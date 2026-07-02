@@ -36,6 +36,10 @@ def connect(path: str) -> sqlite3.Connection:
     return conn
 
 
+def _quote_ident(name: str) -> str:
+    return '"' + name.replace('"', '""') + '"'
+
+
 def _metrics_columns(conn) -> set[str]:
     return {r[1] for r in conn.execute("PRAGMA table_info(metrics)").fetchall()}
 
@@ -46,7 +50,7 @@ def ensure_schema(conn, columns: dict[str, str]) -> None:
     existing = _metrics_columns(conn)
     for col, affinity in columns.items():
         if col not in existing:
-            conn.execute(f'ALTER TABLE metrics ADD COLUMN "{col}" {affinity}')
+            conn.execute(f"ALTER TABLE metrics ADD COLUMN {_quote_ident(col)} {affinity}")
     conn.commit()
 
 
@@ -69,7 +73,7 @@ def write_snapshot(conn, captured_at: str, source: str,
     )
     snapshot_id = cur.lastrowid
     cols = ["snapshot_id", "symbol"] + column_ids
-    quoted = ", ".join(f'"{c}"' for c in cols)
+    quoted = ", ".join(_quote_ident(c) for c in cols)
     placeholders = ", ".join(["?"] * len(cols))
     sql = f"INSERT INTO metrics ({quoted}) VALUES ({placeholders})"
     rows = [

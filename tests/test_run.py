@@ -1,3 +1,7 @@
+import os
+
+import pytest
+
 from screener.catalog import DataPoint
 from screener.db import connect
 from screener.run import run, select_ids
@@ -34,3 +38,95 @@ def test_run_writes_snapshot_end_to_end(tmp_path):
     assert stored == (10.0, "Tech")
     # catalog persisted
     assert conn.execute("SELECT COUNT(*) FROM data_points").fetchone()[0] == 2
+
+
+def test_run_twice_appends_snapshot_and_v_latest_returns_newest(tmp_path):
+    db_path = str(tmp_path / "s.db")
+    catalog = ([DataPoint("price", "Stock Price", "Price & Volume", False)], 1)
+
+    def fake_catalog():
+        return catalog
+
+    def make_fetch(data):
+        def fake_data(ids, type_):
+            return data
+        return fake_data
+
+    run(db_path, fetch_catalog=fake_catalog,
+        fetch_data=make_fetch({"AAA": {"price": 10.0}}),
+        now_iso="2026-07-01T00:00:00+00:00")
+    run(db_path, fetch_catalog=fake_catalog,
+        fetch_data=make_fetch({"AAA": {"price": 20.0}}),
+        now_iso="2026-07-02T00:00:00+00:00")
+
+    conn = connect(db_path)
+    assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 2
+    prices = [r[0] for r in conn.execute("SELECT price FROM v_latest").fetchall()]
+    assert prices == [20.0]
+
+
+def test_run_keep_days_prunes_old_snapshot_through_run(tmp_path):
+    db_path = str(tmp_path / "s.db")
+    catalog = ([DataPoint("price", "Stock Price", "Price & Volume", False)], 1)
+
+    def fake_catalog():
+        return catalog
+
+    def make_fetch(data):
+        def fake_data(ids, type_):
+            return data
+        return fake_data
+
+    run(db_path, fetch_catalog=fake_catalog,
+        fetch_data=make_fetch({"AAA": {"price": 10.0}}),
+        now_iso="2026-06-01T00:00:00+00:00")
+    run(db_path, keep_days=7, fetch_catalog=fake_catalog,
+        fetch_data=make_fetch({"AAA": {"price": 20.0}}),
+        now_iso="2026-07-02T00:00:00+00:00")
+
+    conn = connect(db_path)
+    assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
+    prices = [r[0] for r in conn.execute("SELECT price FROM metrics").fetchall()]
+    assert prices == [20.0]
+
+
+def test_run_exclude_omits_column_from_metrics_table(tmp_path):
+    db_path = str(tmp_path / "s.db")
+    catalog = ([
+        DataPoint("price", "Stock Price", "Price & Volume", False),
+        DataPoint("sector", "Sector", "Company Info", False),
+    ], 2)
+
+    def fake_catalog():
+        return catalog
+
+    def fake_data(ids, type_):
+        assert ids == ["price"]
+        return {"AAA": {"price": 10.0}}
+
+    run(db_path, exclude=["sector"], fetch_catalog=fake_catalog,
+        fetch_data=fake_data, now_iso="2026-07-02T00:00:00+00:00")
+
+    conn = connect(db_path)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(metrics)").fetchall()}
+    assert "price" in cols
+    assert "sector" not in cols
+
+
+def test_run_propagates_fetch_error_and_writes_no_snapshot(tmp_path):
+    db_path = str(tmp_path / "s.db")
+    catalog = ([DataPoint("price", "Stock Price", "Price & Volume", False)], 1)
+
+    def fake_catalog():
+        return catalog
+
+    def failing_fetch(ids, type_):
+        raise RuntimeError("network down")
+
+    with pytest.raises(RuntimeError):
+        run(db_path, fetch_catalog=fake_catalog, fetch_data=failing_fetch,
+            now_iso="2026-07-02T00:00:00+00:00")
+
+    # ensure_schema/write_snapshot only run after a successful fetch_data call,
+    # so the db file is never created and no snapshot rows exist.
+    assert not os.path.exists(db_path)

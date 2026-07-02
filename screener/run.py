@@ -1,10 +1,13 @@
 import argparse
+import sys
 from datetime import datetime, timezone
 
 from screener import catalog, db, fetch
 from screener.typing import column_type
 
 SOURCE = "stockanalysis.com"
+
+_RESERVED_COLUMNS = {"snapshot_id", "symbol"}
 
 
 def select_ids(all_ids, only, exclude):
@@ -16,10 +19,15 @@ def select_ids(all_ids, only, exclude):
 def run(db_path, keep_days=None, only=None, exclude=None, type_="s",
         fetch_catalog=catalog.fetch_catalog, fetch_data=fetch.fetch_data_points,
         now_iso=None):
-    data_points, _count = fetch_catalog()
+    data_points, universe_count = fetch_catalog()
     all_ids = [d.id for d in data_points]
     ids = select_ids(all_ids, only, exclude)
+    # Defensive guard: never let a catalog id collide with a base metrics column.
+    ids = [i for i in ids if i not in _RESERVED_COLUMNS]
     data = fetch_data(ids, type_)
+    if len(data) < universe_count:
+        print(f"warning: stored {len(data)} stocks but catalog reported "
+              f"{universe_count}", file=sys.stderr)
 
     columns = {cid: column_type(cid, (row.get(cid) for row in data.values()))
                for cid in ids}
