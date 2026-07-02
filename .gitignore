@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+screener.db
+*.db-wal
+*.db-shm
