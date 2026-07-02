@@ -59,3 +59,38 @@ def upsert_data_points(conn, data_points: Iterable[DataPoint]) -> None:
         [(d.id, d.name, d.category, int(d.is_pro)) for d in data_points],
     )
     conn.commit()
+
+
+def write_snapshot(conn, captured_at: str, source: str,
+                   data: dict[str, dict], column_ids: list[str]) -> int:
+    cur = conn.execute(
+        "INSERT INTO snapshots (captured_at, universe_count, source) VALUES (?, ?, ?)",
+        (captured_at, len(data), source),
+    )
+    snapshot_id = cur.lastrowid
+    cols = ["snapshot_id", "symbol"] + column_ids
+    quoted = ", ".join(f'"{c}"' for c in cols)
+    placeholders = ", ".join(["?"] * len(cols))
+    sql = f"INSERT INTO metrics ({quoted}) VALUES ({placeholders})"
+    rows = [
+        [snapshot_id, symbol] + [fields.get(cid) for cid in column_ids]
+        for symbol, fields in data.items()
+    ]
+    conn.executemany(sql, rows)
+    conn.commit()
+    return snapshot_id
+
+
+def prune(conn, keep_days: int, now_iso: str) -> int:
+    """Delete snapshots + metrics older than keep_days before now_iso. Returns count."""
+    from datetime import datetime, timedelta
+    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
+    ids = [r[0] for r in conn.execute(
+        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
+    if not ids:
+        return 0
+    qmarks = ",".join("?" * len(ids))
+    conn.execute(f"DELETE FROM metrics WHERE snapshot_id IN ({qmarks})", ids)
+    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
+    conn.commit()
+    return len(ids)
