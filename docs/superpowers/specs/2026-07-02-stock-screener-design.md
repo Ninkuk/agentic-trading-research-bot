@@ -140,6 +140,18 @@ python main.py [--db PATH] [--keep-days N] [--only ID,ID,...] [--exclude ID,ID,.
 - `--db` (default `screener.db`), `--keep-days` (default: keep all),
   `--only`/`--exclude` to subset the catalog.
 
+## Cadence (operational)
+
+- **Default: daily EOD** — one full 310-column snapshot per trading day, run in the
+  evening ET after source data settles. Matches how most fields refresh (source is
+  EOD-oriented: `priceDate` returns the calendar day, not a live tick) and holds the
+  ~3–4 GB/yr budget.
+- **Optional intraday** — only if the bot trades intraday, and only for the ~dozen
+  fast-moving fields (`price`, `change`, `volume`, `relativeVolume`, `rsi`, `gap`,
+  `chFromOpen`, `positionInRange`, pre/after-hours) via `--only`. Avoid full-310
+  hourly snapshots — ~290 fields are unchanged copies, ~24× storage for no signal.
+- Scheduling itself is external (cron/launchd); the screener stays a single-run CLI.
+
 ## Error handling
 
 - **HTTP failures** on either endpoint → abort the run, non-zero exit, no partial
