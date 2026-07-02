@@ -130,3 +130,59 @@ def test_run_propagates_fetch_error_and_writes_no_snapshot(tmp_path):
     # ensure_schema/write_snapshot only run after a successful fetch_data call,
     # so the db file is never created and no snapshot rows exist.
     assert not os.path.exists(db_path)
+
+
+def test_run_drops_reserved_column_id_from_catalog(tmp_path):
+    db_path = str(tmp_path / "s.db")
+    # "symbol" collides with the base metrics column; without the
+    # _RESERVED_COLUMNS filter this leads to a duplicate-column INSERT.
+    catalog = ([
+        DataPoint("symbol", "Symbol", "Company Info", False),
+        DataPoint("price", "Stock Price", "Price & Volume", False),
+    ], 2)
+
+    def fake_catalog():
+        return catalog
+
+    def fake_data(ids, type_):
+        # "symbol" collides with the base metrics column; it must be dropped
+        # from ids before reaching fetch_data.
+        assert ids == ["price"]
+        return {"AAA": {"symbol": "AAA", "price": 10.0},
+                "BBB": {"symbol": "BBB", "price": 20.0}}
+
+    run(db_path, fetch_catalog=fake_catalog, fetch_data=fake_data,
+        now_iso="2026-07-02T00:00:00+00:00")
+
+    conn = connect(db_path)
+    assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
+    price = conn.execute(
+        "SELECT price FROM metrics WHERE symbol='AAA'").fetchone()[0]
+    assert price == 10.0
+
+
+def test_run_warns_on_short_universe_but_still_writes(tmp_path, capsys):
+    db_path = str(tmp_path / "s.db")
+    # Catalog claims 5 stocks but fetch_data only returns 2.
+    catalog = ([
+        DataPoint("price", "Stock Price", "Price & Volume", False),
+        DataPoint("sector", "Sector", "Company Info", False),
+    ], 5)
+
+    def fake_catalog():
+        return catalog
+
+    def fake_data(ids, type_):
+        return {"AAA": {"price": 10.0, "sector": "Tech"},
+                "BBB": {"price": 20.0, "sector": "Energy"}}
+
+    run(db_path, fetch_catalog=fake_catalog, fetch_data=fake_data,
+        now_iso="2026-07-02T00:00:00+00:00")
+
+    captured = capsys.readouterr()
+    assert "warning" in captured.err.lower()
+
+    conn = connect(db_path)
+    assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
+    symbols = {r[0] for r in conn.execute("SELECT symbol FROM v_latest").fetchall()}
+    assert symbols == {"AAA", "BBB"}

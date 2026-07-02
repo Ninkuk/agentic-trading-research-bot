@@ -1,3 +1,5 @@
+import sqlite3
+
 from screener.db import connect, ensure_schema, prune, write_snapshot
 
 
@@ -44,3 +46,19 @@ def test_prune_removes_old_snapshots_and_their_metrics():
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
     assert conn.execute(
         "SELECT COUNT(*) FROM metrics WHERE snapshot_id=?", (old,)).fetchone()[0] == 0
+
+
+def test_ensure_schema_and_write_handle_embedded_quote_identifier():
+    weird = 'a"b'
+    conn = connect(":memory:")
+    ensure_schema(conn, {weird: "REAL"})
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(metrics)").fetchall()}
+    assert weird in cols
+
+    write_snapshot(conn, "2026-07-02T00:00:00+00:00", "src",
+                   {"AAA": {weird: 1.5}}, [weird])
+
+    conn.row_factory = sqlite3.Row
+    row = conn.execute(
+        "SELECT * FROM metrics WHERE symbol='AAA'").fetchone()
+    assert row[weird] == 1.5
