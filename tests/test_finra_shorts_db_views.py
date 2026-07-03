@@ -38,10 +38,15 @@ def test_v_latest_only_max_date_and_liquid():
     _insert(conn, _rows("A", [("2024-06-13", 0.4, 200000),
                               ("2024-06-14", 0.6, 200000)]))
     _insert(conn, _rows("B", [("2024-06-14", 0.9, 50000)]))   # illiquid -> excluded
-    got = {r[0]: r[1] for r in conn.execute(
-        "SELECT symbol, short_ratio FROM v_latest")}
-    assert set(got) == {"A"}                       # B dropped, only latest date
-    assert got["A"] == pytest.approx(0.6)
+    rows = conn.execute(
+        "SELECT symbol, date, short_ratio FROM v_latest").fetchall()
+    # Exactly one row should be returned: A on the latest date only
+    assert len(rows) == 1, f"Expected 1 row, got {len(rows)}: {rows}"
+    # Verify it's A on 2024-06-14 with ratio 0.6 (not A on 2024-06-13 with 0.4)
+    symbol, date, ratio = rows[0]
+    assert symbol == "A"
+    assert date == "2024-06-14"
+    assert ratio == pytest.approx(0.6)
 
 
 def test_v_high_short_ratio_threshold():
