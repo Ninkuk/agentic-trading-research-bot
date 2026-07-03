@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime, timedelta
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -81,3 +82,57 @@ def ensure_schema(conn) -> None:
     """Create tables and derived-signal views. Idempotent."""
     conn.executescript(_SCHEMA)
     conn.commit()
+
+
+def write_snapshot(conn, captured_at: str, filter_: str,
+                   rows: list[dict]) -> tuple[int, int]:
+    """Insert one snapshot header + its observation rows. Returns (id, count)."""
+    cur = conn.execute(
+        "INSERT INTO snapshots (captured_at, filter, ticker_count) VALUES (?, ?, ?)",
+        (captured_at, filter_, len(rows)),
+    )
+    snapshot_id = cur.lastrowid
+    conn.executemany(
+        """INSERT INTO observations
+           (snapshot_id, ticker, name, rank, mentions, upvotes,
+            rank_24h_ago, mentions_24h_ago)
+           VALUES (:sid, :ticker, :name, :rank, :mentions, :upvotes,
+                   :rank_24h_ago, :mentions_24h_ago)""",
+        [{**r, "sid": snapshot_id} for r in rows],
+    )
+    conn.commit()
+    return snapshot_id, len(rows)
+
+
+def _asset_type(ticker: str) -> str:
+    return "crypto" if ticker.endswith(".X") else "stock"
+
+
+def upsert_tickers(conn, rows: list[dict], captured_at: str) -> None:
+    """Upsert the ticker dimension: refresh name/last_seen, preserve first_seen."""
+    conn.executemany(
+        """INSERT INTO tickers (ticker, name, asset_type, first_seen, last_seen)
+           VALUES (:ticker, :name, :asset_type, :seen, :seen)
+           ON CONFLICT(ticker) DO UPDATE SET
+             name=excluded.name,
+             asset_type=excluded.asset_type,
+             last_seen=excluded.last_seen""",
+        [{"ticker": r["ticker"], "name": r["name"],
+          "asset_type": _asset_type(r["ticker"]), "seen": captured_at}
+         for r in rows],
+    )
+    conn.commit()
+
+
+def prune(conn, keep_days: int, now_iso: str) -> int:
+    """Delete snapshots + observations older than keep_days before now_iso."""
+    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
+    ids = [r[0] for r in conn.execute(
+        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
+    if not ids:
+        return 0
+    qmarks = ",".join("?" * len(ids))
+    conn.execute(f"DELETE FROM observations WHERE snapshot_id IN ({qmarks})", ids)
+    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
+    conn.commit()
+    return len(ids)
