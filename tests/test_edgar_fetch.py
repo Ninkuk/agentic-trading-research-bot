@@ -90,3 +90,72 @@ def test_fetch_daily_index_reraises_non_404():
         assert False, "expected HTTPError to propagate"
     except urllib.error.HTTPError as e:
         assert e.code == 500
+
+
+def _http_error(code, retry_after=None):
+    hdrs = {"Retry-After": retry_after} if retry_after is not None else {}
+    return urllib.error.HTTPError("http://x", code, "err", hdrs, None)
+
+
+def test_http_get_retries_on_403_then_succeeds():
+    from edgar_screener.fetch import _http_get
+    calls = {"n": 0}
+    slept = []
+
+    def opener(url):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise _http_error(403)
+        return "OK"
+
+    out = _http_get("http://x", opener=opener, base_delay=1.0, sleep=slept.append)
+    assert out == "OK"
+    assert calls["n"] == 3
+    assert slept == [1.0, 2.0]   # exponential backoff before attempts 2 and 3
+
+
+def test_http_get_gives_up_after_attempts_on_persistent_403():
+    from edgar_screener.fetch import _http_get
+    slept = []
+
+    def opener(url):
+        raise _http_error(403)
+
+    try:
+        _http_get("http://x", opener=opener, attempts=4, base_delay=1.0,
+                  sleep=slept.append)
+        assert False, "expected HTTPError after exhausting retries"
+    except urllib.error.HTTPError as e:
+        assert e.code == 403
+    assert len(slept) == 3   # attempts-1 backoffs, then raise
+
+
+def test_http_get_does_not_retry_404():
+    from edgar_screener.fetch import _http_get
+    slept = []
+
+    def opener(url):
+        raise _http_error(404)
+
+    try:
+        _http_get("http://x", opener=opener, sleep=slept.append)
+        assert False, "404 must raise immediately"
+    except urllib.error.HTTPError as e:
+        assert e.code == 404
+    assert slept == []   # no retry on 404
+
+
+def test_http_get_honors_retry_after_header():
+    from edgar_screener.fetch import _http_get
+    calls = {"n": 0}
+    slept = []
+
+    def opener(url):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise _http_error(429, retry_after="7")
+        return "OK"
+
+    out = _http_get("http://x", opener=opener, base_delay=1.0, sleep=slept.append)
+    assert out == "OK"
+    assert slept == [7.0]   # Retry-After header overrides exponential backoff
