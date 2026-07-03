@@ -76,9 +76,9 @@ def parse_file(text: str) -> list[dict]:
 
 def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
               base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
-    """GET file text with bounded backoff, retrying 403/429/503 and transient
-    network errors. Non-retryable HTTP errors (e.g. 404) raise at once, so
-    fetch_day can map 404 -> None."""
+    """GET file text with bounded backoff, retrying 429/503 and transient
+    network errors. Non-retryable HTTP errors (e.g. 403/404) raise at once, so
+    fetch_day can map 403/404 -> None (this CDN 403s for dates with no file)."""
     return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
                                 base_delay, sleep)
 
