@@ -93,11 +93,26 @@ def prune(conn, keep_days, now_iso):
 
 def write_snapshot(conn, captured_at: str, index_date: str,
                    rows: list[dict]) -> tuple[int, int]:
-    """Insert one snapshot header + its filing rows. Returns (id, count)."""
+    """Insert one snapshot header + its filing rows. Returns (id, count).
+
+    The SEC master.idx daily index sometimes repeats the exact same filing
+    line more than once. A filing is uniquely identified by
+    (accession, cik), so duplicate lines are collapsed to a single stored
+    row (first occurrence wins) before insert and counting.
+    """
+    seen = set()
+    deduped = []
+    for r in rows:
+        key = (r["accession"], r["cik"])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(r)
+
     cur = conn.execute(
         "INSERT INTO snapshots (captured_at, index_date, filing_count) "
         "VALUES (?, ?, ?)",
-        (captured_at, index_date, len(rows)),
+        (captured_at, index_date, len(deduped)),
     )
     snapshot_id = cur.lastrowid
     conn.executemany(
@@ -106,10 +121,10 @@ def write_snapshot(conn, captured_at: str, index_date: str,
             filed_date, path)
            VALUES (:sid, :accession, :cik, :company, :ticker, :form, :bucket,
                    :filed_date, :path)""",
-        [{**r, "sid": snapshot_id} for r in rows],
+        [{**r, "sid": snapshot_id} for r in deduped],
     )
     conn.commit()
-    return snapshot_id, len(rows)
+    return snapshot_id, len(deduped)
 
 
 def upsert_issuers(conn, rows: list[dict], captured_at: str) -> None:

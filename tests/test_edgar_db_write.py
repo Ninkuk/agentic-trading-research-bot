@@ -71,6 +71,32 @@ def test_v_activity_history_deltas():
     assert delta == -1   # 1 - 2
 
 
+def test_write_snapshot_dedupes_identical_index_lines():
+    # The real SEC master.idx sometimes repeats the exact same filing line
+    # more than once (same cik + accession). Those must collapse to a single
+    # stored filing, not raise a UNIQUE constraint violation.
+    conn = connect(":memory:")
+    ensure_schema(conn)
+    rows = [
+        {"accession": "0005-25-005", "cik": 1000623, "company": "Mativ",
+         "ticker": "MATV", "form": "ABS-15G", "bucket": "other",
+         "filed_date": "2025-06-02", "path": "edgar/data/1000623/0005-25-005.txt"},
+        {"accession": "0005-25-005", "cik": 1000623, "company": "Mativ",
+         "ticker": "MATV", "form": "ABS-15G", "bucket": "other",
+         "filed_date": "2025-06-02", "path": "edgar/data/1000623/0005-25-005.txt"},
+        {"accession": "0006-25-006", "cik": 999999, "company": "Private Co",
+         "ticker": None, "form": "D", "bucket": "other",
+         "filed_date": "2025-06-02", "path": "edgar/data/999999/0006-25-006.txt"},
+    ]
+    sid, n = write_snapshot(conn, "2026-07-02T00:00:00+00:00", "2025-06-02", rows)
+    assert n == 2
+    assert conn.execute(
+        "SELECT COUNT(*) FROM filings WHERE snapshot_id=? AND accession=? AND cik=?",
+        (sid, "0005-25-005", 1000623)).fetchone()[0] == 1
+    assert conn.execute(
+        "SELECT filing_count FROM snapshots WHERE id=?", (sid,)).fetchone()[0] == 2
+
+
 def test_prune_removes_old_snapshots_and_filings():
     conn = connect(":memory:")
     ensure_schema(conn)
