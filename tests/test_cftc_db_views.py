@@ -107,3 +107,68 @@ def test_v_positioning_passthrough_columns():
         "net_noncomm, cot_index, pct_oi_noncomm_long, chg_oi "
         "FROM v_positioning WHERE code='P'").fetchone()
     assert row == ("P", "Pork", "ags", "2026-06-23", 1000, 100, 100.0, 42.5, 100)
+
+
+# --- family extension ---
+from cftc_screener import catalog
+
+
+def _seed_disagg(conn, code, series, asset_class="metals"):
+    """series: list of (report_date, mm_long, mm_short)."""
+    db.upsert_markets(conn, [{"code": code, "name": "M",
+                              "asset_class": asset_class}],
+                      "2026-07-03T00:00:00+00:00")
+    rows = [{"code": code, "report_date": d,
+             "mm_long": lo, "mm_short": sh, "open_interest": 1000}
+            for (d, lo, sh) in series]
+    db.write_family(conn, catalog.DISAGG, code, rows)
+
+
+def _seed_tff(conn, code, series, asset_class="equity_index"):
+    """series: list of (report_date, lev_long, lev_short)."""
+    db.upsert_markets(conn, [{"code": code, "name": "M",
+                              "asset_class": asset_class}],
+                      "2026-07-03T00:00:00+00:00")
+    rows = [{"code": code, "report_date": d,
+             "lev_long": lo, "lev_short": sh, "open_interest": 1000}
+            for (d, lo, sh) in series]
+    db.write_family(conn, catalog.TFF, code, rows)
+
+
+def test_disagg_cot_index_is_percentile_of_managed_money_net():
+    conn = _fresh()
+    # net_mm walks 0, 100, then 50 (latest) -> lo=0, hi=100 -> index 50.
+    _seed_disagg(conn, "G", [("2026-06-09", 0, 0), ("2026-06-16", 100, 0),
+                             ("2026-06-23", 50, 0)])
+    idx = conn.execute(
+        "SELECT cot_index FROM v_disagg_cot_index_latest WHERE code='G'"
+    ).fetchone()[0]
+    assert abs(idx - 50.0) < 1e-9
+
+
+def test_managed_money_extremes_flags_crowded_only():
+    conn = _fresh()
+    _seed_disagg(conn, "HOT", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0)])  # index 100
+    _seed_disagg(conn, "MILD", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0),
+                                ("2026-06-30", 50, 0)])                        # index 50
+    codes = {r[0] for r in conn.execute(
+        "SELECT code FROM v_managed_money_extremes")}
+    assert "HOT" in codes and "MILD" not in codes
+
+
+def test_tff_cot_index_is_100_at_leveraged_max():
+    conn = _fresh()
+    _seed_tff(conn, "S", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0)])
+    idx = conn.execute(
+        "SELECT cot_index FROM v_tff_cot_index_latest WHERE code='S'"
+    ).fetchone()[0]
+    assert idx == 100.0
+
+
+def test_leveraged_funds_extremes_flags_crowded_short():
+    conn = _fresh()
+    # net_lev walks 100 then 0 (latest) -> lo=0, hi=100, latest=lo -> index 0.
+    _seed_tff(conn, "SH", [("2026-06-16", 100, 0), ("2026-06-23", 0, 0)])
+    codes = {r[0] for r in conn.execute(
+        "SELECT code FROM v_leveraged_funds_extremes")}
+    assert "SH" in codes
