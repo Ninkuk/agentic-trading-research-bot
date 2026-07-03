@@ -71,6 +71,25 @@ def test_v_activity_history_deltas():
     assert delta == -1   # 1 - 2
 
 
+def test_v_activity_history_uses_latest_snapshot_per_index_date():
+    # Re-snapshotting the same index_date (e.g. a backfill re-run) must NOT
+    # sum filings across both snapshots; the view should reflect only the most
+    # recent capture of that trading day.
+    conn = connect(":memory:")
+    ensure_schema(conn)
+    # First capture of 2025-06-02: MATV has 2 insider filings.
+    write_snapshot(conn, "2026-07-01T00:00:00+00:00", "2025-06-02", _rows())
+    # Later re-capture of the SAME index_date: MATV now has 1 filing.
+    write_snapshot(conn, "2026-07-01T12:00:00+00:00", "2025-06-02", [
+        {"accession": "0009-25-009", "cik": 1000623, "company": "Mativ",
+         "ticker": "MATV", "form": "8-K", "bucket": "event",
+         "filed_date": "2025-06-02", "path": "edgar/data/1000623/0009-25-009.txt"}])
+    count = conn.execute(
+        "SELECT filings_count FROM v_activity_history "
+        "WHERE ticker='MATV' AND index_date='2025-06-02'").fetchone()[0]
+    assert count == 1   # latest snapshot only, not 2 + 1 = 3
+
+
 def test_write_snapshot_dedupes_identical_index_lines():
     # The real SEC master.idx sometimes repeats the exact same filing line
     # more than once (same cik + accession). Those must collapse to a single

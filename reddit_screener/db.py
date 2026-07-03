@@ -79,10 +79,23 @@ def ensure_schema(conn) -> None:
 
 def write_snapshot(conn, captured_at: str, filter_: str,
                    rows: list[dict]) -> tuple[int, int]:
-    """Insert one snapshot header + its observation rows. Returns (id, count)."""
+    """Insert one snapshot header + its observation rows. Returns (id, count).
+
+    ApeWisdom occasionally repeats the same ticker across pages. An observation
+    is keyed by (snapshot_id, ticker), so duplicate tickers are collapsed to a
+    single stored row (first occurrence wins) before insert and counting.
+    """
+    seen = set()
+    deduped = []
+    for r in rows:
+        if r["ticker"] in seen:
+            continue
+        seen.add(r["ticker"])
+        deduped.append(r)
+
     cur = conn.execute(
         "INSERT INTO snapshots (captured_at, filter, ticker_count) VALUES (?, ?, ?)",
-        (captured_at, filter_, len(rows)),
+        (captured_at, filter_, len(deduped)),
     )
     snapshot_id = cur.lastrowid
     conn.executemany(
@@ -91,10 +104,10 @@ def write_snapshot(conn, captured_at: str, filter_: str,
             rank_24h_ago, mentions_24h_ago)
            VALUES (:sid, :ticker, :name, :rank, :mentions, :upvotes,
                    :rank_24h_ago, :mentions_24h_ago)""",
-        [{**r, "sid": snapshot_id} for r in rows],
+        [{**r, "sid": snapshot_id} for r in deduped],
     )
     conn.commit()
-    return snapshot_id, len(rows)
+    return snapshot_id, len(deduped)
 
 
 def _asset_type(ticker: str) -> str:

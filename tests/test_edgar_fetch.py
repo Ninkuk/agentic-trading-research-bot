@@ -145,6 +145,58 @@ def test_http_get_does_not_retry_404():
     assert slept == []   # no retry on 404
 
 
+def test_http_get_retries_on_urlerror_then_succeeds():
+    # Transient non-HTTP failures (connection reset, DNS) must also be retried,
+    # not just HTTP status codes.
+    from edgar_screener.fetch import _http_get
+    calls = {"n": 0}
+    slept = []
+
+    def opener(url):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise urllib.error.URLError("connection reset")
+        return "OK"
+
+    out = _http_get("http://x", opener=opener, base_delay=1.0, sleep=slept.append)
+    assert out == "OK"
+    assert calls["n"] == 3
+    assert slept == [1.0, 2.0]
+
+
+def test_http_get_retries_on_timeout():
+    # A socket read timeout is a TimeoutError, not an HTTPError/URLError.
+    from edgar_screener.fetch import _http_get
+    calls = {"n": 0}
+    slept = []
+
+    def opener(url):
+        calls["n"] += 1
+        if calls["n"] < 2:
+            raise TimeoutError("read timed out")
+        return "OK"
+
+    out = _http_get("http://x", opener=opener, base_delay=1.0, sleep=slept.append)
+    assert out == "OK"
+    assert slept == [1.0]
+
+
+def test_http_get_gives_up_after_persistent_urlerror():
+    from edgar_screener.fetch import _http_get
+    slept = []
+
+    def opener(url):
+        raise urllib.error.URLError("connection reset")
+
+    try:
+        _http_get("http://x", opener=opener, attempts=3, base_delay=1.0,
+                  sleep=slept.append)
+        assert False, "expected URLError after exhausting retries"
+    except urllib.error.URLError:
+        pass
+    assert len(slept) == 2   # attempts-1 backoffs, then raise
+
+
 def test_http_get_honors_retry_after_header():
     from edgar_screener.fetch import _http_get
     calls = {"n": 0}

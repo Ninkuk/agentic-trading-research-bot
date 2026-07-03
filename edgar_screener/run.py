@@ -20,12 +20,16 @@ def run(db_path, index_date=None, keep_days=None,
         for _ in range(_MAX_BACK + 1):
             index_date = day.isoformat()
             rows = fetch_index(index_date)
-            if rows is not None:
+            # Treat a present-but-empty index ([]) like a missing one (None):
+            # keep walking back to a day that actually has filings instead of
+            # storing a 0-filing snapshot for a non-trading day.
+            if rows:
                 break
             day -= timedelta(days=1)
-        if rows is None:
+        if not rows:
             raise RuntimeError(
-                f"no EDGAR daily index in the {_MAX_BACK} days before {now_iso}")
+                f"no EDGAR daily index with filings in the {_MAX_BACK} days "
+                f"before {now_iso}")
     else:
         rows = fetch_index(index_date)
         if rows is None:

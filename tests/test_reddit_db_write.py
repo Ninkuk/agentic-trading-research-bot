@@ -24,6 +24,23 @@ def test_write_snapshot_stores_rows_and_count():
     assert got == (1147, 5135)
 
 
+def test_write_snapshot_dedupes_duplicate_ticker():
+    # ApeWisdom can repeat a symbol across pages; PK is (snapshot_id, ticker),
+    # so a plain executemany would raise IntegrityError and abort the run.
+    conn = connect(":memory:")
+    ensure_schema(conn)
+    dup = {"ticker": "MU", "name": "Micron", "rank": 1, "mentions": 1147,
+           "upvotes": 5135, "rank_24h_ago": 1, "mentions_24h_ago": 951}
+    sid, n = write_snapshot(conn, "2026-07-02T00:00:00+00:00", "all-stocks",
+                            [dup, dict(dup)])
+    assert n == 1  # collapsed to one row
+    assert conn.execute(
+        "SELECT COUNT(*) FROM observations WHERE snapshot_id=?",
+        (sid,)).fetchone()[0] == 1
+    assert conn.execute(
+        "SELECT ticker_count FROM snapshots WHERE id=?", (sid,)).fetchone()[0] == 1
+
+
 def test_upsert_tickers_classifies_and_tracks_seen():
     conn = connect(":memory:")
     ensure_schema(conn)

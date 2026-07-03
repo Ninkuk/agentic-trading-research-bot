@@ -12,6 +12,17 @@ def test_select_ids_applies_only_and_exclude():
     assert select_ids(["a", "b", "c"], None, ["b"]) == ["a", "c"]
 
 
+def test_select_ids_dedupes_and_drops_blank_tokens():
+    # `--only "pe, pe,,roe"` splits to ['pe', ' pe', '', 'roe']; without
+    # sanitizing, dup/empty ids reach the metrics INSERT and crash it.
+    assert select_ids(["a", "b"], ["pe", " pe ", "", "roe", "roe"], None) == [
+        "pe", "roe"]
+
+
+def test_select_ids_strips_exclude_tokens():
+    assert select_ids(["a", "b", "c"], None, [" b "]) == ["a", "c"]
+
+
 def test_run_writes_snapshot_end_to_end(tmp_path):
     db_path = str(tmp_path / "s.db")
     catalog = ([
@@ -159,6 +170,32 @@ def test_run_drops_reserved_column_id_from_catalog(tmp_path):
     price = conn.execute(
         "SELECT price FROM metrics WHERE symbol='AAA'").fetchone()[0]
     assert price == 10.0
+
+
+def test_run_skips_data_point_with_no_values(tmp_path):
+    # A data-point that is null for every symbol (e.g. a pro-only field on a
+    # free plan) should not create a metrics column — this curbs unbounded
+    # ALTER-driven column growth over successive runs.
+    db_path = str(tmp_path / "s.db")
+    catalog = ([
+        DataPoint("price", "Stock Price", "Price & Volume", False),
+        DataPoint("proField", "Pro Metric", "Pro", True),
+    ], 2)
+
+    def fake_catalog():
+        return catalog
+
+    def fake_data(ids, type_):
+        return {"AAA": {"price": 10.0, "proField": None},
+                "BBB": {"price": 20.0, "proField": None}}
+
+    run(db_path, fetch_catalog=fake_catalog, fetch_data=fake_data,
+        now_iso="2026-07-02T00:00:00+00:00")
+
+    conn = connect(db_path)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(metrics)").fetchall()}
+    assert "price" in cols
+    assert "proField" not in cols   # all-null column skipped
 
 
 def test_run_warns_on_short_universe_but_still_writes(tmp_path, capsys):

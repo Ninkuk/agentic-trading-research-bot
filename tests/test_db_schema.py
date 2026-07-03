@@ -22,6 +22,25 @@ def test_ensure_schema_is_idempotent_and_adds_new_columns():
     assert "rsi" in cols(conn)
 
 
+def test_ensure_schema_warns_on_affinity_conflict(capsys):
+    # A metrics column's affinity is fixed when first created; if a later run
+    # infers a different type, SQLite keeps the original and would silently
+    # store mismatched values. ensure_schema must surface that, not hide it.
+    conn = connect(":memory:")
+    ensure_schema(conn, {"shortFloat": "REAL"})
+    ensure_schema(conn, {"shortFloat": "TEXT"})   # conflicting affinity
+    err = capsys.readouterr().err
+    assert "shortFloat" in err
+    assert "REAL" in err and "TEXT" in err
+
+
+def test_ensure_schema_no_warning_when_affinity_matches(capsys):
+    conn = connect(":memory:")
+    ensure_schema(conn, {"price": "REAL"})
+    ensure_schema(conn, {"price": "REAL"})   # idempotent re-run, same affinity
+    assert capsys.readouterr().err == ""
+
+
 def test_upsert_data_points_inserts_and_updates():
     conn = connect(":memory:")
     ensure_schema(conn, {})

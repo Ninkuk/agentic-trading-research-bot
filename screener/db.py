@@ -1,7 +1,11 @@
-import sqlite3
+import sys
 from collections.abc import Iterable
 
 from screener.catalog import DataPoint
+from screener_common import connect, prune as _prune
+
+__all__ = ["connect", "ensure_schema", "prune", "write_snapshot",
+           "upsert_data_points"]
 
 _BASE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -30,27 +34,31 @@ WHERE m.snapshot_id = (
 """
 
 
-def connect(path: str) -> sqlite3.Connection:
-    conn = sqlite3.connect(path)
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
-
-
 def _quote_ident(name: str) -> str:
     return '"' + name.replace('"', '""') + '"'
 
 
-def _metrics_columns(conn) -> set[str]:
-    return {r[1] for r in conn.execute("PRAGMA table_info(metrics)").fetchall()}
+def _metrics_column_types(conn) -> dict[str, str]:
+    return {r[1]: r[2] for r in conn.execute("PRAGMA table_info(metrics)").fetchall()}
 
 
 def ensure_schema(conn, columns: dict[str, str]) -> None:
-    """Create base tables and add any missing metrics columns. Idempotent."""
+    """Create base tables and add any missing metrics columns. Idempotent.
+
+    A column's SQLite affinity is fixed when it is first created and cannot be
+    changed by a later ALTER. If a subsequent run infers a different affinity
+    for an existing column, we keep the original and warn, since the mismatch
+    would otherwise silently mis-store values (e.g. text in a REAL column)."""
     conn.executescript(_BASE_SCHEMA)
-    existing = _metrics_columns(conn)
+    existing = _metrics_column_types(conn)
     for col, affinity in columns.items():
         if col not in existing:
             conn.execute(f"ALTER TABLE metrics ADD COLUMN {_quote_ident(col)} {affinity}")
+        elif existing[col] and existing[col] != affinity:
+            print(f"warning: data-point '{col}' inferred as {affinity} but its "
+                  f"metrics column is {existing[col]}; keeping {existing[col]} "
+                  f"(values may be stored with mismatched affinity)",
+                  file=sys.stderr)
     conn.commit()
 
 
@@ -85,16 +93,6 @@ def write_snapshot(conn, captured_at: str, source: str,
     return snapshot_id
 
 
-def prune(conn, keep_days: int, now_iso: str) -> int:
-    """Delete snapshots + metrics older than keep_days before now_iso. Returns count."""
-    from datetime import datetime, timedelta
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute(
-        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
-    if not ids:
-        return 0
-    qmarks = ",".join("?" * len(ids))
-    conn.execute(f"DELETE FROM metrics WHERE snapshot_id IN ({qmarks})", ids)
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
-    conn.commit()
-    return len(ids)
+def prune(conn, keep_days, now_iso):
+    """Prune stock snapshots + metrics. Delegates to the shared helper."""
+    return _prune(conn, keep_days, now_iso, child_table="metrics")
