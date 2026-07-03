@@ -1,4 +1,4 @@
-from screener.run import main
+from registry import dispatch
 
 if __name__ == "__main__":
-    main()
+    dispatch()
