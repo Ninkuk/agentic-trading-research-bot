@@ -3,6 +3,7 @@ import sys
 from cftc_screener.run import main as cftc_main
 from edgar_screener.run import main as edgar_main
 from fred_screener.run import main as fred_main
+from ftd_screener.run import main as ftd_main
 from reddit_screener.run import main as reddit_main
 from stock_analysis_screener.run import main as stocks_main
 
@@ -12,6 +13,7 @@ REGISTRY = {
     "edgar": edgar_main,
     "fred": fred_main,
     "cftc": cftc_main,
+    "ftd": ftd_main,
 }
 
 

@@ -47,3 +47,8 @@ def test_dispatch_lists_fred():
 def test_dispatch_lists_cftc():
     import registry
     assert "cftc" in registry.REGISTRY
+
+
+def test_dispatch_lists_ftd():
+    import registry
+    assert "ftd" in registry.REGISTRY
