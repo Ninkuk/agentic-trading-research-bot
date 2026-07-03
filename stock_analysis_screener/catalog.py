@@ -1,9 +1,8 @@
-import json
-import urllib.request
 from dataclasses import dataclass
 
-CATALOG_URL = "https://stockanalysis.com/stocks/screener/__data.json"
-_UA = {"User-Agent": "Mozilla/5.0"}
+from stock_analysis_screener import probe
+
+CATALOG_ROUTE = "/stocks/screener/"
 
 
 @dataclass(frozen=True)
@@ -15,39 +14,22 @@ class DataPoint:
 
 
 def parse_catalog(raw: dict) -> tuple[list[DataPoint], int]:
-    """Decode SvelteKit index-deduplicated payload -> (data_points, universe_count)."""
-    pool = None
-    for node in raw.get("nodes", []):
-        data = node.get("data") if isinstance(node, dict) else None
-        if (isinstance(data, list) and data and isinstance(data[0], dict)
-                and "dataPoints" in data[0]):
-            pool = data
-            break
-    if pool is None:
-        raise ValueError("screener payload node not found in __data.json")
+    """Decode the screener __data.json payload -> (data_points, universe_count).
 
-    top = pool[0]
-
-    def deref(idx):
-        return pool[idx]
-
-    count = deref(top["count"])
-    points: list[DataPoint] = []
-    for dp_idx in deref(top["dataPoints"]):
-        obj = deref(dp_idx)
-        if not isinstance(obj, dict) or "id" not in obj:
-            continue
-        points.append(DataPoint(
-            id=deref(obj["id"]),
-            name=deref(obj["name"]) if "name" in obj else "",
-            category=deref(obj["cat"]) if "cat" in obj else "",
-            is_pro=bool(deref(obj["proOnly"])) if "proOnly" in obj else False,
-        ))
-    return points, count
+    Uses the shared ``probe`` decoder to unflatten the ``devalue`` pool, then
+    reads the screener slice off the resulting page dict (the node carrying
+    ``dataPoints``)."""
+    for node in probe.decode_nodes(raw):
+        if isinstance(node, dict) and "dataPoints" in node:
+            points = [
+                DataPoint(dp["id"], dp.get("name", ""), dp.get("cat", ""),
+                          bool(dp.get("proOnly", False)))
+                for dp in node["dataPoints"]
+                if isinstance(dp, dict) and "id" in dp
+            ]
+            return points, node["count"]
+    raise ValueError("screener payload node not found in __data.json")
 
 
-def fetch_catalog(url: str = CATALOG_URL) -> tuple[list[DataPoint], int]:
-    req = urllib.request.Request(url, headers=_UA)
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        raw = json.load(resp)
-    return parse_catalog(raw)
+def fetch_catalog(route: str = CATALOG_ROUTE) -> tuple[list[DataPoint], int]:
+    return parse_catalog(probe.fetch_data_json(route))
