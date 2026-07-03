@@ -2,16 +2,17 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a `cftc` screener that pulls weekly CFTC Commitments of Traders (Legacy Futures-Only) positioning for a curated set of futures markets into SQLite, with views that expose the COT Index and net-positioning signals.
+**Goal:** Add a `cftc` screener that pulls weekly CFTC Commitments of Traders (Legacy Futures-Only) positioning for a curated set of futures markets into SQLite, with views that expose the COT Index and net-positioning signals. Along the way, consolidate the HTTP retry/backoff logic (now needed by a third screener) into a shared `http_client` module.
 
-**Architecture:** Mirrors `fred_screener` module-for-module (`catalog`/`fetch`/`db`/`run`). Data is a *panel* — many markets × weekly report dates × ~25 positioning columns — stored in a `cot` fact table keyed by `(code, report_date)` and upserted (CFTC revises prior weeks). A `markets` dimension and a `snapshots` provenance table round it out. Derived signals live in SQL views. Fetch hits the Socrata SODA API, one incremental request per market.
+**Architecture:** Mirrors `fred_screener` module-for-module (`catalog`/`fetch`/`db`/`run`). Data is a *panel* — many markets × weekly report dates × ~25 positioning columns — stored in a `cot` fact table keyed by `(code, report_date)` and upserted (CFTC revises prior weeks). A `markets` dimension and a `snapshots` provenance table round it out. Derived signals live in SQL views. Fetch hits the Socrata SODA API, one incremental request per market, through a shared bounded-backoff HTTP client that `edgar` and `fred` also migrate onto.
 
-**Tech Stack:** Python 3 standard library only (`urllib`, `sqlite3`, `argparse`, `json`), `pytest` for tests. Reuses `screener_common.connect`. No new dependencies.
+**Tech Stack:** Python 3 standard library only (`urllib`, `sqlite3`, `argparse`, `json`), `pytest` for tests. Reuses `screener_common.connect` and the new shared `http_client`. No new dependencies.
 
 ## Global Constraints
 
 - **Stdlib only** — no new third-party dependencies (match FRED/EDGAR).
 - **Data source:** `https://publicreporting.cftc.gov/resource/6dca-aqww.json` (Legacy Futures-Only). No API key required.
+- **Shared HTTP client:** the exponential-backoff GET loop lives in one module, `http_client.py`, taking the retryable-status set as a parameter. `edgar` retries `{403, 429, 503}`; `fred` and `cftc` retry `{429, 500, 502, 503, 504}`. Each screener keeps a thin `_http_get` wrapper that binds its own status set + default opener, preserving its existing function signature and tests.
 - **Optional auth:** `CFTC_APP_TOKEN` from `.env`, sent as the `X-App-Token` **request header** (never a query param, never logged). Absent token → proceed anonymously.
 - **Stable market key** is `cftc_contract_market_code` (alphanumeric string, e.g. `088691`), NOT the market name.
 - **`report_date`** is stored as `YYYY-MM-DD` (the API returns a full timestamp `...T00:00:00.000` — truncate to the first 10 chars).
@@ -91,10 +92,10 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'cftc_screener'`
 
 - [ ] **Step 4: Verify the catalog codes live, then write the catalog**
 
-First confirm each code returns rows (drop any that return `[]`). Run this probe for the codes below and keep only those with a non-empty result:
+First confirm each code returns rows (drop any that return `[]`). Run this probe and keep only codes with a non-empty result:
 
 ```bash
-for c in 13874A 20974 239742 12460P 042601 043602 044601 020601 099741 097741 096742 092741 090741 099741 098662 088691 084691 085692 076651 067651 023651 111659 022651 002602 005602 001602 007601 057642 054642 083731 080732 033661 073732; do
+for c in 13874A 209742 239742 124603 1170E1 042601 044601 043602 020601 045601 099741 097741 096742 092741 090741 232741 098662 088691 084691 085692 076651 067651 023651 111659 022651 002602 005602 001602 007601 057642 054642 080732 083731 033661 073732; do
   n=$(curl -s -G "https://publicreporting.cftc.gov/resource/6dca-aqww.json" \
         --data-urlencode "\$where=cftc_contract_market_code='$c'" \
         --data-urlencode "\$select=count(*)" | python3 -c "import sys,json;print(json.load(sys.stdin)[0].get('count','0'))");
@@ -102,7 +103,7 @@ for c in 13874A 20974 239742 12460P 042601 043602 044601 020601 099741 097741 09
 done
 ```
 
-Then write the catalog. The codes below are a starting set — **replace any that returned 0** with the correct code found by name (query `market_and_exchange_names like '%NAME%'` as in the design doc). Verified-live codes (keep as-is): `13874A` E-mini S&P 500, `099741` Euro FX, `088691` Gold, `067651` WTI Crude (NYMEX).
+Then write the catalog. The codes below are a starting set — **replace any that returned 0** with the correct code found by name (query `market_and_exchange_names like '%NAME%'` as in the design doc; e.g. `curl -s -G .../6dca-aqww.json --data-urlencode "\$select=cftc_contract_market_code,market_and_exchange_names,count(*)" --data-urlencode "\$group=cftc_contract_market_code,market_and_exchange_names" --data-urlencode "\$where=market_and_exchange_names like '%NASDAQ%'"`). Verified-live codes (keep as-is): `13874A` E-mini S&P 500, `099741` Euro FX, `088691` Gold, `067651` WTI Crude (NYMEX).
 
 ```python
 # cftc_screener/catalog.py
@@ -196,18 +197,290 @@ git commit -m "feat(cftc): curated COT market catalog + select_ids"
 
 ---
 
-### Task 2: Socrata fetch client
+### Task 2: Extract shared HTTP backoff client; migrate edgar + fred
+
+CFTC is the third screener needing the same retry/backoff GET. Consolidate the loop into one module now (rule of three), parameterized by the retryable-status set, and migrate the two existing HTTP screeners onto it. Each screener keeps a thin `_http_get` wrapper so its signature and tests are unchanged.
+
+**Files:**
+- Create: `http_client.py` (repo root, sibling to `screener_common.py`)
+- Test: `tests/test_http_client.py`
+- Modify: `edgar_screener/fetch.py:72-116` (replace `_UA`/`_RETRY_STATUS`/`_urlopen`/`_retry_delay`/`_http_get` block)
+- Modify: `fred_screener/fetch.py:1-60` (replace imports + `_UA`/`_RETRY_STATUS`/`_urlopen`/`_retry_delay`/`_http_get` block)
+
+**Interfaces:**
+- Consumes: nothing.
+- Produces:
+  - `make_opener(headers: dict, timeout: int = 60) -> callable` — returns `opener(url) -> str` that GETs `url` with those request headers and decodes the body.
+  - `http_get(url, opener, retry_status, attempts=5, base_delay=1.0, sleep=time.sleep) -> str` — bounded exponential backoff; retries HTTP statuses in `retry_status` and transient `URLError`/`TimeoutError`; other HTTP errors raise immediately; honors a numeric `Retry-After` header.
+  - `retry_delay(err, attempt, base_delay) -> float` (module-internal helper, exercised via `http_get`).
+- Preserved: `edgar_screener.fetch._http_get` and `fred_screener.fetch._http_get` keep their existing signatures (`(url, opener=_urlopen, attempts=..., base_delay=..., sleep=time.sleep)`), now delegating to `http_client.http_get`.
+
+- [ ] **Step 1: Write the failing test for the shared client**
+
+```python
+# tests/test_http_client.py
+import urllib.error
+
+import pytest
+
+import http_client
+
+
+def _http_error(code, retry_after=None):
+    hdrs = {"Retry-After": retry_after} if retry_after is not None else {}
+    return urllib.error.HTTPError("http://x", code, "err", hdrs, None)
+
+
+def test_http_get_retries_status_in_set_then_succeeds():
+    calls = {"n": 0}
+    slept = []
+
+    def opener(url):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise _http_error(503)
+        return "OK"
+
+    out = http_client.http_get("http://x", opener, frozenset({503}),
+                               base_delay=1.0, sleep=slept.append)
+    assert out == "OK"
+    assert slept == [1.0, 2.0]
+
+
+def test_http_get_does_not_retry_status_outside_set():
+    def opener(url):
+        raise _http_error(404)
+
+    with pytest.raises(urllib.error.HTTPError) as exc:
+        http_client.http_get("http://x", opener, frozenset({503}),
+                             sleep=lambda s: None)
+    assert exc.value.code == 404
+
+
+def test_http_get_retry_status_is_parameterized():
+    # 403 is retried only when the caller's set includes it.
+    def opener(url):
+        raise _http_error(403)
+
+    # excluded -> raises immediately (no sleep)
+    slept = []
+    with pytest.raises(urllib.error.HTTPError):
+        http_client.http_get("http://x", opener, frozenset({429}),
+                             sleep=slept.append)
+    assert slept == []
+    # included -> retried then gives up after attempts
+    slept2 = []
+    with pytest.raises(urllib.error.HTTPError):
+        http_client.http_get("http://x", opener, frozenset({403}), attempts=3,
+                             base_delay=1.0, sleep=slept2.append)
+    assert slept2 == [1.0, 2.0]
+
+
+def test_http_get_retries_urlerror_and_timeout():
+    for exc in (urllib.error.URLError("reset"), TimeoutError("t")):
+        calls = {"n": 0}
+        slept = []
+
+        def opener(url, _e=exc):
+            calls["n"] += 1
+            if calls["n"] < 2:
+                raise _e
+            return "OK"
+
+        assert http_client.http_get("http://x", opener, frozenset(),
+                                    base_delay=1.0, sleep=slept.append) == "OK"
+        assert slept == [1.0]
+
+
+def test_http_get_honors_retry_after_header():
+    calls = {"n": 0}
+    slept = []
+
+    def opener(url):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise _http_error(429, retry_after="7")
+        return "OK"
+
+    http_client.http_get("http://x", opener, frozenset({429}),
+                        base_delay=1.0, sleep=slept.append)
+    assert slept == [7.0]
+
+
+def test_make_opener_attaches_headers_and_reads_body():
+    seen = {}
+
+    class FakeResp:
+        def read(self): return b"BODY"
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    def fake_urlopen(req, timeout=None):
+        seen["headers"] = dict(req.header_items())
+        seen["timeout"] = timeout
+        return FakeResp()
+
+    orig = http_client.urllib.request.urlopen
+    http_client.urllib.request.urlopen = fake_urlopen
+    try:
+        opener = http_client.make_opener({"User-Agent": "UA", "X-App-Token": "TOK"})
+        body = opener("http://x")
+    finally:
+        http_client.urllib.request.urlopen = orig
+    assert body == "BODY"
+    assert seen["timeout"] == 60
+    # urllib title-cases header names
+    assert seen["headers"].get("X-app-token") == "TOK"
+    assert seen["headers"].get("User-agent") == "UA"
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `python -m pytest tests/test_http_client.py -v`
+Expected: FAIL with `ModuleNotFoundError: No module named 'http_client'`
+
+- [ ] **Step 3: Write the shared client**
+
+```python
+# http_client.py
+"""Shared bounded-backoff HTTP GET used by the edgar/fred/cftc fetchers.
+
+Each screener supplies its own opener (with its User-Agent / auth headers) and
+its own retryable-status set, since the services throttle differently
+(SEC: 403; Socrata/FRED: 429 + 5xx)."""
+import time
+import urllib.error
+import urllib.request
+
+
+def make_opener(headers: dict, timeout: int = 60):
+    """Return opener(url)->str that GETs the URL with the given request headers
+    and decodes the body as UTF-8 (replacing undecodable bytes)."""
+    def opener(url: str) -> str:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.read().decode("utf-8", "replace")
+    return opener
+
+
+def retry_delay(err, attempt: int, base_delay: float) -> float:
+    """Honor a numeric Retry-After header if present, else exponential backoff."""
+    headers = getattr(err, "headers", None)
+    retry_after = headers.get("Retry-After") if headers is not None else None
+    if retry_after is not None and str(retry_after).isdigit():
+        return float(retry_after)
+    return base_delay * (2 ** (attempt - 1))
+
+
+def http_get(url: str, opener, retry_status, attempts: int = 5,
+             base_delay: float = 1.0, sleep=time.sleep) -> str:
+    """GET a URL as text with bounded exponential backoff. Retryable: HTTP
+    statuses in ``retry_status``, and transient network errors (URLError,
+    TimeoutError). Other HTTP errors raise immediately. HTTPError is a URLError
+    subclass, so it is matched first."""
+    for attempt in range(1, attempts + 1):
+        try:
+            return opener(url)
+        except urllib.error.HTTPError as e:
+            if e.code not in retry_status or attempt == attempts:
+                raise
+            sleep(retry_delay(e, attempt, base_delay))
+        except (urllib.error.URLError, TimeoutError) as e:
+            if attempt == attempts:
+                raise
+            sleep(retry_delay(e, attempt, base_delay))
+    raise AssertionError("unreachable")  # pragma: no cover
+```
+
+- [ ] **Step 4: Run the shared-client tests to verify they pass**
+
+Run: `python -m pytest tests/test_http_client.py -v`
+Expected: PASS (all tests).
+
+- [ ] **Step 5: Migrate `edgar_screener/fetch.py` onto the shared client**
+
+Replace the block from `TICKER_MAP_URL = ...` down through the end of `_http_get` (currently lines ~72–116) with the following. Leave everything above (`classify`, `parse_master`, `index_url`, the top imports) and below (`fetch_ticker_map`, `fetch_daily_index`) unchanged. Also update the top imports: keep `import json`, `import time`, `import urllib.error`, `from datetime import datetime`; you may drop `import urllib.request` (now unused here — `make_opener` owns it).
+
+```python
+TICKER_MAP_URL = "https://www.sec.gov/files/company_tickers.json"
+_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+
+_RETRY_STATUS = frozenset({403, 429, 503})  # SEC throttles with 403 (not 429)
+_MAX_ATTEMPTS = 5
+_BASE_DELAY = 1.0
+
+_urlopen = http_client.make_opener(_UA)
+
+
+def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
+              base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
+    """GET with bounded backoff, retrying SEC throttling (403/429/503) and
+    transient network errors. Non-retryable HTTP errors (e.g. 404) raise at
+    once, preserving fetch_daily_index's 404 -> None handling."""
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
+                                base_delay, sleep)
+```
+
+Add `import http_client` to the top imports of `edgar_screener/fetch.py`.
+
+- [ ] **Step 6: Migrate `fred_screener/fetch.py` onto the shared client**
+
+Replace the top block (imports through `_http_get`, currently lines ~1–60) with the following. Leave `parse_observations`, `fetch_series`, `fetch_observations`, `require_api_key`, `_build_url`, and the `API_BASE` constant intact.
+
+```python
+import json
+import time
+import urllib.parse
+
+import http_client
+
+API_BASE = "https://api.stlouisfed.org/fred"
+_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+
+_RETRY_STATUS = frozenset({429, 500, 502, 503, 504})  # FRED throttles with 429
+_MAX_ATTEMPTS = 5
+_BASE_DELAY = 1.0
+
+_urlopen = http_client.make_opener(_UA)
+
+
+def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
+              base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
+    """GET with bounded backoff, retrying FRED throttling (429) and transient
+    5xx/network errors. Other HTTP errors (e.g. 400) raise immediately."""
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
+                                base_delay, sleep)
+```
+
+(This removes fred's local `_retry_delay`, the inline backoff loop, and the now-unused `urllib.error`/`urllib.request` imports. `require_api_key`, `_build_url`, `parse_observations`, `fetch_series`, and `fetch_observations` are unchanged and still reference `_build_url`/`_http_get`.)
+
+- [ ] **Step 7: Run the edgar + fred fetch suites to verify no regression**
+
+Run: `python -m pytest tests/test_edgar_fetch.py tests/test_fred_fetch.py tests/test_http_client.py -v`
+Expected: PASS — all existing edgar/fred fetch tests (including the 403 vs 429 backoff tests) still green through the thin wrappers, plus the new shared-client tests.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add http_client.py tests/test_http_client.py edgar_screener/fetch.py fred_screener/fetch.py
+git commit -m "refactor(http): extract shared backoff client; migrate edgar + fred"
+```
+
+---
+
+### Task 3: CFTC Socrata fetch client
 
 **Files:**
 - Create: `cftc_screener/fetch.py`
 - Test: `tests/test_cftc_fetch.py`
 
 **Interfaces:**
-- Consumes: nothing (self-contained HTTP client).
+- Consumes: `http_client.make_opener`, `http_client.http_get` (Task 2).
 - Produces:
   - `_build_url(code, since=None, start=None, limit=50000) -> str`
-  - `_make_opener(app_token=None) -> callable` (returns `opener(url) -> str`)
-  - `_http_get(url, opener=_urlopen, attempts=5, base_delay=1.0, sleep=time.sleep) -> str`
+  - `_headers(app_token=None) -> dict`
+  - `_make_opener(app_token=None) -> callable`
+  - `_http_get(url, opener=_urlopen, ...) -> str` (thin wrapper binding CFTC's retry set)
   - `parse_rows(records: list[dict]) -> list[dict]` — each output row has keys `code`, `report_date`, `name`, plus the 25 data columns (see `_INT_FIELDS`/`_FLOAT_FIELDS`).
   - `fetch_market_rows(code, app_token=None, since=None, start=None, get=_http_get, opener=None) -> list[dict]`
 
@@ -221,7 +494,8 @@ import urllib.error
 import pytest
 
 from cftc_screener.fetch import (
-    _build_url, _http_get, _make_opener, fetch_market_rows, parse_rows,
+    _build_url, _headers, _http_get, _make_opener, _urlopen,
+    fetch_market_rows, parse_rows,
 )
 
 # One realistic Socrata record (subset of the 133 fields), values as strings.
@@ -295,32 +569,21 @@ def test_build_url_incremental_uses_since():
     assert "2026-06-23T00%3A00%3A00" in url  # > 'since T00:00:00'
 
 
-def test_make_opener_attaches_app_token_header():
-    seen = {}
+def test_headers_includes_token_when_present():
+    assert _headers("TOK")["X-App-Token"] == "TOK"
 
-    class FakeResp:
-        def read(self): return b"[]"
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
 
-    def fake_urlopen(req, timeout=None):
-        seen["headers"] = req.headers
-        return FakeResp()
-
-    import cftc_screener.fetch as f
-    opener = _make_opener("TOKEN123")
-    orig = f.urllib.request.urlopen
-    f.urllib.request.urlopen = fake_urlopen
-    try:
-        opener("http://x")
-    finally:
-        f.urllib.request.urlopen = orig
-    # urllib capitalizes header keys: "X-app-token"
-    assert seen["headers"].get("X-app-token") == "TOKEN123"
+def test_headers_omits_token_when_absent():
+    assert "X-App-Token" not in _headers()
 
 
 def test_make_opener_without_token_is_default():
-    assert _make_opener(None).__name__ == "_urlopen"
+    assert _make_opener(None) is _urlopen
+
+
+def test_make_opener_with_token_is_distinct_opener():
+    op = _make_opener("TOK")
+    assert op is not _urlopen and callable(op)
 
 
 def test_fetch_market_rows_parses_and_passes_since():
@@ -369,15 +632,15 @@ def test_http_get_does_not_retry_400():
 Run: `python -m pytest tests/test_cftc_fetch.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'cftc_screener.fetch'`
 
-- [ ] **Step 3: Write the fetch client**
+- [ ] **Step 3: Write the CFTC fetch client**
 
 ```python
 # cftc_screener/fetch.py
 import json
 import time
-import urllib.error
 import urllib.parse
-import urllib.request
+
+import http_client
 
 API_URL = "https://publicreporting.cftc.gov/resource/6dca-aqww.json"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
@@ -420,6 +683,8 @@ _FLOAT_FIELDS = [
     ("conc_net_8_short", "conc_net_le_8_tdr_short_all"),
 ]
 
+_urlopen = http_client.make_opener(_UA)  # default opener, no app token
+
 
 def _build_url(code: str, since=None, start=None, limit: int = _LIMIT) -> str:
     """Socrata SODA query for one market, ordered by report date ascending.
@@ -436,51 +701,23 @@ def _build_url(code: str, since=None, start=None, limit: int = _LIMIT) -> str:
     return f"{API_URL}?{urllib.parse.urlencode(params)}"
 
 
-def _urlopen(url: str) -> str:  # default opener, no app token
-    req = urllib.request.Request(url, headers=_UA)
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return resp.read().decode("utf-8", "replace")
+def _headers(app_token=None) -> dict:
+    """Request headers; add the Socrata app token when present."""
+    return {**_UA, "X-App-Token": app_token} if app_token else dict(_UA)
 
 
 def _make_opener(app_token=None):
-    """Return an opener(url)->str. With a token, attach X-App-Token; else the
-    plain default opener."""
-    if not app_token:
-        return _urlopen
-    headers = {**_UA, "X-App-Token": app_token}
-
-    def opener(url: str) -> str:
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            return resp.read().decode("utf-8", "replace")
-    return opener
-
-
-def _retry_delay(err, attempt: int, base_delay: float) -> float:
-    headers = getattr(err, "headers", None)
-    retry_after = headers.get("Retry-After") if headers is not None else None
-    if retry_after is not None and str(retry_after).isdigit():
-        return float(retry_after)
-    return base_delay * (2 ** (attempt - 1))
+    """Opener that attaches X-App-Token when a token is given; else the default
+    (identity-comparable to _urlopen)."""
+    return http_client.make_opener(_headers(app_token)) if app_token else _urlopen
 
 
 def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
               base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
-    """GET a URL as text with bounded exponential backoff. Retryable: Socrata
-    throttling (429), transient 5xx, and transient network errors. Other HTTP
-    errors raise immediately."""
-    for attempt in range(1, attempts + 1):
-        try:
-            return opener(url)
-        except urllib.error.HTTPError as e:
-            if e.code not in _RETRY_STATUS or attempt == attempts:
-                raise
-            sleep(_retry_delay(e, attempt, base_delay))
-        except (urllib.error.URLError, TimeoutError) as e:
-            if attempt == attempts:
-                raise
-            sleep(_retry_delay(e, attempt, base_delay))
-    raise AssertionError("unreachable")  # pragma: no cover
+    """GET with bounded backoff, retrying Socrata throttling (429) and transient
+    5xx/network errors. Other HTTP errors raise immediately."""
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
+                                base_delay, sleep)
 
 
 def _num(raw, cast):
@@ -493,9 +730,9 @@ def _num(raw, cast):
 
 
 def parse_rows(records: list) -> list[dict]:
-    """Map Socrata records to curated rows. Coerce numeric strings, absent
-    cells to None, and truncate the report timestamp to YYYY-MM-DD. Records
-    missing a code or report date are skipped."""
+    """Map Socrata records to curated rows. Coerce numeric strings, absent cells
+    to None, and truncate the report timestamp to YYYY-MM-DD. Records missing a
+    code or report date are skipped."""
     out = []
     for rec in records:
         code = rec.get("cftc_contract_market_code")
@@ -523,18 +760,18 @@ def fetch_market_rows(code: str, app_token=None, since=None, start=None,
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `python -m pytest tests/test_cftc_fetch.py -v`
-Expected: PASS (all tests). If `test_make_opener_attaches_app_token_header` fails on the header key case, print `seen["headers"]` — urllib title-cases header names to `X-app-token`.
+Expected: PASS (all tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add cftc_screener/fetch.py tests/test_cftc_fetch.py
-git commit -m "feat(cftc): Socrata fetch client with backoff, app-token header, row parsing"
+git commit -m "feat(cftc): Socrata fetch client (shared backoff) + app-token header + row parsing"
 ```
 
 ---
 
-### Task 3: SQLite storage layer (schema tables + writers)
+### Task 4: SQLite storage layer (schema tables + writers)
 
 **Files:**
 - Create: `cftc_screener/db.py`
@@ -549,9 +786,9 @@ git commit -m "feat(cftc): Socrata fetch client with backoff, app-token header, 
   - `max_report_date(conn, code: str) -> str | None`
   - `write_snapshot(conn, captured_at, market_count, row_count) -> int`
   - `prune(conn, keep_days: int, now_iso: str) -> int`
-  - `_COT_COLS: list[str]` (the 25 data-column names, shared with Task 4)
+  - `_COT_COLS: list[str]` (the 25 data-column names, shared with Task 5's views)
 
-Views are added in Task 4; this task's `ensure_schema` creates tables only.
+Views are added in Task 5; this task's `ensure_schema` creates tables only.
 
 - [ ] **Step 1: Write the failing schema test**
 
@@ -737,7 +974,7 @@ CREATE TABLE IF NOT EXISTS snapshots (
 
 
 def ensure_schema(conn) -> None:
-    """Create tables + indexes. Idempotent. (Views added in cftc db views.)"""
+    """Create tables + indexes. Idempotent. (Views added in cftc db views task.)"""
     conn.executescript(_SCHEMA)
     conn.commit()
 
@@ -827,14 +1064,14 @@ git commit -m "feat(cftc): sqlite schema, market/cot upserts, snapshot prune"
 
 ---
 
-### Task 4: Derived signal views (COT Index, positioning, extremes)
+### Task 5: Derived signal views (COT Index, positioning, extremes)
 
 **Files:**
 - Modify: `cftc_screener/db.py` (add `_VIEWS`, run it in `ensure_schema`)
 - Test: `tests/test_cftc_db_views.py`
 
 **Interfaces:**
-- Consumes: the tables + `write_cot`/`upsert_markets` from Task 3.
+- Consumes: the tables + `write_cot`/`upsert_markets` from Task 4.
 - Produces views: `v_net`, `v_latest`, `v_cot_index`, `v_cot_index_latest`, `v_positioning`, `v_extremes`.
 
 - [ ] **Step 1: Write the failing view test**
@@ -996,7 +1233,7 @@ git commit -m "feat(cftc): COT index + positioning + extremes views"
 
 ---
 
-### Task 5: Run orchestration + CLI
+### Task 6: Run orchestration + CLI
 
 **Files:**
 - Create: `cftc_screener/run.py`
@@ -1067,7 +1304,6 @@ def test_run_passes_since_from_max_stored_date(tmp_path, monkeypatch):
 
     def fake_fetch(code, app_token=None, since=None, start=None):
         seen.setdefault("since", []).append(since)
-        # First call: full history; second call would be incremental.
         return _rows(code, [("2026-06-16", 1), ("2026-06-23", 2)])
 
     dbp = str(tmp_path / "cftc.db")
@@ -1208,7 +1444,7 @@ git commit -m "feat(cftc): run orchestration + CLI with incremental fetch and sk
 
 ---
 
-### Task 6: Register in dispatcher + document env var
+### Task 7: Register in dispatcher + document env var
 
 **Files:**
 - Modify: `registry.py:1-13`
@@ -1267,7 +1503,7 @@ CFTC_APP_TOKEN= # optional Socrata app token (lifts rate limits; not required)
 - [ ] **Step 5: Run the full test suite**
 
 Run: `python -m pytest -q`
-Expected: PASS — the whole suite green, including all `test_cftc_*` and the extended registry test.
+Expected: PASS — the whole suite green, including all `test_cftc_*`, `test_http_client`, the extended registry test, and the unchanged edgar/fred suites.
 
 - [ ] **Step 6: Smoke-test against the live API (one market, tiny pull)**
 
@@ -1292,6 +1528,7 @@ git commit -m "feat(cftc): register cftc screener + document optional app token"
 ## Notes for the implementer
 
 - **Catalog codes are the one live-data dependency.** Task 1 Step 4 is not optional — a wrong/renamed code silently fetches nothing (the run logs no error because an empty result is valid). Verify every code returns rows before trusting the catalog.
+- **The shared-client migration (Task 2) must keep edgar/fred green.** The whole point of the thin `_http_get` wrappers is that `tests/test_edgar_fetch.py` and `tests/test_fred_fetch.py` pass unchanged. If they don't, the wrapper signature drifted — do not edit those tests to fit; fix the wrapper.
 - **Why `noncomm_spread` has no `_all`:** confirmed against a live Gold record — the API names the all-contracts spread field `noncomm_positions_spread` (the `_1` variant is the "old crop" split). This is the single field that breaks the otherwise-uniform `*_all` naming.
 - **COT Index needs history to be meaningful.** With `--start` set recently (as in the smoke test), the 3-year window is short, so `cot_index` reflects only the pulled range. Full-history runs (no `--start`) give the real 156-week percentile.
 - **Do not enable `PRAGMA foreign_keys`** — `screener_common.connect` doesn't, and the code upserts markets before COT rows regardless.
