@@ -9,7 +9,8 @@ FILES_BASE = "https://cdn.finra.org/equity/regsho/daily"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
 # CDN sits behind Cloudflare; a descriptive UA avoids bot-rule blocks. Retry the
 # throttling/5xx family (same shape the edgar/cftc fetchers already handle).
-_RETRY_STATUS = frozenset({403, 429, 503})
+# Note: 403 is not retryable for this CDN; it signals "no file for this date".
+_RETRY_STATUS = frozenset({429, 503})
 _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
 
@@ -84,12 +85,13 @@ def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
 
 def fetch_day(date: str, get=_http_get, opener=None):
     """Download + parse one trading day's CNMS file. Returns list[dict], or
-    None on HTTP 404 (weekend/holiday/not-yet-published)."""
+    None on HTTP 403/404 (weekend/holiday/not-yet-published or forbidden)."""
     op = opener if opener is not None else _urlopen
     try:
         text = get(day_url(date), opener=op)
     except urllib.error.HTTPError as e:
-        if e.code == 404:
+        # This CDN returns 403 (not 404) for dates with no file; both mean skip.
+        if e.code in (403, 404):
             return None
         raise
     return parse_file(text)

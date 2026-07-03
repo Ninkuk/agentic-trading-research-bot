@@ -62,7 +62,16 @@ def test_fetch_day_returns_none_on_404():
     assert fetch_day("2099-01-01", get=fake_get) is None
 
 
-def test_fetch_day_reraises_non_404():
+def test_fetch_day_returns_none_on_403():
+    """CDN returns 403 for dates with no file (weekends/holidays); treat as skip."""
+    def fake_get(url, opener=None):
+        raise urllib.error.HTTPError(url, 403, "forbidden", {}, None)
+
+    assert fetch_day("2099-01-01", get=fake_get) is None
+
+
+def test_fetch_day_reraises_non_404_non_403():
+    """Non-retryable HTTP errors like 500 must still raise."""
     def fake_get(url, opener=None):
         raise urllib.error.HTTPError(url, 500, "err", {}, None)
 
@@ -70,16 +79,27 @@ def test_fetch_day_reraises_non_404():
         fetch_day("2024-06-14", get=fake_get)
 
 
-def test_http_get_retries_on_403_then_succeeds():
+def test_http_get_retries_on_429_then_succeeds():
+    """429 (throttling) is retryable; earlier 403 was misclassified as retryable."""
     calls = {"n": 0}
     slept = []
 
     def opener(url):
         calls["n"] += 1
         if calls["n"] < 2:
-            raise urllib.error.HTTPError(url, 403, "throttle", {}, None)
+            raise urllib.error.HTTPError(url, 429, "throttle", {}, None)
         return "OK"
 
     out = _http_get("http://x", opener=opener, base_delay=1.0, sleep=slept.append)
     assert out == "OK"
     assert slept == [1.0]
+
+
+def test_http_get_does_not_retry_on_403():
+    """403 is non-retryable (CDN signals 'no file for this date'); raise at once."""
+    def opener(url):
+        raise urllib.error.HTTPError(url, 403, "forbidden", {}, None)
+
+    with pytest.raises(urllib.error.HTTPError) as excinfo:
+        _http_get("http://x", opener=opener)
+    assert excinfo.value.code == 403
