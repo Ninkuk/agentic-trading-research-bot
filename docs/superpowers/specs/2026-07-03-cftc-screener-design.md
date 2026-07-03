@@ -146,7 +146,10 @@ attempts). Differences from FRED:
   ```
   `since` is the max `report_date` already stored for that market (full history
   on first run; only new weeks thereafter). `--start YYYY-MM-DD` sets a floor for
-  the first run.
+  the first run. (In practice, `run.py` re-fetches the last `_LOOKBACK_WEEKS`
+  (10) weeks with an inclusive `>=` floor on every incremental run, so CFTC's
+  revisions to prior weeks are re-absorbed by the upsert; `--full` forces a
+  complete re-pull. See `2026-07-03-cftc-revision-lookback-design.md`.)
 - **`parse_rows(payload) -> list[dict]`** maps each Socrata record to the curated
   column set, coercing numeric strings to `int`/`float` and absent/blank cells to
   `None`. Report date normalized to `YYYY-MM-DD`.
