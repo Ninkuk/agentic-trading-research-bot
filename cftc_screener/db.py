@@ -57,9 +57,65 @@ CREATE TABLE IF NOT EXISTS snapshots (
 """
 
 
+_VIEWS = """
+CREATE VIEW IF NOT EXISTS v_net AS
+SELECT code, report_date, open_interest,
+       noncomm_long - noncomm_short AS net_noncomm,
+       comm_long    - comm_short    AS net_comm,
+       nonrept_long - nonrept_short AS net_nonrept
+FROM cot;
+
+CREATE VIEW IF NOT EXISTS v_latest AS
+WITH ranked AS (
+    SELECT n.*, ROW_NUMBER() OVER (PARTITION BY code ORDER BY report_date DESC) rn
+    FROM v_net n)
+SELECT r.code, m.name, m.asset_class, r.report_date, r.open_interest,
+       r.net_noncomm, r.net_comm, r.net_nonrept
+FROM ranked r JOIN markets m ON m.code = r.code
+WHERE r.rn = 1;
+
+-- COT Index: net non-commercial position as a 0-100 percentile within its own
+-- trailing 156-week (3-year) range. 90+/10- = crowded long/short.
+CREATE VIEW IF NOT EXISTS v_cot_index AS
+WITH w AS (
+    SELECT code, report_date, net_noncomm,
+           MIN(net_noncomm) OVER win AS lo,
+           MAX(net_noncomm) OVER win AS hi
+    FROM v_net
+    WINDOW win AS (PARTITION BY code ORDER BY report_date
+                   ROWS BETWEEN 155 PRECEDING AND CURRENT ROW))
+SELECT code, report_date, net_noncomm, lo, hi,
+       CASE WHEN hi <> lo
+            THEN 100.0 * (net_noncomm - lo) / (hi - lo) END AS cot_index
+FROM w;
+
+CREATE VIEW IF NOT EXISTS v_cot_index_latest AS
+WITH ranked AS (
+    SELECT code, report_date, net_noncomm, cot_index,
+           ROW_NUMBER() OVER (PARTITION BY code ORDER BY report_date DESC) rn
+    FROM v_cot_index)
+SELECT code, report_date, net_noncomm, cot_index FROM ranked WHERE rn = 1;
+
+-- Positioning board: latest net positions, COT index, %OI, and WoW changes.
+CREATE VIEW IF NOT EXISTS v_positioning AS
+SELECT l.code, l.name, l.asset_class, l.report_date, l.open_interest,
+       l.net_noncomm, l.net_comm, l.net_nonrept,
+       ci.cot_index,
+       c.pct_oi_noncomm_long, c.pct_oi_noncomm_short,
+       c.chg_oi, c.chg_noncomm_long, c.chg_noncomm_short
+FROM v_latest l
+JOIN v_cot_index_latest ci ON ci.code = l.code AND ci.report_date = l.report_date
+JOIN cot c ON c.code = l.code AND c.report_date = l.report_date;
+
+CREATE VIEW IF NOT EXISTS v_extremes AS
+SELECT * FROM v_positioning WHERE cot_index >= 90 OR cot_index <= 10;
+"""
+
+
 def ensure_schema(conn) -> None:
-    """Create tables + indexes. Idempotent. (Views added in cftc db views task.)"""
+    """Create tables, indexes, and derived-signal views. Idempotent."""
     conn.executescript(_SCHEMA)
+    conn.executescript(_VIEWS)
     conn.commit()
 
 
