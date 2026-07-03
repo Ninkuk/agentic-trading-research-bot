@@ -27,17 +27,19 @@ def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
             try:
                 meta = fetch_series(series_id, api_key)
                 obs = fetch_obs(series_id, api_key, start=start)
+                meta = {**meta, "theme": themes.get(series_id, "custom")}
+                db.upsert_series(conn, [meta], now_iso)
+                total_obs += db.write_observations(conn, series_id, obs)
+                successes += 1
             except Exception as e:  # skip-and-continue on any per-series failure
-                # Print only the exception class, never str(e)/e.url: a urllib
-                # HTTPError carries the request URL (which embeds api_key) in
-                # its message and .url attribute. Do not log those here.
+                # Roll back the failed series' uncommitted writes. Print only the
+                # exception class, never str(e)/e.url: a urllib HTTPError carries
+                # the request URL (which embeds api_key) in its message and .url
+                # attribute. Do not log those here.
+                conn.rollback()
                 print(f"warning: skipping {series_id}: {type(e).__name__}",
                       file=sys.stderr)
                 continue
-            meta = {**meta, "theme": themes.get(series_id, "custom")}
-            db.upsert_series(conn, [meta], now_iso)
-            total_obs += db.write_observations(conn, series_id, obs)
-            successes += 1
 
         if successes == 0:
             print("warning: no FRED series fetched successfully; "

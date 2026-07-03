@@ -98,6 +98,27 @@ def test_run_second_run_upserts_revised_value(tmp_path, monkeypatch):
     assert rows == [(1.5,)]   # single row, revised in place
 
 
+def test_run_skips_failing_write_and_continues(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(run_mod.catalog, "CATALOG",
+                        [Series("GOOD", "rates"), Series("BADW", "rates")])
+    orig_write = run_mod.db.write_observations
+
+    def flaky_write(conn, series_id, obs_rows):
+        if series_id == "BADW":
+            raise RuntimeError("disk full")
+        return orig_write(conn, series_id, obs_rows)
+
+    monkeypatch.setattr(run_mod.db, "write_observations", flaky_write)
+    dbp = str(tmp_path / "fred.db")
+    _, sc, _ = run_mod.run(dbp, api_key="K", now_iso=NOW,
+                           fetch_series=_ok_series, fetch_obs=_ok_obs)
+    assert sc == 1                                   # only GOOD counted
+    assert "BADW" in capsys.readouterr().err
+    conn = db.connect(dbp)
+    assert [r[0] for r in conn.execute(
+        "SELECT DISTINCT series_id FROM observations")] == ["GOOD"]  # BADW rolled back
+
+
 def test_run_missing_api_key_raises(tmp_path, monkeypatch):
     monkeypatch.delenv("FRED_API_KEY", raising=False)
     with __import__("pytest").raises(RuntimeError) as exc:
