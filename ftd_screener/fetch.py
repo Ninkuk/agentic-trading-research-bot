@@ -120,6 +120,8 @@ def fetch_period(period: str, get=_http_get, opener=None):
             return None
         raise
     with zipfile.ZipFile(io.BytesIO(blob)) as zf:
-        member = zf.namelist()[0]
-        text = zf.read(member).decode("utf-8", "replace")
+        names = zf.namelist()
+        if not names:  # malformed/empty archive -> caller's skip-and-continue
+            raise ValueError(f"empty archive for period {period}")
+        text = zf.read(names[0]).decode("utf-8", "replace")
     return parse_file(text)

@@ -11,7 +11,7 @@ _REFETCH_PERIODS = 2
 _DEFAULT_LOOKBACK_MONTHS = 24
 
 
-def periods_in_range(start_month: str, end_month: str) -> list:
+def periods_in_range(start_month: str, end_month: str) -> list[str]:
     """Period ids from start_month..end_month inclusive (both 'YYYY-MM'),
     each month yielding its 'a' then 'b' half."""
     y, m = int(start_month[:4]), int(start_month[5:7])

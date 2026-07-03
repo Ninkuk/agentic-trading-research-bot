@@ -1,8 +1,12 @@
 # tests/test_ftd_fetch.py
+import io
+import urllib.error
+import zipfile
+
 import pytest
 
 from ftd_screener.fetch import (
-    parse_file, period_url, settlement_bounds,
+    _http_get, fetch_period, parse_file, period_url, settlement_bounds,
 )
 
 SAMPLE = (
@@ -58,13 +62,6 @@ def test_settlement_bounds_second_half_uses_month_end():
     assert settlement_bounds("202405b") == ("2024-05-16", "2024-05-31")
 
 
-import io
-import urllib.error
-import zipfile
-
-from ftd_screener.fetch import _http_get, fetch_period
-
-
 def _zip_bytes(member: str, text: str) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
@@ -95,6 +92,18 @@ def test_fetch_period_reraises_non_404():
         raise urllib.error.HTTPError(url, 500, "err", {}, None)
 
     with pytest.raises(urllib.error.HTTPError):
+        fetch_period("202505a", get=fake_get)
+
+
+def test_fetch_period_raises_on_empty_archive():
+    empty = io.BytesIO()
+    with zipfile.ZipFile(empty, "w"):
+        pass
+
+    def fake_get(url, opener=None):
+        return empty.getvalue()
+
+    with pytest.raises(ValueError):
         fetch_period("202505a", get=fake_get)
 
 
