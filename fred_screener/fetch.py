@@ -1,8 +1,8 @@
 import json
 import time
-import urllib.error
 import urllib.parse
-import urllib.request
+
+import http_client
 
 API_BASE = "https://api.stlouisfed.org/fred"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
@@ -10,6 +10,8 @@ _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 500, 502, 503, 504})  # FRED throttles with 429
 _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
+
+_urlopen = http_client.make_opener(_UA)
 
 
 def require_api_key(api_key):
@@ -26,38 +28,12 @@ def _build_url(path: str, params: dict, api_key: str) -> str:
     return f"{API_BASE}/{path}?{urllib.parse.urlencode(query)}"
 
 
-def _urlopen(url: str) -> str:
-    req = urllib.request.Request(url, headers=_UA)
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return resp.read().decode("utf-8", "replace")
-
-
-def _retry_delay(err, attempt: int, base_delay: float) -> float:
-    """Honor a numeric Retry-After header if present, else exponential backoff."""
-    headers = getattr(err, "headers", None)
-    retry_after = headers.get("Retry-After") if headers is not None else None
-    if retry_after is not None and str(retry_after).isdigit():
-        return float(retry_after)
-    return base_delay * (2 ** (attempt - 1))
-
-
 def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
               base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
-    """GET a URL as text with bounded exponential backoff. Retryable: FRED
-    throttling (429), transient 5xx, and transient network errors. Other HTTP
-    errors (e.g. 400 bad request) raise immediately."""
-    for attempt in range(1, attempts + 1):
-        try:
-            return opener(url)
-        except urllib.error.HTTPError as e:
-            if e.code not in _RETRY_STATUS or attempt == attempts:
-                raise
-            sleep(_retry_delay(e, attempt, base_delay))
-        except (urllib.error.URLError, TimeoutError) as e:
-            if attempt == attempts:
-                raise
-            sleep(_retry_delay(e, attempt, base_delay))
-    raise AssertionError("unreachable")  # pragma: no cover
+    """GET with bounded backoff, retrying FRED throttling (429) and transient
+    5xx/network errors. Other HTTP errors (e.g. 400) raise immediately."""
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
+                                base_delay, sleep)
 
 
 def parse_observations(payload: dict) -> list[dict]:
