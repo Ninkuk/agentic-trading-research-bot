@@ -1,5 +1,4 @@
-import sqlite3
-from datetime import datetime, timedelta
+from screener_common import connect, prune as _prune
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -72,12 +71,6 @@ WINDOW w AS (PARTITION BY o.ticker, s.filter
 """
 
 
-def connect(path: str) -> sqlite3.Connection:
-    conn = sqlite3.connect(path)
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
-
-
 def ensure_schema(conn) -> None:
     """Create tables and derived-signal views. Idempotent."""
     conn.executescript(_SCHEMA)
@@ -124,15 +117,6 @@ def upsert_tickers(conn, rows: list[dict], captured_at: str) -> None:
     conn.commit()
 
 
-def prune(conn, keep_days: int, now_iso: str) -> int:
-    """Delete snapshots + observations older than keep_days before now_iso."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute(
-        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
-    if not ids:
-        return 0
-    qmarks = ",".join("?" * len(ids))
-    conn.execute(f"DELETE FROM observations WHERE snapshot_id IN ({qmarks})", ids)
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
-    conn.commit()
-    return len(ids)
+def prune(conn, keep_days, now_iso):
+    """Prune reddit snapshots + observations. Delegates to the shared helper."""
+    return _prune(conn, keep_days, now_iso, child_table="observations")

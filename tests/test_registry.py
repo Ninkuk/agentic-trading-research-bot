@@ -26,4 +26,14 @@ def test_dispatch_unknown_name_exits_nonzero(capsys):
 
 
 def test_registry_has_both_screeners():
-    assert set(registry.REGISTRY) >= {"stocks", "reddit"}
+    assert set(registry.REGISTRY) >= {"stocks", "reddit", "edgar"}
+
+
+def test_dispatch_lists_edgar():
+    import registry
+    assert "edgar" in registry.REGISTRY
+
+
+def test_registry_has_all_three_screeners():
+    import registry
+    assert set(registry.REGISTRY) >= {"stocks", "reddit", "edgar"}
