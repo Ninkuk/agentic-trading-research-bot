@@ -42,3 +42,8 @@ def test_registry_has_all_three_screeners():
 def test_dispatch_lists_fred():
     import registry
     assert "fred" in registry.REGISTRY
+
+
+def test_dispatch_lists_cftc():
+    import registry
+    assert "cftc" in registry.REGISTRY
