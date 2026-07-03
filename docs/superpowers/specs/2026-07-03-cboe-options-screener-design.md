@@ -95,9 +95,11 @@ Connection via shared `screener_common.connect` (WAL). Schema is
 `CREATE TABLE/VIEW IF NOT EXISTS` only, applied idempotently by `ensure_schema`
 at the top of every `run()`. Default DB path `cboe_options.db`.
 
-**`snapshot_date` derivation:** the trading date the data represents, parsed from
-the payload `timestamp` (fall back to `last_trade_time`), NOT the wall-clock run
-date — so a weekend re-run does not create a bogus dated row.
+**`snapshot_date` derivation:** the trading date the data represents — the
+underlying's `data.last_trade_time` date, falling back to the top-level
+generation `timestamp` date, and finally to `now_iso[:10]` in `run()` if neither
+parses. NOT the wall-clock run date — so a weekend re-run keys to the real prior
+session instead of creating a bogus dated row.
 
 ### Tables
 
