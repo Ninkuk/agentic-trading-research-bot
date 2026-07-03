@@ -1013,7 +1013,7 @@ import sys
 
 from edgar_screener.run import main as edgar_main
 from reddit_screener.run import main as reddit_main
-from screener.run import main as stocks_main
+from stock_analysis_screener.run import main as stocks_main
 
 REGISTRY = {
     "stocks": stocks_main,
@@ -1050,7 +1050,7 @@ git commit -m "feat: register edgar screener in the CLI dispatcher"
 - [ ] **Step 1: Run the entire test suite**
 
 Run: `.venv/bin/pytest -q`
-Expected: PASS — all tests across `screener/`, `reddit_screener/`, `edgar_screener/`, and `screener_common` green.
+Expected: PASS — all tests across `stock_analysis_screener/`, `reddit_screener/`, `edgar_screener/`, and `screener_common` green.
 
 - [ ] **Step 2: Live smoke pull against SEC (network)**
 
@@ -1086,5 +1086,5 @@ Run: `rm -f /tmp/edgar_smoke.db /tmp/edgar_smoke.db-wal /tmp/edgar_smoke.db-shm`
 
 - **Run pytest via `.venv/bin/pytest`** (the repo uses a `uv`-managed venv). If that path differs, use `uv run pytest`.
 - **The `.venv/bin/python main.py edgar` smoke test hits the live SEC** — it must send the required User-Agent (already baked into `fetch._UA`). If it 403s, the UA header regressed.
-- **Do not touch `screener/`** (the stocks screener) — it is a different shape and out of scope.
+- **Do not touch `stock_analysis_screener/`** (the stocks screener) — it is a different shape and out of scope.
 - **Reddit parity:** after Task 1, re-run reddit's tests any time you touch shared code; they are the guard that the `screener_common` migration stayed behaviour-preserving.

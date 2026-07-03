@@ -67,7 +67,7 @@ subsumes the other four at the smallest size and easiest parse (`line.split("|")
 - **Store raw, derive in views (ELT).** Snapshots are the immutable source of
   truth; every signal is a SQL view that can be rewritten without re-fetching.
 - **Static schema.** The index row shape is fixed (CIK, company, form, date,
-  path) — no dynamic-column / data-point-catalog machinery (unlike `screener/`).
+  path) — no dynamic-column / data-point-catalog machinery (unlike `stock_analysis_screener/`).
 - **Dependency-free.** `urllib` + stdlib only, matching both existing screeners.
 - **Reuse proven patterns** from `reddit_screener/`: snapshot → observation →
   dimension, `prune`, dependency injection into `run()`, TDD.
@@ -93,7 +93,7 @@ transaction. reddit passes `child_table="observations"`, edgar passes
 
 `reddit_screener` and `edgar_screener` both call these. Schemas, fetchers, and
 views stay per-screener. The existing CLI dispatcher (`registry.py`) is already
-the shared entry point. `screener/` (stocks) is a different shape and is left
+the shared entry point. `stock_analysis_screener/` (stocks) is a different shape and is left
 untouched.
 
 > Migrating `reddit_screener` onto `screener_common` is a small, optional

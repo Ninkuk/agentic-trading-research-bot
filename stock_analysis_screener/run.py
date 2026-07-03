@@ -72,7 +72,7 @@ def run(db_path, keep_days=None, only=None, exclude=None, type_="s",
 def main(argv=None):
     p = argparse.ArgumentParser(
         description="Pull stockanalysis.com screener into SQLite")
-    p.add_argument("--db", default="screener.db")
+    p.add_argument("--db", default="stocks.db")
     p.add_argument("--keep-days", type=int, default=None)
     p.add_argument("--only", default=None, help="comma-separated data-point ids")
     p.add_argument("--exclude", default=None, help="comma-separated data-point ids")
