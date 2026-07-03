@@ -56,3 +56,58 @@ def test_settlement_bounds_first_half():
 def test_settlement_bounds_second_half_uses_month_end():
     assert settlement_bounds("202502b") == ("2025-02-16", "2025-02-28")  # non-leap
     assert settlement_bounds("202405b") == ("2024-05-16", "2024-05-31")
+
+
+import io
+import urllib.error
+import zipfile
+
+from ftd_screener.fetch import _http_get, fetch_period
+
+
+def _zip_bytes(member: str, text: str) -> bytes:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr(member, text)
+    return buf.getvalue()
+
+
+def test_fetch_period_reads_single_member_regardless_of_name():
+    blob = _zip_bytes("cnsfails202505a", SAMPLE)   # member name != inferable
+
+    def fake_get(url, opener=None):
+        assert url.endswith("cnsfails202505a.zip")
+        return blob
+
+    rows, trailer = fetch_period("202505a", get=fake_get)
+    assert trailer == 2 and len(rows) == 2
+
+
+def test_fetch_period_returns_none_on_404():
+    def fake_get(url, opener=None):
+        raise urllib.error.HTTPError(url, 404, "not found", {}, None)
+
+    assert fetch_period("209901a", get=fake_get) is None
+
+
+def test_fetch_period_reraises_non_404():
+    def fake_get(url, opener=None):
+        raise urllib.error.HTTPError(url, 500, "err", {}, None)
+
+    with pytest.raises(urllib.error.HTTPError):
+        fetch_period("202505a", get=fake_get)
+
+
+def test_http_get_retries_on_403_then_succeeds():
+    calls = {"n": 0}
+    slept = []
+
+    def opener(url):
+        calls["n"] += 1
+        if calls["n"] < 2:
+            raise urllib.error.HTTPError(url, 403, "throttle", {}, None)
+        return b"OK"
+
+    out = _http_get("http://x", opener=opener, base_delay=1.0, sleep=slept.append)
+    assert out == b"OK"
+    assert slept == [1.0]
