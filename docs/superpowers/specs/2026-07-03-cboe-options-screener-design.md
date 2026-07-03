@@ -135,11 +135,16 @@ session instead of creating a bogus dated row.
 
 ### Views
 
-- `v_unusual_activity` — contracts for the latest `snapshot_date` ordered by
-  `vol_oi_ratio DESC` with a sane floor on `open_interest` and `volume`. Works day 1.
-- `v_iv_rank` — for each underlying's latest `iv30`, its rank/percentile within
-  that underlying's trailing `underlying_daily.iv30` history. Returns meaningful
-  values only after history accumulates (documented in a view comment).
+- `v_unusual_activity` — contracts for each underlying's **own latest**
+  `snapshot_date` (per-underlying, via a correlated `MAX(snapshot_date)` subquery —
+  NOT a global max, so a symbol whose last session differs, e.g. SPX vs VIX, is
+  never evicted) ordered by `vol_oi_ratio DESC` with a sane floor on
+  `open_interest` and `volume`. Works day 1.
+- `v_iv_rank` — for each underlying's latest `iv30` (again per-underlying latest),
+  its rank/percentile within that underlying's trailing `underlying_daily.iv30`
+  history. Returns meaningful values only after history accumulates.
+- `v_latest_sentiment` — each underlying's latest daily rollup (per-underlying
+  latest), for at-a-glance put/call + IV context.
 
 ### Write semantics
 

@@ -57,3 +57,8 @@ def test_dispatch_lists_ftd():
 def test_dispatch_lists_short_volume():
     import registry
     assert "short_volume" in registry.REGISTRY
+
+
+def test_dispatch_lists_options():
+    import registry
+    assert "options" in registry.REGISTRY

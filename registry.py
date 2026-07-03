@@ -5,6 +5,7 @@ from edgar_screener.run import main as edgar_main
 from fred_screener.run import main as fred_main
 from ftd_screener.run import main as ftd_main
 from finra_short_volume.run import main as short_volume_main
+from cboe_options.run import main as options_main
 from reddit_screener.run import main as reddit_main
 from stock_analysis_screener.run import main as stocks_main
 
@@ -16,6 +17,7 @@ REGISTRY = {
     "cftc": cftc_main,
     "ftd": ftd_main,
     "short_volume": short_volume_main,
+    "options": options_main,
 }
 
 
