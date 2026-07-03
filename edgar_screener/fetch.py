@@ -95,14 +95,22 @@ def _retry_delay(err, attempt: int, base_delay: float) -> float:
 
 def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
               base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
-    """GET a URL as text, retrying transient SEC throttling (403/429/503) with
-    bounded exponential backoff. Non-retryable errors (e.g. 404) raise at once,
-    preserving fetch_daily_index's 404 -> None handling."""
+    """GET a URL as text, retrying transient failures with bounded exponential
+    backoff. Retryable: SEC throttling (403/429/503) and transient network
+    errors (connection reset, DNS, socket timeout). Non-retryable HTTP errors
+    (e.g. 404) raise at once, preserving fetch_daily_index's 404 -> None
+    handling."""
     for attempt in range(1, attempts + 1):
         try:
             return opener(url)
         except urllib.error.HTTPError as e:
             if e.code not in _RETRY_STATUS or attempt == attempts:
+                raise
+            sleep(_retry_delay(e, attempt, base_delay))
+        except (urllib.error.URLError, TimeoutError) as e:
+            # HTTPError is a URLError subclass, so it is handled above; this
+            # branch is the transient-network case with no HTTP status.
+            if attempt == attempts:
                 raise
             sleep(_retry_delay(e, attempt, base_delay))
     raise AssertionError("unreachable: loop returns or raises")  # pragma: no cover

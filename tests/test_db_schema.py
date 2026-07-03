@@ -1,5 +1,5 @@
-from screener.catalog import DataPoint
-from screener.db import connect, ensure_schema, upsert_data_points
+from stock_analysis_screener.catalog import DataPoint
+from stock_analysis_screener.db import connect, ensure_schema, upsert_data_points
 
 
 def cols(conn):
@@ -20,6 +20,25 @@ def test_ensure_schema_is_idempotent_and_adds_new_columns():
     ensure_schema(conn, {"price": "REAL"})
     ensure_schema(conn, {"price": "REAL", "rsi": "REAL"})  # rerun + new column
     assert "rsi" in cols(conn)
+
+
+def test_ensure_schema_warns_on_affinity_conflict(capsys):
+    # A metrics column's affinity is fixed when first created; if a later run
+    # infers a different type, SQLite keeps the original and would silently
+    # store mismatched values. ensure_schema must surface that, not hide it.
+    conn = connect(":memory:")
+    ensure_schema(conn, {"shortFloat": "REAL"})
+    ensure_schema(conn, {"shortFloat": "TEXT"})   # conflicting affinity
+    err = capsys.readouterr().err
+    assert "shortFloat" in err
+    assert "REAL" in err and "TEXT" in err
+
+
+def test_ensure_schema_no_warning_when_affinity_matches(capsys):
+    conn = connect(":memory:")
+    ensure_schema(conn, {"price": "REAL"})
+    ensure_schema(conn, {"price": "REAL"})   # idempotent re-run, same affinity
+    assert capsys.readouterr().err == ""
 
 
 def test_upsert_data_points_inserts_and_updates():

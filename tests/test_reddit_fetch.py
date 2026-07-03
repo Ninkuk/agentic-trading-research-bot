@@ -33,6 +33,22 @@ def test_parse_page_tolerates_null_24h_fields():
     assert rows[0]["mentions_24h_ago"] is None
 
 
+def test_parse_page_skips_rows_without_ticker():
+    # A result with a missing or null ticker is unusable (ticker is the PK and
+    # is NOT NULL); it must be dropped, not crash the whole page parse.
+    raw = {"pages": 1, "results": [
+        {"rank": 1, "ticker": "MU", "name": "Micron",
+         "mentions": 10, "upvotes": 20, "rank_24h_ago": 1, "mentions_24h_ago": 5},
+        {"rank": 2, "name": "MissingTicker", "mentions": 5, "upvotes": 6},
+        {"rank": 3, "ticker": None, "name": "NullTicker",
+         "mentions": 5, "upvotes": 6},
+        {"rank": 4, "ticker": "", "name": "EmptyTicker",
+         "mentions": 5, "upvotes": 6},
+    ]}
+    rows, _ = parse_page(raw)
+    assert [r["ticker"] for r in rows] == ["MU"]
+
+
 def test_parse_page_rejects_missing_results():
     with pytest.raises(ValueError):
         parse_page({"pages": 1})

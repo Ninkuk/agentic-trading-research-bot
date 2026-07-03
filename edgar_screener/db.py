@@ -65,11 +65,20 @@ SELECT ticker, company, form, accession, filed_date, path
 FROM v_tickered WHERE bucket = 'offering';
 
 -- Filings-per-ticker across index dates, with delta vs the prior stored day.
+-- If an index_date was snapshotted more than once (e.g. a backfill re-run),
+-- only the most recent snapshot for that day counts, so filings are never
+-- double-counted across duplicate captures of the same trading day.
 CREATE VIEW IF NOT EXISTS v_activity_history AS
-WITH per_day AS (
+WITH day_snapshot AS (
+    SELECT id, index_date,
+           ROW_NUMBER() OVER (PARTITION BY index_date
+                              ORDER BY captured_at DESC, id DESC) AS rn
+    FROM snapshots
+),
+per_day AS (
     SELECT f.ticker AS ticker, s.index_date AS index_date,
            COUNT(*) AS filings_count
-    FROM filings f JOIN snapshots s ON s.id = f.snapshot_id
+    FROM filings f JOIN day_snapshot s ON s.id = f.snapshot_id AND s.rn = 1
     WHERE f.ticker IS NOT NULL
     GROUP BY f.ticker, s.index_date
 )

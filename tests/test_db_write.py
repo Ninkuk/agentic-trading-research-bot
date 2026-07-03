@@ -1,6 +1,6 @@
 import sqlite3
 
-from screener.db import connect, ensure_schema, prune, write_snapshot
+from stock_analysis_screener.db import connect, ensure_schema, prune, write_snapshot
 
 
 def setup_conn():

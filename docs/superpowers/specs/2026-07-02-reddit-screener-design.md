@@ -25,7 +25,7 @@ that future screeners plug into.
 - **Rule of three:** do NOT extract a shared `Screener` base class yet. The two
   existing screeners are genuinely different shapes; wait for the third before
   abstracting internals. Only the CLI dispatch layer is shared now.
-- **Reuse proven patterns** from `screener/`: snapshot + prune, dependency
+- **Reuse proven patterns** from `stock_analysis_screener/`: snapshot + prune, dependency
   injection into `run()`, TDD.
 
 ## The API (verified 2026-07-02)
@@ -60,7 +60,7 @@ distinct, early-signal community.)
 
 ## Module structure
 
-New self-contained package `reddit_screener/`, parallel to `screener/`:
+New self-contained package `reddit_screener/`, parallel to `stock_analysis_screener/`:
 
 ```
 reddit_screener/

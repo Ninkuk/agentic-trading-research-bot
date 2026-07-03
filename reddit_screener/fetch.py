@@ -23,12 +23,17 @@ def _normalize(row: dict) -> dict:
 
 
 def parse_page(raw: dict) -> tuple[list[dict], int]:
-    """Normalize one ApeWisdom page -> (rows, total_pages). Raises on bad shape."""
+    """Normalize one ApeWisdom page -> (rows, total_pages). Raises on bad shape.
+
+    Rows with a missing or empty ticker are dropped: ticker is the observations
+    primary key (NOT NULL), so such rows are unusable and must not crash or
+    poison the snapshot."""
     results = raw.get("results")
     if not isinstance(results, list):
         raise ValueError("unexpected ApeWisdom payload: missing 'results' list")
     pages = _to_int(raw.get("pages")) or 1
-    return [_normalize(r) for r in results], pages
+    rows = [_normalize(r) for r in results if r.get("ticker")]
+    return rows, pages
 
 
 def _http_get_page(filter_: str, page: int, base: str = API_BASE) -> dict:

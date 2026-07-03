@@ -41,6 +41,24 @@ def test_run_default_date_walks_back_to_latest(tmp_path):
     assert calls[:3] == ["2026-07-02", "2026-07-01", "2026-06-30"]
 
 
+def test_run_default_date_walks_past_empty_index(tmp_path):
+    # An index that exists but is empty ([], not None) must not stop the
+    # walk-back: keep looking for a day that actually has filings rather than
+    # storing a 0-filing snapshot for today.
+    db_path = str(tmp_path / "e.db")
+    calls = []
+
+    def fake_index(d):
+        calls.append(d)
+        return _rows() if d == "2026-06-30" else []  # earlier days present-but-empty
+
+    run(db_path, fetch_index=fake_index, fetch_map=lambda: TMAP,
+        now_iso="2026-07-02T00:00:00+00:00")
+    conn = connect(db_path)
+    assert conn.execute("SELECT index_date FROM snapshots").fetchone()[0] == "2026-06-30"
+    assert calls[:3] == ["2026-07-02", "2026-07-01", "2026-06-30"]
+
+
 def test_run_explicit_missing_date_raises(tmp_path):
     db_path = str(tmp_path / "e.db")
     with pytest.raises(RuntimeError, match="no EDGAR index for 2025-06-01"):

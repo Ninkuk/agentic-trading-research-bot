@@ -4,19 +4,19 @@
 
 **Goal:** Pull ApeWisdom Reddit/4chan mention data into SQLite as an immutable time-series, with derived-signal SQL views, exposed through a shared multi-screener CLI dispatcher.
 
-**Architecture:** Store raw snapshots as the source of truth (ELT); all "rich" signals are SQL views computed over them. A new self-contained `reddit_screener/` package mirrors the proven `screener/` patterns (snapshot + prune, dependency-injected `run()`, TDD) but uses a **static** schema — no dynamic columns. A tiny top-level `registry.py` + `main.py` dispatcher routes `python main.py <name> ...` to each screener, so future screeners plug in with one registry line.
+**Architecture:** Store raw snapshots as the source of truth (ELT); all "rich" signals are SQL views computed over them. A new self-contained `reddit_screener/` package mirrors the proven `stock_analysis_screener/` patterns (snapshot + prune, dependency-injected `run()`, TDD) but uses a **static** schema — no dynamic columns. A tiny top-level `registry.py` + `main.py` dispatcher routes `python main.py <name> ...` to each screener, so future screeners plug in with one registry line.
 
 **Tech Stack:** Python 3.12, stdlib only (`sqlite3`, `urllib`, `json`, `html`, `argparse`), pytest.
 
 ## Global Constraints
 
 - **Python:** `>=3.12` (per `pyproject.toml`). SQLite window functions (`ROW_NUMBER`, `LAG`) require SQLite ≥ 3.25 — satisfied by the Python 3.12 bundled SQLite.
-- **No new dependencies.** stdlib only, matching the existing `screener/` package.
+- **No new dependencies.** stdlib only, matching the existing `stock_analysis_screener/` package.
 - **No commit co-authors** (per user global instruction) — plain commit messages, no `Co-Authored-By` trailer.
 - **API base:** `https://apewisdom.io/api/v1.0/filter/{filter}/page/{n}`; 100 results/page; response `{count, pages, current_page, results:[...]}`.
 - **Row fields:** `rank, ticker, name, mentions, upvotes, rank_24h_ago, mentions_24h_ago`. Numeric fields may arrive as `int` OR string OR null; coerce to `int`/`None`. `name` may contain HTML entities; `html.unescape` it.
 - **Default filters:** `all-stocks,4chan`.
-- **Existing `screener/` behaviour must not change** — the `stocks` subcommand forwards to `screener.run.main` unchanged.
+- **Existing `stock_analysis_screener/` behaviour must not change** — the `stocks` subcommand forwards to `stock_analysis_screener.run.main` unchanged.
 
 ---
 
@@ -710,7 +710,7 @@ git commit -m "feat: add Reddit screener run orchestration and CLI"
 - Test: `tests/test_registry.py`
 
 **Interfaces:**
-- Consumes: `screener.run.main` (existing), `reddit_screener.run.main` (Task 4).
+- Consumes: `stock_analysis_screener.run.main` (existing), `reddit_screener.run.main` (Task 4).
 - Produces:
   - `REGISTRY: dict[str, callable]` — `{"stocks": ..., "reddit": ...}`; each value is a `main(argv)` callable.
   - `dispatch(argv=None) -> None` — routes `argv[0]` to the matching screener, forwarding the rest; `--list`/`-l`/empty prints names; unknown name exits with code 2.
@@ -764,7 +764,7 @@ Create `registry.py`:
 import sys
 
 from reddit_screener.run import main as reddit_main
-from screener.run import main as stocks_main
+from stock_analysis_screener.run import main as stocks_main
 
 REGISTRY = {
     "stocks": stocks_main,
