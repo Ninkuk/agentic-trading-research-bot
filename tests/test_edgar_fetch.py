@@ -50,3 +50,43 @@ def test_index_url_computes_quarter():
     assert index_url("2025-06-02").endswith("/2025/QTR2/master.20250602.idx")
     assert index_url("2025-01-15").endswith("/2025/QTR1/master.20250115.idx")
     assert index_url("2025-12-31").endswith("/2025/QTR4/master.20251231.idx")
+
+
+import json
+import urllib.error
+
+from edgar_screener.fetch import fetch_daily_index, fetch_ticker_map
+
+
+def test_fetch_ticker_map_indexes_by_cik():
+    raw = json.dumps({
+        "0": {"cik_str": 1045810, "ticker": "NVDA", "title": "NVIDIA CORP"},
+        "1": {"cik_str": 320193, "ticker": "AAPL", "title": "Apple Inc."},
+    })
+    tmap = fetch_ticker_map(get=lambda url: raw)
+    assert tmap[320193] == {"ticker": "AAPL", "title": "Apple Inc."}
+    assert tmap[1045810]["ticker"] == "NVDA"
+
+
+def test_fetch_daily_index_parses_when_present():
+    def fake_get(url):
+        assert url.endswith("/2025/QTR2/master.20250602.idx")
+        return MASTER
+    rows = fetch_daily_index("2025-06-02", get=fake_get)
+    assert [r["bucket"] for r in rows] == ["insider", "event", "offering"]
+
+
+def test_fetch_daily_index_returns_none_on_404():
+    def fake_get(url):
+        raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+    assert fetch_daily_index("2025-06-01", get=fake_get) is None
+
+
+def test_fetch_daily_index_reraises_non_404():
+    def fake_get(url):
+        raise urllib.error.HTTPError(url, 500, "Server Error", {}, None)
+    try:
+        fetch_daily_index("2025-06-01", get=fake_get)
+        assert False, "expected HTTPError to propagate"
+    except urllib.error.HTTPError as e:
+        assert e.code == 500

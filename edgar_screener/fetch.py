@@ -1,3 +1,6 @@
+import json
+import urllib.error
+import urllib.request
 from datetime import datetime
 
 ARCHIVES_BASE = "https://www.sec.gov/Archives/edgar/daily-index"
@@ -63,3 +66,31 @@ def index_url(index_date: str, base: str = ARCHIVES_BASE) -> str:
     d = datetime.fromisoformat(index_date)
     qtr = (d.month - 1) // 3 + 1
     return f"{base}/{d.year}/QTR{qtr}/master.{d.strftime('%Y%m%d')}.idx"
+
+
+TICKER_MAP_URL = "https://www.sec.gov/files/company_tickers.json"
+_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+
+
+def _http_get(url: str) -> str:
+    req = urllib.request.Request(url, headers=_UA)
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        return resp.read().decode("utf-8", "replace")
+
+
+def fetch_ticker_map(url: str = TICKER_MAP_URL, get=_http_get) -> dict:
+    """Load company_tickers.json into {cik: {'ticker':..., 'title':...}}."""
+    raw = json.loads(get(url))
+    return {int(v["cik_str"]): {"ticker": v["ticker"], "title": v["title"]}
+            for v in raw.values()}
+
+
+def fetch_daily_index(index_date: str, get=_http_get):
+    """Fetch + parse master.idx for a date. Returns rows, or None on HTTP 404."""
+    try:
+        text = get(index_url(index_date))
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None
+        raise
+    return parse_master(text)
