@@ -45,10 +45,72 @@ CREATE TABLE IF NOT EXISTS snapshots (
 );
 """
 
+_VIEWS = """
+-- every fail joined to its security (convenience / per-security history)
+CREATE VIEW IF NOT EXISTS v_security_history AS
+SELECT f.cusip, f.symbol, s.description, f.settlement_date,
+       f.quantity, f.price, f.dollar_value
+FROM fails f JOIN securities s ON s.cusip = f.cusip;
+
+-- (1) latest-settlement-date leaderboard; order by quantity OR dollar_value
+CREATE VIEW IF NOT EXISTS v_latest_fails AS
+SELECT f.cusip, f.symbol, s.description, f.settlement_date,
+       f.quantity, f.price, f.dollar_value
+FROM fails f JOIN securities s ON s.cusip = f.cusip
+WHERE f.settlement_date = (SELECT MAX(settlement_date) FROM fails);
+
+-- global dense rank of distinct settlement dates (settlement days are not
+-- contiguous calendar days; this ordinal defines "consecutive")
+CREATE VIEW IF NOT EXISTS v_date_rank AS
+SELECT settlement_date,
+       DENSE_RANK() OVER (ORDER BY settlement_date) AS drank
+FROM (SELECT DISTINCT settlement_date FROM fails);
+
+-- gaps-and-islands: one row per (cusip, unbroken run of >=10k-share days)
+CREATE VIEW IF NOT EXISTS v_fail_streaks AS
+WITH q AS (
+  SELECT f.cusip, f.settlement_date, f.quantity, dr.drank,
+         dr.drank - ROW_NUMBER() OVER (PARTITION BY f.cusip
+                                       ORDER BY f.settlement_date) AS grp
+  FROM fails f JOIN v_date_rank dr USING (settlement_date)
+  WHERE f.quantity >= 10000)
+SELECT cusip, COUNT(*) AS streak_days,
+       MIN(settlement_date) AS streak_start,
+       MAX(settlement_date) AS streak_end,
+       MAX(quantity) AS peak_quantity
+FROM q GROUP BY cusip, grp;
+
+-- (2) Reg SHO threshold PROXY: >=5 consecutive settlement days at >=10k shares.
+-- (Missing the "0.5% of shares outstanding" half by design.) active=1 when the
+-- streak reaches the newest settlement date.
+CREATE VIEW IF NOT EXISTS v_persistent AS
+SELECT k.cusip, s.symbol, s.description, k.streak_days,
+       k.streak_start, k.streak_end, k.peak_quantity,
+       (k.streak_end = (SELECT MAX(settlement_date) FROM fails)) AS active
+FROM v_fail_streaks k JOIN securities s ON s.cusip = k.cusip
+WHERE k.streak_days >= 5;
+
+-- (3) spikes: latest fails vs the security's own trailing 20-day average
+-- (excludes the current day). spike_ratio >= 3 => notable jump.
+CREATE VIEW IF NOT EXISTS v_spikes AS
+WITH w AS (
+  SELECT cusip, settlement_date, quantity,
+         AVG(quantity) OVER (PARTITION BY cusip ORDER BY settlement_date
+                             ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING) AS base
+  FROM fails)
+SELECT w.cusip, s.symbol, s.description, w.settlement_date,
+       w.quantity, w.base,
+       CASE WHEN w.base > 0 THEN w.quantity / w.base END AS spike_ratio
+FROM w JOIN securities s ON s.cusip = w.cusip
+WHERE w.settlement_date = (SELECT MAX(settlement_date) FROM fails)
+  AND w.base > 0;
+"""
+
 
 def ensure_schema(conn) -> None:
-    """Create tables and indexes. Idempotent. (Views added in a later task.)"""
+    """Create tables, indexes, and screener views. Idempotent."""
     conn.executescript(_SCHEMA)
+    conn.executescript(_VIEWS)
     conn.commit()
 
 
