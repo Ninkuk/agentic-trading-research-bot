@@ -46,7 +46,7 @@ def parse_occ(option: str):
     if len(s) < 16:
         return None
     strike_raw, cp, ymd, root = s[-8:], s[-9], s[-15:-9], s[:-15]
-    if not (root and strike_raw.isdigit() and ymd.isdigit() and cp in ("C", "P")):
+    if not (root and strike_raw.isdecimal() and ymd.isdecimal() and cp in ("C", "P")):
         return None
     expiration = f"20{ymd[:2]}-{ymd[2:4]}-{ymd[4:6]}"
     kind = "call" if cp == "C" else "put"

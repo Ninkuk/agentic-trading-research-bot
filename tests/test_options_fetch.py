@@ -80,6 +80,18 @@ def test_parse_chain_contracts_and_derived():
     assert c_zero["vol_oi_ratio"] == pytest.approx(500.0)
 
 
+def test_parse_chain_mark_none_when_bid_missing():
+    """Verify mark is None when bid is missing, but contract still parses."""
+    p = _payload()
+    # Remove bid from the first contract; keep ask
+    del p["data"]["options"][0]["bid"]
+    daily, contracts = fetch.parse_chain(p, "AAPL")
+    c_no_bid = next(c for c in contracts if c["occ_symbol"] == "AAPL260717C00210000")
+    assert c_no_bid["bid"] is None
+    assert c_no_bid["ask"] == 100.35
+    assert c_no_bid["mark"] is None
+
+
 def test_parse_chain_daily_rollup():
     daily, _ = fetch.parse_chain(_payload(), "AAPL")
     assert daily["underlying"] == "AAPL"
