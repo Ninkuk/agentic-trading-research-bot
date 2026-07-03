@@ -5,3 +5,6 @@ screener.db
 *.db-wal
 *.db-shm
 .env
+
+# Playwright MCP session artifacts
+.playwright-mcp/
