@@ -29,7 +29,7 @@ def _default_start(now_dt, days: int = _DEFAULT_LOOKBACK_DAYS) -> str:
 
 
 def run(db_path, start=None, keep_days=None, full=False,
-        fetch_day=fetch.fetch_day, now_iso=None):
+        fetch_day=fetch.fetch_day, now_iso=None) -> tuple[int, int, int]:
     """Ingest FINRA daily short-volume files into SQLite. Enumerate calendar days
     from `start` (default: ~6 months back) through today; ingest new days and
     re-fetch the trailing _REFETCH_DAYS already-stored ones (all of them when

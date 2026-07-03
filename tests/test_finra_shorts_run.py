@@ -83,7 +83,10 @@ def test_run_skips_failing_day_and_continues(tmp_path, capsys):
     _, dc, rc = run_mod.run(dbp, start="2026-06-29", now_iso=NOW,
                             fetch_day=fetch_day)
     assert dc == 1
-    assert "2026-06-30" in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "2026-06-30" in err
+    assert "RuntimeError" in err
+    assert "boom" not in err
 
 
 def test_run_all_unpublished_writes_zero_snapshot(tmp_path):
@@ -94,3 +97,28 @@ def test_run_all_unpublished_writes_zero_snapshot(tmp_path):
     conn = db.connect(dbp)
     assert tuple(conn.execute(
         "SELECT day_count, row_count FROM snapshots").fetchone()) == (0, 0)
+
+
+def test_run_keep_days_prunes_old_snapshots(tmp_path):
+    dbp = str(tmp_path / "sv.db")
+    # Create schema and one recent snapshot
+    run_mod.run(dbp, start="2026-06-29", now_iso=NOW, fetch_day=lambda day: None)
+    # Directly insert an old snapshot
+    conn = db.connect(dbp)
+    db.write_snapshot(conn, "2000-01-01T00:00:00+00:00", 0, 0)
+    conn.close()
+    # Verify old snapshot exists
+    conn = db.connect(dbp)
+    cnt_before = conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0]
+    assert cnt_before == 2  # recent + old
+    conn.close()
+    # Run with keep_days=30 to prune
+    run_mod.run(dbp, start="2026-06-29", now_iso=NOW, keep_days=30,
+                fetch_day=lambda day: None)
+    # Assert old snapshot is gone
+    conn = db.connect(dbp)
+    cnt_old = conn.execute(
+        "SELECT COUNT(*) FROM snapshots WHERE captured_at < '2020-01-01'"
+    ).fetchone()[0]
+    assert cnt_old == 0
+    conn.close()
