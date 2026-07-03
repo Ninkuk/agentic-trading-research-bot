@@ -2,8 +2,8 @@ import argparse
 import sys
 from datetime import datetime, timezone
 
-from screener import catalog, db, fetch
-from screener.typing import column_type
+from stock_analysis_screener import catalog, db, fetch
+from stock_analysis_screener.typing import column_type
 
 SOURCE = "stockanalysis.com"
 

@@ -1,4 +1,4 @@
-from screener.catalog import DataPoint, parse_catalog
+from stock_analysis_screener.catalog import DataPoint, parse_catalog
 
 
 def make_raw():

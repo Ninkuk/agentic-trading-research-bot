@@ -1,7 +1,7 @@
 import sys
 from collections.abc import Iterable
 
-from screener.catalog import DataPoint
+from stock_analysis_screener.catalog import DataPoint
 from screener_common import connect, prune as _prune
 
 __all__ = ["connect", "ensure_schema", "prune", "write_snapshot",

@@ -1,6 +1,6 @@
 import pytest
 
-from screener.fetch import parse_data_points
+from stock_analysis_screener.fetch import parse_data_points
 
 
 def test_parse_data_points_extracts_ticker_map():

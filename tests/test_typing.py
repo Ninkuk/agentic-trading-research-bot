@@ -1,4 +1,4 @@
-from screener.typing import STRING_IDS, column_type, infer_affinity
+from stock_analysis_screener.typing import STRING_IDS, column_type, infer_affinity
 
 
 def test_infer_real_when_all_numbers():
