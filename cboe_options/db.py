@@ -54,7 +54,6 @@ CREATE TABLE IF NOT EXISTS option_snapshots (
 );
 CREATE INDEX IF NOT EXISTS ix_os_underlying_date
     ON option_snapshots(underlying, snapshot_date);
-CREATE INDEX IF NOT EXISTS ix_os_date ON option_snapshots(snapshot_date);
 CREATE TABLE IF NOT EXISTS underlying_daily (
     snapshot_date         TEXT NOT NULL,
     underlying            TEXT NOT NULL REFERENCES underlyings(symbol),
@@ -85,28 +84,32 @@ CREATE TABLE IF NOT EXISTS snapshots (
 """
 
 _VIEWS = """
--- (1) unusual activity on the latest snapshot: contracts where today's volume
--- dwarfs standing open interest. Works from day one.
+-- (1) unusual activity on each underlying's per-underlying latest snapshot:
+-- contracts where today's volume dwarfs standing open interest. Works from
+-- day one.
 CREATE VIEW IF NOT EXISTS v_unusual_activity AS
 SELECT underlying, occ_symbol, expiration, strike, type,
        volume, open_interest, vol_oi_ratio, iv, snapshot_date
-FROM option_snapshots
-WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM option_snapshots)
+FROM option_snapshots o
+WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM option_snapshots o2
+                       WHERE o2.underlying = o.underlying AND o2.source = 'cboe')
   AND source = 'cboe'
   AND volume >= 100
   AND vol_oi_ratio >= 1.0
 ORDER BY vol_oi_ratio DESC;
 
--- (2) IV Rank/percentile of each underlying's latest iv30 within its full
--- stored history (min-max rank + fraction-of-days-below percentile). Returns
--- meaningful values only once history accumulates (needs many days).
+-- (2) IV Rank/percentile of each underlying's per-underlying latest iv30
+-- within its full stored history (min-max rank + fraction-of-days-below
+-- percentile). Returns meaningful values only once history accumulates
+-- (needs many days).
 CREATE VIEW IF NOT EXISTS v_iv_rank AS
 WITH bounds AS (
   SELECT underlying, MIN(iv30) AS iv_min, MAX(iv30) AS iv_max, COUNT(*) AS n_days
   FROM underlying_daily WHERE iv30 IS NOT NULL GROUP BY underlying),
 today AS (
-  SELECT underlying, snapshot_date, iv30 FROM underlying_daily
-  WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM underlying_daily)
+  SELECT underlying, snapshot_date, iv30 FROM underlying_daily ud
+  WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM underlying_daily u2
+                         WHERE u2.underlying = ud.underlying)
     AND iv30 IS NOT NULL)
 SELECT t.underlying, t.snapshot_date, t.iv30, b.iv_min, b.iv_max, b.n_days,
        CASE WHEN b.iv_max > b.iv_min
@@ -115,13 +118,14 @@ SELECT t.underlying, t.snapshot_date, t.iv30, b.iv_min, b.iv_max, b.n_days,
          WHERE h.underlying = t.underlying AND h.iv30 < t.iv30) AS iv_percentile
 FROM today t JOIN bounds b USING (underlying);
 
--- (3) latest-day sentiment snapshot per underlying.
+-- (3) per-underlying latest-day sentiment snapshot.
 CREATE VIEW IF NOT EXISTS v_latest_sentiment AS
 SELECT underlying, snapshot_date, underlying_price, iv30,
        put_call_volume_ratio, put_call_oi_ratio,
        total_call_volume, total_put_volume
-FROM underlying_daily
-WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM underlying_daily);
+FROM underlying_daily ud
+WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM underlying_daily u2
+                       WHERE u2.underlying = ud.underlying);
 """
 
 

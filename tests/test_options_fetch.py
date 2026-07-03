@@ -104,6 +104,37 @@ def test_parse_chain_daily_rollup():
     assert daily["put_call_oi_ratio"] == pytest.approx(2000 / 3131)
 
 
+def _index_payload():
+    """Trimmed index-shaped CBOE chain (e.g. _SPX.json): top-level symbol
+    'SPX', index-style OCC root 'SPXW' with a $5000 strike."""
+    return {
+        "timestamp": "2026-07-03 17:46:09",
+        "symbol": "SPX",
+        "data": {
+            "symbol": "SPX", "current_price": 5010.5, "close": 5005.0,
+            "iv30": 14.2, "last_trade_time": "2026-07-02T16:14:59",
+            "options": [
+                {"option": "SPXW260320C05000000", "bid": 120.0, "ask": 122.0,
+                 "iv": 0.15, "delta": 0.55, "gamma": 0.001, "theta": -0.3,
+                 "vega": 1.2, "rho": 0.2, "open_interest": 500.0,
+                 "volume": 200.0, "last_trade_price": 121.0, "theo": 121.1},
+            ],
+        },
+    }
+
+
+def test_session_date_and_parse_chain_for_index_payload():
+    payload = _index_payload()
+    assert fetch.session_date(payload) == "2026-07-02"
+    daily, contracts = fetch.parse_chain(payload, "SPX")
+    assert len(contracts) == 1
+    c = contracts[0]
+    assert c["underlying"] == "SPX"
+    assert c["expiration"] == "2026-03-20"
+    assert c["type"] == "call"
+    assert c["strike"] == 5000.0
+
+
 def test_fetch_chain_404_returns_none():
     def get(url, opener=None):
         raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
