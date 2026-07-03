@@ -5,7 +5,7 @@ from screener_common import connect
 __all__ = ["connect", "ensure_schema", "upsert_markets", "write_cot",
            "max_report_date", "write_snapshot", "prune"]
 
-# The 25 curated data columns of `cot` (order matters for INSERT/UPDATE reuse).
+# The 26 curated data columns of `cot` (order matters for INSERT/UPDATE reuse).
 _COT_COLS = [
     "open_interest",
     "noncomm_long", "noncomm_short", "noncomm_spread",
