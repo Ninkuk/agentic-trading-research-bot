@@ -28,6 +28,9 @@ def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
                 meta = fetch_series(series_id, api_key)
                 obs = fetch_obs(series_id, api_key, start=start)
             except Exception as e:  # skip-and-continue on any per-series failure
+                # Print only the exception class, never str(e)/e.url: a urllib
+                # HTTPError carries the request URL (which embeds api_key) in
+                # its message and .url attribute. Do not log those here.
                 print(f"warning: skipping {series_id}: {type(e).__name__}",
                       file=sys.stderr)
                 continue
