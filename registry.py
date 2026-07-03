@@ -1,6 +1,7 @@
 import sys
 
 from edgar_screener.run import main as edgar_main
+from fred_screener.run import main as fred_main
 from reddit_screener.run import main as reddit_main
 from stock_analysis_screener.run import main as stocks_main
 
@@ -8,6 +9,7 @@ REGISTRY = {
     "stocks": stocks_main,
     "reddit": reddit_main,
     "edgar": edgar_main,
+    "fred": fred_main,
 }
 
 
