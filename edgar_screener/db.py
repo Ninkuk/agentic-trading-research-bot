@@ -1,6 +1,6 @@
 from screener_common import connect, prune as _prune
 
-__all__ = ["connect", "ensure_schema", "prune"]
+__all__ = ["connect", "ensure_schema", "prune", "write_snapshot", "upsert_issuers"]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -89,3 +89,43 @@ def ensure_schema(conn) -> None:
 def prune(conn, keep_days, now_iso):
     """Prune edgar snapshots + filings. Delegates to the shared helper."""
     return _prune(conn, keep_days, now_iso, child_table="filings")
+
+
+def write_snapshot(conn, captured_at: str, index_date: str,
+                   rows: list[dict]) -> tuple[int, int]:
+    """Insert one snapshot header + its filing rows. Returns (id, count)."""
+    cur = conn.execute(
+        "INSERT INTO snapshots (captured_at, index_date, filing_count) "
+        "VALUES (?, ?, ?)",
+        (captured_at, index_date, len(rows)),
+    )
+    snapshot_id = cur.lastrowid
+    conn.executemany(
+        """INSERT INTO filings
+           (snapshot_id, accession, cik, company, ticker, form, bucket,
+            filed_date, path)
+           VALUES (:sid, :accession, :cik, :company, :ticker, :form, :bucket,
+                   :filed_date, :path)""",
+        [{**r, "sid": snapshot_id} for r in rows],
+    )
+    conn.commit()
+    return snapshot_id, len(rows)
+
+
+def upsert_issuers(conn, rows: list[dict], captured_at: str) -> None:
+    """Upsert the issuer dimension: refresh ticker/company/last_seen, keep
+    first_seen. Dedupes by CIK within the batch."""
+    seen = {}
+    for r in rows:
+        seen[r["cik"]] = (r.get("ticker"), r["company"])
+    conn.executemany(
+        """INSERT INTO issuers (cik, ticker, company, first_seen, last_seen)
+           VALUES (:cik, :ticker, :company, :seen, :seen)
+           ON CONFLICT(cik) DO UPDATE SET
+             ticker=excluded.ticker,
+             company=excluded.company,
+             last_seen=excluded.last_seen""",
+        [{"cik": c, "ticker": t, "company": n, "seen": captured_at}
+         for c, (t, n) in seen.items()],
+    )
+    conn.commit()
