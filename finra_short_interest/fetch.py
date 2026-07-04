@@ -1,6 +1,7 @@
 # finra_short_interest/fetch.py
 import time
 import urllib.error
+from datetime import date as _date
 
 import http_client
 
@@ -13,7 +14,7 @@ _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 503})
 _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
-_MIN_FIELDS = 13
+_MIN_FIELDS = 14
 
 _urlopen = http_client.make_opener(_UA)  # opener(url) -> decoded UTF-8 text
 
@@ -24,12 +25,14 @@ def settlement_url(date: str, base: str = FILES_BASE) -> str:
     return f"{base}/shrt{date.replace('-', '')}.csv"
 
 
-def _norm_date(raw) -> str | None:
-    """YYYYMMDD -> YYYY-MM-DD; None if not exactly 8 digits."""
+def _norm_iso(raw) -> str | None:
+    """Validate a 'YYYY-MM-DD' settlement date (FINRA emits ISO dates in-file);
+    return it normalized, or None if it is not a valid ISO date."""
     raw = (raw or "").strip()
-    if len(raw) != 8 or not raw.isdigit():
+    try:
+        return _date.fromisoformat(raw).isoformat()
+    except (TypeError, ValueError):
         return None
-    return f"{raw[:4]}-{raw[4:6]}-{raw[6:8]}"
 
 
 def _num(raw, cast):
@@ -56,14 +59,17 @@ def _to_float(raw):
 def parse_file(text: str) -> list[dict]:
     """Parse a FINRA equity short-interest file body into rows.
 
-    Pipe-delimited despite the .csv extension. Column order:
-      accountingYearMonthNumber | symbolCode | issueName | marketClassCode |
-      currentShortPositionQuantity | previousShortPositionQuantity |
-      changePercent | averageDailyVolumeQuantity | daysToCoverQuantity |
-      revisionFlag | stockSplitFlag | newIssueFlag | settlementDate
+    Pipe-delimited despite the .csv extension. Live column order (14 fields,
+    confirmed against cdn.finra.org shrt files 2026-07):
+      0 accountingYearMonthNumber | 1 symbolCode | 2 issueName |
+      3 issuerServicesGroupExchangeCode | 4 marketClassCode |
+      5 currentShortPositionQuantity | 6 previousShortPositionQuantity |
+      7 stockSplitFlag | 8 averageDailyVolumeQuantity | 9 daysToCoverQuantity |
+      10 revisionFlag | 11 changePercent | 12 changePreviousNumber |
+      13 settlementDate (already 'YYYY-MM-DD')
     The header line drops naturally (its non-numeric quantity fails coercion).
-    Any trailer/short/malformed line is skipped: fewer than 13 fields, or
-    missing symbolCode, a valid 8-digit settlementDate, or a parseable
+    Any trailer/short/malformed line is skipped: fewer than 14 fields, or
+    missing symbolCode, a valid ISO settlementDate, or a parseable
     currentShortPositionQuantity. days_to_cover / change_pct are FINRA-computed
     and stored as-is (blank -> None); they are never re-derived."""
     rows: list[dict] = []
@@ -73,9 +79,9 @@ def parse_file(text: str) -> list[dict]:
         parts = line.split("|")
         if len(parts) < _MIN_FIELDS:
             continue
-        (_aym, symbol, issue, mclass, cur, prev, chg,
-         adv, dtc, rev, _split, _new, sdate) = (p.strip() for p in parts[:13])
-        settlement_date = _norm_date(sdate)
+        (_aym, symbol, issue, _exch, mclass, cur, prev, _split,
+         adv, dtc, rev, chg, _chgprev, sdate) = (p.strip() for p in parts[:14])
+        settlement_date = _norm_iso(sdate)
         current_short_qty = _to_int(cur)
         if not symbol or settlement_date is None or current_short_qty is None:
             continue

@@ -7,18 +7,20 @@ from finra_short_interest.fetch import (
     _http_get, fetch_settlement, parse_file, settlement_url,
 )
 
-# Pipe-delimited despite .csv. Header + 3 keepable rows + 3 droppable rows.
+# Pipe-delimited despite .csv. Real 14-column FINRA layout; settlementDate is
+# already ISO. Header + 3 keepable rows + 3 droppable rows.
 SAMPLE = (
-    "accountingYearMonthNumber|symbolCode|issueName|marketClassCode|"
-    "currentShortPositionQuantity|previousShortPositionQuantity|changePercent|"
-    "averageDailyVolumeQuantity|daysToCoverQuantity|revisionFlag|"
-    "stockSplitFlag|newIssueFlag|settlementDate\n"
-    "202406|AAL|AMERICAN AIRLINES|NNM|1500000|1200000|25.0|500000|3.0|A||N|20240614\n"
-    "202406|ILLQ|ILLIQUID CORP|OTC|900000|900000|0.0|1000|900.0|||N|20240614\n"
-    "202406|BLNK|BLANK NUMS|NNM|5000|||500||||N|20240614\n"   # blank prev/chg/dtc/rev -> None
-    "202406||NO SYMBOL|NNM|100|100|0|500|1|||N|20240614\n"     # blank symbol -> skipped
-    "202406|SHORT|TOO FEW FIELDS|NNM|100\n"                    # < 13 fields -> skipped
-    "Trailer|rec|count|x|y|z|w|v|u|t|s|r|qq\n"                 # bad date/qty -> skipped
+    "accountingYearMonthNumber|symbolCode|issueName|"
+    "issuerServicesGroupExchangeCode|marketClassCode|"
+    "currentShortPositionQuantity|previousShortPositionQuantity|stockSplitFlag|"
+    "averageDailyVolumeQuantity|daysToCoverQuantity|revisionFlag|changePercent|"
+    "changePreviousNumber|settlementDate\n"
+    "202406|AAL|AMERICAN AIRLINES|A|NNM|1500000|1200000||500000|3.0|A|25.0|300000|2024-06-14\n"
+    "202406|ILLQ|ILLIQUID CORP|S|OTC|900000|900000||1000|999.99||-0.0|-100|2024-06-14\n"
+    "202406|BLNK|BLANK NUMS|R|NNM|5000|||||||-50|2024-06-14\n"   # blank prev/adv/dtc/rev/chg -> None
+    "202406||NO SYMBOL|A|NNM|100|100||500|1|A|0|0|2024-06-14\n"  # blank symbol -> skipped
+    "202406|SHORT|TOO FEW FIELDS|A|NNM|100\n"                    # < 14 fields -> skipped
+    "Trailer|rec|count|x|y|z|w|v|u|t|s|r|q|badsdate\n"           # bad qty/date -> skipped
 )
 
 
@@ -38,6 +40,7 @@ def test_parse_file_maps_columns_and_keeps_three_rows():
 def test_parse_file_blank_numerics_and_flags_become_none():
     blnk = [r for r in parse_file(SAMPLE) if r["symbol"] == "BLNK"][0]
     assert blnk["previous_short_qty"] is None
+    assert blnk["avg_daily_volume"] is None
     assert blnk["change_pct"] is None
     assert blnk["days_to_cover"] is None
     assert blnk["revision_flag"] is None
