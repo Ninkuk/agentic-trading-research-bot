@@ -30,6 +30,7 @@ def test_v_upcoming_auctions_filters_future_ordered():
         {"cusip": None, "security_type": "Note", "security_term": "10-Year",
          "announcement_date": None, "auction_date": "2099-01-01", "issue_date": None},
     ])
+    db.set_today(conn, "2050-01-01T00:00:00+00:00")
     dates = [r[0] for r in conn.execute(
         "SELECT auction_date FROM v_upcoming_auctions")]
     assert dates == ["2099-01-01"]          # past dropped
@@ -58,3 +59,26 @@ def test_v_auction_demand_latest_per_term():
                        "v_auction_demand WHERE security_term='10-Year'").fetchone()
     assert row[0] == "2026-02-01" and row[1] == 3.0
     assert abs(row[2] - 2.5) < 1e-9         # average of 2.0 and 3.0
+
+
+def test_upcoming_auctions_uses_injected_today_not_wall_clock():
+    conn = _fresh()
+    conn.executemany(
+        "INSERT INTO upcoming_auctions (cusip, security_type, security_term,"
+        " announcement_date, auction_date, issue_date)"
+        " VALUES (?, ?, ?, ?, ?, ?)",
+        [("A1", "Note", "10-Year", "2020-01-01", "2020-01-08", "2020-01-15"),
+         ("A2", "Note", "10-Year", "2020-01-01", "2020-02-05", "2020-02-12")])
+    db.set_today(conn, "2020-01-20T12:00:00+00:00")
+    rows = [r[0] for r in conn.execute(
+        "SELECT cusip FROM v_upcoming_auctions").fetchall()]
+    assert rows == ["A2"]  # 2020 date: passes ONLY if the view ignores wall-clock
+
+
+def test_ensure_schema_migrates_old_view():
+    conn = db.connect(":memory:")
+    conn.execute("CREATE VIEW v_upcoming_auctions AS SELECT 1 AS legacy")
+    db.ensure_schema(conn)  # must drop-and-recreate, not keep the legacy body
+    cols = [d[0] for d in conn.execute(
+        "SELECT * FROM v_upcoming_auctions").description]
+    assert "auction_date" in cols

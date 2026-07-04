@@ -55,6 +55,7 @@ def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
     successes, total_rows = 0, 0
     try:
         db.ensure_schema(conn)
+        db.set_today(conn, now_iso)
         for dataset_id in ids:
             ds = by_id.get(dataset_id)
             try:
