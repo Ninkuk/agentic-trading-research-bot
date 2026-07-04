@@ -140,3 +140,67 @@ def test_run_vintage_fetch_failure_skips_series_and_continues(capsys):
             assert "BAD" in captured.err
             assert "RuntimeError" in captured.err
             assert "vintage boom" not in captured.err
+
+
+def test_run_vintage_write_failure_rolls_back_partial_rows(capsys):
+    """Test run-level: a vintage write that fails PARTWAY through (after
+    inserting a row directly on the shared, uncommitted connection) must not
+    leave that row behind. The nested except must conn.rollback() before the
+    next series' upsert_series commits and silently persists it."""
+
+    def fake_series(series_id, api_key, get=None):
+        return {"id": series_id, "title": f"title-{series_id}",
+                "frequency": "Monthly"}
+
+    def fake_obs(series_id, api_key, start=None, get=None):
+        return [{"date": "2026-01-01", "value": 1.0}]
+
+    def fake_vintages(series_id, api_key, start=None, get=None):
+        return [{"date": "2026-01-01", "realtime_start": "2026-02-01", "value": 1.0}]
+
+    def flaky_write_vintages(conn, series_id, rows):
+        # Insert one row directly on the open (uncommitted) connection, then
+        # blow up before write_observation_vintages' own commit runs -- this
+        # simulates executemany failing partway through.
+        conn.execute(
+            "INSERT INTO observation_vintages "
+            "(series_id, date, realtime_start, value) VALUES (?, ?, ?, ?)",
+            (series_id, "2026-01-01", "2026-02-01", 1.0))
+        raise RuntimeError("vintage write boom")
+
+    import tempfile
+    from sources.screeners.fred_screener.catalog import Series
+    import unittest.mock as mock
+
+    with tempfile.TemporaryDirectory() as tmp_path:
+        with mock.patch.object(run_mod.catalog, "CATALOG",
+                               [Series("FIRST", "rates"), Series("SECOND", "rates")]):
+            with mock.patch.object(run_mod.db, "write_observation_vintages",
+                                    flaky_write_vintages):
+                dbp = f"{tmp_path}/fred.db"
+                sid, sc, oc = run_mod.run(
+                    dbp, api_key="K", now_iso="2026-07-02T00:00:00+00:00",
+                    fetch_series=fake_series, fetch_obs=fake_obs,
+                    vintages=True, fetch_vintages=fake_vintages)
+                # Both series still counted as successful (only the vintage
+                # sub-step failed, and it is skip-and-continue).
+                assert sc == 2
+                conn = db.connect(dbp)
+                # The rollback must have discarded the directly-inserted row
+                # for FIRST -- it must not survive to be committed by SECOND's
+                # upsert_series.
+                count = conn.execute(
+                    "SELECT COUNT(*) FROM observation_vintages "
+                    "WHERE series_id='FIRST'").fetchone()[0]
+                assert count == 0
+                # The series' own observations/metadata (committed by their
+                # own writers before the vintage code ran) must survive.
+                assert conn.execute(
+                    "SELECT COUNT(*) FROM observations "
+                    "WHERE series_id='FIRST'").fetchone()[0] == 1
+                assert conn.execute(
+                    "SELECT COUNT(*) FROM series "
+                    "WHERE series_id='FIRST'").fetchone()[0] == 1
+                captured = capsys.readouterr()
+                assert "RuntimeError" in captured.err
+                assert "vintage write boom" not in captured.err

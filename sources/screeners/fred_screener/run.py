@@ -22,8 +22,6 @@ def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)
-        if vintages:
-            db.set_asof(conn, now_iso)
         successes = 0
         total_obs = 0
         for series_id in ids:
@@ -38,6 +36,10 @@ def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
                         vint = fetch_vintages(series_id, api_key, start=start)
                         db.write_observation_vintages(conn, series_id, vint)
                     except Exception as e:  # skip vintage fetch on failure, but don't fail the series
+                        # Roll back any partially-applied vintage rows left in
+                        # this open transaction, so they don't get silently
+                        # persisted by the next series' upsert_series commit.
+                        conn.rollback()
                         print(f"warning: skipping vintage fetch for {series_id}: {type(e).__name__}",
                               file=sys.stderr)
                 successes += 1
