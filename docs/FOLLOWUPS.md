@@ -108,10 +108,7 @@ Captured while writing the six stage specs under `docs/superpowers/specs/`
 (tracker: [PIPELINE_ROADMAP.md](PIPELINE_ROADMAP.md)).
 
 - ✅ **`treasury` `v_upcoming_auctions` uses `date('now')`** — fixed with Stage 5 (2026-07-04) via the `calendar_now` pattern.
-- 🟠 **`fred` ALFRED vintages** — Stage 6 prerequisite: `observation_vintages`
-  table + vintage fetch mode + `v_asof` view, so regime-rule backtests see
-  data-as-first-published (spec'd in the Stage 6 design doc, built in
-  `fred_screener`).
+- ✅ **`fred` ALFRED vintages** — shipped (2026-07-04, with Stage 6): `observation_vintages` table + vintage fetch mode + `v_asof` view, so regime-rule backtests see data-as-first-published. Remaining live-verify actions: test ALFRED `realtime_*` parameter behavior on the first real `--vintages` run (per FRED live-verify policy) and run the 4-series backfill (CPIAUCSL, UNRATE, T10Y2Y, BAMLH0A0HYM2).
 - ✅ **`etfs.db` stood up + ETF catalog live-verified** (2026-07-04). Fixed
   `stocks --type e` (catalog route was hardcoded to `/stocks/screener/`; now
   `catalog.route_for(type_)` picks `/etf/screener/`, unknown types raise).

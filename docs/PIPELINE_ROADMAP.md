@@ -138,11 +138,9 @@ Builds naturally **with** Stage 3 (same spec or adjacent).
 
 **Built** as `pipeline/scheduler/` (registered: `main.py schedule`). Spec retired; the cron line lives in `run.py`'s docstring. Prerequisite treasury `date('now')` fix shipped with this stage.
 
-### Stage 6 — Backtest & validation harness 📝 🟢
+### Stage 6 — Backtest & validation harness ✅ 🟢
 
-**Spec:** [2026-07-04-stage6-backtest-harness-design.md](superpowers/specs/2026-07-04-stage6-backtest-harness-design.md)
-— v1 is trial-registry + DSR + walk-forward over accumulated snapshots (no retro
-price simulator; that needs a price-history source, FOLLOWUPS §4).
+**Built** as `pipeline/trials/` (registered: `main.py trials`) + the fred `observation_vintages`/`v_asof` extension. Spec retired. v1 = trial registry + DSR + walk-forward over accumulated snapshots; retro price simulation still needs a price-history source (FOLLOWUPS).
 
 §7. Trial registry (log every lookback/threshold/weighting tried) + **Deflated
 Sharpe Ratio** reporting — non-optional once Stage 2 threshold tuning starts.
@@ -161,7 +159,7 @@ that seeded this file):
    consumes its output shape; forces the ETF-mapping and tag-vocabulary
    decisions that block all later stages.
 2. ~~**Stage 5 — scheduler** (anytime, parallel).~~ ✅ shipped. Independent; monitors are built.
-3. **Stage 6 — backtest harness.** Before Stage 2's thresholds get tuned, so
+3. ~~**Stage 6 — backtest harness.**~~ ✅ shipped. Before Stage 2's thresholds get tuned, so
    every trial is logged from the first one.
 4. **Stage 2 — promotion gates.** Thresholds calibrated via Stage 6.
 5. **Stages 3 + 4 — LLM gate + decision log** (together). Consume candidates;
