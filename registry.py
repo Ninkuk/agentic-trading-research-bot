@@ -7,6 +7,7 @@ from ftd_screener.run import main as ftd_main
 from finra_short_volume.run import main as short_volume_main
 from finra_short_interest.run import main as short_interest_main
 from cboe_options.run import main as options_main
+from econ_calendar.run import main as econ_calendar_main
 from reddit_screener.run import main as reddit_main
 from stock_analysis_screener.run import main as stocks_main
 
@@ -20,6 +21,7 @@ REGISTRY = {
     "short_volume": short_volume_main,
     "short_interest": short_interest_main,
     "options": options_main,
+    "econ_calendar": econ_calendar_main,
 }
 
 

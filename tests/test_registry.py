@@ -67,3 +67,8 @@ def test_dispatch_lists_options():
 def test_dispatch_lists_short_interest():
     import registry
     assert "short_interest" in registry.REGISTRY
+
+
+def test_dispatch_lists_econ_calendar():
+    import registry
+    assert "econ_calendar" in registry.REGISTRY
