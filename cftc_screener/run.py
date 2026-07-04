@@ -11,14 +11,14 @@ from cftc_screener import catalog, db, fetch
 _LOOKBACK_WEEKS = 10
 
 
-def _fetch_floor(conn, code, start, full):
-    """Inclusive report-date floor to fetch from for one market. A full re-pull
-    (or a first-ever pull with no stored data) uses the caller's ``start`` (None
-    = full history). Otherwise re-fetch a recent lookback window ending at the
-    latest stored week."""
+def _fetch_floor(conn, fact_table, code, start, full):
+    """Inclusive report-date floor to fetch from for one market in ``fact_table``.
+    A full re-pull (or a first-ever pull with no stored data) uses the caller's
+    ``start`` (None = full history). Otherwise re-fetch a recent lookback window
+    ending at the latest stored week."""
     if full:
         return start
-    last = db.max_report_date(conn, code)
+    last = db.max_report_date(conn, code, fact_table)
     if last is None:
         return start
     return (datetime.fromisoformat(last)
@@ -26,17 +26,19 @@ def _fetch_floor(conn, code, start, full):
 
 
 def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
-        app_token=None, full=False, fetch_rows=fetch.fetch_market_rows,
-        now_iso=None):
-    """Fetch selected CFTC markets into SQLite, upserting weekly COT history.
-    Incremental runs re-fetch the last _LOOKBACK_WEEKS weeks per market to catch
-    revisions; full=True re-pulls from ``start`` (or full history).
+        app_token=None, full=False, family="legacy",
+        fetch_rows=fetch.fetch_market_rows, now_iso=None):
+    """Fetch selected CFTC markets for one report ``family`` into SQLite,
+    upserting weekly COT history into that family's fact table. Incremental runs
+    re-fetch the last _LOOKBACK_WEEKS weeks per market to catch revisions;
+    full=True re-pulls from ``start`` (or full history).
     Returns (snapshot_id, market_count, row_count)."""
     now_iso = now_iso or datetime.now(timezone.utc).isoformat()
     app_token = app_token or os.environ.get("CFTC_APP_TOKEN")  # optional; may be None
 
-    asset = {m.code: m.asset_class for m in catalog.CATALOG}
-    all_codes = [m.code for m in catalog.CATALOG]
+    fam = catalog.FAMILIES[family]
+    asset = {m.code: m.asset_class for m in fam.catalog}
+    all_codes = [m.code for m in fam.catalog]
     codes = catalog.select_ids(all_codes, only, exclude, add=add)
 
     conn = db.connect(db_path)
@@ -46,14 +48,16 @@ def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
         total_rows = 0
         for code in codes:
             try:
-                floor = _fetch_floor(conn, code, start, full)
-                rows = fetch_rows(code, app_token=app_token, start=floor)
+                floor = _fetch_floor(conn, fam.fact_table, code, start, full)
+                rows = fetch_rows(code, dataset_id=fam.dataset_id,
+                                  field_map=fam.field_map,
+                                  app_token=app_token, start=floor)
                 if rows:
                     name = rows[-1].get("name")  # ordered ascending -> newest last
                     db.upsert_markets(conn, [{"code": code, "name": name,
                                               "asset_class": asset.get(code, "custom")}],
                                       now_iso)
-                    total_rows += db.write_cot(conn, code, rows)
+                    total_rows += db.write_family(conn, fam, code, rows)
                 successes += 1
             except Exception as e:  # skip-and-continue on any per-market failure
                 # Roll back the failed market's uncommitted writes, then log only
@@ -93,12 +97,16 @@ def main(argv=None):
                    help="re-pull from --start (or full history), ignoring the "
                         "incremental lookback")
     p.add_argument("--keep-days", type=int, default=None)
+    p.add_argument("--family", default="legacy",
+                   choices=["legacy", "disaggregated", "tff"],
+                   help="COT report family (default: legacy)")
     a = p.parse_args(argv)
     only = a.only.split(",") if a.only else None
     exclude = a.exclude.split(",") if a.exclude else None
     _, mc, rc = run(a.db, only=only, exclude=exclude, add=a.add, start=a.start,
-                    keep_days=a.keep_days, full=a.full)
-    print(f"stored {rc} weekly rows across {mc} markets into {a.db}")
+                    keep_days=a.keep_days, full=a.full, family=a.family)
+    print(f"stored {rc} weekly rows across {mc} markets "
+          f"({a.family}) into {a.db}")
 
 
 if __name__ == "__main__":

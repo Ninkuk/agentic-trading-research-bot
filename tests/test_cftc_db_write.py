@@ -83,3 +83,68 @@ def test_prune_deletes_old_snapshots_but_not_cot():
     assert removed == 1
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
     assert conn.execute("SELECT COUNT(*) FROM cot").fetchone()[0] == 1  # preserved
+
+
+# --- family extension ---
+from cftc_screener import catalog
+
+NOW = "2026-07-03T00:00:00+00:00"
+
+
+def _seed_market(conn, code="088691"):
+    db.upsert_markets(conn, [{"code": code, "name": "GOLD",
+                              "asset_class": "metals"}], NOW)
+
+
+def test_write_family_derived_columns_match_table():
+    # write_family derives its INSERT columns from field_map; they must all be
+    # real columns of the fact table (else sqlite raises "no column named ...").
+    conn = _fresh()
+    for fam in (catalog.DISAGG, catalog.TFF):
+        tbl_cols = {r[1] for r in conn.execute(
+            f"PRAGMA table_info({fam.fact_table})")}
+        map_cols = {c for c, _a, _cast in fam.field_map}
+        assert map_cols <= tbl_cols, f"{fam.name} field_map ⊄ {fam.fact_table}"
+
+
+def test_write_family_upserts_disagg_by_date():
+    conn = _fresh()
+    _seed_market(conn)
+    n1 = db.write_family(conn, catalog.DISAGG, "088691", [
+        {"code": "088691", "report_date": "2026-06-16",
+         "mm_long": 10, "mm_short": 2, "open_interest": 100},
+        {"code": "088691", "report_date": "2026-06-23",
+         "mm_long": 20, "mm_short": 3, "open_interest": 200},
+    ])
+    assert n1 == 2
+    n2 = db.write_family(conn, catalog.DISAGG, "088691", [
+        {"code": "088691", "report_date": "2026-06-23",
+         "mm_long": 25, "mm_short": 3, "open_interest": 250},   # revision
+    ])
+    assert n2 == 1
+    rows = conn.execute(
+        "SELECT report_date, mm_long, open_interest FROM cot_disagg "
+        "WHERE code='088691' ORDER BY report_date").fetchall()
+    assert rows == [("2026-06-16", 10, 100), ("2026-06-23", 25, 250)]
+
+
+def test_max_report_date_reads_family_table():
+    conn = _fresh()
+    _seed_market(conn)
+    assert db.max_report_date(conn, "088691", "cot_disagg") is None
+    db.write_family(conn, catalog.TFF, "088691", [
+        {"code": "088691", "report_date": "2026-06-23", "lev_long": 5}])
+    # legacy cot is still empty for this code; family table has the row
+    assert db.max_report_date(conn, "088691") is None            # 2-arg legacy
+    assert db.max_report_date(conn, "088691", "cot_tff") == "2026-06-23"
+
+
+def test_prune_leaves_family_tables_intact():
+    conn = _fresh()
+    _seed_market(conn)
+    db.write_family(conn, catalog.DISAGG, "088691", [
+        {"code": "088691", "report_date": "2020-01-07", "mm_long": 1}])
+    db.write_snapshot(conn, "2026-01-01T00:00:00+00:00", 1, 1)   # old
+    removed = db.prune(conn, keep_days=30, now_iso=NOW)
+    assert removed == 1
+    assert conn.execute("SELECT COUNT(*) FROM cot_disagg").fetchone()[0] == 1
