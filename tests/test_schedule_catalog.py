@@ -52,6 +52,12 @@ def test_argv_for_gate_carries_window():
     assert argv[-2:] == ["--window", "pre_close"]
 
 
+def test_argv_for_gate_passes_candidates_db():
+    argv = catalog.argv_for(catalog.JOB_BY_NAME["gate_pre_close"], "data")
+    assert argv[argv.index("--candidates-db") + 1] == "data/candidates.db"
+    assert argv[-2:] == ["--window", "pre_close"]
+
+
 def test_constants_match_spec():
     assert catalog.MAX_ATTEMPTS == 3
     assert catalog.STALE_RUNNING_HOURS == 2

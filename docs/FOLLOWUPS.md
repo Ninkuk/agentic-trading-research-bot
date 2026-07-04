@@ -136,6 +136,11 @@ Captured while writing the six stage specs under `docs/superpowers/specs/`
   (`--leads-db`/`--stocks-db`/`--etfs-db`, data-dir-relative, not CWD defaults)
   and a daily `etfs` job (`stocks --type e`) now produces `etfs.db` so the
   ETF leg isn't rejected as data_missing.
+- 🟠 **Stage 3/4 deferred** — τ calibration via Stage 6 trials (open empirical
+  question); symmetric ±15% band experiment gated on v_delta_history; selective
+  consensus; human-override (`decision_maker='human'`) tooling; alert delivery
+  wiring. The scheduler's gate window jobs went live with this registration
+  (2026-07-04).
 
 ---
 

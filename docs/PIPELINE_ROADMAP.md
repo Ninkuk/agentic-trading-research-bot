@@ -96,9 +96,9 @@ size leakage).
 
 **Built** as `pipeline/promote/` (registered: `main.py promote`). Spec retired; thresholds live in the frozen GateConfig (config_hash on every snapshot) — calibrate via Stage 6 trials. Spread gate + |ρ| clustering deferred (FOLLOWUPS).
 
-### Stage 3 — Bounded LLM gate 📝 🟢
+### Stage 3 — Bounded LLM gate ✅ 🟢
 
-**Spec:** [2026-07-04-stage3-llm-gate-design.md](superpowers/specs/2026-07-04-stage3-llm-gate-design.md)
+**Built** as `pipeline/gate/` (registered: `main.py gate`). Spec retired; τ/heat-cap live in catalog.py, guardrail_config_version pins every decision.
 
 §4, §8 Q2 — best-evidenced stage. **Reduce-only veto gate + confidence
 threshold τ** (DOSS pattern): agent may approve, cut size, or veto — never
@@ -108,10 +108,9 @@ clamp in code, `clamp_fired` is a risk alert. Symmetric ±15% band stays a
 documented future experiment gated on logged deltas. τ calibration for slow
 composite signals is an open empirical question.
 
-### Stage 4 — Decision log & replay 📝 🟢
+### Stage 4 — Decision log & replay ✅ 🟢
 
-**Spec:** [2026-07-04-stage4-decision-log-design.md](superpowers/specs/2026-07-04-stage4-decision-log-design.md)
-— same package/DB as Stage 3, no separate registry entry.
+**Built** with Stage 3 in `pipeline/gate/` (`gate.db`, trigger-enforced append-only, `--replay`). Spec retired.
 
 §8 Q3. Immutable `gate_decision` row per candidate reaching the gate:
 input-snapshot hash, deterministic recommendation, bounds, agent proposal, α,
@@ -149,8 +148,10 @@ that seeded this file):
 3. ~~**Stage 6 — backtest harness.**~~ ✅ shipped. Before Stage 2's thresholds get tuned, so
    every trial is logged from the first one.
 4. ~~**Stage 2 — promotion gates.**~~ ✅ shipped. Thresholds calibrated via Stage 6.
-5. **Stages 3 + 4 — LLM gate + decision log** (together). Consume candidates;
+5. ~~**Stages 3 + 4 — LLM gate + decision log** (together).~~ ✅ shipped. Consume candidates;
    best-evidenced design, least design risk.
+
+**All six stages are built.** The roadmap is complete; remaining work is calibration (below) + FOLLOWUPS.
 
 ## Open calibration questions (empirical, not literature gaps)
 

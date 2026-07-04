@@ -79,6 +79,8 @@ def argv_for(job: Job, data_dir: str) -> list[str]:
                  "--etfs-db", d("etfs.db")]
     if job.name == "etfs":
         argv += ["--type", "e"]
+    if job.target == "gate":
+        argv += ["--candidates-db", d("candidates.db")]
     if job.kind == "gate":
         argv += ["--window", job.window]
     return argv

@@ -8,9 +8,11 @@ A signal-collection layer for a trading bot: ~20 independent **screeners** (poin
 readers) and event-date **monitors** (forward-looking calendars) that each fetch one official
 data source (SEC, FRED, CFTC, FINRA, CBOE, Treasury, NY Fed, EIA, USDA, …) into a per-source
 SQLite database, then derive signals in SQL views. Downstream consumption (the "signal → candidate"
-pipeline) is designed in `docs/research/` and tracked in `docs/PIPELINE_ROADMAP.md`. Three stages
-are built: `pipeline/leads/` (signal funnel), `pipeline/scheduler/` (two-clock scheduler), and
-`pipeline/trials/` (backtest harness + fred vintages). Stages 2–4 (promote, gate, decision log) are not yet built.
+pipeline) is designed in `docs/research/` and tracked in `docs/PIPELINE_ROADMAP.md`. All six
+stages are built: `pipeline/leads/` (signal funnel), `pipeline/promote/` (promotion gates),
+`pipeline/gate/` (bounded LLM gate + decision log/replay), `pipeline/scheduler/` (two-clock
+scheduler), and `pipeline/trials/` (backtest harness + fred vintages). The pipeline layer is
+feature-complete per `docs/PIPELINE_ROADMAP.md`; remaining work is calibration + FOLLOWUPS.
 
 **Zero runtime third-party dependencies** — everything is stdlib (`urllib`, `sqlite3`, `json`,
 `argparse`). Python 3.12, managed with `uv`. The only dev dependency is `pytest`.
