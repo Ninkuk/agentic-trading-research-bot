@@ -107,3 +107,8 @@ def test_dispatch_lists_earnings():
 def test_dispatch_lists_ats():
     import registry
     assert "ats" in registry.REGISTRY
+
+
+def test_dispatch_lists_cboe_stats():
+    import registry
+    assert "cboe_stats" in registry.REGISTRY
