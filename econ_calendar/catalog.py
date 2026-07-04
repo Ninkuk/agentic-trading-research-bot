@@ -12,15 +12,18 @@ class Release:
     release_time: str    # 'HH:MM' ET known time; sole source of events.event_time
 
 
-# Curated high/med-impact U.S. macro releases. Ids are the spec's numbered set;
-# confirm each live against /fred/releases before shipping and drop any that
-# 404. Most U.S. macro data prints at 08:30 ET (BLS/BEA/Census).
+# Curated high/med-impact U.S. macro releases. Every release_id was live-verified
+# against the FRED /release/dates endpoint on 2026-07-03 (each returns a real
+# forward calendar). Most U.S. macro data prints at 08:30 ET (BLS/BEA/Census);
+# JOLTS is the exception at 10:00 ET.
 CATALOG: list[Release] = [
     Release(10, "cpi_release", "Consumer Price Index", "high", "inflation", "08:30"),
     Release(50, "employment_situation", "Employment Situation", "high", "labor", "08:30"),
     Release(46, "ppi_release", "Producer Price Index", "high", "inflation", "08:30"),
     Release(53, "gdp_release", "Gross Domestic Product", "high", "growth", "08:30"),
-    Release(99, "retail_sales_release", "Advance Retail Sales", "high", "consumer", "08:30"),
+    Release(9, "retail_sales_release", "Advance Retail Sales", "high", "consumer", "08:30"),
+    Release(54, "pce_release", "Personal Income & Outlays (PCE)", "high", "inflation", "08:30"),
+    Release(192, "jolts_release", "Job Openings and Labor Turnover Survey (JOLTS)", "med", "labor", "10:00"),
 ]
 
 

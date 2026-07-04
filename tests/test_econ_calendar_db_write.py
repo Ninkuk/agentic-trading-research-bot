@@ -3,6 +3,7 @@ from econ_calendar import db
 from econ_calendar.catalog import CATALOG
 
 CPI = next(r for r in CATALOG if r.event_type == "cpi_release")
+MED = next(r for r in CATALOG if r.impact == "med")  # JOLTS — exercises exclusion
 
 
 def _fresh():
@@ -38,6 +39,20 @@ def test_v_imminent_high_impact_filters_high_within_horizon():
     got = [r[0] for r in conn.execute(
         "SELECT event_date FROM v_imminent_high_impact")]
     assert got == ["2026-08-12"]
+
+
+def test_v_imminent_high_impact_excludes_med_impact_release():
+    # With a med-impact release in the catalog (JOLTS), prove the impact='high'
+    # filter actually drops a med row that is otherwise inside the horizon.
+    conn = _fresh()
+    monitor_common.set_today(conn, "2026-08-01T00:00:00+00:00", horizon_days=14)
+    monitor_common.upsert_events(conn, [
+        _evt("cpi_release", "2026-08-12", str(CPI.release_id)),   # high -> in
+        _evt(MED.event_type, "2026-08-10", str(MED.release_id)),  # med -> excluded
+    ], "t")
+    got = [r[0] for r in conn.execute(
+        "SELECT event_type FROM v_imminent_high_impact")]
+    assert got == ["cpi_release"]              # med release filtered out
 
 
 def test_v_upcoming_releases_joins_catalog_impact_and_label():
