@@ -95,7 +95,9 @@ Ranked by signal × low effort × non-overlap (reuse of existing pipelines calle
 
 ## 🎉 Roadmap complete
 
-Every screener and monitor in this roadmap is now **Built, tested, and registered**. `registry.py` dispatches all 20: `stocks`, `reddit`, `edgar`, `fred`, `cftc`, `ftd`, `short_volume`, `short_interest`, `options`, `econ_calendar`, `market_calendar`, `fundamentals`, `fomc`, `treasury`, `earnings`, `ats`, `nyfed`, `cboe_stats`, `eia`, `usda`. The remaining items below are the **Idea 💡** backlog (no spec yet), plus a few documented **follow-ups** captured in the Built rows above: the shared ≤10 req/s SEC throttle in `http_client`, the `fundamentals --bulk` quarterly-ZIP run-loop, the `treasury`/`nyfed` wider revision-lookback, the `earnings` cadence-based date estimation, and WASDE-native (OCE/ESMIS) balance-sheet ingestion for `usda`.
+Every screener and monitor in this roadmap is now **Built, tested, and registered**. `registry.py` dispatches all 20: `stocks`, `reddit`, `edgar`, `fred`, `cftc`, `ftd`, `short_volume`, `short_interest`, `options`, `econ_calendar`, `market_calendar`, `fundamentals`, `fomc`, `treasury`, `earnings`, `ats`, `nyfed`, `cboe_stats`, `eia`, `usda`.
+
+Deferred follow-ups, live 🟡 endpoint-verification tasks, and the un-spec'd **Idea 💡** backlog are tracked in **[FOLLOWUPS.md](FOLLOWUPS.md)** — the shared ≤10 req/s SEC throttle in `http_client`, the `fundamentals --bulk` quarterly-ZIP run-loop, the `treasury`/`nyfed` wider revision-lookback, the `earnings` cadence-based date estimation, and WASDE-native (OCE/ESMIS) balance-sheet ingestion for `usda`, among others.
 
 ## Idea 💡 (no spec)
 
