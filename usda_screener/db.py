@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 
 from screener_common import connect
 
-__all__ = ["connect", "ensure_schema", "write_observations", "write_snapshot",
-           "prune"]
+__all__ = ["connect", "ensure_schema", "write_observations", "write_wasde",
+           "write_snapshot", "prune"]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -50,9 +50,50 @@ ORDER BY commodity, metric, period;
 """
 
 
+# WASDE balance sheet (1e) — a sibling to usda_obs, kept separate so the Quick
+# Stats path is untouched. unit is in the PK because a grain's U.S. line appears
+# in two tables (U.S.-domestic bushels + world-table metric tons) under the same
+# (commodity, region, metric, market_year).
+_WASDE_SCHEMA = """
+CREATE TABLE IF NOT EXISTS wasde_obs (
+    commodity   TEXT NOT NULL,
+    region      TEXT NOT NULL,
+    metric      TEXT NOT NULL,
+    market_year TEXT NOT NULL,
+    unit        TEXT NOT NULL,
+    value       REAL,
+    report_date TEXT,
+    PRIMARY KEY (commodity, region, metric, market_year, unit)
+);
+CREATE INDEX IF NOT EXISTS ix_wasde_commodity ON wasde_obs(commodity, region);
+
+-- The WASDE-native gauge: ending_stocks / total_use per commodity+region+year,
+-- on a single unit basis. total_use falls back to domestic_use + exports for
+-- commodities (e.g. soybeans) that carry no single "Use, Total" line.
+CREATE VIEW IF NOT EXISTS v_wasde_stocks_to_use AS
+WITH use AS (
+    SELECT commodity, region, market_year, unit,
+        MAX(CASE WHEN metric='total_use'    THEN value END) AS total_use,
+        MAX(CASE WHEN metric='domestic_use' THEN value END) AS domestic_use,
+        MAX(CASE WHEN metric='exports'      THEN value END) AS exports
+    FROM wasde_obs GROUP BY commodity, region, market_year, unit
+)
+SELECT es.commodity, es.region, es.market_year, es.unit,
+       es.value AS ending_stocks,
+       COALESCE(u.total_use, u.domestic_use + u.exports) AS total_use,
+       CASE WHEN COALESCE(u.total_use, u.domestic_use + u.exports) > 0
+            THEN es.value / COALESCE(u.total_use, u.domestic_use + u.exports)
+            END AS stocks_to_use
+FROM wasde_obs es
+LEFT JOIN use u ON u.commodity=es.commodity AND u.region=es.region
+     AND u.market_year=es.market_year AND u.unit=es.unit
+WHERE es.metric='ending_stocks';
+"""
+
+
 def ensure_schema(conn) -> None:
-    """Create the fact table + views. Idempotent."""
-    conn.executescript(_SCHEMA)
+    """Create the Quick Stats fact table + views and the WASDE sibling. Idempotent."""
+    conn.executescript(_SCHEMA + _WASDE_SCHEMA)
     conn.commit()
 
 
@@ -69,6 +110,24 @@ def write_observations(conn, commodity, metric, rows) -> int:
          for p, r in by_period.items()])
     conn.commit()
     return len(by_period)
+
+
+def write_wasde(conn, rows) -> int:
+    """Upsert WASDE balance rows by (commodity, region, metric, market_year,
+    unit): a later release's revised value overwrites in place. unit is
+    coalesced to '' so the PK never sees NULL. Dedupe within batch (last wins)."""
+    by_key = {(r["commodity"], r["region"], r["metric"], r["market_year"],
+               r.get("unit") or ""): r for r in rows}
+    conn.executemany(
+        """INSERT INTO wasde_obs
+           (commodity, region, metric, market_year, unit, value, report_date)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(commodity, region, metric, market_year, unit)
+           DO UPDATE SET value=excluded.value, report_date=excluded.report_date""",
+        [(k[0], k[1], k[2], k[3], k[4], r["value"], r.get("report_date"))
+         for k, r in by_key.items()])
+    conn.commit()
+    return len(by_key)
 
 
 def write_snapshot(conn, captured_at, series_count, observation_count) -> int:
