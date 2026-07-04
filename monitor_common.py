@@ -119,3 +119,22 @@ def write_snapshot(conn, captured_at: str, event_count: int, source: str) -> int
     )
     conn.commit()
     return cur.lastrowid
+
+
+def prune(conn, keep_days: int, now_iso: str) -> int:
+    """Delete run-provenance snapshots older than keep_days before now_iso.
+
+    Single-table delete of snapshot headers only, exactly like
+    fred_screener.db.prune. It must NEVER prune events: the whole point of a
+    monitor is the forward calendar. Compares captured_at to a UTC isoformat
+    cutoff as a plain string (fixed-width, so lexicographic '<' is correct)."""
+    cutoff = (datetime.fromisoformat(now_iso)
+              - timedelta(days=keep_days)).isoformat()
+    ids = [r[0] for r in conn.execute(
+        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
+    if not ids:
+        return 0
+    qmarks = ",".join("?" * len(ids))
+    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
+    conn.commit()
+    return len(ids)
