@@ -146,4 +146,51 @@ def prune(conn, keep_days, now_iso) -> int:
     return len(ids)
 
 
-_VIEWS = ""   # filled in Task 4
+_VIEWS = """
+-- TGA closing balance per date with ~week-over-week (5 business-day) change.
+CREATE VIEW IF NOT EXISTS v_tga_trend AS
+WITH tga AS (
+    SELECT record_date, close_balance FROM dts_cash
+    WHERE account_type LIKE '%TGA%'
+)
+SELECT record_date, close_balance,
+       close_balance - LAG(close_balance, 5) OVER (ORDER BY record_date)
+         AS wow_change
+FROM tga ORDER BY record_date;
+
+-- Total public debt per date with the delta vs the prior stored date.
+CREATE VIEW IF NOT EXISTS v_debt_trend AS
+SELECT record_date, tot_pub_debt_out,
+       tot_pub_debt_out - LAG(tot_pub_debt_out) OVER (ORDER BY record_date)
+         AS change_vs_prior
+FROM debt_penny ORDER BY record_date;
+
+-- Newest par curve with the 2s10s spread + inversion flag + 3m10y.
+CREATE VIEW IF NOT EXISTS v_yield_curve_latest AS
+WITH latest AS (SELECT * FROM yield_curve ORDER BY record_date DESC LIMIT 1)
+SELECT record_date, yr2, yr10, mo3,
+       yr10 - yr2 AS spread_2s10s,
+       (yr10 - yr2 < 0) AS inverted,
+       yr10 - mo3 AS spread_3m10y
+FROM latest;
+
+-- Forward auction calendar: announced auctions dated today or later.
+CREATE VIEW IF NOT EXISTS v_upcoming_auctions AS
+SELECT cusip, security_type, security_term, announcement_date, auction_date,
+       issue_date
+FROM upcoming_auctions
+WHERE auction_date >= date('now')
+ORDER BY auction_date;
+
+-- Latest bid-to-cover per term + the term's average across stored auctions.
+CREATE VIEW IF NOT EXISTS v_auction_demand AS
+WITH ranked AS (
+    SELECT security_term, auction_date, bid_to_cover_ratio,
+           ROW_NUMBER() OVER (PARTITION BY security_term
+                              ORDER BY auction_date DESC) AS rn,
+           AVG(bid_to_cover_ratio) OVER (PARTITION BY security_term) AS avg_btc
+    FROM auction_results WHERE bid_to_cover_ratio IS NOT NULL
+)
+SELECT security_term, auction_date, bid_to_cover_ratio AS latest_btc, avg_btc
+FROM ranked WHERE rn = 1;
+"""
