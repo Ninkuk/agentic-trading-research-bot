@@ -128,6 +128,10 @@ Captured while writing the six stage specs under `docs/superpowers/specs/`
   G5 sector-cap proxy today), price/trend confirmation legs, ATR computed
   in-house, and retro backfill for Stage 6. Candidate: stockanalysis historical
   endpoints (the approved-exception source). Needs its own spec.
+- 🟠 **Stage 2 v1 proxies to revisit** — spread gate (needs quote data); |ρ|>0.70
+  clustering + cluster exposure caps (needs return series; sector-cap is the v1
+  proxy); price/trend confirming leg. Note: the Stage 5 scheduler's `promote` job
+  went live with this registration (2026-07-04).
 
 ---
 

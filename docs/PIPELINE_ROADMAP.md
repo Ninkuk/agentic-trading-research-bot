@@ -92,22 +92,9 @@ catalog, commercial-vs-noncommercial COT premise, universe definition.
 Deferred: log-market-cap leg of neutralization (add only if backtests show
 size leakage).
 
-### Stage 2 — Promotion gates → candidates 📝 🔵
+### Stage 2 — Promotion gates → candidates ✅ 🔵
 
-**Spec:** [2026-07-04-stage2-promote-gates-design.md](superpowers/specs/2026-07-04-stage2-promote-gates-design.md)
-— resolves the ADV/spread open question: liquidity + ATR fields come from
-`stock_analysis_screener` data points; spread gate dropped in v1.
-
-§3, §8 Q1. Deterministic Python: liquidity screens (ADV/spread/price floor —
-**numeric thresholds are unsourced, backtest them**), confluence (≥N signals or
-extreme + confirming leg), correlation caps (|ρ| > 0.70 = same-bet flag,
-0.70–0.80 regime-dependent band), regime dial scaling, cross-signal dedup
-(equal-weight 1/N is a legitimate default — "learned weights beat 1/N" was
-refuted). Sizing: fixed-fractional / ATR (§5, 🟡), √-law participation cap
-well below ~20% of ADV (🟢), portfolio heat in Python **after** the LLM clamp.
-Output: `{det_score, horizon_band, size, stop, guardrail_bounds}`.
-Open: where ADV/spread data comes from (own decision — options/short_volume
-volume, stockanalysis data points, or a small price screener).
+**Built** as `pipeline/promote/` (registered: `main.py promote`). Spec retired; thresholds live in the frozen GateConfig (config_hash on every snapshot) — calibrate via Stage 6 trials. Spread gate + |ρ| clustering deferred (FOLLOWUPS).
 
 ### Stage 3 — Bounded LLM gate 📝 🟢
 
@@ -161,7 +148,7 @@ that seeded this file):
 2. ~~**Stage 5 — scheduler** (anytime, parallel).~~ ✅ shipped. Independent; monitors are built.
 3. ~~**Stage 6 — backtest harness.**~~ ✅ shipped. Before Stage 2's thresholds get tuned, so
    every trial is logged from the first one.
-4. **Stage 2 — promotion gates.** Thresholds calibrated via Stage 6.
+4. ~~**Stage 2 — promotion gates.**~~ ✅ shipped. Thresholds calibrated via Stage 6.
 5. **Stages 3 + 4 — LLM gate + decision log** (together). Consume candidates;
    best-evidenced design, least design risk.
 
