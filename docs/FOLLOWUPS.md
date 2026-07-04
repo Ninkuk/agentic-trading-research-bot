@@ -3,184 +3,106 @@
 Deferred work captured while building out the screener/monitor roadmap
 ([ROADMAP.md](ROADMAP.md)). The roadmap itself is **complete**.
 
-**Status (this cycle):** the four low-ambiguity code follow-ups — **1a, 1b, 1c,
-1d** — are now **built and tested** (§1). The five §2 live-verification screeners
-were probed against their real endpoints: **`ats` was fixed**, several
-`nyfed`/`cboe_stats` drifts were found and turned into precise fix specs, and the
-two key-gated screeners (`eia`, `usda`) remain un-probed (no API keys in this
-env). **1e** was researched — a machine-readable WASDE source was located (§1e).
-§3 remains an un-spec'd idea backlog with a suggested build order.
+**Status:** §1 (1a–1e) is **fully built and tested**. §2 live-verification is
+**complete** — every screener was probed against its real endpoint; drifts were
+fixed and verified live. §3 remains an un-spec'd idea backlog (prioritized).
+Only a few intentionally-deferred sub-items remain (each noted inline).
 
-**Priority key:** 🔴 high-leverage / low-ambiguity · 🟠 useful, some design ·
-🔵 needs a spec + product decision first. ✅ done · 🟡 partially done / precise
-follow-up recorded.
+**Priority key:** ✅ done · 🟠 small deferred sub-item · 💡 idea (needs a spec).
 
 ---
 
-## 1. Deferred follow-ups on shipped screeners
+## 1. Deferred follow-ups on shipped screeners — ALL DONE ✅
 
-### 1a. ✅ Shared ≤10 req/s SEC throttle in `http_client` — DONE
-- **Shipped:** host-keyed token-bucket `RateLimiter` in `http_client.py` + one
-  process-wide `SEC_RATE_LIMITER` (9 req/s, headroom under the 10 cap). All SEC
-  openers (`edgar`, `ftd`, `fundamentals`) acquire under a single
-  `SEC_HOST_KEY='sec.gov'` — **not** the literal hostname, which would split
-  `www.sec.gov`/`data.sec.gov` into separate buckets and permit ~2× the intended
-  aggregate rate. `make_opener` + `ftd._bytes_opener` gained `limiter`/
-  `limiter_key` kwargs and pay the throttle before each request (retries
-  included). TDD: fake-clock spacing, key independence, refill, shared-bucket
-  wiring.
+### 1a. ✅ Shared ≤10 req/s SEC throttle in `http_client`
+Host-keyed token-bucket `RateLimiter` + one process-wide `SEC_RATE_LIMITER`
+(9 req/s). All SEC openers (`edgar`, `ftd`, `fundamentals`) acquire under a single
+`SEC_HOST_KEY='sec.gov'` (not the literal host, which would split www/data and
+double the rate). TDD: fake-clock spacing, key independence, refill, wiring.
 
-### 1b. ✅ `fundamentals --bulk` quarterly-ZIP run-loop — DONE
-- **Shipped:** `fetch.bulk_zip_url` + `fetch.fetch_bulk` (bytes opener paying the
-  shared SEC bucket; 404 → `None` so unpublished quarters skip). `run._ingest_bulk`
-  enumerates `{YYYY}q{Q}` from `--start` (default: latest completed quarter)
-  through the current quarter, `parse_bulk` → group by CIK → `upsert_companies` +
-  `write_facts`. Company name/sic come from the ZIP's `sub.tsv` (labeled even with
-  an empty ticker map). `--bulk` is now an alternate primary path (frames/
-  companyfacts skipped). CLI `--start` added.
+### 1b. ✅ `fundamentals --bulk` quarterly-ZIP run-loop
+`fetch_bulk`/`bulk_zip_url` (bytes opener on the shared SEC bucket; 404→skip) +
+`run._ingest_bulk` enumerating `{YYYY}q{Q}` from `--start` through the current
+quarter → `parse_bulk` → grouped upsert. CLI `--start`.
 
-### 1c. ✅ Wider revision-lookback for `treasury` and `nyfed` — DONE
-- **Shipped:** both floor the incremental fetch at `max_date − 7 days` (upsert-in-
-  place absorbs the restatement) and add `--full` to re-pull from `--start` (or
-  full history), ignoring the lookback. Event datasets and first-ever pulls are
-  unchanged. TDD: a restated within-window prior-day row is re-absorbed; `--full`
-  re-pulls full history.
+### 1c. ✅ Wider revision-lookback for `treasury` and `nyfed`
+Both floor the incremental fetch at `max_date − 7 days` + a `--full` re-pull.
+TDD: a restated within-window prior-day row is re-absorbed.
 
-### 1d. ✅ `earnings` cadence-based date estimation (EDGAR job "b") — DONE
-- **Shipped:** `fetch.item_202_history` factors the per-ticker submissions lookup
-  out of `confirm_via_edgar` (which reuses it). `fetch.estimate_next_report`
-  projects the next date from the **median** inter-filing gap of stored 8-K Item
-  2.02 dates, rolled forward past today (a stale-but-regular filer still gets a
-  future date); median resists 8-K/A (tiny gap) and missed-quarter (double gap)
-  outliers; needs ≥3 dates. `run.py` estimates only watched names **absent** from
-  the forward feed (disjoint from the confirm set → no double EDGAR fetch), honors
-  `--horizon-days`, and writes them `status='scheduled'` `source='edgar-estimate'`
-  — distinct from `'stockanalysis'` (forward) and `'edgar'` (confirmation).
+### 1d. ✅ `earnings` cadence-based EDGAR date estimation (job "b")
+`item_202_history` + `estimate_next_report` (median inter-filing gap, rolled
+forward past today). Watched names absent from the feed get a `scheduled`
+`edgar-estimate` event, honoring `--horizon-days`.
 
-### 1e. 🔵 USDA WASDE-native balance-sheet ingestion — RESEARCHED, ready to build
-- **Finding (changes the approach):** the WASDE ending-stocks/use balance sheet
-  **is** available as a stable, machine-readable **OCE CSV** — no ESMIS file
-  scraping needed. Two official routes, updated the day after each release:
-  - Per-release: `https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-{YYYY}-{MM}.csv`
-  - Consolidated history (2010–present), linked from the OCE "Historical WASDE
-    Report Data" page.
-- **Schema (tidy/long format, confirm exact column names on a networked run):**
-  one row per `(Commodity, Region, Attribute, MarketYear)` with a projection/
-  estimate flag, `Value`, and `Unit`. `Region` ∈ {World, United States};
-  `Attribute` ∈ {Beginning Stocks, Production, Imports, Supply, Domestic Use/Feed,
-  Exports, **Ending Stocks**, …}. Stocks-to-use is derivable directly
-  (`Ending Stocks / Total Use`).
-- **Recommended design:** add `usda_screener/fetch.py::fetch_wasde_csv(year,
-  month)` + a tidy-CSV parser; enumerate releases like the `fundamentals --bulk`
-  loop; write rows into `usda_obs` with `source='wasde'` and a `metric` derived
-  from `Attribute` (e.g. `ending_stocks`, `total_use`) so `v_stocks_to_use`
-  becomes WASDE-accurate instead of only as complete as Quick Stats' `TOTAL_USE`.
-  Fits the official-primary-sources policy directly (OCE, no aggregator).
-- **Remaining before build:** one networked run to confirm the exact CSV header
-  names + the `Attribute` vocabulary, then a small `metric`/`source` mapping
-  decision. The USDA host is slow — stream/allow a long timeout.
+### 1e. ✅ USDA WASDE balance-sheet ingestion
+The machine-readable OCE CSV (`oce-wasde-report-data-{YYYY}-{MM}.csv`) supplies
+the ending-stocks/use balance sheet Quick Stats structurally can't (see §2).
+`usda_screener/wasde.py` (tolerant, fail-loud tidy-CSV parser) + `wasde_obs`
+sibling table + `v_wasde_stocks_to_use` (`unit` is in the PK — a grain's U.S.
+line appears in both the U.S.-domestic bushels table and the world-table metric-
+tons row; STU falls back to domestic_use+exports where there's no "Use, Total").
+`run_wasde` walks back to the newest published release; `--wasde` CLI.
+**Verified end-to-end against the real Dec-2025 CSV:** 42 commodities, 3149 obs;
+US STU Corn 0.125, Wheat 0.439, Sorghum 0.101. (Live HTTP fetch not exercised —
+the USDA file host was unreachable from the build env; URL builder + 404 handling
+are unit-tested. Confirm the live fetch on any run from a reachable network.)
 
 ---
 
-## 2. Live 🟡 endpoint / field verification — PROBED
+## 2. Live endpoint / field verification — COMPLETE ✅
 
-The five §2 screeners were probed against their live services (read-only, project
-UA). Results below; each parser still raises loudly on a zero-row shape change, so
-the risk being checked is a **renamed field that parses to `None` and silently
-drops data**.
+All five screeners were probed against their live services (read-only, project
+UA / keys). Every parser now matches live reality.
 
 | Screener | Result |
 |---|---|
-| `ats` | ✅ **Fixed.** Slug `otcMarket/weeklySummary` + body confirmed. Parser read `ATSName` (does **not** exist live → `ats_name` always `None`); now reads `marketParticipantName`. Two design calls remain (below). |
-| `nyfed` | 🟡 `reference_rates` **confirmed**; `repo`/`rrp`/`soma` have real drifts (below). |
-| `cboe_stats` | 🟡 4 VIX/VVIX routes **confirmed**; the **PCR route is broken** (below). |
-| `eia` | ⛔ **Blocked** — needs `EIA_API_KEY` (unset in this env). |
-| `usda` | ⛔ **Blocked** — needs `NASS_API_KEY` (unset in this env). |
+| `ats` | ✅ **Fixed.** `marketParticipantName` (was always-null `ATSName`); ingest only granular `ATS_W_SMBL_FIRM` rows. Live: 7104 rows, 0 null-MPID, 31/31 venues named. |
+| `nyfed` | ✅ **Fixed.** `repo` 400→`/rp/results/search.json` (filter by `operationType`); `rrp`/`repo` `total_submitted`+`award_rate` from the results feed / `details[]`; `soma` melted wide→long. Live: repo 26 + rrp 13 ops with rates; soma across all 9 security types. |
+| `cboe_stats` | ✅ **Fixed.** PCR feed disabled by default (Cboe discontinued the free daily P/C CSV; not on FRED either). 4 VIX/VVIX CDN routes confirmed. |
+| `eia` | ✅ **Confirmed** — all 7 series, routes, facets, bracket-param round-trip, field names match live. No change. |
+| `usda` | ✅ **Fixed.** Dropped the 3 `TOTAL_USE` targets (NASS has no `statisticcat='USE'`; total use → WASDE, 1e). 6 targets confirmed live. |
 
-### 2a. `ats` — remaining design calls (not silent-drop bugs)
-- **OTC vs ATS scope:** the week-only `compareFilters` also returns non-ATS
-  `OTC_*` `summaryTypeCode` rows (for wk 2026-06-08: ~4.3k `ATS_*`, ~0.9k `OTC_*`).
-  Decide whether the "ATS dark-pool" screener should filter to `summaryTypeCode`
-  starting `ATS_`, or intentionally keep both venue families.
-- **Null `MPID` semantics:** blank `MPID` currently maps to the
-  `NON_ATS_DEMINIMIS` sentinel, but in live data null `MPID` marks **symbol-level
-  aggregate roll-ups** (`ATS_W_SMBL`, firm rows w/o MPID), not de-minimis venues
-  — collapsing them all to one sentinel mislabels aggregates and can collide on
-  the PK. Revisit alongside the scope decision.
-
-### 2b. `nyfed` — precise fixes (evidence from live probe, base `markets.newyorkfed.org/api`)
-- 🔴 **`repo` broken path.** `/rp/repo/all/results/search.json` returns **HTTP
-  400** (∉ retry set → `http_get` raises → repo never ingests). Live path is
-  **`/rp/results/search.json`** (200; returns both repo + reverse ops, so the
-  parser must filter by operation type — confirm the type field/values live).
-- 🟠 **`repo`/`rrp` rate + submitted fields.** `award_rate` and (RRP)
-  `total_submitted` are **absent at the record top level** → always `None`. Rate
-  detail is nested: repo under `details[]`
-  (`percentWeightedAverageRate`/`percentHighRate`/…), RRP under `propositions[]`.
-  Populating them means reaching into the nested arrays.
-- 🟠 **`soma` wide-format drop.** `/soma/summary.json` returns **one row per
-  `asOfDate` with security types as columns** (`mbs, cmbs, tips, frn, notesbonds,
-  bills, agencies, total`). `securityType`/`parValue` don't exist; the parser
-  survives only via fallbacks (`security_type='total'`, `par_value=r['total']`),
-  so **only the daily total is captured and the per-security breakdown is silently
-  dropped**. Fixing means melting wide→long (one row per security type) — a small
-  schema/parser change to `(as_of_date, security_type)`.
-- `primary_dealer` (disabled, phase-2): `/pd/get/all/timeseries.json` 400s (`all`
-  invalid) and live PD field names are **lowercase** (`keyid`, `seriesbreak`,
-  `asof`) vs the parser's camelCase. Already flagged; fix when enabling.
-
-### 2c. `cboe_stats` — PCR route broken
-- 🔴 **PCR feed dead.** The hardcoded
-  `cdn.cboe.com/api/global/us_indices/daily_prices/put_call_ratio.csv` returns
-  **403** (file absent; the same host+UA serves every `*_History.csv` at 200), so
-  `_get_csv` swallows it and the PCR table never populates. No working combined
-  put/call-ratio CSV route was found (legacy `www.cboe.com/publish/…/*pc.csv`
-  paths now return the SPA HTML shell). **Needs the correct current Cboe route**
-  (and the assumed `DATE,TOTAL_PCR,EQUITY_PCR,INDEX_PCR,TOTAL_VOLUME` combined
-  schema re-confirmed against it) **or the PCR feed removed**. The 4 VIX/VVIX CDN
-  routes + `_norm_date` (MM/DD/YYYY) + the VVIX single-series fallback are all
-  confirmed correct — no change.
-
-**Env note:** `EIA_API_KEY` and `NASS_API_KEY` are present in `.env.example` but
-unset locally; set them (free registration) to unblock the `eia`/`usda` probes.
+### Deferred §2 sub-items (intentional, low-severity)
+- 🟠 **`nyfed` `award_rate` / rate nesting.** `award_rate` is derived from the
+  dominant `details[]` leg. The per-security detail rows (each leg's
+  submitted/accepted/rate) are not stored individually — only the operation
+  total + a representative rate. Add a `repo_op_details` child table if the
+  per-leg breakdown is ever needed.
+- 🟠 **`nyfed` `primary_dealer`** (phase-2, disabled): `/pd/get/all/...` 400s and
+  live field names are lowercase (`keyid`/`seriesbreak`/`asof`). Fix when enabling.
+- 🟠 **`cboe_stats` PCR** stays code-complete but off; wire a paid Cboe DataShop
+  source and `--only PCR` to re-enable, or delete the feed.
+- 🟠 **`usda` quarterly-stocks vintage.** Quick Stats `STOCKS` returns quarterly
+  grain-stock levels; `parse_response` maps each to its year and the writer
+  keeps last-wins per (commodity, metric, year) — so `ENDING_STOCKS` is a
+  quarterly value, not the marketing-year ending stock. This is the imprecision
+  WASDE (1e) supersedes; prefer `v_wasde_stocks_to_use` for a true balance sheet.
+  A future refinement could filter Quick Stats to a canonical `reference_period`.
 
 ---
 
-## 3. Idea 💡 backlog (no spec yet)
+## 3. Idea 💡 backlog (no spec yet) — deferred by choice
 
 Un-spec'd future screeners. Each starts with a design spec (brainstorming →
 `docs/superpowers/specs/`) before the build loop, and must fit the
 **official-primary-sources-only** policy (the one approved exception,
 stockanalysis.com, is already used).
 
-- **Reg SHO threshold securities list** — SEC/exchange threshold-list membership
-  (persistent fails). Complements `ftd` + `short_interest` for the squeeze signal.
-- **SEC 13F institutional holdings** — quarterly institutional positions
-  (`data.sec.gov` / EDGAR 13F). Panel keyed on `(cik/manager, cusip, quarter)`.
-- **OCC cleared options/futures volume** — venue-agnostic cleared volume/OI from
-  `theocc.com`; complements `cboe_stats`.
-- **SEC N-PORT / N-MFP fund holdings** — mutual-fund / money-market-fund holdings.
-- **FINRA TRACE corporate/agency bond data** — credit-tape read alongside the
-  equity/venue screeners.
-
-**Recommended order (signal value × feasibility, all official-source):**
-1. **Reg SHO threshold list** — small, fully specifiable now, and directly
-   completes the squeeze-signal trio with `ftd`/`short_interest`. Reuses the SEC
-   scaffolding (UA + shared throttle from 1a).
-2. **13F holdings** — high signal, reuses `data.sec.gov` + the throttle; the main
-   work is the 13F XML/INFOTABLE parser and the panel schema.
-3. **OCC cleared volume** — natural `cboe_stats` sibling; do after the `cboe_stats`
-   PCR route (§2c) is resolved so the options package is coherent.
-4. **N-PORT/N-MFP**, **TRACE** — larger parsers, lower marginal signal; schedule
-   last.
+**Recommended build order (signal × feasibility, all official-source):**
+1. **Reg SHO threshold securities list** — small, fully specifiable now; completes
+   the squeeze-signal trio with `ftd`/`short_interest`. Reuses the SEC
+   scaffolding + shared throttle (1a).
+2. **SEC 13F institutional holdings** — high signal; reuses `data.sec.gov` + the
+   throttle. Main work: the 13F INFOTABLE XML parser + a `(manager, cusip,
+   quarter)` panel.
+3. **OCC cleared options/futures volume** — venue-agnostic cleared totals from
+   `theocc.com`; natural `cboe_stats` sibling (do after the PCR source question).
+4. **SEC N-PORT / N-MFP fund holdings**, **FINRA TRACE bond data** — larger
+   parsers, lower marginal signal; schedule last.
 
 ---
 
-## Suggested order if picking this up
-1. **§2c / §2b fixes** — `cboe_stats` PCR route + `nyfed` `repo` path are the two
-   🔴 silent/hard failures currently costing live data; cheap once the route/path
-   is confirmed.
-2. **1e (WASDE CSV)** — one networked run to confirm the CSV header, then wire the
-   second fetch path; unlocks a WASDE-accurate stocks-to-use view.
-3. **`eia`/`usda` §2 probes** — do once the API keys are set.
-4. **§3 ideas** — start with the Reg SHO threshold list (spec first).
+## Env note
+`.env` needs `FRED_API_KEY`, `EIA_API_KEY`, `NASS_API_KEY` (all free; query
+params, never logged). The WASDE feed (1e) needs no key. Runs read keys from the
+environment — export from `.env` before invoking (e.g. `usda`/`eia`).
