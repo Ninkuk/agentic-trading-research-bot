@@ -110,6 +110,68 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     return len(ids)
 
 
-# Views are defined in Task 4; start with an empty string so ensure_schema works
-# now and gains the views when Task 4 fills this in.
-_VIEWS = ""
+_VIEWS = """
+-- Newest reported value per (cik, tag), joined to the company label.
+CREATE VIEW IF NOT EXISTS v_latest_fundamentals AS
+WITH ranked AS (
+    SELECT f.*, ROW_NUMBER() OVER (
+               PARTITION BY f.cik, f.tag
+               ORDER BY f.period_end DESC, f.filed DESC) AS rn
+    FROM facts f
+)
+SELECT r.cik, c.ticker, c.name, r.tag, r.uom, r.period_end,
+       r.fiscal_year, r.fiscal_period, r.value, r.form, r.filed
+FROM ranked r JOIN companies c ON c.cik = r.cik
+WHERE r.rn = 1;
+
+-- All filers' values for one tag+period (caller filters tag/period_end).
+CREATE VIEW IF NOT EXISTS v_frame_cross_section AS
+SELECT f.tag, f.period_end, f.cik, c.ticker, c.name, f.uom, f.value,
+       f.fiscal_year, f.fiscal_period, f.form, f.filed
+FROM facts f JOIN companies c ON c.cik = f.cik
+ORDER BY f.tag, f.period_end, f.value DESC;
+
+-- Pivoted headline metrics per company + ratios derived live from raw facts.
+CREATE VIEW IF NOT EXISTS v_screener AS
+WITH pivoted AS (
+    SELECT l.cik, MAX(l.ticker) AS ticker, MAX(l.name) AS name,
+      MAX(CASE WHEN l.tag IN ('Revenues',
+             'RevenueFromContractWithCustomerExcludingAssessedTax')
+          THEN l.value END) AS revenues,
+      MAX(CASE WHEN l.tag='NetIncomeLoss' THEN l.value END) AS net_income,
+      MAX(CASE WHEN l.tag='Assets' THEN l.value END) AS assets,
+      MAX(CASE WHEN l.tag='Liabilities' THEN l.value END) AS liabilities,
+      MAX(CASE WHEN l.tag='StockholdersEquity' THEN l.value END) AS equity,
+      MAX(CASE WHEN l.tag='CommonStockSharesOutstanding' THEN l.value END) AS shares,
+      MAX(CASE WHEN l.tag='EarningsPerShareDiluted' THEN l.value END) AS eps_diluted
+    FROM v_latest_fundamentals l GROUP BY l.cik
+)
+SELECT p.cik, p.ticker, p.name, p.revenues, p.net_income, p.assets,
+       p.liabilities, p.equity, p.shares, p.eps_diluted,
+       CASE WHEN p.revenues IS NOT NULL AND p.revenues <> 0
+            THEN p.net_income / p.revenues END AS net_margin,
+       CASE WHEN p.equity IS NOT NULL AND p.equity <> 0
+            THEN p.net_income / p.equity END AS roe,
+       CASE WHEN p.equity IS NOT NULL AND p.equity <> 0
+            THEN p.liabilities / p.equity END AS debt_to_equity
+FROM pivoted p;
+
+-- Restatements: a (cik, tag, period_end) reported under >1 form, with the delta.
+CREATE VIEW IF NOT EXISTS v_revisions AS
+WITH multi AS (
+    SELECT cik, tag, period_end FROM facts
+    GROUP BY cik, tag, period_end HAVING COUNT(*) > 1
+),
+seq AS (
+    SELECT f.cik, f.tag, f.period_end, f.form, f.filed, f.value,
+           f.value - LAG(f.value) OVER (
+               PARTITION BY f.cik, f.tag, f.period_end
+               ORDER BY f.filed) AS value_delta
+    FROM facts f JOIN multi m
+      ON m.cik=f.cik AND m.tag=f.tag AND m.period_end=f.period_end
+)
+SELECT s.cik, c.ticker, s.tag, s.period_end, s.form, s.filed, s.value,
+       s.value_delta
+FROM seq s JOIN companies c ON c.cik = s.cik
+ORDER BY s.cik, s.tag, s.period_end, s.filed;
+"""
