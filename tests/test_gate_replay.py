@@ -33,6 +33,16 @@ def test_offline_replay_reproduces_heat_cut_book_and_writes_nothing(tmp_path):
     assert before == after                       # strictly read-only
 
 
+def test_offline_replay_uses_read_only_connection(tmp_path, monkeypatch):
+    gpath, run_id = _gate_world(tmp_path, [_reply()])
+
+    def _forbid_writable_connect(*args, **kwargs):
+        raise AssertionError("writable connect in offline replay")
+
+    monkeypatch.setattr(grun.db, "connect", _forbid_writable_connect)
+    assert grun.replay(gpath, run_id) is True
+
+
 def test_replay_detects_tampered_row(tmp_path):
     gpath, run_id = _gate_world(tmp_path, [_reply()])
     # tamper at INSERT time (triggers forbid mutation): forge a copycat run

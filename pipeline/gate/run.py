@@ -16,6 +16,7 @@ either to a fresh gate `run()` or to `replay()`.
 import argparse
 import json
 import os
+import sqlite3
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -254,7 +255,11 @@ def replay(db_path, run_id, live=False, complete=llm.complete, api_key=None,
 
     Returns True iff every decision matches on all diffed fields. Unknown
     run_id prints to stderr and returns False."""
-    conn = db.connect(db_path)
+    try:
+        conn = pipeline_common.connect_ro(db_path)
+    except sqlite3.OperationalError as e:
+        print(f"replay: {type(e).__name__}", file=sys.stderr)
+        return False
     try:
         header = db.run_row(conn, run_id)
         if header is None:
@@ -285,15 +290,19 @@ def replay(db_path, run_id, live=False, complete=llm.complete, api_key=None,
                     print(f"replay mismatch decision={row['decision_id']} "
                           f"field={field} stored={row[field]!r} "
                           f"recomputed={rec[field]!r}")
+    finally:
+        conn.close()
 
-        if live:
-            now_iso = now_iso or datetime.now(timezone.utc).isoformat()
-            key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-            if not key:
-                raise ValueError(
-                    "no API key: pass api_key or set ANTHROPIC_API_KEY "
-                    "for --live replay")
-            model = header["model_version"] or catalog.DEFAULT_MODEL
+    if live:
+        now_iso = now_iso or datetime.now(timezone.utc).isoformat()
+        key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        if not key:
+            raise ValueError(
+                "no API key: pass api_key or set ANTHROPIC_API_KEY "
+                "for --live replay")
+        model = header["model_version"] or catalog.DEFAULT_MODEL
+        write_conn = db.connect(db_path)
+        try:
             for row in rows:
                 checkpoint = json.loads(row["checkpoint"])
                 try:
@@ -307,12 +316,12 @@ def replay(db_path, run_id, live=False, complete=llm.complete, api_key=None,
                       f"stored_action={row['agent_action']} "
                       f"stored_size_mult={row['agent_size_mult']} "
                       f"counterfactual={detail}")
-                db.write_events(conn, row["decision_id"],
+                db.write_events(write_conn, row["decision_id"],
                                 [("replayed", now_iso, detail)])
+        finally:
+            write_conn.close()
 
-        return clean
-    finally:
-        conn.close()
+    return clean
 
 
 def main(argv=None) -> None:
