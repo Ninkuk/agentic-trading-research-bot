@@ -42,7 +42,7 @@ approved exception — **stockanalysis.com** (already trusted/used). The existin
 | `reddit` | ApeWisdom social sentiment | Retail/social mention velocity | [spec](superpowers/specs/2026-07-02-reddit-screener-design.md) | [plan](superpowers/plans/2026-07-02-reddit-screener.md) |
 | `edgar` | SEC EDGAR daily-index filings | Insider (Form 4), 8-K, 13D/G, S-1/424B, 10-K/Q | [spec](superpowers/specs/2026-07-02-edgar-screener-design.md) | [plan](superpowers/plans/2026-07-02-edgar-screener.md) |
 | `fred` | FRED macro time series | Macro indicators | [spec](superpowers/specs/2026-07-02-fred-screener-design.md) | [plan](superpowers/plans/2026-07-02-fred-screener.md) |
-| `cftc` | CFTC COT (legacy futures-only) | Futures positioning / COT index | [spec](superpowers/specs/2026-07-03-cftc-screener-design.md) | [plan](superpowers/plans/2026-07-03-cftc-screener.md) |
+| `cftc` (`--family`) | CFTC COT — Legacy + Disaggregated + TFF | Futures positioning / COT index; +managed-money (disagg) & leveraged-fund (TFF) nets | [spec](superpowers/specs/2026-07-03-cftc-screener-design.md) · [disagg/tff](superpowers/specs/2026-07-03-cot-disaggregated-tff-screener-design.md) | [plan](superpowers/plans/2026-07-03-cftc-screener.md) · [disagg/tff](superpowers/plans/2026-07-03-cot-disaggregated-tff-screener.md) |
 | `ftd` | SEC Fails-to-Deliver | CNS settlement fails | [spec](superpowers/specs/2026-07-03-ftd-screener-design.md) | [plan](superpowers/plans/2026-07-03-ftd-screener.md) |
 | `short_volume` | FINRA daily short-sale volume | Daily shorting pressure | [spec](superpowers/specs/2026-07-03-finra-short-volume-screener-design.md) | [plan](superpowers/plans/2026-07-03-finra-short-volume-screener.md) |
 
@@ -53,7 +53,6 @@ Cross-cutting: [CFTC revision lookback](superpowers/specs/2026-07-03-cftc-revisi
 | Dispatcher | Screener | Signal | Spec | Plan |
 |---|---|---|---|---|
 | `options` | CBOE per-contract options | Per-ticker IV / greeks / OI / Vol-OI | [spec](superpowers/specs/2026-07-03-cboe-options-screener-design.md) | [plan](superpowers/plans/2026-07-03-cboe-options-screener.md) |
-| `cftc` (`--family`) | CFTC Disaggregated + TFF COT | Swap-dealer / managed-money / leveraged-fund positioning | [spec](superpowers/specs/2026-07-03-cot-disaggregated-tff-screener-design.md) | [plan](superpowers/plans/2026-07-03-cot-disaggregated-tff-screener.md) |
 
 ---
 
@@ -94,7 +93,7 @@ New "forward calendar" kind. Framework: [event-monitor-framework](superpowers/sp
 
 Ranked by signal × low effort × non-overlap (reuse of existing pipelines called out):
 
-1. **`cftc --family` (Disaggregated/TFF)** — clones the existing CFTC Socrata pipeline. → [plan](superpowers/plans/2026-07-03-cot-disaggregated-tff-screener.md)
+1. ~~**`cftc --family` (Disaggregated/TFF)**~~ — ✅ **Built** (see Built table). Cloned the existing CFTC Socrata pipeline. [plan](superpowers/plans/2026-07-03-cot-disaggregated-tff-screener.md)
 2. **`short_interest`** — clones the `short_volume` CDN pattern; adds squeeze/days-to-cover.
 3. **`econ_calendar`** — reuses the existing FRED key; unified upcoming-release backbone.
 4. **`market_calendar`** — small, deterministic; shared infra other monitors depend on.
