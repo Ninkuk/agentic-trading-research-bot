@@ -1,8 +1,26 @@
 import argparse
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from treasury_screener import catalog, db, fetch
+
+# On incremental re-runs, re-fetch this many days before the latest stored
+# record_date so the record_date upsert re-absorbs restatements to recent days
+# (fiscal agencies revise a few days back). --full ignores it and re-pulls from
+# --start (or full history). See [[incremental-since-misses-revisions]].
+_LOOKBACK_DAYS = 7
+
+
+def _since_floor(last, start, full):
+    """Inclusive record_date floor for a daily/monthly dataset. Explicit
+    ``start`` wins; ``full`` (or a first-ever pull with no stored data) pulls
+    full history / from start; otherwise floor at ``last`` - _LOOKBACK_DAYS."""
+    if start is not None:
+        return start
+    if full or last is None:
+        return start
+    return (datetime.fromisoformat(last)
+            - timedelta(days=_LOOKBACK_DAYS)).date().isoformat()
 
 # dataset_id -> (parser, writer, table). yield_curve is handled separately (XML).
 _HANDLERS = {
@@ -22,7 +40,7 @@ def _max_date(conn, table, date_col="record_date"):
 
 
 def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
-        fetch_dataset=fetch.fetch_dataset,
+        full=False, fetch_dataset=fetch.fetch_dataset,
         fetch_yield_curve=fetch.fetch_yield_curve, now_iso=None):
     """Fetch the selected Treasury datasets, upsert each into its table,
     snapshot the run, optionally prune. Skip-and-continue per dataset. Returns
@@ -46,11 +64,10 @@ def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
                 elif dataset_id in _HANDLERS:
                     parser, writer, table = _HANDLERS[dataset_id]
                     # event datasets have no record_date floor; daily/monthly do
-                    since = None
-                    if ds and ds.frequency != "event" and start is None:
-                        since = _max_date(conn, table)
-                    elif start is not None:
+                    if ds and ds.frequency == "event":
                         since = start
+                    else:
+                        since = _since_floor(_max_date(conn, table), start, full)
                     raw = fetch_dataset(ds.endpoint if ds else dataset_id,
                                         since=since)
                     n = writer(conn, parser(raw))
@@ -92,11 +109,15 @@ def main(argv=None):
                    help="extra dataset id not in the catalog (repeatable)")
     p.add_argument("--start", default=None,
                    help="record_date floor for the first fetch (YYYY-MM-DD)")
+    p.add_argument("--full", action="store_true",
+                   help="re-pull from --start (or full history), ignoring the "
+                        "incremental revision-lookback")
     p.add_argument("--keep-days", type=int, default=None,
                    help="prune snapshot provenance older than N days")
     a = p.parse_args(argv)
     _, nds, nrows = run(a.db, only=_split(a.only), exclude=_split(a.exclude),
-                        add=a.add, start=a.start, keep_days=a.keep_days)
+                        add=a.add, start=a.start, full=a.full,
+                        keep_days=a.keep_days)
     print(f"stored {nrows} rows across {nds} datasets into {a.db}")
 
 

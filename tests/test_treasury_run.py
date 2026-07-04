@@ -66,9 +66,48 @@ def test_run_incremental_second_run_upserts(tmp_path):
     runmod.run(db_path, only=["debt_penny"], fetch_dataset=fetch_dataset, now_iso=NOW)
     runmod.run(db_path, only=["debt_penny"], fetch_dataset=fetch_dataset, now_iso=NOW)
     assert seen["since"][0] is None             # first run: full history
-    assert seen["since"][1] == "2026-07-02"     # second run: floored at max date
+    # second run: floored 7 days BEFORE the max stored date (2026-07-02) so the
+    # re-fetch window re-absorbs restatements to recent already-stored days.
+    assert seen["since"][1] == "2026-06-25"
     conn = sqlite3.connect(db_path)
     assert conn.execute("SELECT COUNT(*) FROM debt_penny").fetchone()[0] == 1
+
+
+def test_run_incremental_reabsorbs_restated_prior_day(tmp_path):
+    db_path = str(tmp_path / "t.db")
+    seen = {"since": []}
+    responses = [
+        _raw_debt(["2026-06-28", "2026-07-02"]),   # first run: two stored days
+        [{"record_date": "2026-06-28", "tot_pub_debt_out_amt": "999",
+          "debt_held_public_amt": "70", "intragov_hold_amt": "30"}],  # restated
+    ]
+
+    def fetch_dataset(endpoint, *, fields=None, since=None):
+        seen["since"].append(since)
+        return responses[len(seen["since"]) - 1]
+
+    runmod.run(db_path, only=["debt_penny"], fetch_dataset=fetch_dataset, now_iso=NOW)
+    runmod.run(db_path, only=["debt_penny"], fetch_dataset=fetch_dataset, now_iso=NOW)
+    # the widened window (from 2026-06-25) covers the restated 06-28 day
+    assert seen["since"][1] == "2026-06-25"
+    conn = sqlite3.connect(db_path)
+    val = conn.execute("SELECT tot_pub_debt_out FROM debt_penny "
+                       "WHERE record_date='2026-06-28'").fetchone()[0]
+    assert val == 999.0                          # restatement re-absorbed
+
+
+def test_run_full_ignores_incremental_lookback(tmp_path):
+    db_path = str(tmp_path / "t.db")
+    seen = {"since": []}
+
+    def fetch_dataset(endpoint, *, fields=None, since=None):
+        seen["since"].append(since)
+        return _raw_debt(["2026-07-02"])
+
+    runmod.run(db_path, only=["debt_penny"], fetch_dataset=fetch_dataset, now_iso=NOW)
+    runmod.run(db_path, only=["debt_penny"], fetch_dataset=fetch_dataset,
+               full=True, now_iso=NOW)
+    assert seen["since"] == [None, None]         # --full re-pulls full history
 
 
 def test_run_keep_days_prunes_snapshots_not_facts(tmp_path):

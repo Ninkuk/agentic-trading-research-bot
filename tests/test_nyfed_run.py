@@ -65,7 +65,49 @@ def test_run_incremental_floors_start_at_max_date(tmp_path):
     runmod.run(db_path, only=["reference_rates"], fetch_domain=fetch_domain,
                now_iso=NOW)
     assert seen["start"][0] is None              # first run: full history
-    assert seen["start"][1] == "2026-06-02"      # second: floored at max date
+    # second run: floored 7 days BEFORE the max stored date (2026-06-02) so the
+    # NY Fed's few-days-back restatements to stored rows are re-absorbed.
+    assert seen["start"][1] == "2026-05-26"
+
+
+def test_run_incremental_reabsorbs_restated_prior_day(tmp_path):
+    db_path = str(tmp_path / "n.db")
+    seen = {"start": []}
+    responses = [
+        [{"effectiveDate": "2026-05-30", "type": "SOFR", "percentRate": "5.3"},
+         {"effectiveDate": "2026-06-02", "type": "SOFR", "percentRate": "5.3"}],
+        [{"effectiveDate": "2026-05-30", "type": "SOFR", "percentRate": "9.9"}],
+    ]
+
+    def fetch_domain(endpoint, *, start=None, end=None):
+        seen["start"].append(start)
+        return responses[len(seen["start"]) - 1]
+
+    runmod.run(db_path, only=["reference_rates"], fetch_domain=fetch_domain,
+               now_iso=NOW)
+    runmod.run(db_path, only=["reference_rates"], fetch_domain=fetch_domain,
+               now_iso=NOW)
+    assert seen["start"][1] == "2026-05-26"      # window covers restated 05-30
+    conn = sqlite3.connect(db_path)
+    val = conn.execute("SELECT percent_rate FROM reference_rates "
+                       "WHERE effective_date='2026-05-30'").fetchone()[0]
+    assert val == 9.9                            # restatement re-absorbed
+
+
+def test_run_full_ignores_incremental_lookback(tmp_path):
+    db_path = str(tmp_path / "n.db")
+    seen = {"start": []}
+
+    def fetch_domain(endpoint, *, start=None, end=None):
+        seen["start"].append(start)
+        return [{"effectiveDate": "2026-06-02", "type": "SOFR",
+                 "percentRate": "5.3"}]
+
+    runmod.run(db_path, only=["reference_rates"], fetch_domain=fetch_domain,
+               now_iso=NOW)
+    runmod.run(db_path, only=["reference_rates"], fetch_domain=fetch_domain,
+               full=True, now_iso=NOW)
+    assert seen["start"] == [None, None]         # --full re-pulls full history
 
 
 def test_run_keep_days_prunes_snapshots_not_facts(tmp_path):
