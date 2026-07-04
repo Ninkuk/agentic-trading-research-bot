@@ -77,7 +77,8 @@ _RETRY_STATUS = frozenset({403, 429, 503})  # SEC throttles with 403 (not 429)
 _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
 
-_urlopen = http_client.make_opener(_UA)
+_urlopen = http_client.make_opener(
+    _UA, limiter=http_client.SEC_RATE_LIMITER, limiter_key=http_client.SEC_HOST_KEY)
 
 
 def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,

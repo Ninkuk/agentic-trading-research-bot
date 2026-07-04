@@ -86,6 +86,75 @@ def test_http_get_honors_retry_after_header():
     assert slept == [7.0]
 
 
+class _FakeClock:
+    """Monotonic clock whose sleep() advances the clock, so RateLimiter's
+    wait-until-token loop terminates deterministically without real time."""
+    def __init__(self):
+        self.t = 0.0
+        self.sleeps = []
+
+    def time(self):
+        return self.t
+
+    def sleep(self, dt):
+        self.sleeps.append(dt)
+        self.t += dt
+
+
+def test_rate_limiter_spaces_calls_to_same_key():
+    clk = _FakeClock()
+    rl = http_client.RateLimiter(10.0, clock=clk.time, sleep=clk.sleep)
+    for _ in range(3):
+        rl.acquire("sec.gov")
+    # first call is free (full bucket); each subsequent call waits 1/rate = 0.1s
+    assert clk.sleeps == [0.1, 0.1]
+
+
+def test_rate_limiter_keys_are_independent():
+    clk = _FakeClock()
+    rl = http_client.RateLimiter(10.0, clock=clk.time, sleep=clk.sleep)
+    rl.acquire("a")
+    rl.acquire("b")  # different key -> its own full bucket -> no wait
+    assert clk.sleeps == []
+
+
+def test_rate_limiter_refills_over_elapsed_time():
+    clk = _FakeClock()
+    rl = http_client.RateLimiter(10.0, clock=clk.time, sleep=clk.sleep)
+    rl.acquire("sec.gov")   # consumes the one token
+    clk.t += 0.1            # 0.1s elapses -> one token refilled externally
+    rl.acquire("sec.gov")   # token available, no sleep
+    assert clk.sleeps == []
+
+
+def test_make_opener_acquires_limiter_before_request():
+    order = []
+
+    class FakeLimiter:
+        def acquire(self, key):
+            order.append(("acquire", key))
+
+    class FakeResp:
+        def read(self): return b"BODY"
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    def fake_urlopen(req, timeout=None):
+        order.append(("request", req.full_url))
+        return FakeResp()
+
+    orig = http_client.urllib.request.urlopen
+    http_client.urllib.request.urlopen = fake_urlopen
+    try:
+        opener = http_client.make_opener(
+            {"User-Agent": "UA"}, limiter=FakeLimiter(), limiter_key="sec.gov")
+        opener("http://data.sec.gov/x")
+    finally:
+        http_client.urllib.request.urlopen = orig
+    # throttle is paid BEFORE the network request, and with the domain key
+    assert order == [("acquire", "sec.gov"), ("request", "http://data.sec.gov/x")]
+
+
 def test_make_opener_attaches_headers_and_reads_body():
     seen = {}
 
