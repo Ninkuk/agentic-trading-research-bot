@@ -23,6 +23,25 @@ def test_select_ids_strips_exclude_tokens():
     assert select_ids(["a", "b", "c"], None, [" b "]) == ["a", "c"]
 
 
+def test_run_fetches_catalog_for_the_requested_screener_type(tmp_path):
+    # --type e must pull the ETF catalog (/etf/screener/), not the hardcoded
+    # stocks one — the two screeners have different data-point id sets.
+    db_path = str(tmp_path / "e.db")
+    seen = {}
+
+    def fake_catalog(route="/stocks/screener/"):
+        seen["route"] = route
+        return ([DataPoint("price", "Stock Price", "Price & Volume", False)], 1)
+
+    def fake_data(ids, type_):
+        assert type_ == "e"
+        return {"SPY": {"price": 744.78}}
+
+    run(db_path, type_="e", fetch_catalog=fake_catalog, fetch_data=fake_data,
+        now_iso="2026-07-04T00:00:00+00:00")
+    assert seen["route"] == "/etf/screener/"
+
+
 def test_run_writes_snapshot_end_to_end(tmp_path):
     db_path = str(tmp_path / "s.db")
     catalog = ([
@@ -32,7 +51,7 @@ def test_run_writes_snapshot_end_to_end(tmp_path):
     data = {"AAA": {"price": 10.0, "sector": "Tech"},
             "BBB": {"price": 20.0, "sector": "Energy"}}
 
-    def fake_catalog():
+    def fake_catalog(route):
         return catalog
 
     def fake_data(ids, type_):
@@ -55,7 +74,7 @@ def test_run_twice_appends_snapshot_and_v_latest_returns_newest(tmp_path):
     db_path = str(tmp_path / "s.db")
     catalog = ([DataPoint("price", "Stock Price", "Price & Volume", False)], 1)
 
-    def fake_catalog():
+    def fake_catalog(route):
         return catalog
 
     def make_fetch(data):
@@ -80,7 +99,7 @@ def test_run_keep_days_prunes_old_snapshot_through_run(tmp_path):
     db_path = str(tmp_path / "s.db")
     catalog = ([DataPoint("price", "Stock Price", "Price & Volume", False)], 1)
 
-    def fake_catalog():
+    def fake_catalog(route):
         return catalog
 
     def make_fetch(data):
@@ -108,7 +127,7 @@ def test_run_exclude_omits_column_from_metrics_table(tmp_path):
         DataPoint("sector", "Sector", "Company Info", False),
     ], 2)
 
-    def fake_catalog():
+    def fake_catalog(route):
         return catalog
 
     def fake_data(ids, type_):
@@ -128,7 +147,7 @@ def test_run_propagates_fetch_error_and_writes_no_snapshot(tmp_path):
     db_path = str(tmp_path / "s.db")
     catalog = ([DataPoint("price", "Stock Price", "Price & Volume", False)], 1)
 
-    def fake_catalog():
+    def fake_catalog(route):
         return catalog
 
     def failing_fetch(ids, type_):
@@ -152,7 +171,7 @@ def test_run_drops_reserved_column_id_from_catalog(tmp_path):
         DataPoint("price", "Stock Price", "Price & Volume", False),
     ], 2)
 
-    def fake_catalog():
+    def fake_catalog(route):
         return catalog
 
     def fake_data(ids, type_):
@@ -182,7 +201,7 @@ def test_run_skips_data_point_with_no_values(tmp_path):
         DataPoint("proField", "Pro Metric", "Pro", True),
     ], 2)
 
-    def fake_catalog():
+    def fake_catalog(route):
         return catalog
 
     def fake_data(ids, type_):
@@ -206,7 +225,7 @@ def test_run_warns_on_short_universe_but_still_writes(tmp_path, capsys):
         DataPoint("sector", "Sector", "Company Info", False),
     ], 5)
 
-    def fake_catalog():
+    def fake_catalog(route):
         return catalog
 
     def fake_data(ids, type_):

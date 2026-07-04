@@ -4,6 +4,22 @@ from sources.screeners.stock_analysis_screener import probe
 
 CATALOG_ROUTE = "/stocks/screener/"
 
+# Each screener type has its own catalog route (and its own data-point id set);
+# the data-points API's `type` param must always match the catalog the ids
+# came from.
+_TYPE_ROUTES = {
+    "s": CATALOG_ROUTE,
+    "e": "/etf/screener/",
+}
+
+
+def route_for(type_: str) -> str:
+    try:
+        return _TYPE_ROUTES[type_]
+    except KeyError:
+        raise ValueError(f"unknown screener type: {type_!r} "
+                         f"(known: {sorted(_TYPE_ROUTES)})") from None
+
 
 @dataclass(frozen=True)
 class DataPoint:

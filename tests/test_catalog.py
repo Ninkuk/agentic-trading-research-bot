@@ -1,3 +1,6 @@
+import pytest
+
+from sources.screeners.stock_analysis_screener import catalog
 from sources.screeners.stock_analysis_screener.catalog import DataPoint, parse_catalog
 
 
@@ -34,6 +37,17 @@ def test_parse_catalog_returns_points_and_count():
 
 
 def test_parse_catalog_raises_when_payload_missing():
-    import pytest
     with pytest.raises(ValueError):
         parse_catalog({"nodes": [{"type": "data", "data": ["only-session"]}]})
+
+
+def test_route_for_maps_screener_type_to_catalog_route():
+    # Each screener type has its own catalog with different data-point ids;
+    # fetching the stocks catalog for an ETF run silently sends wrong ids.
+    assert catalog.route_for("s") == "/stocks/screener/"
+    assert catalog.route_for("e") == "/etf/screener/"
+
+
+def test_route_for_rejects_unknown_type():
+    with pytest.raises(ValueError):
+        catalog.route_for("x")

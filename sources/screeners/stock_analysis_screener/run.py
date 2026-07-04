@@ -30,7 +30,7 @@ def select_ids(all_ids, only, exclude):
 def run(db_path, keep_days=None, only=None, exclude=None, type_="s",
         fetch_catalog=catalog.fetch_catalog, fetch_data=fetch.fetch_data_points,
         now_iso=None):
-    data_points, universe_count = fetch_catalog()
+    data_points, universe_count = fetch_catalog(catalog.route_for(type_))
     all_ids = [d.id for d in data_points]
     ids = select_ids(all_ids, only, exclude)
     # Defensive guard: never let a catalog id collide with a base metrics column.

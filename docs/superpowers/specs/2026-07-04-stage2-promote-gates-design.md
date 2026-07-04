@@ -28,12 +28,14 @@ the single most recent snapshot, so the two universes cannot share one DB. There
 
 - **Stocks** (quality leads): `stocks.db` — `price`, `averageVolume`, `dollarVolume`,
   `atr`, `sector`, `nextEarningsDate`.
-- **ETFs** (COT leads): a new **`etfs.db`**, produced by the existing screener with
-  `main.py stocks --db etfs.db --type e` on the 16 mapped ETFs' universe. The ETF
-  catalog is a different 110-metric set — **live-verify its ids for
-  price/ADV/dollar-volume/ATR equivalents before the build** (FOLLOWUPS §4). Until
-  `etfs.db` exists and has those fields, COT leads cannot be promoted — this is the
-  gating data dependency for the whole COT leg.
+- **ETFs** (COT leads): **`etfs.db`**, produced by the existing screener with
+  `main.py stocks --db etfs.db --type e`. **Live-verified 2026-07-04** (route fix
+  shipped in `catalog.route_for`): the 110-metric ETF catalog uses the **same ids**
+  for every field this stage needs — `price`, `low`, `volume`, `averageVolume`,
+  `dollarVolume`, `atr` — plus `assetClass`/`etfCategory`; all 16 mapped ETFs
+  present with values. Note for threshold calibration: SOYB ($1.1M), CORN ($3.6M)
+  and CPER ($7.4M) sit under the default $10M dollar-volume floor and will be
+  liquidity-rejected until the floor is tuned — by design, not a bug.
 - **Spread** → not available from either; the spread gate is **dropped in v1** (the
   $-volume floor is the liquidity proxy). Revisit only if fills prove it necessary.
 - A lead whose instrument has no row in the relevant DB gets a `rejections` row with
