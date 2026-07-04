@@ -15,7 +15,8 @@ def _row(**over):
            "stop_distance": 8.0, "risk_dollars": 1000.0, "realized_risk": 1000.0,
            "size_lo": 0, "size_hi": 125, "as_of_date": "2026-06-30",
            "details": '[{"asset_class":"metals","commercial_index":96.0,'
-                      '"speculator_index":12.0,"code":"088691","family":"disaggregated"}]',
+                      '"speculator_index":12.0,"code":"088691",'
+                      '"family":"disaggregated","cik":1234567}]',
            "equity": 100000.0, "regime_scalar": 1.0, "config_hash": "c" * 64}
     row.update(over)
     return row
