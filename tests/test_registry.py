@@ -29,6 +29,11 @@ def test_registry_has_both_screeners():
     assert set(registry.REGISTRY) >= {"stocks", "reddit", "edgar"}
 
 
+def test_dispatch_lists_nyfed():
+    import registry
+    assert "nyfed" in registry.REGISTRY
+
+
 def test_dispatch_lists_edgar():
     import registry
     assert "edgar" in registry.REGISTRY
