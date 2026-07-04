@@ -4,7 +4,7 @@ from sources.common.screener_common import connect
 
 __all__ = ["connect", "ensure_schema", "write_dts_cash", "write_debt_penny",
            "write_avg_rates", "write_upcoming_auctions", "write_auction_results",
-           "write_yield_curve", "write_snapshot", "prune"]
+           "write_yield_curve", "write_snapshot", "prune", "set_today"]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -59,11 +59,18 @@ CREATE TABLE IF NOT EXISTS auction_results (
     total_accepted     REAL,
     PRIMARY KEY (cusip, auction_date)
 );
+CREATE TABLE IF NOT EXISTS calendar_now (
+    id    INTEGER PRIMARY KEY CHECK (id = 0),
+    today TEXT NOT NULL DEFAULT ''
+);
+INSERT OR IGNORE INTO calendar_now (id, today) VALUES (0, '');
 """
 
 
 def ensure_schema(conn) -> None:
-    """Create all Treasury tables (+ views from Task 4). Idempotent."""
+    """Create all Treasury tables (+ views from Task 4). Idempotent.
+    Drops v_upcoming_auctions before recreating to migrate off date('now')."""
+    conn.execute("DROP VIEW IF EXISTS v_upcoming_auctions")
     conn.executescript(_SCHEMA + _VIEWS)
     conn.commit()
 
@@ -146,6 +153,15 @@ def prune(conn, keep_days, now_iso) -> int:
     return len(ids)
 
 
+def set_today(conn, now_iso: str) -> str:
+    """Set the calendar_now singleton from the injected now_iso (monitor_common
+    pattern). v_upcoming_auctions filters on this — never date('now')."""
+    today = datetime.fromisoformat(now_iso).date().isoformat()
+    conn.execute("UPDATE calendar_now SET today=? WHERE id=0", (today,))
+    conn.commit()
+    return today
+
+
 _VIEWS = """
 -- TGA closing balance per date with ~week-over-week (5 business-day) change.
 CREATE VIEW IF NOT EXISTS v_tga_trend AS
@@ -176,11 +192,11 @@ FROM latest;
 
 -- Forward auction calendar: announced auctions dated today or later.
 CREATE VIEW IF NOT EXISTS v_upcoming_auctions AS
-SELECT cusip, security_type, security_term, announcement_date, auction_date,
-       issue_date
-FROM upcoming_auctions
-WHERE auction_date >= date('now')
-ORDER BY auction_date;
+SELECT u.cusip, u.security_type, u.security_term, u.announcement_date,
+       u.auction_date, u.issue_date
+FROM upcoming_auctions u, calendar_now p
+WHERE u.auction_date >= p.today
+ORDER BY u.auction_date;
 
 -- Latest bid-to-cover per term + the term's average across stored auctions.
 CREATE VIEW IF NOT EXISTS v_auction_demand AS

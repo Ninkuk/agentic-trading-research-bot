@@ -134,16 +134,9 @@ overrode the math" provable), hash-pinned model/prompt/guardrail-config.
 Append-only event log + checkpoint per decision → deterministic replay.
 Builds naturally **with** Stage 3 (same spec or adjacent).
 
-### Stage 5 — Scheduler (two clocks) 📝 🔵
+### Stage 5 — Scheduler (two clocks) ✅ 🔵
 
-**Spec:** [2026-07-04-stage5-scheduler-design.md](superpowers/specs/2026-07-04-stage5-scheduler-design.md)
-— prerequisite: fix `treasury` `v_upcoming_auctions`'s `date('now')` (FOLLOWUPS §4).
-
-§6. Event-driven signal jobs tied to release calendars (COT Friday post-release,
-FRED on `econ_calendar` dates, fundamentals on `earnings` dates) + one/two fixed
-daily gate windows (pre-close; optional pre-open veto). All four monitors it
-needs are built. Structural look-ahead defense, not just plumbing.
-**Independent of Stages 1–4 — parallel-friendly pickup.**
+**Built** as `pipeline/scheduler/` (registered: `main.py schedule`). Spec retired; the cron line lives in `run.py`'s docstring. Prerequisite treasury `date('now')` fix shipped with this stage.
 
 ### Stage 6 — Backtest & validation harness 📝 🟢
 
@@ -167,7 +160,7 @@ that seeded this file):
 1. ~~**Stage 1 — signal funnel.**~~ ✅ shipped. Inputs already exist; everything downstream
    consumes its output shape; forces the ETF-mapping and tag-vocabulary
    decisions that block all later stages.
-2. **Stage 5 — scheduler** (anytime, parallel). Independent; monitors are built.
+2. ~~**Stage 5 — scheduler** (anytime, parallel).~~ ✅ shipped. Independent; monitors are built.
 3. **Stage 6 — backtest harness.** Before Stage 2's thresholds get tuned, so
    every trial is logged from the first one.
 4. **Stage 2 — promotion gates.** Thresholds calibrated via Stage 6.

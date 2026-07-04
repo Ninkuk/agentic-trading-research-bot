@@ -107,9 +107,7 @@ stockanalysis.com, is already used).
 Captured while writing the six stage specs under `docs/superpowers/specs/`
 (tracker: [PIPELINE_ROADMAP.md](PIPELINE_ROADMAP.md)).
 
-- 🟠 **`treasury` `v_upcoming_auctions` uses `date('now')`** — the only view in the
-  repo violating the injected-clock invariant. Convert to the `calendar_now`
-  param-table pattern before the Stage 5 scheduler consumes it.
+- ✅ **`treasury` `v_upcoming_auctions` uses `date('now')`** — fixed with Stage 5 (2026-07-04) via the `calendar_now` pattern.
 - 🟠 **`fred` ALFRED vintages** — Stage 6 prerequisite: `observation_vintages`
   table + vintage fetch mode + `v_asof` view, so regime-rule backtests see
   data-as-first-published (spec'd in the Stage 6 design doc, built in
