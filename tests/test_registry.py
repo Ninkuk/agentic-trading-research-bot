@@ -62,3 +62,8 @@ def test_dispatch_lists_short_volume():
 def test_dispatch_lists_options():
     import registry
     assert "options" in registry.REGISTRY
+
+
+def test_dispatch_lists_short_interest():
+    import registry
+    assert "short_interest" in registry.REGISTRY
