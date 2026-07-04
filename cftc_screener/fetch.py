@@ -64,6 +64,9 @@ DISAGG_FIELDS = [
     ("prod_merc_long", "prod_merc_positions_long", int),
     ("prod_merc_short", "prod_merc_positions_short", int),
     ("swap_long", "swap_positions_long_all", int),
+    # NOTE: the live 72hh-3qpy schema really does spell swap short/spread with a
+    # DOUBLE underscore ("swap__positions_...") while swap long uses a single
+    # one. Verified live 2026-07-03 — do NOT "fix" the typo, or these store NULL.
     ("swap_short", "swap__positions_short_all", int),
     ("swap_spread", "swap__positions_spread_all", int),
     ("mm_long", "m_money_positions_long_all", int),
