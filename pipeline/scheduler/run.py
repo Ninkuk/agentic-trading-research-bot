@@ -141,6 +141,12 @@ def run(db_path, data_dir="data", registry=None,
     try:
         db.ensure_schema(conn)
         due_total = ran_total = 0
+        # (job, trigger_key) pairs already attempted THIS tick. compute_due is
+        # tick-stateless (a failed attempt doesn't get excluded by _gated until
+        # MAX_ATTEMPTS), so the fixpoint loop below must track this itself:
+        # otherwise a failing non-chain job gets re-executed on every fixpoint
+        # iteration of the same tick, burning its whole retry budget in one go.
+        attempted_this_tick = set()
 
         if retry:
             job_name, _, key = retry.partition(":")
@@ -149,12 +155,16 @@ def run(db_path, data_dir="data", registry=None,
                 item = {"job": job_name, "trigger_key": key,
                         "argv": catalog.argv_for(job, data_dir)}
                 due_total += 1
-                if do_run and _execute(conn, item, registry, now_iso):
-                    ran_total += 1
+                if do_run:
+                    attempted_this_tick.add((job_name, key))
+                    if _execute(conn, item, registry, now_iso):
+                        ran_total += 1
 
         for _ in range(catalog.FIXPOINT_LIMIT):
             due = compute_due(conn, ctx, registry, data_dir,
                               window_pre_open=window_pre_open, now_iso=now_iso)
+            due = [item for item in due
+                   if (item["job"], item["trigger_key"]) not in attempted_this_tick]
             if not due:
                 break
             due_total += len(due)
@@ -163,6 +173,7 @@ def run(db_path, data_dir="data", registry=None,
                     print(json.dumps(item, separators=(",", ":")))
                 break  # --due: one evaluation, no state change, no fixpoint
             for item in due:
+                attempted_this_tick.add((item["job"], item["trigger_key"]))
                 if _execute(conn, item, registry, now_iso):
                     ran_total += 1
 

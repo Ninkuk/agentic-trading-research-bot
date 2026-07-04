@@ -216,12 +216,37 @@ def test_failing_job_records_error_and_skips_rest_of_nothing(tmp_path, capsys):
     assert "cftc" in err and "RuntimeError" in err
     assert "secret-path" not in err            # hygiene: class name only
     conn = sdb.connect(dbp)
-    row = conn.execute("SELECT status, error FROM job_runs "
-                       "WHERE job='cftc'").fetchone()
-    assert row == ("error", "RuntimeError")
+    rows = conn.execute("SELECT status, error FROM job_runs "
+                        "WHERE job='cftc'").fetchall()
+    assert len(rows) == 1                      # one attempt this tick, not 3
+    assert rows[0] == ("error", "RuntimeError")
     # other due jobs still ran
     assert conn.execute("SELECT COUNT(*) FROM job_runs "
                         "WHERE status='ok'").fetchone()[0] > 0
+    conn.close()
+
+
+def test_fixpoint_does_not_reexecute_failing_job_within_one_tick(tmp_path):
+    """A failing non-chain job must not be re-run on later fixpoint iterations
+    of the SAME tick: that would burn its whole MAX_ATTEMPTS budget in one
+    tick instead of spreading attempts across separate ~15-min cron ticks."""
+    def boom(argv):
+        raise RuntimeError("boom")
+    reg = dict(REGISTRY_ALL, cftc=boom)
+    data = _data_dir(tmp_path)
+    dbp = str(tmp_path / "schedule.db")
+    due, ran = srun.run(dbp, data_dir=data, registry=reg, now_iso=NOW_FRI_LATE,
+                        do_run=True)
+    conn = sdb.connect(dbp)
+    rows = conn.execute("SELECT job, trigger_key, attempt, status "
+                        "FROM job_runs WHERE job='cftc' AND "
+                        "trigger_key='2026-07-03'").fetchall()
+    assert len(rows) == 1
+    job, key, attempt, status = rows[0]
+    assert (job, key) == ("cftc", "2026-07-03")
+    assert attempt == 1                        # attempt_count == 1
+    assert status == "error"
+    assert sdb.attempt_count(conn, "cftc", "2026-07-03") == 1
     conn.close()
 
 
