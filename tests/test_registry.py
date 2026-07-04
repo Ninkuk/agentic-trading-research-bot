@@ -87,3 +87,8 @@ def test_dispatch_lists_fundamentals():
 def test_dispatch_lists_fomc():
     import registry
     assert "fomc" in registry.REGISTRY
+
+
+def test_dispatch_lists_treasury():
+    import registry
+    assert "treasury" in registry.REGISTRY
