@@ -53,6 +53,7 @@ approved exception — **stockanalysis.com** (already trusted/used). The existin
 | `fundamentals` | SEC XBRL fundamentals (primary-source panel) | Auditable revenue/income/assets/equity/EPS + derived margin/ROE/D-E + restatements | [spec](superpowers/specs/2026-07-03-sec-fundamentals-screener-design.md) | [plan](superpowers/plans/2026-07-03-sec-fundamentals-screener.md) |
 | `fomc` | FOMC meetings / blackout / minutes / SEP | Rate-decision + computed blackout windows (`v_in_blackout`), minutes (+21d), dot-plot meetings | [spec](superpowers/specs/2026-07-03-fomc-calendar-monitor-design.md) | [plan](superpowers/plans/2026-07-03-fomc-calendar-monitor.md) |
 | `treasury` | U.S. Treasury Fiscal Data (liquidity/supply) | TGA cash swings, debt-to-penny, avg rates, 2s10s curve/inversion, **auction calendar** (`v_upcoming_auctions`) + bid-to-cover demand | [spec](superpowers/specs/2026-07-03-treasury-fiscaldata-screener-design.md) | [plan](superpowers/plans/2026-07-03-treasury-fiscaldata-screener.md) |
+| `earnings` | Forward earnings calendar (stockanalysis + EDGAR confirm) | When each watched name reports (before/after bell); EDGAR 8-K Item 2.02 confirms (`v_earnings_confirmed`) | [spec](superpowers/specs/2026-07-03-earnings-calendar-monitor-design.md) | [plan](superpowers/plans/2026-07-03-earnings-calendar-monitor.md) |
 
 Cross-cutting: [CFTC revision lookback](superpowers/specs/2026-07-03-cftc-revision-lookback-design.md) ([plan](superpowers/plans/2026-07-03-cftc-revision-lookback.md)) · [stockanalysis __data.json catalog](stockanalysis_data_json_catalog.md).
 
@@ -81,11 +82,7 @@ New official sources (confirm endpoints at build):
 
 ## Spec'd — event-date monitors 📝
 
-New "forward calendar" kind. Framework: [event-monitor-framework](superpowers/specs/2026-07-03-event-monitor-framework-design.md).
-
-| Conf | Dispatcher | Monitor | Signal | Spec |
-|---|---|---|---|---|
-| 🔵 | `earnings` | Earnings calendar | Forward earnings dates (stockanalysis + EDGAR confirm) | [spec](superpowers/specs/2026-07-03-earnings-calendar-monitor-design.md) |
+_All three spec'd event-date monitors (`market_calendar`, `fomc`, `earnings`) are now **Built** on the shared [event-monitor-framework](superpowers/specs/2026-07-03-event-monitor-framework-design.md) (`monitor_common`). Nothing pending in this state._
 
 ---
 
@@ -100,9 +97,9 @@ Ranked by signal × low effort × non-overlap (reuse of existing pipelines calle
 5. ~~**`fundamentals`**~~ — ✅ **Built** (see Built table). Official XBRL fundamentals panel; reuses EDGAR CIK/UA handling + FRED-style upsert/prune; ratios derived in SQL views. **Follow-ups deferred:** a shared ≤10 req/s SEC throttle in `http_client` (across `edgar`/`ftd`/`fundamentals`), and the `--bulk` quarterly-ZIP run-loop (`parse_bulk` is built + tested; the flag is accepted but the ZIP download loop is not yet wired into `run`). [plan](superpowers/plans/2026-07-03-sec-fundamentals-screener.md)
 6. ~~**`fomc`**~~ — ✅ **Built** (see Built table). Small isolated HTML parse (meeting dates only) + pure-computed minutes/blackout/SEP on `monitor_common`; exposes `v_in_blackout` boolean helper other modules gate Fed-speak logic on. Phase-1.5 RSS `status→released` flip deferred (spec Non-goal). [plan](superpowers/plans/2026-07-03-fomc-calendar-monitor.md)
 7. ~~**`treasury` auctions**~~ — ✅ **Built** (see Built table). Clean key-free FiscalData JSON (paged) + one XML par-curve branch; 6 datasets, ELT liquidity/supply views. Auction calendar ships as `v_upcoming_auctions` (the event-monitor framework reads it — no separate monitor). Wider revision-lookback deferred as a follow-up. [plan](superpowers/plans/2026-07-03-treasury-fiscaldata-screener.md)
-8. **`earnings`** — stockanalysis forward feed + EDGAR confirmation (undocumented source, build last).
+8. ~~**`earnings`**~~ — ✅ **Built** (see Built table). stockanalysis forward feed (reuses the `probe` devalue decoder) + EDGAR 8-K Item-2.02 confirmation on `monitor_common`. Cadence-based *estimation* (projecting a next date from historical Item-2.02 spacing) deferred as a follow-up. [plan](superpowers/plans/2026-07-03-earnings-calendar-monitor.md)
 
-Lower-priority / specialized: `ats`, `nyfed`, `cboe_stats`, `eia`, `usda`.
+**✅ The ranked build order (items 1–8) is complete.** Remaining lower-priority / specialized screeners (each has a spec, no plan yet): `ats`, `nyfed`, `cboe_stats`, `eia`, `usda` — see the Spec'd — data screeners table above.
 
 ## Idea 💡 (no spec)
 
