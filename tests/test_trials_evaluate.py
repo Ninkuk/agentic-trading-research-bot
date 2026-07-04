@@ -98,6 +98,39 @@ def test_score_lead_short_direction_inverts():
     assert r["ret"] == pytest.approx(0.10)
 
 
+def test_score_lead_entry_on_last_snapshot_is_censored_at_zero():
+    # Entry lands on the final available snapshot date: nothing more to
+    # observe, so the loop never resolves. Must NOT read as a genuine
+    # fully-resolved 0.0% flat trade.
+    dates = ["2026-07-01", "2026-07-02"]
+    history = {"2026-07-01": {"AAA": (100.0, 99.0)},
+               "2026-07-02": {"AAA": (105.0, 104.0)}}
+    lead = {"instrument": "AAA", "instrument_kind": "stock",
+            "direction": "long", "horizon_band": "weeks",
+            "as_of_date": "2026-07-01"}
+    r = evaluate.score_lead(lead, dates, history, _calendar(), horizon_days=20)
+    assert r["entry_date"] == "2026-07-02"
+    assert r["exit_date"] == "2026-07-02"
+    assert r["ret"] == 0.0
+    assert r["truncated"] is True
+
+
+def test_score_lead_data_exhausted_before_horizon_is_censored():
+    # Two more snapshots follow entry, but the 20-trading-day "weeks"
+    # horizon is never reached before the price history runs out -> a
+    # censored, still-open position, not a resolved outcome.
+    dates = ["2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06"]
+    history = {d: {"AAA": (p, p - 1)} for d, p in
+               zip(dates, (100.0, 105.0, 110.0, 115.0))}
+    lead = {"instrument": "AAA", "instrument_kind": "stock",
+            "direction": "long", "horizon_band": "weeks",
+            "as_of_date": "2026-07-01"}
+    r = evaluate.score_lead(lead, dates, history, _calendar(), horizon_days=20)
+    assert r["entry_date"] == "2026-07-02"
+    assert r["exit_date"] == "2026-07-06"
+    assert r["truncated"] is True
+
+
 def test_score_lead_delisting_truncates_path():
     dates = ["2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06"]
     history = {"2026-07-01": {"AAA": (100.0, 99.0)},
@@ -158,6 +191,9 @@ def test_evaluate_cohort_planted_edge_and_gap_report():
     assert all(r > 0 for r in out["returns"])              # planted edge
     assert out["window_start"] == out["window_end"] == "2026-07-01"
     assert out["max_gap_days"] == 3                        # 07-03 -> 07-06
+    # "weeks" = 20 trading days, but the fixture only spans 5 snapshots ->
+    # neither WIN nor LOSE reaches its horizon: both are censored.
+    assert out["truncated"] == 2
 
 
 def test_evaluate_cohort_missing_price_db_skips_that_kind():

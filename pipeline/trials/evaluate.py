@@ -94,21 +94,27 @@ def score_lead(lead: dict, dates: list, history: dict, cal_conn,
     entry_date = later[entry_lag - 1]
     entry_px = history[entry_date][sym][0]
     exit_date, exit_px = entry_date, entry_px
-    truncated = False
+    resolved = False
     for d in dates:
         if d <= entry_date:
             continue
         if sym not in history[d] or history[d][sym][0] is None:
-            truncated = True            # tradability mask: path ends here
-            break
+            break                        # tradability mask: path ends here, unresolved
         px, low = history[d][sym]
         exit_date, exit_px = d, px
         if (stop is not None and lead["direction"] == "long"
                 and low is not None and low <= stop):
             exit_px = stop              # exit AT the stop, not the close
+            resolved = True
             break
         if trading_days_between(cal_conn, entry_date, d) >= horizon_days:
+            resolved = True
             break
+    # Anything that didn't reach the horizon or a stop breach is censored:
+    # data simply ran out (recent lead, price history hasn't caught up yet,
+    # or the symbol vanished). Indistinguishable from a genuine flat trade
+    # unless flagged — must not silently masquerade as a resolved outcome.
+    truncated = not resolved
     if lead["direction"] == "long":
         ret = (exit_px - entry_px) / entry_px
     else:
@@ -123,7 +129,7 @@ def evaluate_cohort(leads_conn, stock_history, etf_history, cal_conn,
     (dates, history) tuples from load_price_history, or None when that price
     DB is unavailable (those leads are skipped, counted, never guessed)."""
     by_kind = {"stock": stock_history, "etf": etf_history}
-    returns, scored, skipped = [], 0, 0
+    returns, scored, skipped, truncated = [], 0, 0, 0
     window = []
     gaps = [max_gap_days(h[0]) for h in by_kind.values() if h is not None]
     for lead in load_leads(leads_conn):
@@ -139,9 +145,12 @@ def evaluate_cohort(leads_conn, stock_history, etf_history, cal_conn,
             continue
         returns.append(result["ret"])
         scored += 1
+        if result["truncated"]:
+            truncated += 1
         window.append(lead["as_of_date"])
     return {"returns": returns,
             "window_start": min(window) if window else None,
             "window_end": max(window) if window else None,
             "scored": scored, "skipped": skipped,
-            "max_gap_days": max(gaps) if gaps else 0}
+            "max_gap_days": max(gaps) if gaps else 0,
+            "truncated": truncated}
