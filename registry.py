@@ -13,6 +13,7 @@ from fomc_calendar.run import main as fomc_main
 from reddit_screener.run import main as reddit_main
 from stock_analysis_screener.run import main as stocks_main
 from sec_fundamentals.run import main as fundamentals_main
+from treasury_screener.run import main as treasury_main
 
 REGISTRY = {
     "stocks": stocks_main,
@@ -28,6 +29,7 @@ REGISTRY = {
     "econ_calendar": econ_calendar_main,
     "market_calendar": market_calendar_main,
     "fomc": fomc_main,
+    "treasury": treasury_main,
 }
 
 

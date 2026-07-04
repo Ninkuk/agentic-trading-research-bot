@@ -52,6 +52,7 @@ approved exception — **stockanalysis.com** (already trusted/used). The existin
 | `market_calendar` | Market holidays / early closes / OPEX (**shared trading-day helpers**) | No-trade days, half-days, monthly OPEX / quad-witching; `is_trading_day`/`next_trading_day`/`next_early_close` | [spec](superpowers/specs/2026-07-03-market-calendar-monitor-design.md) | [plan](superpowers/plans/2026-07-03-market-calendar-monitor.md) |
 | `fundamentals` | SEC XBRL fundamentals (primary-source panel) | Auditable revenue/income/assets/equity/EPS + derived margin/ROE/D-E + restatements | [spec](superpowers/specs/2026-07-03-sec-fundamentals-screener-design.md) | [plan](superpowers/plans/2026-07-03-sec-fundamentals-screener.md) |
 | `fomc` | FOMC meetings / blackout / minutes / SEP | Rate-decision + computed blackout windows (`v_in_blackout`), minutes (+21d), dot-plot meetings | [spec](superpowers/specs/2026-07-03-fomc-calendar-monitor-design.md) | [plan](superpowers/plans/2026-07-03-fomc-calendar-monitor.md) |
+| `treasury` | U.S. Treasury Fiscal Data (liquidity/supply) | TGA cash swings, debt-to-penny, avg rates, 2s10s curve/inversion, **auction calendar** (`v_upcoming_auctions`) + bid-to-cover demand | [spec](superpowers/specs/2026-07-03-treasury-fiscaldata-screener-design.md) | [plan](superpowers/plans/2026-07-03-treasury-fiscaldata-screener.md) |
 
 Cross-cutting: [CFTC revision lookback](superpowers/specs/2026-07-03-cftc-revision-lookback-design.md) ([plan](superpowers/plans/2026-07-03-cftc-revision-lookback.md)) · [stockanalysis __data.json catalog](stockanalysis_data_json_catalog.md).
 
@@ -73,7 +74,6 @@ New official sources (confirm endpoints at build):
 
 | Conf | Dispatcher | Screener | Signal | Spec |
 |---|---|---|---|---|
-| 🟡 | `treasury` | U.S. Treasury Fiscal Data | TGA/liquidity, debt, yield curve, auctions | [spec](superpowers/specs/2026-07-03-treasury-fiscaldata-screener-design.md) |
 | 🟡 | `nyfed` | NY Fed Markets data | SOMA/QT pace, RRP, SOFR funding stress | [spec](superpowers/specs/2026-07-03-nyfed-markets-screener-design.md) |
 | 🟡 | `cboe_stats` | CBOE market statistics | Market-wide put/call ratio, VIX term structure | [spec](superpowers/specs/2026-07-03-cboe-market-stats-screener-design.md) |
 | 🟡 | `eia` | EIA energy inventories | Crude/gasoline/natgas builds & draws | [spec](superpowers/specs/2026-07-03-eia-energy-screener-design.md) |
@@ -99,7 +99,7 @@ Ranked by signal × low effort × non-overlap (reuse of existing pipelines calle
 4. ~~**`market_calendar`**~~ — ✅ **Built** (see Built table). Small, deterministic; seeded NYSE/SIFMA holidays + pure-computed OPEX/quad-witching. Added the shared trading-day helpers (`is_trading_day`/`next_trading_day`/`next_early_close`) other monitors and screeners reuse. [plan](superpowers/plans/2026-07-03-market-calendar-monitor.md)
 5. ~~**`fundamentals`**~~ — ✅ **Built** (see Built table). Official XBRL fundamentals panel; reuses EDGAR CIK/UA handling + FRED-style upsert/prune; ratios derived in SQL views. **Follow-ups deferred:** a shared ≤10 req/s SEC throttle in `http_client` (across `edgar`/`ftd`/`fundamentals`), and the `--bulk` quarterly-ZIP run-loop (`parse_bulk` is built + tested; the flag is accepted but the ZIP download loop is not yet wired into `run`). [plan](superpowers/plans/2026-07-03-sec-fundamentals-screener.md)
 6. ~~**`fomc`**~~ — ✅ **Built** (see Built table). Small isolated HTML parse (meeting dates only) + pure-computed minutes/blackout/SEP on `monitor_common`; exposes `v_in_blackout` boolean helper other modules gate Fed-speak logic on. Phase-1.5 RSS `status→released` flip deferred (spec Non-goal). [plan](superpowers/plans/2026-07-03-fomc-calendar-monitor.md)
-7. **`treasury` auctions** — clean key-free JSON; auction calendar doubles as a monitor.
+7. ~~**`treasury` auctions**~~ — ✅ **Built** (see Built table). Clean key-free FiscalData JSON (paged) + one XML par-curve branch; 6 datasets, ELT liquidity/supply views. Auction calendar ships as `v_upcoming_auctions` (the event-monitor framework reads it — no separate monitor). Wider revision-lookback deferred as a follow-up. [plan](superpowers/plans/2026-07-03-treasury-fiscaldata-screener.md)
 8. **`earnings`** — stockanalysis forward feed + EDGAR confirmation (undocumented source, build last).
 
 Lower-priority / specialized: `ats`, `nyfed`, `cboe_stats`, `eia`, `usda`.
