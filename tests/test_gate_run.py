@@ -130,6 +130,34 @@ def test_run_malformed_twice_falls_through_deterministic(tmp_path, capsys):
     conn.close()
 
 
+def test_run_unexpected_response_shape_falls_through_deterministic(tmp_path):
+    # A well-formed HTTP 200 with an unexpected shape (empty content list)
+    # must be treated as a malformed reply — one re-ask, then the
+    # deterministic fallback — not let a raw KeyError/IndexError escape and
+    # halt the run (see llm.response_text hardening).
+    cpath = str(tmp_path / "candidates.db")
+    _mk_candidates(cpath, [_cand("GLD")])
+    calls = {"n": 0}
+    bad_body = {"model": "m", "content": []}
+
+    def fake_complete(system, user, *, model, api_key, post=None, sleep=None):
+        calls["n"] += 1
+        return bad_body
+
+    gpath = str(tmp_path / "gate.db")
+    run_id, n, approved = grun.run(gpath, cpath, api_key="K",
+                                   complete=fake_complete, now_iso=NOW)
+    assert calls["n"] == 2                       # exactly one re-ask
+    conn = gdb.connect(gpath)
+    row = gdb.decisions_for_run(conn, run_id)[0]
+    assert row["agent_error"] == "MalformedResponse"
+    assert row["decision_maker"] == "deterministic"
+    assert row["final_shares"] == row["size_hi"] == 100
+    header = gdb.run_row(conn, run_id)
+    assert header["decision_count"] == n == 1     # header finalized
+    conn.close()
+
+
 def test_run_api_error_falls_through(tmp_path):
     cpath = str(tmp_path / "candidates.db")
     _mk_candidates(cpath, [_cand("GLD")])

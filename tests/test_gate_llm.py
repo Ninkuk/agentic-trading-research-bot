@@ -92,3 +92,16 @@ def test_parse_agent_out_of_range_size_mult_is_ACCEPTED():
 def test_parse_agent_malformed(bad):
     with pytest.raises(llm.MalformedResponse):
         llm.parse_agent(bad)
+
+
+@pytest.mark.parametrize("bad_body", [
+    {"content": []},
+    {"content": [{"type": "text"}]},
+])
+def test_response_text_unexpected_shape_is_malformed(bad_body):
+    # A well-formed HTTP 200 can still carry an unexpected shape (empty
+    # content list, non-text block) — this must not raise a raw
+    # KeyError/IndexError/TypeError that escapes the malformed-response
+    # policy in run.py's _get_proposal.
+    with pytest.raises(llm.MalformedResponse):
+        llm.response_text(bad_body)

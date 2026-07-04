@@ -40,9 +40,9 @@ class Job:
 
 
 # Execution order = catalog order (maintenance first, then data jobs, then chains,
-# then gate windows). promote/gate targets don't exist yet — they stay listed and
-# are skipped until registered (spec: "job targets that don't exist yet simply
-# aren't registered").
+# then gate windows). promote and gate were registered in Stages 2-4; any future
+# unregistered target would simply be skipped by compute_due until it lands in
+# registry.py.
 JOBS: list[Job] = [
     Job("earnings", "earnings", "daily"),
     Job("econ_calendar", "econ_calendar", "daily"),

@@ -52,7 +52,14 @@ def complete(system: str, user: str, *, model: str, api_key: str,
 
 
 def response_text(body: dict) -> str:
-    return body["content"][0]["text"]
+    """Extract the agent's reply text. A well-formed HTTP 200 can still carry
+    an unexpected shape (empty content list, non-text block) — treat that as
+    a malformed reply rather than letting KeyError/IndexError/TypeError
+    escape and halt the run."""
+    try:
+        return body["content"][0]["text"]
+    except (KeyError, IndexError, TypeError) as e:
+        raise MalformedResponse(str(e)) from None
 
 
 def response_model(body: dict):
