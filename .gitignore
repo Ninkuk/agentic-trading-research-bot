@@ -8,3 +8,5 @@ screener.db
 
 # Playwright MCP session artifacts
 .playwright-mcp/
+
+data/
