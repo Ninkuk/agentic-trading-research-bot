@@ -4,8 +4,12 @@ Cron wrapper (external; sources .env so scheduled fred/eia/usda read keys):
     */15 * * * *  cd .../agentic-trading-bot && set -a && . ./.env && set +a && \\
                   uv run python main.py schedule --run >> schedule.log 2>&1
 """
+import argparse
+import json
 import sys
+from datetime import datetime, timezone
 
+from pipeline.common import pipeline_common
 from pipeline.scheduler import catalog, db, extract
 
 
@@ -80,3 +84,122 @@ def compute_due(sched_conn, ctx, registry, data_dir,
                 due.append({"job": job.name, "trigger_key": key,
                             "argv": catalog.argv_for(job, data_dir)})
     return due
+
+
+def _open_monitors(data_dir, connect_ro):
+    """Open the three monitor DBs read-only; a missing one becomes None with a
+    class-name-only warning (skip-and-continue at the trigger level)."""
+    conns = {}
+    for key, fname in (("econ", catalog.MONITOR_DB_FILES["econ_calendar"]),
+                       ("earnings", catalog.MONITOR_DB_FILES["earnings"]),
+                       ("market", catalog.MONITOR_DB_FILES["market_calendar"])):
+        try:
+            conns[key] = connect_ro(f"{data_dir}/{fname}")
+        except Exception as e:
+            conns[key] = None
+            print(f"warning: monitor db {key} unavailable: {type(e).__name__}",
+                  file=sys.stderr)
+    return conns
+
+
+def _execute(sched_conn, item, registry, now_iso) -> bool:
+    """Run one due item in-process, one attempt row per try. Catches
+    (Exception, SystemExit): every registered main is an argparse wrapper and a
+    bad argv raises SystemExit, which a bare `except Exception` would let kill
+    the whole tick. Records type name only (secret hygiene)."""
+    job = catalog.JOB_BY_NAME[item["job"]]
+    attempt = db.start_attempt(sched_conn, item["job"], item["trigger_key"],
+                               now_iso)
+    try:
+        registry[job.target](item["argv"])
+    except (Exception, SystemExit) as e:
+        db.finish_attempt(sched_conn, item["job"], item["trigger_key"], attempt,
+                          now_iso, "error", type(e).__name__)
+        print(f"warning: job {item['job']} failed: {type(e).__name__}",
+              file=sys.stderr)
+        return False
+    db.finish_attempt(sched_conn, item["job"], item["trigger_key"], attempt,
+                      now_iso, "ok")
+    return True
+
+
+def run(db_path, data_dir="data", registry=None,
+        connect_ro=pipeline_common.connect_ro, now_iso=None, do_run=False,
+        window_pre_open=False, retry=None, keep_days=None):
+    """One scheduler tick. Returns (due_count, ran_count). --due mode
+    (do_run=False) prints the due set as JSON lines and executes nothing."""
+    now_iso = now_iso or datetime.now(timezone.utc).isoformat()
+    if registry is None:
+        from registry import REGISTRY as _reg  # deferred: tests inject fakes
+        registry = _reg
+
+    today, now_hhmm, weekday = extract.et_parts(now_iso)
+    monitors = _open_monitors(data_dir, connect_ro)
+    ctx = {"today": today, "now_hhmm": now_hhmm, "weekday": weekday, **monitors}
+
+    conn = db.connect(db_path)
+    try:
+        db.ensure_schema(conn)
+        due_total = ran_total = 0
+
+        if retry:
+            job_name, _, key = retry.partition(":")
+            job = catalog.JOB_BY_NAME.get(job_name)
+            if job and job.target in registry and not db.ok_exists(conn, job_name, key):
+                item = {"job": job_name, "trigger_key": key,
+                        "argv": catalog.argv_for(job, data_dir)}
+                due_total += 1
+                if do_run and _execute(conn, item, registry, now_iso):
+                    ran_total += 1
+
+        for _ in range(catalog.FIXPOINT_LIMIT):
+            due = compute_due(conn, ctx, registry, data_dir,
+                              window_pre_open=window_pre_open, now_iso=now_iso)
+            if not due:
+                break
+            due_total += len(due)
+            if not do_run:
+                for item in due:
+                    print(json.dumps(item, separators=(",", ":")))
+                break  # --due: one evaluation, no state change, no fixpoint
+            for item in due:
+                if _execute(conn, item, registry, now_iso):
+                    ran_total += 1
+
+        db.write_snapshot(conn, now_iso, due_total, ran_total)
+        if keep_days is not None:
+            db.prune(conn, keep_days, now_iso)
+    finally:
+        for m in monitors.values():
+            if m is not None:
+                m.close()
+        conn.close()
+    return due_total, ran_total
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser(
+        prog="schedule",
+        description="Two-clock due-job evaluator (invoke from cron every ~15m)")
+    p.add_argument("--db", default="schedule.db")
+    p.add_argument("--data-dir", default="data",
+                   help="directory holding the monitor + job DBs")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--due", action="store_true",
+                      help="print due jobs as JSON lines, run nothing")
+    mode.add_argument("--run", action="store_true", help="execute due jobs")
+    p.add_argument("--window", default=None, choices=["pre_open"],
+                   help="also evaluate the opt-in pre-open gate window")
+    p.add_argument("--retry", default=None, metavar="job:trigger_key",
+                   help="force one more attempt past the failure cap")
+    p.add_argument("--keep-days", type=int, default=None)
+    a = p.parse_args(argv)
+    due, ran = run(a.db, data_dir=a.data_dir, do_run=a.run,
+                   window_pre_open=(a.window == "pre_open"), retry=a.retry,
+                   keep_days=a.keep_days)
+    print(f"{'ran' if a.run else 'due'}: {ran if a.run else due} "
+          f"(due {due}) [schedule.db: {a.db}]")
+
+
+if __name__ == "__main__":
+    main()
