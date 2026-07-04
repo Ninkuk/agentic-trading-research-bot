@@ -17,6 +17,7 @@ from sec_fundamentals.run import main as fundamentals_main
 from treasury_screener.run import main as treasury_main
 from finra_ats.run import main as ats_main
 from nyfed_screener.run import main as nyfed_main
+from cboe_stats.run import main as cboe_stats_main
 
 REGISTRY = {
     "stocks": stocks_main,
@@ -36,6 +37,7 @@ REGISTRY = {
     "treasury": treasury_main,
     "ats": ats_main,
     "nyfed": nyfed_main,
+    "cboe_stats": cboe_stats_main,
 }
 
 
