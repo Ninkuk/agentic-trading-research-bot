@@ -57,6 +57,7 @@ approved exception — **stockanalysis.com** (already trusted/used). The existin
 | `ats` | FINRA OTC/ATS dark-pool volume (weekly per-venue panel) | Which dark pools trade a name + off-exchange concentration; `v_top_dark_pools` / `v_latest_off_exchange` | [spec](superpowers/specs/2026-07-03-finra-ats-dark-pool-screener-design.md) | [plan](superpowers/plans/2026-07-03-finra-ats-dark-pool-screener.md) |
 | `nyfed` | NY Fed Markets data (funding/liquidity) | SOFR & SOFR-IORB spread, ON-RRP take-up trend, SOMA QT runoff; `v_sofr_latest`/`v_rrp_trend`/`v_soma_runoff` | [spec](superpowers/specs/2026-07-03-nyfed-markets-screener-design.md) | [plan](superpowers/plans/2026-07-03-nyfed-markets-screener.md) |
 | `cboe_stats` | CBOE market-wide put/call + VIX sentiment | Put/call extremes (contrarian), VIX term structure/backwardation; `v_pcr_extremes`/`v_vix_term_structure`/`v_latest_sentiment` | [spec](superpowers/specs/2026-07-03-cboe-market-stats-screener-design.md) | [plan](superpowers/plans/2026-07-03-cboe-market-stats-screener.md) |
+| `eia` | EIA weekly energy inventories | Crude/Cushing/gasoline/distillate/NG-storage builds & draws; `v_weekly_change`/`v_latest` | [spec](superpowers/specs/2026-07-03-eia-energy-screener-design.md) | [plan](superpowers/plans/2026-07-03-eia-energy-screener.md) |
 
 Cross-cutting: [CFTC revision lookback](superpowers/specs/2026-07-03-cftc-revision-lookback-design.md) ([plan](superpowers/plans/2026-07-03-cftc-revision-lookback.md)) · [stockanalysis __data.json catalog](stockanalysis_data_json_catalog.md).
 
@@ -72,7 +73,6 @@ New official sources (confirm endpoints at build):
 
 | Conf | Dispatcher | Screener | Signal | Spec |
 |---|---|---|---|---|
-| 🟡 | `eia` | EIA energy inventories | Crude/gasoline/natgas builds & draws | [spec](superpowers/specs/2026-07-03-eia-energy-screener-design.md) |
 | 🟡 | `usda` | USDA WASDE / NASS | Crop supply/demand, stocks-to-use | [spec](superpowers/specs/2026-07-03-usda-wasde-screener-design.md) |
 
 ## Spec'd — event-date monitors 📝
@@ -94,7 +94,7 @@ Ranked by signal × low effort × non-overlap (reuse of existing pipelines calle
 7. ~~**`treasury` auctions**~~ — ✅ **Built** (see Built table). Clean key-free FiscalData JSON (paged) + one XML par-curve branch; 6 datasets, ELT liquidity/supply views. Auction calendar ships as `v_upcoming_auctions` (the event-monitor framework reads it — no separate monitor). Wider revision-lookback deferred as a follow-up. [plan](superpowers/plans/2026-07-03-treasury-fiscaldata-screener.md)
 8. ~~**`earnings`**~~ — ✅ **Built** (see Built table). stockanalysis forward feed (reuses the `probe` devalue decoder) + EDGAR 8-K Item-2.02 confirmation on `monitor_common`. Cadence-based *estimation* (projecting a next date from historical Item-2.02 spacing) deferred as a follow-up. [plan](superpowers/plans/2026-07-03-earnings-calendar-monitor.md)
 
-**✅ The ranked build order (items 1–8) is complete.** Working through the lower-priority / specialized tail: `ats` ✅ Built, `nyfed` ✅ Built, `cboe_stats` ✅ Built; remaining (each has a spec, no plan yet): `eia`, `usda` — see the Spec'd — data screeners table above.
+**✅ The ranked build order (items 1–8) is complete.** Working through the lower-priority / specialized tail: `ats` ✅ Built, `nyfed` ✅ Built, `cboe_stats` ✅ Built, `eia` ✅ Built; remaining (spec, no plan yet): `usda` — the last item in the entire roadmap.
 
 ## Idea 💡 (no spec)
 
