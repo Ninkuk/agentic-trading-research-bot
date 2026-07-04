@@ -8,7 +8,7 @@ import time
 import urllib.error
 import urllib.request
 
-import http_client
+import sources.common.http_client as http_client
 
 _DATASET = "weeklySummary"   # confirmed live (otcMarket/weeklySummary, anon POST)
 API_URL = f"https://api.finra.org/data/group/otcMarket/name/{_DATASET}"

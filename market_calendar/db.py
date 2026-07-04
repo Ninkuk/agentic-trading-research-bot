@@ -6,8 +6,8 @@ because 'is date D open?' needs a bound date argument, which a stored SQLite vie
 cannot carry. They read the events table written by run.py."""
 from datetime import date, timedelta
 
-from monitor_common import connect
-from monitor_common import ensure_schema as _mc_ensure_schema
+from sources.common.monitor_common import connect
+from sources.common.monitor_common import ensure_schema as _mc_ensure_schema
 
 __all__ = ["connect", "ensure_schema", "is_trading_day", "next_trading_day",
            "next_early_close"]

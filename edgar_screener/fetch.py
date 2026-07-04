@@ -4,7 +4,7 @@ import time
 import urllib.error
 from datetime import datetime
 
-import http_client
+import sources.common.http_client as http_client
 
 ARCHIVES_BASE = "https://www.sec.gov/Archives/edgar/daily-index"
 

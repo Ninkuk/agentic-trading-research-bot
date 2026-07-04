@@ -1,6 +1,6 @@
 import sqlite3
 
-from screener_common import connect, prune
+from sources.common.screener_common import connect, prune
 
 
 def _mk(conn):

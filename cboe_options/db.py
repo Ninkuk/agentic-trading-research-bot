@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from screener_common import connect
+from sources.common.screener_common import connect
 
 __all__ = ["connect", "ensure_schema", "upsert_underlying", "replace_day",
            "upsert_underlying_daily", "record_day", "write_snapshot",

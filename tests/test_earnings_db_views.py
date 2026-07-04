@@ -1,6 +1,6 @@
 import json
 
-import monitor_common
+import sources.common.monitor_common as monitor_common
 from earnings_calendar import db
 
 

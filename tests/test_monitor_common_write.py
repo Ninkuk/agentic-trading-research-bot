@@ -1,4 +1,4 @@
-from monitor_common import (connect, ensure_schema, upsert_events,
+from sources.common.monitor_common import (connect, ensure_schema, upsert_events,
                             replace_forward_window, write_snapshot)
 
 

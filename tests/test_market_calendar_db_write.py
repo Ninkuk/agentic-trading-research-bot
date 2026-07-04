@@ -1,4 +1,4 @@
-import monitor_common
+import sources.common.monitor_common as monitor_common
 from market_calendar import db
 
 

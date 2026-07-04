@@ -3,7 +3,7 @@ import json
 import sys
 from datetime import date, datetime, timedelta, timezone
 
-import monitor_common
+import sources.common.monitor_common as monitor_common
 from earnings_calendar import db, fetch
 
 

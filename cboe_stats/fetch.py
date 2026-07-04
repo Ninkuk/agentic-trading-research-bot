@@ -7,7 +7,7 @@ import time
 import urllib.error
 from datetime import datetime
 
-import http_client
+import sources.common.http_client as http_client
 
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 503})

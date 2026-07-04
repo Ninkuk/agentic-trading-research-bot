@@ -2,7 +2,7 @@
 import time
 import urllib.error
 
-import http_client
+import sources.common.http_client as http_client
 
 FILES_BASE = "https://cdn.finra.org/equity/regsho/daily"
 

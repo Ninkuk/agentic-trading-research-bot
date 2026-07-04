@@ -6,7 +6,7 @@ import time
 import urllib.parse
 import xml.etree.ElementTree as ET
 
-import http_client
+import sources.common.http_client as http_client
 
 API_BASE = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service"
 YIELD_CURVE_URL = ("https://home.treasury.gov/resource-center/data-chart-center/"

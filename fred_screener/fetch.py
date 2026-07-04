@@ -2,7 +2,7 @@ import json
 import time
 import urllib.parse
 
-import http_client
+import sources.common.http_client as http_client
 
 API_BASE = "https://api.stlouisfed.org/fred"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}

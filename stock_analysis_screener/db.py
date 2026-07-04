@@ -3,7 +3,7 @@ import sys
 from collections.abc import Iterable
 
 from stock_analysis_screener.catalog import DataPoint
-from screener_common import connect, prune as _prune
+from sources.common.screener_common import connect, prune as _prune
 
 __all__ = ["connect", "ensure_schema", "prune", "write_snapshot",
            "upsert_data_points"]

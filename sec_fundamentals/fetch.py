@@ -9,7 +9,7 @@ import urllib.error
 import urllib.request
 import zipfile
 
-import http_client
+import sources.common.http_client as http_client
 from edgar_screener.fetch import (  # reuse UA + bounded-backoff scaffolding
     _BASE_DELAY, _MAX_ATTEMPTS, _RETRY_STATUS, _UA, _http_get, fetch_ticker_map)
 

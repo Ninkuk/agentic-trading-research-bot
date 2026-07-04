@@ -1,4 +1,4 @@
-import monitor_common
+import sources.common.monitor_common as monitor_common
 from econ_calendar import db
 from econ_calendar.catalog import CATALOG
 

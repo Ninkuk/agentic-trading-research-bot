@@ -14,7 +14,7 @@ import time
 import urllib.error
 import urllib.parse
 
-import http_client
+import sources.common.http_client as http_client
 
 CSV_BASE = "https://www.usda.gov/sites/default/files/documents"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}

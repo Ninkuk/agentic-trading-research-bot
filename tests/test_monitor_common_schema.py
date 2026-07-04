@@ -1,4 +1,4 @@
-from monitor_common import connect, ensure_schema, set_today
+from sources.common.monitor_common import connect, ensure_schema, set_today
 
 
 def _fresh():

@@ -1,7 +1,7 @@
 import argparse
 from datetime import datetime, timezone
 
-import monitor_common
+import sources.common.monitor_common as monitor_common
 from market_calendar import catalog, compute, db, fetch
 
 _NYSE_URL = "https://www.nyse.com/markets/hours-calendars"

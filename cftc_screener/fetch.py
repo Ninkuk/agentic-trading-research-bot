@@ -3,7 +3,7 @@ import json
 import time
 import urllib.parse
 
-import http_client
+import sources.common.http_client as http_client
 
 _HOST = "https://publicreporting.cftc.gov/resource/{}.json"
 _LEGACY_DATASET = "6dca-aqww"

@@ -1,7 +1,7 @@
 # finra_short_interest/db.py
 from datetime import datetime, timedelta
 
-from screener_common import connect
+from sources.common.screener_common import connect
 
 __all__ = ["connect", "ensure_schema", "upsert_securities",
            "replace_settlement", "record_settlement", "write_snapshot",

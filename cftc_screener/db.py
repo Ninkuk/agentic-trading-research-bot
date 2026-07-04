@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from screener_common import connect
+from sources.common.screener_common import connect
 
 __all__ = ["connect", "ensure_schema", "upsert_markets", "write_cot",
            "write_family", "max_report_date", "write_snapshot", "prune"]

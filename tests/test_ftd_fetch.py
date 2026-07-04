@@ -10,7 +10,7 @@ from ftd_screener.fetch import (
     settlement_bounds,
 )
 import ftd_screener.fetch as ftd_fetch
-import http_client
+import sources.common.http_client as http_client
 
 SAMPLE = (
     "SETTLEMENT DATE|CUSIP|SYMBOL|QUANTITY (FAILS)|DESCRIPTION|PRICE\n"

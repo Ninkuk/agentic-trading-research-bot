@@ -3,7 +3,7 @@ import time
 import urllib.error
 from datetime import date as _date
 
-import http_client
+import sources.common.http_client as http_client
 
 FILES_BASE = "https://cdn.finra.org/equity/otcmarket/biweekly"
 

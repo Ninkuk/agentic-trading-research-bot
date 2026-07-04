@@ -3,7 +3,7 @@ import os
 import sys
 from datetime import datetime, timezone
 
-import monitor_common
+import sources.common.monitor_common as monitor_common
 from econ_calendar import catalog, db, fetch
 
 

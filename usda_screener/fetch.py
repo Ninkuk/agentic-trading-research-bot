@@ -5,7 +5,7 @@ import json
 import time
 import urllib.parse
 
-import http_client
+import sources.common.http_client as http_client
 
 API_URL = "https://quickstats.nass.usda.gov/api/api_GET/"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}

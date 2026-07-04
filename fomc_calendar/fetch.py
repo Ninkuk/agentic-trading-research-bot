@@ -6,7 +6,7 @@ a silent 'no meetings coming' is the dangerous failure mode for a macro monitor.
 import re
 from datetime import date, timedelta
 
-from http_client import http_get, make_opener
+from sources.common.http_client import http_get, make_opener
 
 CALENDAR_URL = "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}

@@ -7,7 +7,7 @@ SQLite view body cannot bind :today); callers set it from the injected now_iso
 with set_today() — never date('now'), so tests are deterministic."""
 from datetime import datetime, timedelta
 
-from screener_common import connect
+from sources.common.screener_common import connect
 
 __all__ = ["connect", "ensure_schema", "set_today", "upsert_events",
            "replace_forward_window", "write_snapshot", "prune"]

@@ -2,7 +2,7 @@ import urllib.error
 
 import pytest
 
-import http_client
+import sources.common.http_client as http_client
 
 
 def _http_error(code, retry_after=None):

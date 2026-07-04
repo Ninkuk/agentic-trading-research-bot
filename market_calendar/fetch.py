@@ -6,7 +6,7 @@ table is missing or zero dated rows parse, we RAISE: a silently-empty holiday se
 would tell the bot the market is open every day, which is dangerous."""
 import re
 
-from http_client import http_get, make_opener
+from sources.common.http_client import http_get, make_opener
 
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
 _RETRY = {403, 429, 503}

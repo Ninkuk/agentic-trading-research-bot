@@ -1,4 +1,4 @@
-from screener_common import connect, prune as _prune
+from sources.common.screener_common import connect, prune as _prune
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (

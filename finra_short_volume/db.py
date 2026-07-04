@@ -1,7 +1,7 @@
 # finra_short_volume/db.py
 from datetime import datetime, timedelta
 
-from screener_common import connect
+from sources.common.screener_common import connect
 
 __all__ = ["connect", "ensure_schema", "upsert_securities", "replace_day",
            "record_day", "write_snapshot", "stored_days", "prune"]

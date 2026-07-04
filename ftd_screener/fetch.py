@@ -6,7 +6,7 @@ import urllib.error
 import urllib.request
 import zipfile
 
-import http_client
+import sources.common.http_client as http_client
 
 FILES_BASE = "https://www.sec.gov/files/data/fails-deliver-data"
 
