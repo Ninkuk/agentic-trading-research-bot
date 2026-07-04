@@ -5,6 +5,7 @@ import pytest
 from pipeline.leads import catalog, extract
 from sources.screeners.cftc_screener import catalog as cftc_catalog
 from sources.screeners.cftc_screener import db as cftc_db
+from sources.screeners.fred_screener import db as fred_db
 from sources.screeners.sec_fundamentals import db as fund_db
 from sources.screeners.stock_analysis_screener import db as stocks_db_mod
 
@@ -278,3 +279,77 @@ def test_percent_rank_matches_sql_semantics():
     assert ranks["a"] == 0.0
     assert ranks["b"] == ranks["c"] == 1 / 3
     assert ranks["d"] == 1.0
+
+
+# Regime dial tests
+
+def _fred_conn(series_obs):
+    """series_obs: dict series_id -> list of (date, value)."""
+    conn = fred_db.connect(":memory:")
+    fred_db.ensure_schema(conn)
+    for sid, obs in series_obs.items():
+        fred_db.upsert_series(conn, [{"id": sid, "title": sid,
+                                      "theme": "test"}], NOW)
+        fred_db.write_observations(
+            conn, sid, [{"date": d, "value": v} for d, v in obs])
+    fred_db.write_snapshot(conn, NOW, len(series_obs), 1)
+    return conn
+
+
+def test_regime_late_cycle_halves_exposure():
+    conn = _fred_conn({
+        "CPIAUCSL": [("2025-06-01", 100.0), ("2026-06-01", 104.0)],  # 4.0% YoY
+        "UNRATE": [("2026-06-01", 4.0)],
+        "T10Y2Y": [("2026-06-30", 0.5)],           # not inverted
+        "BAMLH0A0HYM2": [("2026-06-30", 3.5)],
+    })
+    r = extract.extract_regime(conn)
+    assert abs(r["cpi_yoy"] - 4.0) < 1e-9
+    assert r["unrate"] == 4.0
+    assert r["yield_curve_inverted"] == 0
+    assert r["late_cycle"] == 1
+    assert r["exposure_scalar"] == 0.5
+    assert r["regime_incomplete"] == 0
+    assert r["as_of_date"] == "2026-06-30"
+
+
+def test_regime_inversion_alone_triggers_risk_off():
+    conn = _fred_conn({
+        "CPIAUCSL": [("2025-06-01", 100.0), ("2026-06-01", 102.0)],  # 2.0%
+        "UNRATE": [("2026-06-01", 4.0)],
+        "T10Y2Y": [("2026-06-30", -0.2)],          # inverted
+        "BAMLH0A0HYM2": [("2026-06-30", 3.5)],
+    })
+    r = extract.extract_regime(conn)
+    assert r["late_cycle"] == 0
+    assert r["yield_curve_inverted"] == 1
+    assert r["exposure_scalar"] == 0.5
+
+
+def test_regime_benign_full_exposure():
+    conn = _fred_conn({
+        "CPIAUCSL": [("2025-06-01", 100.0), ("2026-06-01", 102.0)],
+        "UNRATE": [("2026-06-01", 5.0)],
+        "T10Y2Y": [("2026-06-30", 0.5)],
+        "BAMLH0A0HYM2": [("2026-06-30", 3.5)],
+    })
+    r = extract.extract_regime(conn)
+    assert r["late_cycle"] == 0
+    assert r["exposure_scalar"] == 1.0
+    assert r["regime_incomplete"] == 0
+
+
+def test_regime_missing_inputs_flags_incomplete_defaults_full():
+    conn = _fred_conn({"UNRATE": [("2026-06-01", 4.0)]})  # CPI/curve missing
+    r = extract.extract_regime(conn)
+    assert r["cpi_yoy"] is None
+    assert r["yield_curve_inverted"] is None
+    assert r["regime_incomplete"] == 1
+    assert r["exposure_scalar"] == 1.0
+
+
+def test_regime_known_trigger_fires_even_when_incomplete():
+    conn = _fred_conn({"T10Y2Y": [("2026-06-30", -0.2)]})  # only the curve
+    r = extract.extract_regime(conn)
+    assert r["regime_incomplete"] == 1
+    assert r["exposure_scalar"] == 0.5  # inversion is known -> risk-off anyway

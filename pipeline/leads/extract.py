@@ -304,3 +304,46 @@ def extract_quality(fund_conn, stocks_conn,
                  "cik": members[t]["cik"]}, separators=(",", ":")),
         })
     return leads, dropped
+
+
+_REGIME_SERIES = ("CPIAUCSL", "UNRATE", "T10Y2Y", "BAMLH0A0HYM2")
+
+
+def extract_regime(fred_conn) -> dict:
+    """Deterministic late-cycle classifier -> one regime row (spec D6).
+
+    late_cycle = cpi_yoy > CPI_YOY_LATE_CYCLE AND unrate < UNRATE_LATE_CYCLE;
+    risk-off (scalar RISK_OFF_SCALAR) when late_cycle OR curve inverted.
+    Missing inputs stay NULL and set regime_incomplete; unknown inputs are
+    treated as not-firing, so the scalar defaults to full exposure unless a
+    KNOWN trigger fires (a known inversion still halves exposure even when
+    CPI is missing)."""
+    row = fred_conn.execute(
+        "SELECT change_pct FROM v_yoy_change "
+        "WHERE series_id = 'CPIAUCSL'").fetchone()
+    cpi_yoy = row[0] if row else None
+    sig = fred_conn.execute(
+        "SELECT yield_curve_inverted, hy_spread, unemployment "
+        "FROM v_regime_signals").fetchone()
+    inverted, hy_spread, unrate = sig if sig else (None, None, None)
+    qmarks = ",".join("?" * len(_REGIME_SERIES))
+    as_of = fred_conn.execute(
+        f"SELECT MAX(date) FROM v_latest WHERE series_id IN ({qmarks})",
+        _REGIME_SERIES).fetchone()[0]
+
+    late_cycle = (cpi_yoy is not None and unrate is not None
+                  and cpi_yoy > catalog.CPI_YOY_LATE_CYCLE
+                  and unrate < catalog.UNRATE_LATE_CYCLE)
+    risk_off = late_cycle or bool(inverted)
+    incomplete = cpi_yoy is None or unrate is None or inverted is None
+    return {
+        "as_of_date": as_of,
+        "cpi_yoy": cpi_yoy,
+        "unrate": unrate,
+        "yield_curve_inverted": None if inverted is None else int(inverted),
+        "hy_spread": hy_spread,
+        "late_cycle": int(late_cycle),
+        "exposure_scalar": (catalog.RISK_OFF_SCALAR if risk_off
+                            else catalog.RISK_ON_SCALAR),
+        "regime_incomplete": int(incomplete),
+    }
