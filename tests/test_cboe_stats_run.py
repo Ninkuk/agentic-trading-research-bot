@@ -14,6 +14,19 @@ def _vix(d, close):
     return [{"date": d, "open": None, "high": None, "low": None, "close": close}]
 
 
+def test_run_default_does_not_fetch_dead_pcr_feed(tmp_path):
+    called = {"pcr": False}
+
+    def fpcr():
+        called["pcr"] = True
+        return _pcr("2026-06-01")
+
+    # no `only` -> default enabled feeds; PCR is disabled, so never fetched
+    runmod.run(str(tmp_path / "c.db"), fetch_pcr=fpcr,
+               fetch_vix=lambda fid: _vix("2026-06-01", 14.6), now_iso=NOW)
+    assert called["pcr"] is False
+
+
 def test_run_happy_path_counts(tmp_path):
     db_path = str(tmp_path / "c.db")
     sid, fc, rc = runmod.run(

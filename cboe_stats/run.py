@@ -15,8 +15,7 @@ def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
     optionally prune. Skip-and-continue. Returns
     (snapshot_id, feed_count, row_count)."""
     now_iso = now_iso or datetime.now(timezone.utc).isoformat()
-    ids = catalog.select_ids([f.feed_id for f in catalog.CATALOG], only, exclude,
-                             add)
+    ids = catalog.select_ids(catalog.enabled_ids(), only, exclude, add)
     kind_by_id = {f.feed_id: f.kind for f in catalog.CATALOG}
 
     conn = db.connect(db_path)
