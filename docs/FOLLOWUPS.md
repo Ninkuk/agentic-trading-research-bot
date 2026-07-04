@@ -1,7 +1,7 @@
 # Follow-ups & Backlog
 
 Deferred work captured while building out the screener/monitor roadmap
-([ROADMAP.md](ROADMAP.md)). The roadmap itself is **complete**.
+([SOURCES_ROADMAP.md](SOURCES_ROADMAP.md)). The roadmap itself is **complete**.
 
 **Status:** §1 (1a–1e) is **fully built and tested**. §2 live-verification is
 **complete** — every screener was probed against its real endpoint; drifts were
@@ -99,6 +99,40 @@ stockanalysis.com, is already used).
    `theocc.com`; natural `cboe_stats` sibling (do after the PCR source question).
 4. **SEC N-PORT / N-MFP fund holdings**, **FINRA TRACE bond data** — larger
    parsers, lower marginal signal; schedule last.
+
+---
+
+## 4. Pipeline-layer deferred items (from the 2026-07-04 stage specs)
+
+Captured while writing the six stage specs under `docs/superpowers/specs/`
+(tracker: [PIPELINE_ROADMAP.md](PIPELINE_ROADMAP.md)).
+
+- 🟠 **`treasury` `v_upcoming_auctions` uses `date('now')`** — the only view in the
+  repo violating the injected-clock invariant. Convert to the `calendar_now`
+  param-table pattern before the Stage 5 scheduler consumes it.
+- 🟠 **`fred` ALFRED vintages** — Stage 6 prerequisite: `observation_vintages`
+  table + vintage fetch mode + `v_asof` view, so regime-rule backtests see
+  data-as-first-published (spec'd in the Stage 6 design doc, built in
+  `fred_screener`).
+- ✅ **`etfs.db` stood up + ETF catalog live-verified** (2026-07-04). Fixed
+  `stocks --type e` (catalog route was hardcoded to `/stocks/screener/`; now
+  `catalog.route_for(type_)` picks `/etf/screener/`, unknown types raise).
+  Verified live: same ids as stocks for `price`/`low`/`volume`/`averageVolume`/
+  `dollarVolume`/`atr`, plus `assetClass`/`etfCategory`; all 16 COT-mapped ETFs
+  present. First snapshot in `data/etfs.db` (5,447 ETFs, no `--keep-days` —
+  long-retention policy). Calibration note: SOYB/CORN/CPER fall under Stage 2's
+  default $10M dollar-volume floor.
+- 🟠 **Long retention for pipeline-scored DBs** — `stocks.db`, `etfs.db`,
+  `leads.db`, `candidates.db` must run with `--keep-days 3650` (or no prune) from
+  the moment Stage 1 ships; Stage 6's walk-forward window can never exceed what
+  retention keeps (the CLAUDE.md examples' `--keep-days 90` would cap it at ~90
+  days).
+- 🟠 **`stocks` payout data points** — capture dividend/buyback fields so the
+  Stage 1 quality composite can add its 4th (payout) dimension.
+- 💡 **Price-history source** — unlocks the real |ρ| correlation gate (Stage 2
+  G5 sector-cap proxy today), price/trend confirmation legs, ATR computed
+  in-house, and retro backfill for Stage 6. Candidate: stockanalysis historical
+  endpoints (the approved-exception source). Needs its own spec.
 
 ---
 

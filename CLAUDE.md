@@ -8,7 +8,7 @@ A signal-collection layer for a trading bot: ~20 independent **screeners** (poin
 readers) and event-date **monitors** (forward-looking calendars) that each fetch one official
 data source (SEC, FRED, CFTC, FINRA, CBOE, Treasury, NY Fed, EIA, USDA, …) into a per-source
 SQLite database, then derive signals in SQL views. Downstream consumption (the "signal → candidate"
-pipeline) is designed in `docs/research/` but not yet built.
+pipeline) is designed in `docs/research/` and tracked in `docs/PIPELINE_ROADMAP.md`, but not yet built.
 
 **Zero runtime third-party dependencies** — everything is stdlib (`urllib`, `sqlite3`, `json`,
 `argparse`). Python 3.12, managed with `uv`. The only dev dependency is `pytest`.
@@ -71,7 +71,7 @@ source itself. Import a screener/monitor's internals as `sources.screeners.<name
 
 - **`registry.py`** (repo root) — `REGISTRY` dict maps name → each screener's `main`;
   `dispatch()` routes `main.py <name> [args...]`. **A screener "ships" only once registered
-  here** (this is the source of truth for `docs/ROADMAP.md`).
+  here** (this is the source of truth for `docs/SOURCES_ROADMAP.md`).
 - **`sources/common/screener_common.py`** — `connect()` (opens SQLite in **WAL** mode) and a
   generic snapshot cascade `prune()`.
 - **`sources/common/monitor_common.py`** — the event-date **monitor framework**: a forward
@@ -123,8 +123,11 @@ transient working docs (write them under `docs/superpowers/specs/<date>-<name>-d
 and `docs/superpowers/plans/<date>-<name>.md`); they're cleared once the screener ships, so
 don't expect earlier ones to still be on disk. The durable trackers stay under `docs/`:
 
-- `docs/ROADMAP.md` — parent tracker of every screener/monitor and its status (Built ✅ = in
+- `docs/SOURCES_ROADMAP.md` — parent tracker of every screener/monitor and its status (Built ✅ = in
   `registry.py`). Update it as work lands.
+- `docs/PIPELINE_ROADMAP.md` — parent tracker for the signal → candidate pipeline stages
+  (funnel, gates, LLM gate, scheduler, backtest harness). Same status legend and
+  registry.py source-of-truth as SOURCES_ROADMAP.md.
 - `docs/FOLLOWUPS.md` — deferred follow-ups, live endpoint-verification tasks, and the idea backlog.
 
 **Data-source policy:** official primary sources only, with one approved exception —

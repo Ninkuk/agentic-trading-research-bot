@@ -1,7 +1,8 @@
-# Screener & Monitor Roadmap
+# Sources Roadmap (Screeners & Monitors)
 
-Single index of every data screener and event-date monitor in the bot: what's
-built, what's designed, and what's next. This is the parent tracker — update the
+Single index of every data screener and event-date monitor in the bot — the
+**sources layer** (sources → pipeline → execution): what's built, what's
+designed, and what's next. This is the parent tracker — update the
 **Status** column as work progresses.
 
 **Source of truth for "Built"** is `registry.py` (a screener ships only once it's
@@ -98,6 +99,9 @@ Ranked by signal × low effort × non-overlap (reuse of existing pipelines calle
 Every screener and monitor in this roadmap is now **Built, tested, and registered**. `registry.py` dispatches all 20: `stocks`, `reddit`, `edgar`, `fred`, `cftc`, `ftd`, `short_volume`, `short_interest`, `options`, `econ_calendar`, `market_calendar`, `fundamentals`, `fomc`, `treasury`, `earnings`, `ats`, `nyfed`, `cboe_stats`, `eia`, `usda`.
 
 Deferred follow-ups, live 🟡 endpoint-verification tasks, and the un-spec'd **Idea 💡** backlog are tracked in **[FOLLOWUPS.md](FOLLOWUPS.md)** — the shared ≤10 req/s SEC throttle in `http_client`, the `fundamentals --bulk` quarterly-ZIP run-loop, the `treasury`/`nyfed` wider revision-lookback, the `earnings` cadence-based date estimation, and WASDE-native (OCE/ESMIS) balance-sheet ingestion for `usda`, among others.
+
+**What's next** — the layer above this one (signal funnel → promotion gates →
+bounded LLM gate) has its own parent tracker: **[PIPELINE_ROADMAP.md](PIPELINE_ROADMAP.md)**.
 
 ## Idea 💡 (no spec)
 
