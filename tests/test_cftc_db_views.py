@@ -110,10 +110,10 @@ def test_v_positioning_passthrough_columns():
 
 
 # --- family extension ---
-from sources.screeners.cftc_screener import catalog
+from sources.screeners.cftc_screener import catalog as cftc_catalog
 
 
-def _seed_disagg(conn, code, series, asset_class="metals"):
+def _seed_disagg_mm(conn, code, series, asset_class="metals"):
     """series: list of (report_date, mm_long, mm_short)."""
     db.upsert_markets(conn, [{"code": code, "name": "M",
                               "asset_class": asset_class}],
@@ -121,10 +121,10 @@ def _seed_disagg(conn, code, series, asset_class="metals"):
     rows = [{"code": code, "report_date": d,
              "mm_long": lo, "mm_short": sh, "open_interest": 1000}
             for (d, lo, sh) in series]
-    db.write_family(conn, catalog.DISAGG, code, rows)
+    db.write_family(conn, cftc_catalog.DISAGG, code, rows)
 
 
-def _seed_tff(conn, code, series, asset_class="equity_index"):
+def _seed_tff_lev(conn, code, series, asset_class="equity_index"):
     """series: list of (report_date, lev_long, lev_short)."""
     db.upsert_markets(conn, [{"code": code, "name": "M",
                               "asset_class": asset_class}],
@@ -132,14 +132,36 @@ def _seed_tff(conn, code, series, asset_class="equity_index"):
     rows = [{"code": code, "report_date": d,
              "lev_long": lo, "lev_short": sh, "open_interest": 1000}
             for (d, lo, sh) in series]
-    db.write_family(conn, catalog.TFF, code, rows)
+    db.write_family(conn, cftc_catalog.TFF, code, rows)
+
+
+def _seed_disagg(conn, code, series, asset_class="metals"):
+    """series: list of (report_date, prod_merc_long, prod_merc_short)."""
+    db.upsert_markets(conn, [{"code": code, "name": "M",
+                              "asset_class": asset_class}],
+                      "2026-07-04T00:00:00+00:00")
+    rows = [{"code": code, "report_date": d, "prod_merc_long": lo,
+             "prod_merc_short": sh, "open_interest": 1000}
+            for (d, lo, sh) in series]
+    db.write_family(conn, cftc_catalog.DISAGG, code, rows)
+
+
+def _seed_tff(conn, code, series, asset_class="rates"):
+    """series: list of (report_date, dealer_long, dealer_short)."""
+    db.upsert_markets(conn, [{"code": code, "name": "M",
+                              "asset_class": asset_class}],
+                      "2026-07-04T00:00:00+00:00")
+    rows = [{"code": code, "report_date": d, "dealer_long": lo,
+             "dealer_short": sh, "open_interest": 1000}
+            for (d, lo, sh) in series]
+    db.write_family(conn, cftc_catalog.TFF, code, rows)
 
 
 def test_disagg_cot_index_is_percentile_of_managed_money_net():
     conn = _fresh()
     # net_mm walks 0, 100, then 50 (latest) -> lo=0, hi=100 -> index 50.
-    _seed_disagg(conn, "G", [("2026-06-09", 0, 0), ("2026-06-16", 100, 0),
-                             ("2026-06-23", 50, 0)])
+    _seed_disagg_mm(conn, "G", [("2026-06-09", 0, 0), ("2026-06-16", 100, 0),
+                                ("2026-06-23", 50, 0)])
     idx = conn.execute(
         "SELECT cot_index FROM v_disagg_cot_index_latest WHERE code='G'"
     ).fetchone()[0]
@@ -148,9 +170,9 @@ def test_disagg_cot_index_is_percentile_of_managed_money_net():
 
 def test_managed_money_extremes_flags_crowded_only():
     conn = _fresh()
-    _seed_disagg(conn, "HOT", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0)])  # index 100
-    _seed_disagg(conn, "MILD", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0),
-                                ("2026-06-30", 50, 0)])                        # index 50
+    _seed_disagg_mm(conn, "HOT", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0)])  # index 100
+    _seed_disagg_mm(conn, "MILD", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0),
+                                   ("2026-06-30", 50, 0)])                        # index 50
     codes = {r[0] for r in conn.execute(
         "SELECT code FROM v_managed_money_extremes")}
     assert "HOT" in codes and "MILD" not in codes
@@ -158,7 +180,7 @@ def test_managed_money_extremes_flags_crowded_only():
 
 def test_tff_cot_index_is_100_at_leveraged_max():
     conn = _fresh()
-    _seed_tff(conn, "S", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0)])
+    _seed_tff_lev(conn, "S", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0)])
     idx = conn.execute(
         "SELECT cot_index FROM v_tff_cot_index_latest WHERE code='S'"
     ).fetchone()[0]
@@ -168,7 +190,49 @@ def test_tff_cot_index_is_100_at_leveraged_max():
 def test_leveraged_funds_extremes_flags_crowded_short():
     conn = _fresh()
     # net_lev walks 100 then 0 (latest) -> lo=0, hi=100, latest=lo -> index 0.
-    _seed_tff(conn, "SH", [("2026-06-16", 100, 0), ("2026-06-23", 0, 0)])
+    _seed_tff_lev(conn, "SH", [("2026-06-16", 100, 0), ("2026-06-23", 0, 0)])
     codes = {r[0] for r in conn.execute(
         "SELECT code FROM v_leveraged_funds_extremes")}
     assert "SH" in codes
+
+
+def test_commercial_index_keys_on_net_prod_merc():
+    conn = _fresh()
+    # net_prod_merc walks 0, 100, 50 (latest) -> lo=0, hi=100 -> index 50
+    _seed_disagg(conn, "G", [("2026-06-09", 0, 0), ("2026-06-16", 100, 0),
+                             ("2026-06-23", 50, 0)])
+    row = conn.execute(
+        "SELECT report_date, net_prod_merc, cot_index "
+        "FROM v_disagg_cot_index_commercial_latest WHERE code='G'").fetchone()
+    assert row[0] == "2026-06-23"
+    assert row[1] == 50
+    assert abs(row[2] - 50.0) < 1e-9
+
+
+def test_commercial_index_null_when_range_degenerate():
+    conn = _fresh()
+    _seed_disagg(conn, "G", [("2026-06-23", 10, 0)])
+    idx = conn.execute(
+        "SELECT cot_index FROM v_disagg_cot_index_commercial_latest "
+        "WHERE code='G'").fetchone()[0]
+    assert idx is None
+
+
+def test_dealer_index_keys_on_net_dealer():
+    conn = _fresh()
+    # net_dealer walks 0, 100 (latest) -> index 100
+    _seed_tff(conn, "T", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0)])
+    row = conn.execute(
+        "SELECT report_date, net_dealer, cot_index "
+        "FROM v_tff_cot_index_dealer_latest WHERE code='T'").fetchone()
+    assert row == ("2026-06-23", 100, 100.0)
+
+
+def test_speculator_views_unchanged_by_commercial_twins():
+    conn = _fresh()
+    _seed_disagg(conn, "G", [("2026-06-16", 0, 0), ("2026-06-23", 100, 0)])
+    # managed-money view still keys on net_mm (all-NULL here -> cot_index NULL)
+    row = conn.execute(
+        "SELECT net_mm, cot_index FROM v_disagg_cot_index_latest "
+        "WHERE code='G'").fetchone()
+    assert row[0] is None
