@@ -77,3 +77,8 @@ def test_dispatch_lists_econ_calendar():
 def test_dispatch_lists_market_calendar():
     import registry
     assert "market_calendar" in registry.REGISTRY
+
+
+def test_dispatch_lists_fundamentals():
+    import registry
+    assert "fundamentals" in registry.REGISTRY

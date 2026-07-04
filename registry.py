@@ -11,6 +11,7 @@ from econ_calendar.run import main as econ_calendar_main
 from market_calendar.run import main as market_calendar_main
 from reddit_screener.run import main as reddit_main
 from stock_analysis_screener.run import main as stocks_main
+from sec_fundamentals.run import main as fundamentals_main
 
 REGISTRY = {
     "stocks": stocks_main,
@@ -22,6 +23,7 @@ REGISTRY = {
     "short_volume": short_volume_main,
     "short_interest": short_interest_main,
     "options": options_main,
+    "fundamentals": fundamentals_main,
     "econ_calendar": econ_calendar_main,
     "market_calendar": market_calendar_main,
 }
