@@ -80,9 +80,32 @@ def parse_reference_rates(records) -> list:
     return out
 
 
+# The single /rp/results/search.json feed carries both legs, tagged operationType.
+_OP_TYPE_LIVE = {"repo": "Repo", "reverse_repo": "Reverse Repo"}
+# SOMA summary is wide: these columns are per-security par-value totals.
+_SOMA_SECURITIES = ("mbs", "cmbs", "tips", "frn", "tipsInflationCompensation",
+                    "notesbonds", "bills", "agencies", "total")
+
+
+def _op_rate(details):
+    """Operation-level rate from the details[] legs: the dominant (largest
+    accepted) leg's award rate, falling back to its offering rate. Repo ops with
+    nothing accepted fall back to the first leg's offering rate."""
+    if not isinstance(details, list) or not details:
+        return None
+    best = max(details, key=lambda d: _num(d.get("amtAccepted")) or 0.0)
+    return _num(best.get("percentAwardRate")) or _num(best.get("percentOfferingRate"))
+
+
 def parse_repo_ops(records, operation_type) -> list:
+    """Keep only the requested leg (operationType) from the combined results feed
+    and map it to a fact row. total_submitted/total_accepted are top-level; the
+    rate is nested under details[] (absent at the record top level)."""
+    want = _OP_TYPE_LIVE.get(operation_type, operation_type)
     out = []
     for r in records:
+        if (r.get("operationType") or "") != want:
+            continue
         oid = r.get("operationId")
         d = _date(r.get("operationDate"))
         if not oid or not d:
@@ -91,20 +114,24 @@ def parse_repo_ops(records, operation_type) -> list:
                     "operation_type": operation_type,
                     "total_submitted": _num(r.get("totalAmtSubmitted")),
                     "total_accepted": _num(r.get("totalAmtAccepted")),
-                    "award_rate": _num(r.get("awardRate")
-                                       or r.get("percentAwardRate"))})
+                    "award_rate": _op_rate(r.get("details"))})
     return out
 
 
 def parse_soma_holdings(records) -> list:
+    """Melt the wide SOMA summary (security types as columns) into one row per
+    (as_of_date, security_type). Blank cells are skipped; 0.00 is kept (a real
+    zero holding). The 'total' column is retained as its own row."""
     out = []
     for r in records:
         d = _date(r.get("asOfDate"))
         if not d:
             continue
-        out.append({"as_of_date": d,
-                    "security_type": r.get("securityType") or "total",
-                    "par_value": _num(r.get("parValue") or r.get("total"))})
+        for sec in _SOMA_SECURITIES:
+            val = _num(r.get(sec))
+            if val is None:                          # blank cell -> not stored
+                continue
+            out.append({"as_of_date": d, "security_type": sec, "par_value": val})
     return out
 
 

@@ -12,9 +12,9 @@ def test_run_happy_path_counts(tmp_path):
         if "rates" in endpoint:
             return [{"effectiveDate": "2026-06-01", "type": "SOFR",
                      "percentRate": "5.3"}]
-        if "reverserepo" in endpoint:
+        if "results" in endpoint:                 # combined repo/reverserepo feed
             return [{"operationId": "R1", "operationDate": "2026-06-01",
-                     "totalAmtAccepted": "400"}]
+                     "operationType": "Reverse Repo", "totalAmtAccepted": "400"}]
         return []
 
     sid, nd, nr = runmod.run(db_path, only=["reference_rates", "rrp"],
@@ -28,8 +28,7 @@ def test_run_skips_failing_domain_hides_secret(tmp_path, capsys):
     def fetch_domain(endpoint, *, start=None, end=None):
         if "rates" in endpoint:
             raise RuntimeError("https://markets?t=SECRET boom")
-        return [{"asOfDate": "2026-06-03", "securityType": "total",
-                 "parValue": "7e12"}]
+        return [{"asOfDate": "2026-06-03", "total": "7e12"}]   # wide SOMA row
 
     sid, nd, nr = runmod.run(str(tmp_path / "n.db"),
                              only=["reference_rates", "soma"],
