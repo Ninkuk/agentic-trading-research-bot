@@ -1,4 +1,6 @@
+import io
 import sqlite3
+import zipfile
 
 from sec_fundamentals import run as runmod
 
@@ -85,6 +87,63 @@ def test_run_all_fail_writes_zero_snapshot(tmp_path, capsys):
         fetch_map=lambda: {}, now_iso=NOW)
     assert (ncomp, nfact) == (0, 0)
     assert "warning" in capsys.readouterr().err.lower()
+
+
+def _bulk_zip(cik, name, sic, value):
+    """A minimal quarterly financial-statement-data-set ZIP (sub.tsv ⋈ num.tsv)."""
+    sub = ("adsh\tcik\tname\tsic\tform\tperiod\tfy\tfp\tfiled\n"
+           f"acc1\t{cik}\t{name}\t{sic}\t10-K\t20240928\t2024\tFY\t20241101\n")
+    num = ("adsh\ttag\tversion\tddate\tqtrs\tuom\tvalue\n"
+           f"acc1\tNetIncomeLoss\tus-gaap/2024\t20240928\t4\tUSD\t{value}\n")
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("sub.tsv", sub)
+        z.writestr("num.tsv", num)
+    return buf.getvalue()
+
+
+def test_run_bulk_enumerates_quarters_skips_unpublished_labels_from_sub(tmp_path):
+    db_path = str(tmp_path / "f.db")
+    calls = []
+    # NOW = CY2026Q1 label but the month (May) puts the current quarter at Q2,
+    # so start=2025q4 enumerates 2025q4, 2026q1, 2026q2. Only 2025q4 is published.
+    zips = {(2025, 4): _bulk_zip(320193, "APPLE INC", "3571", 100)}
+
+    def fetch_bulk(year, quarter, get=None):
+        calls.append((year, quarter))
+        return zips.get((year, quarter))          # None -> unpublished, skipped
+
+    def fetch_frame(*a, **k):
+        raise AssertionError("frames path must not run in --bulk mode")
+
+    sid, ncomp, nfact = runmod.run(
+        db_path, only=["NetIncomeLoss"], bulk=True, bulk_start="2025q4",
+        fetch_bulk=fetch_bulk, fetch_frame=fetch_frame, fetch_map=lambda: {},
+        now_iso=NOW)
+
+    assert calls == [(2025, 4), (2026, 1), (2026, 2)]   # inclusive to current qtr
+    assert (ncomp, nfact) == (1, 1)
+    conn = sqlite3.connect(db_path)
+    # company labeled from sub.tsv even with an empty ticker map
+    assert conn.execute("SELECT name, sic FROM companies WHERE cik=320193"
+                        ).fetchone() == ("APPLE INC", "3571")
+    assert conn.execute("SELECT form, value FROM facts WHERE cik=320193"
+                        ).fetchone() == ("10-K", 100.0)
+
+
+def test_run_bulk_default_start_is_latest_completed_quarter(tmp_path):
+    # No bulk_start: default to the most recent completed quarter (CY2026Q1 for
+    # NOW), enumerating just that quarter through the current one.
+    calls = []
+
+    def fetch_bulk(year, quarter, get=None):
+        calls.append((year, quarter))
+        return None
+
+    runmod.run(str(tmp_path / "f.db"), only=["NetIncomeLoss"], bulk=True,
+               fetch_bulk=fetch_bulk, fetch_map=lambda: {}, now_iso=NOW)
+    assert calls[0] == (2026, 1)          # previous completed quarter
+    assert calls[-1] == (2026, 2)         # current quarter (unpublished -> None)
 
 
 def test_run_keep_days_prunes_snapshots_not_facts(tmp_path):

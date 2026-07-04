@@ -1,8 +1,25 @@
 import argparse
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from nyfed_screener import catalog, db, fetch
+
+# On incremental re-runs, re-fetch this many days before the latest stored date
+# so the upsert re-absorbs the NY Fed's few-days-back restatements to already-
+# stored rows. --full ignores it. See [[incremental-since-misses-revisions]].
+_LOOKBACK_DAYS = 7
+
+
+def _since_floor(last, start, full):
+    """Inclusive date floor. Explicit ``start`` wins; ``full`` (or a first-ever
+    pull with no stored data) pulls full history / from start; otherwise floor
+    at ``last`` - _LOOKBACK_DAYS."""
+    if start is not None:
+        return start
+    if full or last is None:
+        return start
+    return (datetime.fromisoformat(last)
+            - timedelta(days=_LOOKBACK_DAYS)).date().isoformat()
 
 _DATE_COL = {"reference_rates": "effective_date", "repo_ops": "operation_date",
              "soma_holdings": "as_of_date", "primary_dealer_stats": "as_of_date"}
@@ -31,7 +48,7 @@ def _max_date(conn, table, date_col):
 
 
 def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
-        fetch_domain=fetch.fetch_domain, now_iso=None):
+        full=False, fetch_domain=fetch.fetch_domain, now_iso=None):
     """Fetch selected NY Fed domains, upsert into per-domain tables, snapshot,
     optionally prune. Skip-and-continue. Returns
     (snapshot_id, domain_count, row_count)."""
@@ -49,8 +66,8 @@ def run(db_path, only=None, exclude=None, add=None, start=None, keep_days=None,
                 print(f"warning: unknown domain {domain_id}", file=sys.stderr)
                 continue
             try:
-                since = start if start is not None else _max_date(
-                    conn, ds.table, _DATE_COL[ds.table])
+                since = _since_floor(
+                    _max_date(conn, ds.table, _DATE_COL[ds.table]), start, full)
                 records = fetch_domain(ds.endpoint, start=since)
                 n = _WRITER[domain_id](conn, _parse(domain_id, records))
             except Exception as e:
@@ -87,11 +104,14 @@ def main(argv=None):
                    help="extra domain id e.g. primary_dealer (repeatable)")
     p.add_argument("--start", default=None,
                    help="date floor for the first fetch (YYYY-MM-DD)")
+    p.add_argument("--full", action="store_true",
+                   help="re-pull from --start (or full history), ignoring the "
+                        "incremental revision-lookback")
     p.add_argument("--keep-days", type=int, default=None,
                    help="prune snapshot provenance older than N days")
     a = p.parse_args(argv)
     _, nd, nr = run(a.db, only=_split(a.only), exclude=_split(a.exclude),
-                    add=a.add, start=a.start, keep_days=a.keep_days)
+                    add=a.add, start=a.start, full=a.full, keep_days=a.keep_days)
     print(f"stored {nr} rows across {nd} domains into {a.db}")
 
 

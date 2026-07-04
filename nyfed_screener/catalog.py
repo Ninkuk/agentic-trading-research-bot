@@ -13,10 +13,12 @@ class Domain:
 CATALOG: list[Domain] = [
     Domain("reference_rates", "/rates/all/search.json", "reference_rates",
            "effectiveDate"),
-    Domain("rrp", "/rp/reverserepo/propositions/search.json", "repo_ops",
-           "operationDate"),
-    Domain("repo", "/rp/repo/all/results/search.json", "repo_ops",
-           "operationDate"),
+    # Both legs come from the single combined results feed (returns Repo +
+    # Reverse Repo, tagged operationType); the parser filters to its leg. The
+    # old per-leg paths were wrong: /rp/repo/all/results 400'd, and the reverse
+    # propositions feed lacked totalAmtSubmitted + the details[] rate.
+    Domain("rrp", "/rp/results/search.json", "repo_ops", "operationDate"),
+    Domain("repo", "/rp/results/search.json", "repo_ops", "operationDate"),
     Domain("soma", "/soma/summary.json", "soma_holdings", "asOfDate"),
     Domain("primary_dealer", "/pd/get/all/timeseries.json",
            "primary_dealer_stats", "asOfDate"),

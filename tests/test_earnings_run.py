@@ -48,6 +48,61 @@ def test_run_transient_feed_failure_preserves_calendar_hides_secret(
     assert conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 1
 
 
+def test_run_estimates_missing_watched_ticker_via_edgar_cadence(tmp_path):
+    db_path = str(tmp_path / "e.db")
+    # Watch A (covered by the feed) and Z (NOT in the feed). Z has a regular
+    # ~91-day Item-2.02 cadence -> it gets a cadence-based scheduled estimate.
+    hist = {"Z": ["2026-01-15", "2026-04-16", "2026-07-16"]}
+
+    runmod.run(
+        db_path, only=["A", "Z"],
+        fetch_forward=lambda: [_row("A", "2026-07-08")],
+        confirm=lambda *a, **k: set(),
+        history=lambda tickers: {t: hist[t] for t in tickers if t in hist},
+        now_iso=NOW)
+
+    conn = sqlite3.connect(db_path)
+    row = conn.execute("SELECT event_date, status, source FROM events "
+                       "WHERE subtype='Z'").fetchone()
+    assert row == ("2026-10-15", "scheduled", "edgar-estimate")
+    # the covered ticker is unaffected and stays the aggregator forward date
+    assert conn.execute("SELECT source FROM events WHERE subtype='A'"
+                       ).fetchone() == ("stockanalysis",)
+
+
+def test_run_estimate_only_for_missing_names_not_covered_ones(tmp_path):
+    db_path = str(tmp_path / "e.db")
+    called = {"tickers": None}
+
+    def history(tickers):
+        called["tickers"] = list(tickers)
+        return {}
+
+    runmod.run(
+        db_path, only=["A", "Z"],
+        fetch_forward=lambda: [_row("A", "2026-07-08")],
+        confirm=lambda *a, **k: set(), history=history, now_iso=NOW)
+    # only the uncovered watched name (Z) is looked up for estimation
+    assert called["tickers"] == ["Z"]
+
+
+def test_run_estimate_respects_horizon(tmp_path):
+    db_path = str(tmp_path / "e.db")
+    hist = {"Z": ["2026-01-15", "2026-04-16", "2026-07-16"]}   # est 2026-10-15
+
+    runmod.run(
+        db_path, only=["A", "Z"], horizon_days=30,             # cutoff ~2026-08-05
+        fetch_forward=lambda: [_row("A", "2026-07-08")],
+        confirm=lambda *a, **k: set(),
+        history=lambda tickers: {t: hist[t] for t in tickers if t in hist},
+        now_iso=NOW)
+
+    conn = sqlite3.connect(db_path)
+    # the estimate (2026-10-15) is beyond the 30-day horizon -> not stored
+    assert conn.execute("SELECT COUNT(*) FROM events WHERE subtype='Z'"
+                       ).fetchone()[0] == 0
+
+
 def test_run_keep_days_prunes_snapshots_not_events(tmp_path):
     db_path = str(tmp_path / "e.db")
     runmod.run(db_path, fetch_forward=lambda: [_row("A", "2026-07-08")],

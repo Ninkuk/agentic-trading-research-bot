@@ -15,7 +15,10 @@ _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
 _urlopen = http_client.make_opener(_UA)
 
-# 🟡 confirm live: PCR market-statistics CSV route + the per-index CDN CSVs.
+# PCR feed is disabled by default (catalog._ENABLED): this route 403s and Cboe
+# no longer publishes a free daily put/call-ratio CSV (verified 2026-07; not on
+# FRED release 200 either). URL kept as the documented shape for a future paid
+# DataShop source. The VIX/VVIX CDN routes below are live-confirmed.
 PCR_URL = "https://cdn.cboe.com/api/global/us_indices/daily_prices/put_call_ratio.csv"
 _VIX_BASE = "https://cdn.cboe.com/api/global/us_indices/daily_prices"
 

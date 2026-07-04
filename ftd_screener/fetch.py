@@ -86,17 +86,24 @@ _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
 
 
-def _bytes_opener(headers: dict, timeout: int = 60):
+def _bytes_opener(headers: dict, timeout: int = 60, *,
+                  limiter=None, limiter_key: str = ""):
     """opener(url)->bytes for binary (ZIP) downloads. Unlike
-    http_client.make_opener, does NOT decode the body."""
+    http_client.make_opener, does NOT decode the body. When a ``limiter`` is
+    supplied, pays ``limiter.acquire(limiter_key)`` before each request."""
     def opener(url: str) -> bytes:
+        if limiter is not None:
+            limiter.acquire(limiter_key)
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return resp.read()
     return opener
 
 
-_urlopen = _bytes_opener(_UA)
+# Pay into the same process-wide SEC bucket as edgar/fundamentals (per-IP cap
+# is domain-wide, not per-host) — see http_client.SEC_RATE_LIMITER.
+_urlopen = _bytes_opener(_UA, limiter=http_client.SEC_RATE_LIMITER,
+                         limiter_key=http_client.SEC_HOST_KEY)
 
 
 def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,

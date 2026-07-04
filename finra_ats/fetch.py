@@ -10,13 +10,19 @@ import urllib.request
 
 import http_client
 
-_DATASET = "weeklySummary"   # 🟡 confirm the weekly-ATS dataset slug live
+_DATASET = "weeklySummary"   # confirmed live (otcMarket/weeklySummary, anon POST)
 API_URL = f"https://api.finra.org/data/group/otcMarket/name/{_DATASET}"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 503})
 _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
 _DEMINIMIS = "NON_ATS_DEMINIMIS"
+# The weeklySummary feed carries several summaryTypeCodes: granular per-(symbol,
+# venue) rows plus symbol-only / firm-only aggregate roll-ups, for both ATS and
+# non-ATS OTC. We ingest only the granular ATS venue rows — the dark-pool signal
+# this screener's ats_volume/dark_pools schema is built for. The other types are
+# either non-ATS (OTC_*), or aggregates that would double-count and carry no MPID.
+_ATS_GRANULAR = "ATS_W_SMBL_FIRM"
 
 __all__ = ["week_body", "parse_rows", "fetch_week"]
 
@@ -53,12 +59,18 @@ def parse_rows(text: str, fmt: str) -> list:
     are skipped; blank MPID -> the de-minimis sentinel so the PK holds."""
     out = []
     for r in _records(text, fmt):
+        if (r.get("summaryTypeCode") or "").strip() != _ATS_GRANULAR:
+            continue                             # skip OTC + aggregate roll-ups
         symbol = (r.get("issueSymbolIdentifier") or r.get("symbol") or "").strip()
         week = (r.get("weekStartDate") or "").strip()
         if not symbol or not week:
             continue
         mpid = (r.get("MPID") or "").strip() or _DEMINIMIS
-        ats_name = (r.get("ATSName") or "").strip() or None
+        # Live otcMarket records carry the venue name in `marketParticipantName`;
+        # `ATSName` (assumed pre-verification) does not exist in the live schema
+        # and left ats_name always None. Keep ATSName as a CSV-export fallback.
+        ats_name = (r.get("marketParticipantName")
+                    or r.get("ATSName") or "").strip() or None
         out.append({
             "week_start": week, "symbol": symbol, "mpid": mpid,
             "ats_name": ats_name,

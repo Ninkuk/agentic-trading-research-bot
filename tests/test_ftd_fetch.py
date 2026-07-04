@@ -6,8 +6,11 @@ import zipfile
 import pytest
 
 from ftd_screener.fetch import (
-    _http_get, fetch_period, parse_file, period_url, settlement_bounds,
+    _bytes_opener, _http_get, fetch_period, parse_file, period_url,
+    settlement_bounds,
 )
+import ftd_screener.fetch as ftd_fetch
+import http_client
 
 SAMPLE = (
     "SETTLEMENT DATE|CUSIP|SYMBOL|QUANTITY (FAILS)|DESCRIPTION|PRICE\n"
@@ -120,3 +123,54 @@ def test_http_get_retries_on_403_then_succeeds():
     out = _http_get("http://x", opener=opener, base_delay=1.0, sleep=slept.append)
     assert out == b"OK"
     assert slept == [1.0]
+
+
+def test_bytes_opener_acquires_limiter_before_request():
+    order = []
+
+    class FakeLimiter:
+        def acquire(self, key):
+            order.append(("acquire", key))
+
+    class FakeResp:
+        def read(self): return b"BLOB"
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    def fake_urlopen(req, timeout=None):
+        order.append(("request", req.full_url))
+        return FakeResp()
+
+    orig = ftd_fetch.urllib.request.urlopen
+    ftd_fetch.urllib.request.urlopen = fake_urlopen
+    try:
+        opener = _bytes_opener({"User-Agent": "UA"}, limiter=FakeLimiter(),
+                               limiter_key="sec.gov")
+        blob = opener("http://www.sec.gov/files/data/x.zip")
+    finally:
+        ftd_fetch.urllib.request.urlopen = orig
+    assert blob == b"BLOB"
+    assert order == [("acquire", "sec.gov"),
+                     ("request", "http://www.sec.gov/files/data/x.zip")]
+
+
+def test_ftd_module_opener_pays_into_shared_sec_bucket():
+    # ftd's real _urlopen must acquire the SAME process-wide bucket as
+    # edgar/fundamentals under SEC_HOST_KEY, so the aggregate SEC rate is
+    # bounded. Observed via the shared limiter gaining that key's state.
+    class FakeResp:
+        def read(self): return b"X"
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    def fake_urlopen(req, timeout=None):
+        return FakeResp()
+
+    http_client.SEC_RATE_LIMITER._state.pop(http_client.SEC_HOST_KEY, None)
+    orig = ftd_fetch.urllib.request.urlopen
+    ftd_fetch.urllib.request.urlopen = fake_urlopen
+    try:
+        ftd_fetch._urlopen("http://www.sec.gov/files/data/x.zip")
+    finally:
+        ftd_fetch.urllib.request.urlopen = orig
+    assert http_client.SEC_HOST_KEY in http_client.SEC_RATE_LIMITER._state
