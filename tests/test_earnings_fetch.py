@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 import pytest
 
@@ -35,6 +36,44 @@ def test_timing_to_time_mapping():
     assert fetch.timing_to_time("bmo") == "before open"
     assert fetch.timing_to_time("amc") == "after close"
     assert fetch.timing_to_time("") is None
+
+
+def test_item_202_history_returns_earnings_filing_dates_per_ticker():
+    subs = {"filings": {"recent": {
+        "form": ["8-K", "10-Q", "8-K", "8-K"],
+        "items": ["2.02,9.01", "", "5.02", "2.02"],   # 1st + 4th are earnings
+        "filingDate": ["2026-07-07", "2026-05-01", "2026-06-01", "2026-04-05"],
+    }}}
+    hist = fetch.item_202_history(
+        ["AAPL"], get=lambda url: json.dumps(subs),
+        tmap=lambda: {320193: {"ticker": "AAPL", "title": "Apple Inc."}})
+    assert hist == {"AAPL": ["2026-07-07", "2026-04-05"]}
+
+
+def test_item_202_history_skips_unmapped_ticker():
+    hist = fetch.item_202_history(
+        ["NOPE"], get=lambda url: "{}",
+        tmap=lambda: {320193: {"ticker": "AAPL", "title": "Apple"}})
+    assert hist == {}
+
+
+def test_estimate_next_report_projects_from_median_gap():
+    dates = ["2026-01-15", "2026-04-16", "2026-07-16"]     # ~91-day cadence
+    assert fetch.estimate_next_report(dates, "2026-07-20") == "2026-10-15"
+
+
+def test_estimate_next_report_none_when_insufficient_history():
+    assert fetch.estimate_next_report(["2026-04-16", "2026-07-16"],
+                                      "2026-07-20") is None
+
+
+def test_estimate_next_report_rolls_forward_past_today_for_stale_history():
+    # a regular filer whose last 8-K is stale: roll the cadence forward so the
+    # estimate is always the next FUTURE date, not one already in the past.
+    dates = ["2025-07-01", "2025-10-01", "2025-12-30"]
+    est = fetch.estimate_next_report(dates, "2026-07-20")
+    assert est is not None
+    assert date.fromisoformat(est) > date.fromisoformat("2026-07-20")
 
 
 def test_confirm_via_edgar_matches_item_202_near_date():

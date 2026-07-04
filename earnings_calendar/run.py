@@ -24,9 +24,21 @@ def build_events(rows, now_iso) -> list:
     return out
 
 
+def build_estimate_events(estimates) -> list:
+    """Map {ticker: ISO date} cadence estimates to scheduled earnings events
+    tagged source='edgar-estimate', so consumers can rank them below an
+    aggregator forward date and a real EDGAR confirmation."""
+    return [{
+        "event_type": "earnings", "event_date": when, "event_time": None,
+        "subtype": ticker, "title": None, "status": "scheduled",
+        "source": "edgar-estimate",
+        "payload": json.dumps({"method": "item202-median-gap"}),
+    } for ticker, when in estimates.items()]
+
+
 def run(db_path, horizon_days=None, keep_days=None, only=None,
         fetch_forward=fetch.fetch_forward, confirm=fetch.confirm_via_edgar,
-        now_iso=None):
+        history=fetch.item_202_history, now_iso=None):
     """Decode the forward earnings feed, replace the forward window, optionally
     confirm watched tickers via EDGAR, snapshot, and optionally prune. Returns
     (snapshot_id, event_count). Feed drift aborts loudly; a transient feed
@@ -52,11 +64,33 @@ def run(db_path, horizon_days=None, keep_days=None, only=None,
         if rows is not None:
             if watch is not None:
                 rows = [r for r in rows if r["ticker"].upper() in watch]
+            cutoff = None
             if horizon_days is not None:
                 cutoff = (date.fromisoformat(today)
                           + timedelta(days=horizon_days)).isoformat()
                 rows = [r for r in rows if r["date"] <= cutoff]
             events = build_events(rows, now_iso)
+
+            # job b: for watched names the forward feed omits, estimate the next
+            # report date from their 8-K Item 2.02 cadence (edgar-estimate).
+            if watch is not None:
+                covered = {r["ticker"].upper() for r in rows}
+                missing = sorted(watch - covered)
+                if missing:
+                    try:
+                        hist = history(missing)
+                    except Exception as e:
+                        print(f"warning: earnings estimate failed: "
+                              f"{type(e).__name__}", file=sys.stderr)
+                        hist = {}
+                    estimates = {}
+                    for ticker, dates in hist.items():
+                        est = fetch.estimate_next_report(dates, today)
+                        if est is None or (cutoff is not None and est > cutoff):
+                            continue
+                        estimates[ticker] = est
+                    events = events + build_estimate_events(estimates)
+
             monitor_common.replace_forward_window(conn, "earnings", today,
                                                   events, now_iso)
 
