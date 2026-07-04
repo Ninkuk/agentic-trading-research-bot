@@ -19,27 +19,25 @@ def _q(commodity, statcat, short_desc):
             "year__GE": "2000"}
 
 
-# Curated corn/soy/wheat balance-sheet targets. short_desc / statisticcat_desc
-# ids are 🟡 — confirm live under NASS's 50k-row cap; drop any that error.
+# Curated corn/soy/wheat targets, live-confirmed against NASS Quick Stats
+# (2026-07, all under the 50k-row cap). TOTAL_USE is intentionally absent: NASS
+# has no `statisticcat_desc='USE'` (the query 400s) and no total-use/disappearance
+# short_desc for these grains — total use is a balance-sheet concept sourced from
+# WASDE, not NASS survey data (see the usda-wasde follow-up, 1e). Production and
+# ending stocks come from Quick Stats here.
 CATALOG: list[Series] = [
     Series("CORN", "PRODUCTION", _q("CORN", "PRODUCTION",
            "CORN, GRAIN - PRODUCTION, MEASURED IN BU")),
     Series("CORN", "ENDING_STOCKS", _q("CORN", "STOCKS",
            "CORN, GRAIN - STOCKS, MEASURED IN BU")),
-    Series("CORN", "TOTAL_USE", _q("CORN", "USE",
-           "CORN, GRAIN - USE, TOTAL, MEASURED IN BU")),
     Series("SOYBEANS", "PRODUCTION", _q("SOYBEANS", "PRODUCTION",
            "SOYBEANS - PRODUCTION, MEASURED IN BU")),
     Series("SOYBEANS", "ENDING_STOCKS", _q("SOYBEANS", "STOCKS",
            "SOYBEANS - STOCKS, MEASURED IN BU")),
-    Series("SOYBEANS", "TOTAL_USE", _q("SOYBEANS", "USE",
-           "SOYBEANS - USE, TOTAL, MEASURED IN BU")),
     Series("WHEAT", "PRODUCTION", _q("WHEAT", "PRODUCTION",
            "WHEAT - PRODUCTION, MEASURED IN BU")),
     Series("WHEAT", "ENDING_STOCKS", _q("WHEAT", "STOCKS",
            "WHEAT - STOCKS, MEASURED IN BU")),
-    Series("WHEAT", "TOTAL_USE", _q("WHEAT", "USE",
-           "WHEAT - USE, TOTAL, MEASURED IN BU")),
 ]
 
 

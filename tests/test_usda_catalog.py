@@ -9,10 +9,13 @@ def test_catalog_ids_unique_and_have_query():
         assert ":" in s.id
 
 
-def test_catalog_covers_corn_soy_wheat_balance():
+def test_catalog_covers_corn_soy_wheat_production_and_stocks():
     ids = {s.id for s in CATALOG}
-    assert {"CORN:ENDING_STOCKS", "CORN:TOTAL_USE", "SOYBEANS:ENDING_STOCKS",
+    assert {"CORN:ENDING_STOCKS", "CORN:PRODUCTION", "SOYBEANS:ENDING_STOCKS",
             "WHEAT:ENDING_STOCKS"} <= ids
+    # TOTAL_USE has no NASS Quick Stats equivalent (statisticcat 'USE' 400s);
+    # total use is a balance-sheet concept sourced from WASDE (see 1e).
+    assert not any(s.metric == "TOTAL_USE" for s in CATALOG)
 
 
 def test_select_ids_default_only_exclude_add():
@@ -21,6 +24,6 @@ def test_select_ids_default_only_exclude_add():
     assert select_ids(ids, ["CORN:ENDING_STOCKS", "CORN:ENDING_STOCKS"], None) \
         == ["CORN:ENDING_STOCKS"]
     assert "CORN:ENDING_STOCKS" not in select_ids(ids, None, ["CORN:ENDING_STOCKS"])
-    assert select_ids(ids, ["CORN:TOTAL_USE"], None,
-                      add=["WHEAT:TOTAL_USE", " WHEAT:TOTAL_USE "]) \
-        == ["CORN:TOTAL_USE", "WHEAT:TOTAL_USE"]
+    assert select_ids(ids, ["CORN:PRODUCTION"], None,
+                      add=["WHEAT:PRODUCTION", " WHEAT:PRODUCTION "]) \
+        == ["CORN:PRODUCTION", "WHEAT:PRODUCTION"]
