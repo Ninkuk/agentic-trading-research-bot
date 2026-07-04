@@ -6,10 +6,15 @@ and writes the immutable decision ledger via `db.py`.
 
 Window-policy (which windows run when, pre-close vs mid-day cadence) is a
 Stage 5 scheduler concern, not this module's — `window` here is just an
-opaque label persisted on the run header. Replay (`--replay-run`) and the
-CLI `main()` are added in Task 7; this module only exposes the library
-entry points `load_gate_input` and `run`.
+opaque label persisted on the run header.
+
+`replay()` is the deterministic auditor: given a run_id, it re-derives every
+decision from the stored checkpoint (never from live inputs) and diffs the
+recomputed outcome against what was written. `main()` is the CLI, dispatching
+either to a fresh gate `run()` or to `replay()`.
 """
+import argparse
+import json
 import os
 import sys
 import uuid
@@ -17,6 +22,9 @@ from datetime import datetime, timezone
 
 from pipeline.common import pipeline_common
 from pipeline.gate import catalog, db, llm, mask, resolve
+
+_DIFF_FIELDS = ("input_snapshot_hash", "prompt_hash", "final_shares", "delta",
+                "clamp_fired", "policy_decision", "decision_maker")
 
 
 def load_gate_input(conn) -> tuple:
@@ -200,3 +208,146 @@ def run(db_path, candidates_db, tau=catalog.TAU, model=catalog.DEFAULT_MODEL,
         conn.close()
 
     return run_id, len(decisions), approved_count
+
+
+def _recompute_decision(row: dict, header: dict) -> dict:
+    """Re-derive one decision's outcome from its stored checkpoint (never
+    from live data) plus the run header's tau. Dry-run rows re-derive as the
+    same deterministic size_hi pass-through the original run used — they
+    never go through `resolve.resolve`."""
+    checkpoint = json.loads(row["checkpoint"])
+    input_hash = mask.sha256_canonical(checkpoint["input"])
+    p_hash = mask.prompt_hash(checkpoint["system"], checkpoint["user"])
+    proposal = (None if row["agent_error"] is not None
+                or row["agent_action"] is None else
+                {"action": row["agent_action"],
+                 "size_mult": row["agent_size_mult"],
+                 "confidence": row["agent_confidence"],
+                 "rationale": row["agent_rationale"] or ""})
+    if header["window"] == "dry_run":
+        outcome = {"final_shares": row["size_hi"], "decision_maker": "deterministic",
+                   "policy_decision": "DryRun", "clamp_fired": 0}
+    else:
+        outcome = resolve.resolve(row["size_lo"], row["size_hi"], proposal,
+                                  header["tau"])
+    return {"decision_id": row["decision_id"], "instrument": row["instrument"],
+            "det_shares": row["det_shares"], "det_score": row["det_score"],
+            "stop_distance": row["stop_distance"],
+            "input_snapshot_hash": input_hash, "prompt_hash": p_hash,
+            "final_shares": outcome["final_shares"],
+            "delta": outcome["final_shares"] - row["det_shares"],
+            "clamp_fired": outcome["clamp_fired"],
+            "policy_decision": outcome["policy_decision"],
+            "decision_maker": outcome["decision_maker"]}
+
+
+def replay(db_path, run_id, live=False, complete=llm.complete, api_key=None,
+          now_iso=None) -> bool:
+    """Deterministic audit of a past run: re-derive every decision from its
+    stored checkpoint (the authoritative record) and diff the recomputed
+    outcome against what was written. Offline (default) makes ZERO writes.
+
+    `live=True` additionally re-asks the agent with the exact stored prompt,
+    prints the counterfactual next to the stored proposal, and appends one
+    `replayed` event per decision — the only write live mode performs; the
+    return value still reflects the offline (stored-proposal) diff.
+
+    Returns True iff every decision matches on all diffed fields. Unknown
+    run_id prints to stderr and returns False."""
+    conn = db.connect(db_path)
+    try:
+        header = db.run_row(conn, run_id)
+        if header is None:
+            print(f"replay: unknown run_id {run_id}", file=sys.stderr)
+            return False
+
+        rows = db.decisions_for_run(conn, run_id)
+        recomputed = {r["decision_id"]: _recompute_decision(r, header)
+                     for r in rows}
+
+        if header["window"] != "dry_run":
+            book = [r for r in recomputed.values()
+                    if r["policy_decision"] == "Permit" and r["final_shares"] > 0]
+            cuts = set(resolve.heat_cut(book, header["equity"], header["heat_cap"]))
+            for r in recomputed.values():
+                if r["instrument"] in cuts:
+                    r["final_shares"] = 0
+                    r["delta"] = 0 - r["det_shares"]
+                    r["policy_decision"] = "Deny"
+                    r["decision_maker"] = "deterministic"
+
+        clean = True
+        for row in rows:
+            rec = recomputed[row["decision_id"]]
+            for field in _DIFF_FIELDS:
+                if rec[field] != row[field]:
+                    clean = False
+                    print(f"replay mismatch decision={row['decision_id']} "
+                          f"field={field} stored={row[field]!r} "
+                          f"recomputed={rec[field]!r}")
+
+        if live:
+            now_iso = now_iso or datetime.now(timezone.utc).isoformat()
+            key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+            if not key:
+                raise ValueError(
+                    "no API key: pass api_key or set ANTHROPIC_API_KEY "
+                    "for --live replay")
+            model = header["model_version"] or catalog.DEFAULT_MODEL
+            for row in rows:
+                checkpoint = json.loads(row["checkpoint"])
+                try:
+                    body = complete(checkpoint["system"], checkpoint["user"],
+                                    model=model, api_key=key)
+                    detail = llm.response_text(body)
+                except Exception as e:
+                    detail = type(e).__name__
+                print(f"[live-replay] decision={row['decision_id']} "
+                      f"instrument={row['instrument']} "
+                      f"stored_action={row['agent_action']} "
+                      f"stored_size_mult={row['agent_size_mult']} "
+                      f"counterfactual={detail}")
+                db.write_events(conn, row["decision_id"],
+                                [("replayed", now_iso, detail)])
+
+        return clean
+    finally:
+        conn.close()
+
+
+def main(argv=None) -> None:
+    p = argparse.ArgumentParser(
+        prog="gate", description="Stage 3 gate: LLM risk-review decision loop")
+    p.add_argument("--db", required=True)
+    p.add_argument("--candidates-db")
+    p.add_argument("--tau", type=float, default=catalog.TAU)
+    p.add_argument("--model", default=catalog.DEFAULT_MODEL)
+    p.add_argument("--window", choices=("pre_close", "pre_open", "adhoc"),
+                   default="adhoc")
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--only", default=None,
+                   help="comma-separated instruments to keep")
+    p.add_argument("--replay", type=int, default=None, metavar="RUN_ID",
+                   help="deterministically audit a past run instead of gating")
+    p.add_argument("--live", action="store_true",
+                   help="with --replay, also ask the agent again and log "
+                        "the counterfactual (the only write it performs)")
+    a = p.parse_args(argv)
+
+    if a.replay is not None:
+        if not replay(a.db, a.replay, live=a.live):
+            raise SystemExit(1)
+        return
+
+    if not a.candidates_db:
+        p.error("--candidates-db is required unless --replay is given")
+
+    only = a.only.split(",") if a.only else None
+    run_id, n, approved = run(a.db, a.candidates_db, tau=a.tau, model=a.model,
+                              window=a.window, dry_run=a.dry_run, only=only)
+    print(f"gate run {run_id}: {n} decisions, {approved} approved "
+          f"({'dry_run' if a.dry_run else a.window})")
+
+
+if __name__ == "__main__":
+    main()
