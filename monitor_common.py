@@ -74,3 +74,48 @@ def set_today(conn, now_iso: str, horizon_days: int = 7) -> str:
                  (today, horizon_days))
     conn.commit()
     return today
+
+
+def upsert_events(conn, rows: list[dict], fetched_at: str) -> int:
+    """Insert-or-firm-up events by (event_type, event_date, subtype). A date that
+    firms up (tentative -> confirmed) or gains a time updates in place; no
+    duplicate row. Dedupes within the batch (last wins). Returns distinct rows."""
+    by_key = {(r["event_type"], r["event_date"], r.get("subtype") or ""): r
+              for r in rows}
+    params = [(r["event_type"], r["event_date"], r.get("event_time"),
+               r.get("subtype") or "", r.get("title"), r.get("status"),
+               r["source"], r.get("payload"), fetched_at)
+              for r in by_key.values()]
+    conn.executemany(
+        f"""INSERT INTO events ({", ".join(_EVENT_COLS)}, fetched_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(event_type, event_date, subtype) DO UPDATE SET
+              event_time=excluded.event_time, title=excluded.title,
+              status=excluded.status, source=excluded.source,
+              payload=excluded.payload, fetched_at=excluded.fetched_at""",
+        params,
+    )
+    conn.commit()
+    return len(params)
+
+
+def replace_forward_window(conn, event_type: str, today: str,
+                           rows: list[dict], fetched_at: str) -> int:
+    """Cancellation-aware path for one event_type: delete future rows
+    (event_date >= today) then insert the freshly-fetched set, so a source that
+    stops listing a future event lets that row disappear. Past events
+    (event_date < today) are NEVER touched. Returns rows inserted."""
+    conn.execute("DELETE FROM events WHERE event_type=? AND event_date >= ?",
+                 (event_type, today))
+    n = upsert_events(conn, rows, fetched_at)  # commits
+    return n
+
+
+def write_snapshot(conn, captured_at: str, event_count: int, source: str) -> int:
+    """Insert one run-provenance header. Returns the snapshot id."""
+    cur = conn.execute(
+        "INSERT INTO snapshots (captured_at, event_count, source) VALUES (?, ?, ?)",
+        (captured_at, event_count, source),
+    )
+    conn.commit()
+    return cur.lastrowid
