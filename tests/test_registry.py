@@ -112,3 +112,8 @@ def test_dispatch_lists_ats():
 def test_dispatch_lists_cboe_stats():
     import registry
     assert "cboe_stats" in registry.REGISTRY
+
+
+def test_dispatch_lists_eia():
+    import registry
+    assert "eia" in registry.REGISTRY
