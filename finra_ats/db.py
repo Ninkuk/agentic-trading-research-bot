@@ -120,4 +120,34 @@ def prune(conn, keep_days, now_iso) -> int:
     return len(ids)
 
 
-_VIEWS = ""   # filled in Task 3
+_VIEWS = """
+-- Off-exchange totals per symbol for the newest stored week.
+CREATE VIEW IF NOT EXISTS v_latest_off_exchange AS
+SELECT a.symbol,
+       SUM(a.share_quantity) AS total_shares,
+       SUM(a.trade_count)    AS total_trades,
+       COUNT(DISTINCT a.mpid) AS venue_count
+FROM ats_volume a
+WHERE a.week_start = (SELECT MAX(week_start) FROM ats_volume)
+GROUP BY a.symbol
+ORDER BY total_shares DESC;
+
+-- Biggest dark pools this (newest) week, with the ATS name.
+CREATE VIEW IF NOT EXISTS v_top_dark_pools AS
+SELECT a.mpid, v.ats_name,
+       SUM(a.share_quantity) AS total_shares,
+       SUM(a.trade_count)    AS total_trades
+FROM ats_volume a
+LEFT JOIN venues v ON v.mpid = a.mpid
+WHERE a.week_start = (SELECT MAX(week_start) FROM ats_volume)
+GROUP BY a.mpid, v.ats_name
+ORDER BY total_shares DESC;
+
+-- Per-(symbol, venue) weekly time series.
+CREATE VIEW IF NOT EXISTS v_symbol_venue_history AS
+SELECT a.symbol, a.mpid, v.ats_name, a.week_start, a.trade_count,
+       a.share_quantity
+FROM ats_volume a
+LEFT JOIN venues v ON v.mpid = a.mpid
+ORDER BY a.symbol, a.mpid, a.week_start;
+"""
