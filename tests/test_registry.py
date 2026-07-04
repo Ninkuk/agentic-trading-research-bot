@@ -124,6 +124,11 @@ def test_dispatch_lists_usda():
     assert "usda" in registry.REGISTRY
 
 
+def test_dispatch_lists_schedule():
+    import registry
+    assert "schedule" in registry.REGISTRY
+
+
 def test_dispatch_lists_leads():
     import registry
     assert "leads" in registry.REGISTRY
