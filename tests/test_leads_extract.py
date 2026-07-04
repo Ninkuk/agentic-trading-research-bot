@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from pipeline.leads import catalog, extract
 from sources.screeners.cftc_screener import catalog as cftc_catalog
 from sources.screeners.cftc_screener import db as cftc_db
@@ -247,6 +249,27 @@ def test_revenue_yoy_tag_precedence_per_company():
     yoy = extract._revenue_yoy(fund)
     assert abs(yoy[0] - 0.10) < 1e-9
     assert abs(yoy[1] - 0.20) < 1e-9
+
+
+def test_revenue_yoy_dedupes_restated_facts_by_filing_recency():
+    # Latest period 2025-12-31 was filed twice: the original 10-K (filed
+    # 2026-02-01) reported 200.0, then a 10-K/A restatement (filed
+    # 2026-03-01) reported 110.0. The later-filed row must win even though
+    # it is numerically smaller -- sorted(series, reverse=True) would
+    # otherwise let the larger restated value win the (period_end, value)
+    # tuple tie-break regardless of filing recency.
+    companies = [(0, "A")]
+    fund = _fund_conn(companies, [])
+    fund_db.write_facts(fund, 0, [
+        {"tag": "Revenues", "period_end": "2025-12-31", "value": 200.0,
+         "form": "10-K", "filed": "2026-02-01"},
+        {"tag": "Revenues", "period_end": "2025-12-31", "value": 110.0,
+         "form": "10-K/A", "filed": "2026-03-01"},
+        {"tag": "Revenues", "period_end": "2024-12-31", "value": 100.0,
+         "form": "10-K", "filed": "2025-02-01"},
+    ])
+    yoy = extract._revenue_yoy(fund)
+    assert yoy[0] == pytest.approx(0.10)
 
 
 def test_percent_rank_matches_sql_semantics():

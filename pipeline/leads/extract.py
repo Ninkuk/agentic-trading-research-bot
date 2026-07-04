@@ -141,13 +141,27 @@ def _revenue_yoy(fund_conn, window_days=catalog.GROWTH_WINDOW_DAYS,
                  ratio_bounds=catalog.GROWTH_RATIO_BOUNDS):
     """cik -> revenue YoY fraction. Tag precedence is per company: the first
     REVENUE_TAGS tag the company reports at all is its revenue series (spec
-    D4 — precedence, not v_screener's MAX-across-both quirk)."""
-    facts = defaultdict(list)
+    D4 — precedence, not v_screener's MAX-across-both quirk).
+
+    facts' PK is (cik, tag, period_end, form): a restated filing (e.g. a
+    10-K/A superseding the original 10-K for the same period_end) produces a
+    second row. Dedupe to the most-recently-FILED row per (cik, tag,
+    period_end) before pairing — same convention as
+    sec_fundamentals.db.v_latest_fundamentals' ORDER BY period_end DESC,
+    filed DESC. NULL filed sorts as older than any non-NULL filed date."""
+    latest = {}  # (cik, tag, period_end) -> (filed_sort_key, value)
     qmarks = ",".join("?" * len(catalog.REVENUE_TAGS))
-    for cik, tag, pe, value in fund_conn.execute(
-            f"SELECT cik, tag, period_end, value FROM facts "
+    for cik, tag, pe, value, filed in fund_conn.execute(
+            f"SELECT cik, tag, period_end, value, filed FROM facts "
             f"WHERE tag IN ({qmarks}) AND value IS NOT NULL",
             catalog.REVENUE_TAGS):
+        key = (cik, tag, pe)
+        sort_key = filed or ""
+        prior = latest.get(key)
+        if prior is None or sort_key >= prior[0]:
+            latest[key] = (sort_key, value)
+    facts = defaultdict(list)
+    for (cik, tag, pe), (_filed, value) in latest.items():
         facts[(cik, tag)].append((pe, value))
     out = {}
     for cik in {cik for cik, _tag in facts}:
