@@ -40,37 +40,45 @@ exist in `v_net.net_comm` and `v_disagg_net.net_prod_merc`.
 **Prerequisite change to `sources/screeners/cftc_screener/db.py`** (ELT: signal views
 live in the source DB): add commercial-keyed twins of the existing index views, same
 156-week window and `100*(net-lo)/(hi-lo)` formula:
-- `v_cot_index_commercial` (legacy, keys on `net_comm`) + `_latest`
 - `v_disagg_cot_index_commercial` (keys on `net_prod_merc`) + `_latest`
+- `v_tff_cot_index_dealer` (keys on `net_dealer` — TFF has no producer group; the
+  dealer side is the hedging analog) + `_latest`
 
-TFF has no producer group (financial contracts); for TFF markets the premise group is
-**dealer** (`net_dealer` — the hedging side): `v_tff_cot_index_dealer` + `_latest`.
-The existing speculator-keyed views stay untouched and serve as the confirm leg.
+**Family precedence is pinned per asset class** (physical markets exist in both
+legacy and disaggregated tables with *different* nets): physicals
+(metals/energy/ags/softs) → disaggregated `net_prod_merc`; financials
+(equity_index/rates/fx) → TFF `net_dealer`. The legacy `net_comm` is **not** used in
+v1 (no legacy twin view); it stays available if a market is ever missing from both
+preferred families. The existing speculator-keyed views stay untouched and serve as
+the confirm leg.
 
 ### D2. COT lead rule: commercial extreme, speculator divergence recorded
 - Premise: commercial index ≥ 90 → bullish (commercials most net-long in 3y) → **long**
   lead on the mapped ETF; ≤ 10 → **short** lead. (Index thresholds match the existing
   `v_extremes` convention.)
 - The funnel emits the lead whenever the premise fires; the speculator index for the
-  same market is stored in `details` JSON. Whether divergence is *required* is a
+  same market is stored in `details` JSON, along with the market `code` and its
+  `asset_class` (Stage 2's G5 groups ETF candidates by `asset_class` — it never opens
+  `cftc.db`, so this field is part of the lead contract). Whether divergence is *required* is a
   Stage 2 confluence decision, not baked in here (research: the index is a
   normalizer/extreme-detector, **not a trigger**).
 - Tag: `{type: mean_reversion, implementation: cross_sectional, horizon_band: weeks}`.
 
 ### D3. COT → ETF mapping lives in `catalog.py`
-`Mapping(code, etf, note)` — CFTC contract market code → one liquid, long-underlying
-ETF (no inverse/levered ETFs; direction is expressed in the lead's `direction` field).
-Initial map (codes to be confirmed against `cftc_screener/catalog.py.CATALOG` at build
-time — names below are the catalog's):
+`Mapping(code, etf, asset_class, note)` — CFTC contract market code → one liquid,
+long-underlying ETF (no inverse/levered ETFs; direction is expressed in the lead's
+`direction` field). `asset_class` is copied from the cftc catalog so it travels with
+the lead (D2). Initial map — the mapping keys on `code`; codes and exact names to be
+confirmed against `cftc_screener/catalog.py.CATALOG` at build time:
 
-| Contract | ETF | | Contract | ETF |
+| Contract (catalog name) | ETF | | Contract (catalog name) | ETF |
 |---|---|---|---|---|
 | E-Mini S&P 500 | SPY | | Gold | GLD |
 | E-Mini Nasdaq-100 | QQQ | | Silver | SLV |
 | E-Mini Russell 2000 | IWM | | Copper | CPER |
 | 10-Year T-Note | IEF | | WTI Crude Oil | USO |
-| T-Bond (long) | TLT | | Natural Gas | UNG |
-| 2-Year T-Note | SHY | | Corn / Wheat / Soybeans | CORN / WEAT / SOYB |
+| U.S. Treasury Bond | TLT | | Natural Gas (Henry Hub) | UNG |
+| 2-Year T-Note | SHY | | Corn / Chicago Wheat (SRW) / Soybeans | CORN / WEAT / SOYB |
 | Euro FX | FXE | | Japanese Yen | FXY |
 
 Unmapped catalog markets (VIX, softs without a clean ETF, minor FX) produce **no lead**
@@ -79,18 +87,31 @@ Unmapped catalog markets (VIX, softs without a clean ETF, minor FX) produce **no
 ### D4. Quality composite = 3 dimensions in v1 (payout deferred)
 QMJ-style (research §2 [verified]) over `sec_fundamentals` + `stock_analysis` sector tags:
 - **Profitability** = mean of z(`net_margin`), z(`roe`) — from `v_screener`.
-- **Growth** = z(revenue YoY) — latest `Revenues` (fallback
-  `RevenueFromContractWithCustomerExcludingAssessedTax`) `fiscal_period='FY'` vs prior FY,
-  from `facts`.
+- **Growth** = z(revenue YoY), computed **period_end-aligned from annual facts**: the
+  company's latest Revenues fact whose `period_end` has a companion fact ~12 months
+  earlier (±35 days), same tag. **Not** keyed on `fiscal_period='FY'` — the default
+  frames ingestion path stores `fiscal_period=None`, and bulk-path duration tagging is
+  ambiguous (a Q4 and an annual value can share a PK). Tag precedence is **per
+  company**: `Revenues` if present, else
+  `RevenueFromContractWithCustomerExcludingAssessedTax` — precedence, not the
+  MAX-across-both quirk `v_screener` uses. Duration sanity check: skip a pair whose
+  ratio is outside [0.2, 5] (catches a quarterly/annual mismatch slipping through).
 - **Safety** = z(−`debt_to_equity`).
 - **Payout: deferred** — no dividend/buyback tags in `v_screener` today; add as a 4th
   dimension when the tags are captured (FOLLOWUPS).
 
-`Quality = z( z_prof + z_growth + z_safety )` — each member z-scored cross-sectionally
-**within stockanalysis `sector`** (dummies-only neutralization ≡ group demeaning; SQL
-window functions, population stddev via the `AVG(x*x)−AVG(x)²` moment form already used
-by `fred_screener.v_zscore`). Final `PERCENT_RANK()` computed over **valid (non-NULL
-composite) names only** — the research's drifting-universe denominator rule.
+Composite construction, pinned:
+1. Each **member** z-scored cross-sectionally **within stockanalysis `sector`**
+   (dummies-only neutralization ≡ group demeaning; SQL window functions, population
+   stddev via the `AVG(x*x)−AVG(x)²` moment form already used by
+   `fred_screener.v_zscore`).
+2. **Composite = mean of the non-NULL dimension scores, requiring ≥ 2 of 3 dimensions
+   present** (a plain SQL `+` would NULL the whole composite on one missing member —
+   e.g. a growth gap must not silently drop the name). Names with < 2 dimensions drop
+   out, with the drop count printed per run.
+3. The **outer z and the final `PERCENT_RANK()` are global across the whole universe**
+   (sector effects were already removed at the member level). Rank denominator =
+   valid (non-NULL composite) names only — the research's drifting-universe rule.
 
 Leads: top decile (`rank_pct ≥ 0.90`) → long; bottom decile (`≤ 0.10`) → short (Stage 2
 may drop shorts by config). Tag: `{type: quality, implementation: cross_sectional,
@@ -138,8 +159,10 @@ leads(snapshot_id INTEGER REFERENCES snapshots(id),
       horizon_band TEXT NOT NULL,          -- 'weeks' | 'months'
       score REAL NOT NULL,                 -- signal-native: COT index 0-100, quality z
       rank_pct REAL,                       -- cross-sectional percentile where applicable
-      as_of_date TEXT NOT NULL,            -- data date the signal is computed from
-      details TEXT,                        -- JSON: confirm-leg values, member z's, market code
+      as_of_date TEXT NOT NULL,            -- COT: report_date; quality: date part of the
+                                           -- stocks.db snapshot captured_at (universe vintage)
+      details TEXT,                        -- JSON: confirm-leg values, member z's, and for
+                                           -- COT leads the market code + asset_class (D2)
       PRIMARY KEY (snapshot_id, instrument, signal));
 
 regime(snapshot_id INTEGER PRIMARY KEY REFERENCES snapshots(id),

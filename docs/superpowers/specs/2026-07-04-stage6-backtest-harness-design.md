@@ -27,6 +27,14 @@ Retro price backfill (candidate source: stockanalysis historical endpoints — t
 already-trusted exception) is a separate future decision, tracked in FOLLOWUPS, and
 slots in *under* this harness without changing its schema.
 
+**Retention prerequisite (pinned):** walk-forward is only as long as the snapshot
+history it scores against, and today every DB it needs is run with `--keep-days 90`
+(and `stocks.db`/`leads.db` cascade-prune their fact rows). The DBs this harness
+evaluates — `stocks.db`, `etfs.db`, `leads.db`, `candidates.db` — must be run with
+long retention (`--keep-days 3650`, or omit `--keep-days` so no prune fires) from the
+moment Stage 1 ships. The Stage 5 scheduler's `argv_fn`s are where that retention
+policy is set. Without this, "as snapshots pile up" is false by configuration.
+
 ## Package shape
 
 `pipeline/trials/`: `catalog.py` (metric definitions), `stats.py` (pure math: Sharpe,
@@ -41,15 +49,21 @@ trials(trial_id INTEGER PRIMARY KEY AUTOINCREMENT,
        stage TEXT NOT NULL,                  -- 'leads' | 'promote' | 'gate' | ...
        description TEXT NOT NULL,
        params TEXT NOT NULL,                 -- canonical JSON of every knob in the trial
-       params_hash TEXT NOT NULL UNIQUE,     -- sha256; same params = same trial, no double count
+       params_hash TEXT NOT NULL,            -- sha256 of params
        git_rev TEXT,
-       family TEXT NOT NULL DEFAULT 'default'); -- DSR trial-count scope (see below)
+       family TEXT NOT NULL DEFAULT 'default', -- DSR trial-count scope (see below)
+       UNIQUE (stage, family, params_hash)); -- family-scoped: identical params JSON in two
+                                             -- different families/stages are DIFFERENT trials;
+                                             -- a global UNIQUE would cross-contaminate their Ns
 
 trial_results(trial_id INTEGER REFERENCES trials(trial_id),
               evaluated_at TEXT NOT NULL, window_start TEXT, window_end TEXT,
               n_obs INTEGER, sharpe REAL, skew REAL, kurtosis REAL,
               hit_rate REAL, avg_return REAL, max_drawdown REAL,
-              dsr REAL,                       -- computed at write time vs family count
+              dsr_at_eval REAL, n_at_eval INTEGER, -- DSR AS OF evaluation time, and the family
+                                                   -- N it was computed against — stored DSRs go
+                                                   -- stale as the family grows; the live number
+                                                   -- comes from --leaderboard (below)
               detail TEXT,
               PRIMARY KEY (trial_id, evaluated_at));
 
@@ -76,24 +90,45 @@ SR0  = sd_SR * ( (1-γ)·Φ⁻¹(1 - 1/N) + γ·Φ⁻¹(1 - 1/(N·e)) )   # expe
 DSR  = Φ( ( (SR - SR0) · sqrt(T - 1) )
           / sqrt( 1 - skew·SR + ((kurtosis - 1)/4)·SR² ) )
 ```
-`T` = n_obs, skew/kurtosis of the trial's return series (moment formulas in
-`stats.py`, tested against hand-computed fixtures). Reported alongside raw Sharpe in
-every `trial_results` row and in `v_family_leaderboard`. Edge cases pinned: `N < 2` or
-`sd_SR = 0` → DSR is NULL with a printed notice (never a fake 1.0).
+`T` = n_obs; skew/kurtosis of the trial's return series (moment formulas in
+`stats.py`). **Kurtosis convention pinned: RAW (Pearson) fourth standardized moment,
+normal = 3** — the published PSR/DSR denominator assumes it; an excess-kurtosis
+(normal = 0) slip flips the term's sign at normality and corrupts every DSR. The test
+fixtures include a normal-sample case asserting the denominator ≈
+`sqrt(1 + 0.5·SR²)`. `sd_SR` = stdev over the family's trial SRs taking the **latest
+evaluation per trial**. Caveat, stated for honesty: re-evaluating the same params on
+new windows doesn't add to N (N counts *configurations searched*, per B&LdP) — but
+cherry-picking the best *window* for one config is unpenalized selection; don't do it,
+report latest-window results. Edge cases pinned: `N < 2` or `sd_SR = 0` → DSR is NULL
+with a printed notice (never a fake 1.0).
+
+Because Φ⁻¹ isn't available to SQLite, **live DSR (vs the family's current N) is
+computed in Python by the `--leaderboard` command**, not in a SQL view; the stored
+`dsr_at_eval`/`n_at_eval` are the frozen at-the-time record.
 
 ## 3. Walk-forward evaluation
 
 `main.py trials --evaluate <trial_id>` scores a lead/candidate cohort against later
 observed prices:
 
-- Entry price: `stocks.db` `metrics.price` at the first snapshot **after** the lead's
-  `as_of_date` (t+1 discipline — never the same-day price).
+- Prices come from `stocks.db` (stocks) / `etfs.db` (ETF leads) — the `metrics` wide
+  table's columns are **dynamic**, so the harness declares its **required data-point
+  ids** (`price`, `low`, `averageVolume`) and fails up front with the missing-id list
+  if a DB was built with `--only` excluding them (a clear error beats
+  `OperationalError: no such column`).
+- Entry price: `price` at the first snapshot **after** the lead's `as_of_date` (t+1
+  discipline — never the same-day price).
 - Exit: horizon-band default (`weeks` → 20 trading days, `months` → 60) or stop
-  breach, whichever first, using each later snapshot's `price`/`low`.
-- **Tradability mask at data-load time** (🟢): a name absent from a given `stocks.db`
-  snapshot is untradable that day (delisted/halted/dropped) — its return path
-  truncates at the last snapshot where it existed, and entries can't open on missing
-  days. Trading days come from `market_calendar`, never date arithmetic.
+  breach, whichever first. **Stop-breach caveat, stated honestly:** `low` is the
+  snapshot day's low only — a breach on a day inside a snapshot gap is undetected and
+  the exit prices at the next available snapshot. That is a wrong-exit-price risk
+  (distinct from the n_obs shrinkage below); each evaluation records its
+  `max_gap_days` in `detail` so results from gappy history are flagged, not silently
+  trusted.
+- **Tradability mask at data-load time** (🟢): a name absent from a given snapshot is
+  untradable that day (delisted/halted/dropped) — its return path truncates at the
+  last snapshot where it existed, and entries can't open on missing days. Trading
+  days come from `market_calendar` (`--calendar-db`), never date arithmetic.
 - Returns per lead → per-trial return series → `trial_results` row. Gaps in snapshot
   history (screener didn't run) shrink `n_obs` honestly rather than interpolating.
 
@@ -118,9 +153,10 @@ but implemented in `fred_screener`:
 
 ## Views
 
-`v_family_leaderboard` (per family: trials, best SR, best DSR, N — the "how hard did
-we search" report), `v_trial_history`, `v_evaluation_coverage` (snapshot-gap report
-per window — how much data each evaluation actually had).
+`v_family_leaderboard` (per family: trial count N, best SR, latest results — the "how
+hard did we search" report; **live DSR is appended by the `--leaderboard` command in
+Python**, since SQL lacks Φ⁻¹), `v_trial_history`, `v_evaluation_coverage`
+(snapshot-gap report per window — how much data each evaluation actually had).
 
 ## CLI
 
@@ -128,7 +164,8 @@ per window — how much data each evaluation actually had).
 uv run python main.py trials --db trials.db --register --stage promote \
   --family stage2-liquidity --description "ADV floor 5M" --params '{"dollar_volume_floor": 5000000}'
 uv run python main.py trials --db trials.db --evaluate 17 \
-  --leads-db leads.db --stocks-db stocks.db [--entry-lag 1]
+  --leads-db leads.db --stocks-db stocks.db --etfs-db etfs.db \
+  --calendar-db market_calendar.db [--candidates-db candidates.db] [--entry-lag 1]
 uv run python main.py trials --db trials.db --leaderboard [--family stage2-liquidity]
 ```
 `run(...)` seams: `connect_ro`, `now_iso`, `git_rev` (injected, not shelled-out in

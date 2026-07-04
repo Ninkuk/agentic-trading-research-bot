@@ -20,14 +20,23 @@ the same `now_iso` and monitor DBs it always produces the same answer.
 `pipeline/scheduler/`: `catalog.py` (the job table — triggers, targets, argv),
 `extract.py` (read monitor DBs read-only), `db.py` (`schedule.db`), `run.py`
 (`"schedule"` in `registry.py`). No network of its own — all calendar knowledge comes
-from the already-built monitors (`econ_calendar`, `earnings`, `fomc`,
-`market_calendar`) plus static rules.
+from the already-built monitors (`econ_calendar`, `earnings`, `market_calendar`) plus
+static rules. (`fomc` is *maintained* by the daily job but no v1 trigger consumes it;
+a blackout-aware gate window is a possible future use, not spec'd.)
+
+**Read-only correctness note:** the monitors' `v_upcoming*`/`v_early_closes` views
+filter on each DB's `calendar_now.today`, which only that monitor's own run sets —
+the scheduler must not depend on it (stale if today's maintenance hasn't run) and
+cannot set it on a read-only connection. `extract.py` therefore queries the `events`
+tables **directly**, binding `:today` derived from the scheduler's own `now_iso`.
 
 ## Time model (the one place wall-clock legitimately enters)
 
 `now_iso` is injected as everywhere else; the cron wrapper passes real time, tests
 pass fixtures. ET conversion via stdlib `zoneinfo` (`America/New_York`) — DST handled
-correctly, no third-party dependency. All trigger times below are ET. Trading-day and
+correctly, no third-party dependency on macOS/Linux (system tzdata; caveat: Windows or
+slim CI images would need the `tzdata` PyPI package — acceptable for a
+macOS-deployed scheduler, noted for the "plain checkout" property). All trigger times below are ET. Trading-day and
 early-close facts come from `market_calendar` (`is_trading_day(conn, d)` helper,
 `v_early_closes`) — never hardcoded holiday math.
 
@@ -39,37 +48,44 @@ early-close facts come from `market_calendar` (`is_trading_day(conn, d)` helper,
 | Job | Trigger (clock 1: event-driven) | trigger_key |
 |---|---|---|
 | `cftc` | Friday ≥ 16:00 ET (COT posts ~15:30) | that Friday's date |
-| `fred` | an `econ_calendar` event released today: `v_upcoming_releases` where `event_date = today` and now ≥ `release_time` + 15 min | `event_type:event_date` |
-| `fundamentals`, `stocks` | a watched ticker's earnings event today (`v_upcoming_earnings`), evaluated once post-close 18:00 ET; plus a weekly Sunday baseline sweep | `earnings:date` / `weekly:date` |
+| `fred` | an `econ_calendar` event released today: `events` where `event_date = today` and now ≥ `event_time` + 15 min (`event_time` is populated per event at ingest; `release_time` exists only in `release_catalog`) | `event_type:event_date` |
+| `fundamentals`, `stocks` | a watched ticker's earnings event today (earnings `events`), evaluated once post-close 18:00 ET; plus a weekly Sunday baseline sweep | `earnings:date` / `weekly:date` |
 | `earnings`, `econ_calendar`, `fomc`, `market_calendar`, `treasury` | daily maintenance, 07:00 ET | `daily:date` |
-| `leads` | any of {`cftc`,`fred`,`fundamentals`,`stocks`} succeeded since the last `leads` run | `after:<upstream_job>:<upstream_trigger_key>` |
-| `promote` | `leads` succeeded since last `promote` run | same pattern |
+| `leads` | any of {`cftc`,`fred`,`fundamentals`,`stocks`} has an `ok` run newer than the last `ok` `leads` run | `after:<newest upstream job>:<its trigger_key>` — N upstream successes coalesce into ONE due `leads` run keyed to the newest |
+| `promote` | `leads` has an `ok` run newer than the last `ok` `promote` run | same coalescing pattern |
 
-| Window (clock 2: fixed) | Trigger |
-|---|---|
-| `gate` pre-close | trading day, ≥ 15:30 ET (≥ 12:30 on early closes — from `v_early_closes`), runs once per day |
-| `gate` pre-open (off by default) | trading day, ≥ 09:00 ET, `--window pre_open` |
+| Window (clock 2: fixed) | Trigger | trigger_key |
+|---|---|---|
+| `gate` pre-close | trading day, ≥ 15:30 ET (≥ 12:30 when *equity* markets close early — `events` where `event_type='early_close'`, NOT `bond_early_close`), once per day | `pre_close:<date>` |
+| `gate` pre-open (off by default) | trading day, ≥ 09:00 ET, `--window pre_open` | `pre_open:<date>` |
 
 The five-touchpoint intraday instinct is deliberately absent (research §6: mid-day
 adds cost, not edge, at this data's cadence).
+
+`argv_fn` notes: `promote`'s argv passes no `--equity` — it relies on the
+`PIPELINE_EQUITY` env fallback (Stage 2), sourced from `.env` by the cron wrapper.
+`gate`'s argv includes `--window pre_close` / `--window pre_open` (Stage 3 CLI).
 
 ## Idempotency & state — `schedule.db`
 
 ```sql
 job_runs(job TEXT NOT NULL, trigger_key TEXT NOT NULL,
+         attempt INTEGER NOT NULL,           -- 1, 2, 3, ... one ROW per attempt
          started_at TEXT NOT NULL, finished_at TEXT,
          status TEXT NOT NULL,               -- 'running' | 'ok' | 'error'
          error TEXT,                          -- type name only (secret hygiene)
-         PRIMARY KEY (job, trigger_key));
+         PRIMARY KEY (job, trigger_key, attempt));
 
 snapshots(id INTEGER PRIMARY KEY AUTOINCREMENT, captured_at TEXT NOT NULL,
           due_count INTEGER, ran_count INTEGER);
 ```
-A job is **due** iff its trigger holds AND no `job_runs` row exists for
-`(job, trigger_key)` with status `ok`. An `error` row leaves the job due again on the
-next tick (bounded by `max_attempts = 3` per trigger_key, then it stays failed until
-`--retry job:key`). A stale `running` row older than 2 hours is treated as `error`
-(crash recovery).
+One row per attempt — retries are countable and history is preserved (an
+overwrite-in-place PK couldn't express its own retry policy). A job is **due** iff its
+trigger holds AND no `ok` row exists for `(job, trigger_key)` AND
+`count(attempts) < max_attempts` (= 3; after that it stays failed until
+`--retry job:key`, which is allowed to add attempts past the cap). A `running` row
+older than 2 hours with no successor attempt is treated as `error` (crash recovery) —
+the row itself is never rewritten; the next attempt is a new row.
 
 Views: `v_due` (what would run now — requires `set_now` single-row param table, same
 `calendar_now` pattern as `monitor_common`), `v_recent_runs`, `v_failures`.
@@ -77,15 +93,23 @@ Views: `v_due` (what would run now — requires `set_now` single-row param table
 ## Execution model
 
 `--run` executes due jobs **in-process** via `registry.REGISTRY[name](argv)` — same
-process, sequential, in catalog order (upstream before downstream so one tick can
-carry cftc → leads → promote through). No subprocesses, no parallelism: total runtime
+process, sequential, in catalog order. No subprocesses, no parallelism: total runtime
 is dominated by polite rate limits anyway, and sequential means one WAL writer per DB.
-Per-job failures are caught (`type(e).__name__` only), recorded, and don't stop the
-tick — skip-and-continue at the job level.
+Per-job failures are caught as **`(Exception, SystemExit)`** — every registered `main`
+is an argparse wrapper, and a bad argv raises `SystemExit`, which a bare
+`except Exception` would let kill the whole tick. Recorded as `type(e).__name__` only;
+skip-and-continue at the job level.
 
-The cron side (documented in the README section this stage adds, not code):
+**Chaining within a tick:** due-evaluation loops to a fixpoint — after executing the
+due set, re-evaluate; repeat until nothing new is due (bounded at 3 iterations, the
+depth of the longest chain cftc → leads → promote). Without this, downstream jobs
+would wait a tick per hop.
+
+The cron side (documented in the README section this stage adds, not code) — note the
+`.env` sourcing; scheduled `fred`/`eia`/`usda` jobs read keys from the environment:
 ```
-*/15 * * * *  cd .../agentic-trading-bot && uv run python main.py schedule --run >> schedule.log 2>&1
+*/15 * * * *  cd .../agentic-trading-bot && set -a && . ./.env && set +a && \
+              uv run python main.py schedule --run >> schedule.log 2>&1
 ```
 
 ## CLI
