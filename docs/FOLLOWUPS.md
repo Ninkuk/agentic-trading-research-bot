@@ -37,7 +37,7 @@ forward past today). Watched names absent from the feed get a `scheduled`
 ### 1e. ✅ USDA WASDE balance-sheet ingestion
 The machine-readable OCE CSV (`oce-wasde-report-data-{YYYY}-{MM}.csv`) supplies
 the ending-stocks/use balance sheet Quick Stats structurally can't (see §2).
-`usda_screener/wasde.py` (tolerant, fail-loud tidy-CSV parser) + `wasde_obs`
+`sources/screeners/usda_screener/wasde.py` (tolerant, fail-loud tidy-CSV parser) + `wasde_obs`
 sibling table + `v_wasde_stocks_to_use` (`unit` is in the PK — a grain's U.S.
 line appears in both the U.S.-domestic bushels table and the world-table metric-
 tons row; STU falls back to domestic_use+exports where there's no "Use, Total").

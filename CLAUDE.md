@@ -48,27 +48,43 @@ Every screener is a package of the **same four files** (learn one, know all):
 - **`catalog.py`** — the curated list of what to pull (FRED series ids, CFTC targets, EIA
   facets…) plus `select_ids(only, exclude, add)` selection helpers.
 
-Exceptions to the four-file rule: `market_calendar/compute.py` (pure OPEX/holiday math),
-`stock_analysis_screener/probe.py` + `typing.py` (SvelteKit `__data.json` "devalue" decoder),
-`usda_screener/wasde.py`.
+Exceptions to the four-file rule: `sources/monitors/market_calendar/compute.py` (pure
+OPEX/holiday math), `sources/screeners/stock_analysis_screener/probe.py` + `typing.py`
+(SvelteKit `__data.json` "devalue" decoder), `sources/screeners/usda_screener/wasde.py`.
 
-### Shared spine (repo root)
+### File tree
 
-- **`registry.py`** — `REGISTRY` dict maps name → each screener's `main`; `dispatch()` routes
-  `main.py <name> [args...]`. **A screener "ships" only once registered here** (this is the
-  source of truth for `docs/ROADMAP.md`).
-- **`screener_common.py`** — `connect()` (opens SQLite in **WAL** mode) and a generic snapshot
-  cascade `prune()`.
-- **`monitor_common.py`** — the event-date **monitor framework**: a forward `events` table keyed
-  `(event_type, event_date, subtype)`, `upsert_events` (dates firm up in place: tentative →
-  confirmed), `replace_forward_window` (cancellation-aware; **never touches past events**),
-  `v_upcoming`/`v_imminent` views, and a snapshot-only prune. Monitors (`econ_calendar`, `fomc`,
-  `market_calendar`, `earnings`, and Treasury's `v_upcoming_auctions`) build on this.
-- **`http_client.py`** — bounded exponential-backoff `http_get` (honors `Retry-After`),
-  `make_opener(headers)`, and a `RateLimiter` token bucket. Note the process-wide
-  `SEC_RATE_LIMITER` (9 req/s) keyed on `SEC_HOST_KEY="sec.gov"` — **all** SEC fetchers
-  (`edgar`, `ftd`, `fundamentals`) must acquire under that one key so the per-IP cap is shared,
-  not doubled across `www.` / `data.` hosts.
+Every screener/monitor package lives under `sources/`, nested by kind:
+
+```
+sources/
+├── common/       # screener_common.py, monitor_common.py, http_client.py
+├── screeners/    # 16 point-in-time data readers (import screener_common)
+└── monitors/     # 4 event-date calendars (import monitor_common)
+```
+
+`registry.py` and `main.py` stay at repo root — `registry.py` is the CLI dispatch table, not a
+source itself. Import a screener/monitor's internals as `sources.screeners.<name>.<module>` /
+`sources.monitors.<name>.<module>`.
+
+### Shared spine
+
+- **`registry.py`** (repo root) — `REGISTRY` dict maps name → each screener's `main`;
+  `dispatch()` routes `main.py <name> [args...]`. **A screener "ships" only once registered
+  here** (this is the source of truth for `docs/ROADMAP.md`).
+- **`sources/common/screener_common.py`** — `connect()` (opens SQLite in **WAL** mode) and a
+  generic snapshot cascade `prune()`.
+- **`sources/common/monitor_common.py`** — the event-date **monitor framework**: a forward
+  `events` table keyed `(event_type, event_date, subtype)`, `upsert_events` (dates firm up in
+  place: tentative → confirmed), `replace_forward_window` (cancellation-aware; **never touches
+  past events**), `v_upcoming`/`v_imminent` views, and a snapshot-only prune. Monitors
+  (`econ_calendar`, `fomc`, `market_calendar`, `earnings`, and Treasury's
+  `v_upcoming_auctions`) build on this.
+- **`sources/common/http_client.py`** — bounded exponential-backoff `http_get` (honors
+  `Retry-After`), `make_opener(headers)`, and a `RateLimiter` token bucket. Note the
+  process-wide `SEC_RATE_LIMITER` (9 req/s) keyed on `SEC_HOST_KEY="sec.gov"` — **all** SEC
+  fetchers (`edgar`, `ftd`, `fundamentals`) must acquire under that one key so the per-IP cap
+  is shared, not doubled across `www.` / `data.` hosts.
 
 ### Data model conventions
 
