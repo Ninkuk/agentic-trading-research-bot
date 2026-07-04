@@ -8,7 +8,9 @@ A signal-collection layer for a trading bot: ~20 independent **screeners** (poin
 readers) and event-date **monitors** (forward-looking calendars) that each fetch one official
 data source (SEC, FRED, CFTC, FINRA, CBOE, Treasury, NY Fed, EIA, USDA, …) into a per-source
 SQLite database, then derive signals in SQL views. Downstream consumption (the "signal → candidate"
-pipeline) is designed in `docs/research/` and tracked in `docs/PIPELINE_ROADMAP.md`, but not yet built.
+pipeline) is designed in `docs/research/` and tracked in `docs/PIPELINE_ROADMAP.md`; its first
+stage is built — `pipeline/leads/` (the `leads` dispatcher) funnels per-source signals into a
+unified, tagged `leads.db` read-only over the source DBs. Later stages are not yet built.
 
 **Zero runtime third-party dependencies** — everything is stdlib (`urllib`, `sqlite3`, `json`,
 `argparse`). Python 3.12, managed with `uv`. The only dev dependency is `pytest`.
@@ -16,7 +18,7 @@ pipeline) is designed in `docs/research/` and tracked in `docs/PIPELINE_ROADMAP.
 ## Commands
 
 ```bash
-# Run a screener/monitor (dispatched by name; see registry.py for the 20 names)
+# Run a screener/monitor/pipeline stage (dispatched by name; see registry.py for the names)
 uv run python main.py fred --db fred.db --keep-days 90
 uv run python main.py cftc --family disaggregated
 uv run python main.py --list          # print all registered dispatcher names

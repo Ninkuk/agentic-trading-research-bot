@@ -67,7 +67,7 @@ built** as ELT views in the screener DBs:
 
 ### Stage 1 — Signal funnel → ranked leads ✅ 🟢
 
-**Built:** Built as `pipeline/leads/` (registered: `main.py leads`). Spec retired (transient per CLAUDE.md); decisions D1–D6 live in the package's catalog/docstrings.
+**Built** as `pipeline/leads/` (registered: `main.py leads`). Spec retired (transient per CLAUDE.md); decisions D1–D6 live in the package's catalog/docstrings.
 
 §1–§2. New package (e.g. `pipeline/leads/`) reading the per-source DBs
 read-only, writing a unified `leads.db`. Pure Python + SQL, no network — fully
