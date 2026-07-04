@@ -106,6 +106,20 @@ def test_gate_confluence_two_signals_or_strong_extreme():
     assert rej[0]["instrument"] == "MID" and rej[0]["gate"] == "confluence"
 
 
+def test_gate_confluence_rejects_repeated_same_signal():
+    # Two members but the SAME signal (e.g. two cot_commercial_extreme rows
+    # for the same instrument from different as_of_dates) — not distinct,
+    # so this must NOT qualify for the multi-signal arm.
+    repeated = _group(instrument="DUP", det_score=0.80,
+                      signals=[{"signal": "cot_commercial_extreme",
+                                "det_score": 0.85, "as_of_date": "2026-06-23"},
+                               {"signal": "cot_commercial_extreme",
+                                "det_score": 0.75, "as_of_date": "2026-06-30"}])
+    passed, rej = gates.gate_confluence([repeated], CFG)
+    assert passed == []
+    assert rej[0]["instrument"] == "DUP" and rej[0]["gate"] == "confluence"
+
+
 def test_gate_sector_cap_keeps_top_two_deterministic():
     groups = [_group(instrument=i, det_score=s, sector="metals")
               for i, s in (("GLD", 0.99), ("SLV", 0.97), ("CPER", 0.96))]

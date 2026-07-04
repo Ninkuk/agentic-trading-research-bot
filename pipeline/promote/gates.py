@@ -130,7 +130,8 @@ def gate_confluence(groups, cfg) -> tuple:
     momentum/carry legs, by design.)"""
     passed, rejections = [], []
     for g in groups:
-        if len(g["signals"]) >= 2 or g["det_score"] >= cfg.strong_extreme:
+        distinct_signals = {m["signal"] for m in g["signals"]}
+        if len(distinct_signals) >= 2 or g["det_score"] >= cfg.strong_extreme:
             passed.append(g)
         else:
             rejections.append(_reject(
