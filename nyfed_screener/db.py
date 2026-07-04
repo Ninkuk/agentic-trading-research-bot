@@ -121,4 +121,49 @@ def prune(conn, keep_days, now_iso) -> int:
     return len(ids)
 
 
-_VIEWS = ""   # filled in Task 4
+_VIEWS = """
+-- ON-RRP daily take-up + day-over-day change (excess-liquidity gauge).
+CREATE VIEW IF NOT EXISTS v_rrp_trend AS
+WITH daily AS (
+    SELECT operation_date, SUM(total_accepted) AS take_up
+    FROM repo_ops WHERE operation_type = 'reverse_repo'
+    GROUP BY operation_date
+)
+SELECT operation_date, take_up,
+       take_up - LAG(take_up) OVER (ORDER BY operation_date) AS change_vs_prior
+FROM daily ORDER BY operation_date;
+
+-- Latest SOFR + SOFR-vs-IORB spread (NULL until an iorb row exists).
+CREATE VIEW IF NOT EXISTS v_sofr_latest AS
+WITH latest AS (
+    SELECT * FROM reference_rates WHERE rate_type = 'SOFR'
+    ORDER BY effective_date DESC LIMIT 1
+)
+SELECT l.effective_date, l.percent_rate, l.volume_bn,
+       (SELECT percent_rate FROM iorb WHERE effective_date <= l.effective_date
+        ORDER BY effective_date DESC LIMIT 1) AS iorb,
+       l.percent_rate - (SELECT percent_rate FROM iorb
+                         WHERE effective_date <= l.effective_date
+                         ORDER BY effective_date DESC LIMIT 1) AS sofr_iorb_spread
+FROM latest l;
+
+-- SOMA total par per as-of date + week-over-week change (QT/QE pace).
+CREATE VIEW IF NOT EXISTS v_soma_runoff AS
+WITH tot AS (
+    SELECT as_of_date, par_value FROM soma_holdings
+    WHERE security_type = 'total'
+)
+SELECT as_of_date, par_value,
+       par_value - LAG(par_value) OVER (ORDER BY as_of_date) AS wow_change
+FROM tot ORDER BY as_of_date;
+
+-- Latest primary-dealer value per series (populated only once phase 2 lands).
+CREATE VIEW IF NOT EXISTS v_dealer_positioning AS
+WITH ranked AS (
+    SELECT series_key, as_of_date, value,
+           ROW_NUMBER() OVER (PARTITION BY series_key
+                              ORDER BY as_of_date DESC) AS rn
+    FROM primary_dealer_stats
+)
+SELECT series_key, as_of_date, value FROM ranked WHERE rn = 1;
+"""
