@@ -80,6 +80,25 @@ def test_fetch_frame_retries_403_then_succeeds():
     assert calls["n"] == 2 and slept == [1.0]
 
 
+def test_bulk_zip_url_builds_quarter_path():
+    url = fetch.bulk_zip_url(2023, 2)
+    assert url.endswith("/2023q2.zip")
+    assert "financial-statement-data-sets" in url
+
+
+def test_fetch_bulk_returns_bytes_success_none_on_404_raises_other():
+    assert fetch.fetch_bulk(2023, 2, get=lambda url: b"ZIPBYTES") == b"ZIPBYTES"
+
+    def get_404(url):
+        raise urllib.error.HTTPError(url, 404, "not found", {}, None)
+    assert fetch.fetch_bulk(2099, 4, get=get_404) is None   # unpublished -> skip
+
+    def get_500(url):
+        raise urllib.error.HTTPError(url, 500, "boom", {}, None)
+    with pytest.raises(urllib.error.HTTPError):
+        fetch.fetch_bulk(2023, 2, get=get_500)
+
+
 def test_parse_bulk_joins_num_and_sub_filters_tags_skips_empty():
     sub = "adsh\tcik\tname\tsic\tform\tperiod\tfy\tfp\tfiled\n" \
           "acc1\t320193\tAPPLE INC\t3571\t10-K\t20240928\t2024\tFY\t20241101\n"

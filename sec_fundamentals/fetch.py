@@ -4,17 +4,25 @@ scaffolding (UA, bounded backoff over 403/429/503) verbatim — see the note in
 import csv
 import io
 import json
+import time
+import urllib.error
+import urllib.request
 import zipfile
 
-from edgar_screener.fetch import _http_get, fetch_ticker_map  # reuse UA+backoff
+import http_client
+from edgar_screener.fetch import (  # reuse UA + bounded-backoff scaffolding
+    _BASE_DELAY, _MAX_ATTEMPTS, _RETRY_STATUS, _UA, _http_get, fetch_ticker_map)
 
 __all__ = ["cik_str", "fetch_ticker_map", "parse_frame", "fetch_frame",
            "parse_company_facts", "fetch_company_facts", "fetch_submissions",
-           "parse_bulk"]
+           "parse_bulk", "bulk_zip_url", "fetch_bulk"]
 
 _FRAMES = "https://data.sec.gov/api/xbrl/frames"
 _FACTS = "https://data.sec.gov/api/xbrl/companyfacts"
 _SUBS = "https://data.sec.gov/submissions"
+# Quarterly Financial Statement Data Sets (DERA) — the --bulk backfill source.
+_BULK_BASE = ("https://www.sec.gov/files/dera/data/"
+              "financial-statement-data-sets")
 
 
 def cik_str(cik: int) -> str:
@@ -133,3 +141,45 @@ def _int(v):
         return int(v)
     except (TypeError, ValueError):
         return None
+
+
+def _bytes_opener(headers: dict, timeout: int = 60, *,
+                  limiter=None, limiter_key: str = ""):
+    """opener(url)->bytes for the binary quarterly ZIPs (make_opener decodes,
+    which would corrupt ZIP bytes). Pays the shared SEC throttle when supplied."""
+    def opener(url: str) -> bytes:
+        if limiter is not None:
+            limiter.acquire(limiter_key)
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.read()
+    return opener
+
+
+# Same UA + shared SEC bucket as the JSON path (edgar's _urlopen), just no decode.
+_bulk_urlopen = _bytes_opener(_UA, limiter=http_client.SEC_RATE_LIMITER,
+                              limiter_key=http_client.SEC_HOST_KEY)
+
+
+def _http_get_bytes(url: str, opener=_bulk_urlopen, attempts: int = _MAX_ATTEMPTS,
+                    base_delay: float = _BASE_DELAY, sleep=time.sleep) -> bytes:
+    """GET raw bytes with the SEC bounded backoff (403/429/503 + transient)."""
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
+                                base_delay, sleep)
+
+
+def bulk_zip_url(year: int, quarter: int, base: str = _BULK_BASE) -> str:
+    """URL of the DERA quarterly ZIP for a (year, quarter), e.g. .../2023q2.zip."""
+    return f"{base}/{year}q{quarter}.zip"
+
+
+def fetch_bulk(year: int, quarter: int, get=_http_get_bytes) -> bytes | None:
+    """Download one quarter's financial-statement-data-set ZIP. Returns the raw
+    bytes, or None on HTTP 404 — an unpublished (future) quarter the run skips.
+    Other HTTP errors raise, since they signal a real fetch problem."""
+    try:
+        return get(bulk_zip_url(year, quarter))
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None
+        raise
