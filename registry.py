@@ -19,6 +19,7 @@ from finra_ats.run import main as ats_main
 from nyfed_screener.run import main as nyfed_main
 from cboe_stats.run import main as cboe_stats_main
 from eia_screener.run import main as eia_main
+from usda_screener.run import main as usda_main
 
 REGISTRY = {
     "stocks": stocks_main,
@@ -40,6 +41,7 @@ REGISTRY = {
     "nyfed": nyfed_main,
     "cboe_stats": cboe_stats_main,
     "eia": eia_main,
+    "usda": usda_main,
 }
 
 

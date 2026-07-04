@@ -117,3 +117,8 @@ def test_dispatch_lists_cboe_stats():
 def test_dispatch_lists_eia():
     import registry
     assert "eia" in registry.REGISTRY
+
+
+def test_dispatch_lists_usda():
+    import registry
+    assert "usda" in registry.REGISTRY
