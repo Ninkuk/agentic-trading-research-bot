@@ -122,3 +122,8 @@ def test_dispatch_lists_eia():
 def test_dispatch_lists_usda():
     import registry
     assert "usda" in registry.REGISTRY
+
+
+def test_dispatch_lists_leads():
+    import registry
+    assert "leads" in registry.REGISTRY

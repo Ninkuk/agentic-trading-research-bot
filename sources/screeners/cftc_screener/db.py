@@ -204,6 +204,29 @@ JOIN cot_disagg c ON c.code = l.code AND c.report_date = l.report_date;
 
 CREATE VIEW IF NOT EXISTS v_managed_money_extremes AS
 SELECT * FROM v_disagg_positioning WHERE cot_index >= 90 OR cot_index <= 10;
+
+-- Commercial-keyed twin (pipeline funnel premise leg, spec D1): the same
+-- 156-week index formula keyed on producer/merchant net instead of managed
+-- money. The speculator views above stay untouched (confirm leg).
+CREATE VIEW IF NOT EXISTS v_disagg_cot_index_commercial AS
+WITH w AS (
+    SELECT code, report_date, net_prod_merc,
+           MIN(net_prod_merc) OVER win AS lo,
+           MAX(net_prod_merc) OVER win AS hi
+    FROM v_disagg_net
+    WINDOW win AS (PARTITION BY code ORDER BY report_date
+                   ROWS BETWEEN 155 PRECEDING AND CURRENT ROW))
+SELECT code, report_date, net_prod_merc, lo, hi,
+       CASE WHEN hi <> lo
+            THEN 100.0 * (net_prod_merc - lo) / (hi - lo) END AS cot_index
+FROM w;
+
+CREATE VIEW IF NOT EXISTS v_disagg_cot_index_commercial_latest AS
+WITH ranked AS (
+    SELECT code, report_date, net_prod_merc, cot_index,
+           ROW_NUMBER() OVER (PARTITION BY code ORDER BY report_date DESC) rn
+    FROM v_disagg_cot_index_commercial)
+SELECT code, report_date, net_prod_merc, cot_index FROM ranked WHERE rn = 1;
 """
 
 _TFF_VIEWS = """
@@ -257,6 +280,28 @@ JOIN cot_tff c ON c.code = l.code AND c.report_date = l.report_date;
 
 CREATE VIEW IF NOT EXISTS v_leveraged_funds_extremes AS
 SELECT * FROM v_leveraged_funds_positioning WHERE cot_index >= 90 OR cot_index <= 10;
+
+-- Dealer-keyed twin (pipeline funnel premise leg, spec D1): TFF has no
+-- producer/merchant group; the dealer side is the hedging analog.
+CREATE VIEW IF NOT EXISTS v_tff_cot_index_dealer AS
+WITH w AS (
+    SELECT code, report_date, net_dealer,
+           MIN(net_dealer) OVER win AS lo,
+           MAX(net_dealer) OVER win AS hi
+    FROM v_tff_net
+    WINDOW win AS (PARTITION BY code ORDER BY report_date
+                   ROWS BETWEEN 155 PRECEDING AND CURRENT ROW))
+SELECT code, report_date, net_dealer, lo, hi,
+       CASE WHEN hi <> lo
+            THEN 100.0 * (net_dealer - lo) / (hi - lo) END AS cot_index
+FROM w;
+
+CREATE VIEW IF NOT EXISTS v_tff_cot_index_dealer_latest AS
+WITH ranked AS (
+    SELECT code, report_date, net_dealer, cot_index,
+           ROW_NUMBER() OVER (PARTITION BY code ORDER BY report_date DESC) rn
+    FROM v_tff_cot_index_dealer)
+SELECT code, report_date, net_dealer, cot_index FROM ranked WHERE rn = 1;
 """
 
 
