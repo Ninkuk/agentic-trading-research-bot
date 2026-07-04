@@ -1,4 +1,4 @@
-from fomc_calendar import db
+from sources.monitors.fomc_calendar import db
 
 
 def test_ensure_schema_creates_shared_tables_and_fomc_views():

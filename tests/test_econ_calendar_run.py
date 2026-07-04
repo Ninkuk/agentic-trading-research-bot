@@ -1,6 +1,6 @@
 import sqlite3
 
-from econ_calendar import run as runmod
+from sources.monitors.econ_calendar import run as runmod
 
 NOW = "2026-08-01T00:00:00+00:00"
 

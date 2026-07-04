@@ -7,10 +7,10 @@ from sources.screeners.ftd_screener.run import main as ftd_main
 from sources.screeners.finra_short_volume.run import main as short_volume_main
 from sources.screeners.finra_short_interest.run import main as short_interest_main
 from sources.screeners.cboe_options.run import main as options_main
-from econ_calendar.run import main as econ_calendar_main
-from market_calendar.run import main as market_calendar_main
-from fomc_calendar.run import main as fomc_main
-from earnings_calendar.run import main as earnings_main
+from sources.monitors.econ_calendar.run import main as econ_calendar_main
+from sources.monitors.market_calendar.run import main as market_calendar_main
+from sources.monitors.fomc_calendar.run import main as fomc_main
+from sources.monitors.earnings_calendar.run import main as earnings_main
 from sources.screeners.reddit_screener.run import main as reddit_main
 from sources.screeners.stock_analysis_screener.run import main as stocks_main
 from sources.screeners.sec_fundamentals.run import main as fundamentals_main

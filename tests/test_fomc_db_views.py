@@ -1,7 +1,7 @@
 import json
 
 import sources.common.monitor_common as monitor_common
-from fomc_calendar import db
+from sources.monitors.fomc_calendar import db
 
 
 def _fresh(now):

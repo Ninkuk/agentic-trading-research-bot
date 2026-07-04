@@ -4,7 +4,7 @@ import sys
 from datetime import date, datetime, timedelta, timezone
 
 import sources.common.monitor_common as monitor_common
-from earnings_calendar import db, fetch
+from sources.monitors.earnings_calendar import db, fetch
 
 
 def build_events(rows, now_iso) -> list:

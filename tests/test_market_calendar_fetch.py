@@ -1,6 +1,6 @@
 import pytest
 
-from market_calendar import fetch
+from sources.monitors.market_calendar import fetch
 
 # Minimal fixture shaped like the parser's tolerant contract: rows pairing a
 # label with an ISO (or normalizable) date. Keep in sync with the parser regex.

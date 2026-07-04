@@ -1,7 +1,7 @@
 import json
 
 import sources.common.monitor_common as monitor_common
-from earnings_calendar import db
+from sources.monitors.earnings_calendar import db
 
 
 def _fresh(now, horizon=7):

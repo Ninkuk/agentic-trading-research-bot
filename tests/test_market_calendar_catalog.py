@@ -1,6 +1,6 @@
 from datetime import date
 
-from market_calendar import catalog
+from sources.monitors.market_calendar import catalog
 
 
 def _all_dated():

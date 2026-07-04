@@ -4,7 +4,7 @@ import sys
 from datetime import date, datetime, timedelta, timezone
 
 import sources.common.monitor_common as monitor_common
-from fomc_calendar import db, fetch
+from sources.monitors.fomc_calendar import db, fetch
 
 _EVENT_TYPES = ("fomc_meeting", "fomc_sep", "fomc_minutes",
                 "fomc_blackout_start", "fomc_blackout_end")

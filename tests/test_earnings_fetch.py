@@ -3,7 +3,7 @@ from datetime import date
 
 import pytest
 
-from earnings_calendar import fetch
+from sources.monitors.earnings_calendar import fetch
 
 # Decoded fixture shaped per the catalog: day-blocks each with a date + symbol
 # rows (s/n/t/e/eg/r/rg/m). Confirm vs a live decode at implementation.

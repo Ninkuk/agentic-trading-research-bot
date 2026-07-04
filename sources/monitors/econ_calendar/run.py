@@ -4,7 +4,7 @@ import sys
 from datetime import datetime, timezone
 
 import sources.common.monitor_common as monitor_common
-from econ_calendar import catalog, db, fetch
+from sources.monitors.econ_calendar import catalog, db, fetch
 
 
 def run(db_path, only=None, exclude=None, horizon_days=7, keep_days=None,

@@ -1,6 +1,6 @@
 import sources.common.monitor_common as monitor_common
-from econ_calendar import db
-from econ_calendar.catalog import CATALOG
+from sources.monitors.econ_calendar import db
+from sources.monitors.econ_calendar.catalog import CATALOG
 
 CPI = next(r for r in CATALOG if r.event_type == "cpi_release")
 MED = next(r for r in CATALOG if r.impact == "med")  # JOLTS — exercises exclusion

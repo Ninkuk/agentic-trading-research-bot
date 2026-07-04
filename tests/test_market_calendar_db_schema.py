@@ -1,4 +1,4 @@
-from market_calendar import db
+from sources.monitors.market_calendar import db
 
 
 def test_ensure_schema_creates_events_snapshots_and_calendar_views():

@@ -1,6 +1,6 @@
 import json
 
-from fomc_calendar import run as runmod
+from sources.monitors.fomc_calendar import run as runmod
 
 NOW = "2026-01-01T00:00:00+00:00"
 MEETING = {"start_date": "2026-03-17", "end_date": "2026-03-18",

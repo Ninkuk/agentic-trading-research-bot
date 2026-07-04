@@ -2,7 +2,7 @@ import argparse
 from datetime import datetime, timezone
 
 import sources.common.monitor_common as monitor_common
-from market_calendar import catalog, compute, db, fetch
+from sources.monitors.market_calendar import catalog, compute, db, fetch
 
 _NYSE_URL = "https://www.nyse.com/markets/hours-calendars"
 _SIFMA_URL = "https://www.sifma.org/resources/guides-playbooks/holiday-schedule"

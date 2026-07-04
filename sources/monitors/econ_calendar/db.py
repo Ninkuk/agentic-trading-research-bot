@@ -1,7 +1,7 @@
 from sources.common.monitor_common import connect
 from sources.common.monitor_common import ensure_schema as _mc_ensure_schema
 
-from econ_calendar.catalog import CATALOG
+from sources.monitors.econ_calendar.catalog import CATALOG
 
 __all__ = ["connect", "ensure_schema"]
 

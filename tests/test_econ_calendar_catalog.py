@@ -1,4 +1,4 @@
-from econ_calendar.catalog import CATALOG, Release, select_ids
+from sources.monitors.econ_calendar.catalog import CATALOG, Release, select_ids
 
 _VALID_IMPACT = {"high", "med"}
 _VALID_CATEGORY = {"inflation", "labor", "growth", "consumer"}

@@ -1,5 +1,5 @@
 import sources.common.monitor_common as monitor_common
-from market_calendar import db
+from sources.monitors.market_calendar import db
 
 
 def _fresh():

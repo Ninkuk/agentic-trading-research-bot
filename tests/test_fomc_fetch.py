@@ -1,6 +1,6 @@
 import pytest
 
-from fomc_calendar import fetch
+from sources.monitors.fomc_calendar import fetch
 
 # Fixture shaped like the real page: per-year panels ("YYYY FOMC Meetings"),
 # each meeting a __month + __date block. '*' on the date = press conference;

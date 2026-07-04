@@ -1,4 +1,4 @@
-from earnings_calendar import db
+from sources.monitors.earnings_calendar import db
 
 
 def test_ensure_schema_creates_tables_and_four_earnings_views():

@@ -3,8 +3,8 @@ import urllib.error
 
 import pytest
 
-from econ_calendar import fetch
-from econ_calendar.catalog import Release
+from sources.monitors.econ_calendar import fetch
+from sources.monitors.econ_calendar.catalog import Release
 
 REL = {10: Release(10, "cpi_release", "Consumer Price Index",
                    "high", "inflation", "08:30")}

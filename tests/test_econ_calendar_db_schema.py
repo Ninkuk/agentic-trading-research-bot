@@ -1,5 +1,5 @@
-from econ_calendar import db
-from econ_calendar.catalog import CATALOG
+from sources.monitors.econ_calendar import db
+from sources.monitors.econ_calendar.catalog import CATALOG
 
 
 def test_ensure_schema_creates_events_snapshots_catalog_and_views():

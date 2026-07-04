@@ -1,6 +1,6 @@
 from datetime import date
 
-from market_calendar import compute
+from sources.monitors.market_calendar import compute
 
 
 def test_third_friday_known_values():
