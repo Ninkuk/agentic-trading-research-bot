@@ -82,3 +82,8 @@ def test_dispatch_lists_market_calendar():
 def test_dispatch_lists_fundamentals():
     import registry
     assert "fundamentals" in registry.REGISTRY
+
+
+def test_dispatch_lists_fomc():
+    import registry
+    assert "fomc" in registry.REGISTRY

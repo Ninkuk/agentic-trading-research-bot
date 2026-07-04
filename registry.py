@@ -9,6 +9,7 @@ from finra_short_interest.run import main as short_interest_main
 from cboe_options.run import main as options_main
 from econ_calendar.run import main as econ_calendar_main
 from market_calendar.run import main as market_calendar_main
+from fomc_calendar.run import main as fomc_main
 from reddit_screener.run import main as reddit_main
 from stock_analysis_screener.run import main as stocks_main
 from sec_fundamentals.run import main as fundamentals_main
@@ -26,6 +27,7 @@ REGISTRY = {
     "fundamentals": fundamentals_main,
     "econ_calendar": econ_calendar_main,
     "market_calendar": market_calendar_main,
+    "fomc": fomc_main,
 }
 
 
