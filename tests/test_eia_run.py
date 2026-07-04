@@ -1,6 +1,6 @@
 import sqlite3
 
-from eia_screener import run as runmod
+from sources.screeners.eia_screener import run as runmod
 
 NOW = "2026-07-03T00:00:00+00:00"
 CATALOG_ID = "WCESTUS1"

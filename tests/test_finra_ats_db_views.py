@@ -1,4 +1,4 @@
-from finra_ats import db
+from sources.screeners.finra_ats import db
 
 
 def _seed():

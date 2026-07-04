@@ -1,5 +1,5 @@
 # tests/test_ftd_db_schema.py
-from ftd_screener import db
+from sources.screeners.ftd_screener import db
 
 
 def test_ensure_schema_is_idempotent():

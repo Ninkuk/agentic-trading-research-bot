@@ -1,7 +1,7 @@
 import json
 import urllib.error
 
-from finra_ats import fetch
+from sources.screeners.finra_ats import fetch
 
 # Field names mirror the LIVE otcMarket/weeklySummary schema: the venue name is
 # `marketParticipantName` (NOT `ATSName`, which does not exist in live records),

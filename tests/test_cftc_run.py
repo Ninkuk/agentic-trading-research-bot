@@ -1,6 +1,6 @@
 # tests/test_cftc_run.py
-from cftc_screener import db, run as run_mod
-from cftc_screener.catalog import Family, Market
+from sources.screeners.cftc_screener import db, run as run_mod
+from sources.screeners.cftc_screener.catalog import Family, Market
 
 NOW = "2026-07-03T00:00:00+00:00"
 
@@ -150,7 +150,7 @@ def test_run_only_selects_subset(tmp_path, monkeypatch):
 
 
 # --- family extension ---
-from cftc_screener.catalog import Family
+from sources.screeners.cftc_screener.catalog import Family
 
 
 def _disagg_family(codes):

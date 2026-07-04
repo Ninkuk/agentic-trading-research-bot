@@ -1,7 +1,7 @@
 import pytest
 
-from edgar_screener.db import connect
-from edgar_screener.run import run
+from sources.screeners.edgar_screener.db import connect
+from sources.screeners.edgar_screener.run import run
 
 TMAP = {1000623: {"ticker": "MATV", "title": "Mativ"}}
 
@@ -100,7 +100,7 @@ def test_run_walks_back_over_missing_file_403(tmp_path):
     import io
     import urllib.error
 
-    from edgar_screener import fetch
+    from sources.screeners.edgar_screener import fetch
 
     master = ("CIK|Company Name|Form Type|Date Filed|File Name\n"
               "----------------------------------------------------------\n"

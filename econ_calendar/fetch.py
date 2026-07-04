@@ -2,7 +2,7 @@ import json
 
 # Reuse the FRED client written once in fred_screener.fetch: same host, same key,
 # same bounded backoff (429/5xx), same require_api_key (never echoes the key).
-from fred_screener.fetch import _build_url, _http_get, require_api_key
+from sources.screeners.fred_screener.fetch import _build_url, _http_get, require_api_key
 
 __all__ = ["require_api_key", "_http_get", "fetch_all_release_dates",
            "fetch_release_dates", "parse_release_dates"]

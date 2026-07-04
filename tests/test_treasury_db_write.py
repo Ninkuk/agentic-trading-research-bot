@@ -1,4 +1,4 @@
-from treasury_screener import db
+from sources.screeners.treasury_screener import db
 
 
 def _fresh():

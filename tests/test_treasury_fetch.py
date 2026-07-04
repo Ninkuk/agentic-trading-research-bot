@@ -1,7 +1,7 @@
 import json
 import urllib.error
 
-from treasury_screener import fetch
+from sources.screeners.treasury_screener import fetch
 
 
 def test_build_url_encodes_fields_filter_sort_and_pagination():

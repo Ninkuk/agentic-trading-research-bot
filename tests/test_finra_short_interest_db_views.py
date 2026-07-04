@@ -1,7 +1,7 @@
 # tests/test_finra_short_interest_db_views.py
 import pytest
 
-from finra_short_interest import db
+from sources.screeners.finra_short_interest import db
 
 _COLS = ["symbol", "settlement_date", "current_short_qty", "previous_short_qty",
          "avg_daily_volume", "days_to_cover", "change_pct", "revision_flag",

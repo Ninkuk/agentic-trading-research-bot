@@ -1,6 +1,6 @@
 import pytest
 
-from usda_screener import wasde
+from sources.screeners.usda_screener import wasde
 
 # Real OCE WASDE tidy-CSV shape (oce-wasde-report-data-2025-12.csv, 16 cols).
 # Corn/United States appears in TWO tables: the U.S. domestic balance sheet

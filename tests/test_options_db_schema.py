@@ -1,4 +1,4 @@
-from cboe_options import db
+from sources.screeners.cboe_options import db
 
 
 def test_ensure_schema_is_idempotent_and_creates_objects():

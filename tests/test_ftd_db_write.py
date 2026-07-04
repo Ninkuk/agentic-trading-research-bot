@@ -1,5 +1,5 @@
 # tests/test_ftd_db_write.py
-from ftd_screener import db
+from sources.screeners.ftd_screener import db
 
 
 def _rows(*specs):

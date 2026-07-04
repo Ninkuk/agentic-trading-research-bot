@@ -1,4 +1,4 @@
-from edgar_screener.db import (connect, ensure_schema, prune, upsert_issuers,
+from sources.screeners.edgar_screener.db import (connect, ensure_schema, prune, upsert_issuers,
                                write_snapshot)
 
 

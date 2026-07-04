@@ -1,5 +1,5 @@
-from stock_analysis_screener.catalog import DataPoint
-from stock_analysis_screener.db import connect, ensure_schema, upsert_data_points
+from sources.screeners.stock_analysis_screener.catalog import DataPoint
+from sources.screeners.stock_analysis_screener.db import connect, ensure_schema, upsert_data_points
 
 
 def cols(conn):

@@ -1,4 +1,4 @@
-from eia_screener.catalog import CATALOG, Series, select_ids
+from sources.screeners.eia_screener.catalog import CATALOG, Series, select_ids
 
 _CATS = {"crude", "cushing", "gasoline", "distillate", "production", "imports",
          "natgas", "custom"}

@@ -1,4 +1,4 @@
-from edgar_screener.db import connect, ensure_schema
+from sources.screeners.edgar_screener.db import connect, ensure_schema
 
 TABLES = {"snapshots", "filings", "issuers"}
 VIEWS = {"v_latest", "v_tickered", "v_insider_activity", "v_events",

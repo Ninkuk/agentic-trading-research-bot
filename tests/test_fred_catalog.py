@@ -1,4 +1,4 @@
-from fred_screener.catalog import CATALOG, Series, select_ids
+from sources.screeners.fred_screener.catalog import CATALOG, Series, select_ids
 
 VALID_THEMES = {"growth", "inflation", "rates", "labor", "credit",
                 "housing", "sentiment"}

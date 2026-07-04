@@ -1,4 +1,4 @@
-from nyfed_screener import db
+from sources.screeners.nyfed_screener import db
 
 
 def test_ensure_schema_creates_tables_idempotent():

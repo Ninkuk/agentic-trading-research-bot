@@ -4,7 +4,7 @@ import urllib.error
 
 import pytest
 
-from cftc_screener.fetch import (
+from sources.screeners.cftc_screener.fetch import (
     _build_url, _headers, _http_get, _make_opener, _urlopen,
     fetch_market_rows, parse_rows,
 )
@@ -139,7 +139,7 @@ def test_http_get_does_not_retry_400():
 
 
 # --- family extension ---
-from cftc_screener.fetch import DISAGG_FIELDS, LEGACY_FIELDS, TFF_FIELDS
+from sources.screeners.cftc_screener.fetch import DISAGG_FIELDS, LEGACY_FIELDS, TFF_FIELDS
 
 # A Disaggregated Socrata record (subset), values as strings.
 DISAGG_REC = {

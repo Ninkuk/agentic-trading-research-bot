@@ -1,5 +1,5 @@
-from fred_screener import db, run as run_mod
-from fred_screener.catalog import Series
+from sources.screeners.fred_screener import db, run as run_mod
+from sources.screeners.fred_screener.catalog import Series
 
 
 def _theme_lookup(series_id):

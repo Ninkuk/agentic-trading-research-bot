@@ -1,7 +1,7 @@
 # tests/test_ftd_run.py
 from datetime import datetime, timezone
 
-from ftd_screener import db, run as run_mod
+from sources.screeners.ftd_screener import db, run as run_mod
 
 NOW = "2026-07-03T00:00:00+00:00"
 

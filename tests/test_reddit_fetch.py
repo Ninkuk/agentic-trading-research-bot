@@ -1,6 +1,6 @@
 import pytest
 
-from reddit_screener.fetch import fetch_filter, parse_page
+from sources.screeners.reddit_screener.fetch import fetch_filter, parse_page
 
 
 def test_parse_page_coerces_types_and_unescapes_name():

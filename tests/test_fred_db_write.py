@@ -1,4 +1,4 @@
-from fred_screener import db
+from sources.screeners.fred_screener import db
 
 
 def _fresh():

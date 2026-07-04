@@ -1,4 +1,4 @@
-from finra_ats import db
+from sources.screeners.finra_ats import db
 
 
 def test_ensure_schema_creates_tables_idempotent():

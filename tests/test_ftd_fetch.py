@@ -5,11 +5,11 @@ import zipfile
 
 import pytest
 
-from ftd_screener.fetch import (
+from sources.screeners.ftd_screener.fetch import (
     _bytes_opener, _http_get, fetch_period, parse_file, period_url,
     settlement_bounds,
 )
-import ftd_screener.fetch as ftd_fetch
+import sources.screeners.ftd_screener.fetch as ftd_fetch
 import sources.common.http_client as http_client
 
 SAMPLE = (

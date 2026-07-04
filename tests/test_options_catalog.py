@@ -1,4 +1,4 @@
-from cboe_options import catalog
+from sources.screeners.cboe_options import catalog
 
 
 def test_catalog_has_starter_symbols():

@@ -1,4 +1,4 @@
-from sec_fundamentals.catalog import CATALOG, Concept, select_ids
+from sources.screeners.sec_fundamentals.catalog import CATALOG, Concept, select_ids
 
 _KINDS = {"instant", "duration"}
 _GROUPS = {"income", "balance", "cashflow", "shares", "per_share"}

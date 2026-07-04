@@ -1,4 +1,4 @@
-from cboe_stats import db
+from sources.screeners.cboe_stats import db
 
 
 def _fresh():

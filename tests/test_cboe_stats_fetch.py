@@ -1,6 +1,6 @@
 import urllib.error
 
-from cboe_stats import fetch
+from sources.screeners.cboe_stats import fetch
 
 _PCR = ("DATE,TOTAL_PCR,EQUITY_PCR,INDEX_PCR,TOTAL_VOLUME\n"
         "2026-06-01,0.95,0.72,1.40,\"45,000,000\"\n"

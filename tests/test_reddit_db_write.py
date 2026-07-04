@@ -1,4 +1,4 @@
-from reddit_screener.db import (connect, ensure_schema, prune, upsert_tickers,
+from sources.screeners.reddit_screener.db import (connect, ensure_schema, prune, upsert_tickers,
                                 write_snapshot)
 
 

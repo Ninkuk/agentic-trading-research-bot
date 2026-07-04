@@ -5,7 +5,7 @@ import zipfile
 
 import pytest
 
-from sec_fundamentals import fetch
+from sources.screeners.sec_fundamentals import fetch
 
 
 def test_cik_str_zero_pads_to_ten_digits():
@@ -73,7 +73,7 @@ def test_fetch_frame_retries_403_then_succeeds():
 
     # inject the opener into the shared bounded-backoff via a get closure
     def get(url):
-        from edgar_screener.fetch import _http_get
+        from sources.screeners.edgar_screener.fetch import _http_get
         return _http_get(url, opener=opener, sleep=slept.append)
 
     fetch.fetch_frame("Assets", "USD", "CY2024Q3I", get=get)

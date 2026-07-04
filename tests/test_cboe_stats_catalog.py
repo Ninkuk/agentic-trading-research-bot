@@ -1,4 +1,4 @@
-from cboe_stats.catalog import CATALOG, Feed, enabled_ids, select_ids
+from sources.screeners.cboe_stats.catalog import CATALOG, Feed, enabled_ids, select_ids
 
 
 def test_catalog_has_pcr_and_vol_indices():

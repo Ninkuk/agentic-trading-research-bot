@@ -3,7 +3,7 @@ import urllib.error
 
 import pytest
 
-from finra_short_volume.fetch import (
+from sources.screeners.finra_short_volume.fetch import (
     _http_get, day_url, fetch_day, parse_file,
 )
 

@@ -1,5 +1,5 @@
 # tests/test_ftd_db_views.py
-from ftd_screener import db
+from sources.screeners.ftd_screener import db
 
 
 def _seed(conn, cusip, series):

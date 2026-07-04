@@ -1,6 +1,6 @@
 import sqlite3
 
-from treasury_screener import run as runmod
+from sources.screeners.treasury_screener import run as runmod
 
 NOW = "2026-07-03T00:00:00+00:00"
 

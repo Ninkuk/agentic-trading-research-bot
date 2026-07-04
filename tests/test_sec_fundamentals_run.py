@@ -2,7 +2,7 @@ import io
 import sqlite3
 import zipfile
 
-from sec_fundamentals import run as runmod
+from sources.screeners.sec_fundamentals import run as runmod
 
 NOW = "2026-05-01T00:00:00+00:00"      # most recent completed quarter: CY2026Q1
 MAP = {1: {"ticker": "AAA", "title": "Alpha"},

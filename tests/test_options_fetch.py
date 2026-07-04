@@ -3,7 +3,7 @@ import urllib.error
 
 import pytest
 
-from cboe_options import fetch
+from sources.screeners.cboe_options import fetch
 
 
 def _payload():

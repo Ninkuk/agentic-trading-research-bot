@@ -1,4 +1,4 @@
-from treasury_screener.catalog import CATALOG, Dataset, select_ids
+from sources.screeners.treasury_screener.catalog import CATALOG, Dataset, select_ids
 
 _FREQ = {"daily", "monthly", "event"}
 

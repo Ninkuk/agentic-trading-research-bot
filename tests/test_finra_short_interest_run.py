@@ -1,7 +1,7 @@
 # tests/test_finra_short_interest_run.py
 from datetime import datetime, timezone
 
-from finra_short_interest import db, run as run_mod
+from sources.screeners.finra_short_interest import db, run as run_mod
 
 NOW = "2024-08-15T00:00:00+00:00"
 

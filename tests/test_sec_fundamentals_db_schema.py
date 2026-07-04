@@ -1,4 +1,4 @@
-from sec_fundamentals import db
+from sources.screeners.sec_fundamentals import db
 
 
 def test_ensure_schema_creates_tables_and_is_idempotent():

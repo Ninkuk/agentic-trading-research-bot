@@ -1,4 +1,4 @@
-from usda_screener import db
+from sources.screeners.usda_screener import db
 
 
 def _fresh():

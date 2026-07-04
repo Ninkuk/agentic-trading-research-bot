@@ -1,7 +1,7 @@
 import json
 import urllib.error
 
-from nyfed_screener import fetch
+from sources.screeners.nyfed_screener import fetch
 
 
 def test_build_url_encodes_dates():

@@ -1,4 +1,4 @@
-from nyfed_screener import db
+from sources.screeners.nyfed_screener import db
 
 
 def _fresh():

@@ -1,4 +1,4 @@
-from cftc_screener import db
+from sources.screeners.cftc_screener import db
 
 
 def _seed(conn, code, series, name="M", asset_class="metals"):
@@ -110,7 +110,7 @@ def test_v_positioning_passthrough_columns():
 
 
 # --- family extension ---
-from cftc_screener import catalog
+from sources.screeners.cftc_screener import catalog
 
 
 def _seed_disagg(conn, code, series, asset_class="metals"):

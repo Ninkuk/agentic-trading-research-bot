@@ -1,4 +1,4 @@
-from edgar_screener.fetch import classify, index_url, parse_master
+from sources.screeners.edgar_screener.fetch import classify, index_url, parse_master
 
 MASTER = """Description:           Daily Index of EDGAR Dissemination Feed by Form Type
 Last Data Received:    Jun 2, 2025
@@ -55,7 +55,7 @@ def test_index_url_computes_quarter():
 import json
 import urllib.error
 
-from edgar_screener.fetch import fetch_daily_index, fetch_ticker_map
+from sources.screeners.edgar_screener.fetch import fetch_daily_index, fetch_ticker_map
 
 
 def test_fetch_ticker_map_indexes_by_cik():
@@ -145,7 +145,7 @@ def _http_error(code, retry_after=None):
 
 
 def test_http_get_retries_on_403_then_succeeds():
-    from edgar_screener.fetch import _http_get
+    from sources.screeners.edgar_screener.fetch import _http_get
     calls = {"n": 0}
     slept = []
 
@@ -162,7 +162,7 @@ def test_http_get_retries_on_403_then_succeeds():
 
 
 def test_http_get_gives_up_after_attempts_on_persistent_403():
-    from edgar_screener.fetch import _http_get
+    from sources.screeners.edgar_screener.fetch import _http_get
     slept = []
 
     def opener(url):
@@ -178,7 +178,7 @@ def test_http_get_gives_up_after_attempts_on_persistent_403():
 
 
 def test_http_get_does_not_retry_404():
-    from edgar_screener.fetch import _http_get
+    from sources.screeners.edgar_screener.fetch import _http_get
     slept = []
 
     def opener(url):
@@ -195,7 +195,7 @@ def test_http_get_does_not_retry_404():
 def test_http_get_retries_on_urlerror_then_succeeds():
     # Transient non-HTTP failures (connection reset, DNS) must also be retried,
     # not just HTTP status codes.
-    from edgar_screener.fetch import _http_get
+    from sources.screeners.edgar_screener.fetch import _http_get
     calls = {"n": 0}
     slept = []
 
@@ -213,7 +213,7 @@ def test_http_get_retries_on_urlerror_then_succeeds():
 
 def test_http_get_retries_on_timeout():
     # A socket read timeout is a TimeoutError, not an HTTPError/URLError.
-    from edgar_screener.fetch import _http_get
+    from sources.screeners.edgar_screener.fetch import _http_get
     calls = {"n": 0}
     slept = []
 
@@ -229,7 +229,7 @@ def test_http_get_retries_on_timeout():
 
 
 def test_http_get_gives_up_after_persistent_urlerror():
-    from edgar_screener.fetch import _http_get
+    from sources.screeners.edgar_screener.fetch import _http_get
     slept = []
 
     def opener(url):
@@ -245,7 +245,7 @@ def test_http_get_gives_up_after_persistent_urlerror():
 
 
 def test_http_get_honors_retry_after_header():
-    from edgar_screener.fetch import _http_get
+    from sources.screeners.edgar_screener.fetch import _http_get
     calls = {"n": 0}
     slept = []
 

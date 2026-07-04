@@ -2,9 +2,9 @@ import os
 
 import pytest
 
-from stock_analysis_screener.catalog import DataPoint
-from stock_analysis_screener.db import connect
-from stock_analysis_screener.run import run, select_ids
+from sources.screeners.stock_analysis_screener.catalog import DataPoint
+from sources.screeners.stock_analysis_screener.db import connect
+from sources.screeners.stock_analysis_screener.run import run, select_ids
 
 
 def test_select_ids_applies_only_and_exclude():

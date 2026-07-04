@@ -1,4 +1,4 @@
-from sec_fundamentals import db
+from sources.screeners.sec_fundamentals import db
 
 
 def _seed():

@@ -1,4 +1,4 @@
-from reddit_screener.db import connect, ensure_schema
+from sources.screeners.reddit_screener.db import connect, ensure_schema
 
 
 def objects(conn, kind):

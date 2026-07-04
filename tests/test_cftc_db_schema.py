@@ -1,4 +1,4 @@
-from cftc_screener import db
+from sources.screeners.cftc_screener import db
 
 
 def test_ensure_schema_is_idempotent():

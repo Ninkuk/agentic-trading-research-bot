@@ -3,7 +3,7 @@ import urllib.error
 
 import pytest
 
-from finra_short_interest.fetch import (
+from sources.screeners.finra_short_interest.fetch import (
     _http_get, fetch_settlement, parse_file, settlement_url,
 )
 

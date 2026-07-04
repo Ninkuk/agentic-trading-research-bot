@@ -1,5 +1,5 @@
 # tests/test_cftc_catalog.py
-from cftc_screener.catalog import CATALOG, Market, select_ids
+from sources.screeners.cftc_screener.catalog import CATALOG, Market, select_ids
 
 VALID_CLASSES = {"equity_index", "rates", "fx", "metals", "energy", "ags", "softs"}
 
@@ -38,7 +38,7 @@ def test_select_ids_appends_add_after_selection():
 
 
 # --- family extension ---
-from cftc_screener.catalog import DISAGG_CATALOG, FAMILIES, Family, TFF_CATALOG
+from sources.screeners.cftc_screener.catalog import DISAGG_CATALOG, FAMILIES, Family, TFF_CATALOG
 
 _PHYSICAL = {"metals", "energy", "ags", "softs"}
 _FINANCIAL = {"equity_index", "rates", "fx"}

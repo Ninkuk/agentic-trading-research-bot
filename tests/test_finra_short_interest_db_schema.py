@@ -1,5 +1,5 @@
 # tests/test_finra_short_interest_db_schema.py
-from finra_short_interest import db
+from sources.screeners.finra_short_interest import db
 
 
 def test_ensure_schema_is_idempotent_and_creates_tables():

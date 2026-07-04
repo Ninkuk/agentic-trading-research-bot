@@ -1,5 +1,5 @@
 # tests/test_finra_short_interest_db_write.py
-from finra_short_interest import db
+from sources.screeners.finra_short_interest import db
 
 
 def _rows(*specs):

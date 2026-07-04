@@ -1,4 +1,4 @@
-from treasury_screener import db
+from sources.screeners.treasury_screener import db
 
 
 def test_ensure_schema_creates_all_tables_idempotent():

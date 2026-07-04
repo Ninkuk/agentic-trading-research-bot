@@ -1,4 +1,4 @@
-from usda_screener import db
+from sources.screeners.usda_screener import db
 
 
 def test_ensure_schema_creates_table_and_views_idempotent():

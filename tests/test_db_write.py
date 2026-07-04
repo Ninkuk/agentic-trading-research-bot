@@ -1,7 +1,7 @@
 import json
 import sqlite3
 
-from stock_analysis_screener.db import connect, ensure_schema, prune, write_snapshot
+from sources.screeners.stock_analysis_screener.db import connect, ensure_schema, prune, write_snapshot
 
 
 def setup_conn():

@@ -1,5 +1,5 @@
 # tests/test_finra_shorts_db_schema.py
-from finra_short_volume import db
+from sources.screeners.finra_short_volume import db
 
 
 def test_ensure_schema_is_idempotent():

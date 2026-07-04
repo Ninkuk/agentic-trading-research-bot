@@ -9,8 +9,8 @@ import sys
 from datetime import date, timedelta
 from statistics import median
 
-from edgar_screener import fetch as _edgar
-from stock_analysis_screener import probe
+from sources.screeners.edgar_screener import fetch as _edgar
+from sources.screeners.stock_analysis_screener import probe
 
 EARNINGS_ROUTE = "/stocks/earnings-calendar/"
 SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik:010d}.json"

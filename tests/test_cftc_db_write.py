@@ -1,4 +1,4 @@
-from cftc_screener import db
+from sources.screeners.cftc_screener import db
 
 
 def _fresh():
@@ -86,7 +86,7 @@ def test_prune_deletes_old_snapshots_but_not_cot():
 
 
 # --- family extension ---
-from cftc_screener import catalog
+from sources.screeners.cftc_screener import catalog
 
 NOW = "2026-07-03T00:00:00+00:00"
 

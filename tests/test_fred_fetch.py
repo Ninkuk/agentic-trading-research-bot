@@ -2,7 +2,7 @@ import urllib.error
 
 import pytest
 
-from fred_screener.fetch import (
+from sources.screeners.fred_screener.fetch import (
     _build_url, _http_get, fetch_observations, fetch_series,
     parse_observations, require_api_key,
 )

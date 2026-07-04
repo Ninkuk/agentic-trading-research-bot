@@ -1,4 +1,4 @@
-from nyfed_screener.catalog import CATALOG, Domain, enabled_ids, select_ids
+from sources.screeners.nyfed_screener.catalog import CATALOG, Domain, enabled_ids, select_ids
 
 
 def test_catalog_ids_unique_and_v1_present():

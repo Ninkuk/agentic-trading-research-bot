@@ -1,4 +1,4 @@
-from eia_screener import db
+from sources.screeners.eia_screener import db
 
 
 def _seed():

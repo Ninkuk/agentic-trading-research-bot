@@ -3,7 +3,7 @@ import urllib.error
 
 import pytest
 
-from eia_screener import fetch
+from sources.screeners.eia_screener import fetch
 
 
 def test_require_api_key_raises_without_echoing():

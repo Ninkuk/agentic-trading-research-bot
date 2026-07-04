@@ -1,7 +1,7 @@
 import pytest
 
-from reddit_screener.db import connect
-from reddit_screener.run import run
+from sources.screeners.reddit_screener.db import connect
+from sources.screeners.reddit_screener.run import run
 
 
 def _mkrows(ticker, mentions):

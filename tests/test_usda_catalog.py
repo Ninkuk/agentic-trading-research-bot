@@ -1,4 +1,4 @@
-from usda_screener.catalog import CATALOG, Series, select_ids
+from sources.screeners.usda_screener.catalog import CATALOG, Series, select_ids
 
 
 def test_catalog_ids_unique_and_have_query():

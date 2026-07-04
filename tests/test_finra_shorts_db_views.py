@@ -1,7 +1,7 @@
 # tests/test_finra_shorts_db_views.py
 import pytest
 
-from finra_short_volume import db
+from sources.screeners.finra_short_volume import db
 
 _COLS = ["symbol", "date", "short_volume", "short_exempt_volume",
          "total_volume", "short_ratio", "market"]

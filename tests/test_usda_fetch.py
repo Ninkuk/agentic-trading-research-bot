@@ -3,7 +3,7 @@ import urllib.error
 
 import pytest
 
-from usda_screener import fetch
+from sources.screeners.usda_screener import fetch
 
 
 def test_require_api_key_raises_without_echoing():

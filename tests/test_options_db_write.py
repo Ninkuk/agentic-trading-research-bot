@@ -1,4 +1,4 @@
-from cboe_options import db
+from sources.screeners.cboe_options import db
 
 FA = "2026-07-03T00:00:00+00:00"
 
