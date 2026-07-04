@@ -45,6 +45,7 @@ approved exception — **stockanalysis.com** (already trusted/used). The existin
 | `cftc` (`--family`) | CFTC COT — Legacy + Disaggregated + TFF | Futures positioning / COT index; +managed-money (disagg) & leveraged-fund (TFF) nets | [spec](superpowers/specs/2026-07-03-cftc-screener-design.md) · [disagg/tff](superpowers/specs/2026-07-03-cot-disaggregated-tff-screener-design.md) | [plan](superpowers/plans/2026-07-03-cftc-screener.md) · [disagg/tff](superpowers/plans/2026-07-03-cot-disaggregated-tff-screener.md) |
 | `ftd` | SEC Fails-to-Deliver | CNS settlement fails | [spec](superpowers/specs/2026-07-03-ftd-screener-design.md) | [plan](superpowers/plans/2026-07-03-ftd-screener.md) |
 | `short_volume` | FINRA daily short-sale volume | Daily shorting pressure | [spec](superpowers/specs/2026-07-03-finra-short-volume-screener-design.md) | [plan](superpowers/plans/2026-07-03-finra-short-volume-screener.md) |
+| `short_interest` | FINRA Equity Short Interest | Settled short position / days-to-cover / squeeze | [spec](superpowers/specs/2026-07-03-finra-short-interest-screener-design.md) | [plan](superpowers/plans/2026-07-03-finra-short-interest-screener.md) |
 | `options` | CBOE per-contract options | Per-ticker IV / greeks / OI / Vol-OI | [spec](superpowers/specs/2026-07-03-cboe-options-screener-design.md) | [plan](superpowers/plans/2026-07-03-cboe-options-screener.md) |
 
 Cross-cutting: [CFTC revision lookback](superpowers/specs/2026-07-03-cftc-revision-lookback-design.md) ([plan](superpowers/plans/2026-07-03-cftc-revision-lookback.md)) · [stockanalysis __data.json catalog](stockanalysis_data_json_catalog.md).
@@ -61,7 +62,6 @@ Deepen publishers already wired in (reuse existing pipelines):
 
 | Conf | Dispatcher | Screener | Signal | Spec |
 |---|---|---|---|---|
-| 🟢 | `short_interest` | FINRA Equity Short Interest | Settled short interest, days-to-cover, squeeze | [spec](superpowers/specs/2026-07-03-finra-short-interest-screener-design.md) |
 | 🟢 | `ats` | FINRA OTC/ATS dark-pool volume | Off-exchange venue concentration | [spec](superpowers/specs/2026-07-03-finra-ats-dark-pool-screener-design.md) |
 | 🟢 | `fundamentals` | SEC XBRL fundamentals | Primary-source fundamentals (complements `stocks`) | [spec](superpowers/specs/2026-07-03-sec-fundamentals-screener-design.md) |
 
@@ -93,7 +93,7 @@ New "forward calendar" kind. Framework: [event-monitor-framework](superpowers/sp
 Ranked by signal × low effort × non-overlap (reuse of existing pipelines called out):
 
 1. ~~**`cftc --family` (Disaggregated/TFF)**~~ — ✅ **Built** (see Built table). Cloned the existing CFTC Socrata pipeline. [plan](superpowers/plans/2026-07-03-cot-disaggregated-tff-screener.md)
-2. **`short_interest`** — clones the `short_volume` CDN pattern; adds squeeze/days-to-cover.
+2. ~~**`short_interest`**~~ — ✅ **Built** (see Built table). Cloned the `short_volume` CDN pattern; adds squeeze/days-to-cover. [plan](superpowers/plans/2026-07-03-finra-short-interest-screener.md)
 3. **`econ_calendar`** — reuses the existing FRED key; unified upcoming-release backbone.
 4. **`market_calendar`** — small, deterministic; shared infra other monitors depend on.
 5. **`fundamentals`** — official XBRL fundamentals; reuses EDGAR CIK/UA handling.
