@@ -92,6 +92,39 @@ def test_run_ticker_map_failure_writes_nothing(tmp_path):
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 0
 
 
+def test_run_walks_back_over_missing_file_403(tmp_path):
+    # End-to-end: on a non-filing day the real fetch_daily_index sees a 403
+    # AccessDenied (S3 "missing key"), must treat it like a missing day, and
+    # run() must walk back to the previous trading day instead of aborting.
+    import functools
+    import io
+    import urllib.error
+
+    from edgar_screener import fetch
+
+    master = ("CIK|Company Name|Form Type|Date Filed|File Name\n"
+              "----------------------------------------------------------\n"
+              "1000623|Mativ Holdings, Inc.|4|20260702|edgar/data/1000623/a1.txt\n")
+
+    def fake_get(url):
+        if url.endswith("master.20260703.idx"):      # holiday -> S3 AccessDenied
+            raise urllib.error.HTTPError(
+                url, 403, "Forbidden", {"Content-Type": "application/xml"},
+                io.BytesIO(b"<Error><Code>AccessDenied</Code></Error>"))
+        if url.endswith("master.20260702.idx"):       # previous trading day
+            return master
+        raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+
+    db_path = str(tmp_path / "e.db")
+    run(db_path,
+        fetch_index=functools.partial(fetch.fetch_daily_index, get=fake_get),
+        fetch_map=lambda: TMAP,
+        now_iso="2026-07-03T12:00:00+00:00")
+    conn = connect(db_path)
+    assert conn.execute(
+        "SELECT index_date FROM snapshots").fetchone()[0] == "2026-07-02"
+
+
 def test_run_second_run_appends_history(tmp_path):
     db_path = str(tmp_path / "e.db")
     run(db_path, index_date="2025-06-02", fetch_index=lambda d: _rows(),
