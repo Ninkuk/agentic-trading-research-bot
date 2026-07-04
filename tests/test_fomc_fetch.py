@@ -20,6 +20,28 @@ _HTML = """
 """
 
 
+# Real live markup (2026-07) wraps the month name in <strong>, and cross-month
+# meetings render as a single wrapped "Apr/May". The __date cell stays unwrapped.
+_HTML_STRONG = """
+<div class="panel"><div class="panel-heading"><h4>2026 FOMC Meetings</h4></div>
+  <div class="row fomc-meeting">
+    <div class="fomc-meeting__month col-md-2"><strong>January</strong></div>
+    <div class="fomc-meeting__date col-lg-1">27-28</div></div>
+  <div class="row fomc-meeting">
+    <div class="fomc-meeting__month col-md-2"><strong>Apr/May</strong></div>
+    <div class="fomc-meeting__date col-lg-1">28-1</div></div>
+</div>
+"""
+
+
+def test_parse_calendar_handles_strong_wrapped_months():
+    meetings = fetch.parse_calendar(_HTML_STRONG)
+    starts = {m["start_date"] for m in meetings}
+    assert {"2026-01-27", "2026-04-28"} <= starts
+    aprmay = next(m for m in meetings if m["start_date"] == "2026-04-28")
+    assert aprmay["end_date"] == "2026-05-01"   # cross-month end resolves to May
+
+
 def test_parse_calendar_extracts_meetings_and_dates():
     meetings = fetch.parse_calendar(_HTML)
     assert len(meetings) == 3

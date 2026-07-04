@@ -16,10 +16,13 @@ _MONTHS = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
            "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
 
 _YEAR = re.compile(r"(\d{4})\s+FOMC\s+Meetings([^<]*)", re.IGNORECASE)
-# month (opt /second-month) ... date "d-d" (opt trailing '*') — confirm vs live markup.
+# month (opt /second-month) ... date "d-d" (opt trailing '*'). The `(?:\s*<[^>]+>)*`
+# after each class `>` skips inline wrappers: live markup wraps the month in
+# <strong> (cross-month meetings render as one "<strong>Apr/May</strong>"), and
+# guards against a future wrapper appearing around the date too.
 _MEETING = re.compile(
-    r"fomc-meeting__month[^>]*>\s*([A-Za-z]+)(?:\s*/\s*([A-Za-z]+))?\s*<"
-    r"[\s\S]*?fomc-meeting__date[^>]*>\s*(\d+)\s*-\s*(\d+)\s*(\*?)",
+    r"fomc-meeting__month[^>]*>(?:\s*<[^>]+>)*\s*([A-Za-z]+)(?:\s*/\s*([A-Za-z]+))?\s*<"
+    r"[\s\S]*?fomc-meeting__date[^>]*>(?:\s*<[^>]+>)*\s*(\d+)\s*-\s*(\d+)\s*(\*?)",
     re.IGNORECASE)
 
 

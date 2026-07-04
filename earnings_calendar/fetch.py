@@ -28,7 +28,14 @@ class EarningsFeedError(Exception):
 
 
 def _day_blocks(payload):
+    """Per-day blocks (each a dict with a `date` + a symbol list). The live shape
+    nests them as earnings[week].days[day]; fall back to the legacy top-level
+    `data` list. Top-level `days` (counts only, no symbols) is intentionally
+    ignored."""
     if isinstance(payload, dict):
+        weeks = payload.get("earnings")
+        if isinstance(weeks, list):
+            return [day for wk in weeks for day in (wk or {}).get("days") or []]
         return payload.get("data") or []
     if isinstance(payload, list):
         return payload
@@ -47,7 +54,7 @@ def fetch_forward(get=probe.page_data) -> list:
     rows = []
     for block in _day_blocks(payload):
         d = _norm_date(block.get("date"))
-        for sym in block.get("rows", []):
+        for sym in block.get("symbols") or block.get("rows") or []:
             ticker = sym.get("s")
             if not ticker or not d:
                 continue

@@ -17,6 +17,36 @@ DECODED = {"data": [
 ]}
 
 
+# Real live shape (2026-07): rows moved from top-level data[].rows to
+# earnings[week].days[day].symbols; per-symbol keys (s/n/t/e/eg/r/rg/m) unchanged.
+# Top-level "days" carries counts only (no symbols) and must be ignored.
+DECODED_NESTED = {
+    "view": "Daily",
+    "days": [{"date": "2026-07-06", "day": "Monday", "count": 2}],
+    "earnings": [
+        {"weekOf": "2026-07-06", "days": [
+            {"date": "2026-07-06", "symbols": [
+                {"s": "AAPL", "n": "Apple Inc.", "t": "amc", "e": 1.5, "eg": 10,
+                 "r": 9e10, "rg": 5, "m": 3e12},
+            ]},
+            {"date": "2026-07-07", "symbols": [
+                {"s": "MSFT", "n": "Microsoft Corp.", "t": "bmo", "e": 2.9},
+            ]},
+        ]},
+    ],
+}
+
+
+def test_fetch_forward_decodes_new_nested_earnings_shape():
+    rows = fetch.fetch_forward(get=lambda path: DECODED_NESTED)
+    assert len(rows) == 2
+    aapl = next(r for r in rows if r["ticker"] == "AAPL")
+    assert aapl["date"] == "2026-07-06" and aapl["timing"] == "amc"
+    assert aapl["name"] == "Apple Inc." and aapl["mktcap"] == 3e12
+    msft = next(r for r in rows if r["ticker"] == "MSFT")
+    assert msft["date"] == "2026-07-07" and msft["timing"] == "bmo"
+
+
 def test_fetch_forward_flattens_and_normalizes():
     rows = fetch.fetch_forward(get=lambda path: DECODED)
     assert len(rows) == 2

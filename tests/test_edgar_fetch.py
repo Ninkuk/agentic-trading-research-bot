@@ -92,6 +92,53 @@ def test_fetch_daily_index_reraises_non_404():
         assert e.code == 500
 
 
+import gzip
+import io
+
+# SEC serves the EDGAR archive from S3: a master.idx that does not exist
+# (weekend/holiday/before nightly publication) returns 403 with an S3
+# AccessDenied XML body, NOT 404. It must behave like 404 so run()'s walk-back
+# to the previous trading day proceeds instead of aborting.
+_ACCESS_DENIED = (
+    b'<?xml version="1.0" encoding="UTF-8"?>'
+    b'<Error><Code>AccessDenied</Code><Message>Access Denied</Message>'
+    b'<RequestId>2N0SQHAW7Q1SEM6V</RequestId></Error>')
+
+
+def _s3_403(url, body, content_encoding=None):
+    hdrs = {"Content-Type": "application/xml"}
+    if content_encoding:
+        hdrs["Content-Encoding"] = content_encoding
+    return urllib.error.HTTPError(url, 403, "Forbidden", hdrs, io.BytesIO(body))
+
+
+def test_fetch_daily_index_returns_none_on_missing_file_403():
+    def fake_get(url):
+        raise _s3_403(url, _ACCESS_DENIED)
+    assert fetch_daily_index("2026-07-03", get=fake_get) is None
+
+
+def test_fetch_daily_index_returns_none_on_gzipped_missing_file_403():
+    # The real S3 error body arrives gzip-encoded.
+    def fake_get(url):
+        raise _s3_403(url, gzip.compress(_ACCESS_DENIED), content_encoding="gzip")
+    assert fetch_daily_index("2026-07-03", get=fake_get) is None
+
+
+def test_fetch_daily_index_reraises_throttle_403():
+    # A genuine SEC rate-limit 403 is an HTML throttle page with no S3
+    # AccessDenied marker and must still propagate.
+    def fake_get(url):
+        raise urllib.error.HTTPError(
+            url, 403, "Forbidden", {"Content-Type": "text/html"},
+            io.BytesIO(b"<html>Request Rate Threshold Exceeded</html>"))
+    try:
+        fetch_daily_index("2026-07-03", get=fake_get)
+        assert False, "expected throttle 403 to propagate"
+    except urllib.error.HTTPError as e:
+        assert e.code == 403
+
+
 def _http_error(code, retry_after=None):
     hdrs = {"Retry-After": retry_after} if retry_after is not None else {}
     return urllib.error.HTTPError("http://x", code, "err", hdrs, None)

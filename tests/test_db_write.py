@@ -1,3 +1,4 @@
+import json
 import sqlite3
 
 from stock_analysis_screener.db import connect, ensure_schema, prune, write_snapshot
@@ -46,6 +47,26 @@ def test_prune_removes_old_snapshots_and_their_metrics():
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
     assert conn.execute(
         "SELECT COUNT(*) FROM metrics WHERE snapshot_id=?", (old,)).fetchone()[0] == 0
+
+
+def test_write_snapshot_json_encodes_nonscalar_values():
+    # stockanalysis.com now returns arrays for some Company-Info data-points
+    # (e.g. inIndex=["SP500","NASDAQ100"], tags=["clean-energy"]). SQLite cannot
+    # bind a list/dict, so the writer must JSON-encode non-scalars to TEXT
+    # (reversible + queryable via json_each) rather than crash.
+    conn = setup_conn()
+    ensure_schema(conn, {"inIndex": "TEXT", "tags": "TEXT"})
+    data = {"AAA": {"price": 10.0,
+                    "inIndex": ["SP500", "NASDAQ100"],
+                    "tags": ["clean-energy"]}}
+    sid = write_snapshot(conn, "2026-07-02T00:00:00+00:00", "src", data,
+                         ["price", "inIndex", "tags"])
+    row = conn.execute(
+        "SELECT price, inIndex, tags FROM metrics WHERE snapshot_id=? AND symbol='AAA'",
+        (sid,)).fetchone()
+    assert row[0] == 10.0                       # scalars pass through untouched
+    assert json.loads(row[1]) == ["SP500", "NASDAQ100"]
+    assert json.loads(row[2]) == ["clean-energy"]
 
 
 def test_ensure_schema_and_write_handle_embedded_quote_identifier():

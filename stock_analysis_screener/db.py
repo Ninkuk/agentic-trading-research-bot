@@ -1,3 +1,4 @@
+import json
 import sys
 from collections.abc import Iterable
 
@@ -36,6 +37,17 @@ WHERE m.snapshot_id = (
 
 def _quote_ident(name: str) -> str:
     return '"' + name.replace('"', '""') + '"'
+
+
+def _to_cell(v):
+    """Coerce a parsed data-point value into something SQLite can bind. Some
+    stockanalysis.com data-points are arrays (e.g. inIndex=["SP500","NASDAQ100"],
+    tags=["clean-energy"]); JSON-encode any list/dict to TEXT so the value is
+    preserved (and queryable via json_each) instead of raising ProgrammingError.
+    Scalars (str/int/float/None) pass through untouched."""
+    if isinstance(v, (list, dict)):
+        return json.dumps(v, separators=(",", ":"))
+    return v
 
 
 def _metrics_column_types(conn) -> dict[str, str]:
@@ -85,7 +97,7 @@ def write_snapshot(conn, captured_at: str, source: str,
     placeholders = ", ".join(["?"] * len(cols))
     sql = f"INSERT INTO metrics ({quoted}) VALUES ({placeholders})"
     rows = [
-        [snapshot_id, symbol] + [fields.get(cid) for cid in column_ids]
+        [snapshot_id, symbol] + [_to_cell(fields.get(cid)) for cid in column_ids]
         for symbol, fields in data.items()
     ]
     conn.executemany(sql, rows)

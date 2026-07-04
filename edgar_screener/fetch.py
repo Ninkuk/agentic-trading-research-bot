@@ -1,3 +1,4 @@
+import gzip
 import json
 import time
 import urllib.error
@@ -97,12 +98,32 @@ def fetch_ticker_map(url: str = TICKER_MAP_URL, get=_http_get) -> dict:
             for v in raw.values()}
 
 
+def _is_missing_file_403(e: urllib.error.HTTPError) -> bool:
+    """The EDGAR archive is S3-backed, so a nonexistent master.idx (weekend,
+    market holiday, or before nightly publication) returns 403 with an S3
+    ``<Code>AccessDenied</Code>`` XML body rather than 404. Distinguish that
+    from a genuine SEC rate-limit 403 (an HTML throttle page) by the S3 marker,
+    so the former can be treated like a missing day."""
+    try:
+        body = e.read()
+    except Exception:
+        return False
+    if (e.headers.get("Content-Encoding") or "").lower() == "gzip":
+        try:
+            body = gzip.decompress(body)
+        except (OSError, EOFError):
+            pass
+    return b"<Code>AccessDenied</Code>" in body
+
+
 def fetch_daily_index(index_date: str, get=_http_get):
-    """Fetch + parse master.idx for a date. Returns rows, or None on HTTP 404."""
+    """Fetch + parse master.idx for a date. Returns rows, or None when the day
+    has no index (HTTP 404, or an S3 AccessDenied 403 for a nonexistent file)
+    so the caller can walk back to the previous trading day."""
     try:
         text = get(index_url(index_date))
     except urllib.error.HTTPError as e:
-        if e.code == 404:
+        if e.code == 404 or (e.code == 403 and _is_missing_file_403(e)):
             return None
         raise
     return parse_master(text)
