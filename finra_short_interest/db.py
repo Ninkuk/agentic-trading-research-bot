@@ -45,10 +45,59 @@ CREATE TABLE IF NOT EXISTS snapshots (
 );
 """
 
+_VIEWS = """
+-- per-symbol time series (drill-down)
+CREATE VIEW IF NOT EXISTS v_symbol_history AS
+SELECT symbol, settlement_date, current_short_qty, avg_daily_volume,
+       days_to_cover, change_pct
+FROM short_interest;
+
+-- (1) latest-settlement leaderboard, liquid names only
+--     (order by current_short_qty or days_to_cover). The liquidity floor
+--     mirrors short_volume's v_latest; illiquid names remain in v_symbol_history.
+CREATE VIEW IF NOT EXISTS v_latest AS
+SELECT symbol, settlement_date, current_short_qty, avg_daily_volume,
+       days_to_cover, change_pct, market_class
+FROM short_interest
+WHERE settlement_date = (SELECT MAX(settlement_date) FROM short_interest)
+  AND avg_daily_volume >= 100000;
+
+-- (2) squeeze shortlist: high open short AND thin liquidity to buy it back
+CREATE VIEW IF NOT EXISTS v_high_days_to_cover AS
+SELECT symbol, settlement_date, current_short_qty, avg_daily_volume,
+       days_to_cover, change_pct, market_class
+FROM short_interest
+WHERE settlement_date = (SELECT MAX(settlement_date) FROM short_interest)
+  AND avg_daily_volume >= 100000
+  AND days_to_cover >= 5.0;
+
+-- (3) building short interest on the latest settlement, measured BOTH against
+--     the file's own previous_short_qty AND the symbol's trailing settlement
+--     average (~prior quarter: the 6 settlements before this one).
+CREATE VIEW IF NOT EXISTS v_short_interest_spikes AS
+WITH w AS (
+  SELECT symbol, settlement_date, current_short_qty, previous_short_qty,
+         avg_daily_volume,
+         AVG(current_short_qty) OVER (
+           PARTITION BY symbol ORDER BY settlement_date
+           ROWS BETWEEN 6 PRECEDING AND 1 PRECEDING) AS base
+  FROM short_interest)
+SELECT w.symbol, w.settlement_date, w.current_short_qty, w.previous_short_qty,
+       CAST(w.current_short_qty AS REAL)
+         / NULLIF(w.previous_short_qty, 0) AS si_change,
+       w.base,
+       CASE WHEN w.base > 0
+            THEN CAST(w.current_short_qty AS REAL) / w.base END AS base_ratio
+FROM w
+WHERE w.settlement_date = (SELECT MAX(settlement_date) FROM short_interest)
+  AND w.avg_daily_volume >= 100000;
+"""
+
 
 def ensure_schema(conn) -> None:
-    """Create tables and indexes. Idempotent. (Views are added in Task 3.)"""
+    """Create tables, indexes, and screener views. Idempotent."""
     conn.executescript(_SCHEMA)
+    conn.executescript(_VIEWS)
     conn.commit()
 
 
