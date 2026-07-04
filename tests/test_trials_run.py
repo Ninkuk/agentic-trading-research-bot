@@ -148,3 +148,21 @@ def test_main_cli_register_smoke(tmp_path, capsys):
                "--family", "liq"])
     out = capsys.readouterr().out
     assert "trial" in out
+
+
+def test_main_cli_register_stores_git_rev_provenance(tmp_path):
+    dbp = str(tmp_path / "trials.db")
+    trun.main(["--db", dbp, "--register", "--stage", "promote",
+               "--description", "prov", "--params", '{"x": 1}',
+               "--git-rev", "abc1234"])
+    conn = tdb.connect(dbp)
+    assert conn.execute("SELECT git_rev FROM trials").fetchone() == ("abc1234",)
+    conn.close()
+    # without the flag, the CLI falls back to the current HEAD (non-null here,
+    # since the test suite runs inside the repo)
+    dbp2 = str(tmp_path / "trials2.db")
+    trun.main(["--db", dbp2, "--register", "--stage", "promote",
+               "--description", "prov2", "--params", '{"x": 2}'])
+    conn = tdb.connect(dbp2)
+    assert conn.execute("SELECT git_rev FROM trials").fetchone()[0]
+    conn.close()

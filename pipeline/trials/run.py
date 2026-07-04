@@ -1,10 +1,23 @@
 import argparse
 import json
+import subprocess
 import sys
 from datetime import datetime, timezone
 
 from pipeline.common import pipeline_common
 from pipeline.trials import catalog, db, evaluate, stats
+
+
+def _current_git_rev():
+    """Best-effort HEAD for --register provenance; None outside a repo.
+    Only the CLI shells out — run_register keeps its injected git_rev seam,
+    so tests never spawn a subprocess."""
+    try:
+        out = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                             capture_output=True, text=True, timeout=5)
+        return out.stdout.strip() or None
+    except Exception:
+        return None
 
 
 def run_register(db_path, stage, description, params_json,
@@ -167,6 +180,8 @@ def main(argv=None):
     p.add_argument("--etfs-db", default="etfs.db")
     p.add_argument("--calendar-db", default="market_calendar.db")
     p.add_argument("--entry-lag", type=int, default=catalog.DEFAULT_ENTRY_LAG)
+    p.add_argument("--git-rev", default=None,
+                   help="provenance for --register (default: current HEAD)")
     p.add_argument("--keep-days", type=int, default=None)
     a = p.parse_args(argv)
 
@@ -175,7 +190,8 @@ def main(argv=None):
             p.error("--register needs --stage, --description, --params")
         trial_id, created = run_register(
             a.db, a.stage, a.description, a.params,
-            family=a.family or catalog.DEFAULT_FAMILY)
+            family=a.family or catalog.DEFAULT_FAMILY,
+            git_rev=a.git_rev or _current_git_rev())
         print(f"trial {trial_id} {'registered' if created else 'already registered'}")
     elif a.evaluate is not None:
         run_evaluate(a.db, a.evaluate, leads_db=a.leads_db,

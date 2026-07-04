@@ -75,7 +75,9 @@ GROUP BY t.family;
 CREATE VIEW IF NOT EXISTS v_evaluation_coverage AS
 SELECT r.trial_id, r.evaluated_at, r.window_start, r.window_end, r.n_obs,
        json_extract(r.detail, '$.max_gap_days') AS max_gap_days,
-       json_extract(r.detail, '$.skipped')      AS skipped
+       json_extract(r.detail, '$.skipped')      AS skipped,
+       json_extract(r.detail, '$.scored')       AS scored,
+       json_extract(r.detail, '$.truncated')    AS truncated
 FROM trial_results r;
 """
 

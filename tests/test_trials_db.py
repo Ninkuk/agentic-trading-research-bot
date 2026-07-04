@@ -16,7 +16,8 @@ def _result(**over):
          "window_end": "2026-07-01", "n_obs": 24, "sharpe": 0.5,
          "skew": -0.1, "kurtosis": 3.2, "hit_rate": 0.6, "avg_return": 0.01,
          "max_drawdown": 0.08, "dsr_at_eval": None, "n_at_eval": 1,
-         "detail": json.dumps({"max_gap_days": 3, "skipped": 2})}
+         "detail": json.dumps({"max_gap_days": 3, "skipped": 2,
+                               "scored": 24, "truncated": 5})}
     r.update(over)
     return r
 
@@ -85,9 +86,9 @@ def test_coverage_view_reads_detail_json():
     conn = _fresh()
     tid, _ = db.register_trial(conn, "promote", "d", {"x": 1}, NOW)
     db.write_result(conn, tid, _result())
-    row = conn.execute("SELECT n_obs, max_gap_days, skipped "
+    row = conn.execute("SELECT n_obs, max_gap_days, skipped, scored, truncated "
                        "FROM v_evaluation_coverage").fetchone()
-    assert row == (24, 3, 2)
+    assert row == (24, 3, 2, 24, 5)
 
 
 def test_prune_never_touches_trials_or_results():
