@@ -99,4 +99,42 @@ def prune(conn, keep_days, now_iso) -> int:
     return len(ids)
 
 
-_VIEWS = ""   # filled in Task 4
+_VIEWS = """
+-- Latest put/call vs its trailing percentile, with a contrarian flag.
+CREATE VIEW IF NOT EXISTS v_pcr_extremes AS
+WITH latest AS (SELECT * FROM pcr_daily ORDER BY date DESC LIMIT 1)
+SELECT l.date, l.total_pcr, l.equity_pcr,
+       (SELECT AVG(equity_pcr < l.equity_pcr) FROM pcr_daily
+        WHERE equity_pcr IS NOT NULL) AS equity_pcr_pctile,
+       CASE
+         WHEN (SELECT AVG(equity_pcr < l.equity_pcr) FROM pcr_daily
+               WHERE equity_pcr IS NOT NULL) >= 0.8 THEN 'fear'
+         WHEN (SELECT AVG(equity_pcr < l.equity_pcr) FROM pcr_daily
+               WHERE equity_pcr IS NOT NULL) <= 0.2 THEN 'complacency'
+         ELSE 'neutral' END AS equity_flag
+FROM latest l;
+
+-- Latest VIX vs VIX3M term structure (backwardation = stress).
+CREATE VIEW IF NOT EXISTS v_vix_term_structure AS
+WITH latest AS (
+    SELECT * FROM vix_daily WHERE close IS NOT NULL ORDER BY date DESC LIMIT 1
+)
+SELECT date, close, vix3m,
+       CASE WHEN vix3m IS NOT NULL AND vix3m <> 0 THEN close / vix3m END
+         AS vix_vix3m_ratio,
+       CASE WHEN vix3m IS NULL THEN NULL WHEN close > vix3m THEN 1 ELSE 0 END
+         AS backwardation
+FROM latest;
+
+-- One-row at-a-glance sentiment readout.
+CREATE VIEW IF NOT EXISTS v_latest_sentiment AS
+SELECT
+  (SELECT date FROM vix_daily WHERE close IS NOT NULL
+   ORDER BY date DESC LIMIT 1) AS vix_date,
+  (SELECT close FROM vix_daily WHERE close IS NOT NULL
+   ORDER BY date DESC LIMIT 1) AS vix_close,
+  (SELECT date FROM pcr_daily ORDER BY date DESC LIMIT 1) AS pcr_date,
+  (SELECT equity_pcr FROM pcr_daily ORDER BY date DESC LIMIT 1) AS equity_pcr,
+  (SELECT total_pcr FROM pcr_daily ORDER BY date DESC LIMIT 1) AS total_pcr,
+  (SELECT backwardation FROM v_vix_term_structure) AS backwardation;
+"""
