@@ -25,7 +25,8 @@ plans in `docs/superpowers/plans/`.
 `fetch.py` (network + pure parse) → `db.py` (SQLite schema + writes + views + prune)
 → `run.py` (incremental orchestration + argparse CLI), registered in `registry.py`,
 sharing `screener_common.connect` (WAL) and `http_client` bounded-backoff. Event-date
-**monitors** add a shared `monitor_common.py` and a forward-looking `events` table —
+**monitors** add a shared `monitor_common.py` (now built — landed with `econ_calendar`)
+and a forward-looking `events` table —
 see [event-monitor-framework](superpowers/specs/2026-07-03-event-monitor-framework-design.md).
 
 Data-source policy: **official primary sources only** for new screeners, with one
@@ -47,6 +48,7 @@ approved exception — **stockanalysis.com** (already trusted/used). The existin
 | `short_volume` | FINRA daily short-sale volume | Daily shorting pressure | [spec](superpowers/specs/2026-07-03-finra-short-volume-screener-design.md) | [plan](superpowers/plans/2026-07-03-finra-short-volume-screener.md) |
 | `short_interest` | FINRA Equity Short Interest | Settled short position / days-to-cover / squeeze | [spec](superpowers/specs/2026-07-03-finra-short-interest-screener-design.md) | [plan](superpowers/plans/2026-07-03-finra-short-interest-screener.md) |
 | `options` | CBOE per-contract options | Per-ticker IV / greeks / OI / Vol-OI | [spec](superpowers/specs/2026-07-03-cboe-options-screener-design.md) | [plan](superpowers/plans/2026-07-03-cboe-options-screener.md) |
+| `econ_calendar` | FRED economic-release calendar (**first event-date monitor**) | Forward CPI/PPI/jobs/GDP/retail/PCE/JOLTS release dates | [spec](superpowers/specs/2026-07-03-econ-calendar-monitor-design.md) · [framework](superpowers/specs/2026-07-03-event-monitor-framework-design.md) | [plan](superpowers/plans/2026-07-03-econ-calendar-monitor.md) |
 
 Cross-cutting: [CFTC revision lookback](superpowers/specs/2026-07-03-cftc-revision-lookback-design.md) ([plan](superpowers/plans/2026-07-03-cftc-revision-lookback.md)) · [stockanalysis __data.json catalog](stockanalysis_data_json_catalog.md).
 
@@ -81,7 +83,6 @@ New "forward calendar" kind. Framework: [event-monitor-framework](superpowers/sp
 
 | Conf | Dispatcher | Monitor | Signal | Spec |
 |---|---|---|---|---|
-| 🔵 | `econ_calendar` | Economic release calendar (FRED backbone) | Upcoming CPI/PPI/jobs/GDP/retail dates | [spec](superpowers/specs/2026-07-03-econ-calendar-monitor-design.md) |
 | 🔵 | `market_calendar` | Market holidays / early closes / OPEX | No-trade days, quad-witching (shared infra) | [spec](superpowers/specs/2026-07-03-market-calendar-monitor-design.md) |
 | 🔵 | `fomc` | FOMC meetings / blackout / minutes | Rate-decision + blackout windows | [spec](superpowers/specs/2026-07-03-fomc-calendar-monitor-design.md) |
 | 🔵 | `earnings` | Earnings calendar | Forward earnings dates (stockanalysis + EDGAR confirm) | [spec](superpowers/specs/2026-07-03-earnings-calendar-monitor-design.md) |
@@ -94,7 +95,7 @@ Ranked by signal × low effort × non-overlap (reuse of existing pipelines calle
 
 1. ~~**`cftc --family` (Disaggregated/TFF)**~~ — ✅ **Built** (see Built table). Cloned the existing CFTC Socrata pipeline. [plan](superpowers/plans/2026-07-03-cot-disaggregated-tff-screener.md)
 2. ~~**`short_interest`**~~ — ✅ **Built** (see Built table). Cloned the `short_volume` CDN pattern; adds squeeze/days-to-cover. [plan](superpowers/plans/2026-07-03-finra-short-interest-screener.md)
-3. **`econ_calendar`** — reuses the existing FRED key; unified upcoming-release backbone.
+3. ~~**`econ_calendar`**~~ — ✅ **Built** (see Built table). First event-date monitor; established the shared `monitor_common` framework (events table, upsert/replace-forward, imminence views, snapshot-only prune) that the remaining monitors reuse. [plan](superpowers/plans/2026-07-03-econ-calendar-monitor.md)
 4. **`market_calendar`** — small, deterministic; shared infra other monitors depend on.
 5. **`fundamentals`** — official XBRL fundamentals; reuses EDGAR CIK/UA handling.
 6. **`fomc`** — small HTML parse + computed blackout/minutes; high macro impact.
