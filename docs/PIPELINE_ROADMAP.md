@@ -65,9 +65,9 @@ built** as ELT views in the screener DBs:
 
 ## Stages
 
-### Stage 1 — Signal funnel → ranked leads 📝 🟢 **(pick up first)**
+### Stage 1 — Signal funnel → ranked leads ✅ 🟢
 
-**Spec:** [2026-07-04-stage1-leads-signal-funnel-design.md](superpowers/specs/2026-07-04-stage1-leads-signal-funnel-design.md)
+**Built:** Built as `pipeline/leads/` (registered: `main.py leads`). Spec retired (transient per CLAUDE.md); decisions D1–D6 live in the package's catalog/docstrings.
 
 §1–§2. New package (e.g. `pipeline/leads/`) reading the per-source DBs
 read-only, writing a unified `leads.db`. Pure Python + SQL, no network — fully
@@ -164,7 +164,7 @@ Needed **before** trusting any Stage 2 calibration.
 Ranked by dependency × evidence strength (rationale in the 2026-07-04 session
 that seeded this file):
 
-1. **Stage 1 — signal funnel.** Inputs already exist; everything downstream
+1. ~~**Stage 1 — signal funnel.**~~ ✅ shipped. Inputs already exist; everything downstream
    consumes its output shape; forces the ETF-mapping and tag-vocabulary
    decisions that block all later stages.
 2. **Stage 5 — scheduler** (anytime, parallel). Independent; monitors are built.
