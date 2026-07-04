@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sources.common.screener_common import connect
 
 __all__ = ["connect", "ensure_schema", "upsert_series", "write_observations",
-           "write_snapshot", "prune"]
+           "write_snapshot", "prune", "write_observation_vintages", "set_asof"]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -94,6 +94,30 @@ LEFT JOIN v_latest curve  ON curve.series_id  = 'T10Y2Y'
 LEFT JOIN v_latest hy     ON hy.series_id     = 'BAMLH0A0HYM2'
 LEFT JOIN v_latest ff     ON ff.series_id     = 'DFF'
 LEFT JOIN v_latest unrate ON unrate.series_id = 'UNRATE';
+
+CREATE TABLE IF NOT EXISTS observation_vintages (
+    series_id      TEXT NOT NULL,
+    date           TEXT NOT NULL,
+    realtime_start TEXT NOT NULL,
+    value          REAL,
+    PRIMARY KEY (series_id, date, realtime_start)
+);
+
+CREATE TABLE IF NOT EXISTS calendar_now (
+    id    INTEGER PRIMARY KEY CHECK (id = 0),
+    today TEXT NOT NULL DEFAULT ''
+);
+INSERT OR IGNORE INTO calendar_now (id, today) VALUES (0, '');
+
+-- Value as known on the as-of date: newest vintage published on/before it.
+CREATE VIEW IF NOT EXISTS v_asof AS
+WITH ranked AS (
+    SELECT v.series_id, v.date, v.value, v.realtime_start,
+           ROW_NUMBER() OVER (PARTITION BY v.series_id, v.date
+                              ORDER BY v.realtime_start DESC) rn
+    FROM observation_vintages v, calendar_now p
+    WHERE v.realtime_start <= p.today)
+SELECT series_id, date, value, realtime_start FROM ranked WHERE rn = 1;
 """
 
 _SERIES_FIELDS = ("frequency", "frequency_short", "units", "units_short",
@@ -176,3 +200,28 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
     conn.commit()
     return len(ids)
+
+
+def set_asof(conn, asof: str) -> str:
+    """Set the as-of date for v_asof (calendar_now pattern). Accepts
+    YYYY-MM-DD or a full isoformat; stores the date part. Backtests set
+    arbitrary historical dates — this is not 'today'."""
+    d = asof[:10]
+    conn.execute("UPDATE calendar_now SET today=? WHERE id=0", (d,))
+    conn.commit()
+    return d
+
+
+def write_observation_vintages(conn, series_id: str, rows: list) -> int:
+    """Upsert vintages by (series_id, date, realtime_start). Dedupes within
+    the batch (last wins). Returns distinct rows written."""
+    by_key = {(r["date"], r["realtime_start"]): r for r in rows}
+    conn.executemany(
+        """INSERT INTO observation_vintages
+           (series_id, date, realtime_start, value) VALUES (?, ?, ?, ?)
+           ON CONFLICT(series_id, date, realtime_start)
+           DO UPDATE SET value=excluded.value""",
+        [(series_id, d, rs, r.get("value"))
+         for (d, rs), r in by_key.items()])
+    conn.commit()
+    return len(by_key)

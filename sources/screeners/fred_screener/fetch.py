@@ -47,6 +47,19 @@ def parse_observations(payload: dict) -> list[dict]:
     return rows
 
 
+def parse_observation_vintages(payload: dict) -> list[dict]:
+    """Map a /series/observations payload with realtime_start to
+    [{date, realtime_start, value}], turning FRED's '.' missing marker into None
+    and numeric strings into floats."""
+    rows = []
+    for o in payload.get("observations", []):
+        raw = o.get("value")
+        value = None if raw in (None, ".") else float(raw)
+        rows.append({"date": o["date"], "realtime_start": o["realtime_start"],
+                     "value": value})
+    return rows
+
+
 def fetch_series(series_id: str, api_key: str, get=_http_get) -> dict:
     """GET /fred/series metadata; return the single seriess[0] dict."""
     url = _build_url("series", {"series_id": series_id}, api_key)
@@ -65,3 +78,16 @@ def fetch_observations(series_id: str, api_key: str, start=None,
         params["observation_start"] = start
     url = _build_url("series/observations", params, api_key)
     return parse_observations(json.loads(get(url)))
+
+
+def fetch_observation_vintages(series_id: str, api_key: str, start=None,
+                               get=_http_get) -> list[dict]:
+    """GET /fred/series/observations with realtime_start/end for vintage history;
+    return parsed [{date, realtime_start, value}] rows. Each observation's own
+    realtime_start is extracted."""
+    params = {"series_id": series_id, "realtime_start": "1776-07-04",
+              "realtime_end": "9999-12-31"}
+    if start:
+        params["observation_start"] = start
+    url = _build_url("series/observations", params, api_key)
+    return parse_observation_vintages(json.loads(get(url)))
