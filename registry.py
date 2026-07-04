@@ -24,6 +24,7 @@ from sources.screeners.usda_screener.run import main as usda_main
 # pipeline stages
 from pipeline.leads.run import main as leads_main
 from pipeline.scheduler.run import main as schedule_main
+from pipeline.trials.run import main as trials_main
 
 REGISTRY = {
     "stocks": stocks_main,
@@ -48,6 +49,7 @@ REGISTRY = {
     "usda": usda_main,
     "leads": leads_main,
     "schedule": schedule_main,
+    "trials": trials_main,
 }
 
 
