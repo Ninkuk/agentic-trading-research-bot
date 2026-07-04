@@ -118,12 +118,13 @@ source itself. Import a screener/monitor's internals as `sources.screeners.<name
 
 ## Workflow for a new screener/monitor
 
-The repo follows **spec → plan → build**, all under `docs/`:
+The repo follows **spec → plan → build**. The design spec and implementation plan are
+transient working docs (write them under `docs/superpowers/specs/<date>-<name>-design.md`
+and `docs/superpowers/plans/<date>-<name>.md`); they're cleared once the screener ships, so
+don't expect earlier ones to still be on disk. The durable trackers stay under `docs/`:
 
 - `docs/ROADMAP.md` — parent tracker of every screener/monitor and its status (Built ✅ = in
   `registry.py`). Update it as work lands.
-- `docs/superpowers/specs/<date>-<name>-design.md` — design spec (one per screener).
-- `docs/superpowers/plans/<date>-<name>.md` — implementation plan.
 - `docs/FOLLOWUPS.md` — deferred follow-ups, live endpoint-verification tasks, and the idea backlog.
 
 **Data-source policy:** official primary sources only, with one approved exception —
