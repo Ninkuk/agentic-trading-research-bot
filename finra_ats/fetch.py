@@ -10,7 +10,7 @@ import urllib.request
 
 import http_client
 
-_DATASET = "weeklySummary"   # 🟡 confirm the weekly-ATS dataset slug live
+_DATASET = "weeklySummary"   # confirmed live (otcMarket/weeklySummary, anon POST)
 API_URL = f"https://api.finra.org/data/group/otcMarket/name/{_DATASET}"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 503})
@@ -58,7 +58,11 @@ def parse_rows(text: str, fmt: str) -> list:
         if not symbol or not week:
             continue
         mpid = (r.get("MPID") or "").strip() or _DEMINIMIS
-        ats_name = (r.get("ATSName") or "").strip() or None
+        # Live otcMarket records carry the venue name in `marketParticipantName`;
+        # `ATSName` (assumed pre-verification) does not exist in the live schema
+        # and left ats_name always None. Keep ATSName as a CSV-export fallback.
+        ats_name = (r.get("marketParticipantName")
+                    or r.get("ATSName") or "").strip() or None
         out.append({
             "week_start": week, "symbol": symbol, "mpid": mpid,
             "ats_name": ats_name,
