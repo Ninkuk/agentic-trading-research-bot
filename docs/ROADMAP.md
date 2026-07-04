@@ -51,6 +51,7 @@ approved exception — **stockanalysis.com** (already trusted/used). The existin
 | `econ_calendar` | FRED economic-release calendar (**first event-date monitor**) | Forward CPI/PPI/jobs/GDP/retail/PCE/JOLTS release dates | [spec](superpowers/specs/2026-07-03-econ-calendar-monitor-design.md) · [framework](superpowers/specs/2026-07-03-event-monitor-framework-design.md) | [plan](superpowers/plans/2026-07-03-econ-calendar-monitor.md) |
 | `market_calendar` | Market holidays / early closes / OPEX (**shared trading-day helpers**) | No-trade days, half-days, monthly OPEX / quad-witching; `is_trading_day`/`next_trading_day`/`next_early_close` | [spec](superpowers/specs/2026-07-03-market-calendar-monitor-design.md) | [plan](superpowers/plans/2026-07-03-market-calendar-monitor.md) |
 | `fundamentals` | SEC XBRL fundamentals (primary-source panel) | Auditable revenue/income/assets/equity/EPS + derived margin/ROE/D-E + restatements | [spec](superpowers/specs/2026-07-03-sec-fundamentals-screener-design.md) | [plan](superpowers/plans/2026-07-03-sec-fundamentals-screener.md) |
+| `fomc` | FOMC meetings / blackout / minutes / SEP | Rate-decision + computed blackout windows (`v_in_blackout`), minutes (+21d), dot-plot meetings | [spec](superpowers/specs/2026-07-03-fomc-calendar-monitor-design.md) | [plan](superpowers/plans/2026-07-03-fomc-calendar-monitor.md) |
 
 Cross-cutting: [CFTC revision lookback](superpowers/specs/2026-07-03-cftc-revision-lookback-design.md) ([plan](superpowers/plans/2026-07-03-cftc-revision-lookback.md)) · [stockanalysis __data.json catalog](stockanalysis_data_json_catalog.md).
 
@@ -84,7 +85,6 @@ New "forward calendar" kind. Framework: [event-monitor-framework](superpowers/sp
 
 | Conf | Dispatcher | Monitor | Signal | Spec |
 |---|---|---|---|---|
-| 🔵 | `fomc` | FOMC meetings / blackout / minutes | Rate-decision + blackout windows | [spec](superpowers/specs/2026-07-03-fomc-calendar-monitor-design.md) |
 | 🔵 | `earnings` | Earnings calendar | Forward earnings dates (stockanalysis + EDGAR confirm) | [spec](superpowers/specs/2026-07-03-earnings-calendar-monitor-design.md) |
 
 ---
@@ -98,7 +98,7 @@ Ranked by signal × low effort × non-overlap (reuse of existing pipelines calle
 3. ~~**`econ_calendar`**~~ — ✅ **Built** (see Built table). First event-date monitor; established the shared `monitor_common` framework (events table, upsert/replace-forward, imminence views, snapshot-only prune) that the remaining monitors reuse. [plan](superpowers/plans/2026-07-03-econ-calendar-monitor.md)
 4. ~~**`market_calendar`**~~ — ✅ **Built** (see Built table). Small, deterministic; seeded NYSE/SIFMA holidays + pure-computed OPEX/quad-witching. Added the shared trading-day helpers (`is_trading_day`/`next_trading_day`/`next_early_close`) other monitors and screeners reuse. [plan](superpowers/plans/2026-07-03-market-calendar-monitor.md)
 5. ~~**`fundamentals`**~~ — ✅ **Built** (see Built table). Official XBRL fundamentals panel; reuses EDGAR CIK/UA handling + FRED-style upsert/prune; ratios derived in SQL views. **Follow-ups deferred:** a shared ≤10 req/s SEC throttle in `http_client` (across `edgar`/`ftd`/`fundamentals`), and the `--bulk` quarterly-ZIP run-loop (`parse_bulk` is built + tested; the flag is accepted but the ZIP download loop is not yet wired into `run`). [plan](superpowers/plans/2026-07-03-sec-fundamentals-screener.md)
-6. **`fomc`** — small HTML parse + computed blackout/minutes; high macro impact.
+6. ~~**`fomc`**~~ — ✅ **Built** (see Built table). Small isolated HTML parse (meeting dates only) + pure-computed minutes/blackout/SEP on `monitor_common`; exposes `v_in_blackout` boolean helper other modules gate Fed-speak logic on. Phase-1.5 RSS `status→released` flip deferred (spec Non-goal). [plan](superpowers/plans/2026-07-03-fomc-calendar-monitor.md)
 7. **`treasury` auctions** — clean key-free JSON; auction calendar doubles as a monitor.
 8. **`earnings`** — stockanalysis forward feed + EDGAR confirmation (undocumented source, build last).
 
