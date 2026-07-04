@@ -30,7 +30,7 @@ def select_ids(all_ids, only, exclude):
 def run(db_path, keep_days=None, only=None, exclude=None, type_="s",
         fetch_catalog=catalog.fetch_catalog, fetch_data=fetch.fetch_data_points,
         now_iso=None):
-    data_points, universe_count = fetch_catalog(catalog.route_for(type_))
+    data_points, universe_count = fetch_catalog(type_)
     all_ids = [d.id for d in data_points]
     ids = select_ids(all_ids, only, exclude)
     # Defensive guard: never let a catalog id collide with a base metrics column.
@@ -76,7 +76,8 @@ def main(argv=None):
     p.add_argument("--keep-days", type=int, default=None)
     p.add_argument("--only", default=None, help="comma-separated data-point ids")
     p.add_argument("--exclude", default=None, help="comma-separated data-point ids")
-    p.add_argument("--type", dest="type_", default="s")
+    p.add_argument("--type", dest="type_", default="s",
+                   choices=sorted(catalog.TYPE_ROUTES))
     a = p.parse_args(argv)
     only = a.only.split(",") if a.only else None
     exclude = a.exclude.split(",") if a.exclude else None

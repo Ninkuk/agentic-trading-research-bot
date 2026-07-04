@@ -2,23 +2,20 @@ from dataclasses import dataclass
 
 from sources.screeners.stock_analysis_screener import probe
 
-CATALOG_ROUTE = "/stocks/screener/"
-
 # Each screener type has its own catalog route (and its own data-point id set);
 # the data-points API's `type` param must always match the catalog the ids
-# came from.
-_TYPE_ROUTES = {
-    "s": CATALOG_ROUTE,
+# came from — so the route never leaves this module: callers pass `type_`.
+TYPE_ROUTES = {
+    "s": "/stocks/screener/",
     "e": "/etf/screener/",
 }
 
 
 def route_for(type_: str) -> str:
-    try:
-        return _TYPE_ROUTES[type_]
-    except KeyError:
+    if type_ not in TYPE_ROUTES:
         raise ValueError(f"unknown screener type: {type_!r} "
-                         f"(known: {sorted(_TYPE_ROUTES)})") from None
+                         f"(known: {sorted(TYPE_ROUTES)})")
+    return TYPE_ROUTES[type_]
 
 
 @dataclass(frozen=True)
@@ -47,5 +44,5 @@ def parse_catalog(raw: dict) -> tuple[list[DataPoint], int]:
     raise ValueError("screener payload node not found in __data.json")
 
 
-def fetch_catalog(route: str = CATALOG_ROUTE) -> tuple[list[DataPoint], int]:
-    return parse_catalog(probe.fetch_data_json(route))
+def fetch_catalog(type_: str = "s") -> tuple[list[DataPoint], int]:
+    return parse_catalog(probe.fetch_data_json(route_for(type_)))
