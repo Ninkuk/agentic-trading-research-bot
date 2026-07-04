@@ -93,4 +93,35 @@ def prune(conn, keep_days, now_iso) -> int:
     return len(ids)
 
 
-_VIEWS = ""   # filled in Task 4
+_VIEWS = """
+-- Most recent non-null observation per series, joined to metadata.
+CREATE VIEW IF NOT EXISTS v_latest AS
+WITH ranked AS (
+    SELECT o.series_id, o.period, o.value,
+           ROW_NUMBER() OVER (PARTITION BY o.series_id
+                              ORDER BY o.period DESC) AS rn
+    FROM eia_obs o WHERE o.value IS NOT NULL
+)
+SELECT r.series_id, s.label, s.category, s.unit, r.period, r.value
+FROM ranked r JOIN series s ON s.series_id = r.series_id
+WHERE r.rn = 1;
+
+-- Latest vs the immediately preceding non-null period: the build/draw signal.
+CREATE VIEW IF NOT EXISTS v_weekly_change AS
+SELECT l.series_id, l.label, l.category, l.period AS latest_period,
+       l.value AS latest, p.value AS prior,
+       l.value - p.value AS change_abs,
+       CASE WHEN p.value IS NOT NULL AND p.value <> 0
+            THEN 100.0 * (l.value - p.value) / p.value END AS change_pct
+FROM v_latest l
+LEFT JOIN eia_obs p ON p.series_id = l.series_id AND p.value IS NOT NULL
+     AND p.period = (SELECT MAX(o2.period) FROM eia_obs o2
+                     WHERE o2.series_id = l.series_id AND o2.value IS NOT NULL
+                       AND o2.period < l.period);
+
+-- Full observation history per series joined to metadata.
+CREATE VIEW IF NOT EXISTS v_series_history AS
+SELECT o.series_id, s.label, s.category, s.unit, o.period, o.value
+FROM eia_obs o JOIN series s ON s.series_id = o.series_id
+ORDER BY o.series_id, o.period;
+"""
