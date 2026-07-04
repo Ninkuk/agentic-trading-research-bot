@@ -40,6 +40,12 @@ def test_det_score_directional_extremity():
     assert gates.normalize_det_score(_lead(signal="mystery")) is None
 
 
+def test_det_score_null_score_is_none_not_max_extremity():
+    # a NULL COT score must normalize to None, not 1.0 (max extremity), even
+    # on a short (which would otherwise flip 0.0 -> 1.0 via `1.0 - frac`).
+    assert gates.normalize_det_score(_lead(score=None, direction="short")) is None
+
+
 def test_group_leads_dedups_and_averages():
     leads = [_lead(), _lead(score=85.0, as_of_date="2026-07-01",
                             horizon_band="months"),

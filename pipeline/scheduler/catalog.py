@@ -19,12 +19,15 @@ MONITOR_DB_FILES = {"econ_calendar": "econ_calendar.db",
                     "earnings": "earnings.db",
                     "market_calendar": "market_calendar.db"}
 
-# Where each dispatcher's own DB lives under --data-dir
+# Where each dispatcher's own DB lives under --data-dir. Keyed by job.target,
+# except "etfs" which is keyed by job.name (it shares target "stocks" with
+# the stocks job but writes a different DB file).
 DB_FILES = {"earnings": "earnings.db", "econ_calendar": "econ_calendar.db",
             "fomc": "fomc.db", "market_calendar": "market_calendar.db",
             "treasury": "treasury.db", "cftc": "cftc.db", "fred": "fred.db",
             "fundamentals": "sec_fundamentals.db", "stocks": "stocks.db",
-            "leads": "leads.db", "promote": "candidates.db", "gate": "gate.db"}
+            "leads": "leads.db", "promote": "candidates.db", "gate": "gate.db",
+            "etfs": "etfs.db"}
 
 
 @dataclass(frozen=True)
@@ -46,6 +49,7 @@ JOBS: list[Job] = [
     Job("fomc", "fomc", "daily"),
     Job("market_calendar", "market_calendar", "daily"),
     Job("treasury", "treasury", "daily"),
+    Job("etfs", "stocks", "daily"),
     Job("cftc", "cftc", "cftc_weekly"),
     Job("fred", "fred", "econ_release"),
     Job("fundamentals", "fundamentals", "earnings"),
@@ -65,11 +69,16 @@ def argv_for(job: Job, data_dir: str) -> list[str]:
     the cron wrapper)."""
     def d(f):
         return f"{data_dir}/{f}"
-    argv = ["--db", d(DB_FILES[job.target])]
+    argv = ["--db", d(DB_FILES.get(job.name, DB_FILES[job.target]))]
     if job.target == "leads":
         argv += ["--cftc-db", d("cftc.db"), "--fred-db", d("fred.db"),
                  "--fundamentals-db", d("sec_fundamentals.db"),
                  "--stocks-db", d("stocks.db")]
+    if job.target == "promote":
+        argv += ["--leads-db", d("leads.db"), "--stocks-db", d("stocks.db"),
+                 "--etfs-db", d("etfs.db")]
+    if job.name == "etfs":
+        argv += ["--type", "e"]
     if job.kind == "gate":
         argv += ["--window", job.window]
     return argv

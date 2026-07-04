@@ -131,7 +131,11 @@ Captured while writing the six stage specs under `docs/superpowers/specs/`
 - 🟠 **Stage 2 v1 proxies to revisit** — spread gate (needs quote data); |ρ|>0.70
   clustering + cluster exposure caps (needs return series; sector-cap is the v1
   proxy); price/trend confirming leg. Note: the Stage 5 scheduler's `promote` job
-  went live with this registration (2026-07-04).
+  went live with this registration (2026-07-04), along with the final-review
+  fixes that landed with it: `argv_for` now passes promote its source DBs
+  (`--leads-db`/`--stocks-db`/`--etfs-db`, data-dir-relative, not CWD defaults)
+  and a daily `etfs` job (`stocks --type e`) now produces `etfs.db` so the
+  ETF leg isn't rejected as data_missing.
 
 ---
 

@@ -14,7 +14,9 @@ def normalize_det_score(lead: dict):
     normalize to None (excluded from the group mean)."""
     direction = lead["direction"]
     if lead["signal"] == "cot_commercial_extreme":
-        frac = (lead["score"] or 0.0) / 100.0
+        if lead["score"] is None:
+            return None
+        frac = lead["score"] / 100.0
         return frac if direction == "long" else 1.0 - frac
     if lead["signal"] == "quality_composite":
         pct = lead.get("rank_pct")

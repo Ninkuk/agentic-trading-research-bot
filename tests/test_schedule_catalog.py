@@ -15,10 +15,10 @@ def test_catalog_order_puts_chains_after_their_upstreams():
             assert pos[up] < pos[j.name], (j.name, up)
 
 
-def test_daily_maintenance_covers_all_five_monitors():
+def test_daily_maintenance_covers_five_monitors_plus_etfs_refresh():
     daily = {j.name for j in catalog.JOBS if j.kind == "daily"}
     assert daily == {"earnings", "econ_calendar", "fomc", "market_calendar",
-                     "treasury"}
+                     "treasury", "etfs"}
 
 
 def test_argv_for_leads_passes_all_source_dbs():
@@ -27,6 +27,24 @@ def test_argv_for_leads_passes_all_source_dbs():
     assert argv[:2] == ["--db", "data/leads.db"]
     for flag in ("--cftc-db", "--fred-db", "--fundamentals-db", "--stocks-db"):
         assert flag in argv
+
+
+def test_argv_for_promote_passes_all_source_dbs():
+    job = catalog.JOB_BY_NAME["promote"]
+    argv = catalog.argv_for(job, "data")
+    assert argv[:2] == ["--db", "data/candidates.db"]
+    for flag, val in (("--leads-db", "data/leads.db"),
+                      ("--stocks-db", "data/stocks.db"),
+                      ("--etfs-db", "data/etfs.db")):
+        assert flag in argv
+        assert argv[argv.index(flag) + 1] == val
+
+
+def test_argv_for_etfs_passes_own_db_and_type():
+    job = catalog.JOB_BY_NAME["etfs"]
+    argv = catalog.argv_for(job, "data")
+    assert argv[:2] == ["--db", "data/etfs.db"]
+    assert argv[-2:] == ["--type", "e"]
 
 
 def test_argv_for_gate_carries_window():
