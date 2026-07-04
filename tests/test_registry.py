@@ -137,3 +137,8 @@ def test_dispatch_lists_leads():
 def test_dispatch_lists_trials():
     import registry
     assert "trials" in registry.REGISTRY
+
+
+def test_dispatch_lists_promote():
+    import registry
+    assert "promote" in registry.REGISTRY
