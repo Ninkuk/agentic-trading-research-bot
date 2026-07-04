@@ -142,3 +142,8 @@ def test_dispatch_lists_trials():
 def test_dispatch_lists_promote():
     import registry
     assert "promote" in registry.REGISTRY
+
+
+def test_dispatch_lists_gate():
+    import registry
+    assert "gate" in registry.REGISTRY
