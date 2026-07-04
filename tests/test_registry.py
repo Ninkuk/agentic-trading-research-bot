@@ -97,3 +97,8 @@ def test_dispatch_lists_treasury():
 def test_dispatch_lists_earnings():
     import registry
     assert "earnings" in registry.REGISTRY
+
+
+def test_dispatch_lists_ats():
+    import registry
+    assert "ats" in registry.REGISTRY
