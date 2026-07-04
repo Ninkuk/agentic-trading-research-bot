@@ -1,0 +1,59 @@
+import sqlite3
+
+from earnings_calendar import run as runmod
+
+NOW = "2026-07-06T00:00:00+00:00"
+
+
+def _row(ticker, date):
+    return {"ticker": ticker, "name": ticker, "date": date, "timing": "amc",
+            "eps_est": None, "eps_growth": None, "rev_est": None,
+            "rev_growth": None, "mktcap": 1e9}
+
+
+def test_run_end_to_end_counts_and_snapshots(tmp_path):
+    db_path = str(tmp_path / "e.db")
+    sid, count = runmod.run(
+        db_path, fetch_forward=lambda: [_row("A", "2026-07-08"),
+                                        _row("B", "2026-07-09")], now_iso=NOW)
+    assert count == 2
+    conn = sqlite3.connect(db_path)
+    assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
+
+
+def test_run_only_filters_to_watchlist(tmp_path):
+    db_path = str(tmp_path / "e.db")
+    runmod.run(db_path, only=["A"],
+               fetch_forward=lambda: [_row("A", "2026-07-08"),
+                                      _row("B", "2026-07-09")],
+               confirm=lambda *a, **k: set(), now_iso=NOW)
+    conn = sqlite3.connect(db_path)
+    tickers = {r[0] for r in conn.execute("SELECT subtype FROM events")}
+    assert tickers == {"A"}
+
+
+def test_run_transient_feed_failure_preserves_calendar_hides_secret(
+        tmp_path, capsys):
+    db_path = str(tmp_path / "e.db")
+    runmod.run(db_path, fetch_forward=lambda: [_row("A", "2026-07-08")],
+               now_iso=NOW)
+
+    def boom():
+        raise RuntimeError("https://stockanalysis?k=SECRET boom")
+
+    runmod.run(db_path, fetch_forward=boom, now_iso=NOW)
+    err = capsys.readouterr().err
+    assert "RuntimeError" in err and "SECRET" not in err
+    conn = sqlite3.connect(db_path)
+    assert conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 1
+
+
+def test_run_keep_days_prunes_snapshots_not_events(tmp_path):
+    db_path = str(tmp_path / "e.db")
+    runmod.run(db_path, fetch_forward=lambda: [_row("A", "2026-07-08")],
+               now_iso="2026-01-01T00:00:00+00:00")
+    runmod.run(db_path, fetch_forward=lambda: [_row("A", "2026-07-08")],
+               now_iso=NOW, keep_days=30)
+    conn = sqlite3.connect(db_path)
+    assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
+    assert conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] >= 1
