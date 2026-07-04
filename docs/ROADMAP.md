@@ -45,14 +45,13 @@ approved exception — **stockanalysis.com** (already trusted/used). The existin
 | `cftc` (`--family`) | CFTC COT — Legacy + Disaggregated + TFF | Futures positioning / COT index; +managed-money (disagg) & leveraged-fund (TFF) nets | [spec](superpowers/specs/2026-07-03-cftc-screener-design.md) · [disagg/tff](superpowers/specs/2026-07-03-cot-disaggregated-tff-screener-design.md) | [plan](superpowers/plans/2026-07-03-cftc-screener.md) · [disagg/tff](superpowers/plans/2026-07-03-cot-disaggregated-tff-screener.md) |
 | `ftd` | SEC Fails-to-Deliver | CNS settlement fails | [spec](superpowers/specs/2026-07-03-ftd-screener-design.md) | [plan](superpowers/plans/2026-07-03-ftd-screener.md) |
 | `short_volume` | FINRA daily short-sale volume | Daily shorting pressure | [spec](superpowers/specs/2026-07-03-finra-short-volume-screener-design.md) | [plan](superpowers/plans/2026-07-03-finra-short-volume-screener.md) |
+| `options` | CBOE per-contract options | Per-ticker IV / greeks / OI / Vol-OI | [spec](superpowers/specs/2026-07-03-cboe-options-screener-design.md) | [plan](superpowers/plans/2026-07-03-cboe-options-screener.md) |
 
 Cross-cutting: [CFTC revision lookback](superpowers/specs/2026-07-03-cftc-revision-lookback-design.md) ([plan](superpowers/plans/2026-07-03-cftc-revision-lookback.md)) · [stockanalysis __data.json catalog](stockanalysis_data_json_catalog.md).
 
 ## Planned 📐
 
-| Dispatcher | Screener | Signal | Spec | Plan |
-|---|---|---|---|---|
-| `options` | CBOE per-contract options | Per-ticker IV / greeks / OI / Vol-OI | [spec](superpowers/specs/2026-07-03-cboe-options-screener-design.md) | [plan](superpowers/plans/2026-07-03-cboe-options-screener.md) |
+_Nothing currently in this state — the last two planned screeners (`options`, `cftc --family`) are now Built. Next candidates carry a spec but no plan yet; see below._
 
 ---
 
