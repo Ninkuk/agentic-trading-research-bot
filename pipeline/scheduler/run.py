@@ -1,8 +1,13 @@
 """Two-clock scheduler: deterministic due-job evaluator + in-process executor.
 
-Cron wrapper (external; sources .env so scheduled fred/eia/usda read keys):
+Cron wrapper (external; sources .env so scheduled fred/eia/usda read keys;
+flock enforces the single-runner assumption if a tick outlasts the interval):
     */15 * * * *  cd .../agentic-trading-bot && set -a && . ./.env && set +a && \\
+                  flock -n schedule.lock \\
                   uv run python main.py schedule --run >> schedule.log 2>&1
+
+ET conversion uses stdlib zoneinfo, which needs system tzdata (present on
+macOS/Linux; slim CI images or Windows would need the tzdata PyPI package).
 """
 import argparse
 import json
@@ -71,7 +76,7 @@ def _trigger_keys(job, ctx, sched_conn, window_pre_open) -> list:
 
 
 def compute_due(sched_conn, ctx, registry, data_dir,
-                window_pre_open=False, now_iso=None) -> list:
+                window_pre_open=False, *, now_iso) -> list:
     """Everything that should run right now, in catalog order. Deterministic:
     same now_iso + same DBs -> same answer. Unregistered targets are skipped
     (spec: job targets that don't exist yet simply aren't registered)."""
@@ -171,8 +176,12 @@ def run(db_path, data_dir="data", registry=None,
             if not do_run:
                 for item in due:
                     print(json.dumps(item, separators=(",", ":")))
-                break  # --due: one evaluation, no state change, no fixpoint
+                break  # --due: one evaluation, no job_runs change, no fixpoint
             for item in due:
+                # duplicate keys within one due list would double-execute;
+                # unreachable today but structurally excluded here
+                if (item["job"], item["trigger_key"]) in attempted_this_tick:
+                    continue
                 attempted_this_tick.add((item["job"], item["trigger_key"]))
                 if _execute(conn, item, registry, now_iso):
                     ran_total += 1
