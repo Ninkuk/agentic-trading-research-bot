@@ -273,3 +273,54 @@ def test_gate_notional_book_all_fit_no_cuts():
               "shares": 0.1, "price": 300.0}]
     passed, rejections = gates.gate_notional_book(cands, 200.0)
     assert passed == cands and rejections == []
+
+
+# --- crowding gate (DEFENSES_ROADMAP Tier 1 + 2) ---
+
+def _crowd(rank=2, mentions=90, mean=10.0, std=2.0, n=10, ticker="GLD"):
+    return {ticker: {"rank": rank, "mentions": mentions,
+                     "baseline_mean": mean, "baseline_std": std, "n": n}}
+
+
+def test_gate_crowding_kills_hot_name():
+    passed, rej = gates.gate_crowding([_sized_group()], _crowd(), CFG)
+    assert passed == [] and rej[0]["gate"] == "crowding"
+    assert "rank 2" in rej[0]["reason"]
+
+
+def test_gate_crowding_rank_alone_not_enough():
+    # top-rank but only 1.5x its own norm (an always-chattered name)
+    passed, rej = gates.gate_crowding(
+        [_sized_group()], _crowd(rank=1, mentions=15), CFG)
+    assert len(passed) == 1 and rej == []
+
+
+def test_gate_crowding_mentions_spike_alone_not_enough():
+    # 9x its norm but nowhere near the top of the board
+    passed, rej = gates.gate_crowding(
+        [_sized_group()], _crowd(rank=40, mentions=90), CFG)
+    assert len(passed) == 1 and rej == []
+
+
+def test_gate_crowding_absent_name_passes_free():
+    passed, rej = gates.gate_crowding([_sized_group()], {}, CFG)
+    assert len(passed) == 1 and rej == []
+    assert all("retail_attention_z" not in d for d in passed[0]["details"])
+
+
+def test_gate_crowding_thin_baseline_passes():
+    passed, rej = gates.gate_crowding(
+        [_sized_group()], _crowd(n=CFG.crowding_min_n - 1), CFG)
+    assert len(passed) == 1 and rej == []
+
+
+def test_gate_crowding_appends_attention_z_detail():
+    passed, _ = gates.gate_crowding(
+        [_sized_group()], _crowd(rank=40, mentions=14), CFG)
+    assert {"retail_attention_z": 2.0} in passed[0]["details"]
+
+
+def test_gate_crowding_zero_std_no_z_detail():
+    passed, _ = gates.gate_crowding(
+        [_sized_group()], _crowd(rank=40, mentions=14, std=0.0), CFG)
+    assert all("retail_attention_z" not in d for d in passed[0]["details"])

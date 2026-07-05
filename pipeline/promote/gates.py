@@ -125,6 +125,39 @@ def gate_liquidity(groups, liquidity_by_kind: dict, cfg) -> tuple:
     return passed, rejections
 
 
+def gate_crowding(groups, crowding: dict, cfg) -> tuple:
+    """G3b: pump defense — kill when retail attention is extreme relative to
+    the name's OWN baseline (board rank <= N AND mentions >= X * trailing
+    norm; absolute mentions can't work — SPY is always chattered about, and
+    the per-name norm means ETFs need no special case). Absence from
+    reddit.db or a thin baseline = calm = pass free. Survivors with a usable
+    baseline get retail_attention_z appended to details — the Tier 2 metric
+    that crosses the Stage 3 mask as data (never identity)."""
+    passed, rejections = [], []
+    for g in groups:
+        c = crowding.get(g["instrument"])
+        if (c is None or c["n"] < cfg.crowding_min_n
+                or not c["baseline_mean"]):
+            passed.append(g)
+            continue
+        mentions = c["mentions"] or 0
+        if (c["rank"] is not None and c["rank"] <= cfg.crowding_rank_max
+                and mentions >= cfg.crowding_mult * c["baseline_mean"]):
+            rejections.append(_reject(
+                g, "crowding",
+                f"rank {c['rank']} <= {cfg.crowding_rank_max} and mentions "
+                f"{mentions} >= {cfg.crowding_mult}x baseline "
+                f"{c['baseline_mean']:.1f}"))
+            continue
+        if c["baseline_std"]:
+            g = dict(g)
+            g["details"] = list(g["details"]) + [{
+                "retail_attention_z": round(
+                    (mentions - c["baseline_mean"]) / c["baseline_std"], 2)}]
+        passed.append(g)
+    return passed, rejections
+
+
 def gate_confluence(groups, cfg) -> tuple:
     """G4: >= 2 distinct signals, OR a single signal at strong extreme.
     (In v1 the two legs cover disjoint instruments, so promotion reduces to

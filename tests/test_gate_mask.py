@@ -77,3 +77,14 @@ def test_prompt_hash_binds_system_and_user():
     assert h1 != mask.prompt_hash("sys", "user2")
     assert h1 != mask.prompt_hash("sys2", "user")
     assert len(h1) == 64
+
+
+def test_masked_view_carries_retail_attention_z():
+    # Tier 2 crowding: the z crosses the mask as data (never identity)
+    from pipeline.gate import mask
+    row = {"direction": "long", "horizon_band": "weeks", "det_score": 0.9,
+           "sector": "gold", "atr": 4.0, "price": 200.0,
+           "signals": [], "details": [{"retail_attention_z": 2.8}],
+           "next_earnings_date": None}
+    view = mask.masked_view(row, "CAND_A", "2026-07-05T20:00:00+00:00")
+    assert view["metrics"]["retail_attention_z"] == 2.8

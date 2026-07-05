@@ -42,9 +42,25 @@ def _load_liquidity(connect_ro, path, required, label):
         src.close()
 
 
+def _load_crowding(connect_ro, path, now_iso, cfg):
+    """Missing/empty reddit.db = calm = everything passes the crowding gate
+    (top-N list semantics — absence is signal, not an error)."""
+    try:
+        src = connect_ro(path)
+    except Exception as e:
+        print(f"warning: reddit db unavailable: {type(e).__name__}",
+              file=sys.stderr)
+        return {}
+    try:
+        return extract.load_crowding(src, now_iso, cfg.crowding_baseline_days)
+    finally:
+        src.close()
+
+
 def run(db_path, leads_db="leads.db", stocks_db="stocks.db",
-        etfs_db="etfs.db", equity=None, allow_short=False, fractional=None,
-        keep_days=None, config=catalog.DEFAULT_CONFIG,
+        etfs_db="etfs.db", reddit_db="reddit.db", equity=None,
+        allow_short=False, fractional=None, keep_days=None,
+        config=catalog.DEFAULT_CONFIG,
         connect_ro=pipeline_common.connect_ro, now_iso=None):
     """Promote the latest leads through G1..G6 + sizing + the cohort
     notional check into candidates.db.
@@ -75,6 +91,7 @@ def run(db_path, leads_db="leads.db", stocks_db="stocks.db",
         "etf": _load_liquidity(connect_ro, etfs_db,
                                catalog.REQUIRED_ETF_POINTS, "etfs db"),
     }
+    crowding = _load_crowding(connect_ro, reddit_db, now_iso, cfg)
 
     rejections = []
     groups, rej = gates.group_leads(cohort["leads"])          # G1
@@ -82,6 +99,8 @@ def run(db_path, leads_db="leads.db", stocks_db="stocks.db",
     groups, rej = gates.gate_direction(groups, cfg.allow_short)  # G2
     rejections += rej
     groups, rej = gates.gate_liquidity(groups, liquidity, cfg)   # G3
+    rejections += rej
+    groups, rej = gates.gate_crowding(groups, crowding, cfg)     # G3b
     rejections += rej
     groups, rej = gates.gate_confluence(groups, cfg)             # G4
     rejections += rej
@@ -129,6 +148,7 @@ def main(argv=None):
     p.add_argument("--leads-db", default="leads.db")
     p.add_argument("--stocks-db", default="stocks.db")
     p.add_argument("--etfs-db", default="etfs.db")
+    p.add_argument("--reddit-db", default="reddit.db")
     p.add_argument("--equity", type=float, default=None,
                    help="account equity (default: PIPELINE_EQUITY env)")
     p.add_argument("--allow-short", action="store_true")
@@ -137,7 +157,7 @@ def main(argv=None):
     p.add_argument("--keep-days", type=int, default=None)
     a = p.parse_args(argv)
     run(a.db, leads_db=a.leads_db, stocks_db=a.stocks_db, etfs_db=a.etfs_db,
-        equity=a.equity, allow_short=a.allow_short,
+        reddit_db=a.reddit_db, equity=a.equity, allow_short=a.allow_short,
         fractional=True if a.fractional else None, keep_days=a.keep_days)
 
 

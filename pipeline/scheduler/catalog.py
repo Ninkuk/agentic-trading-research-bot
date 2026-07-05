@@ -27,7 +27,7 @@ DB_FILES = {"earnings": "earnings.db", "econ_calendar": "econ_calendar.db",
             "treasury": "treasury.db", "cftc": "cftc.db", "fred": "fred.db",
             "fundamentals": "sec_fundamentals.db", "stocks": "stocks.db",
             "leads": "leads.db", "promote": "candidates.db", "gate": "gate.db",
-            "etfs": "etfs.db"}
+            "etfs": "etfs.db", "reddit": "reddit.db"}
 
 
 @dataclass(frozen=True)
@@ -50,12 +50,13 @@ JOBS: list[Job] = [
     Job("market_calendar", "market_calendar", "daily"),
     Job("treasury", "treasury", "daily"),
     Job("etfs", "stocks", "daily"),
+    Job("reddit", "reddit", "daily"),   # crowding-gate input; long retention
     Job("cftc", "cftc", "cftc_weekly"),
     Job("fred", "fred", "econ_release"),
     Job("fundamentals", "fundamentals", "earnings"),
     Job("stocks", "stocks", "earnings"),
     Job("leads", "leads", "chain", after=("cftc", "fred", "fundamentals", "stocks")),
-    Job("promote", "promote", "chain", after=("leads",)),
+    Job("promote", "promote", "chain", after=("leads", "reddit")),
     Job("gate_pre_close", "gate", "gate", window="pre_close"),
     Job("gate_pre_open", "gate", "gate", window="pre_open"),
 ]
@@ -76,7 +77,7 @@ def argv_for(job: Job, data_dir: str) -> list[str]:
                  "--stocks-db", d("stocks.db")]
     if job.target == "promote":
         argv += ["--leads-db", d("leads.db"), "--stocks-db", d("stocks.db"),
-                 "--etfs-db", d("etfs.db")]
+                 "--etfs-db", d("etfs.db"), "--reddit-db", d("reddit.db")]
     if job.name == "etfs":
         argv += ["--type", "e"]
     if job.target == "gate":

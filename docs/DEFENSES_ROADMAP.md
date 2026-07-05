@@ -55,7 +55,7 @@ Built 2026-07-05. Design questions resolved:
   post-gate agent cut can land under $1 notional — order placement (a Claude
   command) must skip dust orders.
 
-## Crowding / pump defense 💡
+## Crowding / pump defense ✅
 
 Origin: 2026-07-05 session — gap analysis of the anonymized LLM gate. The
 funnel is pump-resistant by construction (lead signals are price-blind; G3
@@ -68,7 +68,7 @@ time series).
 
 Two tiers, mirroring the system's code-vs-LLM split:
 
-### Tier 1 — deterministic crowding gate in `pipeline/promote/` 💡
+### Tier 1 — deterministic crowding gate in `pipeline/promote/` ✅
 
 - New gate after G3 (promote already attaches market context there:
   liquidity from stocks/etfs.db, crowding from reddit.db — same move,
@@ -82,7 +82,7 @@ Two tiers, mirroring the system's code-vs-LLM split:
 - Every kill logged `gate='crowding'`; thresholds join the frozen
   GateConfig (visible in config_hash), calibrated via Stage 6 trials.
 
-### Tier 2 — masked crowding metric into the Stage 3 gate 💡
+### Tier 2 — masked crowding metric into the Stage 3 gate ✅
 
 - Promote writes a normalized `retail_attention_z` into candidate details →
   flows through `v_gate_input` → one entry added to `MASK_DETAIL_KEYS`.
@@ -99,7 +99,26 @@ Two tiers, mirroring the system's code-vs-LLM split:
 - Retention: reddit.db joins the long-retention list (per-name baselines
   need history; same rule protecting the Stage 6 walk-forward window).
 
-Design questions for the spec: threshold form (rank floor vs. z-score vs.
-both); kill vs. size-halve for Tier 1 (gates currently only kill; a scalar
-would echo the regime dial); ETF baseline handling; how far back the
-per-name baseline looks.
+Built 2026-07-05 as `gate_crowding` (G3b, after G3) + `extract.load_crowding`.
+Design questions resolved:
+
+- **Threshold form**: BOTH legs required — board rank ≤ `crowding_rank_max`
+  (10) AND mentions ≥ `crowding_mult` (3.0) × the name's trailing mean over
+  `crowding_baseline_days` (30), computed against the `all-stocks` filter
+  only. Baselines thinner than `crowding_min_n` (5 snapshots) pass free
+  (the gate self-arms after ~a week of daily reddit jobs).
+- **Kill vs size-halve**: kill — gates only kill in v1; a scalar variant is
+  a Stage 6 trials question.
+- **ETF baseline**: no special case — the per-name norm self-normalizes
+  SPY-class permanent chatter.
+- **Tier 2**: survivors with a usable baseline get `retail_attention_z`
+  (population z vs own baseline, 2dp) appended to details;
+  `retail_attention_z` joined `MASK_DETAIL_KEYS`. Advisory, τ-filtered,
+  absent in dry runs — by construction.
+- **Plumbing**: daily `reddit` scheduler job (no `--keep-days` — long
+  retention for baselines); promote chains `after=("leads", "reddit")` and
+  receives `--reddit-db`. Missing reddit.db = calm = pass free (stderr
+  warning only). Old-repo ApeWisdom history is backfilled under its
+  original per-sub filters (`wallstreetbets`/`stocks`/`4chan`) — deliberately
+  NOT into `all-stocks`, whose 3-sub-scaled counts would bias live baselines
+  low and false-kill top-10 names (see DEPLOYMENT_ROADMAP).
