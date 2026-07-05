@@ -22,7 +22,7 @@ enters.
 
 ## Commands
 
-### `account-positions` — resolve account positions/details 💡
+### `account-positions` — resolve account positions/details ✅
 
 Origin: 2026-07-05 session — Stage 2/3 review found the account-awareness
 blind spots. When invoked, Claude resolves the live account via the
@@ -46,10 +46,15 @@ likely in promote's GateConfig):
 4. **Marked-to-market equity** — sizing tracks the account instead of the
    last `.env` edit.
 
-Design questions for the spec: `portfolio.db` schema ownership (a normal
-screener package the command shells into vs. Claude writing SQL directly —
-prefer the former); how stop distances for *held* positions enter the heat
-calculation; secret hygiene for MCP errors.
+Built 2026-07-05: `sources/screeners/portfolio_screener/` (registered:
+`main.py portfolio --input <doc.json|->`) + the
+`.claude/skills/account-positions` skill. Design questions resolved: schema
+is owned by a normal screener package the command shells into (Claude never
+writes SQL); MCP errors surface as exception type names only; the four
+downstream integrations above remain follow-ons (stop distances for held
+positions land with the whole-book-heat item). Until marked-to-market lands,
+the skill nudges the user when `PIPELINE_EQUITY` drifts from snapshot
+equity.
 
 ### `paper-trail-report` — humanify the error logs & decision ledgers 💡
 
