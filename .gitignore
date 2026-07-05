@@ -9,4 +9,7 @@ screener.db
 # Playwright MCP session artifacts
 .playwright-mcp/
 
+# Personal Claude Code overrides (not for the repo)
+.claude/settings.local.json
+
 data/

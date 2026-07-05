@@ -40,7 +40,7 @@ promotion gates — liquidity · confluence · correlation caps · regime dial �
         ▼  (fixed daily window: pre-close, opt. pre-open)
 bounded LLM gate — read-only state, reduce-only + τ, clamp in code, decision log
         ▼
-execution (Robinhood MCP — out of scope)
+execution (Robinhood MCP — out of scope; Claude command layer tracked in CLAUDE_ROADMAP.md)
 ```
 
 Invariants carried down from the collection layer: stdlib-only, ELT (signals in
@@ -122,7 +122,7 @@ Builds naturally **with** Stage 3 (same spec or adjacent).
 
 ### Stage 5 — Scheduler (two clocks) ✅ 🔵
 
-**Built** as `pipeline/scheduler/` (registered: `main.py schedule`). Spec retired; the cron line lives in `run.py`'s docstring. Prerequisite treasury `date('now')` fix shipped with this stage.
+**Built** as `pipeline/scheduler/` (registered: `main.py schedule`). Spec retired; the cron line lives in `run.py`'s docstring (Linux-only — macOS deployment via launchd is tracked in [DEPLOYMENT_ROADMAP.md](DEPLOYMENT_ROADMAP.md)). Prerequisite treasury `date('now')` fix shipped with this stage.
 
 ### Stage 6 — Backtest & validation harness ✅ 🟢
 
@@ -151,7 +151,7 @@ that seeded this file):
 5. ~~**Stages 3 + 4 — LLM gate + decision log** (together).~~ ✅ shipped. Consume candidates;
    best-evidenced design, least design risk.
 
-**All six stages are built.** The roadmap is complete; remaining work is calibration (below) + FOLLOWUPS.
+**All six stages are built.** The roadmap is complete; remaining work is calibration (below) + FOLLOWUPS. Post-v1 hardening is tracked in [DEFENSES_ROADMAP.md](DEFENSES_ROADMAP.md).
 
 ## Open calibration questions (empirical, not literature gaps)
 
