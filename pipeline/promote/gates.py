@@ -125,6 +125,39 @@ def gate_liquidity(groups, liquidity_by_kind: dict, cfg) -> tuple:
     return passed, rejections
 
 
+def gate_crowding(groups, crowding: dict, cfg) -> tuple:
+    """G3b: pump defense — kill when retail attention is extreme relative to
+    the name's OWN baseline (board rank <= N AND mentions >= X * trailing
+    norm; absolute mentions can't work — SPY is always chattered about, and
+    the per-name norm means ETFs need no special case). Absence from
+    reddit.db or a thin baseline = calm = pass free. Survivors with a usable
+    baseline get retail_attention_z appended to details — the Tier 2 metric
+    that crosses the Stage 3 mask as data (never identity)."""
+    passed, rejections = [], []
+    for g in groups:
+        c = crowding.get(g["instrument"])
+        if (c is None or c["n"] < cfg.crowding_min_n
+                or not c["baseline_mean"]):
+            passed.append(g)
+            continue
+        mentions = c["mentions"] or 0
+        if (c["rank"] is not None and c["rank"] <= cfg.crowding_rank_max
+                and mentions >= cfg.crowding_mult * c["baseline_mean"]):
+            rejections.append(_reject(
+                g, "crowding",
+                f"rank {c['rank']} <= {cfg.crowding_rank_max} and mentions "
+                f"{mentions} >= {cfg.crowding_mult}x baseline "
+                f"{c['baseline_mean']:.1f}"))
+            continue
+        if c["baseline_std"]:
+            g = dict(g)
+            g["details"] = list(g["details"]) + [{
+                "retail_attention_z": round(
+                    (mentions - c["baseline_mean"]) / c["baseline_std"], 2)}]
+        passed.append(g)
+    return passed, rejections
+
+
 def gate_confluence(groups, cfg) -> tuple:
     """G4: >= 2 distinct signals, OR a single signal at strong extreme.
     (In v1 the two legs cover disjoint instruments, so promotion reduces to
@@ -169,25 +202,67 @@ def gate_max_positions(groups, cfg) -> tuple:
     return passed, rejections
 
 
+def _floor_shares(x: float, fractional: bool):
+    """Round DOWN to the order increment: whole shares, or the 1e-6 quantum
+    Robinhood accepts for fractional equity orders. Mirrored in
+    pipeline/gate/resolve.py — keep the two in lockstep (replay re-derives
+    with the gate copy)."""
+    if fractional:
+        return math.floor(x * 1_000_000 + 1e-6) / 1_000_000
+    return math.floor(x)
+
+
+def gate_notional_book(candidates: list, equity: float) -> tuple:
+    """Cohort-level overdraft guard: whole-candidate cuts, ascending
+    (det_score, instrument) — mirroring Stage 3's heat_cut — until cumulative
+    shares*price fits inside equity (cash-account buying power proxy until
+    portfolio.db supplies real cash). Runs AFTER sizing."""
+    total = sum(c["shares"] * c["price"] for c in candidates)
+    cuts, rejections = set(), []
+    for c in sorted(candidates, key=lambda c: (c["det_score"],
+                                               c["instrument"])):
+        if total <= equity:
+            break
+        total -= c["shares"] * c["price"]
+        cuts.add((c["instrument"], c["direction"]))
+        rejections.append(_reject(
+            c, "notional",
+            f"cohort notional exceeds equity {equity:.2f}"))
+    passed = [c for c in candidates
+              if (c["instrument"], c["direction"]) not in cuts]
+    return passed, rejections
+
+
 def size_candidate(group: dict, equity: float, regime_scalar: float,
                    cfg) -> tuple:
     """Fixed-fractional / ATR sizing with the sqrt-law participation cap.
-    Kelly is explicitly NOT used (p/b too noisy on slow signals). Returns
-    (candidate_row, None) or (None, size_zero_rejection). Portfolio heat is
-    Stage 3's job, after the LLM clamp."""
+    Kelly is explicitly NOT used (p/b too noisy on slow signals). Notional
+    is capped at equity (a cash account cannot overdraft on one order) and
+    dust under min_notional is rejected rather than ordered. Returns
+    (candidate_row, None) or (None, rejection). Portfolio heat is Stage 3's
+    job, after the LLM clamp; the cohort-level notional check is
+    gate_notional_book's."""
     atr = group.get("atr") or 0.0
     stop_distance = atr * cfg.atr_mult
     if stop_distance <= 0:
         return None, _reject(group, "size_zero",
                              f"degenerate stop (atr={atr})")
+    price = group["price"]
     risk_dollars = equity * cfg.risk_fraction * regime_scalar
-    shares = math.floor(risk_dollars / stop_distance)
-    shares = min(shares, math.floor(cfg.participation_cap
-                                    * group["average_volume"]))
-    if shares <= 0:
+    raw = risk_dollars / stop_distance
+    raw = min(raw, cfg.participation_cap * group["average_volume"])
+    notional_cap = equity / price if price > 0 else 0.0
+    clamped_by_notional = raw > notional_cap
+    raw = min(raw, notional_cap)
+    shares = _floor_shares(raw, cfg.fractional_shares)
+    if shares <= 0 or shares * price < cfg.min_notional:
+        if clamped_by_notional or shares > 0:
+            return None, _reject(
+                group, "notional",
+                f"notional {shares * price:.2f} vs equity {equity:.2f} / "
+                f"min_notional {cfg.min_notional}")
         return None, _reject(group, "size_zero",
                              "floor/participation cap left 0 shares")
-    price = group["price"]
     stop_price = (price - stop_distance if group["direction"] == "long"
                   else price + stop_distance)
     return {

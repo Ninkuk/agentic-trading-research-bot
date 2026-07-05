@@ -15,10 +15,10 @@ def test_catalog_order_puts_chains_after_their_upstreams():
             assert pos[up] < pos[j.name], (j.name, up)
 
 
-def test_daily_maintenance_covers_five_monitors_plus_etfs_refresh():
+def test_daily_maintenance_covers_five_monitors_plus_etfs_and_reddit():
     daily = {j.name for j in catalog.JOBS if j.kind == "daily"}
     assert daily == {"earnings", "econ_calendar", "fomc", "market_calendar",
-                     "treasury", "etfs"}
+                     "treasury", "etfs", "reddit"}
 
 
 def test_argv_for_leads_passes_all_source_dbs():
@@ -64,3 +64,19 @@ def test_constants_match_spec():
     assert catalog.FIXPOINT_LIMIT == 3
     assert catalog.RELEASE_LAG_MIN == 15
     assert (catalog.PRE_CLOSE_ET, catalog.PRE_CLOSE_EARLY_ET) == ("15:30", "12:30")
+
+
+def test_reddit_daily_job_registered_for_crowding():
+    job = catalog.JOB_BY_NAME["reddit"]
+    assert job.target == "reddit" and job.kind == "daily"
+    assert catalog.DB_FILES["reddit"] == "reddit.db"
+    # long retention: the per-name baselines need history — no --keep-days
+    assert "--keep-days" not in catalog.argv_for(job, "/d")
+
+
+def test_promote_chain_includes_reddit_and_passes_reddit_db():
+    job = catalog.JOB_BY_NAME["promote"]
+    assert "reddit" in job.after
+    argv = catalog.argv_for(job, "/d")
+    assert "--reddit-db" in argv
+    assert argv[argv.index("--reddit-db") + 1] == "/d/reddit.db"

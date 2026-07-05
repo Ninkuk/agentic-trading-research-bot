@@ -1,5 +1,6 @@
 import pytest
 
+from pipeline.common import pipeline_common
 from pipeline.promote import catalog, extract
 from pipeline.leads import db as leads_db
 from sources.screeners.stock_analysis_screener import db as stocks_db_mod
@@ -72,3 +73,72 @@ def test_load_liquidity_normalizes_symbols():
     assert liq["BRK-B"]["price"] == 400.0
     assert liq["BRK-B"]["sector"] == "Financials"
     assert liq["BRK-B"]["nextEarningsDate"] == "2026-08-01"
+
+
+# --- crowding inputs from reddit.db (DEFENSES_ROADMAP) ---
+
+def _reddit_world(path, days):
+    """days: list of (captured_at, filter, [(ticker, rank, mentions)])."""
+    from sources.screeners.reddit_screener import db as rdb
+    conn = rdb.connect(path)
+    rdb.ensure_schema(conn)
+    for captured_at, filter_, rows in days:
+        rdb.write_snapshot(conn, captured_at, filter_, [
+            {"ticker": t, "name": t, "rank": r, "mentions": m,
+             "upvotes": m * 3, "rank_24h_ago": None, "mentions_24h_ago": None}
+            for t, r, m in rows])
+    conn.close()
+
+
+def test_load_crowding_latest_vs_trailing_baseline(tmp_path):
+    path = str(tmp_path / "reddit.db")
+    days = [(f"2026-07-0{d}T07:00:00+00:00", "all-stocks",
+             [("GME", 5, 10), ("SPY", 1, 500)]) for d in range(1, 5)]
+    days.append(("2026-07-05T07:00:00+00:00", "all-stocks",
+                 [("GME", 2, 90), ("SPY", 1, 510)]))
+    _reddit_world(path, days)
+    conn = pipeline_common.connect_ro(path)
+    crowding = extract.load_crowding(conn, "2026-07-05T21:00:00+00:00", 30)
+    conn.close()
+    gme = crowding["GME"]
+    assert gme["rank"] == 2 and gme["mentions"] == 90
+    assert gme["baseline_mean"] == pytest.approx(10.0)
+    assert gme["baseline_std"] == pytest.approx(0.0)
+    assert gme["n"] == 4
+    # SPY's own norm is high -> its multiple stays ~1x
+    assert crowding["SPY"]["baseline_mean"] == pytest.approx(500.0)
+
+
+def test_load_crowding_ignores_other_filters(tmp_path):
+    path = str(tmp_path / "reddit.db")
+    _reddit_world(path, [
+        ("2026-07-04T07:00:00+00:00", "4chan", [("GME", 1, 999)]),
+        ("2026-07-05T07:00:00+00:00", "all-stocks", [("GME", 9, 12)])])
+    conn = pipeline_common.connect_ro(path)
+    crowding = extract.load_crowding(conn, "2026-07-05T21:00:00+00:00", 30)
+    conn.close()
+    assert crowding["GME"]["n"] == 0          # 4chan history never leaks
+
+
+def test_load_crowding_window_excludes_older_than_cutoff(tmp_path):
+    path = str(tmp_path / "reddit.db")
+    _reddit_world(path, [
+        ("2026-05-01T07:00:00+00:00", "all-stocks", [("GME", 5, 1000)]),
+        ("2026-07-04T07:00:00+00:00", "all-stocks", [("GME", 5, 10)]),
+        ("2026-07-05T07:00:00+00:00", "all-stocks", [("GME", 5, 12)])])
+    conn = pipeline_common.connect_ro(path)
+    crowding = extract.load_crowding(conn, "2026-07-05T21:00:00+00:00", 30)
+    conn.close()
+    assert crowding["GME"]["n"] == 1
+    assert crowding["GME"]["baseline_mean"] == pytest.approx(10.0)
+
+
+def test_load_crowding_empty_db_returns_empty(tmp_path):
+    from sources.screeners.reddit_screener import db as rdb
+    path = str(tmp_path / "reddit.db")
+    conn = rdb.connect(path)
+    rdb.ensure_schema(conn)
+    conn.close()
+    ro = pipeline_common.connect_ro(path)
+    assert extract.load_crowding(ro, "2026-07-05T21:00:00+00:00", 30) == {}
+    ro.close()

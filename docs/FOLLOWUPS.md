@@ -118,10 +118,11 @@ Captured while writing the six stage specs under `docs/superpowers/specs/`
   long-retention policy). Calibration note: SOYB/CORN/CPER fall under Stage 2's
   default $10M dollar-volume floor.
 - 🟠 **Long retention for pipeline-scored DBs** — `stocks.db`, `etfs.db`,
-  `leads.db`, `candidates.db` must run with `--keep-days 3650` (or no prune) from
-  the moment Stage 1 ships; Stage 6's walk-forward window can never exceed what
-  retention keeps (the CLAUDE.md examples' `--keep-days 90` would cap it at ~90
-  days).
+  `leads.db`, `candidates.db`, and `reddit.db` (crowding-gate per-name
+  baselines, added 2026-07-05) must run with `--keep-days 3650` (or no prune)
+  from the moment Stage 1 ships; Stage 6's walk-forward window can never exceed
+  what retention keeps (the CLAUDE.md examples' `--keep-days 90` would cap it
+  at ~90 days).
 - 🟠 **`stocks` payout data points** — capture dividend/buyback fields so the
   Stage 1 quality composite can add its 4th (payout) dimension.
 - 💡 **Price-history source** — unlocks the real |ρ| correlation gate (Stage 2

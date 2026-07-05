@@ -20,6 +20,7 @@ from sources.screeners.nyfed_screener.run import main as nyfed_main
 from sources.screeners.cboe_stats.run import main as cboe_stats_main
 from sources.screeners.eia_screener.run import main as eia_main
 from sources.screeners.usda_screener.run import main as usda_main
+from sources.screeners.portfolio_screener.run import main as portfolio_main
 
 # pipeline stages
 from pipeline.leads.run import main as leads_main
@@ -49,6 +50,7 @@ REGISTRY = {
     "cboe_stats": cboe_stats_main,
     "eia": eia_main,
     "usda": usda_main,
+    "portfolio": portfolio_main,
     "leads": leads_main,
     "schedule": schedule_main,
     "trials": trials_main,

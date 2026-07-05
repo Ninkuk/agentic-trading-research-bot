@@ -1,9 +1,15 @@
-"""The one place the pipeline talks to an LLM. stdlib urllib behind an
-injected `post` seam (no network in tests); bounded retries reusing
-http_client.retry_delay. Secret hygiene: never log the URL, body (contains
-the masked prompt) or headers (contain the key) — exception type names only,
-and that responsibility lives in run.py's catch."""
+"""The one place the pipeline talks to an LLM. Two backends behind the same
+injected `complete=` seam: `complete` (raw Messages API, needs a key) and
+`complete_cli` (headless `claude -p`, subscription auth — the default under
+the strictly-no-ANTHROPIC_API_KEY policy). Both sit behind injectable seams
+(`post=` / `run_proc=`, no network or subprocess in tests); bounded retries
+reuse http_client.retry_delay. Secret hygiene: never log the URL, body
+(contains the masked prompt), headers (contain the key) or subprocess
+stderr — exception type names only, and that responsibility lives in
+run.py's catch."""
 import json
+import os
+import subprocess
 import time
 import urllib.error
 import urllib.request
@@ -49,6 +55,58 @@ def complete(system: str, user: str, *, model: str, api_key: str,
             if attempt == catalog.LLM_ATTEMPTS:
                 raise
             sleep(retry_delay(e, attempt, 1.0))
+
+
+class CLIError(RuntimeError):
+    """The claude CLI backend failed after LLM_ATTEMPTS tries. Carries only
+    a short cause tag (exit code / exception type name) — never stderr."""
+
+
+def complete_cli(system: str, user: str, *, model: str, api_key=None,
+                 run_proc=subprocess.run, sleep=time.sleep) -> dict:
+    """One headless `claude -p` completion (subscription auth — the
+    no-API-key policy path). Returns a Messages-shaped body so
+    response_text / response_model / parse_agent and every downstream
+    guardrail stay backend-agnostic. `api_key` is accepted and ignored
+    (seam compatibility with `complete`).
+
+    The user prompt travels via stdin, never argv (`ps` hygiene); the child
+    env never carries ANTHROPIC_API_KEY, so auth is structurally
+    subscription-only. The served model is pinned from the envelope's
+    modelUsage (falling back to the requested name), keeping the Stage 4
+    reproducibility contract. Retries LLM_ATTEMPTS times on timeout,
+    non-zero exit, an unparseable envelope, or is_error; then raises
+    CLIError. No temperature control exists on this path — rationales may
+    vary run-to-run; bounds are unaffected (resolve.py clamps regardless,
+    and replay re-derives from the STORED proposal)."""
+    argv = [catalog.CLI_BIN, "-p", "--output-format", "json",
+            "--model", model, "--system-prompt", system]
+    env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
+    last = "unknown"
+    for attempt in range(1, catalog.LLM_ATTEMPTS + 1):
+        proc = None
+        try:
+            proc = run_proc(argv, input=user, capture_output=True, text=True,
+                            timeout=catalog.CLI_TIMEOUT_S, env=env)
+        except (subprocess.TimeoutExpired, OSError) as e:
+            last = type(e).__name__
+        if proc is not None and proc.returncode == 0:
+            try:
+                envelope = json.loads(proc.stdout)
+            except ValueError as e:
+                envelope, last = None, type(e).__name__
+            if envelope is not None and not envelope.get("is_error"):
+                served = next(iter(envelope.get("modelUsage") or {}), model)
+                return {"content": [{"type": "text",
+                                     "text": envelope.get("result", "")}],
+                        "model": served}
+            if envelope is not None:
+                last = "is_error"
+        elif proc is not None:
+            last = f"exit {proc.returncode}"
+        if attempt < catalog.LLM_ATTEMPTS:
+            sleep(retry_delay(None, attempt, 1.0))
+    raise CLIError(last)
 
 
 def response_text(body: dict) -> str:

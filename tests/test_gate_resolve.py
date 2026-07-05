@@ -78,3 +78,20 @@ def test_heat_cut_ignores_zero_share_rows():
             {"instrument": "B", "det_score": 0.95, "final_shares": 10,
              "stop_distance": 10.0}]
     assert resolve.heat_cut(book, equity=100_000.0, heat_cap=0.06) == []
+
+
+def test_resolve_fractional_quantizes_to_millionth():
+    out = resolve.resolve(0, 0.083333, _p(size_mult=0.5), 0.5,
+                          fractional=True)
+    assert out["final_shares"] == 0.041666
+    assert out["decision_maker"] == "agent"
+
+
+def test_resolve_whole_share_floor_unchanged():
+    out = resolve.resolve(0, 10, _p(size_mult=0.55), 0.5)
+    assert out["final_shares"] == 5
+
+
+def test_resolve_fractional_fallthrough_keeps_size_hi():
+    out = resolve.resolve(0, 0.083333, None, 0.5, fractional=True)
+    assert out["final_shares"] == 0.083333

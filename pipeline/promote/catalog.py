@@ -18,6 +18,12 @@ class GateConfig:
     atr_mult: float = 2.0                   # stop_distance = atr * atr_mult
     participation_cap: float = 0.01         # shares <= 1% of averageVolume
     allow_short: bool = False               # G2: cash-account reality
+    fractional_shares: bool = False         # sizing: REAL shares (1e-6 quantum)
+    min_notional: float = 1.0               # Robinhood $1 per-order minimum
+    crowding_rank_max: int = 10             # G3b: hot = top-N of the board AND...
+    crowding_mult: float = 3.0              # ...mentions >= X * the name's own norm
+    crowding_baseline_days: int = 30        # trailing window for that norm
+    crowding_min_n: int = 5                 # baselines thinner than this pass free
 
 
 DEFAULT_CONFIG = GateConfig()
@@ -39,3 +45,7 @@ REQUIRED_ETF_POINTS = ("price", "averageVolume", "dollarVolume", "atr")
 
 # Longest horizon wins when signals with different bands group (G1).
 HORIZON_ORDER = {"weeks": 0, "months": 1}
+
+# The reddit.db snapshot series the crowding gate reads (the broad universe;
+# per-sub series and the old-repo backfill stay out of the baseline).
+CROWDING_FILTER = "all-stocks"

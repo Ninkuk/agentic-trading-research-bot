@@ -165,3 +165,76 @@ def test_main_cli_smoke(tmp_path, capsys):
                "--equity", "100000"])
     out = capsys.readouterr().out
     assert "candidates" in out
+
+
+# --- fractional sizing + cohort notional (DEFENSES_ROADMAP) ---
+
+def test_run_fractional_small_account_promotes_fractional_shares(tmp_path):
+    # the 2026-07-05 first-live-run scenario: $200.37, risk-off -> whole
+    # shares all die size_zero; fractional=True must produce a real book
+    paths = _world(tmp_path)
+    _make_leads(paths["leads"], [_lead()], scalar=0.5)
+    sid, n_cand, _ = prun.run(paths["cand"], leads_db=paths["leads"],
+                              stocks_db=paths["stocks"],
+                              etfs_db=paths["etfs"], equity=200.37,
+                              fractional=True, now_iso=NOW)
+    assert n_cand == 1
+    conn = pdb.connect(paths["cand"])
+    shares, frac = conn.execute(
+        "SELECT c.shares, s.fractional FROM candidates c "
+        "JOIN snapshots s ON s.id=c.snapshot_id WHERE s.id=?",
+        (sid,)).fetchone()
+    assert 0 < shares < 1 and frac == 1
+    conn.close()
+
+
+def test_run_fractional_env_fallback(tmp_path, monkeypatch):
+    paths = _world(tmp_path)
+    _make_leads(paths["leads"], [_lead()], scalar=0.5)
+    monkeypatch.setenv("PIPELINE_FRACTIONAL", "1")
+    sid, n_cand, _ = prun.run(paths["cand"], leads_db=paths["leads"],
+                              stocks_db=paths["stocks"],
+                              etfs_db=paths["etfs"], equity=200.37,
+                              now_iso=NOW)
+    assert n_cand == 1
+    conn = pdb.connect(paths["cand"])
+    assert conn.execute("SELECT fractional FROM snapshots WHERE id=?",
+                        (sid,)).fetchone()[0] == 1
+    conn.close()
+
+
+def test_run_whole_share_small_account_still_dies_size_zero(tmp_path):
+    paths = _world(tmp_path)
+    _make_leads(paths["leads"], [_lead()], scalar=0.5)
+    sid, n_cand, n_rej = prun.run(paths["cand"], leads_db=paths["leads"],
+                                  stocks_db=paths["stocks"],
+                                  etfs_db=paths["etfs"], equity=200.37,
+                                  now_iso=NOW)
+    assert n_cand == 0 and n_rej == 1
+
+
+def test_run_cohort_notional_cut_logged(tmp_path):
+    # two fractional candidates each near the equity ceiling: the cohort
+    # gate must cut the lower-scored one and log gate='notional'
+    paths = _world(tmp_path)
+    _make_leads(paths["leads"], [
+        _lead(),                                             # GLD det 0.96
+        _lead(instrument="SLV", score=95.5,
+              details='{"asset_class":"metals2"}')])
+    _make_prices(paths["etfs"], {
+        "GLD": {"price": 200.0, "averageVolume": 5e6, "dollarVolume": 1e9,
+                "atr": 0.05, "sector": None, "nextEarningsDate": None},
+        "SLV": {"price": 200.0, "averageVolume": 5e6, "dollarVolume": 1e9,
+                "atr": 0.05, "sector": None, "nextEarningsDate": None}})
+    # tiny atr -> huge risk-driven size -> each clamps to ~equity notional
+    sid, n_cand, _ = prun.run(paths["cand"], leads_db=paths["leads"],
+                              stocks_db=paths["stocks"],
+                              etfs_db=paths["etfs"], equity=1000.0,
+                              fractional=True, now_iso=NOW)
+    assert n_cand == 1
+    conn = pdb.connect(paths["cand"])
+    rejects = dict(conn.execute(
+        "SELECT instrument, gate FROM rejections WHERE snapshot_id=?",
+        (sid,)).fetchall())
+    assert rejects.get("SLV") == "notional"
+    conn.close()

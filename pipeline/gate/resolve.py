@@ -3,9 +3,22 @@ heat check. All guardrails live here and in db triggers — never in prompts."""
 import math
 
 
-def resolve(size_lo: int, size_hi: int, proposal, tau: float) -> dict:
+def _floor_shares(x: float, fractional: bool):
+    """Round DOWN to the order increment: whole shares, or the 1e-6 quantum
+    for fractional books. Mirrors pipeline/promote/gates.py — keep in
+    lockstep (replay re-derives with THIS copy from the stored run header's
+    `fractional`)."""
+    if fractional:
+        return math.floor(x * 1_000_000 + 1e-6) / 1_000_000
+    return math.floor(x)
+
+
+def resolve(size_lo, size_hi, proposal, tau: float,
+            fractional: bool = False) -> dict:
     """One candidate's resolution (Permit layer; heat/dry-run overlay runs
-    downstream). proposal=None is the error/fallback path.
+    downstream). proposal=None is the error/fallback path. `fractional`
+    comes from the candidates snapshot (persisted on the gate run header so
+    replay recovers it without live config).
 
     Pinned cliff: a low-confidence veto is DISCARDED (deterministic full
     size) — tau exists so noisy caution cannot de-lever the trusted book;
@@ -19,7 +32,7 @@ def resolve(size_lo: int, size_hi: int, proposal, tau: float) -> dict:
                 "policy_decision": "Permit", "clamp_fired": 0,
                 "event": "rejected"}
     mult = proposal["size_mult"]
-    raw = math.floor(size_hi * mult)
+    raw = _floor_shares(size_hi * mult, fractional)
     final = min(size_hi, max(size_lo, raw))
     return {"final_shares": final, "decision_maker": "agent",
             "policy_decision": "Permit",

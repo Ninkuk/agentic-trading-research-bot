@@ -15,9 +15,12 @@ CREATE TABLE IF NOT EXISTS gate_runs (
     heat_cap                  REAL NOT NULL,
     tau                       REAL NOT NULL,
     model_version             TEXT,
-    guardrail_config_version  TEXT NOT NULL
+    guardrail_config_version  TEXT NOT NULL,
+    fractional                INTEGER NOT NULL DEFAULT 0  -- sizing quantum; replay reads THIS
 );
 
+-- Share columns are REAL since fractional sizing; DBs created with the
+-- earlier INTEGER DDL stay valid (INTEGER affinity keeps REALs lossless).
 CREATE TABLE IF NOT EXISTS gate_decisions (
     decision_id               TEXT PRIMARY KEY,
     run_id                    INTEGER NOT NULL REFERENCES gate_runs(id),
@@ -26,20 +29,20 @@ CREATE TABLE IF NOT EXISTS gate_decisions (
     direction                 TEXT NOT NULL,
     input_snapshot_hash       TEXT NOT NULL,
     checkpoint                TEXT NOT NULL,
-    det_shares                INTEGER NOT NULL,
+    det_shares                REAL NOT NULL,
     det_stop                  REAL,
     det_score                 REAL,
     stop_distance             REAL,
-    size_lo                   INTEGER NOT NULL,
-    size_hi                   INTEGER NOT NULL,
+    size_lo                   REAL NOT NULL,
+    size_hi                   REAL NOT NULL,
     agent_action              TEXT,
     agent_size_mult           REAL,
     agent_confidence          REAL,
     agent_rationale           TEXT,
     agent_error               TEXT,
     tau                       REAL NOT NULL,
-    final_shares              INTEGER NOT NULL,
-    delta                     INTEGER NOT NULL,
+    final_shares              REAL NOT NULL,
+    delta                     REAL NOT NULL,
     clamp_fired               INTEGER NOT NULL DEFAULT 0,
     policy_decision           TEXT NOT NULL,
     decision_maker            TEXT NOT NULL,
@@ -107,21 +110,32 @@ _DECISION_COLS = ("decision_id", "run_id", "decided_at", "instrument", "directio
                   "guardrail_config_version")
 
 
+def _migrate(conn) -> None:
+    """Pre-fractional DBs gain gate_runs.fractional in place (gate_runs is
+    not trigger-protected — finalize_run already updates it)."""
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(gate_runs)")}
+    if cols and "fractional" not in cols:
+        conn.execute("ALTER TABLE gate_runs "
+                     "ADD COLUMN fractional INTEGER NOT NULL DEFAULT 0")
+
+
 def ensure_schema(conn) -> None:
-    """Create tables + views + triggers. Idempotent."""
-    conn.executescript(_SCHEMA + _VIEWS)
+    """Create tables + views + triggers; migrate old DBs. Idempotent."""
+    conn.executescript(_SCHEMA)
+    _migrate(conn)
+    conn.executescript(_VIEWS)
     conn.commit()
 
 
 def write_run(conn, captured_at, candidates_snapshot_id, window, equity, heat_cap,
-              tau, guardrail_config_version) -> int:
+              tau, guardrail_config_version, fractional=0) -> int:
     """Insert a gate run (decision_count and model_version NULL at insert)."""
     cur = conn.execute(
         "INSERT INTO gate_runs (captured_at, candidates_snapshot_id, window, "
-        "equity, heat_cap, tau, guardrail_config_version) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "equity, heat_cap, tau, guardrail_config_version, fractional) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (captured_at, candidates_snapshot_id, window, equity, heat_cap, tau,
-         guardrail_config_version))
+         guardrail_config_version, int(fractional)))
     conn.commit()
     return cur.lastrowid
 

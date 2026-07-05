@@ -5,13 +5,17 @@ TAU = 0.5              # confidence threshold; below it the agent is ignored
 HEAT_CAP = 0.06        # portfolio heat cap: sum(final_shares*stop_distance) <= cap*equity
 DEFAULT_MODEL = "claude-sonnet-5"
 MAX_TOKENS = 300       # the grammar is tiny by design
-LLM_ATTEMPTS = 3       # transport retries inside llm.complete
+LLM_ATTEMPTS = 3       # transport retries inside llm.complete / complete_cli
 RATIONALE_MAX = 500    # longer rationales are truncated, not rejected
+CLI_BIN = "claude"     # headless subscription-auth backend (no-API-key policy)
+CLI_TIMEOUT_S = 180    # per-attempt subprocess budget for `claude -p`
 
 # The only detail metrics that may cross the mask (normalized values, never
-# identifiers): COT premise + confirm indexes, quality dimension z-scores.
+# identifiers): COT premise + confirm indexes, quality dimension z-scores,
+# and the Tier-2 crowding metric (attention vs the name's own baseline).
 MASK_DETAIL_KEYS = ("commercial_index", "speculator_index",
-                    "profitability_z", "growth_z", "safety_z")
+                    "profitability_z", "growth_z", "safety_z",
+                    "retail_attention_z")
 
 SYSTEM_PROMPT = """\
 You are a risk reviewer for a systematic trading pipeline. You will see ONE
