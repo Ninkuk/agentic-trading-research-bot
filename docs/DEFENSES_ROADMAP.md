@@ -5,7 +5,7 @@ close identified risk gaps rather than add new signal legs. Kept separate so
 [PIPELINE_ROADMAP.md](PIPELINE_ROADMAP.md) stays a finished v1 record. Same
 status legend and `registry.py`/`GateConfig` source-of-truth conventions.
 
-## Fractional sizing + notional-cost check (small-account support) 💡
+## Fractional sizing + notional-cost check (small-account support) ✅
 
 Origin: first live funnel run, 2026-07-05 — real equity $200.37 in the
 risk-off regime (scalar 0.5) leaves a $1.00 risk budget per trade, and
@@ -30,12 +30,30 @@ Two coupled changes (the second is a genuine risk gap the first exposes):
    account: 1 GLD share ≈ $310 > $200 equity would have passed today's
    sizing if the risk budget had allowed it).
 
-Design questions for the spec: rounding increment (Robinhood accepts
-0.000001 but $1 minimum notional per order); per-symbol fractional
-eligibility (not all listings qualify — likely a liquidity-gate-style
-data_missing rejection); whether gate.db decision columns need a
-migration or fresh-DB stance (append-only tables can't ALTER carelessly);
-how `heat_cut` (whole-position cuts) interacts with fractional books.
+Built 2026-07-05. Design questions resolved:
+
+- **Rounding**: floor to 1e-6 (Robinhood's increment); `min_notional: 1.0`
+  in GateConfig rejects dust below the $1 per-order minimum (`gate='notional'`).
+- **Flag plumbing**: `GateConfig.fractional_shares` (off by default), flipped
+  by `promote --fractional` or the `PIPELINE_FRACTIONAL` env (the scheduler
+  path — same pattern as `PIPELINE_EQUITY`); config_hash pins the switch.
+  The quantum then travels **with the data**: snapshots.fractional →
+  `v_gate_input` → `gate_runs.fractional`, so Stage 4 replay re-derives with
+  the stored quantum, never live config.
+- **Migration stance**: `ALTER TABLE ... ADD COLUMN` for the two non-append-only
+  headers (snapshots, gate_runs); share columns' DDL is REAL for fresh DBs and
+  old INTEGER-affinity DBs store non-integral REALs losslessly (pinned by test).
+  `gate_decisions` needed no ALTER.
+- **Notional-cost check** (both modes, not just fractional): per-candidate
+  clamp `shares ≤ equity/price` at sizing, plus a cohort-level
+  `gate_notional_book` cut (ascending det_score, mirroring heat_cut) so the
+  book's total notional fits inside equity. Equity is the cash proxy until
+  `portfolio.db` (CLAUDE_ROADMAP `account-positions`) supplies real cash.
+- **`heat_cut`**: unchanged — already REAL-safe (no flooring), still cuts
+  whole positions.
+- **Deferred**: per-symbol fractional eligibility (no data source yet); a
+  post-gate agent cut can land under $1 notional — order placement (a Claude
+  command) must skip dust orders.
 
 ## Crowding / pump defense 💡
 

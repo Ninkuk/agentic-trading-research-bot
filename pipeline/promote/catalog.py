@@ -18,6 +18,8 @@ class GateConfig:
     atr_mult: float = 2.0                   # stop_distance = atr * atr_mult
     participation_cap: float = 0.01         # shares <= 1% of averageVolume
     allow_short: bool = False               # G2: cash-account reality
+    fractional_shares: bool = False         # sizing: REAL shares (1e-6 quantum)
+    min_notional: float = 1.0               # Robinhood $1 per-order minimum
 
 
 DEFAULT_CONFIG = GateConfig()

@@ -194,3 +194,82 @@ def test_size_candidate_zero_shares_rejected():
     cand2, rej2 = gates.size_candidate(g2, equity=100_000.0, regime_scalar=1.0,
                                        cfg=CFG)
     assert cand2 is None and rej2["gate"] == "size_zero"
+
+
+# --- fractional sizing + notional-cost checks (DEFENSES_ROADMAP) ---
+
+def _sized_group(**over):
+    g = _group(price=310.0, atr=6.0, sector="gold", next_earnings_date=None,
+               average_volume=5_000_000.0, dollar_volume=5e8)
+    g.update(over)
+    return g
+
+
+def test_size_candidate_fractional_small_account():
+    import dataclasses
+    import math
+    cfg = dataclasses.replace(CFG, fractional_shares=True)
+    # $200.37 equity, risk-off 0.5 -> risk ~$1.00; stop 12 -> ~0.0834 shares
+    cand, rej = gates.size_candidate(_sized_group(), equity=200.37,
+                                     regime_scalar=0.5, cfg=cfg)
+    assert rej is None
+    expected = math.floor((200.37 * 0.01 * 0.5) / 12.0 * 1e6 + 1e-6) / 1e6
+    assert cand["shares"] == expected
+    assert 0 < cand["shares"] < 1
+    assert cand["size_hi"] == cand["shares"]
+    assert cand["realized_risk"] == pytest.approx(cand["shares"] * 12.0)
+
+
+def test_size_candidate_whole_share_notional_clamp():
+    # 1 GLD share $310 > $200 equity: even with a huge risk budget the
+    # notional clamp zeroes it in whole-share mode -> 'notional' rejection
+    import dataclasses
+    cfg = dataclasses.replace(CFG, risk_fraction=2.0)
+    cand, rej = gates.size_candidate(_sized_group(), equity=200.0,
+                                     regime_scalar=1.0, cfg=cfg)
+    assert cand is None and rej["gate"] == "notional"
+
+
+def test_size_candidate_fractional_notional_clamp_caps_at_equity():
+    import dataclasses
+    cfg = dataclasses.replace(CFG, fractional_shares=True, risk_fraction=2.0)
+    cand, rej = gates.size_candidate(_sized_group(), equity=200.0,
+                                     regime_scalar=1.0, cfg=cfg)
+    assert rej is None
+    assert cand["shares"] * 310.0 <= 200.0
+
+
+def test_size_candidate_fractional_min_notional():
+    # shares worth < $1 -> rejected as dust, not ordered
+    import dataclasses
+    cfg = dataclasses.replace(CFG, fractional_shares=True)
+    cand, rej = gates.size_candidate(_sized_group(), equity=2.0,
+                                     regime_scalar=1.0, cfg=cfg)
+    assert cand is None and rej["gate"] == "notional"
+
+
+def test_size_candidate_whole_share_default_unchanged():
+    # regression: default config on a comfortable account is byte-identical
+    g = _sized_group(price=50.0, atr=2.0, average_volume=10_000.0)
+    cand, rej = gates.size_candidate(g, equity=100_000.0, regime_scalar=1.0,
+                                     cfg=CFG)
+    assert rej is None
+    assert cand["shares"] == 100 and isinstance(cand["shares"], int)
+
+
+def test_gate_notional_book_cuts_lowest_score_first():
+    cands = [{"instrument": "A", "direction": "long", "det_score": 0.9,
+              "shares": 0.5, "price": 300.0},
+             {"instrument": "B", "direction": "long", "det_score": 0.8,
+              "shares": 0.4, "price": 300.0}]
+    passed, rejections = gates.gate_notional_book(cands, 200.0)
+    assert [c["instrument"] for c in passed] == ["A"]
+    assert rejections[0]["gate"] == "notional"
+    assert rejections[0]["instrument"] == "B"
+
+
+def test_gate_notional_book_all_fit_no_cuts():
+    cands = [{"instrument": "A", "direction": "long", "det_score": 0.9,
+              "shares": 0.1, "price": 300.0}]
+    passed, rejections = gates.gate_notional_book(cands, 200.0)
+    assert passed == cands and rejections == []

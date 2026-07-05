@@ -19,6 +19,15 @@ def _resolve_equity(equity):
     raise ValueError("no equity: pass --equity or set PIPELINE_EQUITY")
 
 
+def _resolve_fractional(fractional):
+    """--fractional flag, else PIPELINE_FRACTIONAL env (same scheduler path
+    as PIPELINE_EQUITY — flipping it needs no code change). The value still
+    lands in the frozen config, so config_hash pins the switch per snapshot."""
+    if fractional is not None:
+        return bool(fractional)
+    return os.environ.get("PIPELINE_FRACTIONAL", "") in ("1", "true", "yes")
+
+
 def _load_liquidity(connect_ro, path, required, label):
     try:
         src = connect_ro(path)
@@ -34,15 +43,20 @@ def _load_liquidity(connect_ro, path, required, label):
 
 
 def run(db_path, leads_db="leads.db", stocks_db="stocks.db",
-        etfs_db="etfs.db", equity=None, allow_short=False, keep_days=None,
-        config=catalog.DEFAULT_CONFIG,
+        etfs_db="etfs.db", equity=None, allow_short=False, fractional=None,
+        keep_days=None, config=catalog.DEFAULT_CONFIG,
         connect_ro=pipeline_common.connect_ro, now_iso=None):
-    """Promote the latest leads through G1..G6 + sizing into candidates.db.
+    """Promote the latest leads through G1..G6 + sizing + the cohort
+    notional check into candidates.db.
     Returns (snapshot_id, candidate_count, rejection_count)."""
     now_iso = now_iso or datetime.now(timezone.utc).isoformat()
     equity = _resolve_equity(equity)
-    cfg = dataclasses.replace(config, allow_short=allow_short) \
-        if allow_short != config.allow_short else config
+    fractional = _resolve_fractional(fractional)
+    cfg = config
+    if allow_short != cfg.allow_short:
+        cfg = dataclasses.replace(cfg, allow_short=allow_short)
+    if fractional != cfg.fractional_shares:
+        cfg = dataclasses.replace(cfg, fractional_shares=fractional)
 
     try:
         leads_conn = connect_ro(leads_db)
@@ -85,13 +99,17 @@ def run(db_path, leads_db="leads.db", stocks_db="stocks.db",
         else:
             candidates.append(cand)
 
+    candidates, rej = gates.gate_notional_book(candidates, equity)
+    rejections += rej
+
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)
         sid = db.write_snapshot(conn, now_iso, equity,
                                 cohort["regime_scalar"],
                                 cohort["leads_snapshot_id"],
-                                catalog.config_hash(cfg))
+                                catalog.config_hash(cfg),
+                                fractional=int(cfg.fractional_shares))
         db.write_candidates(conn, sid, candidates)
         db.write_rejections(conn, sid, rejections)
         cc, rc = db.finalize_snapshot(conn, sid)
@@ -114,10 +132,13 @@ def main(argv=None):
     p.add_argument("--equity", type=float, default=None,
                    help="account equity (default: PIPELINE_EQUITY env)")
     p.add_argument("--allow-short", action="store_true")
+    p.add_argument("--fractional", action="store_true",
+                   help="fractional-share sizing (default: PIPELINE_FRACTIONAL env)")
     p.add_argument("--keep-days", type=int, default=None)
     a = p.parse_args(argv)
     run(a.db, leads_db=a.leads_db, stocks_db=a.stocks_db, etfs_db=a.etfs_db,
-        equity=a.equity, allow_short=a.allow_short, keep_days=a.keep_days)
+        equity=a.equity, allow_short=a.allow_short,
+        fractional=True if a.fractional else None, keep_days=a.keep_days)
 
 
 if __name__ == "__main__":

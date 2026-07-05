@@ -252,3 +252,27 @@ def test_run_only_filter(tmp_path):
     run_id, n, _ = grun.run(gpath, cpath, api_key="K", complete=complete,
                             now_iso=NOW, only=["GLD"])
     assert n == 1
+
+
+def test_run_fractional_book_persists_flag_and_quantizes(tmp_path):
+    cpath = str(tmp_path / "candidates.db")
+    conn = pdb.connect(cpath)
+    pdb.ensure_schema(conn)
+    sid = pdb.write_snapshot(conn, NOW, equity=200.0, regime_scalar=1.0,
+                             leads_snapshot_id=1, config_hash="c" * 64,
+                             fractional=1)
+    pdb.write_candidates(conn, sid, [_cand("GLD", shares=0.083333,
+                                           size_hi=0.083333)])
+    pdb.finalize_snapshot(conn, sid)
+    conn.close()
+    complete, _ = _completer([_reply(size_mult=0.5)])
+    gpath = str(tmp_path / "gate.db")
+    run_id, n, _ = grun.run(gpath, cpath, api_key="K", complete=complete,
+                            now_iso=NOW)
+    gconn = gdb.connect(gpath)
+    header = gdb.run_row(gconn, run_id)
+    assert header["fractional"] == 1
+    row = gdb.decisions_for_run(gconn, run_id)[0]
+    assert row["final_shares"] == 0.041666      # 1e-6 quantum, not floor->0
+    assert row["size_hi"] == 0.083333
+    gconn.close()

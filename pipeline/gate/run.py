@@ -106,6 +106,9 @@ def run(db_path, candidates_db, tau=catalog.TAU, model=catalog.DEFAULT_MODEL,
 
     equity = rows[0]["equity"] if rows else 0.0
     config_hash = (rows[0].get("config_hash") if rows else "") or ""
+    # sizing quantum travels WITH the data (candidates snapshot -> run
+    # header) so replay recovers it without live config
+    fractional = bool(rows[0].get("fractional")) if rows else False
     gcv = catalog.guardrail_config_version(tau, catalog.HEAT_CAP, model,
                                           config_hash)
 
@@ -116,7 +119,8 @@ def run(db_path, candidates_db, tau=catalog.TAU, model=catalog.DEFAULT_MODEL,
         db.ensure_schema(conn)
         run_id = db.write_run(conn, now_iso, snapshot_id,
                               "dry_run" if dry_run else window, equity,
-                              catalog.HEAT_CAP, tau, gcv)
+                              catalog.HEAT_CAP, tau, gcv,
+                              fractional=int(fractional))
 
         decisions = []
         model_version = None
@@ -146,7 +150,8 @@ def run(db_path, candidates_db, tau=catalog.TAU, model=catalog.DEFAULT_MODEL,
                 if body is not None and model_version is None:
                     model_version = llm.response_model(body)
                 outcome = resolve.resolve(row["size_lo"], row["size_hi"],
-                                         proposal, tau)
+                                         proposal, tau,
+                                         fractional=fractional)
 
             det_shares = row["shares"]
             final_shares = outcome["final_shares"]
@@ -242,7 +247,8 @@ def _recompute_decision(row: dict, header: dict) -> dict:
                    "policy_decision": "DryRun", "clamp_fired": 0}
     else:
         outcome = resolve.resolve(row["size_lo"], row["size_hi"], proposal,
-                                  header["tau"])
+                                  header["tau"],
+                                  fractional=bool(header.get("fractional")))
     return {"decision_id": row["decision_id"], "instrument": row["instrument"],
             "det_shares": row["det_shares"], "det_score": row["det_score"],
             "stop_distance": row["stop_distance"],

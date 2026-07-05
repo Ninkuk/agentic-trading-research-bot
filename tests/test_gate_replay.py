@@ -81,3 +81,26 @@ def test_main_replay_exit_codes(tmp_path):
     grun.main(["--db", gpath, "--replay", str(run_id)])   # exits 0 = returns
     with pytest.raises(SystemExit):
         grun.main(["--db", gpath, "--replay", "9999"])    # unknown run
+
+
+def test_replay_fractional_run_is_clean(tmp_path):
+    # replay must re-derive with the 1e-6 quantum recovered from the run
+    # header (NOT live config) — a whole-share floor would zero the book
+    # and diff dirty
+    cpath = str(tmp_path / "candidates.db")
+    from pipeline.promote import db as pdb
+    conn = pdb.connect(cpath)
+    pdb.ensure_schema(conn)
+    sid = pdb.write_snapshot(conn, NOW, equity=200.0, regime_scalar=1.0,
+                             leads_snapshot_id=1, config_hash="c" * 64,
+                             fractional=1)
+    pdb.write_candidates(conn, sid, [_cand("GLD", shares=0.083333,
+                                           size_hi=0.083333,
+                                           stop_distance=12.0)])
+    pdb.finalize_snapshot(conn, sid)
+    conn.close()
+    complete, _ = _completer([_reply(size_mult=0.5)])
+    gpath = str(tmp_path / "gate.db")
+    run_id, _, _ = grun.run(gpath, cpath, api_key="K", complete=complete,
+                            now_iso=NOW)
+    assert grun.replay(gpath, run_id) is True

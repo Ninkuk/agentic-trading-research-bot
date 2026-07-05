@@ -95,3 +95,45 @@ def test_prune_cascades_both_children():
     assert conn.execute("SELECT COUNT(*) FROM candidates").fetchone()[0] == 0
     assert conn.execute("SELECT COUNT(*) FROM rejections").fetchone()[0] == 0
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
+
+
+# --- fractional flag through the data (DEFENSES_ROADMAP) ---
+
+def test_old_integer_schema_roundtrips_fractional_shares():
+    # DBs created before the REAL DDL keep working: SQLite INTEGER affinity
+    # stores a non-integral REAL losslessly (no migration of candidates
+    # needed) — this test pins that assumption.
+    import sqlite3
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE t (shares INTEGER NOT NULL)")
+    conn.execute("INSERT INTO t VALUES (?)", (0.083333,))
+    assert conn.execute("SELECT shares FROM t").fetchone()[0] == 0.083333
+
+
+def test_snapshots_fractional_migration():
+    # a DB created with the pre-fractional schema gains the column on the
+    # next ensure_schema (ALTER TABLE migration), defaulting to 0
+    import sqlite3
+    conn = sqlite3.connect(":memory:")
+    conn.execute("""CREATE TABLE snapshots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, captured_at TEXT NOT NULL,
+        candidate_count INTEGER, rejection_count INTEGER,
+        equity REAL NOT NULL, regime_scalar REAL, leads_snapshot_id INTEGER,
+        config_hash TEXT NOT NULL)""")
+    conn.execute("INSERT INTO snapshots (captured_at, equity, config_hash)"
+                 " VALUES (?, 100.0, 'c')", (NOW,))
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(snapshots)")}
+    assert "fractional" in cols
+    assert conn.execute("SELECT fractional FROM snapshots").fetchone()[0] == 0
+
+
+def test_v_gate_input_exposes_fractional_and_real_shares():
+    conn = _fresh()
+    sid = db.write_snapshot(conn, NOW, equity=200.0, regime_scalar=1.0,
+                            leads_snapshot_id=1, config_hash="c" * 64,
+                            fractional=1)
+    db.write_candidates(conn, sid, [_candidate(shares=0.5, size_hi=0.5)])
+    row = conn.execute(
+        "SELECT fractional, shares FROM v_gate_input").fetchone()
+    assert row == (1, 0.5)
