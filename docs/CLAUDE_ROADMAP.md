@@ -71,7 +71,7 @@ under the $10M floor); the gate vetoed nothing but one veto was discarded
 below τ — third time this week, consider reviewing τ." Read-only by
 design — this command never mutates any DB.
 
-### `gate-llm-backend` — headless Claude serves the Stage 3 gate 💡
+### `gate-llm-backend` — headless Claude serves the Stage 3 gate ✅
 
 Origin: 2026-07-05 decision — **strictly no `ANTHROPIC_API_KEY`** in this
 project. The Stage 3 gate's LLM call moves off the raw `api.anthropic.com`
@@ -106,11 +106,18 @@ from the *stored* proposal, so determinism-of-audit survives). Cron must
 run as the logged-in user with `claude` on PATH. `--dry-run` remains
 zero-backend.
 
-Design questions for the spec: subprocess timeout + retry mapping onto
-`LLM_ATTEMPTS`; how scheduler `argv_for` passes `--backend`; prompt
-delivery via stdin (argv leaks into `ps` output — the masked prompt is not
-secret, but the habit matters); parsing the CLI JSON envelope vs. the
-Messages body shape.
+Built 2026-07-05 (`llm.complete_cli` + `--backend {claude-cli,api}`,
+default `claude-cli`). Design questions resolved: one subprocess attempt
+per `LLM_ATTEMPTS` retry (timeout `CLI_TIMEOUT_S=180s`; retryable = timeout,
+non-zero exit, unparseable envelope, `is_error`; then `CLIError`);
+scheduler `argv_for` passes nothing — the default IS the policy; user
+prompt via stdin (never argv), system prompt via `--system-prompt`; the
+CLI envelope (`result`, `modelUsage`) is adapted to a Messages-shaped body
+inside `complete_cli` so `response_text`/`response_model`/`parse_agent`
+stay backend-agnostic; `model_version` pins from the `modelUsage` key
+(live-verified against the real CLI). Extra hardening: the child env is
+stripped of `ANTHROPIC_API_KEY`, so auth is structurally
+subscription-only.
 
 ## Future ideas
 

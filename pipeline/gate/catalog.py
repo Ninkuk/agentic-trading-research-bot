@@ -5,8 +5,10 @@ TAU = 0.5              # confidence threshold; below it the agent is ignored
 HEAT_CAP = 0.06        # portfolio heat cap: sum(final_shares*stop_distance) <= cap*equity
 DEFAULT_MODEL = "claude-sonnet-5"
 MAX_TOKENS = 300       # the grammar is tiny by design
-LLM_ATTEMPTS = 3       # transport retries inside llm.complete
+LLM_ATTEMPTS = 3       # transport retries inside llm.complete / complete_cli
 RATIONALE_MAX = 500    # longer rationales are truncated, not rejected
+CLI_BIN = "claude"     # headless subscription-auth backend (no-API-key policy)
+CLI_TIMEOUT_S = 180    # per-attempt subprocess budget for `claude -p`
 
 # The only detail metrics that may cross the mask (normalized values, never
 # identifiers): COT premise + confirm indexes, quality dimension z-scores.

@@ -215,14 +215,33 @@ def test_run_dry_run_no_api_calls_and_excluded_from_book(tmp_path):
     conn.close()
 
 
-def test_run_requires_api_key_unless_dry_run(tmp_path, monkeypatch):
+def test_run_api_backend_requires_api_key_unless_dry_run(tmp_path, monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     cpath = str(tmp_path / "candidates.db")
     _mk_candidates(cpath, [_cand("GLD")])
     with pytest.raises(ValueError):
-        grun.run(str(tmp_path / "g.db"), cpath, now_iso=NOW)
+        grun.run(str(tmp_path / "g.db"), cpath, now_iso=NOW, backend="api")
     import os.path
     assert not os.path.exists(str(tmp_path / "g.db"))
+
+
+def test_run_default_backend_needs_no_api_key(tmp_path, monkeypatch):
+    # the claude-cli backend is subscription-authenticated — the strictly-
+    # no-ANTHROPIC_API_KEY policy path must not demand a key
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    cpath = str(tmp_path / "candidates.db")
+    _mk_candidates(cpath, [_cand("GLD")])
+    complete, calls = _completer([_reply()])
+    run_id, n, approved = grun.run(str(tmp_path / "gate.db"), cpath,
+                                   complete=complete, now_iso=NOW)
+    assert n == 1 and approved == 1 and calls["n"] == 1
+
+
+def test_run_default_complete_is_backend_aware():
+    assert grun._complete_for("claude-cli", None) is llm.complete_cli
+    assert grun._complete_for("api", None) is llm.complete
+    marker = object()
+    assert grun._complete_for("api", marker) is marker
 
 
 def test_run_only_filter(tmp_path):

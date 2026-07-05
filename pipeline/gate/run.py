@@ -41,15 +41,26 @@ def load_gate_input(conn) -> tuple:
     return rows, snapshot_id
 
 
-def _resolve_api_key(api_key, dry_run):
-    if dry_run:
+def _resolve_api_key(api_key, dry_run, backend):
+    """Only the legacy `api` backend demands a key — the default claude-cli
+    backend is subscription-authenticated (the no-API-key policy is policy,
+    not preference)."""
+    if dry_run or backend == "claude-cli":
         return api_key
     key = api_key or os.environ.get("ANTHROPIC_API_KEY")
     if not key:
         raise ValueError(
             "no API key: pass api_key or set ANTHROPIC_API_KEY "
-            "(unless dry_run)")
+            "(api backend only; the default claude-cli backend needs none)")
     return key
+
+
+def _complete_for(backend, complete):
+    """An explicitly injected `complete` (tests) always wins; otherwise the
+    backend picks between the claude-cli subprocess and the Messages API."""
+    if complete is not None:
+        return complete
+    return llm.complete_cli if backend == "claude-cli" else llm.complete
 
 
 def _get_proposal(alias, system, user, model, api_key, complete):
@@ -74,11 +85,12 @@ def _get_proposal(alias, system, user, model, api_key, complete):
 
 
 def run(db_path, candidates_db, tau=catalog.TAU, model=catalog.DEFAULT_MODEL,
-        api_key=None, complete=llm.complete, window="adhoc", dry_run=False,
+        api_key=None, complete=None, window="adhoc", dry_run=False,
         connect_ro=pipeline_common.connect_ro, now_iso=None, id_gen=None,
-        only=None) -> tuple:
+        only=None, backend="claude-cli") -> tuple:
     """Run one gate pass. Returns (run_id, decision_count, approved_count)."""
-    api_key = _resolve_api_key(api_key, dry_run)
+    complete = _complete_for(backend, complete)
+    api_key = _resolve_api_key(api_key, dry_run, backend)
     now_iso = now_iso or datetime.now(timezone.utc).isoformat()
     id_gen = id_gen or (lambda: str(uuid.uuid4()))
 
@@ -242,8 +254,8 @@ def _recompute_decision(row: dict, header: dict) -> dict:
             "decision_maker": outcome["decision_maker"]}
 
 
-def replay(db_path, run_id, live=False, complete=llm.complete, api_key=None,
-          now_iso=None) -> bool:
+def replay(db_path, run_id, live=False, complete=None, api_key=None,
+          now_iso=None, backend="claude-cli") -> bool:
     """Deterministic audit of a past run: re-derive every decision from its
     stored checkpoint (the authoritative record) and diff the recomputed
     outcome against what was written. Offline (default) makes ZERO writes.
@@ -295,11 +307,8 @@ def replay(db_path, run_id, live=False, complete=llm.complete, api_key=None,
 
     if live:
         now_iso = now_iso or datetime.now(timezone.utc).isoformat()
-        key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-        if not key:
-            raise ValueError(
-                "no API key: pass api_key or set ANTHROPIC_API_KEY "
-                "for --live replay")
+        complete = _complete_for(backend, complete)
+        key = _resolve_api_key(api_key, False, backend)
         model = header["model_version"] or catalog.DEFAULT_MODEL
         write_conn = db.connect(db_path)
         try:
@@ -341,10 +350,15 @@ def main(argv=None) -> None:
     p.add_argument("--live", action="store_true",
                    help="with --replay, also ask the agent again and log "
                         "the counterfactual (the only write it performs)")
+    p.add_argument("--backend", choices=("claude-cli", "api"),
+                   default="claude-cli",
+                   help="LLM backend: headless `claude -p` (subscription "
+                        "auth, default) or the raw Messages API (needs "
+                        "ANTHROPIC_API_KEY)")
     a = p.parse_args(argv)
 
     if a.replay is not None:
-        if not replay(a.db, a.replay, live=a.live):
+        if not replay(a.db, a.replay, live=a.live, backend=a.backend):
             raise SystemExit(1)
         return
 
@@ -353,7 +367,8 @@ def main(argv=None) -> None:
 
     only = a.only.split(",") if a.only else None
     run_id, n, approved = run(a.db, a.candidates_db, tau=a.tau, model=a.model,
-                              window=a.window, dry_run=a.dry_run, only=only)
+                              window=a.window, dry_run=a.dry_run, only=only,
+                              backend=a.backend)
     print(f"gate run {run_id}: {n} decisions, {approved} approved "
           f"({'dry_run' if a.dry_run else a.window})")
 
