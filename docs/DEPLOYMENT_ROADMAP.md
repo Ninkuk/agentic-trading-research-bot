@@ -6,7 +6,7 @@ it replaces. The scheduler itself ships in `pipeline/scheduler/` — items
 here are host-side (macOS today), deliberately outside the stdlib-only
 codebase. Same status legend as [PIPELINE_ROADMAP.md](PIPELINE_ROADMAP.md).
 
-## launchd tick — replaces the docstring cron line on macOS 💡
+## launchd tick — replaces the docstring cron line on macOS ✅
 
 Origin: 2026-07-05 session. The cron wrapper documented in
 `pipeline/scheduler/run.py`'s docstring depends on `flock`, which macOS
@@ -33,6 +33,22 @@ Deliverables:
 Known limitation (accepted for now): a LaunchAgent runs only while logged
 in and awake — the 15:30 ET pre-close gate window needs the lid open.
 Long-term answer is an always-on host; revisit once the gate runs live.
+
+Built 2026-07-05: both deliverables shipped (`--db data/schedule.db
+--data-dir data` pinned in the tick so every DB lives under `data/`; PATH
+extended with `~/.local/bin` for the gate's claude-cli backend) and
+verified with two real ticks — the first exposed that `.env` lacked
+`PIPELINE_EQUITY`; it now carries `PIPELINE_EQUITY=200.37` +
+`PIPELINE_FRACTIONAL=1`, and the retry tick promoted the first non-empty
+candidate book (4 fractional positions). **One manual step remains** (a
+session cannot self-authorize persistence):
+
+```sh
+cp deploy/com.agentic-trading-bot.schedule.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.agentic-trading-bot.schedule.plist
+```
+
+(Reverse with `launchctl bootout gui/$(id -u)/com.agentic-trading-bot.schedule`.)
 
 ## Retire the `agentic-trades` LaunchAgents ✅
 

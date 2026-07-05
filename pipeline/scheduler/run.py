@@ -1,10 +1,16 @@
 """Two-clock scheduler: deterministic due-job evaluator + in-process executor.
 
-Cron wrapper (external; sources .env so scheduled fred/eia/usda read keys;
-flock enforces the single-runner assumption if a tick outlasts the interval):
+Linux cron wrapper (external; sources .env so scheduled fred/eia/usda read
+keys; flock enforces the single-runner assumption if a tick outlasts the
+interval):
     */15 * * * *  cd .../agentic-trading-bot && set -a && . ./.env && set +a && \\
                   flock -n schedule.lock \\
                   uv run python main.py schedule --run >> schedule.log 2>&1
+
+macOS ships no flock — deploy via launchd instead (deploy/schedule-tick.sh +
+deploy/com.agentic-trading-bot.schedule.plist; see DEPLOYMENT_ROADMAP.md).
+launchd never starts a second instance of a running job label, so the lock
+is unnecessary rather than ported.
 
 ET conversion uses stdlib zoneinfo, which needs system tzdata (present on
 macOS/Linux; slim CI images or Windows would need the tzdata PyPI package).
