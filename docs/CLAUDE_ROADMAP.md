@@ -56,7 +56,7 @@ positions land with the whole-book-heat item). Until marked-to-market lands,
 the skill nudges the user when `PIPELINE_EQUITY` drifts from snapshot
 equity.
 
-### `paper-trail-report` — humanify the error logs & decision ledgers 💡
+### `paper-trail-report` — humanify the error logs & decision ledgers ✅
 
 When invoked, Claude reads every failure surface and produces a
 plain-English digest a human can act on, instead of raw rows:
@@ -75,6 +75,11 @@ Output shape (sketch): "yesterday's pre-close run promoted 4 of 19 leads;
 under the $10M floor); the gate vetoed nothing but one veto was discarded
 below τ — third time this week, consider reviewing τ." Read-only by
 design — this command never mutates any DB.
+
+Built 2026-07-05 as `.claude/skills/paper-trail-report` (URI `mode=ro` on
+every open — zero writes structurally); exercised end-to-end against the
+first live run's DBs. Missing surfaces (e.g. schedule.db before launchd
+goes live) report as "no history yet", not errors.
 
 ### `gate-llm-backend` — headless Claude serves the Stage 3 gate ✅
 
