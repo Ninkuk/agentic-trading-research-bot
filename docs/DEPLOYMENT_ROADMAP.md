@@ -58,7 +58,16 @@ silent since 2026-06-26 with ApeWisdom errors) unloaded and their plists
 deleted from `~/Library/LaunchAgents/`. Templates remain in the old repo
 (`~/Desktop/agentic-trades`) if ever needed.
 
-Still open 💡: before deleting the old repo itself, check whether its
-accumulated ApeWisdom history has backfill value for the crowding gate's
-per-name baselines ([DEFENSES_ROADMAP.md](DEFENSES_ROADMAP.md)) —
-attention-history depth is that design's one data hunger.
+Resolved 2026-07-05 ✅: the old repo's ApeWisdom history
+(`tools/data/reddit_velocity.db` — 79k hourly rows, 2026-06-20→07-05, subs
+wallstreetbets/stocks/4chan) **was backfilled** into `data/reddit.db`
+(3,790 observations, downsampled to one snapshot per day per sub, ranks
+synthesized by mentions) — under its **original sub names as filters**,
+NOT `all-stocks`: the old 3-sub counts are scale-incompatible with the live
+aggregate series and would bias crowding baselines low (false kills eat the
+3× headroom). The `4chan` series merges cleanly with the live `4chan`
+filter (same ApeWisdom universe). The crowding gate reads `all-stocks`
+only, so it self-arms after ~`crowding_min_n` (5) daily scheduler runs; the
+preserved per-sub history stays queryable for Stage 6 calibration. The old
+repo is now safe to delete whenever convenient (nothing else was mined
+from it).
