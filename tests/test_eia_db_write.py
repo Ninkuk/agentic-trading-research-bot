@@ -8,8 +8,14 @@ def _fresh():
 
 
 def _meta(sid, unit="MBBL", label="L", cat="crude"):
-    return {"series_id": sid, "route": "r", "label": label, "category": cat,
-            "unit": unit, "frequency": "weekly"}
+    return {
+        "series_id": sid,
+        "route": "r",
+        "label": label,
+        "category": cat,
+        "unit": unit,
+        "frequency": "weekly",
+    }
 
 
 def test_write_observations_upsert_in_place():

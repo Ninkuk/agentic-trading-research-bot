@@ -4,13 +4,13 @@ and the trading-day helpers other modules import.
 is_trading_day/next_trading_day/next_early_close are Python helpers (not views)
 because 'is date D open?' needs a bound date argument, which a stored SQLite view
 cannot carry. They read the events table written by run.py."""
+
 from datetime import date, timedelta
 
 from sources.common.monitor_common import connect
 from sources.common.monitor_common import ensure_schema as _mc_ensure_schema
 
-__all__ = ["connect", "ensure_schema", "is_trading_day", "next_trading_day",
-           "next_early_close"]
+__all__ = ["connect", "ensure_schema", "is_trading_day", "next_trading_day", "next_early_close"]
 
 _CAL_SCHEMA = """
 -- What's closed or short from today onward (equity + bond).
@@ -50,11 +50,11 @@ def ensure_schema(conn) -> None:
 
 def is_trading_day(conn, d: str) -> bool:
     """True iff `d` (YYYY-MM-DD) is a weekday and not an equity market_holiday."""
-    if date.fromisoformat(d).weekday() >= 5:            # Sat/Sun
+    if date.fromisoformat(d).weekday() >= 5:  # Sat/Sun
         return False
     hit = conn.execute(
-        "SELECT 1 FROM events WHERE event_type='market_holiday' "
-        "AND event_date=? LIMIT 1", (d,)).fetchone()
+        "SELECT 1 FROM events WHERE event_type='market_holiday' AND event_date=? LIMIT 1", (d,)
+    ).fetchone()
     return hit is None
 
 
@@ -73,5 +73,7 @@ def next_early_close(conn, d: str):
     """The next equity early_close on or after `d`, or None."""
     row = conn.execute(
         "SELECT event_date FROM events WHERE event_type='early_close' "
-        "AND event_date >= ? ORDER BY event_date LIMIT 1", (d,)).fetchone()
+        "AND event_date >= ? ORDER BY event_date LIMIT 1",
+        (d,),
+    ).fetchone()
     return row[0] if row else None

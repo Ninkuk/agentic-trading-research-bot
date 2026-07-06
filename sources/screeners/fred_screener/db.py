@@ -2,8 +2,16 @@ from datetime import datetime, timedelta
 
 from sources.common.screener_common import connect
 
-__all__ = ["connect", "ensure_schema", "upsert_series", "write_observations",
-           "write_snapshot", "prune", "write_observation_vintages", "set_asof"]
+__all__ = [
+    "connect",
+    "ensure_schema",
+    "upsert_series",
+    "write_observations",
+    "write_snapshot",
+    "prune",
+    "write_observation_vintages",
+    "set_asof",
+]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -120,9 +128,18 @@ WITH ranked AS (
 SELECT series_id, date, value, realtime_start FROM ranked WHERE rn = 1;
 """
 
-_SERIES_FIELDS = ("frequency", "frequency_short", "units", "units_short",
-                  "seasonal_adjustment_short", "observation_start",
-                  "observation_end", "last_updated", "popularity", "notes")
+_SERIES_FIELDS = (
+    "frequency",
+    "frequency_short",
+    "units",
+    "units_short",
+    "seasonal_adjustment_short",
+    "observation_start",
+    "observation_end",
+    "last_updated",
+    "popularity",
+    "notes",
+)
 
 
 def ensure_schema(conn) -> None:
@@ -136,8 +153,12 @@ def upsert_series(conn, meta_rows: list[dict], captured_at: str) -> None:
     first_seen. Each meta_row is a FRED series dict plus a 'theme' key."""
     params = []
     for m in meta_rows:
-        row = {"series_id": m["id"], "theme": m.get("theme"),
-               "title": m.get("title"), "seen": captured_at}
+        row = {
+            "series_id": m["id"],
+            "theme": m.get("theme"),
+            "title": m.get("title"),
+            "seen": captured_at,
+        }
         for f in _SERIES_FIELDS:
             row[f] = m.get(f)
         params.append(row)
@@ -171,12 +192,10 @@ def write_observations(conn, series_id: str, obs_rows: list[dict]) -> int:
     return len(by_date)
 
 
-def write_snapshot(conn, captured_at: str, series_count: int,
-                   observation_count: int) -> int:
+def write_snapshot(conn, captured_at: str, series_count: int, observation_count: int) -> int:
     """Insert one fetch-run header. Returns the snapshot id."""
     cur = conn.execute(
-        "INSERT INTO snapshots (captured_at, series_count, observation_count) "
-        "VALUES (?, ?, ?)",
+        "INSERT INTO snapshots (captured_at, series_count, observation_count) VALUES (?, ?, ?)",
         (captured_at, series_count, observation_count),
     )
     conn.commit()
@@ -190,10 +209,13 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     (they are upserted by (series_id, date) and are the historical store), so
     this is a plain single-table delete of old snapshot headers, NOT the shared
     cascade prune in screener_common. Do not wire observations into a cascade."""
-    cutoff = (datetime.fromisoformat(now_iso)
-              - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute(
-        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
+    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
+    ids = [
+        r[0]
+        for r in conn.execute(
+            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
+        ).fetchall()
+    ]
     if not ids:
         return 0
     qmarks = ",".join("?" * len(ids))
@@ -221,7 +243,7 @@ def write_observation_vintages(conn, series_id: str, rows: list) -> int:
            (series_id, date, realtime_start, value) VALUES (?, ?, ?, ?)
            ON CONFLICT(series_id, date, realtime_start)
            DO UPDATE SET value=excluded.value""",
-        [(series_id, d, rs, r.get("value"))
-         for (d, rs), r in by_key.items()])
+        [(series_id, d, rs, r.get("value")) for (d, rs), r in by_key.items()],
+    )
     conn.commit()
     return len(by_key)

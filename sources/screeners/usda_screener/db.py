@@ -2,8 +2,14 @@ from datetime import datetime, timedelta
 
 from sources.common.screener_common import connect
 
-__all__ = ["connect", "ensure_schema", "write_observations", "write_wasde",
-           "write_snapshot", "prune"]
+__all__ = [
+    "connect",
+    "ensure_schema",
+    "write_observations",
+    "write_wasde",
+    "write_snapshot",
+    "prune",
+]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -106,8 +112,8 @@ def write_observations(conn, commodity, metric, rows) -> int:
            VALUES (?, ?, ?, ?, ?)
            ON CONFLICT(commodity, metric, period) DO UPDATE SET
              value=excluded.value, unit=excluded.unit""",
-        [(commodity, metric, p, r["value"], r.get("unit"))
-         for p, r in by_period.items()])
+        [(commodity, metric, p, r["value"], r.get("unit")) for p, r in by_period.items()],
+    )
     conn.commit()
     return len(by_period)
 
@@ -116,24 +122,30 @@ def write_wasde(conn, rows) -> int:
     """Upsert WASDE balance rows by (commodity, region, metric, market_year,
     unit): a later release's revised value overwrites in place. unit is
     coalesced to '' so the PK never sees NULL. Dedupe within batch (last wins)."""
-    by_key = {(r["commodity"], r["region"], r["metric"], r["market_year"],
-               r.get("unit") or ""): r for r in rows}
+    by_key = {
+        (r["commodity"], r["region"], r["metric"], r["market_year"], r.get("unit") or ""): r
+        for r in rows
+    }
     conn.executemany(
         """INSERT INTO wasde_obs
            (commodity, region, metric, market_year, unit, value, report_date)
            VALUES (?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(commodity, region, metric, market_year, unit)
            DO UPDATE SET value=excluded.value, report_date=excluded.report_date""",
-        [(k[0], k[1], k[2], k[3], k[4], r["value"], r.get("report_date"))
-         for k, r in by_key.items()])
+        [
+            (k[0], k[1], k[2], k[3], k[4], r["value"], r.get("report_date"))
+            for k, r in by_key.items()
+        ],
+    )
     conn.commit()
     return len(by_key)
 
 
 def write_snapshot(conn, captured_at, series_count, observation_count) -> int:
     cur = conn.execute(
-        "INSERT INTO snapshots (captured_at, series_count, observation_count) "
-        "VALUES (?, ?, ?)", (captured_at, series_count, observation_count))
+        "INSERT INTO snapshots (captured_at, series_count, observation_count) VALUES (?, ?, ?)",
+        (captured_at, series_count, observation_count),
+    )
     conn.commit()
     return cur.lastrowid
 
@@ -141,13 +153,15 @@ def write_snapshot(conn, captured_at, series_count, observation_count) -> int:
 def prune(conn, keep_days, now_iso) -> int:
     """Single-table delete of old snapshots ONLY. usda_obs is the accumulated
     history and is NEVER cascade-pruned (FRED prune shape)."""
-    cutoff = (datetime.fromisoformat(now_iso)
-              - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute(
-        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
+    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
+    ids = [
+        r[0]
+        for r in conn.execute(
+            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
+        ).fetchall()
+    ]
     if not ids:
         return 0
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({','.join('?' * len(ids))})",
-                 ids)
+    conn.execute(f"DELETE FROM snapshots WHERE id IN ({','.join('?' * len(ids))})", ids)
     conn.commit()
     return len(ids)

@@ -4,28 +4,42 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Underlying:
-    symbol: str      # catalog key WITHOUT the index underscore (e.g. "SPX")
-    is_index: bool   # True -> chain_url adds the leading "_" the CBOE API needs
+    symbol: str  # catalog key WITHOUT the index underscore (e.g. "SPX")
+    is_index: bool  # True -> chain_url adds the leading "_" the CBOE API needs
 
 
 # Starter watchlist (editable). Equities/ETFs use the plain ticker; indices are
 # flagged is_index=True and fetched via the "_"-prefixed CBOE path.
 CATALOG: list[Underlying] = [
     # mega-cap tech
-    Underlying("AAPL", False), Underlying("MSFT", False), Underlying("NVDA", False),
-    Underlying("AMZN", False), Underlying("GOOGL", False), Underlying("META", False),
+    Underlying("AAPL", False),
+    Underlying("MSFT", False),
+    Underlying("NVDA", False),
+    Underlying("AMZN", False),
+    Underlying("GOOGL", False),
+    Underlying("META", False),
     Underlying("TSLA", False),
     # high-volume single names
-    Underlying("AMD", False), Underlying("NFLX", False), Underlying("AVGO", False),
-    Underlying("PLTR", False), Underlying("COIN", False), Underlying("MSTR", False),
+    Underlying("AMD", False),
+    Underlying("NFLX", False),
+    Underlying("AVGO", False),
+    Underlying("PLTR", False),
+    Underlying("COIN", False),
+    Underlying("MSTR", False),
     Underlying("SMCI", False),
     # liquid other
-    Underlying("JPM", False), Underlying("BAC", False), Underlying("XOM", False),
-    Underlying("DIS", False), Underlying("BABA", False),
+    Underlying("JPM", False),
+    Underlying("BAC", False),
+    Underlying("XOM", False),
+    Underlying("DIS", False),
+    Underlying("BABA", False),
     # ETFs
-    Underlying("SPY", False), Underlying("QQQ", False), Underlying("IWM", False),
+    Underlying("SPY", False),
+    Underlying("QQQ", False),
+    Underlying("IWM", False),
     # indices (fetched as _SPX / _VIX)
-    Underlying("SPX", True), Underlying("VIX", True),
+    Underlying("SPX", True),
+    Underlying("VIX", True),
 ]
 
 _INDEX = {u.symbol for u in CATALOG if u.is_index}

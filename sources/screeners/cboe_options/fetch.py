@@ -84,22 +84,30 @@ def parse_chain(payload: dict, underlying: str):
         _root, expiration, kind, strike = parsed
         bid, ask = _num(o.get("bid"), float), _num(o.get("ask"), float)
         oi, vol = _to_int(o.get("open_interest")), _to_int(o.get("volume"))
-        contracts.append({
-            "occ_symbol": o["option"], "underlying": underlying,
-            "expiration": expiration, "strike": strike, "type": kind,
-            "bid": bid, "ask": ask, "mark": _mark(bid, ask),
-            "last": _num(o.get("last_trade_price"), float),
-            "theo": _num(o.get("theo"), float),
-            "iv": _num(o.get("iv"), float),
-            "delta": _num(o.get("delta"), float),
-            "gamma": _num(o.get("gamma"), float),
-            "theta": _num(o.get("theta"), float),
-            "vega": _num(o.get("vega"), float),
-            "rho": _num(o.get("rho"), float),
-            "open_interest": oi, "volume": vol,
-            "underlying_price": px,
-            "vol_oi_ratio": (vol or 0) / max(oi or 0, 1),
-        })
+        contracts.append(
+            {
+                "occ_symbol": o["option"],
+                "underlying": underlying,
+                "expiration": expiration,
+                "strike": strike,
+                "type": kind,
+                "bid": bid,
+                "ask": ask,
+                "mark": _mark(bid, ask),
+                "last": _num(o.get("last_trade_price"), float),
+                "theo": _num(o.get("theo"), float),
+                "iv": _num(o.get("iv"), float),
+                "delta": _num(o.get("delta"), float),
+                "gamma": _num(o.get("gamma"), float),
+                "theta": _num(o.get("theta"), float),
+                "vega": _num(o.get("vega"), float),
+                "rho": _num(o.get("rho"), float),
+                "open_interest": oi,
+                "volume": vol,
+                "underlying_price": px,
+                "vol_oi_ratio": (vol or 0) / max(oi or 0, 1),
+            }
+        )
         if kind == "call":
             call_vol += vol or 0
             call_oi += oi or 0
@@ -107,24 +115,31 @@ def parse_chain(payload: dict, underlying: str):
             put_vol += vol or 0
             put_oi += oi or 0
     daily = {
-        "underlying": underlying, "underlying_price": px,
+        "underlying": underlying,
+        "underlying_price": px,
         "close": _num(data.get("close"), float),
         "iv30": _num(data.get("iv30"), float),
-        "total_call_volume": call_vol, "total_put_volume": put_vol,
+        "total_call_volume": call_vol,
+        "total_put_volume": put_vol,
         "put_call_volume_ratio": (put_vol / call_vol) if call_vol else None,
-        "total_call_oi": call_oi, "total_put_oi": put_oi,
+        "total_call_oi": call_oi,
+        "total_put_oi": put_oi,
         "put_call_oi_ratio": (put_oi / call_oi) if call_oi else None,
     }
     return daily, contracts
 
 
-def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
-              base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
+def _http_get(
+    url: str,
+    opener=_urlopen,
+    attempts: int = _MAX_ATTEMPTS,
+    base_delay: float = _BASE_DELAY,
+    sleep=time.sleep,
+) -> str:
     """GET chain JSON text with bounded backoff, retrying 429/503 and transient
     network errors. Non-retryable HTTP errors (e.g. 403/404) raise at once, so
     fetch_chain can map 404 -> None."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
-                                base_delay, sleep)
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def fetch_chain(symbol: str, is_index: bool, get=_http_get):

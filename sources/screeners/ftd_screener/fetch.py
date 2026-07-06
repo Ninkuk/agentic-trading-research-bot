@@ -71,12 +71,17 @@ def parse_file(text: str) -> tuple[list[dict], int | None]:
         if not cusip or date is None or quantity is None:
             continue
         p = _num(price, float)
-        rows.append({
-            "cusip": cusip, "settlement_date": date,
-            "symbol": symbol or None, "quantity": quantity, "price": p,
-            "description": desc or None,
-            "dollar_value": (quantity * p) if p is not None else None,
-        })
+        rows.append(
+            {
+                "cusip": cusip,
+                "settlement_date": date,
+                "symbol": symbol or None,
+                "quantity": quantity,
+                "price": p,
+                "description": desc or None,
+                "dollar_value": (quantity * p) if p is not None else None,
+            }
+        )
     return rows, trailer_count
 
 
@@ -86,33 +91,39 @@ _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
 
 
-def _bytes_opener(headers: dict, timeout: int = 60, *,
-                  limiter=None, limiter_key: str = ""):
+def _bytes_opener(headers: dict, timeout: int = 60, *, limiter=None, limiter_key: str = ""):
     """opener(url)->bytes for binary (ZIP) downloads. Unlike
     http_client.make_opener, does NOT decode the body. When a ``limiter`` is
     supplied, pays ``limiter.acquire(limiter_key)`` before each request."""
+
     def opener(url: str) -> bytes:
         if limiter is not None:
             limiter.acquire(limiter_key)
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return resp.read()
+
     return opener
 
 
 # Pay into the same process-wide SEC bucket as edgar/fundamentals (per-IP cap
 # is domain-wide, not per-host) — see http_client.SEC_RATE_LIMITER.
-_urlopen = _bytes_opener(_UA, limiter=http_client.SEC_RATE_LIMITER,
-                         limiter_key=http_client.SEC_HOST_KEY)
+_urlopen = _bytes_opener(
+    _UA, limiter=http_client.SEC_RATE_LIMITER, limiter_key=http_client.SEC_HOST_KEY
+)
 
 
-def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
-              base_delay: float = _BASE_DELAY, sleep=time.sleep) -> bytes:
+def _http_get(
+    url: str,
+    opener=_urlopen,
+    attempts: int = _MAX_ATTEMPTS,
+    base_delay: float = _BASE_DELAY,
+    sleep=time.sleep,
+) -> bytes:
     """GET raw bytes with bounded backoff, retrying SEC throttling (403/429/503)
     and transient network errors. Non-retryable HTTP errors (e.g. 404) raise at
     once, preserving fetch_period's 404 -> None handling."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
-                                base_delay, sleep)
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def fetch_period(period: str, get=_http_get, opener=None):

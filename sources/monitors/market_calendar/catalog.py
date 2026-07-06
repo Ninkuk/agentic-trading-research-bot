@@ -69,12 +69,12 @@ BOND_HOLIDAYS: dict[str, str] = {
 
 # SIFMA recommended bond early closes, 14:00 ET (2026 set from the design spec).
 BOND_EARLY_CLOSES: dict[str, str] = {
-    "2026-04-03": "14:00",   # Good Friday
-    "2026-05-22": "14:00",   # Friday before Memorial Day
-    "2026-07-02": "14:00",   # Thursday before Independence Day (observed)
-    "2026-11-27": "14:00",   # Day after Thanksgiving
-    "2026-12-24": "14:00",   # Christmas Eve
-    "2026-12-31": "14:00",   # New Year's Eve
+    "2026-04-03": "14:00",  # Good Friday
+    "2026-05-22": "14:00",  # Friday before Memorial Day
+    "2026-07-02": "14:00",  # Thursday before Independence Day (observed)
+    "2026-11-27": "14:00",  # Day after Thanksgiving
+    "2026-12-24": "14:00",  # Christmas Eve
+    "2026-12-31": "14:00",  # New Year's Eve
 }
 
 

@@ -22,8 +22,7 @@ def test_prune_deletes_old_snapshots_and_children():
     conn.execute("INSERT INTO snapshots(id, captured_at) VALUES (1, '2026-06-01T00:00:00+00:00')")
     conn.execute("INSERT INTO snapshots(id, captured_at) VALUES (2, '2026-07-02T00:00:00+00:00')")
     conn.execute("INSERT INTO kids VALUES (1, 10), (2, 20)")
-    removed = prune(conn, keep_days=7, now_iso="2026-07-02T00:00:00+00:00",
-                    child_table="kids")
+    removed = prune(conn, keep_days=7, now_iso="2026-07-02T00:00:00+00:00", child_table="kids")
     assert removed == 1
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
     assert conn.execute("SELECT COUNT(*) FROM kids").fetchone()[0] == 1
@@ -34,5 +33,4 @@ def test_prune_no_old_snapshots_returns_zero():
     conn = sqlite3.connect(":memory:")
     _mk(conn)
     conn.execute("INSERT INTO snapshots(id, captured_at) VALUES (1, '2026-07-02T00:00:00+00:00')")
-    assert prune(conn, keep_days=7, now_iso="2026-07-02T00:00:00+00:00",
-                 child_table="kids") == 0
+    assert prune(conn, keep_days=7, now_iso="2026-07-02T00:00:00+00:00", child_table="kids") == 0

@@ -1,6 +1,5 @@
 from sources.common.monitor_common import connect
 from sources.common.monitor_common import ensure_schema as _mc_ensure_schema
-
 from sources.monitors.econ_calendar.catalog import CATALOG
 
 __all__ = ["connect", "ensure_schema"]
@@ -57,7 +56,9 @@ def ensure_schema(conn) -> None:
              release_id=excluded.release_id, label=excluded.label,
              impact=excluded.impact, category=excluded.category,
              release_time=excluded.release_time""",
-        [(r.event_type, r.release_id, r.label, r.impact, r.category,
-          r.release_time) for r in CATALOG],
+        [
+            (r.event_type, r.release_id, r.label, r.impact, r.category, r.release_time)
+            for r in CATALOG
+        ],
     )
     conn.commit()

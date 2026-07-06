@@ -2,6 +2,7 @@
 the query string (never logged), plus EIA's bracket-array params built via an
 ordered (key, value) tuple list + urlencode(doseq=True) so repeated
 facets[series][] survive."""
+
 import json
 import time
 import urllib.parse
@@ -21,15 +22,14 @@ __all__ = ["require_api_key", "parse_response", "fetch_series_obs"]
 def require_api_key(api_key):
     """Return a non-empty key or raise. Never echoes the key value."""
     if not api_key:
-        raise RuntimeError(
-            "EIA_API_KEY is not set; add it to .env (see .env.example)")
+        raise RuntimeError("EIA_API_KEY is not set; add it to .env (see .env.example)")
     return api_key
 
 
-def _http_get(url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY,
-              sleep=time.sleep):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay,
-                                sleep)
+def _http_get(
+    url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep
+):
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def _num(v):

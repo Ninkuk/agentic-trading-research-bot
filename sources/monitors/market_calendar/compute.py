@@ -4,6 +4,7 @@ Monthly equity/index option expiration is the 3rd Friday; quad-witching is the
 3rd Friday of Mar/Jun/Sep/Dec. When that Friday is a market holiday the
 expiration shifts to the preceding Thursday — deterministic once the holiday set
 is known, which is why this takes `holidays` as an argument rather than fetching."""
+
 from datetime import date, timedelta
 
 _QUAD_MONTHS = {3, 6, 9, 12}
@@ -25,7 +26,7 @@ def opex_dates(year: int, holidays: set) -> list:
     for month in range(1, 13):
         d = third_friday(year, month)
         if d.isoformat() in holidays:
-            d = d - timedelta(days=1)   # preceding Thursday
+            d = d - timedelta(days=1)  # preceding Thursday
         kind = "quad_witching" if month in _QUAD_MONTHS else "opex"
         out.append((d.isoformat(), kind))
     return out

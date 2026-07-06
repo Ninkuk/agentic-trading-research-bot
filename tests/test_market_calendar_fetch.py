@@ -31,11 +31,11 @@ _SIFMA_HTML = """
 
 def test_parse_nyse_year_columns_and_dateless_cells():
     got = fetch.parse_nyse_calendar(_NYSE_HTML)
-    assert got["2026-01-01"] == "New Year’s Day"      # entity unescaped
-    assert got["2027-01-01"] == "New Year’s Day"      # year from column header
-    assert "2028-01-01" not in got                     # "—*" cell skipped
-    assert got["2026-07-03"] == "Independence Day"     # "(observed)" note ok
-    assert got["2028-07-04"] == "Independence Day"     # footnote stars ok
+    assert got["2026-01-01"] == "New Year’s Day"  # entity unescaped
+    assert got["2027-01-01"] == "New Year’s Day"  # year from column header
+    assert "2028-01-01" not in got  # "—*" cell skipped
+    assert got["2026-07-03"] == "Independence Day"  # "(observed)" note ok
+    assert got["2028-07-04"] == "Independence Day"  # footnote stars ok
     assert got["2028-11-23"] == "Thanksgiving Day"
 
 
@@ -43,7 +43,7 @@ def test_parse_sifma_us_section_only():
     got = fetch.parse_sifma_calendar(_SIFMA_HTML)
     assert got["2026-10-12"] == "Columbus Day"
     assert got["2026-11-26"] == "Thanksgiving Day"
-    assert "2026-12-28" not in got                     # U.K. section excluded
+    assert "2026-12-28" not in got  # U.K. section excluded
 
 
 def test_parse_raises_on_zero_rows_never_blanks_calendar():
@@ -58,7 +58,7 @@ def test_parse_raises_on_zero_rows_never_blanks_calendar():
 def test_fetch_page_uses_bounded_backoff(monkeypatch):
     calls = {"n": 0}
 
-    def get(url):                       # injected opener stand-in
+    def get(url):  # injected opener stand-in
         calls["n"] += 1
         return "<ok/>"
 

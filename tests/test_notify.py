@@ -9,13 +9,14 @@ from sources.common import notify
 def _capture(calls):
     def post(url, data, headers):
         calls.append((url, data, headers))
+
     return post
 
 
 def test_send_posts_message_to_topic_url():
     calls = []
     notify.send("hello", topic="t0pic", post=_capture(calls))
-    (url, data, headers), = calls
+    ((url, data, headers),) = calls
     assert url == "https://ntfy.sh/t0pic"
     assert data == b"hello"
     assert headers == {}
@@ -23,8 +24,15 @@ def test_send_posts_message_to_topic_url():
 
 def test_send_sets_title_priority_tags_and_token_headers():
     calls = []
-    notify.send("m", topic="t", title="Daily summary", priority="high",
-                tags=["warning", "chart"], token="tok", post=_capture(calls))
+    notify.send(
+        "m",
+        topic="t",
+        title="Daily summary",
+        priority="high",
+        tags=["warning", "chart"],
+        token="tok",
+        post=_capture(calls),
+    )
     headers = calls[0][2]
     assert headers["Title"] == "Daily summary"
     assert headers["Priority"] == "high"
@@ -49,6 +57,7 @@ def test_send_without_topic_raises(monkeypatch):
 def test_send_scrubs_topic_from_transport_errors():
     def post(url, data, headers):
         raise urllib.error.HTTPError(url, 429, "too many", None, None)
+
     with pytest.raises(RuntimeError) as exc:
         notify.send("m", topic="secret-topic", post=post)
     assert "secret-topic" not in str(exc.value)

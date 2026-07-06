@@ -4,15 +4,13 @@ from sources.combiners.composite import db
 
 
 def _tables(conn):
-    return {r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'")}
+    return {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
 
 
 def test_ensure_schema_creates_tables(tmp_path):
     conn = db.connect(str(tmp_path / "composite.db"))
     db.ensure_schema(conn)
-    assert {"snapshots", "signal_values", "market_regime",
-            "ticker_scores"} <= _tables(conn)
+    assert {"snapshots", "signal_values", "market_regime", "ticker_scores"} <= _tables(conn)
 
 
 def test_ensure_schema_is_idempotent(tmp_path):
@@ -33,10 +31,14 @@ def test_connect_uses_wal_and_uri(tmp_path):
 def test_score_check_constraint(tmp_path):
     conn = db.connect(str(tmp_path / "composite.db"))
     db.ensure_schema(conn)
-    conn.execute("INSERT INTO snapshots (captured_at, signals_expected)"
-                 " VALUES ('2026-07-06T00:00:00+00:00', 1)")
+    conn.execute(
+        "INSERT INTO snapshots (captured_at, signals_expected)"
+        " VALUES ('2026-07-06T00:00:00+00:00', 1)"
+    )
     import pytest
+
     with pytest.raises(sqlite3.IntegrityError):
         conn.execute(
             "INSERT INTO signal_values (snapshot_id, signal_id, grain,"
-            " entity, score) VALUES (1, 'x', 'ticker', 'AAPL', 3)")
+            " entity, score) VALUES (1, 'x', 'ticker', 'AAPL', 3)"
+        )

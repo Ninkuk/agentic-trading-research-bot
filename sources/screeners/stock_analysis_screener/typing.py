@@ -2,16 +2,48 @@ from collections.abc import Iterable
 
 # Data-point ids whose values are always text: categories, dates, currencies,
 # identifiers, and Yes/No flags. Forces TEXT even if a sample looks numeric.
-STRING_IDS: frozenset[str] = frozenset({
-    "n", "marketCapCategory", "industry", "sector", "exchange", "country",
-    "usState", "high52Date", "low52Date", "allTimeHighDate", "allTimeLowDate",
-    "priceDate", "ipoDate", "lastReportDate", "fiscalYearEnd", "last10kFilingDate",
-    "earningsDate", "nextEarningsDate", "lastEarningsDate", "earningsTime",
-    "exDivDate", "paymentDate", "lastSplitDate", "lastSplitType", "isSpac",
-    "optionable", "ma50vs200", "priceCurrency", "financialCurrency", "sic",
-    "cik", "isin", "cusip", "website", "analystRatings", "analystRatingsTop",
-    "payoutFrequency", "tag",
-})
+STRING_IDS: frozenset[str] = frozenset(
+    {
+        "n",
+        "marketCapCategory",
+        "industry",
+        "sector",
+        "exchange",
+        "country",
+        "usState",
+        "high52Date",
+        "low52Date",
+        "allTimeHighDate",
+        "allTimeLowDate",
+        "priceDate",
+        "ipoDate",
+        "lastReportDate",
+        "fiscalYearEnd",
+        "last10kFilingDate",
+        "earningsDate",
+        "nextEarningsDate",
+        "lastEarningsDate",
+        "earningsTime",
+        "exDivDate",
+        "paymentDate",
+        "lastSplitDate",
+        "lastSplitType",
+        "isSpac",
+        "optionable",
+        "ma50vs200",
+        "priceCurrency",
+        "financialCurrency",
+        "sic",
+        "cik",
+        "isin",
+        "cusip",
+        "website",
+        "analystRatings",
+        "analystRatingsTop",
+        "payoutFrequency",
+        "tag",
+    }
+)
 
 
 def infer_affinity(values: Iterable[object]) -> str:

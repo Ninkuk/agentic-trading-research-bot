@@ -3,20 +3,25 @@ import urllib.error
 import pytest
 
 from sources.screeners.fred_screener.fetch import (
-    _build_url, _http_get, fetch_observations, fetch_series,
-    parse_observations, require_api_key,
+    _build_url,
+    _http_get,
+    fetch_observations,
+    fetch_series,
+    parse_observations,
+    require_api_key,
 )
 
 OBS_PAYLOAD = {
     "observations": [
         {"date": "2026-04-01", "value": "4.3"},
-        {"date": "2026-05-01", "value": "."},      # missing marker
+        {"date": "2026-05-01", "value": "."},  # missing marker
         {"date": "2026-06-01", "value": "4.2"},
     ]
 }
 SERIES_PAYLOAD = {
-    "seriess": [{"id": "UNRATE", "title": "Unemployment Rate",
-                 "frequency": "Monthly", "units": "Percent"}]
+    "seriess": [
+        {"id": "UNRATE", "title": "Unemployment Rate", "frequency": "Monthly", "units": "Percent"}
+    ]
 }
 
 
@@ -48,8 +53,9 @@ def test_require_api_key_returns_present_key():
 
 
 def test_fetch_series_returns_first_seriess_entry():
-    got = fetch_series("UNRATE", api_key="K",
-                       get=lambda url: __import__("json").dumps(SERIES_PAYLOAD))
+    got = fetch_series(
+        "UNRATE", api_key="K", get=lambda url: __import__("json").dumps(SERIES_PAYLOAD)
+    )
     assert got["id"] == "UNRATE"
     assert got["title"] == "Unemployment Rate"
 
@@ -61,8 +67,7 @@ def test_fetch_observations_parses_and_passes_start():
         seen["url"] = url
         return __import__("json").dumps(OBS_PAYLOAD)
 
-    rows = fetch_observations("UNRATE", api_key="K", start="2020-01-01",
-                              get=fake_get)
+    rows = fetch_observations("UNRATE", api_key="K", start="2020-01-01", get=fake_get)
     assert rows[0] == {"date": "2026-04-01", "value": 4.3}
     assert "observation_start=2020-01-01" in seen["url"]
 

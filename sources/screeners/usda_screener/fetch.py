@@ -1,6 +1,7 @@
 """USDA NASS Quick Stats API client. Near-clone of eia_screener.fetch: an API key
 in the query string (never logged) + a pure parser. Withheld markers ((D)/(Z)/
 (NA)) and blanks map to None."""
+
 import json
 import time
 import urllib.parse
@@ -20,15 +21,14 @@ __all__ = ["require_api_key", "parse_response", "fetch_target"]
 def require_api_key(api_key):
     """Return a non-empty key or raise. Never echoes the key value."""
     if not api_key:
-        raise RuntimeError(
-            "NASS_API_KEY is not set; add it to .env (see .env.example)")
+        raise RuntimeError("NASS_API_KEY is not set; add it to .env (see .env.example)")
     return api_key
 
 
-def _http_get(url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY,
-              sleep=time.sleep):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay,
-                                sleep)
+def _http_get(
+    url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep
+):
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def _num(v):
@@ -55,8 +55,9 @@ def parse_response(payload) -> list:
         year = d.get("year")
         if year in (None, ""):
             continue
-        rows.append({"period": str(year), "value": _num(d.get("Value")),
-                     "unit": d.get("unit_desc")})
+        rows.append(
+            {"period": str(year), "value": _num(d.get("Value")), "unit": d.get("unit_desc")}
+        )
     return rows
 
 

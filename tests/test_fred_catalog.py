@@ -1,7 +1,6 @@
 from sources.screeners.fred_screener.catalog import CATALOG, Series, select_ids
 
-VALID_THEMES = {"growth", "inflation", "rates", "labor", "credit",
-                "housing", "sentiment"}
+VALID_THEMES = {"growth", "inflation", "rates", "labor", "credit", "housing", "sentiment"}
 
 
 def test_catalog_ids_are_unique():

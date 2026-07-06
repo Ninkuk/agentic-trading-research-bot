@@ -1,6 +1,6 @@
 import argparse
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sources.screeners.ftd_screener import db, fetch
 
@@ -34,15 +34,16 @@ def _default_start(now_dt, months: int = _DEFAULT_LOOKBACK_MONTHS) -> str:
     return f"{y:04d}-{m:02d}"
 
 
-def run(db_path, start=None, keep_days=None, full=False,
-        fetch_period=fetch.fetch_period, now_iso=None):
+def run(
+    db_path, start=None, keep_days=None, full=False, fetch_period=fetch.fetch_period, now_iso=None
+):
     """Ingest FTD periods into SQLite. Enumerate half-month periods from `start`
     (default: 24 months back) through the current month; ingest new periods and
     re-fetch the trailing _REFETCH_PERIODS already-stored ones (all of them when
     full=True). A 404 (period not yet published) is skipped. Any per-period
     failure rolls back and continues. Returns (snapshot_id, period_count,
     row_count)."""
-    now_iso = now_iso or datetime.now(timezone.utc).isoformat()
+    now_iso = now_iso or datetime.now(UTC).isoformat()
     now_dt = datetime.fromisoformat(now_iso)
     start = start or _default_start(now_dt)
     end_month = f"{now_dt.year:04d}-{now_dt.month:02d}"
@@ -58,28 +59,30 @@ def run(db_path, start=None, keep_days=None, full=False,
         period_count = 0
         total_rows = 0
         for period in all_periods:
-            if (not full and period in stored_set and period not in refetch):
+            if not full and period in stored_set and period not in refetch:
                 continue
             try:
                 result = fetch_period(period)
-                if result is None:          # 404 -> not yet published
+                if result is None:  # 404 -> not yet published
                     continue
                 rows, trailer_count = result
                 if trailer_count is not None and trailer_count != len(rows):
-                    print(f"warning: {period} trailer count {trailer_count} != "
-                          f"parsed {len(rows)}", file=sys.stderr)
+                    print(
+                        f"warning: {period} trailer count {trailer_count} != parsed {len(rows)}",
+                        file=sys.stderr,
+                    )
                 db.upsert_securities(conn, rows)
                 written = db.replace_period(conn, period, rows)
-                db.record_period(conn, period, fetch.settlement_bounds(period),
-                                 now_iso, written, trailer_count)
+                db.record_period(
+                    conn, period, fetch.settlement_bounds(period), now_iso, written, trailer_count
+                )
                 total_rows += written
                 period_count += 1
             except Exception as e:  # skip-and-continue on any per-period failure
                 # Roll back the failed period's uncommitted writes, then log only
                 # the exception class — never str(e)/e.url, which may echo the URL.
                 conn.rollback()
-                print(f"warning: skipping {period}: {type(e).__name__}",
-                      file=sys.stderr)
+                print(f"warning: skipping {period}: {type(e).__name__}", file=sys.stderr)
                 continue
 
         snapshot_id = db.write_snapshot(conn, now_iso, period_count, total_rows)
@@ -92,18 +95,23 @@ def run(db_path, start=None, keep_days=None, full=False,
 
 def main(argv=None):
     p = argparse.ArgumentParser(
-        prog="ftd",
-        description="Pull SEC fails-to-deliver data into SQLite")
+        prog="ftd", description="Pull SEC fails-to-deliver data into SQLite"
+    )
     p.add_argument("--db", default="ftd.db")
-    p.add_argument("--start", default=None,
-                   help="earliest publication month YYYY-MM "
-                        "(default: 24 months back)")
-    p.add_argument("--full", action="store_true",
-                   help="re-ingest every period in range, ignoring the "
-                        "incremental skip")
-    p.add_argument("--keep-days", type=int, default=None,
-                   help="prune snapshot provenance older than N days "
-                        "(never touches fail history)")
+    p.add_argument(
+        "--start", default=None, help="earliest publication month YYYY-MM (default: 24 months back)"
+    )
+    p.add_argument(
+        "--full",
+        action="store_true",
+        help="re-ingest every period in range, ignoring the incremental skip",
+    )
+    p.add_argument(
+        "--keep-days",
+        type=int,
+        default=None,
+        help="prune snapshot provenance older than N days (never touches fail history)",
+    )
     a = p.parse_args(argv)
     _, pc, rc = run(a.db, start=a.start, keep_days=a.keep_days, full=a.full)
     print(f"stored {rc} fail rows across {pc} periods into {a.db}")

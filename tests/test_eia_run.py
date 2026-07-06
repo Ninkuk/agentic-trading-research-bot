@@ -16,8 +16,9 @@ def test_run_happy_path_counts(tmp_path):
     def fetch_series_obs(route, facet, api_key, start=None):
         return _obs(("2026-06-26", 415.0), ("2026-06-19", 420.0))
 
-    sid, sc, oc = runmod.run(db_path, only=[CATALOG_ID], api_key="K",
-                             fetch_series_obs=fetch_series_obs, now_iso=NOW)
+    sid, sc, oc = runmod.run(
+        db_path, only=[CATALOG_ID], api_key="K", fetch_series_obs=fetch_series_obs, now_iso=NOW
+    )
     assert sc == 1 and oc == 2
     conn = sqlite3.connect(db_path)
     assert conn.execute("SELECT unit FROM series").fetchone()[0] == "MBBL"
@@ -39,12 +40,16 @@ def test_run_skips_failing_series_hides_key(tmp_path, capsys):
         return _obs(("2026-06-26", 1.0))
 
     sid, sc, oc = runmod.run(
-        str(tmp_path / "e.db"), only=["WCESTUS1", "WGTSTUS1"], api_key="K",
-        fetch_series_obs=fetch_series_obs, now_iso=NOW)
-    assert sc == 1                                  # first failed, second stored
+        str(tmp_path / "e.db"),
+        only=["WCESTUS1", "WGTSTUS1"],
+        api_key="K",
+        fetch_series_obs=fetch_series_obs,
+        now_iso=NOW,
+    )
+    assert sc == 1  # first failed, second stored
     err = capsys.readouterr().err
     assert "RuntimeError" in err
-    assert "SECRETKEY" not in err                   # key/message never leaked
+    assert "SECRETKEY" not in err  # key/message never leaked
 
 
 def test_run_add_route_facet_token(tmp_path):
@@ -54,20 +59,28 @@ def test_run_add_route_facet_token(tmp_path):
         seen.append((route, facet))
         return _obs(("2026-06-26", 1.0))
 
-    runmod.run(str(tmp_path / "e.db"), only=[], add=["natural-gas/stor/wkly:F1"],
-               api_key="K", fetch_series_obs=fetch_series_obs, now_iso=NOW)
+    runmod.run(
+        str(tmp_path / "e.db"),
+        only=[],
+        add=["natural-gas/stor/wkly:F1"],
+        api_key="K",
+        fetch_series_obs=fetch_series_obs,
+        now_iso=NOW,
+    )
     assert ("natural-gas/stor/wkly", "F1") in seen
     conn = sqlite3.connect(str(tmp_path / "e.db"))
-    assert conn.execute(
-        "SELECT category FROM series WHERE series_id='F1'").fetchone()[0] == "custom"
+    assert (
+        conn.execute("SELECT category FROM series WHERE series_id='F1'").fetchone()[0] == "custom"
+    )
 
 
 def test_run_all_fail_zero_snapshot(tmp_path, capsys):
     def boom(route, facet, api_key, start=None):
         raise RuntimeError("x")
 
-    sid, sc, oc = runmod.run(str(tmp_path / "e.db"), only=["WCESTUS1"],
-                             api_key="K", fetch_series_obs=boom, now_iso=NOW)
+    sid, sc, oc = runmod.run(
+        str(tmp_path / "e.db"), only=["WCESTUS1"], api_key="K", fetch_series_obs=boom, now_iso=NOW
+    )
     assert (sc, oc) == (0, 0)
     conn = sqlite3.connect(str(tmp_path / "e.db"))
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
@@ -80,11 +93,21 @@ def test_run_keep_days_prunes_snapshots_not_obs(tmp_path):
     def fetch_series_obs(route, facet, api_key, start=None):
         return _obs(("2026-06-26", 1.0))
 
-    runmod.run(db_path, only=["WCESTUS1"], api_key="K",
-               fetch_series_obs=fetch_series_obs,
-               now_iso="2026-01-01T00:00:00+00:00")
-    runmod.run(db_path, only=["WCESTUS1"], api_key="K",
-               fetch_series_obs=fetch_series_obs, now_iso=NOW, keep_days=30)
+    runmod.run(
+        db_path,
+        only=["WCESTUS1"],
+        api_key="K",
+        fetch_series_obs=fetch_series_obs,
+        now_iso="2026-01-01T00:00:00+00:00",
+    )
+    runmod.run(
+        db_path,
+        only=["WCESTUS1"],
+        api_key="K",
+        fetch_series_obs=fetch_series_obs,
+        now_iso=NOW,
+        keep_days=30,
+    )
     conn = sqlite3.connect(db_path)
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
     assert conn.execute("SELECT COUNT(*) FROM eia_obs").fetchone()[0] == 1

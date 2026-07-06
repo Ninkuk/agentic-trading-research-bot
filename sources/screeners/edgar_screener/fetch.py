@@ -9,13 +9,20 @@ import sources.common.http_client as http_client
 ARCHIVES_BASE = "https://www.sec.gov/Archives/edgar/daily-index"
 
 _FORM_BUCKETS = {
-    "4": "insider", "4/A": "insider",
-    "8-K": "event", "8-K/A": "event",
-    "SC 13D": "stake", "SC 13D/A": "stake",
-    "SC 13G": "stake", "SC 13G/A": "stake",
-    "S-1": "offering", "S-1/A": "offering",
-    "10-K": "periodic", "10-K/A": "periodic",
-    "10-Q": "periodic", "10-Q/A": "periodic",
+    "4": "insider",
+    "4/A": "insider",
+    "8-K": "event",
+    "8-K/A": "event",
+    "SC 13D": "stake",
+    "SC 13D/A": "stake",
+    "SC 13G": "stake",
+    "SC 13G/A": "stake",
+    "S-1": "offering",
+    "S-1/A": "offering",
+    "10-K": "periodic",
+    "10-K/A": "periodic",
+    "10-Q": "periodic",
+    "10-Q/A": "periodic",
 }
 
 
@@ -52,15 +59,17 @@ def parse_master(text: str) -> list[dict]:
         accession = path.rsplit("/", 1)[-1]
         if accession.endswith(".txt"):
             accession = accession[:-4]
-        rows.append({
-            "cik": cik_i,
-            "company": company,
-            "form": form,
-            "filed_date": f"{filed[:4]}-{filed[4:6]}-{filed[6:8]}",
-            "path": path,
-            "accession": accession,
-            "bucket": classify(form),
-        })
+        rows.append(
+            {
+                "cik": cik_i,
+                "company": company,
+                "form": form,
+                "filed_date": f"{filed[:4]}-{filed[4:6]}-{filed[6:8]}",
+                "path": path,
+                "accession": accession,
+                "bucket": classify(form),
+            }
+        )
     return rows
 
 
@@ -79,23 +88,27 @@ _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
 
 _urlopen = http_client.make_opener(
-    _UA, limiter=http_client.SEC_RATE_LIMITER, limiter_key=http_client.SEC_HOST_KEY)
+    _UA, limiter=http_client.SEC_RATE_LIMITER, limiter_key=http_client.SEC_HOST_KEY
+)
 
 
-def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
-              base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
+def _http_get(
+    url: str,
+    opener=_urlopen,
+    attempts: int = _MAX_ATTEMPTS,
+    base_delay: float = _BASE_DELAY,
+    sleep=time.sleep,
+) -> str:
     """GET with bounded backoff, retrying SEC throttling (403/429/503) and
     transient network errors. Non-retryable HTTP errors (e.g. 404) raise at
     once, preserving fetch_daily_index's 404 -> None handling."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
-                                base_delay, sleep)
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def fetch_ticker_map(url: str = TICKER_MAP_URL, get=_http_get) -> dict:
     """Load company_tickers.json into {cik: {'ticker':..., 'title':...}}."""
     raw = json.loads(get(url))
-    return {int(v["cik_str"]): {"ticker": v["ticker"], "title": v["title"]}
-            for v in raw.values()}
+    return {int(v["cik_str"]): {"ticker": v["ticker"], "title": v["title"]} for v in raw.values()}
 
 
 def _is_missing_file_403(e: urllib.error.HTTPError) -> bool:

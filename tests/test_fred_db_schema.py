@@ -2,9 +2,7 @@ from sources.screeners.fred_screener import db
 
 
 def _tables_and_views(conn):
-    rows = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type IN ('table','view')"
-    ).fetchall()
+    rows = conn.execute("SELECT name FROM sqlite_master WHERE type IN ('table','view')").fetchall()
     return {r[0] for r in rows}
 
 

@@ -2,8 +2,14 @@ from datetime import datetime, timedelta
 
 from sources.common.screener_common import connect
 
-__all__ = ["connect", "ensure_schema", "upsert_series", "write_observations",
-           "write_snapshot", "prune"]
+__all__ = [
+    "connect",
+    "ensure_schema",
+    "upsert_series",
+    "write_observations",
+    "write_snapshot",
+    "prune",
+]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -41,10 +47,18 @@ def ensure_schema(conn) -> None:
 def upsert_series(conn, metas, captured_at) -> None:
     """Upsert the series dimension: refresh route/label/category/unit/frequency +
     last_seen, preserve first_seen (FRED upsert_series shape)."""
-    params = [{"series_id": m["series_id"], "route": m.get("route"),
-               "label": m.get("label"), "category": m.get("category"),
-               "unit": m.get("unit"), "frequency": m.get("frequency", "weekly"),
-               "seen": captured_at} for m in metas]
+    params = [
+        {
+            "series_id": m["series_id"],
+            "route": m.get("route"),
+            "label": m.get("label"),
+            "category": m.get("category"),
+            "unit": m.get("unit"),
+            "frequency": m.get("frequency", "weekly"),
+            "seen": captured_at,
+        }
+        for m in metas
+    ]
     conn.executemany(
         """INSERT INTO series (series_id, route, label, category, unit,
                                frequency, first_seen, last_seen)
@@ -54,7 +68,8 @@ def upsert_series(conn, metas, captured_at) -> None:
              route=excluded.route, label=excluded.label,
              category=excluded.category, unit=excluded.unit,
              frequency=excluded.frequency, last_seen=excluded.last_seen""",
-        params)
+        params,
+    )
     conn.commit()
 
 
@@ -65,15 +80,17 @@ def write_observations(conn, series_id, rows) -> int:
     conn.executemany(
         """INSERT INTO eia_obs (series_id, period, value) VALUES (?, ?, ?)
            ON CONFLICT(series_id, period) DO UPDATE SET value=excluded.value""",
-        [(series_id, p, v) for p, v in by_period.items()])
+        [(series_id, p, v) for p, v in by_period.items()],
+    )
     conn.commit()
     return len(by_period)
 
 
 def write_snapshot(conn, captured_at, series_count, observation_count) -> int:
     cur = conn.execute(
-        "INSERT INTO snapshots (captured_at, series_count, observation_count) "
-        "VALUES (?, ?, ?)", (captured_at, series_count, observation_count))
+        "INSERT INTO snapshots (captured_at, series_count, observation_count) VALUES (?, ?, ?)",
+        (captured_at, series_count, observation_count),
+    )
     conn.commit()
     return cur.lastrowid
 
@@ -81,14 +98,16 @@ def write_snapshot(conn, captured_at, series_count, observation_count) -> int:
 def prune(conn, keep_days, now_iso) -> int:
     """Single-table delete of old snapshots ONLY. eia_obs is the accumulated
     history and is NEVER cascade-pruned (FRED prune shape)."""
-    cutoff = (datetime.fromisoformat(now_iso)
-              - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute(
-        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
+    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
+    ids = [
+        r[0]
+        for r in conn.execute(
+            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
+        ).fetchall()
+    ]
     if not ids:
         return 0
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({','.join('?' * len(ids))})",
-                 ids)
+    conn.execute(f"DELETE FROM snapshots WHERE id IN ({','.join('?' * len(ids))})", ids)
     conn.commit()
     return len(ids)
 

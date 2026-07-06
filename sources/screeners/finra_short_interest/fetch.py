@@ -79,34 +79,54 @@ def parse_file(text: str) -> list[dict]:
         parts = line.split("|")
         if len(parts) < _MIN_FIELDS:
             continue
-        (_aym, symbol, issue, _exch, mclass, cur, prev, _split,
-         adv, dtc, rev, chg, _chgprev, sdate) = (p.strip() for p in parts[:14])
+        (
+            _aym,
+            symbol,
+            issue,
+            _exch,
+            mclass,
+            cur,
+            prev,
+            _split,
+            adv,
+            dtc,
+            rev,
+            chg,
+            _chgprev,
+            sdate,
+        ) = (p.strip() for p in parts[:14])
         settlement_date = _norm_iso(sdate)
         current_short_qty = _to_int(cur)
         if not symbol or settlement_date is None or current_short_qty is None:
             continue
-        rows.append({
-            "symbol": symbol,
-            "issue_name": issue or None,
-            "settlement_date": settlement_date,
-            "current_short_qty": current_short_qty,
-            "previous_short_qty": _to_int(prev),
-            "avg_daily_volume": _to_int(adv),
-            "days_to_cover": _to_float(dtc),
-            "change_pct": _to_float(chg),
-            "revision_flag": rev or None,
-            "market_class": mclass or None,
-        })
+        rows.append(
+            {
+                "symbol": symbol,
+                "issue_name": issue or None,
+                "settlement_date": settlement_date,
+                "current_short_qty": current_short_qty,
+                "previous_short_qty": _to_int(prev),
+                "avg_daily_volume": _to_int(adv),
+                "days_to_cover": _to_float(dtc),
+                "change_pct": _to_float(chg),
+                "revision_flag": rev or None,
+                "market_class": mclass or None,
+            }
+        )
     return rows
 
 
-def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
-              base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
+def _http_get(
+    url: str,
+    opener=_urlopen,
+    attempts: int = _MAX_ATTEMPTS,
+    base_delay: float = _BASE_DELAY,
+    sleep=time.sleep,
+) -> str:
     """GET file text with bounded backoff, retrying 429/503 and transient
     network errors. Non-retryable HTTP errors (e.g. 403/404) raise at once, so
     fetch_settlement can map 403/404 -> None."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
-                                base_delay, sleep)
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def fetch_settlement(date: str, get=_http_get, opener=None):

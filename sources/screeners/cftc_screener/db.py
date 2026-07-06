@@ -2,22 +2,45 @@ from datetime import datetime, timedelta
 
 from sources.common.screener_common import connect
 
-__all__ = ["connect", "ensure_schema", "upsert_markets", "write_cot",
-           "write_family", "max_report_date", "write_snapshot", "prune"]
+__all__ = [
+    "connect",
+    "ensure_schema",
+    "upsert_markets",
+    "write_cot",
+    "write_family",
+    "max_report_date",
+    "write_snapshot",
+    "prune",
+]
 
 # The 26 curated data columns of `cot` (order matters for INSERT/UPDATE reuse).
 _COT_COLS = [
     "open_interest",
-    "noncomm_long", "noncomm_short", "noncomm_spread",
-    "comm_long", "comm_short",
-    "nonrept_long", "nonrept_short",
-    "chg_oi", "chg_noncomm_long", "chg_noncomm_short",
-    "chg_comm_long", "chg_comm_short",
-    "pct_oi_noncomm_long", "pct_oi_noncomm_short",
-    "pct_oi_comm_long", "pct_oi_comm_short",
-    "traders_total", "traders_noncomm_long", "traders_noncomm_short",
-    "traders_comm_long", "traders_comm_short",
-    "conc_net_4_long", "conc_net_8_long", "conc_net_4_short", "conc_net_8_short",
+    "noncomm_long",
+    "noncomm_short",
+    "noncomm_spread",
+    "comm_long",
+    "comm_short",
+    "nonrept_long",
+    "nonrept_short",
+    "chg_oi",
+    "chg_noncomm_long",
+    "chg_noncomm_short",
+    "chg_comm_long",
+    "chg_comm_short",
+    "pct_oi_noncomm_long",
+    "pct_oi_noncomm_short",
+    "pct_oi_comm_long",
+    "pct_oi_comm_short",
+    "traders_total",
+    "traders_noncomm_long",
+    "traders_noncomm_short",
+    "traders_comm_long",
+    "traders_comm_short",
+    "conc_net_4_long",
+    "conc_net_8_long",
+    "conc_net_4_short",
+    "conc_net_8_short",
 ]
 
 _SCHEMA = """
@@ -318,9 +341,15 @@ def ensure_schema(conn) -> None:
 def upsert_markets(conn, rows: list[dict], captured_at: str) -> None:
     """Upsert the market dimension: refresh name/asset_class/last_seen, preserve
     first_seen."""
-    params = [{"code": r["code"], "name": r.get("name"),
-               "asset_class": r.get("asset_class"), "seen": captured_at}
-              for r in rows]
+    params = [
+        {
+            "code": r["code"],
+            "name": r.get("name"),
+            "asset_class": r.get("asset_class"),
+            "seen": captured_at,
+        }
+        for r in rows
+    ]
     conn.executemany(
         """INSERT INTO markets (code, name, asset_class, first_seen, last_seen)
            VALUES (:code, :name, :asset_class, :seen, :seen)
@@ -372,17 +401,17 @@ def max_report_date(conn, code: str, fact_table: str = "cot"):
     """Latest stored report_date for a market in ``fact_table``, or None. The
     optional ``fact_table`` keeps the legacy 2-arg call working."""
     row = conn.execute(
-        f"SELECT MAX(report_date) FROM {fact_table} WHERE code=?",
-        (code,)).fetchone()
+        f"SELECT MAX(report_date) FROM {fact_table} WHERE code=?", (code,)
+    ).fetchone()
     return row[0] if row and row[0] else None
 
 
-def write_snapshot(conn, captured_at: str, market_count: int,
-                   row_count: int) -> int:
+def write_snapshot(conn, captured_at: str, market_count: int, row_count: int) -> int:
     """Insert one fetch-run header. Returns the snapshot id."""
     cur = conn.execute(
-        "INSERT INTO snapshots (captured_at, market_count, row_count) "
-        "VALUES (?, ?, ?)", (captured_at, market_count, row_count))
+        "INSERT INTO snapshots (captured_at, market_count, row_count) VALUES (?, ?, ?)",
+        (captured_at, market_count, row_count),
+    )
     conn.commit()
     return cur.lastrowid
 
@@ -391,10 +420,13 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     """Delete run-provenance snapshots older than keep_days before now_iso.
     COT history is NOT snapshot-scoped, so this is a single-table delete of
     snapshot headers only — do NOT cascade into cot."""
-    cutoff = (datetime.fromisoformat(now_iso)
-              - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute(
-        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
+    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
+    ids = [
+        r[0]
+        for r in conn.execute(
+            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
+        ).fetchall()
+    ]
     if not ids:
         return 0
     qmarks = ",".join("?" * len(ids))

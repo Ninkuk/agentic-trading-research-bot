@@ -7,20 +7,21 @@ from sources.screeners.portfolio_screener import db, run
 
 NOW = "2026-07-05T20:00:00+00:00"
 
-DOC = {"account": {"equity": 205.37, "cash": 12.4, "buying_power": 12.4},
-       "positions": [{"symbol": "GLD", "quantity": 0.5,
-                      "average_buy_price": 301.2, "market_value": 155.0}]}
+DOC = {
+    "account": {"equity": 205.37, "cash": 12.4, "buying_power": 12.4},
+    "positions": [
+        {"symbol": "GLD", "quantity": 0.5, "average_buy_price": 301.2, "market_value": 155.0}
+    ],
+}
 
 
 def test_run_ingests_doc(tmp_path):
     path = str(tmp_path / "portfolio.db")
     sid, n_pos, skipped = run.run(path, DOC, now_iso=NOW)
     conn = db.connect(path)
-    assert conn.execute("SELECT captured_at FROM snapshots WHERE id=?",
-                        (sid,)).fetchone()[0] == NOW
+    assert conn.execute("SELECT captured_at FROM snapshots WHERE id=?", (sid,)).fetchone()[0] == NOW
     assert n_pos == 1 and skipped == 0
-    assert conn.execute("SELECT equity FROM v_latest_account"
-                        ).fetchone()[0] == 205.37
+    assert conn.execute("SELECT equity FROM v_latest_account").fetchone()[0] == 205.37
     conn.close()
 
 

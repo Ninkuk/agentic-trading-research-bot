@@ -13,6 +13,7 @@ Slot rationale lives with the cadence plan; the invariants encoded here:
   * The pre-open batch is one serialized process (see preopen_batch.sh).
   * Weekday key: 0=Sunday .. 6=Saturday.
 """
+
 import argparse
 import plistlib
 import subprocess
@@ -37,18 +38,15 @@ def monthly(days, hour, minute):
 
 
 def hourly(weekdays, hours, minute):
-    return [{"Weekday": w, "Hour": h, "Minute": minute}
-            for w in weekdays for h in hours]
+    return [{"Weekday": w, "Hour": h, "Minute": minute} for w in weekdays for h in hours]
 
 
 def yearly(months, day, hour, minute):
-    return [{"Month": m, "Day": day, "Hour": hour, "Minute": minute}
-            for m in months]
+    return [{"Month": m, "Day": day, "Hour": hour, "Minute": minute} for m in months]
 
 
 def job(name, *args):
-    return ["/bin/bash", str(SCRIPTS / "run_job.sh"), name,
-            "--db", f"data/{name}.db", *args]
+    return ["/bin/bash", str(SCRIPTS / "run_job.sh"), name, "--db", f"data/{name}.db", *args]
 
 
 def script(basename):
@@ -58,16 +56,13 @@ def script(basename):
 # name -> (ProgramArguments, StartCalendarInterval)
 JOBS = {
     # -- intraday, weekdays (market hours 6:30am-2:00pm Phx across seasons) --
-    "options-intraday": (job("options", "--keep-days", "90"),
-                         hourly(MON_FRI, range(6, 14), 30)),
-    "reddit-intraday": (job("reddit", "--keep-days", "90"),
-                        hourly(MON_FRI, range(6, 14), 35)),
+    "options-intraday": (job("options", "--keep-days", "90"), hourly(MON_FRI, range(6, 14), 30)),
+    "reddit-intraday": (job("reddit", "--keep-days", "90"), hourly(MON_FRI, range(6, 14), 35)),
     # -- daily, weekdays --
     "preopen": (script("preopen_batch.sh"), weekly(MON_FRI, 4, 0)),
     "nyfed": (job("nyfed"), weekly(MON_FRI, 11, 30)),
     "portfolio": (script("portfolio_snapshot.sh"), weekly(MON_FRI, 14, 30)),
-    "options-close": (job("options", "--keep-days", "90"),
-                      weekly(MON_FRI, 14, 45)),
+    "options-close": (job("options", "--keep-days", "90"), weekly(MON_FRI, 14, 45)),
     "treasury": (job("treasury"), weekly(MON_FRI, 16, 30)),
     "fred": (job("fred"), weekly(MON_FRI, 16, 40)),
     "cboe-stats": (job("cboe_stats"), weekly(MON_FRI, 18, 0)),
@@ -80,9 +75,16 @@ JOBS = {
     "ats": (job("ats"), weekly([1], 18, 45)),
     "eia": (job("eia"), weekly([3, 4, 5], 10, 15)),
     "cftc": (script("cftc_weekly.sh"), weekly([5], 14, 15)),
-    "fundamentals": (["/bin/bash", str(SCRIPTS / "run_job.sh"),
-                      "fundamentals", "--db", "data/sec_fundamentals.db"],
-                     weekly([6], 6, 0)),
+    "fundamentals": (
+        [
+            "/bin/bash",
+            str(SCRIPTS / "run_job.sh"),
+            "fundamentals",
+            "--db",
+            "data/sec_fundamentals.db",
+        ],
+        weekly([6], 6, 0),
+    ),
     "ftd": (job("ftd"), weekly([0], 7, 0)),
     # -- monthly --
     "market-calendar": (job("market_calendar"), monthly([1], 5, 0)),
@@ -94,31 +96,34 @@ JOBS = {
     # --full re-ingests the whole retention window; the replace-by-period
     # writers absorb any repost.
     "ftd-full": (job("ftd", "--full"), monthly([15], 8, 0)),
-    "short-interest-full": (job("short_interest", "--full"),
-                            monthly([15], 19, 0)),
+    "short-interest-full": (job("short_interest", "--full"), monthly([15], 19, 0)),
     # -- quarterly / yearly --
     # DERA quarterly ZIP lands ~6wk after quarter end; each ZIP carries the
     # amendments/restatements *filed* that quarter, which the weekly frames
     # job (current quarter only) never re-reads.
-    "fundamentals-bulk": (["/bin/bash", str(SCRIPTS / "run_job.sh"),
-                           "fundamentals", "--db", "data/sec_fundamentals.db",
-                           "--bulk"],
-                          yearly([2, 5, 8, 11], 20, 9, 0)),
+    "fundamentals-bulk": (
+        [
+            "/bin/bash",
+            str(SCRIPTS / "run_job.sh"),
+            "fundamentals",
+            "--db",
+            "data/sec_fundamentals.db",
+            "--bulk",
+        ],
+        yearly([2, 5, 8, 11], 20, 9, 0),
+    ),
     # The hand-transcribed holiday seed in market_calendar/catalog.py ends
     # 2027-12; --refresh merges live NYSE/SIFMA pages over it and fails
     # loudly on page drift (isolated here so drift can't break the seed-only
     # run). Must run every month, 30min after the seed job: each run does a
     # replace_forward_window, so the seed-only run wipes any refresh-added
     # events and this job re-adds them.
-    "market-calendar-refresh": (job("market_calendar", "--refresh"),
-                                monthly([1], 5, 30)),
+    "market-calendar-refresh": (job("market_calendar", "--refresh"), monthly([1], 5, 30)),
     # -- combine (every day, after all collectors incl. edgar's 15-min
     #    failure retry; before the nightly summary) --
-    "composite": (job("composite", "--keep-days", "365"),
-                  weekly(range(7), 21, 5)),
+    "composite": (job("composite", "--keep-days", "365"), weekly(range(7), 21, 5)),
     # -- observability (every day, after the 8:30pm edgar run + retry) --
-    "daily-summary": (script("daily_summary.sh"),
-                      weekly(range(7), 21, 15)),
+    "daily-summary": (script("daily_summary.sh"), weekly(range(7), 21, 15)),
 }
 
 
@@ -143,8 +148,7 @@ def build(name, program_args, intervals):
 
 
 def launchctl(*args, check=False):
-    return subprocess.run(["launchctl", *args], check=check,
-                          capture_output=True, text=True)
+    return subprocess.run(["launchctl", *args], check=check, capture_output=True, text=True)
 
 
 def main(argv=None):
@@ -153,8 +157,7 @@ def main(argv=None):
     p.add_argument("--dry-run", action="store_true")
     a = p.parse_args(argv)
 
-    uid = subprocess.run(["id", "-u"], capture_output=True,
-                         text=True).stdout.strip()
+    uid = subprocess.run(["id", "-u"], capture_output=True, text=True).stdout.strip()
     domain = f"gui/{uid}"
 
     if a.uninstall:

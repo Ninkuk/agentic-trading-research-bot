@@ -2,11 +2,18 @@ from datetime import datetime, timedelta
 
 from sources.common.screener_common import connect
 
-__all__ = ["connect", "ensure_schema", "upsert_securities", "replace_period",
-           "record_period", "write_snapshot", "stored_periods", "prune"]
+__all__ = [
+    "connect",
+    "ensure_schema",
+    "upsert_securities",
+    "replace_period",
+    "record_period",
+    "write_snapshot",
+    "stored_periods",
+    "prune",
+]
 
-_FAIL_COLS = ["cusip", "settlement_date", "period", "symbol", "quantity",
-              "price", "dollar_value"]
+_FAIL_COLS = ["cusip", "settlement_date", "period", "symbol", "quantity", "price", "dollar_value"]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS securities (
@@ -119,9 +126,15 @@ def upsert_securities(conn, rows: list[dict]) -> None:
     settlement_date ever seen, and refresh symbol/description from the row whose
     date is at or after the stored last_seen (so the label reflects the newest
     appearance regardless of insert order)."""
-    params = [{"cusip": r["cusip"], "symbol": r.get("symbol"),
-               "description": r.get("description"), "d": r["settlement_date"]}
-              for r in rows]
+    params = [
+        {
+            "cusip": r["cusip"],
+            "symbol": r.get("symbol"),
+            "description": r.get("description"),
+            "d": r["settlement_date"],
+        }
+        for r in rows
+    ]
     conn.executemany(
         """INSERT INTO securities (cusip, symbol, description, first_seen, last_seen)
            VALUES (:cusip, :symbol, :description, :d, :d)
@@ -160,8 +173,9 @@ def replace_period(conn, period: str, rows: list[dict]) -> int:
     return len(by_key)
 
 
-def record_period(conn, period: str, bounds: tuple, fetched_at: str,
-                  row_count: int, trailer_count) -> None:
+def record_period(
+    conn, period: str, bounds: tuple, fetched_at: str, row_count: int, trailer_count
+) -> None:
     """Upsert one period's provenance row."""
     start, end = bounds
     conn.execute(
@@ -171,16 +185,17 @@ def record_period(conn, period: str, bounds: tuple, fetched_at: str,
            ON CONFLICT(period) DO UPDATE SET
              fetched_at=excluded.fetched_at, row_count=excluded.row_count,
              trailer_count=excluded.trailer_count""",
-        (period, start, end, fetched_at, row_count, trailer_count))
+        (period, start, end, fetched_at, row_count, trailer_count),
+    )
     conn.commit()
 
 
-def write_snapshot(conn, captured_at: str, period_count: int,
-                   row_count: int) -> int:
+def write_snapshot(conn, captured_at: str, period_count: int, row_count: int) -> int:
     """Insert one fetch-run header. Returns the snapshot id."""
     cur = conn.execute(
-        "INSERT INTO snapshots (captured_at, period_count, row_count) "
-        "VALUES (?, ?, ?)", (captured_at, period_count, row_count))
+        "INSERT INTO snapshots (captured_at, period_count, row_count) VALUES (?, ?, ?)",
+        (captured_at, period_count, row_count),
+    )
     conn.commit()
     return cur.lastrowid
 
@@ -188,18 +203,20 @@ def write_snapshot(conn, captured_at: str, period_count: int,
 def stored_periods(conn) -> list:
     """All ingested period ids, sorted ascending (lexical == chronological
     because months are zero-padded and 'a' < 'b')."""
-    return [r[0] for r in conn.execute(
-        "SELECT period FROM periods ORDER BY period")]
+    return [r[0] for r in conn.execute("SELECT period FROM periods ORDER BY period")]
 
 
 def prune(conn, keep_days: int, now_iso: str) -> int:
     """Delete run-provenance snapshots older than keep_days before now_iso.
     Fail history is NOT snapshot-scoped, so this is a single-table delete of
     snapshot headers only — do NOT cascade into fails."""
-    cutoff = (datetime.fromisoformat(now_iso)
-              - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute(
-        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
+    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
+    ids = [
+        r[0]
+        for r in conn.execute(
+            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
+        ).fetchall()
+    ]
     if not ids:
         return 0
     qmarks = ",".join("?" * len(ids))

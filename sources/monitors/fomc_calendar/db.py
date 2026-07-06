@@ -1,5 +1,6 @@
 """fomc_calendar store: the shared monitor schema plus three FOMC views. The
 events/snapshots/calendar_now DDL lives in monitor_common; this only adds views."""
+
 from sources.common.monitor_common import connect
 from sources.common.monitor_common import ensure_schema as _mc_ensure_schema
 

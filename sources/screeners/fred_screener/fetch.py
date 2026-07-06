@@ -17,8 +17,7 @@ _urlopen = http_client.make_opener(_UA)
 def require_api_key(api_key):
     """Return a non-empty API key or raise. Never echoes the key value."""
     if not api_key:
-        raise RuntimeError(
-            "FRED_API_KEY is not set; add it to .env (see .env.example)")
+        raise RuntimeError("FRED_API_KEY is not set; add it to .env (see .env.example)")
     return api_key
 
 
@@ -28,12 +27,16 @@ def _build_url(path: str, params: dict, api_key: str) -> str:
     return f"{API_BASE}/{path}?{urllib.parse.urlencode(query)}"
 
 
-def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
-              base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
+def _http_get(
+    url: str,
+    opener=_urlopen,
+    attempts: int = _MAX_ATTEMPTS,
+    base_delay: float = _BASE_DELAY,
+    sleep=time.sleep,
+) -> str:
     """GET with bounded backoff, retrying FRED throttling (429) and transient
     5xx/network errors. Other HTTP errors (e.g. 400) raise immediately."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
-                                base_delay, sleep)
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def parse_observations(payload: dict) -> list[dict]:
@@ -55,8 +58,7 @@ def parse_observation_vintages(payload: dict) -> list[dict]:
     for o in payload.get("observations", []):
         raw = o.get("value")
         value = None if raw in (None, ".") else float(raw)
-        rows.append({"date": o["date"], "realtime_start": o["realtime_start"],
-                     "value": value})
+        rows.append({"date": o["date"], "realtime_start": o["realtime_start"], "value": value})
     return rows
 
 
@@ -70,8 +72,7 @@ def fetch_series(series_id: str, api_key: str, get=_http_get) -> dict:
     return seriess[0]
 
 
-def fetch_observations(series_id: str, api_key: str, start=None,
-                       get=_http_get) -> list[dict]:
+def fetch_observations(series_id: str, api_key: str, start=None, get=_http_get) -> list[dict]:
     """GET /fred/series/observations; return parsed [{date, value}] rows."""
     params = {"series_id": series_id}
     if start:
@@ -80,13 +81,13 @@ def fetch_observations(series_id: str, api_key: str, start=None,
     return parse_observations(json.loads(get(url)))
 
 
-def fetch_observation_vintages(series_id: str, api_key: str, start=None,
-                               get=_http_get) -> list[dict]:
+def fetch_observation_vintages(
+    series_id: str, api_key: str, start=None, get=_http_get
+) -> list[dict]:
     """GET /fred/series/observations with realtime_start/end for vintage history;
     return parsed [{date, realtime_start, value}] rows. Each observation's own
     realtime_start is extracted."""
-    params = {"series_id": series_id, "realtime_start": "1776-07-04",
-              "realtime_end": "9999-12-31"}
+    params = {"series_id": series_id, "realtime_start": "1776-07-04", "realtime_end": "9999-12-31"}
     if start:
         params["observation_start"] = start
     url = _build_url("series/observations", params, api_key)

@@ -6,10 +6,11 @@ Robinhood MCP and writes it to a file — whatever Claude learns enters the
 system as data through this dispatcher, never as live calls. Secret hygiene:
 errors print exception type names only (an MCP payload could embed account
 identifiers in a message)."""
+
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sources.screeners.portfolio_screener import db, fetch
 
@@ -17,7 +18,7 @@ from sources.screeners.portfolio_screener import db, fetch
 def run(db_path: str, doc, now_iso=None, keep_days=None) -> tuple:
     """Parse + store one snapshot. Returns (snapshot_id, position_count,
     skipped_count)."""
-    now_iso = now_iso or datetime.now(timezone.utc).isoformat()
+    now_iso = now_iso or datetime.now(UTC).isoformat()
     account, positions, skipped = fetch.parse_snapshot(doc)
     conn = db.connect(db_path)
     try:
@@ -32,11 +33,12 @@ def run(db_path: str, doc, now_iso=None, keep_days=None) -> tuple:
 
 def main(argv=None) -> None:
     p = argparse.ArgumentParser(
-        prog="portfolio",
-        description="Snapshot account positions/details into portfolio.db")
+        prog="portfolio", description="Snapshot account positions/details into portfolio.db"
+    )
     p.add_argument("--db", default="portfolio.db")
-    p.add_argument("--input", required=True,
-                   help="path to the combined JSON document, or - for stdin")
+    p.add_argument(
+        "--input", required=True, help="path to the combined JSON document, or - for stdin"
+    )
     p.add_argument("--keep-days", type=int, default=None)
     a = p.parse_args(argv)
 
@@ -47,8 +49,7 @@ def main(argv=None) -> None:
             with open(a.input, encoding="utf-8") as f:
                 doc = json.load(f)
     except Exception as e:
-        print(f"error: cannot read input: {type(e).__name__}",
-              file=sys.stderr)
+        print(f"error: cannot read input: {type(e).__name__}", file=sys.stderr)
         raise SystemExit(1) from None
 
     try:

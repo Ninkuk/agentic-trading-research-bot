@@ -13,6 +13,7 @@ Secret hygiene: the topic is embedded in the request URL, so a urllib error
 message can leak it. ``send`` raises with the URL scrubbed; the CLI prints
 only the exception type name, matching the screeners' error convention.
 """
+
 import argparse
 import os
 import sys
@@ -23,24 +24,30 @@ DEFAULT_SERVER = "https://ntfy.sh"
 
 
 def _default_post(url: str, data: bytes, headers: dict) -> None:
-    req = urllib.request.Request(url, data=data, headers=headers,
-                                 method="POST")
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
     with urllib.request.urlopen(req, timeout=30):
         pass
 
 
-def send(message: str, *, title=None, priority=None, tags=None,
-         topic=None, server=None, token=None, post=None) -> None:
+def send(
+    message: str,
+    *,
+    title=None,
+    priority=None,
+    tags=None,
+    topic=None,
+    server=None,
+    token=None,
+    post=None,
+) -> None:
     """Publish one notification. ``tags`` is an iterable of ntfy tag names
     (e.g. emoji shortcodes); ``priority`` is 1-5 or an ntfy name like "high".
     Raises RuntimeError (topic unset, or scrubbed transport failure)."""
     post = post or _default_post
     topic = topic or os.environ.get("NTFY_TOPIC")
     if not topic:
-        raise RuntimeError(
-            "NTFY_TOPIC is not set; add it to .env (see .env.example)")
-    server = (server or os.environ.get("NTFY_SERVER")
-              or DEFAULT_SERVER).rstrip("/")
+        raise RuntimeError("NTFY_TOPIC is not set; add it to .env (see .env.example)")
+    server = (server or os.environ.get("NTFY_SERVER") or DEFAULT_SERVER).rstrip("/")
     token = token or os.environ.get("NTFY_TOKEN")
 
     headers = {}
@@ -62,9 +69,11 @@ def send(message: str, *, title=None, priority=None, tags=None,
 
 def main(argv=None):
     p = argparse.ArgumentParser(
-        description="Publish an ntfy notification (message from args or stdin)")
-    p.add_argument("message", nargs="?", default=None,
-                   help="message body ('-' or omitted: read stdin)")
+        description="Publish an ntfy notification (message from args or stdin)"
+    )
+    p.add_argument(
+        "message", nargs="?", default=None, help="message body ('-' or omitted: read stdin)"
+    )
     p.add_argument("--title", default=None)
     p.add_argument("--priority", default=None, help="1-5 or ntfy name")
     p.add_argument("--tags", default=None, help="comma-separated ntfy tags")

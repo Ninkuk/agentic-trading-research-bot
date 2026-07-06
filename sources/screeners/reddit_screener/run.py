@@ -1,17 +1,16 @@
 import argparse
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sources.screeners.reddit_screener import db, fetch
 
 DEFAULT_FILTERS = ["all-stocks", "4chan"]
 
 
-def run(db_path, filters=None, keep_days=None,
-        fetch_filter=fetch.fetch_filter, now_iso=None):
+def run(db_path, filters=None, keep_days=None, fetch_filter=fetch.fetch_filter, now_iso=None):
     """Fetch each filter and append a snapshot. Returns [(snapshot_id, count)]."""
     filters = filters or DEFAULT_FILTERS
-    captured_at = now_iso or datetime.now(timezone.utc).isoformat()
+    captured_at = now_iso or datetime.now(UTC).isoformat()
     conn = db.connect(db_path)
     results = []
     try:
@@ -19,8 +18,7 @@ def run(db_path, filters=None, keep_days=None,
         for filter_ in filters:
             rows = fetch_filter(filter_)
             if not rows:
-                print(f"warning: filter '{filter_}' returned 0 tickers",
-                      file=sys.stderr)
+                print(f"warning: filter '{filter_}' returned 0 tickers", file=sys.stderr)
             snapshot_id, count = db.write_snapshot(conn, captured_at, filter_, rows)
             db.upsert_tickers(conn, rows, captured_at)
             results.append((snapshot_id, count))
@@ -33,10 +31,12 @@ def run(db_path, filters=None, keep_days=None,
 
 def main(argv=None):
     p = argparse.ArgumentParser(
-        prog="reddit", description="Pull ApeWisdom Reddit sentiment into SQLite")
+        prog="reddit", description="Pull ApeWisdom Reddit sentiment into SQLite"
+    )
     p.add_argument("--db", default="reddit.db")
-    p.add_argument("--filters", default="all-stocks,4chan",
-                   help="comma-separated ApeWisdom filters")
+    p.add_argument(
+        "--filters", default="all-stocks,4chan", help="comma-separated ApeWisdom filters"
+    )
     p.add_argument("--keep-days", type=int, default=None)
     a = p.parse_args(argv)
     filters = [f.strip() for f in a.filters.split(",") if f.strip()]

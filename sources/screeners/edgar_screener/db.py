@@ -1,4 +1,5 @@
-from sources.common.screener_common import connect, prune as _prune
+from sources.common.screener_common import connect
+from sources.common.screener_common import prune as _prune
 
 __all__ = ["connect", "ensure_schema", "prune", "write_snapshot", "upsert_issuers"]
 
@@ -100,8 +101,7 @@ def prune(conn, keep_days, now_iso):
     return _prune(conn, keep_days, now_iso, child_table="filings")
 
 
-def write_snapshot(conn, captured_at: str, index_date: str,
-                   rows: list[dict]) -> tuple[int, int]:
+def write_snapshot(conn, captured_at: str, index_date: str, rows: list[dict]) -> tuple[int, int]:
     """Insert one snapshot header + its filing rows. Returns (id, count).
 
     The SEC master.idx daily index sometimes repeats the exact same filing
@@ -119,8 +119,7 @@ def write_snapshot(conn, captured_at: str, index_date: str,
         deduped.append(r)
 
     cur = conn.execute(
-        "INSERT INTO snapshots (captured_at, index_date, filing_count) "
-        "VALUES (?, ?, ?)",
+        "INSERT INTO snapshots (captured_at, index_date, filing_count) VALUES (?, ?, ?)",
         (captured_at, index_date, len(deduped)),
     )
     snapshot_id = cur.lastrowid
@@ -149,7 +148,6 @@ def upsert_issuers(conn, rows: list[dict], captured_at: str) -> None:
              ticker=excluded.ticker,
              company=excluded.company,
              last_seen=excluded.last_seen""",
-        [{"cik": c, "ticker": t, "company": n, "seen": captured_at}
-         for c, (t, n) in seen.items()],
+        [{"cik": c, "ticker": t, "company": n, "seen": captured_at} for c, (t, n) in seen.items()],
     )
     conn.commit()

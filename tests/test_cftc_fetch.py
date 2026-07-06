@@ -5,8 +5,13 @@ import urllib.error
 import pytest
 
 from sources.screeners.cftc_screener.fetch import (
-    _build_url, _headers, _http_get, _make_opener, _urlopen,
-    fetch_market_rows, parse_rows,
+    _build_url,
+    _headers,
+    _http_get,
+    _make_opener,
+    _urlopen,
+    fetch_market_rows,
+    parse_rows,
 )
 
 # One realistic Socrata record (subset of the 133 fields), values as strings.
@@ -17,7 +22,7 @@ REC = {
     "open_interest_all": "352167",
     "noncomm_positions_long_all": "217028",
     "noncomm_positions_short_all": "35689",
-    "noncomm_positions_spread": "31295",          # NOTE: no _all suffix
+    "noncomm_positions_spread": "31295",  # NOTE: no _all suffix
     "comm_positions_long_all": "64579",
     "comm_positions_short_all": "269983",
     "nonrept_positions_long_all": "39265",
@@ -46,19 +51,20 @@ REC = {
 def test_parse_rows_maps_and_coerces():
     [row] = parse_rows([REC])
     assert row["code"] == "088691"
-    assert row["report_date"] == "2026-06-23"          # timestamp truncated
+    assert row["report_date"] == "2026-06-23"  # timestamp truncated
     assert row["name"] == "GOLD - COMMODITY EXCHANGE INC."
-    assert row["open_interest"] == 352167              # int
+    assert row["open_interest"] == 352167  # int
     assert row["noncomm_long"] == 217028
-    assert row["noncomm_spread"] == 31295              # sourced from _spread (no _all)
-    assert row["pct_oi_noncomm_long"] == 61.6          # float
+    assert row["noncomm_spread"] == 31295  # sourced from _spread (no _all)
+    assert row["pct_oi_noncomm_long"] == 61.6  # float
     assert row["conc_net_8_short"] == 51.1
     assert row["traders_total"] == 282
 
 
 def test_parse_rows_missing_fields_become_none():
-    [row] = parse_rows([{"cftc_contract_market_code": "X",
-                         "report_date_as_yyyy_mm_dd": "2026-01-06T00:00:00.000"}])
+    [row] = parse_rows(
+        [{"cftc_contract_market_code": "X", "report_date_as_yyyy_mm_dd": "2026-01-06T00:00:00.000"}]
+    )
     assert row["open_interest"] is None
     assert row["pct_oi_comm_long"] is None
 
@@ -158,7 +164,7 @@ DISAGG_REC = {
 def test_field_maps_are_disjoint_triples():
     for fmap in (LEGACY_FIELDS, DISAGG_FIELDS, TFF_FIELDS):
         assert fmap, "field map must be non-empty"
-        for col, api, cast in fmap:              # unpack proves 3-tuple shape
+        for col, api, cast in fmap:  # unpack proves 3-tuple shape
             assert isinstance(col, str) and isinstance(api, str)
             assert cast in (int, float)
         cols = [c for c, _a, _cast in fmap]
@@ -167,26 +173,26 @@ def test_field_maps_are_disjoint_triples():
 
 def test_build_url_targets_family_dataset():
     url = _build_url("088691", dataset_id="72hh-3qpy")
-    assert url.startswith(
-        "https://publicreporting.cftc.gov/resource/72hh-3qpy.json?")
+    assert url.startswith("https://publicreporting.cftc.gov/resource/72hh-3qpy.json?")
     assert "cftc_contract_market_code%3D%27088691%27" in url
 
 
 def test_build_url_defaults_to_legacy_dataset():
     assert _build_url("088691").startswith(
-        "https://publicreporting.cftc.gov/resource/6dca-aqww.json?")
+        "https://publicreporting.cftc.gov/resource/6dca-aqww.json?"
+    )
 
 
 def test_parse_rows_with_disagg_field_map():
     [row] = parse_rows([DISAGG_REC], DISAGG_FIELDS)
     assert row["code"] == "088691"
-    assert row["report_date"] == "2026-06-23"          # timestamp truncated
+    assert row["report_date"] == "2026-06-23"  # timestamp truncated
     assert row["name"] == "GOLD - COMMODITY EXCHANGE INC."
-    assert row["mm_long"] == 120000                    # int coercion
+    assert row["mm_long"] == 120000  # int coercion
     assert row["mm_short"] == 40000
-    assert row["pct_oi_mm_long"] == 24.0               # float coercion
+    assert row["pct_oi_mm_long"] == 24.0  # float coercion
     assert row["conc_net_4_long"] == 18.2
-    assert row["mm_spread"] is None                    # absent -> None
+    assert row["mm_spread"] is None  # absent -> None
 
 
 def test_fetch_market_rows_threads_dataset_and_field_map():
@@ -196,7 +202,8 @@ def test_fetch_market_rows_threads_dataset_and_field_map():
         seen["url"] = url
         return json.dumps([DISAGG_REC])
 
-    rows = fetch_market_rows("088691", dataset_id="72hh-3qpy",
-                             field_map=DISAGG_FIELDS, get=fake_get)
+    rows = fetch_market_rows(
+        "088691", dataset_id="72hh-3qpy", field_map=DISAGG_FIELDS, get=fake_get
+    )
     assert "72hh-3qpy.json" in seen["url"]
     assert rows[0]["mm_long"] == 120000

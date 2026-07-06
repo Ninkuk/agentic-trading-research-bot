@@ -24,9 +24,12 @@ def test_select_symbols_only_exclude_add():
     assert catalog.select_symbols(all_syms, ["AAPL", "NVDA"], None) == ["AAPL", "NVDA"]
     assert catalog.select_symbols(all_syms, None, ["MSFT"]) == ["AAPL", "NVDA"]
     assert catalog.select_symbols(all_syms, None, None, ["TSLA"]) == [
-        "AAPL", "MSFT", "NVDA", "TSLA"]
+        "AAPL",
+        "MSFT",
+        "NVDA",
+        "TSLA",
+    ]
 
 
 def test_select_symbols_dedupes_and_strips():
-    assert catalog.select_symbols(["AAPL"], None, None, [" AAPL ", "MSFT"]) == [
-        "AAPL", "MSFT"]
+    assert catalog.select_symbols(["AAPL"], None, None, [" AAPL ", "MSFT"]) == ["AAPL", "MSFT"]
