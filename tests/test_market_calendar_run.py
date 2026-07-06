@@ -44,7 +44,9 @@ def test_run_keep_days_prunes_snapshots_not_future_events(tmp_path):
 
 def test_run_refresh_merges_parsed_pages_over_seed(tmp_path):
     db_path = str(tmp_path / "m.db")
-    pages = {"nyse": "<td>Test Holiday</td><td>2026-06-15</td>", "sifma": None}
+    pages = {"nyse": "<tr><th>Holiday</th><th>2026</th></tr>"
+                     "<tr><th>Test Holiday</th><td>Monday, June 15</td></tr>",
+             "sifma": None}
     runmod.run(db_path, years=1, now_iso=NOW, pages=pages)
     conn = sqlite3.connect(db_path)
     hit = conn.execute(
