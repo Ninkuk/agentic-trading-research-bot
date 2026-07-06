@@ -13,10 +13,14 @@ One-clock rule: never reference a source's calendar_now-dependent views
 query base tables with :today instead.
 """
 
-SIGNALS = [
+from typing import Any
+
+SIGNALS: list[dict[str, Any]] = [
     # ------------------------------------------------ market grain ----
     {
-        "signal_id": "fred_curve", "db": "fred.db", "grain": "market",
+        "signal_id": "fred_curve",
+        "db": "fred.db",
+        "grain": "market",
         "staleness_budget_days": 7,
         "sql": """
             SELECT '*', value,
@@ -28,7 +32,9 @@ SIGNALS = [
         """,
     },
     {
-        "signal_id": "fred_hy_spread", "db": "fred.db", "grain": "market",
+        "signal_id": "fred_hy_spread",
+        "db": "fred.db",
+        "grain": "market",
         "staleness_budget_days": 7,
         "sql": """
             SELECT '*', value,
@@ -42,7 +48,9 @@ SIGNALS = [
         """,
     },
     {
-        "signal_id": "cboe_vix", "db": "cboe_stats.db", "grain": "market",
+        "signal_id": "cboe_vix",
+        "db": "cboe_stats.db",
+        "grain": "market",
         "staleness_budget_days": 5,
         "sql": """
             SELECT '*', close,
@@ -55,8 +63,10 @@ SIGNALS = [
         """,
     },
     {
-        "signal_id": "cboe_vix_backwardation", "db": "cboe_stats.db",
-        "grain": "market", "staleness_budget_days": 5,
+        "signal_id": "cboe_vix_backwardation",
+        "db": "cboe_stats.db",
+        "grain": "market",
+        "staleness_budget_days": 5,
         "sql": """
             SELECT '*', close - vix3m,
                    CASE WHEN close > vix3m THEN -2 ELSE 0 END,
@@ -68,8 +78,10 @@ SIGNALS = [
     },
     {
         # Contrarian: panicky put buying (high PCR percentile) is bullish.
-        "signal_id": "cboe_equity_pcr", "db": "cboe_stats.db",
-        "grain": "market", "staleness_budget_days": 5,
+        "signal_id": "cboe_equity_pcr",
+        "db": "cboe_stats.db",
+        "grain": "market",
+        "staleness_budget_days": 5,
         "sql": """
             WITH latest AS (
                 SELECT date, equity_pcr FROM src.pcr_daily
@@ -93,7 +105,9 @@ SIGNALS = [
     },
     {
         # Gate, not direction: score 0; regime tier reads the raw flag.
-        "signal_id": "fomc_blackout", "db": "fomc.db", "grain": "market",
+        "signal_id": "fomc_blackout",
+        "db": "fomc.db",
+        "grain": "market",
         "staleness_budget_days": 0,
         "sql": """
             SELECT '*',
@@ -109,8 +123,10 @@ SIGNALS = [
         # HIGH-impact only, mirroring the source's own v_imminent_high_impact
         # (join events -> release_catalog, impact = 'high'), but bound to
         # :today instead of the source's calendar_now (one-clock rule).
-        "signal_id": "econ_imminent", "db": "econ_calendar.db",
-        "grain": "market", "staleness_budget_days": 0,
+        "signal_id": "econ_imminent",
+        "db": "econ_calendar.db",
+        "grain": "market",
+        "staleness_budget_days": 0,
         "sql": """
             SELECT '*', COUNT(*), 0, :today
             FROM src.events e
@@ -121,8 +137,10 @@ SIGNALS = [
         """,
     },
     {
-        "signal_id": "mcal_days_to_opex", "db": "market_calendar.db",
-        "grain": "market", "staleness_budget_days": 0,
+        "signal_id": "mcal_days_to_opex",
+        "db": "market_calendar.db",
+        "grain": "market",
+        "staleness_budget_days": 0,
         "sql": """
             SELECT '*',
                    CAST(julianday(MIN(event_date)) - julianday(:today)
@@ -135,7 +153,9 @@ SIGNALS = [
     },
     {
         # Falling RRP take-up releases liquidity into markets: bullish.
-        "signal_id": "nyfed_rrp", "db": "nyfed.db", "grain": "market",
+        "signal_id": "nyfed_rrp",
+        "db": "nyfed.db",
+        "grain": "market",
         "staleness_budget_days": 5,
         "sql": """
             SELECT '*', change_vs_prior,
@@ -149,7 +169,9 @@ SIGNALS = [
     },
     {
         # Rising TGA drains liquidity from markets: bearish.
-        "signal_id": "tsy_tga", "db": "treasury.db", "grain": "market",
+        "signal_id": "tsy_tga",
+        "db": "treasury.db",
+        "grain": "market",
         "staleness_budget_days": 7,
         "sql": """
             SELECT '*', wow_change,
@@ -164,8 +186,10 @@ SIGNALS = [
     # ------------------------------------------- asset-class grain ----
     {
         # Contrarian at extremes: washed-out managed money = bullish.
-        "signal_id": "cftc_mm_extreme", "db": "cftc.db",
-        "grain": "asset_class", "staleness_budget_days": 12,
+        "signal_id": "cftc_mm_extreme",
+        "db": "cftc.db",
+        "grain": "asset_class",
+        "staleness_budget_days": 12,
         "sql": """
             SELECT m.asset_class, AVG(c.cot_index),
                    CASE WHEN AVG(c.cot_index) <= 10 THEN 2
@@ -180,8 +204,10 @@ SIGNALS = [
         """,
     },
     {
-        "signal_id": "cftc_lev_extreme", "db": "cftc.db",
-        "grain": "asset_class", "staleness_budget_days": 12,
+        "signal_id": "cftc_lev_extreme",
+        "db": "cftc.db",
+        "grain": "asset_class",
+        "staleness_budget_days": 12,
         "sql": """
             SELECT m.asset_class, AVG(c.cot_index),
                    CASE WHEN AVG(c.cot_index) <= 10 THEN 2
@@ -197,8 +223,10 @@ SIGNALS = [
     },
     {
         # Crude build = bearish energy; draw = bullish.
-        "signal_id": "eia_crude_stocks", "db": "eia.db",
-        "grain": "asset_class", "staleness_budget_days": 10,
+        "signal_id": "eia_crude_stocks",
+        "db": "eia.db",
+        "grain": "asset_class",
+        "staleness_budget_days": 10,
         "sql": """
             SELECT 'energy', change_pct,
                    CASE WHEN change_pct <= -2.0 THEN 1
@@ -208,8 +236,10 @@ SIGNALS = [
         """,
     },
     {
-        "signal_id": "eia_natgas_storage", "db": "eia.db",
-        "grain": "asset_class", "staleness_budget_days": 10,
+        "signal_id": "eia_natgas_storage",
+        "db": "eia.db",
+        "grain": "asset_class",
+        "staleness_budget_days": 10,
         "sql": """
             SELECT 'energy', change_pct,
                    CASE WHEN change_pct <= -2.0 THEN 1
@@ -222,8 +252,10 @@ SIGNALS = [
     {
         # Tight US grain stocks-to-use = bullish ags. WASDE is monthly and
         # market-year keyed; obs_date is :today by construction (budget 35).
-        "signal_id": "usda_stocks_to_use", "db": "usda.db",
-        "grain": "asset_class", "staleness_budget_days": 35,
+        "signal_id": "usda_stocks_to_use",
+        "db": "usda.db",
+        "grain": "asset_class",
+        "staleness_budget_days": 35,
         "sql": """
             SELECT 'ags', AVG(stocks_to_use),
                    CASE WHEN AVG(stocks_to_use) < 0.10 THEN 1 ELSE 0 END,
@@ -245,8 +277,10 @@ SIGNALS = [
         # bullish (measured 2026-07-06); score only genuine extremes.
         # FAMILY OVERLAP: this and ftd_persistent both read squeeze fuel —
         # a flag driven by only these two is one phenomenon double-counted.
-        "signal_id": "si_days_to_cover", "db": "short_interest.db",
-        "grain": "ticker", "staleness_budget_days": 25,
+        "signal_id": "si_days_to_cover",
+        "db": "short_interest.db",
+        "grain": "ticker",
+        "staleness_budget_days": 25,
         "sql": """
             SELECT symbol, days_to_cover,
                    CASE WHEN days_to_cover >= 20 THEN 2 ELSE 1 END,
@@ -261,8 +295,10 @@ SIGNALS = [
         # At the old >= 1.5 floor this emitted 1,135 rows (52% of all signal
         # rows) and skewed the composite bearish (measured 2026-07-06);
         # >= 2.5 = 443 rows, >= 8.0 = 82 -- matching si_days_to_cover's scale.
-        "signal_id": "si_spike", "db": "short_interest.db",
-        "grain": "ticker", "staleness_budget_days": 25,
+        "signal_id": "si_spike",
+        "db": "short_interest.db",
+        "grain": "ticker",
+        "staleness_budget_days": 25,
         "sql": """
             SELECT symbol, base_ratio,
                    CASE WHEN base_ratio >= 8.0 THEN -2 ELSE -1 END,
@@ -272,8 +308,10 @@ SIGNALS = [
         """,
     },
     {
-        "signal_id": "sv_ratio_spike", "db": "short_volume.db",
-        "grain": "ticker", "staleness_budget_days": 4,
+        "signal_id": "sv_ratio_spike",
+        "db": "short_volume.db",
+        "grain": "ticker",
+        "staleness_budget_days": 4,
         "sql": """
             SELECT symbol, spike_ratio,
                    CASE WHEN spike_ratio >= 1.6 THEN -2 ELSE -1 END,
@@ -284,8 +322,10 @@ SIGNALS = [
     {
         # Persistent fails-to-deliver = delivery stress / squeeze fuel.
         # FAMILY OVERLAP with si_days_to_cover — see the note there.
-        "signal_id": "ftd_persistent", "db": "ftd.db",
-        "grain": "ticker", "staleness_budget_days": 25,
+        "signal_id": "ftd_persistent",
+        "db": "ftd.db",
+        "grain": "ticker",
+        "staleness_budget_days": 25,
         "sql": """
             SELECT symbol, streak_days,
                    CASE WHEN streak_days >= 10 THEN 2 ELSE 1 END,
@@ -296,8 +336,10 @@ SIGNALS = [
     },
     {
         # Attention momentum: mention spikes with real volume behind them.
-        "signal_id": "reddit_trending", "db": "reddit.db",
-        "grain": "ticker", "staleness_budget_days": 2,
+        "signal_id": "reddit_trending",
+        "db": "reddit.db",
+        "grain": "ticker",
+        "staleness_budget_days": 2,
         "sql": """
             SELECT ticker, mention_pct_change,
                    CASE WHEN mention_pct_change >= 3.0 THEN 2 ELSE 1 END,
@@ -309,8 +351,10 @@ SIGNALS = [
     },
     {
         # Mean-reversion read on RSI extremes, liquid names only.
-        "signal_id": "stocks_rsi", "db": "stocks.db",
-        "grain": "ticker", "staleness_budget_days": 4,
+        "signal_id": "stocks_rsi",
+        "db": "stocks.db",
+        "grain": "ticker",
+        "staleness_budget_days": 4,
         "sql": """
             SELECT symbol, rsi,
                    CASE WHEN rsi <= 20 THEN 2 WHEN rsi <= 30 THEN 1
@@ -325,8 +369,10 @@ SIGNALS = [
     {
         # Form 4 cluster = attention flag; direction unknown at index
         # level (buys and sells both file Form 4), hence score 0.
-        "signal_id": "edgar_insider", "db": "edgar.db",
-        "grain": "ticker", "staleness_budget_days": 5,
+        "signal_id": "edgar_insider",
+        "db": "edgar.db",
+        "grain": "ticker",
+        "staleness_budget_days": 5,
         "sql": """
             SELECT ticker, COUNT(*), 0, MAX(filed_date)
             FROM src.v_tickered
@@ -336,8 +382,10 @@ SIGNALS = [
     },
     {
         # Live holdings: informational only (never votes; sets in_portfolio).
-        "signal_id": "portfolio_holding", "db": "portfolio.db",
-        "grain": "ticker", "staleness_budget_days": 3,
+        "signal_id": "portfolio_holding",
+        "db": "portfolio.db",
+        "grain": "ticker",
+        "staleness_budget_days": 3,
         "sql": """
             SELECT p.symbol, p.quantity, 0, substr(s.captured_at, 1, 10)
             FROM src.positions p

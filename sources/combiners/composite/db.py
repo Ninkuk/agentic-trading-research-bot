@@ -1,6 +1,7 @@
 """composite.db schema: snapshot-scoped signal values, one market-regime
 row per run, and a per-ticker scorecard. The composite's value is its
 replayable history — everything is snapshot-scoped and pruned by cascade."""
+
 import sqlite3
 from datetime import datetime, timedelta
 
@@ -110,14 +111,16 @@ INFORMATIONAL_SIGNALS = frozenset({"portfolio_holding"})
 def write_snapshot(conn, now_iso: str, signals_expected: int) -> int:
     cur = conn.execute(
         "INSERT INTO snapshots (captured_at, signals_expected) VALUES (?, ?)",
-        (now_iso, signals_expected))
+        (now_iso, signals_expected),
+    )
     conn.commit()  # survive later per-signal rollbacks
     return cur.lastrowid
 
 
 def finish_snapshot(conn, sid: int, ok: int, failed: int) -> None:
-    conn.execute("UPDATE snapshots SET signals_ok=?, signals_failed=?"
-                 " WHERE id=?", (ok, failed, sid))
+    conn.execute(
+        "UPDATE snapshots SET signals_ok=?, signals_failed=? WHERE id=?", (ok, failed, sid)
+    )
 
 
 def write_signal_values(conn, sid: int, rows) -> int:
@@ -127,9 +130,18 @@ def write_signal_values(conn, sid: int, rows) -> int:
             "INSERT OR IGNORE INTO signal_values (snapshot_id, signal_id,"
             " grain, entity, raw_value, score, obs_date, staleness_days,"
             " via_crosswalk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (sid, r["signal_id"], r["grain"], r["entity"], r["raw_value"],
-             r["score"], r["obs_date"], r["staleness_days"],
-             r.get("via_crosswalk", 0)))
+            (
+                sid,
+                r["signal_id"],
+                r["grain"],
+                r["entity"],
+                r["raw_value"],
+                r["score"],
+                r["obs_date"],
+                r["staleness_days"],
+                r.get("via_crosswalk", 0),
+            ),
+        )
         n += cur.rowcount
     return n
 
@@ -145,7 +157,8 @@ def apply_crosswalk(conn, sid: int, crosswalk: dict) -> int:
             "SELECT signal_id, raw_value, score, obs_date, staleness_days"
             " FROM signal_values WHERE snapshot_id=? AND grain='asset_class'"
             " AND entity=? AND via_crosswalk=0",
-            (sid, asset_class)).fetchall()
+            (sid, asset_class),
+        ).fetchall()
         for signal_id, raw, score, obs, stale in rows:
             for t in tickers:
                 cur = conn.execute(
@@ -153,7 +166,8 @@ def apply_crosswalk(conn, sid: int, crosswalk: dict) -> int:
                     " signal_id, grain, entity, raw_value, score, obs_date,"
                     " staleness_days, via_crosswalk)"
                     " VALUES (?, ?, 'ticker', ?, ?, ?, ?, ?, 1)",
-                    (sid, signal_id, t, raw, score, obs, stale))
+                    (sid, signal_id, t, raw, score, obs, stale),
+                )
                 n += cur.rowcount
     return n
 
@@ -162,6 +176,10 @@ def apply_crosswalk(conn, sid: int, crosswalk: dict) -> int:
 _REGIME_RISK_OFF_VIX = 25.0
 _REGIME_RISK_ON_VIX = 20.0
 _REGIME_HY_WIDE = 4.0
+
+
+def _int_or_none(v) -> int | None:
+    return None if v is None else int(v)
 
 
 def _classify_regime(vals: dict) -> str:
@@ -183,7 +201,9 @@ def write_market_regime(conn, sid: int, regime_fields: dict) -> None:
     for signal_id, col in regime_fields.items():
         row = conn.execute(
             "SELECT raw_value FROM signal_values WHERE snapshot_id=?"
-            " AND signal_id=? AND entity='*'", (sid, signal_id)).fetchone()
+            " AND signal_id=? AND entity='*'",
+            (sid, signal_id),
+        ).fetchone()
         vals[col] = row[0] if row else None
         present += 1 if row and row[0] is not None else 0
     t10y2y = vals.get("t10y2y")
@@ -194,19 +214,24 @@ def write_market_regime(conn, sid: int, regime_fields: dict) -> None:
         " in_fomc_blackout, imminent_high_impact, days_to_opex, rrp_change,"
         " tga_change, regime, inputs_expected, inputs_present)"
         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (sid, t10y2y,
-         None if t10y2y is None else int(t10y2y < 0),
-         vals.get("hy_spread"), vals.get("vix"),
-         None if back is None else int(back > 0),
-         vals.get("equity_pcr_pctile"),
-         None if vals.get("in_fomc_blackout") is None
-         else int(vals["in_fomc_blackout"]),
-         None if vals.get("imminent_high_impact") is None
-         else int(vals["imminent_high_impact"]),
-         None if vals.get("days_to_opex") is None
-         else int(vals["days_to_opex"]),
-         vals.get("rrp_change"), vals.get("tga_change"),
-         _classify_regime(vals), len(regime_fields), present))
+        (
+            sid,
+            t10y2y,
+            None if t10y2y is None else int(t10y2y < 0),
+            vals.get("hy_spread"),
+            vals.get("vix"),
+            None if back is None else int(back > 0),
+            vals.get("equity_pcr_pctile"),
+            _int_or_none(vals.get("in_fomc_blackout")),
+            _int_or_none(vals.get("imminent_high_impact")),
+            _int_or_none(vals.get("days_to_opex")),
+            vals.get("rrp_change"),
+            vals.get("tga_change"),
+            _classify_regime(vals),
+            len(regime_fields),
+            present,
+        ),
+    )
 
 
 def write_ticker_scores(conn, sid: int) -> int:
@@ -218,7 +243,9 @@ def write_ticker_scores(conn, sid: int) -> int:
     applicable = conn.execute(
         f"SELECT COUNT(DISTINCT signal_id) FROM signal_values"
         f" WHERE snapshot_id=? AND grain='ticker'"
-        f" AND signal_id NOT IN ({info})", args).fetchone()[0]
+        f" AND signal_id NOT IN ({info})",
+        args,
+    ).fetchone()[0]
     conn.execute(
         f"INSERT INTO ticker_scores (snapshot_id, symbol, bullish, bearish,"
         f" total, score_sum, coverage, worst_staleness_days)"
@@ -228,18 +255,24 @@ def write_ticker_scores(conn, sid: int) -> int:
         f"  MAX(staleness_days)"
         f" FROM signal_values WHERE snapshot_id=? AND grain='ticker'"
         f" AND signal_id NOT IN ({info}) GROUP BY entity",
-        (applicable, applicable, *args))
+        (applicable, applicable, *args),
+    )
     # Held tickers always appear, even with zero signals; then flag them.
     conn.execute(
         "INSERT OR IGNORE INTO ticker_scores (snapshot_id, symbol, coverage)"
         " SELECT snapshot_id, entity, 0.0 FROM signal_values"
-        " WHERE snapshot_id=? AND signal_id='portfolio_holding'", (sid,))
+        " WHERE snapshot_id=? AND signal_id='portfolio_holding'",
+        (sid,),
+    )
     conn.execute(
         "UPDATE ticker_scores SET in_portfolio=1 WHERE snapshot_id=?"
         " AND symbol IN (SELECT entity FROM signal_values WHERE snapshot_id=?"
-        " AND signal_id='portfolio_holding')", (sid, sid))
-    return conn.execute("SELECT COUNT(*) FROM ticker_scores"
-                        " WHERE snapshot_id=?", (sid,)).fetchone()[0]
+        " AND signal_id='portfolio_holding')",
+        (sid, sid),
+    )
+    return conn.execute(
+        "SELECT COUNT(*) FROM ticker_scores WHERE snapshot_id=?", (sid,)
+    ).fetchone()[0]
 
 
 def prune(conn, keep_days: int, now_iso: str) -> int:
@@ -247,16 +280,13 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     caveat as screener_common.prune (which handles a single child table —
     calling it once per child would orphan the later ones, so the cascade
     is reimplemented here over the three children)."""
-    cutoff = (datetime.fromisoformat(now_iso)
-              - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute(
-        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,))]
+    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
+    ids = [r[0] for r in conn.execute("SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,))]
     if not ids:
         return 0
     qmarks = ",".join("?" * len(ids))
     for table in ("signal_values", "market_regime", "ticker_scores"):
-        conn.execute(f"DELETE FROM {table} WHERE snapshot_id IN ({qmarks})",
-                     ids)
+        conn.execute(f"DELETE FROM {table} WHERE snapshot_id IN ({qmarks})", ids)
     conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
     conn.commit()
     return len(ids)

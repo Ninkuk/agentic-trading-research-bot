@@ -10,6 +10,7 @@ CLI:
     python -m stock_analysis_screener.probe /stocks/AAPL/statistics/
     python -m stock_analysis_screener.probe --keys /markets/gainers/ /ipos/
 """
+
 import json
 import sys
 import urllib.request
@@ -28,9 +29,15 @@ def unflatten(values):
     """
     if not isinstance(values, list) or not values:
         return values
-    cache = {}
-    _SENTINELS = {-1: None, -2: None, -3: float("nan"),
-                  -4: float("inf"), -5: float("-inf"), -6: -0.0}
+    cache: dict = {}
+    _SENTINELS = {
+        -1: None,
+        -2: None,
+        -3: float("nan"),
+        -4: float("inf"),
+        -5: float("-inf"),
+        -6: -0.0,
+    }
 
     def hydrate(i):
         if i < 0:
@@ -42,7 +49,7 @@ def unflatten(values):
             cache[i] = v
             return v
         if isinstance(v, list):
-            if v and isinstance(v[0], str):        # type-tagged special
+            if v and isinstance(v[0], str):  # type-tagged special
                 tag = v[0]
                 if tag in ("Date", "BigInt"):
                     return v[1]
@@ -53,12 +60,12 @@ def unflatten(values):
                     cache[i] = out
                     return out
                 if tag == "Map":
-                    d = {}
+                    d: dict = {}
                     cache[i] = d
                     for k in range(1, len(v), 2):
                         d[str(hydrate(v[k]))] = hydrate(v[k + 1])
                     return d
-                cache[i] = v                       # unknown tag -> literal
+                cache[i] = v  # unknown tag -> literal
                 return v
             out = []
             cache[i] = out
@@ -116,8 +123,7 @@ def summarize(value, depth=0, maxdepth=3):
     if depth > maxdepth:
         return "..."
     if isinstance(value, dict):
-        return {k: summarize(v, depth + 1, maxdepth)
-                for k, v in list(value.items())[:40]} or "{}"
+        return {k: summarize(v, depth + 1, maxdepth) for k, v in list(value.items())[:40]} or "{}"
     if isinstance(value, list):
         if not value:
             return "[]"
@@ -137,7 +143,7 @@ def main(argv=None):
     for path in (a for a in argv if not a.startswith("--")):
         try:
             raw = fetch_data_json(path)
-        except Exception as exc:                    # noqa: BLE001 - CLI diagnostic
+        except Exception as exc:  # noqa: BLE001 - CLI diagnostic
             print(json.dumps({"path": path, "error": str(exc)[:120]}))
             continue
         nodes = [n for n in decode_nodes(raw) if n is not None]

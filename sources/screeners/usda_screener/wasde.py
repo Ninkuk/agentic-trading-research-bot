@@ -16,6 +16,7 @@ so _US_TABLES curates the (title -> commodity/unit per matrix) print layout,
 which has been stable for decades. Pure parser + fetch seam,
 network-free-testable. Raises WasdeSchemaError when no curated table matches
 so a layout change fails loudly instead of silently dropping data."""
+
 import re
 import time
 import urllib.error
@@ -24,9 +25,11 @@ from datetime import datetime
 
 import sources.common.http_client as http_client
 
-REPORT_PAGE_URL = ("https://www.usda.gov/about-usda/general-information/"
-                   "staff-offices/office-chief-economist/commodity-markets/"
-                   "wasde-report")
+REPORT_PAGE_URL = (
+    "https://www.usda.gov/about-usda/general-information/"
+    "staff-offices/office-chief-economist/commodity-markets/"
+    "wasde-report"
+)
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
 _MAX_ATTEMPTS = 4
@@ -34,8 +37,7 @@ _BASE_DELAY = 1.0
 # The USDA host is slow for the ~2MB report XML; give it room.
 _urlopen = http_client.make_opener(_UA, timeout=180)
 
-__all__ = ["WasdeSchemaError", "find_xml_urls", "parse_wasde_xml",
-           "fetch_wasde", "BALANCE_METRICS"]
+__all__ = ["WasdeSchemaError", "find_xml_urls", "parse_wasde_xml", "fetch_wasde", "BALANCE_METRICS"]
 
 # Balance-sheet attribute -> canonical metric, keyed by _norm_attr output
 # (lowercased, commas/periods/footnote markers dropped). Non-balance rows
@@ -71,15 +73,27 @@ BALANCE_METRICS = tuple(dict.fromkeys(_METRIC_MAP.values()))
 # June 2026 report's magnitudes.
 _US_TABLES = (
     ("u.s. wheat supply and use", (("Wheat", "Million Bushels"),)),
-    ("u.s. feed grain and corn supply and use",
-     (("Feed Grains", "Million Metric Tons"), ("Corn", "Million Bushels"))),
-    ("u.s. sorghum, barley, and oats supply and use",
-     (("Sorghum", "Million Bushels"), ("Barley", "Million Bushels"),
-      ("Oats", "Million Bushels"))),
+    (
+        "u.s. feed grain and corn supply and use",
+        (("Feed Grains", "Million Metric Tons"), ("Corn", "Million Bushels")),
+    ),
+    (
+        "u.s. sorghum, barley, and oats supply and use",
+        (
+            ("Sorghum", "Million Bushels"),
+            ("Barley", "Million Bushels"),
+            ("Oats", "Million Bushels"),
+        ),
+    ),
     ("u.s. rice supply and use", (("Rice", "Million Hundredweight"),)),
-    ("u.s. soybeans and products supply and use",
-     (("Soybeans", "Million Bushels"), ("Soybean Oil", "Million Pounds"),
-      ("Soybean Meal", "Thousand Short Tons"))),
+    (
+        "u.s. soybeans and products supply and use",
+        (
+            ("Soybeans", "Million Bushels"),
+            ("Soybean Oil", "Million Pounds"),
+            ("Soybean Meal", "Thousand Short Tons"),
+        ),
+    ),
     ("u.s. sugar supply and use", (("Sugar", "1000 Short Tons, Raw Value"),)),
     ("u.s. cotton supply and use", (("Cotton", "Million 480-Pound Bales"),)),
 )
@@ -87,7 +101,8 @@ _REGION = "United States"
 
 _XML_LINK = re.compile(
     r'href="((?:https://www\.usda\.gov)?/oce/commodity/wasde/'
-    r'wasde(\d{2})(\d{2})(?:v\d+)?\.xml)"')
+    r'wasde(\d{2})(\d{2})(?:v\d+)?\.xml)"'
+)
 
 
 class WasdeSchemaError(Exception):
@@ -95,10 +110,10 @@ class WasdeSchemaError(Exception):
     raised so the mismatch is visible rather than silently yielding zero rows."""
 
 
-def _http_get(url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY,
-              sleep=time.sleep):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay,
-                                sleep)
+def _http_get(
+    url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep
+):
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def _num(v):
@@ -138,8 +153,7 @@ def find_xml_urls(html) -> list:
 def _attr_value(el, prefix):
     """First non-empty attrib value whose key starts with prefix (the XML
     suffixes keys per matrix: attribute1/attribute2, cell_value1, ...)."""
-    return next((v for k, v in el.attrib.items()
-                 if k.startswith(prefix) and v and v.strip()), None)
+    return next((v for k, v in el.attrib.items() if k.startswith(prefix) and v and v.strip()), None)
 
 
 def _matrix_rows(matrix):
@@ -154,11 +168,19 @@ def _matrix_rows(matrix):
             my = _attr_value(yg, "market_year")
             if not my:
                 continue
-            cells = [_attr_value(mg, "cell_value") or
-                     next((_attr_value(c, "cell_value") for c in mg.iter()
-                           if _attr_value(c, "cell_value")), None)
-                     for mg in yg.iter()
-                     if any(k.startswith("forecast_month") for k in mg.attrib)]
+            cells = [
+                _attr_value(mg, "cell_value")
+                or next(
+                    (
+                        _attr_value(c, "cell_value")
+                        for c in mg.iter()
+                        if _attr_value(c, "cell_value")
+                    ),
+                    None,
+                )
+                for mg in yg.iter()
+                if any(k.startswith("forecast_month") for k in mg.attrib)
+            ]
             if not cells:
                 continue
             # Est./Proj. markers stripped so next month's status flip upserts
@@ -167,10 +189,10 @@ def _matrix_rows(matrix):
             yield metric, year_key, _num(cells[-1])
 
 
-def _report_date(sub) -> str:
+def _report_date(sub) -> str | None:
     """Report_Month 'June 2026' -> '2026-06-01' (source-derived, no wall clock)."""
     try:
-        d = datetime.strptime((sub.get("Report_Month") or "").strip(), "%B %Y")
+        d = datetime.strptime((sub.get("Report_Month") or "").strip(), "%B %Y")  # noqa: DTZ007 — date-only parse
     except ValueError:
         return None
     return d.date().replace(day=1).isoformat()
@@ -186,27 +208,33 @@ def parse_wasde_xml(xml_text) -> list:
     block the legitimate feed never has — reject those before parsing
     (treasury_screener.parse_yield_curve's guard)."""
     if xml_text and ("<!DOCTYPE" in xml_text or "<!ENTITY" in xml_text):
-        raise ValueError("refusing XML with a DOCTYPE/ENTITY declaration "
-                         "(entity-expansion guard)")
+        raise ValueError("refusing XML with a DOCTYPE/ENTITY declaration (entity-expansion guard)")
     root = ET.fromstring(xml_text)
     out = []
     for sub in root.iter("Report"):
         title = _norm_title(sub.get("sub_report_title"))
-        table = next((commodities for prefix, commodities in _US_TABLES
-                      if title.startswith(prefix)), None)
+        table = next(
+            (commodities for prefix, commodities in _US_TABLES if title.startswith(prefix)), None
+        )
         if table is None:
             continue
         report_date = _report_date(sub)
         matrices = [el for el in sub if el.tag.startswith("matrix")]
-        for (commodity, unit), matrix in zip(table, matrices):
+        for (commodity, unit), matrix in zip(table, matrices, strict=False):
             for metric, market_year, value in _matrix_rows(matrix):
-                out.append({"commodity": commodity, "region": _REGION,
-                            "metric": metric, "market_year": market_year,
-                            "value": value, "unit": unit,
-                            "report_date": report_date})
+                out.append(
+                    {
+                        "commodity": commodity,
+                        "region": _REGION,
+                        "metric": metric,
+                        "market_year": market_year,
+                        "value": value,
+                        "unit": unit,
+                        "report_date": report_date,
+                    }
+                )
     if not out:
-        raise WasdeSchemaError(
-            "report XML matched none of the curated U.S. supply/use tables")
+        raise WasdeSchemaError("report XML matched none of the curated U.S. supply/use tables")
     return out
 
 
@@ -225,5 +253,5 @@ def fetch_wasde(get=_http_get):
         try:
             return parse_wasde_xml(get(url))
         except (urllib.error.HTTPError, ET.ParseError, WasdeSchemaError):
-            continue                             # placeholder / gone -> next
+            continue  # placeholder / gone -> next
     return None
