@@ -37,7 +37,7 @@ if [ -n "${WATCH:-}" ]; then
 else
     echo "[$(date '+%F %T')] FAILED: empty earnings watchlist" >&2
 fi
-step stocks --db data/stocks.db --type s
-step stocks --db data/etfs.db --type e
+step stocks --db data/stocks.db --type s --keep-days 30
+step stocks --db data/etfs.db --type e --keep-days 30
 step reddit --db data/reddit.db --keep-days 90
 echo "[$(date '+%F %T')] preopen batch done"
