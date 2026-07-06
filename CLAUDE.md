@@ -23,14 +23,24 @@ uv run python main.py --list          # print all registered dispatcher names
 # data/<name>.db or you'll create a stray DB at repo root.
 
 # Tests (fully offline — no network, no real API keys needed)
-uv run pytest                          # full suite (~600 tests, <1s)
+uv run pytest                          # full suite (~700 tests, <1s)
 uv run pytest tests/test_fred_run.py   # one file
 uv run pytest -k regime                # by name substring
 uv run pytest tests/test_fred_run.py::test_run_upserts_observations  # single test
 
-# Dependencies are stdlib-only by design. Avoid adding runtime deps; if genuinely
-# unavoidable, add via `uv add` and justify it (it breaks the "plain checkout" property).
+# Lint / format / types (config in pyproject.toml; all must pass before commit)
+uv run ruff check                      # lint (add --fix for autofixes)
+uv run ruff format                     # format in place (--check to only verify)
+uv run mypy                            # type-check sources/, main.py, registry.py
+
+# Dependencies are stdlib-only by design (ruff/mypy/pytest are dev-group only).
+# Avoid adding runtime deps; if genuinely unavoidable, add via `uv add` and
+# justify it (it breaks the "plain checkout" property).
 ```
+
+The pre-commit hook (`.githooks/pre-commit`) runs all four gates in ~2s. It's wired via
+`core.hooksPath`; on a fresh clone run `git config core.hooksPath .githooks` once.
+Bypass an intentionally-red WIP commit with `git commit --no-verify`.
 
 API keys (`FRED_API_KEY`, `EIA_API_KEY`, `NASS_API_KEY`, optional `CFTC_APP_TOKEN`) live in `.env`
 — see `.env.example`. Most sources (SEC, FINRA, CBOE, Treasury, NY Fed) need no key.
