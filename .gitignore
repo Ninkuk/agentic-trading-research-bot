@@ -16,3 +16,6 @@ data/
 
 # Finder metadata
 .DS_Store
+
+# launchd job logs
+logs/
