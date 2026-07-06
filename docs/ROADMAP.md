@@ -26,19 +26,10 @@ decisions. Every day these issues stand, contaminated rows accumulate.
 refuses windows containing a split-shaped consecutive-day move on either
 leg; `v_basis_breaks` is the audit view. Residuals live in item 8.)*
 
-### 2. Entry-price look-ahead in outcome grading
-
-**Problem.** Entry price is the newest close ≤ `composite_date`, but composite
-runs at 9:05 pm using data through that same close — the earliest a human can
-act is the next open. Every graded outcome silently pockets the overnight gap,
-which is exactly where retail-attention signals (reddit, SI spikes, insider
-clusters) concentrate their apparent edge.
-
-**Done when.** Entry is the *next* trading day's close (the honest choice for
-a close-only ledger); existing pending rows regraded or marked pre-fix;
-efficacy views distinguish pre/post-fix vintages if both are retained.
-
-**Size.** S. **Depends on.** —
+*(Item 2, next-day entry, shipped 2026-07-06: entries are the first close
+strictly after `composite_date`; registration defers until that close
+exists, so steady-state registers with a one-night lag. Pre-fix pending
+rows are wiped by a one-time migration — nothing had matured.)*
 
 ### 3. Permanent close-ledger retention
 

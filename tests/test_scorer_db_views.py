@@ -110,7 +110,7 @@ def test_regime_and_pending(tmp_path):
     ).fetchone()
     assert r[0] == "risk_on" and r[1] == 1 and r[2] > 0
     # register something unmaturable -> shows in v_pending
-    db.register_snapshot(conn, 2, "2026-07-07", [], [], "mixed", (21,), "SPY", 7, NOW)
+    db.register_snapshot(conn, 2, "2026-07-06", [], [], "mixed", (21,), "SPY", 7, NOW)
     assert conn.execute("SELECT COUNT(*) FROM v_pending").fetchone()[0] == 1
 
 

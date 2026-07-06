@@ -31,10 +31,10 @@ def read_snapshots(conn) -> list:
     hours before truncating to a date — Phoenix is UTC-7 fixed year-round,
     no DST — so the nightly run (e.g. 9:05pm Phoenix = 04:05Z next day)
     lands on the trading evening the opinion was actually formed on, not
-    the UTC calendar day. A catch-up run after an outage can still
-    register a backlog snapshot later than steady-state; entry_date and
-    composite_date are both stored per outcome row, so that drift stays
-    filterable after the fact.
+    the UTC calendar day. Registration then waits for the first ledger
+    close AFTER that date (next-day entry, no look-ahead), so a backlog
+    snapshot registering after an outage still enters at its historically
+    exact close as long as the price ledger retains it.
     """
     return [
         (r[0], r[1])

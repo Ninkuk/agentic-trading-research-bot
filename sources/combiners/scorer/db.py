@@ -1,10 +1,12 @@
 """scorer.db: the permanent efficacy dataset. prices is a rolling ledger;
 outcome tables are never pruned — they ARE the experiment.
 
-Catch-up entries: a composite snapshot that registers late (e.g. after an
-outage) enters at whatever ledger window is current at registration time,
-not at its composite_date's own window. entry_date and composite_date are
-both stored per outcome row, so this drift is filterable after the fact."""
+Entries are next-day closes: a snapshot registers only once the ledger
+holds a close AFTER its composite_date (registration defers otherwise), so
+grading never pockets the overnight gap the opinion couldn't have traded.
+A snapshot that registers late (e.g. after an outage) still enters at its
+historically exact next close while the ledger retains it; beyond the
+price-prune window its symbols skip via the forward entry guard."""
 
 import sqlite3
 from datetime import datetime, timedelta
@@ -43,7 +45,7 @@ CREATE TABLE IF NOT EXISTS prices (
 CREATE TABLE IF NOT EXISTS registered_snapshots (
     composite_snapshot_id INTEGER PRIMARY KEY,
     composite_date        TEXT NOT NULL,
-    entry_date            TEXT,     -- ledger window anchor (MAX price_date <= composite_date); NULL if ledger empty
+    entry_date            TEXT,     -- ledger window anchor (MIN price_date > composite_date); registration defers while none exists
     registered_at         TEXT NOT NULL,
     ticker_rows           INTEGER NOT NULL,
     signal_rows           INTEGER NOT NULL,
@@ -217,13 +219,17 @@ def insert_prices(conn, rows) -> int:
 
 
 def entry_for(conn, symbol, composite_date, max_age_days):
-    """Newest ledger close on/before composite_date, unless staler than the
-    guard (halted/delisted symbols must not register garbage windows)."""
+    """First ledger close STRICTLY AFTER composite_date — the earliest price
+    the opinion could actually be acted on. The composite forms its opinion
+    at 9:05pm using data through that day's close, so entering at that same
+    close would silently pocket the overnight gap (look-ahead). The forward
+    guard refuses thin/halted symbols whose next print lands more than
+    max_age_days after the opinion (7 covers any holiday weekend)."""
     row = conn.execute(
         "SELECT price_date, close FROM prices WHERE symbol=?"
-        " AND price_date <= ? AND price_date >= date(?, ?)"
-        " ORDER BY price_date DESC LIMIT 1",
-        (symbol, composite_date, composite_date, f"-{int(max_age_days)} days"),
+        " AND price_date > ? AND price_date <= date(?, ?)"
+        " ORDER BY price_date ASC LIMIT 1",
+        (symbol, composite_date, composite_date, f"+{int(max_age_days)} days"),
     ).fetchone()
     return (row[0], row[1]) if row else None
 
@@ -251,6 +257,13 @@ def register_snapshot(
     """All-or-nothing registration of one composite snapshot: the marker row
     and every outcome row commit together. Returns (registered, skipped).
 
+    Entries are next-day closes (no look-ahead), so on the night a snapshot
+    is created its entry close doesn't exist yet: registration DEFERS —
+    returns (0, 0) without writing the marker — and the nightly loop's
+    registered_ids diff naturally retries it once the ledger advances.
+    Steady state therefore registers each night's snapshot the following
+    night.
+
     One grading per trading window (adversarial-review F3): weekend and
     same-day-rerun composite snapshots share a ledger window anchor; only
     the first snapshot for that anchor registers outcome rows — later
@@ -258,20 +271,23 @@ def register_snapshot(
     never revisits them. Multi-counting duplicate windows would let
     v_bucket_performance treat copies of one window as independent samples.
 
-    The dedupe key is the ledger's window anchor (MAX price_date <=
+    The dedupe key is the ledger's window anchor (MIN price_date >
     composite_date across ALL symbols) rather than the benchmark's own
     entry date: if the benchmark's price for the window never lands (e.g.
     an etfs-only harvest failure) while ticker prices for that day exist,
-    keying off the benchmark's entry would silently fall back to a prior
+    keying off the benchmark's entry would silently fall back to another
     day's close and collide with an already-registered window, durably
     discarding an otherwise gradeable night as marker-only.
     """
     registered = skipped = 0
     with conn:  # transaction
         window_anchor = conn.execute(
-            "SELECT MAX(price_date) FROM prices WHERE price_date <= ?",
+            "SELECT MIN(price_date) FROM prices WHERE price_date > ?",
             (composite_date,),
         ).fetchone()[0]
+        if window_anchor is None:
+            print(f"defer composite snapshot {csid}: ledger not past {composite_date}")
+            return 0, 0
         duplicate_window = (
             window_anchor is not None
             and conn.execute(

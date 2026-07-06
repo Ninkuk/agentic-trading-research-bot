@@ -35,11 +35,13 @@ def test_insert_prices_dedupes(tmp_path):
 def test_entry_for_respects_guard(tmp_path):
     conn = _conn(tmp_path)
     _ledger(conn, "AAPL", DAYS)
-    # weekend composite date -> Friday 07-02 close
-    assert db.entry_for(conn, "AAPL", "2026-07-05", 7) == ("2026-07-02", 105.0)
-    # stale: newest price 07-07, composite date 30 days later
-    assert db.entry_for(conn, "AAPL", "2026-08-15", 7) is None
-    assert db.entry_for(conn, "GHOST", "2026-07-05", 7) is None
+    # first close strictly after the opinion date; holiday weekend spanned
+    assert db.entry_for(conn, "AAPL", "2026-07-02", 7) == ("2026-07-06", 106.0)
+    # nothing after the last ledger date
+    assert db.entry_for(conn, "AAPL", "2026-07-07", 7) is None
+    # forward guard: next print lands more than 7 days after the opinion
+    assert db.entry_for(conn, "AAPL", "2026-06-10", 7) is None
+    assert db.entry_for(conn, "GHOST", "2026-07-02", 7) is None
 
 
 def test_register_and_mature_roundtrip(tmp_path):
@@ -61,18 +63,19 @@ def test_register_and_mature_roundtrip(tmp_path):
         now_iso=NOW,
     )
     assert (reg, skipped) == (3, 0)  # 1 ticker + 1 signal + 1 regime
-    # entry was 07-01 (close 104 / 504); +2 trading days = 07-06
+    # entry is the first close AFTER 07-01 -> 07-02 (105 / 505), no
+    # look-ahead; +2 trading days = 07-07
     assert db.mature(conn, NOW) == 3
     t = conn.execute(
         "SELECT entry_date, entry_close, exit_date, exit_close,"
         " fwd_return, bench_fwd_return FROM ticker_outcomes"
     ).fetchone()
-    assert t[0] == "2026-07-01" and t[1] == 104.0
-    assert t[2] == "2026-07-06" and t[3] == 106.0
-    assert abs(t[4] - (106.0 / 104.0 - 1)) < 1e-9
-    assert abs(t[5] - (506.0 / 504.0 - 1)) < 1e-9
+    assert t[0] == "2026-07-02" and t[1] == 105.0
+    assert t[2] == "2026-07-07" and t[3] == 107.0
+    assert abs(t[4] - (107.0 / 105.0 - 1)) < 1e-9
+    assert abs(t[5] - (507.0 / 505.0 - 1)) < 1e-9
     r = conn.execute("SELECT regime, bench_fwd_return FROM regime_outcomes").fetchone()
-    assert r[0] == "risk_on" and abs(r[1] - (506.0 / 504.0 - 1)) < 1e-9
+    assert r[0] == "risk_on" and abs(r[1] - (507.0 / 505.0 - 1)) < 1e-9
 
 
 def test_pending_without_data_stays_pending(tmp_path):
@@ -91,7 +94,7 @@ def test_pending_without_data_stays_pending(tmp_path):
         7,
         NOW,
     )
-    assert db.mature(conn, NOW) == 0  # only 1 day past entry exists
+    assert db.mature(conn, NOW) == 0  # entry 07-07 is the last ledger date
     assert conn.execute("SELECT exit_close FROM ticker_outcomes").fetchone()[0] is None
 
 
@@ -156,7 +159,7 @@ def test_duplicate_entry_window_registers_marker_only(tmp_path):
     _ledger(conn, "SPY", DAYS, start=500.0)
     rows = [dict(symbol="AAPL", score_sum=2, total=2, bullish=2, bearish=0, in_portfolio=0)]
     reg1, _ = db.register_snapshot(conn, 1, "2026-07-04", rows, [], "risk_on", (5,), "SPY", 7, NOW)
-    # Sunday-run snapshot grades the same Friday close window
+    # Sunday-run snapshot shares the same Monday entry close -> marker-only
     reg2, _ = db.register_snapshot(conn, 2, "2026-07-05", rows, [], "risk_on", (5,), "SPY", 7, NOW)
     assert reg1 == 2 and reg2 == 0  # ticker + regime, then marker-only
     assert {1, 2} <= db.registered_ids(conn)
@@ -169,47 +172,58 @@ def test_bench_gap_does_not_discard_gradeable_night(tmp_path):
     _ledger(conn, "AAPL", DAYS)  # AAPL ledger runs through 2026-07-07
     rows = [dict(symbol="AAPL", score_sum=2, total=2, bullish=2, bearish=0, in_portfolio=0)]
 
-    # snap 1: window anchor is 07-02 (both ledgers have that date) -> registers normally
-    reg1, skipped1 = db.register_snapshot(
+    # etfs-only harvest failure: SPY has no close after 07-02 but AAPL does,
+    # so the anchor is AAPL's 07-06 and the night still registers — the
+    # ticker row with NULL bench, the regime row skipped (its graded leg IS
+    # the benchmark) — rather than being discarded or deferred forever.
+    reg, skipped = db.register_snapshot(
         conn, 1, "2026-07-02", rows, [], "risk_on", (5,), "SPY", 7, NOW
     )
-    assert reg1 == 2 and skipped1 == 0  # ticker + regime
     assert 1 in db.registered_ids(conn)
-
-    # snap 2: etfs-only harvest failure means SPY has no 07-07 price, but AAPL
-    # does -> window anchor is 07-07 (AAPL's), which differs from 07-02, so
-    # this must NOT be discarded as a duplicate window.
-    rows2 = [dict(symbol="AAPL", score_sum=1, total=1, bullish=1, bearish=0, in_portfolio=0)]
-    reg2, skipped2 = db.register_snapshot(
-        conn, 2, "2026-07-07", rows2, [], "risk_on", (5,), "SPY", 7, NOW
-    )
-    assert 2 in db.registered_ids(conn)
+    assert (reg, skipped) == (1, 1)  # ticker registered; regime skipped
     assert (
         conn.execute(
-            "SELECT entry_date FROM registered_snapshots WHERE composite_snapshot_id = 2"
+            "SELECT entry_date FROM registered_snapshots WHERE composite_snapshot_id = 1"
         ).fetchone()[0]
-        == "2026-07-07"
+        == "2026-07-06"
     )
-
     ticker_row = conn.execute(
-        "SELECT entry_date, bench_entry_close FROM ticker_outcomes WHERE composite_snapshot_id = 2"
+        "SELECT entry_date, bench_entry_close FROM ticker_outcomes"
     ).fetchone()
-    assert ticker_row == ("2026-07-07", None)  # SPY has no 07-07 price
+    assert ticker_row == ("2026-07-06", None)
+    assert conn.execute("SELECT COUNT(*) FROM regime_outcomes").fetchone()[0] == 0
 
-    # regime row: bench entry_for("SPY", "2026-07-07", 7) still finds the
-    # 07-02 close (within the 7-day staleness guard) -> registers, not skipped.
-    regime_row = conn.execute(
-        "SELECT entry_date FROM regime_outcomes WHERE composite_snapshot_id = 2"
-    ).fetchone()
-    assert regime_row == ("2026-07-02",)
-    assert reg2 == 2 and skipped2 == 0  # ticker + regime, both registered
+
+def test_same_night_registration_defers(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "AAPL", DAYS[:6])
+    _ledger(conn, "SPY", DAYS[:6], start=500.0)
+    rows = [dict(symbol="AAPL", score_sum=2, total=2, bullish=2, bearish=0, in_portfolio=0)]
+    # opinion formed on the ledger's newest date: its entry close doesn't
+    # exist yet, so registration must defer -- no marker, retried later.
+    reg, skipped = db.register_snapshot(
+        conn, 1, "2026-07-02", rows, [], "risk_on", (5,), "SPY", 7, NOW
+    )
+    assert (reg, skipped) == (0, 0)
+    assert db.registered_ids(conn) == set()
+    assert conn.execute("SELECT COUNT(*) FROM ticker_outcomes").fetchone()[0] == 0
+    # next night the 07-06 closes land -> the same snapshot registers
+    db.insert_prices(conn, [("AAPL", "2026-07-06", 106.0), ("SPY", "2026-07-06", 506.0)])
+    reg, skipped = db.register_snapshot(
+        conn, 1, "2026-07-02", rows, [], "risk_on", (5,), "SPY", 7, NOW
+    )
+    assert (reg, skipped) == (2, 0)  # ticker + regime
+    assert 1 in db.registered_ids(conn)
 
 
 def test_gap_beyond_bound_stays_pending(tmp_path):
     conn = _conn(tmp_path)
-    db.insert_prices(conn, [("AAPL", "2026-07-01", 100.0), ("SPY", "2026-07-01", 500.0)])
-    # ledger gap: next prices only in November (sources were down > 30d)
-    db.insert_prices(conn, [("AAPL", f"2026-11-{d:02d}", 200.0) for d in range(2, 9)])
+    db.insert_prices(conn, [("AAPL", "2026-07-01", 100.0), ("AAPL", "2026-07-02", 100.0)])
+    db.insert_prices(conn, [("SPY", "2026-07-01", 500.0), ("SPY", "2026-07-02", 500.0)])
+    # ledger gap: next prices only in November (sources were down > 30d);
+    # 150 keeps the day-over-day ratio inside the basis-break bounds so the
+    # calendar bound is what's under test here
+    db.insert_prices(conn, [("AAPL", f"2026-11-{d:02d}", 150.0) for d in range(2, 9)])
     db.register_snapshot(
         conn,
         1,
@@ -278,7 +292,7 @@ def test_registered_counts_actual_inserts(tmp_path):
 
 
 def _register_one(conn, symbol, horizons):
-    """Register a single bullish ticker row entered on DAYS[0]."""
+    """Register a single bullish DAYS[0] opinion (enters at DAYS[1]'s close)."""
     return db.register_snapshot(
         conn,
         1,
@@ -314,8 +328,8 @@ def test_gradual_crash_still_matures(tmp_path):
     _register_one(conn, "CRSH", (5,))
     db.mature(conn, NOW)
     t = conn.execute("SELECT exit_date, fwd_return FROM ticker_outcomes").fetchone()
-    assert t[0] == DAYS[5]
-    assert abs(t[1] - (53.0 / 100.0 - 1)) < 1e-9
+    assert t[0] == DAYS[6]  # entry DAYS[1] + 5 trading days
+    assert abs(t[1] - (47.0 / 88.0 - 1)) < 1e-9
 
 
 def test_split_after_exit_does_not_block(tmp_path):
@@ -324,13 +338,13 @@ def test_split_after_exit_does_not_block(tmp_path):
     closes = [100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 52.0, 52.5]
     db.insert_prices(conn, list(zip(["ACME"] * 8, DAYS, closes, strict=True)))
     _ledger(conn, "SPY", DAYS, start=500.0)
-    _register_one(conn, "ACME", (5, 6))
+    _register_one(conn, "ACME", (4, 5))
     db.mature(conn, NOW)
     rows = dict(
         conn.execute("SELECT horizon, matured_at IS NOT NULL FROM ticker_outcomes").fetchall()
     )
-    assert rows[5] == 1  # window ends at DAYS[5], before the break
-    assert rows[6] == 0  # window spans the break -> quarantined
+    assert rows[4] == 1  # entry DAYS[1] + 4 days ends at DAYS[5], before the break
+    assert rows[5] == 0  # window spans the break -> quarantined
 
 
 def test_benchmark_break_blocks_symbol_rows(tmp_path):

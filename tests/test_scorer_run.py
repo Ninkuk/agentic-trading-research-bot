@@ -62,8 +62,8 @@ def test_full_cycle(tmp_path, capsys):
     assert harvested == 10  # 5 dates x 2 symbols
     assert registered > 0 and skipped == 0
     conn = sqlite3.connect(out)
-    # entry 07-01 (close 102); +5/+10/+21 pending (only 2 fwd days), so
-    # nothing matured yet
+    # entry is the first close after 07-01 -> 07-02; +5/+10/+21 pending
+    # (only 1 fwd day), so nothing matured yet
     assert matured == 0
     assert conn.execute("SELECT COUNT(*) FROM v_pending").fetchone()[0] > 0
     # header records honest counts
