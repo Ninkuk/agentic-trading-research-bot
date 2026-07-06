@@ -47,3 +47,58 @@ def test_score_history_spans_snapshots(tmp_path):
         "SELECT captured_at, score_sum FROM v_score_history"
         " WHERE symbol='GME' ORDER BY captured_at").fetchall()
     assert got == [(T1, 3), (T2, 6)]
+
+
+def test_flagged_isolates_each_threshold(tmp_path):
+    """Verify v_flagged applies both thresholds independently.
+    - HIGHSUM_LOWTOT: score_sum=4 (passes sum), total=2 (fails total) -> not flagged
+    - LOWSUM_HIGHTOT: score_sum=3 (fails sum), total=3 (passes total) -> not flagged
+    - AT_BOUNDARY: score_sum=4, total=3 -> flagged (both at boundary)
+    - NEG_BOUNDARY: score_sum=-4, total=3 -> flagged (ABS applies)
+    """
+    conn = db.connect(str(tmp_path / "c2.db")); db.ensure_schema(conn)
+    sid = db.write_snapshot(conn, T2, 1)
+
+    # HIGHSUM_LOWTOT: 2 signals, both score 2 -> score_sum 4, total 2
+    db.write_signal_values(conn, sid, [
+        dict(signal_id="s0", grain="ticker", entity="HIGHSUM_LOWTOT",
+             raw_value=1.0, score=2, obs_date="2026-07-03", staleness_days=1.0),
+        dict(signal_id="s1", grain="ticker", entity="HIGHSUM_LOWTOT",
+             raw_value=1.0, score=2, obs_date="2026-07-03", staleness_days=1.0)
+    ])
+
+    # LOWSUM_HIGHTOT: 3 signals, scores 1,1,1 -> score_sum 3, total 3
+    db.write_signal_values(conn, sid, [
+        dict(signal_id="s0", grain="ticker", entity="LOWSUM_HIGHTOT",
+             raw_value=1.0, score=1, obs_date="2026-07-03", staleness_days=1.0),
+        dict(signal_id="s1", grain="ticker", entity="LOWSUM_HIGHTOT",
+             raw_value=1.0, score=1, obs_date="2026-07-03", staleness_days=1.0),
+        dict(signal_id="s2", grain="ticker", entity="LOWSUM_HIGHTOT",
+             raw_value=1.0, score=1, obs_date="2026-07-03", staleness_days=1.0)
+    ])
+
+    # AT_BOUNDARY: 3 signals, scores 2,1,1 -> score_sum 4, total 3
+    db.write_signal_values(conn, sid, [
+        dict(signal_id="s0", grain="ticker", entity="AT_BOUNDARY",
+             raw_value=1.0, score=2, obs_date="2026-07-03", staleness_days=1.0),
+        dict(signal_id="s1", grain="ticker", entity="AT_BOUNDARY",
+             raw_value=1.0, score=1, obs_date="2026-07-03", staleness_days=1.0),
+        dict(signal_id="s2", grain="ticker", entity="AT_BOUNDARY",
+             raw_value=1.0, score=1, obs_date="2026-07-03", staleness_days=1.0)
+    ])
+
+    # NEG_BOUNDARY: 3 signals, scores -2,-1,-1 -> score_sum -4, total 3
+    db.write_signal_values(conn, sid, [
+        dict(signal_id="s0", grain="ticker", entity="NEG_BOUNDARY",
+             raw_value=1.0, score=-2, obs_date="2026-07-03", staleness_days=1.0),
+        dict(signal_id="s1", grain="ticker", entity="NEG_BOUNDARY",
+             raw_value=1.0, score=-1, obs_date="2026-07-03", staleness_days=1.0),
+        dict(signal_id="s2", grain="ticker", entity="NEG_BOUNDARY",
+             raw_value=1.0, score=-1, obs_date="2026-07-03", staleness_days=1.0)
+    ])
+
+    db.write_ticker_scores(conn, sid)
+
+    # Only AT_BOUNDARY and NEG_BOUNDARY should pass both thresholds
+    flagged = sorted(r[0] for r in conn.execute("SELECT symbol FROM v_flagged"))
+    assert flagged == ["AT_BOUNDARY", "NEG_BOUNDARY"]
