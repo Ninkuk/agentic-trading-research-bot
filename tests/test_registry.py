@@ -12,9 +12,7 @@ def test_dispatch_lists_registered_screeners(capsys):
 
 def test_dispatch_routes_and_forwards_argv(monkeypatch):
     seen = {}
-    monkeypatch.setitem(
-        registry.REGISTRY, "reddit", lambda argv: seen.setdefault("argv", argv)
-    )
+    monkeypatch.setitem(registry.REGISTRY, "reddit", lambda argv: seen.setdefault("argv", argv))
     registry.dispatch(["reddit", "--db", "x.db"])
     assert seen["argv"] == ["--db", "x.db"]
 
