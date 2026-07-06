@@ -13,3 +13,6 @@ screener.db
 .claude/settings.local.json
 
 data/
+
+# Finder metadata
+.DS_Store
