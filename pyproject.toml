@@ -8,9 +8,44 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "mypy>=2.1.0",
     "pytest>=9.1.1",
+    "ruff>=0.15.20",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E4", "E7", "E9",  # pycodestyle errors
+    "F",               # pyflakes
+    "I",               # isort (import sorting)
+    "B",               # bugbear (likely bugs)
+    "UP",              # pyupgrade (modern syntax)
+    "SIM",             # simplification
+    "DTZ",             # naive-datetime bans (protects the fixed-width UTC timestamp invariant)
+]
+ignore = [
+    "SIM105",  # try/except/pass is the skip-and-continue idiom here
+    "SIM108",  # ternary is not always clearer
+]
+
+[tool.ruff.lint.per-file-ignores]
+# tests: naive datetimes in fixtures, `assert False` idiom, mid-file imports after fixtures
+"tests/*" = ["DTZ", "B011", "E402"]
+# deploy scripts intentionally compare local wall-clock to local log timestamps
+"deploy/*" = ["DTZ"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["sources", "main.py", "registry.py"]
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
