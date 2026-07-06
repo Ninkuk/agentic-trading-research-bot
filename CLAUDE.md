@@ -16,9 +16,11 @@ SQLite database, then derive signals in SQL views.
 
 ```bash
 # Run a screener/monitor (dispatched by name; see registry.py for the names)
-uv run python main.py fred --db fred.db --keep-days 90
+uv run python main.py fred --db data/fred.db --keep-days 90   # DBs live in data/
 uv run python main.py cftc --family disaggregated
 uv run python main.py --list          # print all registered dispatcher names
+# NOTE: every --db default is a bare cwd-relative filename (e.g. fred.db); always pass
+# data/<name>.db or you'll create a stray DB at repo root.
 
 # Tests (fully offline — no network, no real API keys needed)
 uv run pytest                          # full suite (~600 tests, <1s)
@@ -51,6 +53,11 @@ Exceptions to the four-file rule: `sources/monitors/market_calendar/compute.py` 
 OPEX/holiday math), `sources/screeners/stock_analysis_screener/probe.py` + `typing.py`
 (SvelteKit `__data.json` "devalue" decoder), `sources/screeners/usda_screener/wasde.py`.
 
+One inverted slice: `portfolio` has no network in `fetch.py` at all — live Robinhood
+state is fetched by Claude via MCP (see `.claude/skills/account-positions`) and piped in
+as JSON via `main.py portfolio --input <file|->`. Live account state enters the system
+only through that dispatcher; never write SQL against `portfolio.db` directly.
+
 ### File tree
 
 Every screener/monitor package lives under `sources/`, nested by kind:
@@ -58,7 +65,7 @@ Every screener/monitor package lives under `sources/`, nested by kind:
 ```
 sources/
 ├── common/       # screener_common.py, monitor_common.py, http_client.py
-├── screeners/    # 16 point-in-time data readers (import screener_common)
+├── screeners/    # 17 point-in-time data readers (import screener_common)
 └── monitors/     # 4 event-date calendars (import monitor_common)
 ```
 
@@ -124,7 +131,8 @@ don't expect earlier ones to still be on disk.
 
 **Data-source policy:** official primary sources only, with one approved exception —
 **stockanalysis.com** (already trusted; used by `stocks` and `earnings`). `reddit` (ApeWisdom)
-predates the policy and stays as-is.
+predates the policy and stays as-is. `portfolio` is account state (Robinhood via MCP),
+not a market data source, so the policy doesn't apply to it.
 
 Tests mirror the module layout: `tests/test_<name>_<layer>.py` where layer ∈
 {`catalog`, `fetch`, `db_schema`, `db_write`, `db_views`, `run`}. Register the new `main` in
