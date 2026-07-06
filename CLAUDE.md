@@ -7,12 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 A signal-collection layer for a trading bot: ~20 independent **screeners** (point-in-time data
 readers) and event-date **monitors** (forward-looking calendars) that each fetch one official
 data source (SEC, FRED, CFTC, FINRA, CBOE, Treasury, NY Fed, EIA, USDA, …) into a per-source
-SQLite database, then derive signals in SQL views. Downstream consumption (the "signal → candidate"
-pipeline) is designed in `docs/research/` and tracked in `docs/PIPELINE_ROADMAP.md`. All six
-stages are built: `pipeline/leads/` (signal funnel), `pipeline/promote/` (promotion gates),
-`pipeline/gate/` (bounded LLM gate + decision log/replay), `pipeline/scheduler/` (two-clock
-scheduler), and `pipeline/trials/` (backtest harness + fred vintages). The pipeline layer is
-feature-complete per `docs/PIPELINE_ROADMAP.md`; remaining work is calibration + FOLLOWUPS.
+SQLite database, then derive signals in SQL views.
 
 **Zero runtime third-party dependencies** — everything is stdlib (`urllib`, `sqlite3`, `json`,
 `argparse`). Python 3.12, managed with `uv`. The only dev dependency is `pytest`.
@@ -20,7 +15,7 @@ feature-complete per `docs/PIPELINE_ROADMAP.md`; remaining work is calibration +
 ## Commands
 
 ```bash
-# Run a screener/monitor/pipeline stage (dispatched by name; see registry.py for the names)
+# Run a screener/monitor (dispatched by name; see registry.py for the names)
 uv run python main.py fred --db fred.db --keep-days 90
 uv run python main.py cftc --family disaggregated
 uv run python main.py --list          # print all registered dispatcher names
@@ -75,7 +70,7 @@ source itself. Import a screener/monitor's internals as `sources.screeners.<name
 
 - **`registry.py`** (repo root) — `REGISTRY` dict maps name → each screener's `main`;
   `dispatch()` routes `main.py <name> [args...]`. **A screener "ships" only once registered
-  here** (this is the source of truth for `docs/SOURCES_ROADMAP.md`).
+  here.**
 - **`sources/common/screener_common.py`** — `connect()` (opens SQLite in **WAL** mode) and a
   generic snapshot cascade `prune()`.
 - **`sources/common/monitor_common.py`** — the event-date **monitor framework**: a forward
@@ -125,14 +120,7 @@ source itself. Import a screener/monitor's internals as `sources.screeners.<name
 The repo follows **spec → plan → build**. The design spec and implementation plan are
 transient working docs (write them under `docs/superpowers/specs/<date>-<name>-design.md`
 and `docs/superpowers/plans/<date>-<name>.md`); they're cleared once the screener ships, so
-don't expect earlier ones to still be on disk. The durable trackers stay under `docs/`:
-
-- `docs/SOURCES_ROADMAP.md` — parent tracker of every screener/monitor and its status (Built ✅ = in
-  `registry.py`). Update it as work lands.
-- `docs/PIPELINE_ROADMAP.md` — parent tracker for the signal → candidate pipeline stages
-  (funnel, gates, LLM gate, scheduler, backtest harness). Same status legend and
-  registry.py source-of-truth as SOURCES_ROADMAP.md.
-- `docs/FOLLOWUPS.md` — deferred follow-ups, live endpoint-verification tasks, and the idea backlog.
+don't expect earlier ones to still be on disk.
 
 **Data-source policy:** official primary sources only, with one approved exception —
 **stockanalysis.com** (already trusted; used by `stocks` and `earnings`). `reddit` (ApeWisdom)
