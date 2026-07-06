@@ -169,3 +169,25 @@ def test_prune_never_touches_outcomes(tmp_path):
                         ).fetchone()[0] == 1  # outcomes untouched
     assert conn.execute("SELECT COUNT(*) FROM snapshots WHERE id=?",
                         (old_header,)).fetchone()[0] == 0
+
+
+def test_registered_counts_actual_inserts(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "AAPL", DAYS)
+    _ledger(conn, "SPY", DAYS, start=500.0)
+    # Two identical ticker_rows for "AAPL"; the duplicate will be ignored
+    ticker_rows = [
+        dict(symbol="AAPL", score_sum=2, total=2, bullish=2, bearish=0,
+             in_portfolio=0),
+        dict(symbol="AAPL", score_sum=2, total=2, bullish=2, bearish=0,
+             in_portfolio=0)
+    ]
+    reg, skipped = db.register_snapshot(
+        conn, 1, "2026-07-01", ticker_rows, [], "risk_on",
+        horizons=(5,), benchmark="SPY", max_age_days=7, now_iso=NOW)
+    # Expected: 1 ticker (duplicate ignored) + 1 regime = 2
+    assert reg == 2
+    assert skipped == 0
+    # Verify only one ticker_outcomes row was actually inserted
+    assert conn.execute("SELECT COUNT(*) FROM ticker_outcomes"
+                        ).fetchone()[0] == 1

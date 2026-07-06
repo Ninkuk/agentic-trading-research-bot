@@ -180,7 +180,7 @@ def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
                 continue
             bench = _bench_close(conn, benchmark, entry[0])
             for h in horizons:
-                conn.execute(
+                cur = conn.execute(
                     "INSERT OR IGNORE INTO ticker_outcomes"
                     " (composite_snapshot_id, composite_date, symbol,"
                     "  score_sum, total, bullish, bearish, in_portfolio,"
@@ -189,7 +189,7 @@ def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
                     (csid, composite_date, r["symbol"], r["score_sum"],
                      r["total"], r["bullish"], r["bearish"],
                      r["in_portfolio"], h, entry[0], entry[1], bench))
-                registered += 1
+                registered += cur.rowcount
         for r in signal_rows:
             entry = entry_for(conn, r["entity"], composite_date, max_age_days)
             if entry is None:
@@ -197,7 +197,7 @@ def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
                 continue
             bench = _bench_close(conn, benchmark, entry[0])
             for h in horizons:
-                conn.execute(
+                cur = conn.execute(
                     "INSERT OR IGNORE INTO signal_outcomes"
                     " (composite_snapshot_id, composite_date, signal_id,"
                     "  entity, score, via_crosswalk, horizon, entry_date,"
@@ -206,19 +206,19 @@ def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
                     (csid, composite_date, r["signal_id"], r["entity"],
                      r["score"], r["via_crosswalk"], h, entry[0], entry[1],
                      bench))
-                registered += 1
+                registered += cur.rowcount
         if bench_entry is None:
             skipped += 1
         else:
             for h in horizons:
-                conn.execute(
+                cur = conn.execute(
                     "INSERT OR IGNORE INTO regime_outcomes"
                     " (composite_snapshot_id, composite_date, regime,"
                     "  horizon, entry_date, bench_entry_close)"
                     " VALUES (?,?,?,?,?,?)",
                     (csid, composite_date, regime, h,
                      bench_entry[0], bench_entry[1]))
-                registered += 1
+                registered += cur.rowcount
         conn.execute(
             "UPDATE registered_snapshots SET ticker_rows=?, signal_rows=?,"
             " skipped=? WHERE composite_snapshot_id=?",
