@@ -58,6 +58,14 @@ state is fetched by Claude via MCP (see `.claude/skills/account-positions`) and 
 as JSON via `main.py portfolio --input <file|->`. Live account state enters the system
 only through that dispatcher; never write SQL against `portfolio.db` directly.
 
+**Combiners are the third source kind.** Unlike screeners/monitors, a combiner's `fetch.py`
+never touches the network — it reads the other `data/*.db` files ATTACHed read-only and
+derives a cross-source view (e.g. `composite`: a market regime + a per-ticker scorecard). It
+binds its own `:today` instead of reading a source's `calendar_now`-dependent views (monitor
+`v_upcoming`/`v_imminent`, `treasury.v_upcoming_auctions`, `fred.v_asof`), so it stays on one
+clock without depending on any single source's calendar state. Otherwise it ships like any
+other source: registered in `registry.py`, dispatched via `main.py composite ...`.
+
 ### File tree
 
 Every screener/monitor package lives under `sources/`, nested by kind:
@@ -66,12 +74,13 @@ Every screener/monitor package lives under `sources/`, nested by kind:
 sources/
 ├── common/       # screener_common.py, monitor_common.py, http_client.py
 ├── screeners/    # 17 point-in-time data readers (import screener_common)
-└── monitors/     # 4 event-date calendars (import monitor_common)
+├── monitors/     # 4 event-date calendars (import monitor_common)
+└── combiners/    # 1 cross-source combiner (composite: regime + ticker scorecard)
 ```
 
 `registry.py` and `main.py` stay at repo root — `registry.py` is the CLI dispatch table, not a
-source itself. Import a screener/monitor's internals as `sources.screeners.<name>.<module>` /
-`sources.monitors.<name>.<module>`.
+source itself. Import a screener/monitor/combiner's internals as `sources.screeners.<name>.<module>` /
+`sources.monitors.<name>.<module>` / `sources.combiners.<name>.<module>`.
 
 ### Shared spine
 
