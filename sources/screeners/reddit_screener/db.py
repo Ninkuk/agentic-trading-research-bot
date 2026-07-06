@@ -1,4 +1,5 @@
-from sources.common.screener_common import connect, prune as _prune
+from sources.common.screener_common import connect as connect  # re-exported for callers
+from sources.common.screener_common import prune as _prune
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -77,8 +78,7 @@ def ensure_schema(conn) -> None:
     conn.commit()
 
 
-def write_snapshot(conn, captured_at: str, filter_: str,
-                   rows: list[dict]) -> tuple[int, int]:
+def write_snapshot(conn, captured_at: str, filter_: str, rows: list[dict]) -> tuple[int, int]:
     """Insert one snapshot header + its observation rows. Returns (id, count).
 
     ApeWisdom occasionally repeats the same ticker across pages. An observation
@@ -123,9 +123,15 @@ def upsert_tickers(conn, rows: list[dict], captured_at: str) -> None:
              name=excluded.name,
              asset_type=excluded.asset_type,
              last_seen=excluded.last_seen""",
-        [{"ticker": r["ticker"], "name": r["name"],
-          "asset_type": _asset_type(r["ticker"]), "seen": captured_at}
-         for r in rows],
+        [
+            {
+                "ticker": r["ticker"],
+                "name": r["name"],
+                "asset_type": _asset_type(r["ticker"]),
+                "seen": captured_at,
+            }
+            for r in rows
+        ],
     )
     conn.commit()
 
