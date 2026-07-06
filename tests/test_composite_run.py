@@ -1,5 +1,7 @@
 import sqlite3
 
+import pytest
+
 from sources.combiners.composite import db, run as run_mod
 from sources.screeners.fred_screener import db as fred_db
 from sources.screeners.portfolio_screener import db as pf_db
@@ -84,6 +86,27 @@ def test_run_never_writes_to_sources(tmp_path):
     run_mod.run(str(tmp_path / "composite.db"), str(tmp_path),
                 now_iso=NOW, signals=[FRED_SIG])
     assert (tmp_path / "fred.db").read_bytes() == before
+
+
+def test_run_phase2_failure_is_loud_and_header_honest(
+        tmp_path, capsys, monkeypatch):
+    _mini_fred(tmp_path)
+    monkeypatch.setattr(
+        run_mod.db, "write_market_regime",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom-secret")))
+    out = str(tmp_path / "composite.db")
+    with pytest.raises(RuntimeError):
+        run_mod.run(out, str(tmp_path), now_iso=NOW, signals=[FRED_SIG])
+    conn = sqlite3.connect(out)
+    assert conn.execute("SELECT signals_ok, signals_failed FROM snapshots"
+                        ).fetchone() == (1, 0)
+    assert conn.execute("SELECT COUNT(*) FROM market_regime"
+                        ).fetchone()[0] == 0
+    assert conn.execute("SELECT COUNT(*) FROM signal_values"
+                        ).fetchone()[0] == 1
+    captured = capsys.readouterr().out
+    assert "combine failed: RuntimeError" in captured
+    assert "boom-secret" not in captured
 
 
 def test_main_argv_roundtrip(tmp_path, capsys):

@@ -49,9 +49,18 @@ def run(db_path, db_dir, now_iso=None, only=None, exclude=None, add=None,
                         failed += 1
             finally:
                 fetch.detach(conn)
-        db.apply_crosswalk(conn, sid, catalog.CROSSWALK)
-        db.write_market_regime(conn, sid, catalog.REGIME_FIELDS)
-        db.write_ticker_scores(conn, sid)
+        try:
+            db.apply_crosswalk(conn, sid, catalog.CROSSWALK)
+            db.write_market_regime(conn, sid, catalog.REGIME_FIELDS)
+            db.write_ticker_scores(conn, sid)
+        except Exception as e:
+            # Loud failure, honest header: record the real phase-1 counts,
+            # drop partial combine writes, and re-raise for the operator.
+            conn.rollback()
+            db.finish_snapshot(conn, sid, ok, failed)
+            conn.commit()
+            print(f"combine failed: {type(e).__name__}")
+            raise
         db.finish_snapshot(conn, sid, ok, failed)
         conn.commit()
         if keep_days is not None:
