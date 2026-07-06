@@ -59,6 +59,33 @@ CREATE TABLE IF NOT EXISTS ticker_scores (
     in_portfolio         INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (snapshot_id, symbol)
 );
+
+CREATE VIEW IF NOT EXISTS v_latest_snapshot AS
+SELECT id FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1;
+
+CREATE VIEW IF NOT EXISTS v_latest_regime AS
+SELECT m.* FROM market_regime m
+JOIN v_latest_snapshot l ON m.snapshot_id = l.id;
+
+CREATE VIEW IF NOT EXISTS v_latest_scorecard AS
+SELECT t.* FROM ticker_scores t
+JOIN v_latest_snapshot l ON t.snapshot_id = l.id;
+
+-- Flag thresholds are hand-set and tunable; edit here (|score_sum| >= 4
+-- with at least 3 voting signals present).
+CREATE VIEW IF NOT EXISTS v_flagged AS
+SELECT * FROM v_latest_scorecard
+WHERE ABS(score_sum) >= 4 AND total >= 3;
+
+-- The future paper-trading dataset: composite over time.
+CREATE VIEW IF NOT EXISTS v_score_history AS
+SELECT s.captured_at, t.symbol, t.bullish, t.bearish, t.total,
+       t.score_sum, t.coverage, t.in_portfolio
+FROM ticker_scores t JOIN snapshots s ON s.id = t.snapshot_id;
+
+CREATE VIEW IF NOT EXISTS v_signal_detail AS
+SELECT v.* FROM signal_values v
+JOIN v_latest_snapshot l ON v.snapshot_id = l.id;
 """
 
 
