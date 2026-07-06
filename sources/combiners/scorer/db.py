@@ -11,7 +11,17 @@ from datetime import datetime, timedelta
 
 PRICE_KEEP_DAYS = 90  # must stay > 21 trading days (~31 calendar) + margin
 
-_SCHEMA = """
+# Basis-break guard bounds: the ledger stores each day's close on that day's
+# price basis with no adjusted history to correct from, so a split shows up
+# as a consecutive-date ratio near 1/2, 1/3, 2, 5, ... — outside these
+# bounds. Multiplication (not division) so a zero prev-close flags
+# conservatively. Sub-threshold splits (3:2, ratio 0.667) pass undetected —
+# accepted residual, see docs/superpowers/specs/2026-07-06-scorer-basis-
+# guard-design.md.
+BASIS_BREAK_LO = 0.55  # forward splits >= 2:1 land below this
+BASIS_BREAK_HI = 1.8  # reverse splits >= 1:2 land above this
+
+_SCHEMA = f"""
 CREATE TABLE IF NOT EXISTS snapshots (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     captured_at TEXT NOT NULL,
@@ -139,6 +149,21 @@ SELECT regime, horizon, COUNT(*) AS n_matured,
        MAX(bench_fwd_return) AS max_bench_return
 FROM regime_outcomes WHERE matured_at IS NOT NULL
 GROUP BY regime, horizon;
+
+-- Split-shaped consecutive-date moves anywhere in the ledger: the audit
+-- trail for rows the basis guard holds pending (join v_pending on the
+-- entity to tell "quarantined" from merely "young"). Thresholds are the
+-- same BASIS_BREAK_* constants mature() binds as :lo/:hi.
+CREATE VIEW IF NOT EXISTS v_basis_breaks AS
+SELECT a.symbol,
+       b.price_date AS prev_date, b.close AS prev_close,
+       a.price_date, a.close,
+       a.close / b.close AS ratio
+FROM prices a
+JOIN prices b ON b.symbol = a.symbol
+ AND b.price_date = (SELECT MAX(c.price_date) FROM prices c
+                     WHERE c.symbol = a.symbol AND c.price_date < a.price_date)
+WHERE a.close < b.close * {BASIS_BREAK_LO} OR a.close > b.close * {BASIS_BREAK_HI};
 
 -- Registered but not yet matured: what's cooking and roughly when.
 CREATE VIEW IF NOT EXISTS v_pending AS
@@ -360,7 +385,27 @@ def registered_ids(conn):
 # than the horizon could plausibly span (~2 calendar days per trading day
 # + a holiday week) — a gapped row stays pending and visible forever
 # rather than silently grading the wrong window into the permanent record.
-_MATURE_SYMBOL = """
+# The basis guard applies the same refuse-to-grade principle to price
+# basis: a split inside the window would fabricate a return (2:1 -> -50%),
+# so any window containing a BASIS_BREAK_* consecutive-date move — on the
+# graded leg or the benchmark leg — stays pending forever. v_basis_breaks
+# is the audit trail for what was held and why.
+
+# One break scan, embedded per leg: TRUE when any consecutive-date pair
+# whose later date falls in (entry_date, x.xdate] moves outside the
+# BASIS_BREAK bounds (:lo/:hi) for {who}'s ledger.
+_BREAK_SCAN = """EXISTS (
+      SELECT 1 FROM prices a JOIN prices b
+        ON b.symbol = a.symbol
+       AND b.price_date = (SELECT MAX(c.price_date) FROM prices c
+                           WHERE c.symbol = a.symbol
+                             AND c.price_date < a.price_date)
+      WHERE a.symbol = {who}
+        AND a.price_date > {t}.entry_date AND a.price_date <= x.xdate
+        AND (a.close < b.close * :lo OR a.close > b.close * :hi))"""
+
+_MATURE_SYMBOL = (
+    """
 UPDATE {table} SET
   exit_date = x.xdate,
   exit_close = (SELECT close FROM prices
@@ -385,9 +430,16 @@ FROM (SELECT t.rowid AS rid,
 WHERE {table}.rowid = x.rid AND x.xdate IS NOT NULL
   AND julianday(x.xdate) - julianday({table}.entry_date)
       <= {table}.horizon * 2 + 7
-"""
+  AND NOT """
+    + _BREAK_SCAN.format(who="{table}.{sym}", t="{table}")
+    + """
+  AND NOT """
+    + _BREAK_SCAN.format(who=":bench", t="{table}")
+    + "\n"
+)
 
-_MATURE_REGIME = """
+_MATURE_REGIME = (
+    """
 UPDATE regime_outcomes SET
   exit_date = x.xdate,
   bench_exit_close = (SELECT close FROM prices
@@ -408,12 +460,20 @@ FROM (SELECT t.rowid AS rid,
 WHERE regime_outcomes.rowid = x.rid AND x.xdate IS NOT NULL
   AND julianday(x.xdate) - julianday(regime_outcomes.entry_date)
       <= regime_outcomes.horizon * 2 + 7
-"""
+  AND NOT """
+    + _BREAK_SCAN.format(who=":bench", t="regime_outcomes")
+    + "\n"
+)
 
 
 def mature(conn, now_iso, benchmark="SPY") -> int:
     n = 0
-    params = {"now": now_iso, "bench": benchmark}
+    params = {
+        "now": now_iso,
+        "bench": benchmark,
+        "lo": BASIS_BREAK_LO,
+        "hi": BASIS_BREAK_HI,
+    }
     for table, sym in (
         ("ticker_outcomes", "symbol"),
         ("signal_outcomes", "entity"),

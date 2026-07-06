@@ -22,31 +22,9 @@ Each item: **problem → done when → size (S/M/L) → dependencies**.
 The scorer's outcome tables are permanent and drive future re-weighting
 decisions. Every day these issues stand, contaminated rows accumulate.
 
-### 1. Corporate actions in the scorer price ledger (CONFIRMED 2026-07-06)
-
-**Problem.** `scorer.db → prices` accumulates nightly closes harvested from
-`stocks.db`/`etfs.db`. Each source snapshot is a frozen single bar (that
-day's close as served that day), so a split changes the ledger's price basis
-mid-stream and **no adjusted history exists anywhere in the system to
-correct from** — re-harvesting re-offers the same frozen values, and
-`insert_prices` is INSERT OR IGNORE besides. Confirmed by running a
-synthetic 2:1 split through the real register/mature path: it matured a
-fabricated −49.5 % `fwd_return` into the permanent outcome tables; the
-julianday gap guard does not apply and no magnitude guard exists. Latent as
-of confirmation (ledger was one date per symbol, zero matured rows).
-Dividends cause the same basis drift in miniature (close-only returns
-understate total return; SPY benchmark partially offsets in excess terms).
-
-**Done when.** Split-spanning outcomes cannot mature into the permanent
-record. Candidate mechanisms (design decision needed — nightly re-harvest is
-NOT viable, see above): (a) cross-check the ledger's raw window return
-against the provider's own split-adjusted short-horizon return columns
-(`ch1w`/`ch1m` in `stocks.db` metrics) and quarantine on disagreement;
-(b) magnitude guard that holds suspicious rows pending-forever like the gap
-guard; (c) infer split factors from basis breaks and rescale prior ledger
-rows. A test covers a synthetic split maturing (or refusing to).
-
-**Size.** M (verification done). **Depends on.** —
+*(Item 1, the scorer basis-break guard, shipped 2026-07-06: maturation now
+refuses windows containing a split-shaped consecutive-day move on either
+leg; `v_basis_breaks` is the audit view. Residuals live in item 8.)*
 
 ### 2. Entry-price look-ahead in outcome grading
 
@@ -155,3 +133,8 @@ Ideas that need the machinery above before they're worth building:
   does a signal only work risk-on? Needs sample sizes only time (and #3) buys.
 - **Weighting the composite** — still a human decision; revisit only when #4's
   guardrails say the efficacy evidence is reliable.
+- **Basis-guard enrichment** (residuals from shipped item 1) — cross-check
+  quarantined windows against the provider's split-adjusted `ch1w`/`ch1m`
+  columns to clear false positives (real crashes beyond −45 %/day) and catch
+  sub-threshold splits (3:2, ratio 0.667, passes the guard). Dividend drift
+  also remains unhandled (close-only returns understate total return).

@@ -275,3 +275,81 @@ def test_registered_counts_actual_inserts(tmp_path):
     assert skipped == 0
     # Verify only one ticker_outcomes row was actually inserted
     assert conn.execute("SELECT COUNT(*) FROM ticker_outcomes").fetchone()[0] == 1
+
+
+def _register_one(conn, symbol, horizons):
+    """Register a single bullish ticker row entered on DAYS[0]."""
+    return db.register_snapshot(
+        conn,
+        1,
+        DAYS[0],
+        [dict(symbol=symbol, score_sum=4, total=3, bullish=3, bearish=0, in_portfolio=0)],
+        [],
+        "risk_on",
+        horizons,
+        "SPY",
+        7,
+        NOW,
+    )
+
+
+def test_split_in_window_stays_pending(tmp_path):
+    conn = _conn(tmp_path)
+    # 2:1 split between DAYS[2] and DAYS[3]: basis halves, price is flat.
+    closes = [100.0, 101.0, 99.5, 50.2, 50.0, 50.5, 49.8, 50.1]
+    db.insert_prices(conn, list(zip(["ACME"] * 8, DAYS, closes, strict=True)))
+    _ledger(conn, "SPY", DAYS, start=500.0)
+    _register_one(conn, "ACME", (5,))
+    db.mature(conn, NOW)  # regime row may mature; ACME must not
+    t = conn.execute("SELECT exit_date, fwd_return, matured_at FROM ticker_outcomes").fetchone()
+    assert t == (None, None, None)
+
+
+def test_gradual_crash_still_matures(tmp_path):
+    conn = _conn(tmp_path)
+    # -47% over the window but every day-over-day ratio ~0.88 (no break).
+    closes = [100.0, 88.0, 77.0, 68.0, 60.0, 53.0, 47.0, 41.0]
+    db.insert_prices(conn, list(zip(["CRSH"] * 8, DAYS, closes, strict=True)))
+    _ledger(conn, "SPY", DAYS, start=500.0)
+    _register_one(conn, "CRSH", (5,))
+    db.mature(conn, NOW)
+    t = conn.execute("SELECT exit_date, fwd_return FROM ticker_outcomes").fetchone()
+    assert t[0] == DAYS[5]
+    assert abs(t[1] - (53.0 / 100.0 - 1)) < 1e-9
+
+
+def test_split_after_exit_does_not_block(tmp_path):
+    conn = _conn(tmp_path)
+    # Clean through DAYS[5]; split lands between DAYS[5] and DAYS[6].
+    closes = [100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 52.0, 52.5]
+    db.insert_prices(conn, list(zip(["ACME"] * 8, DAYS, closes, strict=True)))
+    _ledger(conn, "SPY", DAYS, start=500.0)
+    _register_one(conn, "ACME", (5, 6))
+    db.mature(conn, NOW)
+    rows = dict(
+        conn.execute("SELECT horizon, matured_at IS NOT NULL FROM ticker_outcomes").fetchall()
+    )
+    assert rows[5] == 1  # window ends at DAYS[5], before the break
+    assert rows[6] == 0  # window spans the break -> quarantined
+
+
+def test_benchmark_break_blocks_symbol_rows(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "AAPL", DAYS)
+    # SPY itself breaks basis inside the window.
+    closes = [500.0, 505.0, 510.0, 250.0, 252.0, 254.0, 256.0, 258.0]
+    db.insert_prices(conn, list(zip(["SPY"] * 8, DAYS, closes, strict=True)))
+    _register_one(conn, "AAPL", (5,))
+    assert db.mature(conn, NOW) == 0
+    assert (
+        conn.execute(
+            "SELECT COUNT(*) FROM ticker_outcomes WHERE matured_at IS NOT NULL"
+        ).fetchone()[0]
+        == 0
+    )
+    assert (
+        conn.execute(
+            "SELECT COUNT(*) FROM regime_outcomes WHERE matured_at IS NOT NULL"
+        ).fetchone()[0]
+        == 0
+    )

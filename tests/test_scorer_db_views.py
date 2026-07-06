@@ -112,3 +112,19 @@ def test_regime_and_pending(tmp_path):
     # register something unmaturable -> shows in v_pending
     db.register_snapshot(conn, 2, "2026-07-07", [], [], "mixed", (21,), "SPY", 7, NOW)
     assert conn.execute("SELECT COUNT(*) FROM v_pending").fetchone()[0] == 1
+
+
+def test_v_basis_breaks_flags_split_only(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # ACME splits 2:1 between DAYS[2] and DAYS[3]; SPY is normal noise.
+    closes = [100.0, 101.0, 99.0, 49.6, 50.0, 50.4, 49.9, 50.2]
+    db.insert_prices(conn, list(zip(["ACME"] * 8, DAYS, closes, strict=True)))
+    db.insert_prices(conn, [("SPY", d, 500 + i) for i, d in enumerate(DAYS)])
+    rows = conn.execute(
+        "SELECT symbol, prev_date, price_date, ratio FROM v_basis_breaks"
+    ).fetchall()
+    assert len(rows) == 1
+    sym, prev_date, price_date, ratio = rows[0]
+    assert (sym, prev_date, price_date) == ("ACME", DAYS[2], DAYS[3])
+    assert abs(ratio - 49.6 / 99.0) < 1e-9
