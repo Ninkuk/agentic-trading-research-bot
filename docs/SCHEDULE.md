@@ -1,6 +1,6 @@
 # Data-collection schedule
 
-Every screener/monitor runs on a launchd schedule (27 `com.tradingbot.*`
+Every screener/monitor/combiner runs on a launchd schedule (28 `com.tradingbot.*`
 LaunchAgents). **Source of truth is the `JOBS` dict in
 `deploy/launchd/install.py`** — this doc is the human-readable view; if they
 disagree, trust install.py and fix this file.
@@ -56,6 +56,7 @@ summer open (6:30am Phoenix).
 | `ftd-full` | 15th 8:00am | `--full` re-ingests all 24 months of FTD half-months; the weekly probe only re-fetches ~1 month back, so SEC reposts older than that land only here |
 | `short-interest-full` | 15th 7:00pm | `--full` re-ingests ~12 months of settlements; the daily probe only re-fetches ~1 month back, FINRA corrections older than that land only here |
 | `usda-wasde` | 12th & 16th 10:15am | WASDE lands ~9th–12th, occasionally later — the 16th probe catches stragglers |
+| `composite` | every day 9:05pm | Combines all source DBs into `data/composite.db` (read-only attaches; regime + ticker scorecard). Must stay after every collector's last daily slot INCLUDING edgar's 15-min failure retry (~8:45pm+) and before daily-summary at 9:15pm |
 | `daily-summary` | every day 9:15pm | ntfy digest (see below) |
 
 ## Quarterly
