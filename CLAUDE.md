@@ -74,7 +74,10 @@ derives a cross-source view (e.g. `composite`: a market regime + a per-ticker sc
 binds its own `:today` instead of reading a source's `calendar_now`-dependent views (monitor
 `v_upcoming`/`v_imminent`, `treasury.v_upcoming_auctions`, `fred.v_asof`), so it stays on one
 clock without depending on any single source's calendar state. Otherwise it ships like any
-other source: registered in `registry.py`, dispatched via `main.py composite ...`.
+other source: registered in `registry.py`, dispatched via `main.py composite ...`. The
+`scorer` combiner grades composite opinions against forward returns and never feeds back —
+re-weighting the catalog is a human decision made by reading `v_signal_efficacy`/
+`v_bucket_performance`.
 
 ### File tree
 
@@ -85,7 +88,7 @@ sources/
 ├── common/       # screener_common.py, monitor_common.py, http_client.py
 ├── screeners/    # 17 point-in-time data readers (import screener_common)
 ├── monitors/     # 4 event-date calendars (import monitor_common)
-└── combiners/    # 1 cross-source combiner (composite: regime + ticker scorecard)
+└── combiners/    # 2 cross-source combiners (composite: opinions; scorer: grades them)
 ```
 
 `registry.py` and `main.py` stay at repo root — `registry.py` is the CLI dispatch table, not a

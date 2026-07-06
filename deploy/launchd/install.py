@@ -122,6 +122,7 @@ JOBS = {
     # -- combine (every day, after all collectors incl. edgar's 15-min
     #    failure retry; before the nightly summary) --
     "composite": (job("composite", "--keep-days", "365"), weekly(range(7), 21, 5)),
+    "scorer": (job("scorer", "--keep-days", "365"), weekly(range(7), 21, 10)),
     # -- observability (every day, after the 8:30pm edgar run + retry) --
     "daily-summary": (script("daily_summary.sh"), weekly(range(7), 21, 15)),
 }
