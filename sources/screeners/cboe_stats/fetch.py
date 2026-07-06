@@ -1,8 +1,10 @@
 """CBOE market-statistics + VIX CSV client. Shares only the CBOE-CDN UA and the
-bounded-backoff helper with cboe_options — nothing else. Pure CSV parsers,
-network-free-testable. Dates come from the CSV, never the wall clock."""
+bounded-backoff helper with cboe_options — nothing else. Pure parsers,
+network-free-testable. Dates come from the source, never the wall clock."""
 import csv
 import io
+import json
+import re
 import time
 import urllib.error
 from datetime import datetime
@@ -15,14 +17,15 @@ _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
 _urlopen = http_client.make_opener(_UA)
 
-# PCR feed is disabled by default (catalog._ENABLED): this route 403s and Cboe
-# no longer publishes a free daily put/call-ratio CSV (verified 2026-07; not on
-# FRED release 200 either). URL kept as the documented shape for a future paid
-# DataShop source. The VIX/VVIX CDN routes below are live-confirmed.
-PCR_URL = "https://cdn.cboe.com/api/global/us_indices/daily_prices/put_call_ratio.csv"
+# Cboe discontinued the free put/call-ratio CSV (the old CDN route 403s), but
+# the daily market-statistics page server-renders the same ratios + volumes
+# into its Next.js RSC stream — that page IS the PCR feed now (live-verified
+# 2026-07; history back to 2019-10-07 via ?dt=YYYY-MM-DD). The VIX/VVIX CDN
+# CSV routes below are unchanged and live-confirmed.
+PCR_URL = "https://www.cboe.com/markets/us/options/market-statistics/daily/"
 _VIX_BASE = "https://cdn.cboe.com/api/global/us_indices/daily_prices"
 
-__all__ = ["parse_pcr_csv", "parse_vix_csv", "fetch_pcr", "fetch_vix"]
+__all__ = ["parse_pcr_page", "parse_vix_csv", "fetch_pcr", "fetch_vix"]
 
 
 def _http_get(url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY,
@@ -56,19 +59,69 @@ def _norm_date(s):
     return None
 
 
-def parse_pcr_csv(text) -> list:
-    rows = []
-    for rec in csv.DictReader(io.StringIO(text)):
-        norm = {(k or "").strip().upper().replace(" ", "_").replace("/", "_"): v
-                for k, v in rec.items()}
-        d = _norm_date(norm.get("DATE"))
-        if not d:
-            continue
-        rows.append({"date": d, "total_pcr": _num(norm.get("TOTAL_PCR")),
-                     "equity_pcr": _num(norm.get("EQUITY_PCR")),
-                     "index_pcr": _num(norm.get("INDEX_PCR")),
-                     "total_volume": _int(norm.get("TOTAL_VOLUME"))})
-    return rows
+# One RSC flight chunk: self.__next_f.push([1,"<escaped JS string>"])
+_RSC_PUSH = re.compile(r'self\.__next_f\.push\(\[1,"((?:[^"\\]|\\.)*)"\]\)')
+_SELECTED_DATE = re.compile(r'"selectedDate":"(\d{4}-\d{2}-\d{2})"')
+
+
+def _rsc_stream(html) -> str:
+    """Reassemble the page's RSC flight stream: each push payload is a JS
+    string literal (arbitrarily chunked), decoded and concatenated in order."""
+    return "".join(json.loads(f'"{m}"')
+                   for m in _RSC_PUSH.findall(html or ""))
+
+
+def _balanced_object(s, start):
+    """The JSON text of the object opening at s[start] ('{'), string-aware."""
+    depth, in_str, esc = 0, False, False
+    for i in range(start, len(s)):
+        c = s[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+        elif c == '"':
+            in_str = True
+        elif c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return s[start:i + 1]
+    return None
+
+
+def parse_pcr_page(html) -> list:
+    """Extract the day's put/call ratios + total volume from the daily
+    market-statistics page's server-rendered "optionsData" payload. Returns a
+    single-row list (the page shows one session), or [] when the payload is
+    absent (maintenance shell, layout change)."""
+    stream = _rsc_stream(html)
+    key = stream.find('"optionsData"')
+    date_m = _SELECTED_DATE.search(stream)
+    if key < 0 or not date_m:
+        return []
+    obj_start = stream.find("{", key + len('"optionsData"'))
+    text = _balanced_object(stream, obj_start) if obj_start >= 0 else None
+    if text is None:
+        return []
+    try:
+        od = json.loads(text)
+    except ValueError:
+        return []
+    ratios = {(r.get("name") or "").upper(): _num(r.get("value"))
+              for r in od.get("ratios") or []}
+    volume = next((_int(r.get("total"))
+                   for r in od.get("SUM OF ALL PRODUCTS") or []
+                   if (r.get("name") or "").upper() == "VOLUME"), None)
+    return [{"date": date_m.group(1),
+             "total_pcr": ratios.get("TOTAL PUT/CALL RATIO"),
+             "equity_pcr": ratios.get("EQUITY PUT/CALL RATIO"),
+             "index_pcr": ratios.get("INDEX PUT/CALL RATIO"),
+             "total_volume": volume}]
 
 
 def parse_vix_csv(text) -> list:
@@ -106,9 +159,12 @@ def _get_csv(url, get):
         raise
 
 
-def fetch_pcr(get=_http_get):
-    text = _get_csv(PCR_URL, get)
-    return None if text is None else parse_pcr_csv(text)
+def fetch_pcr(get=_http_get, dt=None):
+    """Fetch the daily-stats page (latest session, or a past one via dt) and
+    parse its PCR row. None on 403/404 -> the run skips the feed."""
+    url = PCR_URL + (f"?dt={dt}" if dt else "")
+    text = _get_csv(url, get)
+    return None if text is None else parse_pcr_page(text)
 
 
 def fetch_vix(feed_id, get=_http_get):

@@ -39,7 +39,7 @@ directly.
 3. Ingest:
 
    ```bash
-   uv run python main.py portfolio --db data/portfolio.db --input <scratchpad>/portfolio.json
+   uv run python main.py portfolio --db data/portfolio.db --input <scratchpad>/portfolio.json --keep-days 365
    ```
 
 4. Report to the user: snapshot id, position count (+ skipped count if any),

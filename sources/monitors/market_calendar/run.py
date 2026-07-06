@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import sources.common.monitor_common as monitor_common
 from sources.monitors.market_calendar import catalog, compute, db, fetch
 
-_NYSE_URL = "https://www.nyse.com/markets/hours-calendars"
+_NYSE_URL = "https://www.nyse.com/trade/hours-calendars"
 _SIFMA_URL = "https://www.sifma.org/resources/guides-playbooks/holiday-schedule"
 
 

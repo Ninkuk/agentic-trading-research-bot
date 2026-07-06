@@ -2,21 +2,58 @@ import urllib.error
 
 from sources.screeners.cboe_stats import fetch
 
-_PCR = ("DATE,TOTAL_PCR,EQUITY_PCR,INDEX_PCR,TOTAL_VOLUME\n"
-        "2026-06-01,0.95,0.72,1.40,\"45,000,000\"\n"
-        ",0.9,0.7,1.2,100\n")                       # blank date dropped
 _VIX = ("Preamble line to skip\n"
         "DATE,OPEN,HIGH,LOW,CLOSE\n"
         "06/01/2026,14.1,15.0,13.9,14.6\n")
 _VVIX = "DATE,VVIX\n2026-06-01,95.2\n"
 
+# The stats the daily page server-renders into its Next.js RSC flight stream.
+_PCR_PAYLOAD = (
+    '{"data":{"optionsData":{'
+    '"ratios":[{"name":"TOTAL PUT/CALL RATIO","value":"0.79"},'
+    '{"name":"INDEX PUT/CALL RATIO","value":"0.97"},'
+    '{"name":"EQUITY PUT/CALL RATIO","value":"0.53"}],'
+    '"SUM OF ALL PRODUCTS":[{"name":"VOLUME","call":9428474,"put":7490078,'
+    '"total":16918552},{"name":"OPEN INTEREST","call":1,"put":2,"total":3}]},'
+    '"selectedDate":"2026-07-02","minDate":"2019-10-07"}}')
 
-def test_parse_pcr_csv_coerces_and_strips_commas():
-    rows = fetch.parse_pcr_csv(_PCR)
-    assert len(rows) == 1
-    assert rows[0]["date"] == "2026-06-01"
-    assert rows[0]["equity_pcr"] == 0.72
-    assert rows[0]["total_volume"] == 45000000       # comma-stripped int
+
+def _rsc_page(payload, split_at=60):
+    """Wrap `payload` the way the live page ships it: escaped into JS string
+    literals split across multiple self.__next_f.push chunks."""
+    esc = payload.replace("\\", "\\\\").replace('"', '\\"')
+    a, b = esc[:split_at], esc[split_at:]
+    return (f'<html><script>self.__next_f.push([1,"{a}"])</script>'
+            f'<script>self.__next_f.push([1,"{b}"])</script></html>')
+
+
+def test_parse_pcr_page_reassembles_chunks_and_maps_row():
+    rows = fetch.parse_pcr_page(_rsc_page(_PCR_PAYLOAD))
+    assert rows == [{"date": "2026-07-02", "total_pcr": 0.79,
+                     "equity_pcr": 0.53, "index_pcr": 0.97,
+                     "total_volume": 16918552}]
+
+
+def test_parse_pcr_page_without_stats_payload_yields_nothing():
+    assert fetch.parse_pcr_page("<html><body>maintenance</body></html>") == []
+
+
+def test_fetch_pcr_dt_param_and_403_skip():
+    seen = []
+
+    def get(url):
+        seen.append(url)
+        return _rsc_page(_PCR_PAYLOAD)
+
+    fetch.fetch_pcr(get=get)
+    assert "?dt=" not in seen[0]                     # no dt -> latest session
+    fetch.fetch_pcr(get=get, dt="2026-06-30")
+    assert seen[1].endswith("?dt=2026-06-30")
+
+    def get403(url):
+        raise urllib.error.HTTPError(url, 403, "no", {}, None)
+
+    assert fetch.fetch_pcr(get=get403) is None       # skip, don't crash the run
 
 
 def test_parse_vix_csv_skips_preamble_and_parses_mmddyyyy():
