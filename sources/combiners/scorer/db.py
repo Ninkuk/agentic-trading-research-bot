@@ -88,6 +88,63 @@ CREATE TABLE IF NOT EXISTS regime_outcomes (
     matured_at            TEXT,
     PRIMARY KEY (composite_snapshot_id, horizon)
 );
+
+-- Bucketing lives in views (ELT): stored rows keep raw score_sum/total.
+-- Buckets: strong_bull >= +4, bull +2..+3, neutral -1..+1, bear -3..-2,
+-- strong_bear <= -4; rows with total < 2 bucket as 'thin' regardless.
+-- hit = excess in the score's direction (bull: excess > 0; bear: < 0).
+CREATE VIEW IF NOT EXISTS v_bucket_performance AS
+WITH m AS (
+    SELECT CASE WHEN total < 2 THEN 'thin'
+                WHEN score_sum >= 4 THEN 'strong_bull'
+                WHEN score_sum >= 2 THEN 'bull'
+                WHEN score_sum <= -4 THEN 'strong_bear'
+                WHEN score_sum <= -2 THEN 'bear'
+                ELSE 'neutral' END AS bucket,
+           horizon, fwd_return, score_sum,
+           fwd_return - bench_fwd_return AS excess
+    FROM ticker_outcomes WHERE matured_at IS NOT NULL
+)
+SELECT bucket, horizon, COUNT(*) AS n_matured,
+       AVG(fwd_return) AS avg_fwd_return,
+       AVG(excess) AS avg_excess,
+       AVG(CASE WHEN excess IS NULL THEN NULL
+                WHEN score_sum > 0 THEN (excess > 0)
+                WHEN score_sum < 0 THEN (excess < 0) END) AS hit_rate
+FROM m GROUP BY bucket, horizon;
+
+-- Per-signal grade, direction-adjusted: excess * sign(score). Crosswalked
+-- evidence is split out so mapped scores are graded separately.
+CREATE VIEW IF NOT EXISTS v_signal_efficacy AS
+SELECT signal_id, via_crosswalk, horizon, COUNT(*) AS n_matured,
+       AVG((fwd_return - bench_fwd_return)
+           * (CASE WHEN score > 0 THEN 1 ELSE -1 END))
+           AS avg_directional_excess,
+       AVG(CASE WHEN bench_fwd_return IS NULL THEN NULL
+                WHEN score > 0 THEN (fwd_return > bench_fwd_return)
+                ELSE (fwd_return < bench_fwd_return) END) AS hit_rate
+FROM signal_outcomes
+WHERE matured_at IS NOT NULL
+GROUP BY signal_id, via_crosswalk, horizon;
+
+CREATE VIEW IF NOT EXISTS v_regime_performance AS
+SELECT regime, horizon, COUNT(*) AS n_matured,
+       AVG(bench_fwd_return) AS avg_bench_return,
+       MIN(bench_fwd_return) AS min_bench_return,
+       MAX(bench_fwd_return) AS max_bench_return
+FROM regime_outcomes WHERE matured_at IS NOT NULL
+GROUP BY regime, horizon;
+
+-- Registered but not yet matured: what's cooking and roughly when.
+CREATE VIEW IF NOT EXISTS v_pending AS
+SELECT 'ticker' AS kind, composite_date, symbol AS entity, horizon,
+       entry_date FROM ticker_outcomes WHERE matured_at IS NULL
+UNION ALL
+SELECT 'signal', composite_date, signal_id || ':' || entity, horizon,
+       entry_date FROM signal_outcomes WHERE matured_at IS NULL
+UNION ALL
+SELECT 'regime', composite_date, COALESCE(regime, '?'), horizon,
+       entry_date FROM regime_outcomes WHERE matured_at IS NULL;
 """
 
 
@@ -104,16 +161,19 @@ def ensure_schema(conn) -> None:
 
 
 def write_snapshot(conn, now_iso: str) -> int:
-    cur = conn.execute("INSERT INTO snapshots (captured_at) VALUES (?)",
-                       (now_iso,))
+    cur = conn.execute(
+        "INSERT INTO snapshots (captured_at) VALUES (?)", (now_iso,)
+    )
     conn.commit()  # survive later rollbacks
     return cur.lastrowid
 
 
 def finish_snapshot(conn, sid, harvested, registered, matured, skipped):
-    conn.execute("UPDATE snapshots SET harvested=?, registered=?,"
-                 " matured=?, skipped=? WHERE id=?",
-                 (harvested, registered, matured, skipped, sid))
+    conn.execute(
+        "UPDATE snapshots SET harvested=?, registered=?,"
+        " matured=?, skipped=? WHERE id=?",
+        (harvested, registered, matured, skipped, sid),
+    )
 
 
 def insert_prices(conn, rows) -> int:
@@ -123,7 +183,9 @@ def insert_prices(conn, rows) -> int:
             continue
         cur = conn.execute(
             "INSERT OR IGNORE INTO prices (symbol, price_date, close)"
-            " VALUES (?, ?, ?)", (symbol, price_date, close))
+            " VALUES (?, ?, ?)",
+            (symbol, price_date, close),
+        )
         n += cur.rowcount
     return n
 
@@ -135,20 +197,31 @@ def entry_for(conn, symbol, composite_date, max_age_days):
         "SELECT price_date, close FROM prices WHERE symbol=?"
         " AND price_date <= ? AND price_date >= date(?, ?)"
         " ORDER BY price_date DESC LIMIT 1",
-        (symbol, composite_date, composite_date,
-         f"-{int(max_age_days)} days")).fetchone()
+        (symbol, composite_date, composite_date, f"-{int(max_age_days)} days"),
+    ).fetchone()
     return (row[0], row[1]) if row else None
 
 
 def _bench_close(conn, benchmark, price_date):
-    row = conn.execute("SELECT close FROM prices WHERE symbol=?"
-                       " AND price_date=?", (benchmark, price_date)).fetchone()
+    row = conn.execute(
+        "SELECT close FROM prices WHERE symbol=?" " AND price_date=?",
+        (benchmark, price_date),
+    ).fetchone()
     return row[0] if row else None
 
 
-def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
-                      regime, horizons, benchmark, max_age_days,
-                      now_iso) -> tuple:
+def register_snapshot(
+    conn,
+    csid,
+    composite_date,
+    ticker_rows,
+    signal_rows,
+    regime,
+    horizons,
+    benchmark,
+    max_age_days,
+    now_iso,
+) -> tuple:
     """All-or-nothing registration of one composite snapshot: the marker row
     and every outcome row commit together. Returns (registered, skipped).
 
@@ -163,14 +236,21 @@ def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
     bench_entry = entry_for(conn, benchmark, composite_date, max_age_days)
     entry_date = bench_entry[0] if bench_entry else None
     with conn:  # transaction
-        duplicate_window = entry_date is not None and conn.execute(
-            "SELECT 1 FROM registered_snapshots WHERE entry_date = ?"
-            " LIMIT 1", (entry_date,)).fetchone() is not None
+        duplicate_window = (
+            entry_date is not None
+            and conn.execute(
+                "SELECT 1 FROM registered_snapshots WHERE entry_date = ?"
+                " LIMIT 1",
+                (entry_date,),
+            ).fetchone()
+            is not None
+        )
         conn.execute(
             "INSERT INTO registered_snapshots (composite_snapshot_id,"
             " composite_date, entry_date, registered_at, ticker_rows,"
             " signal_rows, skipped) VALUES (?, ?, ?, ?, 0, 0, 0)",
-            (csid, composite_date, entry_date, now_iso))
+            (csid, composite_date, entry_date, now_iso),
+        )
         if duplicate_window:
             return 0, 0
         for r in ticker_rows:
@@ -186,9 +266,21 @@ def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
                     "  score_sum, total, bullish, bearish, in_portfolio,"
                     "  horizon, entry_date, entry_close, bench_entry_close)"
                     " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (csid, composite_date, r["symbol"], r["score_sum"],
-                     r["total"], r["bullish"], r["bearish"],
-                     r["in_portfolio"], h, entry[0], entry[1], bench))
+                    (
+                        csid,
+                        composite_date,
+                        r["symbol"],
+                        r["score_sum"],
+                        r["total"],
+                        r["bullish"],
+                        r["bearish"],
+                        r["in_portfolio"],
+                        h,
+                        entry[0],
+                        entry[1],
+                        bench,
+                    ),
+                )
                 registered += cur.rowcount
         for r in signal_rows:
             entry = entry_for(conn, r["entity"], composite_date, max_age_days)
@@ -203,9 +295,19 @@ def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
                     "  entity, score, via_crosswalk, horizon, entry_date,"
                     "  entry_close, bench_entry_close)"
                     " VALUES (?,?,?,?,?,?,?,?,?,?)",
-                    (csid, composite_date, r["signal_id"], r["entity"],
-                     r["score"], r["via_crosswalk"], h, entry[0], entry[1],
-                     bench))
+                    (
+                        csid,
+                        composite_date,
+                        r["signal_id"],
+                        r["entity"],
+                        r["score"],
+                        r["via_crosswalk"],
+                        h,
+                        entry[0],
+                        entry[1],
+                        bench,
+                    ),
+                )
                 registered += cur.rowcount
         if bench_entry is None:
             skipped += 1
@@ -216,19 +318,31 @@ def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
                     " (composite_snapshot_id, composite_date, regime,"
                     "  horizon, entry_date, bench_entry_close)"
                     " VALUES (?,?,?,?,?,?)",
-                    (csid, composite_date, regime, h,
-                     bench_entry[0], bench_entry[1]))
+                    (
+                        csid,
+                        composite_date,
+                        regime,
+                        h,
+                        bench_entry[0],
+                        bench_entry[1],
+                    ),
+                )
                 registered += cur.rowcount
         conn.execute(
             "UPDATE registered_snapshots SET ticker_rows=?, signal_rows=?,"
             " skipped=? WHERE composite_snapshot_id=?",
-            (len(ticker_rows), len(signal_rows), skipped, csid))
+            (len(ticker_rows), len(signal_rows), skipped, csid),
+        )
     return registered, skipped
 
 
 def registered_ids(conn):
-    return {r[0] for r in conn.execute(
-        "SELECT composite_snapshot_id FROM registered_snapshots")}
+    return {
+        r[0]
+        for r in conn.execute(
+            "SELECT composite_snapshot_id FROM registered_snapshots"
+        )
+    }
 
 
 # Maturation: the Nth distinct ledger date after entry, per symbol.
@@ -293,10 +407,11 @@ WHERE regime_outcomes.rowid = x.rid AND x.xdate IS NOT NULL
 def mature(conn, now_iso, benchmark="SPY") -> int:
     n = 0
     params = {"now": now_iso, "bench": benchmark}
-    for table, sym in (("ticker_outcomes", "symbol"),
-                       ("signal_outcomes", "entity")):
-        cur = conn.execute(_MATURE_SYMBOL.format(table=table, sym=sym),
-                           params)
+    for table, sym in (
+        ("ticker_outcomes", "symbol"),
+        ("signal_outcomes", "entity"),
+    ):
+        cur = conn.execute(_MATURE_SYMBOL.format(table=table, sym=sym), params)
         n += cur.rowcount
     n += conn.execute(_MATURE_REGIME, params).rowcount
     conn.commit()
@@ -306,12 +421,17 @@ def mature(conn, now_iso, benchmark="SPY") -> int:
 def prune(conn, keep_days: int, now_iso: str) -> int:
     """Run headers + old ledger rows only. Outcome tables are the permanent
     experiment record and are NEVER pruned."""
-    header_cutoff = (datetime.fromisoformat(now_iso)
-                     - timedelta(days=keep_days)).isoformat()
-    price_cutoff = (datetime.fromisoformat(now_iso)
-                    - timedelta(days=PRICE_KEEP_DAYS)).date().isoformat()
-    n = conn.execute("DELETE FROM snapshots WHERE captured_at < ?",
-                     (header_cutoff,)).rowcount
+    header_cutoff = (
+        datetime.fromisoformat(now_iso) - timedelta(days=keep_days)
+    ).isoformat()
+    price_cutoff = (
+        (datetime.fromisoformat(now_iso) - timedelta(days=PRICE_KEEP_DAYS))
+        .date()
+        .isoformat()
+    )
+    n = conn.execute(
+        "DELETE FROM snapshots WHERE captured_at < ?", (header_cutoff,)
+    ).rowcount
     conn.execute("DELETE FROM prices WHERE price_date < ?", (price_cutoff,))
     conn.commit()
     return n
