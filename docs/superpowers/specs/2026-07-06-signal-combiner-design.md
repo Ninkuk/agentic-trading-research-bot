@@ -129,7 +129,7 @@ market_regime(
   snapshot_id PRIMARY KEY,
   t10y2y REAL, curve_inverted INT, hy_spread REAL, vix REAL, vix_backwardation INT,
   equity_pcr_pctile REAL, in_fomc_blackout INT, imminent_high_impact INT,
-  days_to_opex INT, rrp_trend TEXT, tga_trend TEXT,
+  days_to_opex INT, rrp_change REAL, tga_change REAL,  -- signed WoW deltas; the sign IS the trend
   regime TEXT,                                     -- 'risk_on' | 'risk_off' | 'mixed'
   inputs_expected INT, inputs_present INT)         -- coverage, always visible
 
