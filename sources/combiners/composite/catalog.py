@@ -106,13 +106,18 @@ SIGNALS = [
         """,
     },
     {
+        # HIGH-impact only, mirroring the source's own v_imminent_high_impact
+        # (join events -> release_catalog, impact = 'high'), but bound to
+        # :today instead of the source's calendar_now (one-clock rule).
         "signal_id": "econ_imminent", "db": "econ_calendar.db",
         "grain": "market", "staleness_budget_days": 0,
         "sql": """
             SELECT '*', COUNT(*), 0, :today
-            FROM src.events
-            WHERE event_date >= :today
-              AND event_date <= date(:today, '+3 days')
+            FROM src.events e
+            JOIN src.release_catalog c ON c.event_type = e.event_type
+            WHERE e.event_date >= :today
+              AND e.event_date <= date(:today, '+3 days')
+              AND c.impact = 'high'
         """,
     },
     {
