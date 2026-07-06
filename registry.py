@@ -22,13 +22,6 @@ from sources.screeners.eia_screener.run import main as eia_main
 from sources.screeners.usda_screener.run import main as usda_main
 from sources.screeners.portfolio_screener.run import main as portfolio_main
 
-# pipeline stages
-from pipeline.leads.run import main as leads_main
-from pipeline.scheduler.run import main as schedule_main
-from pipeline.trials.run import main as trials_main
-from pipeline.promote.run import main as promote_main
-from pipeline.gate.run import main as gate_main
-
 REGISTRY = {
     "stocks": stocks_main,
     "reddit": reddit_main,
@@ -51,11 +44,6 @@ REGISTRY = {
     "eia": eia_main,
     "usda": usda_main,
     "portfolio": portfolio_main,
-    "leads": leads_main,
-    "schedule": schedule_main,
-    "trials": trials_main,
-    "promote": promote_main,
-    "gate": gate_main,
 }
 
 
