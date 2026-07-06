@@ -1,0 +1,85 @@
+# Data-collection schedule
+
+Every screener/monitor runs on a launchd schedule (22 `com.tradingbot.*`
+LaunchAgents). **Source of truth is the `JOBS` dict in
+`deploy/launchd/install.py`** — this doc is the human-readable view; if they
+disagree, trust install.py and fix this file.
+
+All times are **Phoenix wall-clock** (America/Phoenix, MST year-round — no
+DST). Data publishers are US-East, so ET releases drift against a fixed
+Phoenix clock: ET is 3h ahead in summer (EDT), 2h in winter (EST). Slots for
+post-release jobs were placed using the winter offset (ET−2h), which is
+at-or-after the release in both seasons; pre-open jobs anchor to the earlier
+summer open (6:30am Phoenix).
+
+## Intraday — weekdays, market hours
+
+| Job | When | Notes |
+|---|---|---|
+| `options-intraday` | hourly :30, 6:30am–1:30pm | CBOE chains; IV/flow intraday shape. `--keep-days 90` |
+| `reddit-intraday` | hourly :35, 6:35am–1:35pm | ApeWisdom sentiment. `--keep-days 90` |
+
+## Daily — weekdays
+
+| Job | When | Notes |
+|---|---|---|
+| `preopen` | 4:00am | ONE serialized process: earnings → stocks → etfs → reddit baseline. Earnings watchlist = portfolio.db holdings ∪ cboe_options catalog equities (required — without `--only`, 8-K confirmation is skipped) |
+| `nyfed` | 11:30am | After RRP results (~1:15pm ET) |
+| `portfolio` | 2:30pm | Headless `claude -p "/account-positions"` → Robinhood MCP; verifies a fresh snapshot landed (stale MCP auth = loud failure) |
+| `options-close` | 2:45pm | Settled end-of-day chains (post-close both seasons) |
+| `treasury` | 4:30pm | FiscalData + yield-curve XML |
+| `fred` | 4:40pm | Daily rate series finalized ~4:15pm ET |
+| `cboe-stats` | 6:00pm | VIX term-structure CSVs |
+| `short-volume` | 6:15pm | FINRA Reg SHO daily file |
+| `short-interest` | 6:30pm | Daily probe; FINRA disseminates twice-monthly on varying days, 404s are free |
+| `edgar` | 8:30pm (+retry 15min) | **Must stay in the evening**: the daily-index walk-back starts at *today* and stops at the first non-empty index, so a morning run (after EDGAR's 6am-ET filing window opens) stores a partial current-day sliver and permanently skips the prior day. Evening = same-day complete index |
+
+## Weekly
+
+| Job | When | Notes |
+|---|---|---|
+| `econ-calendar` | Mon 5:00am | FRED release dates |
+| `fomc` | Mon 5:10am | Fed calendar page |
+| `ats` | Mon 6:45pm | FINRA ATS weekly aggregates (published Mondays, 2–4wk lag) |
+| `eia` | Wed/Thu/Fri 10:15am | WPSR Wed, NG storage Thu; the Friday run covers holiday-shifted releases |
+| `cftc` | Fri 2:15pm | COT (Fri 3:30pm ET); all three families sequentially |
+| `fundamentals` | Sat 6:00am | XBRL frames → `data/sec_fundamentals.db` |
+| `ftd` | Sun 7:00am | Weekly probe; SEC publication dates drift |
+
+## Monthly / on demand
+
+| Job | When | Notes |
+|---|---|---|
+| `market-calendar` | 1st 5:00am | Seeded holidays/OPEX; `--refresh` manually ~yearly |
+| `usda-wasde` | 12th & 16th 10:15am | WASDE lands ~9th–12th, occasionally later — the 16th probe catches stragglers |
+| `daily-summary` | every day 9:15pm | ntfy digest (see below) |
+| `fundamentals --bulk` | manual, quarterly | DERA zip, ~6 weeks after quarter end |
+
+## Constraints (preserve when editing the schedule)
+
+- **SEC jobs never share an hour.** The 9 req/s rate limiter in
+  `http_client.py` is per-process; concurrent launchd jobs (`edgar`, `ftd`,
+  `fundamentals`, earnings-in-preopen) would double-dip SEC's per-IP cap.
+- **`stocks`/`etfs` stay serialized** (same batch) and `stocks` stays daily —
+  stockanalysis.com is an unofficial endpoint; don't hammer it.
+- Missed runs self-heal via revision lookbacks (CFTC 10wk, Treasury/NY Fed 7d,
+  FINRA/FTD reprobe) — **except `edgar`**: a skipped day is a permanent hole;
+  backfill with `uv run python main.py edgar --db data/edgar.db --date YYYY-MM-DD`.
+
+## Operations
+
+- **Change the schedule**: edit `deploy/launchd/install.py`, then
+  `uv run python deploy/launchd/install.py` (regenerates + reloads plists).
+  `--uninstall` removes every job; `--dry-run` writes plists without loading.
+- **Health check**: `deploy/launchd/status.sh` — launchd exit codes, last log
+  line per job, per-DB snapshot freshness.
+- **Logs**: `logs/<job>.log` (gitignored), timestamped start/stored/FAILED lines.
+- **Nightly push**: `daily_summary.py` sends an ntfy digest at 9:15pm — run
+  counts, FAILED/STALE lines, non-zero exit codes, stale DBs vs expected
+  cadence. Healthy = ✅ default priority; problems = ⚠️ high priority. No
+  9:15pm ping at all ⇒ the machine (or login session) is down — the summary
+  can't report its own absence.
+- **Restarts**: plists live in `~/Library/LaunchAgents` and survive reboots,
+  but jobs only run once a login session exists (they need the Keychain and
+  `.env`) — keep auto-login enabled on the always-on Mac mini. Runs missed
+  while powered off are skipped, not made up.
