@@ -16,11 +16,11 @@ CATALOG: list[Feed] = [
     Feed("VVIX", "vix"),
 ]
 
-# PCR is defined but OFF by default: Cboe discontinued the free daily put/call-
-# ratio feed (the old CDN/datahouse CSVs 403 or return the SPA shell, and it is
-# not on FRED). Its parser is kept for anyone who wires a paid DataShop source;
-# opt in with `--only PCR`. The VIX/VVIX CDN feeds are live-confirmed.
-_ENABLED = {"VIX", "VIX3M", "VIX9D", "VVIX"}
+# All feeds on by default. PCR is sourced from the daily market-statistics
+# page's server-rendered payload (the free CSV Cboe discontinued in 2025 —
+# see fetch.PCR_URL); it yields one session per run, so history accrues from
+# the daily schedule (or a ?dt= backfill loop).
+_ENABLED = {"PCR", "VIX", "VIX3M", "VIX9D", "VVIX"}
 
 
 def enabled_ids() -> list:

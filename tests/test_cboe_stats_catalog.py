@@ -8,13 +8,11 @@ def test_catalog_has_pcr_and_vol_indices():
     assert by_id["VIX"].kind == "vix"
 
 
-def test_enabled_ids_excludes_dead_pcr_feed():
-    # Cboe discontinued the free daily put/call-ratio feed (no free official
-    # source; not on FRED either), so PCR is defined but off by default —
-    # opt-in via --only PCR if a paid DataShop source is wired.
+def test_enabled_ids_includes_all_feeds():
+    # PCR is back on by default: it now reads the daily market-statistics
+    # page's server-rendered payload (the free CSV was discontinued).
     ids = enabled_ids()
-    assert "PCR" not in ids
-    assert {"VIX", "VIX3M", "VIX9D", "VVIX"} <= set(ids)
+    assert {"PCR", "VIX", "VIX3M", "VIX9D", "VVIX"} <= set(ids)
 
 
 def test_select_ids_default_only_exclude_add():
