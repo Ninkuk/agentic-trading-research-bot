@@ -18,6 +18,12 @@ directly.
    - `get_portfolio` → equity (market value)
    - `get_equity_positions` → per-position symbol, quantity, average buy
      price, market value
+
+   **Account pin**: always use the **"Agentic" account (number ending
+   1936)**. If `get_accounts` returns more than one account, select it by
+   name/last-4 and scope the portfolio and positions calls to it; if no
+   account matches, stop and report — never fall back to a different
+   account.
 2. Build ONE combined JSON document in the scratchpad (never paste raw MCP
    payloads into the conversation — they can carry account identifiers):
 
