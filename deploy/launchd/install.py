@@ -41,6 +41,11 @@ def hourly(weekdays, hours, minute):
             for w in weekdays for h in hours]
 
 
+def yearly(months, day, hour, minute):
+    return [{"Month": m, "Day": day, "Hour": hour, "Minute": minute}
+            for m in months]
+
+
 def job(name, *args):
     return ["/bin/bash", str(SCRIPTS / "run_job.sh"), name,
             "--db", f"data/{name}.db", *args]
@@ -81,7 +86,36 @@ JOBS = {
     "ftd": (job("ftd"), weekly([0], 7, 0)),
     # -- monthly --
     "market-calendar": (job("market_calendar"), monthly([1], 5, 0)),
+    "usda-nass": (job("usda"), monthly([2], 10, 15)),
     "usda-wasde": (job("usda", "--wasde"), monthly([12, 16], 10, 15)),
+    # Revision re-absorption: ftd and short_interest re-fetch only ~1 month
+    # of trailing periods on their weekly/daily runs, but SEC reposts FTD
+    # half-months and FINRA corrects settlements later than that. A monthly
+    # --full re-ingests the whole retention window; the replace-by-period
+    # writers absorb any repost.
+    "ftd-full": (job("ftd", "--full"), monthly([15], 8, 0)),
+    "short-interest-full": (job("short_interest", "--full"),
+                            monthly([15], 19, 0)),
+    # -- quarterly / yearly --
+    # DERA quarterly ZIP lands ~6wk after quarter end; each ZIP carries the
+    # amendments/restatements *filed* that quarter, which the weekly frames
+    # job (current quarter only) never re-reads.
+    "fundamentals-bulk": (["/bin/bash", str(SCRIPTS / "run_job.sh"),
+                           "fundamentals", "--db", "data/sec_fundamentals.db",
+                           "--bulk"],
+                          yearly([2, 5, 8, 11], 20, 9, 0)),
+    # The hand-transcribed holiday seed in market_calendar/catalog.py ends
+    # 2027-12; --refresh merges live NYSE/SIFMA pages over it and fails
+    # loudly on page drift (isolated here so drift can't break the seed-only
+    # run). Must run every month, 30min after the seed job: each run does a
+    # replace_forward_window, so the seed-only run wipes any refresh-added
+    # events and this job re-adds them.
+    "market-calendar-refresh": (job("market_calendar", "--refresh"),
+                                monthly([1], 5, 30)),
+    # -- combine (every day, after all collectors incl. edgar's 15-min
+    #    failure retry; before the nightly summary) --
+    "composite": (job("composite", "--keep-days", "365"),
+                  weekly(range(7), 21, 5)),
     # -- observability (every day, after the 8:30pm edgar run + retry) --
     "daily-summary": (script("daily_summary.sh"),
                       weekly(range(7), 21, 15)),

@@ -21,6 +21,7 @@ from sources.screeners.cboe_stats.run import main as cboe_stats_main
 from sources.screeners.eia_screener.run import main as eia_main
 from sources.screeners.usda_screener.run import main as usda_main
 from sources.screeners.portfolio_screener.run import main as portfolio_main
+from sources.combiners.composite.run import main as composite_main
 
 REGISTRY = {
     "stocks": stocks_main,
@@ -44,6 +45,7 @@ REGISTRY = {
     "eia": eia_main,
     "usda": usda_main,
     "portfolio": portfolio_main,
+    "composite": composite_main,
 }
 
 

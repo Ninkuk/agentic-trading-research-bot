@@ -39,6 +39,8 @@ An adversarial review with full session context ran every catalog SQL against th
 - **F5 (minor):** launchd slot moved 21:00 → 21:05 to clear edgar's 15-min failure-retry window.
 - **F6 (minor):** short-interest staleness budgets 20 → 25 days (FINRA bi-monthly + ~9-day publication lag).
 
+**Smoke-run recalibration (Task 8, 2026-07-06):** the first real run caught `si_spike` doing exactly what F2 caught in its bullish sibling — 1,135 rows (52% of all signal rows) at the old ≥1.5 floor, skewing the composite bearish (score_sum mean −0.72) and pushing the scorecard to 1,992 rows. Re-measured the live distribution and tightened to `base_ratio >= 2.5` floor (443 rows) with `-2` at `>= 8.0` (82 rows), matching si_days_to_cover's scale. This is the distribution check working as designed — thresholds set before real data existed should expect one recalibration pass.
+
 ## File Structure
 
 - Create: `sources/combiners/__init__.py` (empty), `sources/combiners/composite/__init__.py` (empty)
@@ -946,10 +948,10 @@ SIGNALS = [
         "grain": "ticker", "staleness_budget_days": 25,
         "sql": """
             SELECT symbol, base_ratio,
-                   CASE WHEN base_ratio >= 2.0 THEN -2 ELSE -1 END,
+                   CASE WHEN base_ratio >= 8.0 THEN -2 ELSE -1 END,
                    settlement_date
             FROM src.v_short_interest_spikes
-            WHERE base_ratio >= 1.5
+            WHERE base_ratio >= 2.5
         """,
     },
     {
