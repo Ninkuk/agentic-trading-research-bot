@@ -7,6 +7,10 @@ import urllib.parse
 import sources.common.http_client as http_client
 
 API_BASE = "https://markets.newyorkfed.org/api"
+# The search.json endpoints return an EMPTY list when startDate is absent
+# (live-verified 2026-07), so every fetch sends one; this floor predates all
+# published series (rates/repo begin 2000-07, SOMA 2003-07) = full history.
+FULL_HISTORY_START = "2000-01-01"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
 _MAX_ATTEMPTS = 5
@@ -53,13 +57,13 @@ def _first_list(obj):
 
 
 def fetch_domain(endpoint, *, start=None, end=None, get=_http_get) -> list:
-    """GET a domain history endpoint (windowed when start given); return records."""
-    params = {}
-    if start:
-        params["startDate"] = start
+    """GET a domain history endpoint; return records. No ``start`` means full
+    history — sent explicitly as FULL_HISTORY_START because the search.json
+    endpoints treat a missing startDate as an empty window, not "everything"."""
+    params = {"startDate": start or FULL_HISTORY_START}
     if end:
         params["endDate"] = end
-    payload = json.loads(get(_build_url(endpoint, params or None)))
+    payload = json.loads(get(_build_url(endpoint, params)))
     return _first_list(payload) or []
 
 

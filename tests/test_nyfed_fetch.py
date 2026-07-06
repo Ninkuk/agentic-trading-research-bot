@@ -21,6 +21,23 @@ def test_fetch_domain_extracts_records_from_envelope():
     assert recs and recs[0]["type"] == "SOFR"
 
 
+def test_fetch_domain_defaults_start_to_full_history_floor():
+    # The search.json endpoints return [] when startDate is absent, so a
+    # no-start call must still send the full-history floor or a first run
+    # (empty table -> since=None) never bootstraps.
+    seen = []
+
+    def get(url):
+        seen.append(url)
+        return json.dumps({"refRates": []})
+
+    fetch.fetch_domain("/rates/all/search.json", get=get)
+    assert f"startDate={fetch.FULL_HISTORY_START}" in seen[0]
+
+    fetch.fetch_domain("/rates/all/search.json", start="2026-06-01", get=get)
+    assert "startDate=2026-06-01" in seen[1]     # explicit start still wins
+
+
 def test_parse_reference_rates_coerces():
     rows = fetch.parse_reference_rates([
         {"effectiveDate": "2026-06-01", "type": "SOFR", "percentRate": "5.31",
