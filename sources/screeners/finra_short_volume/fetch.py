@@ -63,24 +63,31 @@ def parse_file(text: str) -> list[dict]:
         if not symbol or date is None or short_volume is None or total_volume is None:
             continue
         short_ratio = (short_volume / total_volume) if total_volume else None
-        rows.append({
-            "symbol": symbol, "date": date,
-            "short_volume": short_volume,
-            "short_exempt_volume": _num(sev, int),
-            "total_volume": total_volume,
-            "short_ratio": short_ratio,
-            "market": market or None,
-        })
+        rows.append(
+            {
+                "symbol": symbol,
+                "date": date,
+                "short_volume": short_volume,
+                "short_exempt_volume": _num(sev, int),
+                "total_volume": total_volume,
+                "short_ratio": short_ratio,
+                "market": market or None,
+            }
+        )
     return rows
 
 
-def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
-              base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
+def _http_get(
+    url: str,
+    opener=_urlopen,
+    attempts: int = _MAX_ATTEMPTS,
+    base_delay: float = _BASE_DELAY,
+    sleep=time.sleep,
+) -> str:
     """GET file text with bounded backoff, retrying 429/503 and transient
     network errors. Non-retryable HTTP errors (e.g. 403/404) raise at once, so
     fetch_day can map 403/404 -> None (this CDN 403s for dates with no file)."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
-                                base_delay, sleep)
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def fetch_day(date: str, get=_http_get, opener=None):

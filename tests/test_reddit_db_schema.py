@@ -2,8 +2,10 @@ from sources.screeners.reddit_screener.db import connect, ensure_schema
 
 
 def objects(conn, kind):
-    return {r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type=?", (kind,)).fetchall()}
+    return {
+        r[0]
+        for r in conn.execute("SELECT name FROM sqlite_master WHERE type=?", (kind,)).fetchall()
+    }
 
 
 def test_ensure_schema_creates_tables_and_views():
@@ -23,7 +25,14 @@ def test_ensure_schema_is_idempotent():
 def test_observations_columns():
     conn = connect(":memory:")
     ensure_schema(conn)
-    cols = {r[1] for r in conn.execute(
-        "PRAGMA table_info(observations)").fetchall()}
-    assert cols == {"snapshot_id", "ticker", "name", "rank", "mentions",
-                    "upvotes", "rank_24h_ago", "mentions_24h_ago"}
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(observations)").fetchall()}
+    assert cols == {
+        "snapshot_id",
+        "ticker",
+        "name",
+        "rank",
+        "mentions",
+        "upvotes",
+        "rank_24h_ago",
+        "mentions_24h_ago",
+    }

@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Series:
-    commodity: str   # CORN | SOYBEANS | WHEAT
-    metric: str      # PRODUCTION | ENDING_STOCKS | TOTAL_USE  (our label)
-    query: dict      # NASS Quick Stats filter (short_desc, statisticcat_desc, ...)
+    commodity: str  # CORN | SOYBEANS | WHEAT
+    metric: str  # PRODUCTION | ENDING_STOCKS | TOTAL_USE  (our label)
+    query: dict  # NASS Quick Stats filter (short_desc, statisticcat_desc, ...)
 
     @property
     def id(self) -> str:
@@ -14,9 +14,13 @@ class Series:
 
 
 def _q(commodity, statcat, short_desc):
-    return {"commodity_desc": commodity, "statisticcat_desc": statcat,
-            "agg_level_desc": "NATIONAL", "short_desc": short_desc,
-            "year__GE": "2000"}
+    return {
+        "commodity_desc": commodity,
+        "statisticcat_desc": statcat,
+        "agg_level_desc": "NATIONAL",
+        "short_desc": short_desc,
+        "year__GE": "2000",
+    }
 
 
 # Curated corn/soy/wheat targets, live-confirmed against NASS Quick Stats
@@ -26,18 +30,20 @@ def _q(commodity, statcat, short_desc):
 # WASDE, not NASS survey data (see the usda-wasde follow-up, 1e). Production and
 # ending stocks come from Quick Stats here.
 CATALOG: list[Series] = [
-    Series("CORN", "PRODUCTION", _q("CORN", "PRODUCTION",
-           "CORN, GRAIN - PRODUCTION, MEASURED IN BU")),
-    Series("CORN", "ENDING_STOCKS", _q("CORN", "STOCKS",
-           "CORN, GRAIN - STOCKS, MEASURED IN BU")),
-    Series("SOYBEANS", "PRODUCTION", _q("SOYBEANS", "PRODUCTION",
-           "SOYBEANS - PRODUCTION, MEASURED IN BU")),
-    Series("SOYBEANS", "ENDING_STOCKS", _q("SOYBEANS", "STOCKS",
-           "SOYBEANS - STOCKS, MEASURED IN BU")),
-    Series("WHEAT", "PRODUCTION", _q("WHEAT", "PRODUCTION",
-           "WHEAT - PRODUCTION, MEASURED IN BU")),
-    Series("WHEAT", "ENDING_STOCKS", _q("WHEAT", "STOCKS",
-           "WHEAT - STOCKS, MEASURED IN BU")),
+    Series(
+        "CORN", "PRODUCTION", _q("CORN", "PRODUCTION", "CORN, GRAIN - PRODUCTION, MEASURED IN BU")
+    ),
+    Series("CORN", "ENDING_STOCKS", _q("CORN", "STOCKS", "CORN, GRAIN - STOCKS, MEASURED IN BU")),
+    Series(
+        "SOYBEANS",
+        "PRODUCTION",
+        _q("SOYBEANS", "PRODUCTION", "SOYBEANS - PRODUCTION, MEASURED IN BU"),
+    ),
+    Series(
+        "SOYBEANS", "ENDING_STOCKS", _q("SOYBEANS", "STOCKS", "SOYBEANS - STOCKS, MEASURED IN BU")
+    ),
+    Series("WHEAT", "PRODUCTION", _q("WHEAT", "PRODUCTION", "WHEAT - PRODUCTION, MEASURED IN BU")),
+    Series("WHEAT", "ENDING_STOCKS", _q("WHEAT", "STOCKS", "WHEAT - STOCKS, MEASURED IN BU")),
 ]
 
 

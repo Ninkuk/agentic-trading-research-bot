@@ -6,22 +6,23 @@ import pytest
 from sources.monitors.econ_calendar import fetch
 from sources.monitors.econ_calendar.catalog import Release
 
-REL = {10: Release(10, "cpi_release", "Consumer Price Index",
-                   "high", "inflation", "08:30")}
-PAYLOAD = {"release_dates": [
-    {"release_id": 10, "release_name": "Consumer Price Index", "date": "2026-08-12"},
-    {"release_id": 999, "release_name": "Not In Catalog", "date": "2026-08-13"},
-]}
+REL = {10: Release(10, "cpi_release", "Consumer Price Index", "high", "inflation", "08:30")}
+PAYLOAD = {
+    "release_dates": [
+        {"release_id": 10, "release_name": "Consumer Price Index", "date": "2026-08-12"},
+        {"release_id": 999, "release_name": "Not In Catalog", "date": "2026-08-13"},
+    ]
+}
 
 
 def test_parse_filters_to_catalog_and_maps_fields():
     rows = fetch.parse_release_dates(PAYLOAD["release_dates"], REL)
-    assert len(rows) == 1                       # 999 dropped
+    assert len(rows) == 1  # 999 dropped
     r = rows[0]
     assert r["event_type"] == "cpi_release"
     assert r["event_date"] == "2026-08-12"
-    assert r["event_time"] == "08:30"           # from the catalog known-time
-    assert r["subtype"] == "10"                 # str(release_id)
+    assert r["event_time"] == "08:30"  # from the catalog known-time
+    assert r["subtype"] == "10"  # str(release_id)
     assert r["status"] == "scheduled"
     assert r["source"] == "fred"
 

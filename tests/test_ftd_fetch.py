@@ -5,19 +5,23 @@ import zipfile
 
 import pytest
 
+import sources.common.http_client as http_client
+import sources.screeners.ftd_screener.fetch as ftd_fetch
 from sources.screeners.ftd_screener.fetch import (
-    _bytes_opener, _http_get, fetch_period, parse_file, period_url,
+    _bytes_opener,
+    _http_get,
+    fetch_period,
+    parse_file,
+    period_url,
     settlement_bounds,
 )
-import sources.screeners.ftd_screener.fetch as ftd_fetch
-import sources.common.http_client as http_client
 
 SAMPLE = (
     "SETTLEMENT DATE|CUSIP|SYMBOL|QUANTITY (FAILS)|DESCRIPTION|PRICE\n"
     "20250501|B38564108|CMBT|111|CMB.TECH NV (BEL)|9.51\n"
-    "20250502|000000000|BLANKQTY||CORP|\n"          # blank quantity -> skipped
+    "20250502|000000000|BLANKQTY||CORP|\n"  # blank quantity -> skipped
     "20250502|C00948205|AGRI|12336|AGRIFORCE|2.13\n"
-    "20250505||NOCUSIP|50|NO CUSIP CO|1.00\n"        # blank cusip -> skipped
+    "20250505||NOCUSIP|50|NO CUSIP CO|1.00\n"  # blank cusip -> skipped
     "Trailer record count 2\n"
     "Trailer total quantity of shares 12447\n"
 )
@@ -26,10 +30,13 @@ SAMPLE = (
 def test_parse_file_maps_and_coerces():
     rows, trailer = parse_file(SAMPLE)
     assert trailer == 2
-    assert len(rows) == 2                       # blank-qty and blank-cusip skipped
+    assert len(rows) == 2  # blank-qty and blank-cusip skipped
     assert rows[0] == {
-        "cusip": "B38564108", "settlement_date": "2025-05-01",
-        "symbol": "CMBT", "quantity": 111, "price": 9.51,
+        "cusip": "B38564108",
+        "settlement_date": "2025-05-01",
+        "symbol": "CMBT",
+        "quantity": 111,
+        "price": 9.51,
         "description": "CMB.TECH NV (BEL)",
         "dollar_value": pytest.approx(111 * 9.51),
     }
@@ -39,21 +46,21 @@ def test_parse_file_maps_and_coerces():
 
 def test_parse_file_blank_price_gives_none():
     rows, trailer = parse_file("20250501|X1|SYM|100|A NAME|\n")
-    assert trailer is None                      # no trailer line present
+    assert trailer is None  # no trailer line present
     assert rows[0]["price"] is None
     assert rows[0]["dollar_value"] is None
 
 
 def test_parse_file_header_row_is_dropped():
     # header's SETTLEMENT DATE is non-numeric -> filtered; QUANTITY cell non-int too
-    rows, _ = parse_file(
-        "SETTLEMENT DATE|CUSIP|SYMBOL|QUANTITY (FAILS)|DESCRIPTION|PRICE\n")
+    rows, _ = parse_file("SETTLEMENT DATE|CUSIP|SYMBOL|QUANTITY (FAILS)|DESCRIPTION|PRICE\n")
     assert rows == []
 
 
 def test_period_url():
     assert period_url("202505a") == (
-        "https://www.sec.gov/files/data/fails-deliver-data/cnsfails202505a.zip")
+        "https://www.sec.gov/files/data/fails-deliver-data/cnsfails202505a.zip"
+    )
 
 
 def test_settlement_bounds_first_half():
@@ -73,7 +80,7 @@ def _zip_bytes(member: str, text: str) -> bytes:
 
 
 def test_fetch_period_reads_single_member_regardless_of_name():
-    blob = _zip_bytes("cnsfails202505a", SAMPLE)   # member name != inferable
+    blob = _zip_bytes("cnsfails202505a", SAMPLE)  # member name != inferable
 
     def fake_get(url, opener=None):
         assert url.endswith("cnsfails202505a.zip")
@@ -133,9 +140,14 @@ def test_bytes_opener_acquires_limiter_before_request():
             order.append(("acquire", key))
 
     class FakeResp:
-        def read(self): return b"BLOB"
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
+        def read(self):
+            return b"BLOB"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
 
     def fake_urlopen(req, timeout=None):
         order.append(("request", req.full_url))
@@ -144,14 +156,12 @@ def test_bytes_opener_acquires_limiter_before_request():
     orig = ftd_fetch.urllib.request.urlopen
     ftd_fetch.urllib.request.urlopen = fake_urlopen
     try:
-        opener = _bytes_opener({"User-Agent": "UA"}, limiter=FakeLimiter(),
-                               limiter_key="sec.gov")
+        opener = _bytes_opener({"User-Agent": "UA"}, limiter=FakeLimiter(), limiter_key="sec.gov")
         blob = opener("http://www.sec.gov/files/data/x.zip")
     finally:
         ftd_fetch.urllib.request.urlopen = orig
     assert blob == b"BLOB"
-    assert order == [("acquire", "sec.gov"),
-                     ("request", "http://www.sec.gov/files/data/x.zip")]
+    assert order == [("acquire", "sec.gov"), ("request", "http://www.sec.gov/files/data/x.zip")]
 
 
 def test_ftd_module_opener_pays_into_shared_sec_bucket():
@@ -159,9 +169,14 @@ def test_ftd_module_opener_pays_into_shared_sec_bucket():
     # edgar/fundamentals under SEC_HOST_KEY, so the aggregate SEC rate is
     # bounded. Observed via the shared limiter gaining that key's state.
     class FakeResp:
-        def read(self): return b"X"
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
+        def read(self):
+            return b"X"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
 
     def fake_urlopen(req, timeout=None):
         return FakeResp()

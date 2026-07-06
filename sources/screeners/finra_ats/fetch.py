@@ -1,6 +1,7 @@
 """FINRA OTC/ATS (dark-pool) transparency via the anonymous api.finra.org query
 API. POSTs a compareFilters body but reuses http_client's backoff unchanged: the
 loop only calls opener(url), so a body-capturing POST closure drops straight in."""
+
 import csv
 import io
 import json
@@ -10,7 +11,7 @@ import urllib.request
 
 import sources.common.http_client as http_client
 
-_DATASET = "weeklySummary"   # confirmed live (otcMarket/weeklySummary, anon POST)
+_DATASET = "weeklySummary"  # confirmed live (otcMarket/weeklySummary, anon POST)
 API_URL = f"https://api.finra.org/data/group/otcMarket/name/{_DATASET}"
 _UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 503})
@@ -29,10 +30,12 @@ __all__ = ["week_body", "parse_rows", "fetch_week"]
 
 def week_body(week_start: str, limit: int = 10000) -> dict:
     """compareFilters JSON body selecting one week (weekStartDate EQUAL date)."""
-    return {"compareFilters": [{"compareType": "EQUAL",
-                                "fieldName": "weekStartDate",
-                                "fieldValue": week_start}],
-            "limit": limit}
+    return {
+        "compareFilters": [
+            {"compareType": "EQUAL", "fieldName": "weekStartDate", "fieldValue": week_start}
+        ],
+        "limit": limit,
+    }
 
 
 def _to_int(raw):
@@ -60,7 +63,7 @@ def parse_rows(text: str, fmt: str) -> list:
     out = []
     for r in _records(text, fmt):
         if (r.get("summaryTypeCode") or "").strip() != _ATS_GRANULAR:
-            continue                             # skip OTC + aggregate roll-ups
+            continue  # skip OTC + aggregate roll-ups
         symbol = (r.get("issueSymbolIdentifier") or r.get("symbol") or "").strip()
         week = (r.get("weekStartDate") or "").strip()
         if not symbol or not week:
@@ -69,15 +72,18 @@ def parse_rows(text: str, fmt: str) -> list:
         # Live otcMarket records carry the venue name in `marketParticipantName`;
         # `ATSName` (assumed pre-verification) does not exist in the live schema
         # and left ats_name always None. Keep ATSName as a CSV-export fallback.
-        ats_name = (r.get("marketParticipantName")
-                    or r.get("ATSName") or "").strip() or None
-        out.append({
-            "week_start": week, "symbol": symbol, "mpid": mpid,
-            "ats_name": ats_name,
-            "trade_count": _to_int(r.get("totalWeeklyTradeCount")),
-            "share_quantity": _to_int(r.get("totalWeeklyShareQuantity")),
-            "tier": (r.get("tierIdentifier") or "").strip() or None,
-        })
+        ats_name = (r.get("marketParticipantName") or r.get("ATSName") or "").strip() or None
+        out.append(
+            {
+                "week_start": week,
+                "symbol": symbol,
+                "mpid": mpid,
+                "ats_name": ats_name,
+                "trade_count": _to_int(r.get("totalWeeklyTradeCount")),
+                "share_quantity": _to_int(r.get("totalWeeklyShareQuantity")),
+                "tier": (r.get("tierIdentifier") or "").strip() or None,
+            }
+        )
     return out
 
 
@@ -85,21 +91,18 @@ def _post_opener(body: dict):
     """opener(url)->text that POSTs the JSON body. Captures the body so
     http_client.http_get's opener(url) call issues the POST unchanged."""
     data = json.dumps(body).encode("utf-8")
-    headers = {**_UA, "Content-Type": "application/json",
-               "Accept": "application/json"}
+    headers = {**_UA, "Content-Type": "application/json", "Accept": "application/json"}
 
     def opener(url):
-        req = urllib.request.Request(url, data=data, headers=headers,
-                                     method="POST")
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
         with urllib.request.urlopen(req, timeout=60) as resp:
             return resp.read().decode("utf-8", "replace")
+
     return opener
 
 
-def _http_get(url, opener, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY,
-              sleep=time.sleep):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay,
-                                sleep)
+def _http_get(url, opener, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep):
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def fetch_week(week_start, get=_http_get, opener=None):

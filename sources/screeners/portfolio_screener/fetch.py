@@ -1,6 +1,7 @@
 """Pure parsing of the combined account/positions JSON document. No network:
 Claude (the human-triggered command layer) fetches via the Robinhood MCP and
 hands the doc to run.py — this module only validates and normalizes it."""
+
 from sources.screeners.portfolio_screener import catalog
 
 
@@ -46,11 +47,12 @@ def parse_snapshot(doc) -> tuple:
         if not symbol or not isinstance(symbol, str) or quantity is None:
             skipped += 1
             continue
-        positions.append({
-            "symbol": symbol.strip().upper().replace(".", "-"),
-            "quantity": quantity,
-            "avg_cost": _num(_first(raw, catalog.POSITION_FIELDS["avg_cost"])),
-            "market_value": _num(
-                _first(raw, catalog.POSITION_FIELDS["market_value"])),
-        })
+        positions.append(
+            {
+                "symbol": symbol.strip().upper().replace(".", "-"),
+                "quantity": quantity,
+                "avg_cost": _num(_first(raw, catalog.POSITION_FIELDS["avg_cost"])),
+                "market_value": _num(_first(raw, catalog.POSITION_FIELDS["market_value"])),
+            }
+        )
     return account, positions, skipped

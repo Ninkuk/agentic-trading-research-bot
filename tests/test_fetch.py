@@ -4,10 +4,15 @@ from sources.screeners.stock_analysis_screener.fetch import parse_data_points
 
 
 def test_parse_data_points_extracts_ticker_map():
-    raw = {"status": 200, "data": {"data": {
-        "AAA": {"price": 10.0, "sector": "Tech"},
-        "BBB": {"price": None, "sector": "Energy"},
-    }}}
+    raw = {
+        "status": 200,
+        "data": {
+            "data": {
+                "AAA": {"price": 10.0, "sector": "Tech"},
+                "BBB": {"price": None, "sector": "Energy"},
+            }
+        },
+    }
     out = parse_data_points(raw)
     assert out == {
         "AAA": {"price": 10.0, "sector": "Tech"},

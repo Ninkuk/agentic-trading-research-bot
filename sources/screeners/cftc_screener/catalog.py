@@ -1,12 +1,14 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+from sources.screeners.cftc_screener import fetch
+
 
 @dataclass(frozen=True)
 class Market:
-    code: str          # cftc_contract_market_code — the stable key
-    name: str          # human label (canonical name refreshed from newest row at write time)
-    asset_class: str   # equity_index|rates|fx|metals|energy|ags|softs
+    code: str  # cftc_contract_market_code — the stable key
+    name: str  # human label (canonical name refreshed from newest row at write time)
+    asset_class: str  # equity_index|rates|fx|metals|energy|ags|softs
 
 
 # Curated COT reader. Codes verified live against the Socrata API on
@@ -58,29 +60,26 @@ CATALOG: list[Market] = [
 ]
 
 
-from sources.screeners.cftc_screener import fetch
-
 # The legacy catalog cleanly partitions by asset class: physical commodities are
 # reported under Disaggregated, financial futures under TFF. Deriving the
 # per-family catalogs from CATALOG keeps the verified contract codes in one place.
 _PHYSICAL = {"metals", "energy", "ags", "softs"}
 _FINANCIAL = {"equity_index", "rates", "fx"}
 DISAGG_CATALOG: list[Market] = [m for m in CATALOG if m.asset_class in _PHYSICAL]
-TFF_CATALOG:    list[Market] = [m for m in CATALOG if m.asset_class in _FINANCIAL]
+TFF_CATALOG: list[Market] = [m for m in CATALOG if m.asset_class in _FINANCIAL]
 
 
 @dataclass(frozen=True)
 class Family:
-    name: str            # legacy | disaggregated | tff
-    dataset_id: str      # Socrata resource id
-    catalog: list        # list[Market] the family reports
-    fact_table: str      # cot | cot_disagg | cot_tff
-    field_map: list      # (db_column, socrata_field, cast) triples for this family
+    name: str  # legacy | disaggregated | tff
+    dataset_id: str  # Socrata resource id
+    catalog: list  # list[Market] the family reports
+    fact_table: str  # cot | cot_disagg | cot_tff
+    field_map: list  # (db_column, socrata_field, cast) triples for this family
 
 
 LEGACY = Family("legacy", fetch._LEGACY_DATASET, CATALOG, "cot", fetch.LEGACY_FIELDS)
-DISAGG = Family("disaggregated", "72hh-3qpy", DISAGG_CATALOG, "cot_disagg",
-                fetch.DISAGG_FIELDS)
+DISAGG = Family("disaggregated", "72hh-3qpy", DISAGG_CATALOG, "cot_disagg", fetch.DISAGG_FIELDS)
 TFF = Family("tff", "gpe5-46if", TFF_CATALOG, "cot_tff", fetch.TFF_FIELDS)
 
 # SUPPLEMENTAL (Commodity Index Traders, 13 ag markets, combined F&O) is a

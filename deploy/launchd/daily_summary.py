@@ -9,6 +9,7 @@ Run from the repo root (the launchd wrapper guarantees it). Exit 0 even on
 an unhealthy summary — the notification IS the alert; only a failure to
 notify exits non-zero so it surfaces in launchctl/status.sh.
 """
+
 import datetime as dt
 import re
 import sqlite3
@@ -28,23 +29,27 @@ _BAD = ("FAILED", "STALE", "Traceback", "Error:")
 # Max acceptable age (days) of the newest snapshot, by DB filename. Defaults
 # to 4 (daily jobs surviving a weekend + a holiday). Slower cadences:
 MAX_AGE_DAYS = {
-    "ats.db": 9, "cftc.db": 9, "eia.db": 9, "econ_calendar.db": 9,
-    "fomc.db": 9, "sec_fundamentals.db": 9, "ftd.db": 10,
-    "usda.db": 35, "market_calendar.db": 35,
+    "ats.db": 9,
+    "cftc.db": 9,
+    "eia.db": 9,
+    "econ_calendar.db": 9,
+    "fomc.db": 9,
+    "sec_fundamentals.db": 9,
+    "ftd.db": 10,
+    "usda.db": 35,
+    "market_calendar.db": 35,
 }
 DEFAULT_MAX_AGE_DAYS = 4
 
 
 def job_exit_codes():
     """{job-name: last exit code} from launchctl (None while running)."""
-    out = subprocess.run(["launchctl", "list"], capture_output=True,
-                         text=True).stdout
+    out = subprocess.run(["launchctl", "list"], capture_output=True, text=True).stdout
     codes = {}
     for line in out.splitlines():
         parts = line.split()
         if len(parts) == 3 and parts[2].startswith(PREFIX):
-            codes[parts[2][len(PREFIX):]] = (None if parts[1] == "-"
-                                             else int(parts[1]))
+            codes[parts[2][len(PREFIX) :]] = None if parts[1] == "-" else int(parts[1])
     return codes
 
 
@@ -72,8 +77,7 @@ def stale_dbs(now):
     for db in sorted(DATA.glob("*.db")):
         try:
             with sqlite3.connect(db) as conn:
-                latest = conn.execute(
-                    "SELECT MAX(captured_at) FROM snapshots").fetchone()[0]
+                latest = conn.execute("SELECT MAX(captured_at) FROM snapshots").fetchone()[0]
         except sqlite3.Error:
             continue  # not a snapshots-bearing DB; not ours to judge
         if latest is None:
@@ -103,20 +107,20 @@ def build_summary(now_local, now_utc):
     problems.extend(stale_dbs(now_utc))
 
     healthy = not problems
-    lines = [f"{total_runs} runs in the last 24h, "
-             f"{len(codes)} jobs loaded."]
+    lines = [f"{total_runs} runs in the last 24h, {len(codes)} jobs loaded."]
     lines += problems if problems else ["All healthy."]
     return healthy, "\n".join(lines[:30])
 
 
 def main():
-    healthy, summary = build_summary(dt.datetime.now(),
-                                     dt.datetime.now(dt.timezone.utc))
+    healthy, summary = build_summary(dt.datetime.now(), dt.datetime.now(dt.UTC))
     try:
-        notify.send(summary,
-                    title="trading-bot daily summary",
-                    priority="default" if healthy else "high",
-                    tags=["white_check_mark"] if healthy else ["warning"])
+        notify.send(
+            summary,
+            title="trading-bot daily summary",
+            priority="default" if healthy else "high",
+            tags=["white_check_mark"] if healthy else ["warning"],
+        )
     except RuntimeError as e:
         print(e, file=sys.stderr)
         return 1

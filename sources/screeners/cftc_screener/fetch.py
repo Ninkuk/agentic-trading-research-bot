@@ -52,8 +52,9 @@ _urlopen = http_client.make_opener(_UA)  # default opener, no app token
 
 # Unified (db_column, socrata_field, cast) triples. Legacy is assembled from the
 # existing int/float lists so its field names live in exactly one place.
-LEGACY_FIELDS = ([(c, api, int) for c, api in _INT_FIELDS] +
-                 [(c, api, float) for c, api in _FLOAT_FIELDS])
+LEGACY_FIELDS = [(c, api, int) for c, api in _INT_FIELDS] + [
+    (c, api, float) for c, api in _FLOAT_FIELDS
+]
 
 # Disaggregated Futures-Only (72hh-3qpy). Producer/Merchant + Swap Dealers
 # (hedgers); Managed Money + Other Reportables (speculators); Nonreportable.
@@ -133,8 +134,9 @@ TFF_FIELDS = [
 ]
 
 
-def _build_url(code: str, dataset_id: str = _LEGACY_DATASET,
-               since=None, start=None, limit: int = _LIMIT) -> str:
+def _build_url(
+    code: str, dataset_id: str = _LEGACY_DATASET, since=None, start=None, limit: int = _LIMIT
+) -> str:
     """Socrata SODA query for one market on ``dataset_id``, ordered by report date
     ascending. ``since`` (YYYY-MM-DD) fetches strictly newer weeks; else ``start``
     sets an inclusive floor; else full history."""
@@ -143,9 +145,11 @@ def _build_url(code: str, dataset_id: str = _LEGACY_DATASET,
         clauses.append(f"report_date_as_yyyy_mm_dd > '{since}T00:00:00'")
     elif start:
         clauses.append(f"report_date_as_yyyy_mm_dd >= '{start}T00:00:00'")
-    params = {"$where": " AND ".join(clauses),
-              "$order": "report_date_as_yyyy_mm_dd",
-              "$limit": limit}
+    params = {
+        "$where": " AND ".join(clauses),
+        "$order": "report_date_as_yyyy_mm_dd",
+        "$limit": limit,
+    }
     return f"{_HOST.format(dataset_id)}?{urllib.parse.urlencode(params)}"
 
 
@@ -160,12 +164,16 @@ def _make_opener(app_token=None):
     return http_client.make_opener(_headers(app_token)) if app_token else _urlopen
 
 
-def _http_get(url: str, opener=_urlopen, attempts: int = _MAX_ATTEMPTS,
-              base_delay: float = _BASE_DELAY, sleep=time.sleep) -> str:
+def _http_get(
+    url: str,
+    opener=_urlopen,
+    attempts: int = _MAX_ATTEMPTS,
+    base_delay: float = _BASE_DELAY,
+    sleep=time.sleep,
+) -> str:
     """GET with bounded backoff, retrying Socrata throttling (429) and transient
     5xx/network errors. Other HTTP errors raise immediately."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts,
-                                base_delay, sleep)
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def _num(raw, cast):
@@ -188,17 +196,27 @@ def parse_rows(records: list, field_map=LEGACY_FIELDS) -> list[dict]:
         raw_date = rec.get("report_date_as_yyyy_mm_dd")
         if not code or not raw_date:
             continue
-        row = {"code": code, "report_date": raw_date[:10],
-               "name": rec.get("market_and_exchange_names")}
+        row = {
+            "code": code,
+            "report_date": raw_date[:10],
+            "name": rec.get("market_and_exchange_names"),
+        }
         for col, api, cast in field_map:
             row[col] = _num(rec.get(api), cast)
         out.append(row)
     return out
 
 
-def fetch_market_rows(code: str, dataset_id: str = _LEGACY_DATASET,
-                      field_map=LEGACY_FIELDS, app_token=None, since=None,
-                      start=None, get=_http_get, opener=None) -> list[dict]:
+def fetch_market_rows(
+    code: str,
+    dataset_id: str = _LEGACY_DATASET,
+    field_map=LEGACY_FIELDS,
+    app_token=None,
+    since=None,
+    start=None,
+    get=_http_get,
+    opener=None,
+) -> list[dict]:
     """Fetch one market's COT rows from ``dataset_id`` using ``field_map``
     (incremental when ``since`` given)."""
     op = opener if opener is not None else _make_opener(app_token)

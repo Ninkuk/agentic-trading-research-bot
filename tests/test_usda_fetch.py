@@ -14,19 +14,20 @@ def test_require_api_key_raises_without_echoing():
 
 
 def test_build_url_includes_key_format_and_filters():
-    url = fetch._build_url({"commodity_desc": "CORN",
-                            "statisticcat_desc": "STOCKS"}, "SECRET")
+    url = fetch._build_url({"commodity_desc": "CORN", "statisticcat_desc": "STOCKS"}, "SECRET")
     assert url.startswith("https://quickstats.nass.usda.gov/api/api_GET/?")
     assert "key=SECRET" in url and "format=JSON" in url
     assert "commodity_desc=CORN" in url and "statisticcat_desc=STOCKS" in url
 
 
 def test_parse_response_coerces_and_withheld_to_none():
-    payload = {"data": [
-        {"year": 2025, "Value": "1,875,000,000", "unit_desc": "BU"},
-        {"year": 2024, "Value": "(D)", "unit_desc": "BU"},        # withheld
-        {"Value": "5", "unit_desc": "BU"},                         # no year -> drop
-    ]}
+    payload = {
+        "data": [
+            {"year": 2025, "Value": "1,875,000,000", "unit_desc": "BU"},
+            {"year": 2024, "Value": "(D)", "unit_desc": "BU"},  # withheld
+            {"Value": "5", "unit_desc": "BU"},  # no year -> drop
+        ]
+    }
     rows = fetch.parse_response(payload)
     assert len(rows) == 2
     assert rows[0] == {"period": "2025", "value": 1875000000.0, "unit": "BU"}
@@ -38,8 +39,7 @@ def test_fetch_target_calls_get_and_parses():
 
     def get(url):
         seen["url"] = url
-        return json.dumps({"data": [{"year": 2025, "Value": "10",
-                                     "unit_desc": "BU"}]})
+        return json.dumps({"data": [{"year": 2025, "Value": "10", "unit_desc": "BU"}]})
 
     rows = fetch.fetch_target({"commodity_desc": "WHEAT"}, "K", get=get)
     assert rows[0]["value"] == 10.0 and "commodity_desc=WHEAT" in seen["url"]

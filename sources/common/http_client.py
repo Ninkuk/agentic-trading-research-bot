@@ -3,9 +3,11 @@
 Each screener supplies its own opener (with its User-Agent / auth headers) and
 its own retryable-status set, since the services throttle differently
 (SEC: 403; Socrata/FRED: 429 + 5xx)."""
+
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 
 
 class RateLimiter:
@@ -18,8 +20,9 @@ class RateLimiter:
     needed, and its absence keeps the fake-clock test deterministic. Each key
     gets an independent bucket, so limiting one host never starves another."""
 
-    def __init__(self, rate: float, capacity: float = 1.0, *,
-                 clock=time.monotonic, sleep=time.sleep):
+    def __init__(
+        self, rate: float, capacity: float = 1.0, *, clock=time.monotonic, sleep=time.sleep
+    ):
         self._rate = rate
         self._capacity = capacity
         self._clock = clock
@@ -48,18 +51,21 @@ SEC_HOST_KEY = "sec.gov"
 SEC_RATE_LIMITER = RateLimiter(9.0)
 
 
-def make_opener(headers: dict, timeout: int = 60, *,
-                limiter: "RateLimiter | None" = None, limiter_key: str = ""):
+def make_opener(
+    headers: dict, timeout: int = 60, *, limiter: "RateLimiter | None" = None, limiter_key: str = ""
+):
     """Return opener(url)->str that GETs the URL with the given request headers
     and decodes the body as UTF-8 (replacing undecodable bytes). When a
     ``limiter`` is supplied, ``limiter.acquire(limiter_key)`` is paid before
     each request (including retries), throttling the shared source."""
+
     def opener(url: str) -> str:
         if limiter is not None:
             limiter.acquire(limiter_key)
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return resp.read().decode("utf-8", "replace")
+
     return opener
 
 
@@ -72,9 +78,16 @@ def retry_delay(err, attempt: int, base_delay: float) -> float:
     return base_delay * (2 ** (attempt - 1))
 
 
-def http_get(url: str, opener, retry_status, attempts: int = 5,
-             base_delay: float = 1.0, sleep=time.sleep) -> str:
-    """GET a URL as text with bounded exponential backoff. Retryable: HTTP
+def http_get[T](
+    url: str,
+    opener: Callable[[str], T],
+    retry_status,
+    attempts: int = 5,
+    base_delay: float = 1.0,
+    sleep=time.sleep,
+) -> T:
+    """GET a URL via ``opener`` (text or bytes) with bounded exponential
+    backoff. Retryable: HTTP
     statuses in ``retry_status``, and transient network errors (URLError,
     TimeoutError). Other HTTP errors raise immediately. HTTPError is a URLError
     subclass, so it is matched first."""

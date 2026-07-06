@@ -15,8 +15,9 @@ def test_run_happy_path_counts(tmp_path):
     def fetch_target(query, api_key):
         return _rows(("2025", 2000.0), ("2024", 1900.0))
 
-    sid, sc, oc = runmod.run(db_path, only=["CORN:ENDING_STOCKS"], api_key="K",
-                             fetch_target=fetch_target, now_iso=NOW)
+    sid, sc, oc = runmod.run(
+        db_path, only=["CORN:ENDING_STOCKS"], api_key="K", fetch_target=fetch_target, now_iso=NOW
+    )
     assert sc == 1 and oc == 2
     conn = sqlite3.connect(db_path)
     assert conn.execute("SELECT COUNT(*) FROM usda_obs").fetchone()[0] == 2
@@ -39,8 +40,11 @@ def test_run_skips_failing_target_hides_key(tmp_path, capsys):
 
     sid, sc, oc = runmod.run(
         str(tmp_path / "u.db"),
-        only=["CORN:ENDING_STOCKS", "SOYBEANS:ENDING_STOCKS"], api_key="K",
-        fetch_target=fetch_target, now_iso=NOW)
+        only=["CORN:ENDING_STOCKS", "SOYBEANS:ENDING_STOCKS"],
+        api_key="K",
+        fetch_target=fetch_target,
+        now_iso=NOW,
+    )
     assert sc == 1
     err = capsys.readouterr().err
     assert "RuntimeError" in err and "SECRETKEY" not in err
@@ -53,8 +57,14 @@ def test_run_add_known_pair(tmp_path):
         seen.append(query["commodity_desc"])
         return _rows(("2025", 1.0))
 
-    runmod.run(str(tmp_path / "u.db"), only=[], add=["WHEAT:PRODUCTION"],
-               api_key="K", fetch_target=fetch_target, now_iso=NOW)
+    runmod.run(
+        str(tmp_path / "u.db"),
+        only=[],
+        add=["WHEAT:PRODUCTION"],
+        api_key="K",
+        fetch_target=fetch_target,
+        now_iso=NOW,
+    )
     assert "WHEAT" in seen
 
 
@@ -62,8 +72,13 @@ def test_run_all_fail_zero_snapshot(tmp_path, capsys):
     def boom(query, api_key):
         raise RuntimeError("x")
 
-    sid, sc, oc = runmod.run(str(tmp_path / "u.db"), only=["CORN:PRODUCTION"],
-                             api_key="K", fetch_target=boom, now_iso=NOW)
+    sid, sc, oc = runmod.run(
+        str(tmp_path / "u.db"),
+        only=["CORN:PRODUCTION"],
+        api_key="K",
+        fetch_target=boom,
+        now_iso=NOW,
+    )
     assert (sc, oc) == (0, 0)
     conn = sqlite3.connect(str(tmp_path / "u.db"))
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
@@ -76,10 +91,21 @@ def test_run_keep_days_prunes_snapshots_not_obs(tmp_path):
     def fetch_target(query, api_key):
         return _rows(("2025", 1.0))
 
-    runmod.run(db_path, only=["CORN:PRODUCTION"], api_key="K",
-               fetch_target=fetch_target, now_iso="2026-01-01T00:00:00+00:00")
-    runmod.run(db_path, only=["CORN:PRODUCTION"], api_key="K",
-               fetch_target=fetch_target, now_iso=NOW, keep_days=30)
+    runmod.run(
+        db_path,
+        only=["CORN:PRODUCTION"],
+        api_key="K",
+        fetch_target=fetch_target,
+        now_iso="2026-01-01T00:00:00+00:00",
+    )
+    runmod.run(
+        db_path,
+        only=["CORN:PRODUCTION"],
+        api_key="K",
+        fetch_target=fetch_target,
+        now_iso=NOW,
+        keep_days=30,
+    )
     conn = sqlite3.connect(db_path)
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
     assert conn.execute("SELECT COUNT(*) FROM usda_obs").fetchone()[0] == 1

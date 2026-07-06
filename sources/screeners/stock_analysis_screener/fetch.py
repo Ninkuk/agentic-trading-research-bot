@@ -15,8 +15,7 @@ def parse_data_points(raw: dict) -> dict[str, dict]:
     return inner
 
 
-def fetch_data_points(ids: list[str], type_: str = "s",
-                      url: str = DATA_URL) -> dict[str, dict]:
+def fetch_data_points(ids: list[str], type_: str = "s", url: str = DATA_URL) -> dict[str, dict]:
     query = urllib.parse.urlencode({"type": type_, "ids": " ".join(ids)})
     req = urllib.request.Request(f"{url}?{query}", headers=_UA)
     with urllib.request.urlopen(req, timeout=120) as resp:

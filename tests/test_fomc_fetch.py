@@ -39,7 +39,7 @@ def test_parse_calendar_handles_strong_wrapped_months():
     starts = {m["start_date"] for m in meetings}
     assert {"2026-01-27", "2026-04-28"} <= starts
     aprmay = next(m for m in meetings if m["start_date"] == "2026-04-28")
-    assert aprmay["end_date"] == "2026-05-01"   # cross-month end resolves to May
+    assert aprmay["end_date"] == "2026-05-01"  # cross-month end resolves to May
 
 
 def test_parse_calendar_extracts_meetings_and_dates():
@@ -60,7 +60,7 @@ def test_parse_calendar_handles_cross_month_range():
 
 def test_parse_calendar_marks_tentative_year():
     meetings = fetch.parse_calendar(_HTML)
-    assert meetings[2]["status"] == "tentative"       # 2027 panel
+    assert meetings[2]["status"] == "tentative"  # 2027 panel
 
 
 def test_parse_calendar_raises_on_zero_from_nonempty():

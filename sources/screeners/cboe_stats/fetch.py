@@ -1,6 +1,7 @@
 """CBOE market-statistics + VIX CSV client. Shares only the CBOE-CDN UA and the
 bounded-backoff helper with cboe_options — nothing else. Pure parsers,
 network-free-testable. Dates come from the source, never the wall clock."""
+
 import csv
 import io
 import json
@@ -28,10 +29,10 @@ _VIX_BASE = "https://cdn.cboe.com/api/global/us_indices/daily_prices"
 __all__ = ["parse_pcr_page", "parse_vix_csv", "fetch_pcr", "fetch_vix"]
 
 
-def _http_get(url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY,
-              sleep=time.sleep):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay,
-                                sleep)
+def _http_get(
+    url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep
+):
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def _num(v):
@@ -53,7 +54,7 @@ def _norm_date(s):
     s = (s or "").strip()
     for fmt in ("%Y-%m-%d", "%m/%d/%Y"):
         try:
-            return datetime.strptime(s, fmt).date().isoformat()
+            return datetime.strptime(s, fmt).date().isoformat()  # noqa: DTZ007 — date-only parse
         except ValueError:
             continue
     return None
@@ -67,8 +68,7 @@ _SELECTED_DATE = re.compile(r'"selectedDate":"(\d{4}-\d{2}-\d{2})"')
 def _rsc_stream(html) -> str:
     """Reassemble the page's RSC flight stream: each push payload is a JS
     string literal (arbitrarily chunked), decoded and concatenated in order."""
-    return "".join(json.loads(f'"{m}"')
-                   for m in _RSC_PUSH.findall(html or ""))
+    return "".join(json.loads(f'"{m}"') for m in _RSC_PUSH.findall(html or ""))
 
 
 def _balanced_object(s, start):
@@ -90,7 +90,7 @@ def _balanced_object(s, start):
         elif c == "}":
             depth -= 1
             if depth == 0:
-                return s[start:i + 1]
+                return s[start : i + 1]
     return None
 
 
@@ -112,16 +112,24 @@ def parse_pcr_page(html) -> list:
         od = json.loads(text)
     except ValueError:
         return []
-    ratios = {(r.get("name") or "").upper(): _num(r.get("value"))
-              for r in od.get("ratios") or []}
-    volume = next((_int(r.get("total"))
-                   for r in od.get("SUM OF ALL PRODUCTS") or []
-                   if (r.get("name") or "").upper() == "VOLUME"), None)
-    return [{"date": date_m.group(1),
-             "total_pcr": ratios.get("TOTAL PUT/CALL RATIO"),
-             "equity_pcr": ratios.get("EQUITY PUT/CALL RATIO"),
-             "index_pcr": ratios.get("INDEX PUT/CALL RATIO"),
-             "total_volume": volume}]
+    ratios = {(r.get("name") or "").upper(): _num(r.get("value")) for r in od.get("ratios") or []}
+    volume = next(
+        (
+            _int(r.get("total"))
+            for r in od.get("SUM OF ALL PRODUCTS") or []
+            if (r.get("name") or "").upper() == "VOLUME"
+        ),
+        None,
+    )
+    return [
+        {
+            "date": date_m.group(1),
+            "total_pcr": ratios.get("TOTAL PUT/CALL RATIO"),
+            "equity_pcr": ratios.get("EQUITY PUT/CALL RATIO"),
+            "index_pcr": ratios.get("INDEX PUT/CALL RATIO"),
+            "total_volume": volume,
+        }
+    ]
 
 
 def parse_vix_csv(text) -> list:
@@ -137,16 +145,22 @@ def parse_vix_csv(text) -> list:
             if "DATE" in upper:
                 header = upper
             continue
-        rec = dict(zip(header, parts))
+        rec = dict(zip(header, parts, strict=False))
         d = _norm_date(rec.get("DATE"))
         if not d:
             continue
         close = _num(rec.get("CLOSE"))
         if close is None and len(parts) > 1:
-            close = _num(parts[-1])              # single-value fallback
-        rows.append({"date": d, "open": _num(rec.get("OPEN")),
-                     "high": _num(rec.get("HIGH")), "low": _num(rec.get("LOW")),
-                     "close": close})
+            close = _num(parts[-1])  # single-value fallback
+        rows.append(
+            {
+                "date": d,
+                "open": _num(rec.get("OPEN")),
+                "high": _num(rec.get("HIGH")),
+                "low": _num(rec.get("LOW")),
+                "close": close,
+            }
+        )
     return rows
 
 
@@ -155,7 +169,7 @@ def _get_csv(url, get):
         return get(url)
     except urllib.error.HTTPError as e:
         if e.code in (403, 404):
-            return None                          # skip this feed
+            return None  # skip this feed
         raise
 
 

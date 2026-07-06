@@ -9,8 +9,7 @@ def _fresh():
 
 def test_ensure_schema_creates_tables():
     conn = _fresh()
-    names = {r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'")}
+    names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     assert {"events", "snapshots", "calendar_now"} <= names
 
 
@@ -25,14 +24,15 @@ def test_set_today_writes_date_and_horizon():
     conn = _fresh()
     today = set_today(conn, "2026-07-03T12:00:00+00:00", horizon_days=5)
     assert today == "2026-07-03"
-    row = conn.execute(
-        "SELECT today, horizon_days FROM calendar_now WHERE id=0").fetchone()
+    row = conn.execute("SELECT today, horizon_days FROM calendar_now WHERE id=0").fetchone()
     assert row == ("2026-07-03", 5)
 
 
 def test_subtype_defaults_to_empty_string_not_null():
     conn = _fresh()
-    conn.execute("INSERT INTO events (event_type, event_date, source, fetched_at) "
-                 "VALUES ('x', '2026-07-03', 'fred', 't')")
+    conn.execute(
+        "INSERT INTO events (event_type, event_date, source, fetched_at) "
+        "VALUES ('x', '2026-07-03', 'fred', 't')"
+    )
     conn.commit()
     assert conn.execute("SELECT subtype FROM events").fetchone()[0] == ""

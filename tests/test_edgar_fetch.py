@@ -22,7 +22,7 @@ def test_classify_buckets():
     assert classify("SC 13D") == "stake"
     assert classify("SC 13G/A") == "stake"
     assert classify("S-1") == "offering"
-    assert classify("424B5") == "offering"   # prefix match
+    assert classify("424B5") == "offering"  # prefix match
     assert classify("424B2") == "offering"
     assert classify("10-K") == "periodic"
     assert classify("3") == "other"
@@ -30,7 +30,7 @@ def test_classify_buckets():
 
 def test_parse_master_extracts_valid_rows_only():
     rows = parse_master(MASTER)
-    assert len(rows) == 3          # 2 malformed lines skipped
+    assert len(rows) == 3  # 2 malformed lines skipped
     first = rows[0]
     assert first["cik"] == 1000623
     assert first["company"] == "Mativ Holdings, Inc."
@@ -59,10 +59,12 @@ from sources.screeners.edgar_screener.fetch import fetch_daily_index, fetch_tick
 
 
 def test_fetch_ticker_map_indexes_by_cik():
-    raw = json.dumps({
-        "0": {"cik_str": 1045810, "ticker": "NVDA", "title": "NVIDIA CORP"},
-        "1": {"cik_str": 320193, "ticker": "AAPL", "title": "Apple Inc."},
-    })
+    raw = json.dumps(
+        {
+            "0": {"cik_str": 1045810, "ticker": "NVDA", "title": "NVIDIA CORP"},
+            "1": {"cik_str": 320193, "ticker": "AAPL", "title": "Apple Inc."},
+        }
+    )
     tmap = fetch_ticker_map(get=lambda url: raw)
     assert tmap[320193] == {"ticker": "AAPL", "title": "Apple Inc."}
     assert tmap[1045810]["ticker"] == "NVDA"
@@ -72,6 +74,7 @@ def test_fetch_daily_index_parses_when_present():
     def fake_get(url):
         assert url.endswith("/2025/QTR2/master.20250602.idx")
         return MASTER
+
     rows = fetch_daily_index("2025-06-02", get=fake_get)
     assert [r["bucket"] for r in rows] == ["insider", "event", "offering"]
 
@@ -79,12 +82,14 @@ def test_fetch_daily_index_parses_when_present():
 def test_fetch_daily_index_returns_none_on_404():
     def fake_get(url):
         raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+
     assert fetch_daily_index("2025-06-01", get=fake_get) is None
 
 
 def test_fetch_daily_index_reraises_non_404():
     def fake_get(url):
         raise urllib.error.HTTPError(url, 500, "Server Error", {}, None)
+
     try:
         fetch_daily_index("2025-06-01", get=fake_get)
         assert False, "expected HTTPError to propagate"
@@ -101,8 +106,9 @@ import io
 # to the previous trading day proceeds instead of aborting.
 _ACCESS_DENIED = (
     b'<?xml version="1.0" encoding="UTF-8"?>'
-    b'<Error><Code>AccessDenied</Code><Message>Access Denied</Message>'
-    b'<RequestId>2N0SQHAW7Q1SEM6V</RequestId></Error>')
+    b"<Error><Code>AccessDenied</Code><Message>Access Denied</Message>"
+    b"<RequestId>2N0SQHAW7Q1SEM6V</RequestId></Error>"
+)
 
 
 def _s3_403(url, body, content_encoding=None):
@@ -115,6 +121,7 @@ def _s3_403(url, body, content_encoding=None):
 def test_fetch_daily_index_returns_none_on_missing_file_403():
     def fake_get(url):
         raise _s3_403(url, _ACCESS_DENIED)
+
     assert fetch_daily_index("2026-07-03", get=fake_get) is None
 
 
@@ -122,6 +129,7 @@ def test_fetch_daily_index_returns_none_on_gzipped_missing_file_403():
     # The real S3 error body arrives gzip-encoded.
     def fake_get(url):
         raise _s3_403(url, gzip.compress(_ACCESS_DENIED), content_encoding="gzip")
+
     assert fetch_daily_index("2026-07-03", get=fake_get) is None
 
 
@@ -130,8 +138,13 @@ def test_fetch_daily_index_reraises_throttle_403():
     # AccessDenied marker and must still propagate.
     def fake_get(url):
         raise urllib.error.HTTPError(
-            url, 403, "Forbidden", {"Content-Type": "text/html"},
-            io.BytesIO(b"<html>Request Rate Threshold Exceeded</html>"))
+            url,
+            403,
+            "Forbidden",
+            {"Content-Type": "text/html"},
+            io.BytesIO(b"<html>Request Rate Threshold Exceeded</html>"),
+        )
+
     try:
         fetch_daily_index("2026-07-03", get=fake_get)
         assert False, "expected throttle 403 to propagate"
@@ -146,6 +159,7 @@ def _http_error(code, retry_after=None):
 
 def test_http_get_retries_on_403_then_succeeds():
     from sources.screeners.edgar_screener.fetch import _http_get
+
     calls = {"n": 0}
     slept = []
 
@@ -158,27 +172,28 @@ def test_http_get_retries_on_403_then_succeeds():
     out = _http_get("http://x", opener=opener, base_delay=1.0, sleep=slept.append)
     assert out == "OK"
     assert calls["n"] == 3
-    assert slept == [1.0, 2.0]   # exponential backoff before attempts 2 and 3
+    assert slept == [1.0, 2.0]  # exponential backoff before attempts 2 and 3
 
 
 def test_http_get_gives_up_after_attempts_on_persistent_403():
     from sources.screeners.edgar_screener.fetch import _http_get
+
     slept = []
 
     def opener(url):
         raise _http_error(403)
 
     try:
-        _http_get("http://x", opener=opener, attempts=4, base_delay=1.0,
-                  sleep=slept.append)
+        _http_get("http://x", opener=opener, attempts=4, base_delay=1.0, sleep=slept.append)
         assert False, "expected HTTPError after exhausting retries"
     except urllib.error.HTTPError as e:
         assert e.code == 403
-    assert len(slept) == 3   # attempts-1 backoffs, then raise
+    assert len(slept) == 3  # attempts-1 backoffs, then raise
 
 
 def test_http_get_does_not_retry_404():
     from sources.screeners.edgar_screener.fetch import _http_get
+
     slept = []
 
     def opener(url):
@@ -189,13 +204,14 @@ def test_http_get_does_not_retry_404():
         assert False, "404 must raise immediately"
     except urllib.error.HTTPError as e:
         assert e.code == 404
-    assert slept == []   # no retry on 404
+    assert slept == []  # no retry on 404
 
 
 def test_http_get_retries_on_urlerror_then_succeeds():
     # Transient non-HTTP failures (connection reset, DNS) must also be retried,
     # not just HTTP status codes.
     from sources.screeners.edgar_screener.fetch import _http_get
+
     calls = {"n": 0}
     slept = []
 
@@ -214,6 +230,7 @@ def test_http_get_retries_on_urlerror_then_succeeds():
 def test_http_get_retries_on_timeout():
     # A socket read timeout is a TimeoutError, not an HTTPError/URLError.
     from sources.screeners.edgar_screener.fetch import _http_get
+
     calls = {"n": 0}
     slept = []
 
@@ -230,22 +247,23 @@ def test_http_get_retries_on_timeout():
 
 def test_http_get_gives_up_after_persistent_urlerror():
     from sources.screeners.edgar_screener.fetch import _http_get
+
     slept = []
 
     def opener(url):
         raise urllib.error.URLError("connection reset")
 
     try:
-        _http_get("http://x", opener=opener, attempts=3, base_delay=1.0,
-                  sleep=slept.append)
+        _http_get("http://x", opener=opener, attempts=3, base_delay=1.0, sleep=slept.append)
         assert False, "expected URLError after exhausting retries"
     except urllib.error.URLError:
         pass
-    assert len(slept) == 2   # attempts-1 backoffs, then raise
+    assert len(slept) == 2  # attempts-1 backoffs, then raise
 
 
 def test_http_get_honors_retry_after_header():
     from sources.screeners.edgar_screener.fetch import _http_get
+
     calls = {"n": 0}
     slept = []
 
@@ -257,4 +275,4 @@ def test_http_get_honors_retry_after_header():
 
     out = _http_get("http://x", opener=opener, base_delay=1.0, sleep=slept.append)
     assert out == "OK"
-    assert slept == [7.0]   # Retry-After header overrides exponential backoff
+    assert slept == [7.0]  # Retry-After header overrides exponential backoff

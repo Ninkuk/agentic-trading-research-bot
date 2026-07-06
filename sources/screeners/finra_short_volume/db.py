@@ -3,11 +3,26 @@ from datetime import datetime, timedelta
 
 from sources.common.screener_common import connect
 
-__all__ = ["connect", "ensure_schema", "upsert_securities", "replace_day",
-           "record_day", "write_snapshot", "stored_days", "prune"]
+__all__ = [
+    "connect",
+    "ensure_schema",
+    "upsert_securities",
+    "replace_day",
+    "record_day",
+    "write_snapshot",
+    "stored_days",
+    "prune",
+]
 
-_SV_COLS = ["symbol", "date", "short_volume", "short_exempt_volume",
-            "total_volume", "short_ratio", "market"]
+_SV_COLS = [
+    "symbol",
+    "date",
+    "short_volume",
+    "short_exempt_volume",
+    "total_volume",
+    "short_ratio",
+    "market",
+]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS securities (
@@ -142,16 +157,17 @@ def record_day(conn, date: str, fetched_at: str, row_count: int) -> None:
            VALUES (?, ?, ?)
            ON CONFLICT(date) DO UPDATE SET
              fetched_at=excluded.fetched_at, row_count=excluded.row_count""",
-        (date, fetched_at, row_count))
+        (date, fetched_at, row_count),
+    )
     conn.commit()
 
 
-def write_snapshot(conn, captured_at: str, day_count: int,
-                   row_count: int) -> int:
+def write_snapshot(conn, captured_at: str, day_count: int, row_count: int) -> int:
     """Insert one fetch-run header. Returns the snapshot id."""
     cur = conn.execute(
-        "INSERT INTO snapshots (captured_at, day_count, row_count) "
-        "VALUES (?, ?, ?)", (captured_at, day_count, row_count))
+        "INSERT INTO snapshots (captured_at, day_count, row_count) VALUES (?, ?, ?)",
+        (captured_at, day_count, row_count),
+    )
     conn.commit()
     return cur.lastrowid
 
@@ -165,10 +181,13 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     """Delete run-provenance snapshots older than keep_days before now_iso.
     Short-volume history is NOT snapshot-scoped, so this is a single-table delete
     of snapshot headers only — it must NOT cascade into short_volume."""
-    cutoff = (datetime.fromisoformat(now_iso)
-              - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute(
-        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
+    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
+    ids = [
+        r[0]
+        for r in conn.execute(
+            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
+        ).fetchall()
+    ]
     if not ids:
         return 0
     qmarks = ",".join("?" * len(ids))

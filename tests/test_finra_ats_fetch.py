@@ -8,25 +8,52 @@ from sources.screeners.finra_ats import fetch
 # and each record carries a `summaryTypeCode`. Only the granular per-(symbol,
 # venue) ATS rows (`ATS_W_SMBL_FIRM`) are ingested — non-ATS OTC and aggregate
 # roll-ups are filtered out (they'd double-count and carry no MPID).
-_JSON = json.dumps([
-    {"summaryTypeCode": "ATS_W_SMBL_FIRM", "weekStartDate": "2026-06-08",
-     "issueSymbolIdentifier": "AAPL", "MPID": "UBSA",
-     "marketParticipantName": "UBS ATS", "totalWeeklyTradeCount": "1234",
-     "totalWeeklyShareQuantity": "567890", "tierIdentifier": "T1"},
-    {"summaryTypeCode": "ATS_W_SMBL_FIRM", "weekStartDate": "2026-06-08",
-     "issueSymbolIdentifier": "AAPL", "MPID": "", "marketParticipantName": "",
-     "totalWeeklyTradeCount": "5", "totalWeeklyShareQuantity": "",
-     "tierIdentifier": "T1"},   # blank MPID -> de-minimis sentinel (defensive)
-    {"summaryTypeCode": "OTC_W_SMBL_FIRM", "weekStartDate": "2026-06-08",
-     "issueSymbolIdentifier": "AAPL", "MPID": "", "totalWeeklyTradeCount": "50",
-     "totalWeeklyShareQuantity": "999"},          # non-ATS OTC -> filtered out
-    {"summaryTypeCode": "ATS_W_SMBL", "weekStartDate": "2026-06-08",
-     "issueSymbolIdentifier": "AAPL", "MPID": "",
-     "totalWeeklyShareQuantity": "888"},          # aggregate roll-up -> filtered
-    {"summaryTypeCode": "ATS_W_SMBL_FIRM", "weekStartDate": "2026-06-08",
-     "issueSymbolIdentifier": "", "MPID": "X",    # no symbol -> skipped
-     "totalWeeklyTradeCount": "1"},
-])
+_JSON = json.dumps(
+    [
+        {
+            "summaryTypeCode": "ATS_W_SMBL_FIRM",
+            "weekStartDate": "2026-06-08",
+            "issueSymbolIdentifier": "AAPL",
+            "MPID": "UBSA",
+            "marketParticipantName": "UBS ATS",
+            "totalWeeklyTradeCount": "1234",
+            "totalWeeklyShareQuantity": "567890",
+            "tierIdentifier": "T1",
+        },
+        {
+            "summaryTypeCode": "ATS_W_SMBL_FIRM",
+            "weekStartDate": "2026-06-08",
+            "issueSymbolIdentifier": "AAPL",
+            "MPID": "",
+            "marketParticipantName": "",
+            "totalWeeklyTradeCount": "5",
+            "totalWeeklyShareQuantity": "",
+            "tierIdentifier": "T1",
+        },  # blank MPID -> de-minimis sentinel (defensive)
+        {
+            "summaryTypeCode": "OTC_W_SMBL_FIRM",
+            "weekStartDate": "2026-06-08",
+            "issueSymbolIdentifier": "AAPL",
+            "MPID": "",
+            "totalWeeklyTradeCount": "50",
+            "totalWeeklyShareQuantity": "999",
+        },  # non-ATS OTC -> filtered out
+        {
+            "summaryTypeCode": "ATS_W_SMBL",
+            "weekStartDate": "2026-06-08",
+            "issueSymbolIdentifier": "AAPL",
+            "MPID": "",
+            "totalWeeklyShareQuantity": "888",
+        },  # aggregate roll-up -> filtered
+        {
+            "summaryTypeCode": "ATS_W_SMBL_FIRM",
+            "weekStartDate": "2026-06-08",
+            "issueSymbolIdentifier": "",
+            "MPID": "X",  # no symbol -> skipped
+            "totalWeeklyTradeCount": "1",
+        },
+    ]
+)
 
 
 def test_week_body_selects_the_week():
@@ -42,9 +69,9 @@ def test_parse_rows_json_coerces_and_sentinels_deminimis():
     assert {r["symbol"] for r in rows} == {"AAPL"}
     assert rows[0]["mpid"] == "UBSA" and rows[0]["share_quantity"] == 567890
     assert rows[0]["trade_count"] == 1234 and rows[0]["tier"] == "T1"
-    assert rows[0]["ats_name"] == "UBS ATS"          # from marketParticipantName
-    assert rows[1]["mpid"] == "NON_ATS_DEMINIMIS"    # blank MPID -> sentinel
-    assert rows[1]["share_quantity"] is None         # blank -> None
+    assert rows[0]["ats_name"] == "UBS ATS"  # from marketParticipantName
+    assert rows[1]["mpid"] == "NON_ATS_DEMINIMIS"  # blank MPID -> sentinel
+    assert rows[1]["share_quantity"] is None  # blank -> None
 
 
 def test_parse_rows_filters_non_ats_and_aggregate_summary_types():
@@ -54,14 +81,24 @@ def test_parse_rows_filters_non_ats_and_aggregate_summary_types():
 
 
 def test_parse_rows_csv():
-    csv_text = ("summaryTypeCode,weekStartDate,issueSymbolIdentifier,MPID,"
-                "marketParticipantName,totalWeeklyTradeCount,"
-                "totalWeeklyShareQuantity,tierIdentifier\n"
-                "ATS_W_SMBL_FIRM,2026-06-08,MSFT,CDEL,Citadel Connect,10,2000,T1\n")
+    csv_text = (
+        "summaryTypeCode,weekStartDate,issueSymbolIdentifier,MPID,"
+        "marketParticipantName,totalWeeklyTradeCount,"
+        "totalWeeklyShareQuantity,tierIdentifier\n"
+        "ATS_W_SMBL_FIRM,2026-06-08,MSFT,CDEL,Citadel Connect,10,2000,T1\n"
+    )
     rows = fetch.parse_rows(csv_text, "csv")
-    assert rows == [{"week_start": "2026-06-08", "symbol": "MSFT",
-                     "mpid": "CDEL", "ats_name": "Citadel Connect",
-                     "trade_count": 10, "share_quantity": 2000, "tier": "T1"}]
+    assert rows == [
+        {
+            "week_start": "2026-06-08",
+            "symbol": "MSFT",
+            "mpid": "CDEL",
+            "ats_name": "Citadel Connect",
+            "trade_count": 10,
+            "share_quantity": 2000,
+            "tier": "T1",
+        }
+    ]
 
 
 def test_fetch_week_posts_and_parses(monkeypatch):

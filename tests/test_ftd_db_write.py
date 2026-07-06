@@ -6,19 +6,24 @@ def _rows(*specs):
     """spec tuples: (cusip, settlement_date, symbol, quantity, price)."""
     out = []
     for cusip, date, symbol, qty, price in specs:
-        out.append({
-            "cusip": cusip, "settlement_date": date, "symbol": symbol,
-            "quantity": qty, "price": price, "description": f"{symbol} corp",
-            "dollar_value": (qty * price if price is not None else None),
-        })
+        out.append(
+            {
+                "cusip": cusip,
+                "settlement_date": date,
+                "symbol": symbol,
+                "quantity": qty,
+                "price": price,
+                "description": f"{symbol} corp",
+                "dollar_value": (qty * price if price is not None else None),
+            }
+        )
     return out
 
 
 def test_replace_period_replaces_and_drops_removed_rows():
     conn = db.connect(":memory:")
     db.ensure_schema(conn)
-    v1 = _rows(("A", "2025-05-01", "AA", 100, 1.0),
-               ("B", "2025-05-01", "BB", 200, 2.0))
+    v1 = _rows(("A", "2025-05-01", "AA", 100, 1.0), ("B", "2025-05-01", "BB", 200, 2.0))
     db.upsert_securities(conn, v1)
     assert db.replace_period(conn, "202505a", v1) == 2
     assert conn.execute("SELECT COUNT(*) FROM fails").fetchone()[0] == 2
@@ -27,8 +32,7 @@ def test_replace_period_replaces_and_drops_removed_rows():
     v2 = _rows(("A", "2025-05-01", "AA", 150, 1.0))
     db.upsert_securities(conn, v2)
     assert db.replace_period(conn, "202505a", v2) == 1
-    assert [tuple(r) for r in conn.execute(
-        "SELECT cusip, quantity FROM fails")] == [("A", 150)]
+    assert [tuple(r) for r in conn.execute("SELECT cusip, quantity FROM fails")] == [("A", 150)]
 
 
 def test_upsert_securities_tracks_first_last_seen_and_latest_label():
@@ -38,8 +42,8 @@ def test_upsert_securities_tracks_first_last_seen_and_latest_label():
     db.upsert_securities(conn, _rows(("A", "2025-05-20", "NEW", 1, None)))
     db.upsert_securities(conn, _rows(("A", "2025-04-01", "EARLY", 1, None)))
     row = conn.execute(
-        "SELECT symbol, first_seen, last_seen FROM securities "
-        "WHERE cusip='A'").fetchone()
+        "SELECT symbol, first_seen, last_seen FROM securities WHERE cusip='A'"
+    ).fetchone()
     assert tuple(row) == ("NEW", "2025-04-01", "2025-05-20")
 
 

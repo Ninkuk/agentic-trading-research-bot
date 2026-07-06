@@ -1,4 +1,4 @@
-from sources.screeners.treasury_screener.catalog import CATALOG, Dataset, select_ids
+from sources.screeners.treasury_screener.catalog import CATALOG, select_ids
 
 _FREQ = {"daily", "monthly", "event"}
 
@@ -6,8 +6,14 @@ _FREQ = {"daily", "monthly", "event"}
 def test_catalog_ids_unique_and_known():
     ids = [d.dataset_id for d in CATALOG]
     assert len(ids) == len(set(ids))
-    assert {"dts_cash", "debt_penny", "avg_rates", "upcoming_auctions",
-            "auction_results", "yield_curve"} <= set(ids)
+    assert {
+        "dts_cash",
+        "debt_penny",
+        "avg_rates",
+        "upcoming_auctions",
+        "auction_results",
+        "yield_curve",
+    } <= set(ids)
 
 
 def test_catalog_fields_valid():

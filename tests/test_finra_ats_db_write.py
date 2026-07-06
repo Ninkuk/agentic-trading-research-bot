@@ -8,9 +8,15 @@ def _fresh():
 
 
 def _row(week, symbol, mpid, shares=100, ats_name="ATS", tc=5, tier="T1"):
-    return {"week_start": week, "symbol": symbol, "mpid": mpid,
-            "ats_name": ats_name, "trade_count": tc, "share_quantity": shares,
-            "tier": tier}
+    return {
+        "week_start": week,
+        "symbol": symbol,
+        "mpid": mpid,
+        "ats_name": ats_name,
+        "trade_count": tc,
+        "share_quantity": shares,
+        "tier": tier,
+    }
 
 
 def test_upsert_venues_refreshes_name_and_extends_seen_window():
@@ -26,14 +32,16 @@ def test_upsert_venues_refreshes_name_and_extends_seen_window():
 def test_replace_week_replaces_and_dedupes():
     conn = _fresh()
     db.upsert_venues(conn, [_row("2026-06-08", "A", "M1")])
-    db.replace_week(conn, "2026-06-08", [_row("2026-06-08", "A", "M1", shares=100),
-                                         _row("2026-06-08", "A", "M2", shares=50)])
+    db.replace_week(
+        conn,
+        "2026-06-08",
+        [_row("2026-06-08", "A", "M1", shares=100), _row("2026-06-08", "A", "M2", shares=50)],
+    )
     # a re-post that drops M2 leaves no orphan
     n = db.replace_week(conn, "2026-06-08", [_row("2026-06-08", "A", "M1", shares=200)])
     assert n == 1
-    rows = conn.execute("SELECT mpid, share_quantity FROM ats_volume "
-                        "ORDER BY mpid").fetchall()
-    assert rows == [("M1", 200)]                 # M2 gone, M1 replaced
+    rows = conn.execute("SELECT mpid, share_quantity FROM ats_volume ORDER BY mpid").fetchall()
+    assert rows == [("M1", 200)]  # M2 gone, M1 replaced
 
 
 def test_record_week_stored_weeks_and_prune():

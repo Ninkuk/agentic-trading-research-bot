@@ -1,4 +1,4 @@
-from sources.monitors.econ_calendar.catalog import CATALOG, Release, select_ids
+from sources.monitors.econ_calendar.catalog import CATALOG, select_ids
 
 _VALID_IMPACT = {"high", "med"}
 _VALID_CATEGORY = {"inflation", "labor", "growth", "consumer"}
@@ -18,8 +18,7 @@ def test_catalog_fields_valid_and_every_release_has_a_time():
 
 def test_catalog_has_the_high_impact_core():
     types = {r.event_type for r in CATALOG}
-    assert {"cpi_release", "employment_situation", "ppi_release",
-            "gdp_release"} <= types
+    assert {"cpi_release", "employment_situation", "ppi_release", "gdp_release"} <= types
 
 
 def test_select_ids_defaults_to_full_catalog():

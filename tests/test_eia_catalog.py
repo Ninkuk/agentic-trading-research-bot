@@ -1,7 +1,6 @@
-from sources.screeners.eia_screener.catalog import CATALOG, Series, select_ids
+from sources.screeners.eia_screener.catalog import CATALOG, select_ids
 
-_CATS = {"crude", "cushing", "gasoline", "distillate", "production", "imports",
-         "natgas", "custom"}
+_CATS = {"crude", "cushing", "gasoline", "distillate", "production", "imports", "natgas", "custom"}
 
 
 def test_catalog_ids_unique_have_route_and_facet():

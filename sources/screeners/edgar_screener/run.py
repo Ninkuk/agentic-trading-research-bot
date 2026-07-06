@@ -1,18 +1,23 @@
 import argparse
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sources.screeners.edgar_screener import db, fetch
 
 _MAX_BACK = 5
 
 
-def run(db_path, index_date=None, keep_days=None,
-        fetch_index=fetch.fetch_daily_index, fetch_map=fetch.fetch_ticker_map,
-        now_iso=None):
+def run(
+    db_path,
+    index_date=None,
+    keep_days=None,
+    fetch_index=fetch.fetch_daily_index,
+    fetch_map=fetch.fetch_ticker_map,
+    now_iso=None,
+):
     """Fetch one EDGAR daily index, join tickers, append a snapshot.
     Returns (snapshot_id, filing_count)."""
-    now_iso = now_iso or datetime.now(timezone.utc).isoformat()
+    now_iso = now_iso or datetime.now(UTC).isoformat()
 
     if index_date is None:
         day = datetime.fromisoformat(now_iso).date()
@@ -28,8 +33,8 @@ def run(db_path, index_date=None, keep_days=None,
             day -= timedelta(days=1)
         if not rows:
             raise RuntimeError(
-                f"no EDGAR daily index with filings in the {_MAX_BACK} days "
-                f"before {now_iso}")
+                f"no EDGAR daily index with filings in the {_MAX_BACK} days before {now_iso}"
+            )
     else:
         rows = fetch_index(index_date)
         if rows is None:
@@ -49,8 +54,7 @@ def run(db_path, index_date=None, keep_days=None,
             r["ticker"] = info["ticker"] if info else None
 
         if not rows:
-            print(f"warning: EDGAR index for {index_date} has 0 filings",
-                  file=sys.stderr)
+            print(f"warning: EDGAR index for {index_date} has 0 filings", file=sys.stderr)
 
         snapshot_id, count = db.write_snapshot(conn, now_iso, index_date, rows)
         db.upsert_issuers(conn, rows, now_iso)
@@ -63,11 +67,10 @@ def run(db_path, index_date=None, keep_days=None,
 
 def main(argv=None):
     p = argparse.ArgumentParser(
-        prog="edgar",
-        description="Pull the SEC EDGAR daily filing index into SQLite")
+        prog="edgar", description="Pull the SEC EDGAR daily filing index into SQLite"
+    )
     p.add_argument("--db", default="edgar.db")
-    p.add_argument("--date", default=None,
-                   help="YYYY-MM-DD filing day (default: latest available)")
+    p.add_argument("--date", default=None, help="YYYY-MM-DD filing day (default: latest available)")
     p.add_argument("--keep-days", type=int, default=None)
     a = p.parse_args(argv)
     _, count = run(a.db, index_date=a.date, keep_days=a.keep_days)

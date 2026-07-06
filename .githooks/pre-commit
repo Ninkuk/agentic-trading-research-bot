@@ -1,0 +1,11 @@
+#!/bin/sh
+# Pre-commit gate: lint, format, types, full test suite (whole run is a few
+# seconds — the suite is offline and sub-second, so we can afford all of it).
+# Bypass for an intentionally-red WIP commit with: git commit --no-verify
+set -e
+cd "$(git rev-parse --show-toplevel)"
+
+uv run ruff check
+uv run ruff format --check
+uv run mypy
+uv run pytest -q

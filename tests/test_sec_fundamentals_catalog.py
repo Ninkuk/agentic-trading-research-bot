@@ -1,9 +1,14 @@
-from sources.screeners.sec_fundamentals.catalog import CATALOG, Concept, select_ids
+from sources.screeners.sec_fundamentals.catalog import CATALOG, select_ids
 
 _KINDS = {"instant", "duration"}
 _GROUPS = {"income", "balance", "cashflow", "shares", "per_share"}
-_UNIT_BY_GROUP = {"income": "USD", "balance": "USD", "cashflow": "USD",
-                  "shares": "shares", "per_share": "USD/shares"}
+_UNIT_BY_GROUP = {
+    "income": "USD",
+    "balance": "USD",
+    "cashflow": "USD",
+    "shares": "shares",
+    "per_share": "USD/shares",
+}
 
 
 def test_catalog_tags_unique():
@@ -21,8 +26,14 @@ def test_catalog_fields_valid_and_unit_matches_group():
 
 def test_catalog_has_headline_concepts():
     tags = {c.tag for c in CATALOG}
-    assert {"Revenues", "NetIncomeLoss", "Assets", "StockholdersEquity",
-            "EarningsPerShareDiluted", "CommonStockSharesOutstanding"} <= tags
+    assert {
+        "Revenues",
+        "NetIncomeLoss",
+        "Assets",
+        "StockholdersEquity",
+        "EarningsPerShareDiluted",
+        "CommonStockSharesOutstanding",
+    } <= tags
 
 
 def test_balance_tags_are_instant_income_are_duration():

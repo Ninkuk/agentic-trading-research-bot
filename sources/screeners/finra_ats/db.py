@@ -2,8 +2,16 @@ from datetime import datetime, timedelta
 
 from sources.common.screener_common import connect
 
-__all__ = ["connect", "ensure_schema", "upsert_venues", "replace_week",
-           "record_week", "write_snapshot", "stored_weeks", "prune"]
+__all__ = [
+    "connect",
+    "ensure_schema",
+    "upsert_venues",
+    "replace_week",
+    "record_week",
+    "write_snapshot",
+    "stored_weeks",
+    "prune",
+]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS venues (
@@ -45,13 +53,12 @@ def ensure_schema(conn) -> None:
 
 def upsert_venues(conn, rows) -> None:
     """Upsert the mpid dimension: newest ats_name, widen first/last_seen."""
-    agg = {}
+    agg: dict = {}
     for r in rows:
         mp, w = r["mpid"], r["week_start"]
         cur = agg.get(mp)
         if cur is None:
-            agg[mp] = {"mpid": mp, "ats_name": r.get("ats_name"),
-                       "first": w, "last": w}
+            agg[mp] = {"mpid": mp, "ats_name": r.get("ats_name"), "first": w, "last": w}
         else:
             if r.get("ats_name"):
                 cur["ats_name"] = r["ats_name"]
@@ -64,7 +71,8 @@ def upsert_venues(conn, rows) -> None:
              ats_name=COALESCE(excluded.ats_name, venues.ats_name),
              first_seen=min(venues.first_seen, excluded.first_seen),
              last_seen=max(venues.last_seen, excluded.last_seen)""",
-        list(agg.values()))
+        list(agg.values()),
+    )
     conn.commit()
 
 
@@ -77,7 +85,9 @@ def replace_week(conn, week_start, rows) -> int:
         """INSERT INTO ats_volume
            (week_start, symbol, mpid, trade_count, share_quantity, tier)
            VALUES (:week_start, :symbol, :mpid, :trade_count, :share_quantity,
-                   :tier)""", list(by_key.values()))
+                   :tier)""",
+        list(by_key.values()),
+    )
     conn.commit()
     return len(by_key)
 
@@ -88,34 +98,37 @@ def record_week(conn, week_start, fetched_at, row_count) -> None:
            VALUES (?, ?, ?)
            ON CONFLICT(week_start) DO UPDATE SET
              fetched_at=excluded.fetched_at, row_count=excluded.row_count""",
-        (week_start, fetched_at, row_count))
+        (week_start, fetched_at, row_count),
+    )
     conn.commit()
 
 
 def write_snapshot(conn, captured_at, week_count, row_count) -> int:
     cur = conn.execute(
-        "INSERT INTO snapshots (captured_at, week_count, row_count) "
-        "VALUES (?, ?, ?)", (captured_at, week_count, row_count))
+        "INSERT INTO snapshots (captured_at, week_count, row_count) VALUES (?, ?, ?)",
+        (captured_at, week_count, row_count),
+    )
     conn.commit()
     return cur.lastrowid
 
 
 def stored_weeks(conn) -> list:
-    return [r[0] for r in conn.execute(
-        "SELECT week_start FROM weeks ORDER BY week_start")]
+    return [r[0] for r in conn.execute("SELECT week_start FROM weeks ORDER BY week_start")]
 
 
 def prune(conn, keep_days, now_iso) -> int:
     """Single-table delete of old snapshots only. ats_volume is the store and is
     NEVER cascade-pruned (FRED prune shape)."""
-    cutoff = (datetime.fromisoformat(now_iso)
-              - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute(
-        "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)).fetchall()]
+    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
+    ids = [
+        r[0]
+        for r in conn.execute(
+            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
+        ).fetchall()
+    ]
     if not ids:
         return 0
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({','.join('?' * len(ids))})",
-                 ids)
+    conn.execute(f"DELETE FROM snapshots WHERE id IN ({','.join('?' * len(ids))})", ids)
     conn.commit()
     return len(ids)
 

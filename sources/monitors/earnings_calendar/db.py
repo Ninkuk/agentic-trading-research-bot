@@ -2,6 +2,7 @@
 The events/snapshots/calendar_now DDL lives in monitor_common; this only adds
 views. Scope is by ingest (--only watchlist), so the views need no watchlist
 table — they filter event_type='earnings' against the injected :today."""
+
 from sources.common.monitor_common import connect
 from sources.common.monitor_common import ensure_schema as _mc_ensure_schema
 

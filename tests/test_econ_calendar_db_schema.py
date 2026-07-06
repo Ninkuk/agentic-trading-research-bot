@@ -5,13 +5,10 @@ from sources.monitors.econ_calendar.catalog import CATALOG
 def test_ensure_schema_creates_events_snapshots_catalog_and_views():
     conn = db.connect(":memory:")
     db.ensure_schema(conn)
-    tables = {r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'")}
-    views = {r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='view'")}
+    tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    views = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='view'")}
     assert {"events", "snapshots", "release_catalog"} <= tables
-    assert {"v_upcoming_releases", "v_imminent_high_impact",
-            "v_this_week"} <= views
+    assert {"v_upcoming_releases", "v_imminent_high_impact", "v_this_week"} <= views
 
 
 def test_ensure_schema_idempotent_and_syncs_full_catalog():

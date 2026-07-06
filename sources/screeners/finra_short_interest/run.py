@@ -1,7 +1,8 @@
 # finra_short_interest/run.py
 import argparse
 import sys
-from datetime import date as date_cls, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from datetime import date as date_cls
 
 from sources.screeners.finra_short_interest import db, fetch
 
@@ -9,7 +10,7 @@ from sources.screeners.finra_short_interest import db, fetch
 # so a FINRA repost/revision is re-absorbed by replace_settlement. --full
 # re-ingests every settlement in range.
 _REFETCH_SETTLEMENTS = 2
-_DEFAULT_LOOKBACK_DAYS = 365       # ~12 months (~24 settlements)
+_DEFAULT_LOOKBACK_DAYS = 365  # ~12 months (~24 settlements)
 
 
 def _last_day_of_month(year: int, month: int) -> date_cls:
@@ -23,10 +24,10 @@ def _roll_back_to_weekday(d: date_cls) -> date_cls:
     landing on a weekend rolls back to the prior Friday. Holiday shifts are not
     modeled — a wrong guess simply 404s and is skipped (and, being unstored, is
     retried on every later run until it publishes)."""
-    wd = d.weekday()                # Mon=0 .. Sun=6
-    if wd == 5:                     # Saturday -> Friday
+    wd = d.weekday()  # Mon=0 .. Sun=6
+    if wd == 5:  # Saturday -> Friday
         return d - timedelta(days=1)
-    if wd == 6:                     # Sunday -> Friday
+    if wd == 6:  # Sunday -> Friday
         return d - timedelta(days=2)
     return d
 
@@ -56,16 +57,21 @@ def _default_start(now_dt, days: int = _DEFAULT_LOOKBACK_DAYS) -> str:
     return (now_dt.date() - timedelta(days=days)).isoformat()
 
 
-def run(db_path, start=None, keep_days=None, full=False,
-        fetch_settlement=fetch.fetch_settlement,
-        now_iso=None) -> tuple[int, int, int]:
+def run(
+    db_path,
+    start=None,
+    keep_days=None,
+    full=False,
+    fetch_settlement=fetch.fetch_settlement,
+    now_iso=None,
+) -> tuple[int, int, int]:
     """Ingest FINRA bi-monthly short-interest files into SQLite. Enumerate
     settlement dates from `start` (default: ~12 months back) through today;
     ingest new settlements and re-fetch the trailing _REFETCH_SETTLEMENTS
     already-stored ones (all of them when full=True). A 403/404 (absent /
     not-yet-published settlement) is skipped. Any per-settlement failure rolls
     back and continues. Returns (snapshot_id, settlement_count, row_count)."""
-    now_iso = now_iso or datetime.now(timezone.utc).isoformat()
+    now_iso = now_iso or datetime.now(UTC).isoformat()
     now_dt = datetime.fromisoformat(now_iso)
     start = start or _default_start(now_dt)
     end_date = now_dt.date().isoformat()
@@ -76,7 +82,7 @@ def run(db_path, start=None, keep_days=None, full=False,
         db.ensure_schema(conn)
         stored = db.stored_settlements(conn)
         stored_set = set(stored)
-        refetch = set(stored[-_REFETCH_SETTLEMENTS:])   # newest stored settlements
+        refetch = set(stored[-_REFETCH_SETTLEMENTS:])  # newest stored settlements
 
         settlement_count = 0
         total_rows = 0
@@ -85,7 +91,7 @@ def run(db_path, start=None, keep_days=None, full=False,
                 continue
             try:
                 rows = fetch_settlement(s)
-                if rows is None:                  # 403/404 -> absent/unpublished
+                if rows is None:  # 403/404 -> absent/unpublished
                     continue
                 db.upsert_securities(conn, rows)
                 written = db.replace_settlement(conn, s, rows)
@@ -96,12 +102,10 @@ def run(db_path, start=None, keep_days=None, full=False,
                 # Roll back this settlement's uncommitted writes, then log ONLY
                 # the exception class — never str(e)/e.url.
                 conn.rollback()
-                print(f"warning: skipping {s}: {type(e).__name__}",
-                      file=sys.stderr)
+                print(f"warning: skipping {s}: {type(e).__name__}", file=sys.stderr)
                 continue
 
-        snapshot_id = db.write_snapshot(conn, now_iso, settlement_count,
-                                        total_rows)
+        snapshot_id = db.write_snapshot(conn, now_iso, settlement_count, total_rows)
         if keep_days is not None:
             db.prune(conn, keep_days, now_iso)
     finally:
@@ -111,19 +115,27 @@ def run(db_path, start=None, keep_days=None, full=False,
 
 def main(argv=None):
     p = argparse.ArgumentParser(
-        prog="short_interest",
-        description="Pull FINRA bi-monthly equity short interest into SQLite")
+        prog="short_interest", description="Pull FINRA bi-monthly equity short interest into SQLite"
+    )
     p.add_argument("--db", default="short_interest.db")
-    p.add_argument("--start", default=None,
-                   help="earliest settlement date YYYY-MM-DD "
-                        "(default: ~12 months back; listed coverage starts "
-                        "2021-06, earlier is OTC-only)")
-    p.add_argument("--full", action="store_true",
-                   help="re-ingest every settlement in range, ignoring the "
-                        "incremental skip")
-    p.add_argument("--keep-days", type=int, default=None,
-                   help="prune snapshot provenance older than N days "
-                        "(never touches short-interest history)")
+    p.add_argument(
+        "--start",
+        default=None,
+        help="earliest settlement date YYYY-MM-DD "
+        "(default: ~12 months back; listed coverage starts "
+        "2021-06, earlier is OTC-only)",
+    )
+    p.add_argument(
+        "--full",
+        action="store_true",
+        help="re-ingest every settlement in range, ignoring the incremental skip",
+    )
+    p.add_argument(
+        "--keep-days",
+        type=int,
+        default=None,
+        help="prune snapshot provenance older than N days (never touches short-interest history)",
+    )
     a = p.parse_args(argv)
     _, sc, rc = run(a.db, start=a.start, keep_days=a.keep_days, full=a.full)
     print(f"stored {rc} short-interest rows across {sc} settlements into {a.db}")

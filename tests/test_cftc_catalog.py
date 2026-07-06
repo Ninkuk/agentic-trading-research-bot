@@ -38,7 +38,7 @@ def test_select_ids_appends_add_after_selection():
 
 
 # --- family extension ---
-from sources.screeners.cftc_screener.catalog import DISAGG_CATALOG, FAMILIES, Family, TFF_CATALOG
+from sources.screeners.cftc_screener.catalog import DISAGG_CATALOG, FAMILIES, TFF_CATALOG, Family
 
 _PHYSICAL = {"metals", "energy", "ags", "softs"}
 _FINANCIAL = {"equity_index", "rates", "fx"}

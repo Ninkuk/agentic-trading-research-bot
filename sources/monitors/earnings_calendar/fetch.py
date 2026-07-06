@@ -4,6 +4,7 @@
 Forward dates are decoded via the EXISTING stock_analysis_screener.probe decoder
 (do not write a second devalue decoder). EDGAR only *confirms* a date after the
 filing posts — it is never the forward source. Licensed data is internal-use only."""
+
 import json
 import sys
 from datetime import date, timedelta
@@ -19,8 +20,14 @@ SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 # (>= this many dates -> >= min-1 gaps). Two dates (one gap) is too noisy.
 _MIN_HISTORY = 3
 
-__all__ = ["EarningsFeedError", "fetch_forward", "timing_to_time",
-           "confirm_via_edgar", "item_202_history", "estimate_next_report"]
+__all__ = [
+    "EarningsFeedError",
+    "fetch_forward",
+    "timing_to_time",
+    "confirm_via_edgar",
+    "item_202_history",
+    "estimate_next_report",
+]
 
 
 class EarningsFeedError(Exception):
@@ -58,15 +65,21 @@ def fetch_forward(get=probe.page_data) -> list:
             ticker = sym.get("s")
             if not ticker or not d:
                 continue
-            rows.append({
-                "ticker": ticker, "name": sym.get("n"), "date": d,
-                "timing": sym.get("t"), "eps_est": sym.get("e"),
-                "eps_growth": sym.get("eg"), "rev_est": sym.get("r"),
-                "rev_growth": sym.get("rg"), "mktcap": sym.get("m"),
-            })
+            rows.append(
+                {
+                    "ticker": ticker,
+                    "name": sym.get("n"),
+                    "date": d,
+                    "timing": sym.get("t"),
+                    "eps_est": sym.get("e"),
+                    "eps_growth": sym.get("eg"),
+                    "rev_est": sym.get("r"),
+                    "rev_growth": sym.get("rg"),
+                    "mktcap": sym.get("m"),
+                }
+            )
     if payload and not rows:
-        raise EarningsFeedError(
-            "no earnings rows decoded from non-empty payload (schema drift?)")
+        raise EarningsFeedError("no earnings rows decoded from non-empty payload (schema drift?)")
     return rows
 
 
@@ -85,9 +98,8 @@ def _item_202_dates(payload) -> list:
     out = []
     for i, form in enumerate(forms):
         item = items[i] if i < len(items) else ""
-        if form == "8-K" and "2.02" in (item or ""):
-            if i < len(dates):
-                out.append(dates[i])
+        if form == "8-K" and "2.02" in (item or "") and i < len(dates):
+            out.append(dates[i])
     return out
 
 
@@ -106,8 +118,7 @@ def _near(scheduled, dates, window=3) -> bool:
     return False
 
 
-def item_202_history(tickers, get=_edgar._http_get,
-                     tmap=_edgar.fetch_ticker_map) -> dict:
+def item_202_history(tickers, get=_edgar._http_get, tmap=_edgar.fetch_ticker_map) -> dict:
     """For each ticker, resolve its CIK and return its historical 8-K Item 2.02
     (earnings) filing dates, in the submissions payload's order (most recent
     first). Per-ticker failures are skipped (type-name-only log); an unmapped
@@ -122,15 +133,15 @@ def item_202_history(tickers, get=_edgar._http_get,
         try:
             payload = json.loads(get(SUBMISSIONS_URL.format(cik=cik)))
         except Exception as e:  # skip-and-continue; never echo str(e)/url
-            print(f"warning: EDGAR history {ticker}: {type(e).__name__}",
-                  file=sys.stderr)
+            print(f"warning: EDGAR history {ticker}: {type(e).__name__}", file=sys.stderr)
             continue
         out[ticker] = _item_202_dates(payload)
     return out
 
 
-def confirm_via_edgar(tickers, scheduled_by_ticker, get=_edgar._http_get,
-                      tmap=_edgar.fetch_ticker_map) -> set:
+def confirm_via_edgar(
+    tickers, scheduled_by_ticker, get=_edgar._http_get, tmap=_edgar.fetch_ticker_map
+) -> set:
     """For each watched ticker, look for an 8-K Item 2.02 near a scheduled date
     -> confirm that (ticker, date). Returns the set of confirmed (ticker, date)
     pairs. Reuses item_202_history for the per-ticker filing lookup."""
@@ -163,7 +174,7 @@ def estimate_next_report(dates, today, min_history: int = _MIN_HISTORY):
     parsed = sorted({d for d in (_as_date(x) for x in dates) if d is not None})
     if len(parsed) < min_history:
         return None
-    gap = int(median((b - a).days for a, b in zip(parsed, parsed[1:])))
+    gap = int(median((b - a).days for a, b in zip(parsed, parsed[1:], strict=False)))
     if gap <= 0:
         return None
     t = _as_date(today)

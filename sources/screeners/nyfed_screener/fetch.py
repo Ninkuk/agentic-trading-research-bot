@@ -1,5 +1,6 @@
 """NY Fed Markets API client (key-free JSON) + per-domain pure parsers.
 Envelope-agnostic: _first_list pulls the records array whatever the wrapper key."""
+
 import json
 import time
 import urllib.parse
@@ -18,10 +19,10 @@ _BASE_DELAY = 1.0
 _urlopen = http_client.make_opener(_UA)
 
 
-def _http_get(url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY,
-              sleep=time.sleep):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay,
-                                sleep)
+def _http_get(
+    url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep
+):
+    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
 
 
 def _num(v):
@@ -74,21 +75,35 @@ def parse_reference_rates(records) -> list:
         d = _date(r.get("effectiveDate"))
         if not rt or not d:
             continue
-        out.append({"rate_type": rt, "effective_date": d,
-                    "percent_rate": _num(r.get("percentRate")),
-                    "volume_bn": _num(r.get("volumeInBillions")),
-                    "pct_1": _num(r.get("percentPercentile1")),
-                    "pct_25": _num(r.get("percentPercentile25")),
-                    "pct_75": _num(r.get("percentPercentile75")),
-                    "pct_99": _num(r.get("percentPercentile99"))})
+        out.append(
+            {
+                "rate_type": rt,
+                "effective_date": d,
+                "percent_rate": _num(r.get("percentRate")),
+                "volume_bn": _num(r.get("volumeInBillions")),
+                "pct_1": _num(r.get("percentPercentile1")),
+                "pct_25": _num(r.get("percentPercentile25")),
+                "pct_75": _num(r.get("percentPercentile75")),
+                "pct_99": _num(r.get("percentPercentile99")),
+            }
+        )
     return out
 
 
 # The single /rp/results/search.json feed carries both legs, tagged operationType.
 _OP_TYPE_LIVE = {"repo": "Repo", "reverse_repo": "Reverse Repo"}
 # SOMA summary is wide: these columns are per-security par-value totals.
-_SOMA_SECURITIES = ("mbs", "cmbs", "tips", "frn", "tipsInflationCompensation",
-                    "notesbonds", "bills", "agencies", "total")
+_SOMA_SECURITIES = (
+    "mbs",
+    "cmbs",
+    "tips",
+    "frn",
+    "tipsInflationCompensation",
+    "notesbonds",
+    "bills",
+    "agencies",
+    "total",
+)
 
 
 def _op_rate(details):
@@ -114,11 +129,16 @@ def parse_repo_ops(records, operation_type) -> list:
         d = _date(r.get("operationDate"))
         if not oid or not d:
             continue
-        out.append({"operation_id": str(oid), "operation_date": d,
-                    "operation_type": operation_type,
-                    "total_submitted": _num(r.get("totalAmtSubmitted")),
-                    "total_accepted": _num(r.get("totalAmtAccepted")),
-                    "award_rate": _op_rate(r.get("details"))})
+        out.append(
+            {
+                "operation_id": str(oid),
+                "operation_date": d,
+                "operation_type": operation_type,
+                "total_submitted": _num(r.get("totalAmtSubmitted")),
+                "total_accepted": _num(r.get("totalAmtAccepted")),
+                "award_rate": _op_rate(r.get("details")),
+            }
+        )
     return out
 
 
@@ -133,7 +153,7 @@ def parse_soma_holdings(records) -> list:
             continue
         for sec in _SOMA_SECURITIES:
             val = _num(r.get(sec))
-            if val is None:                          # blank cell -> not stored
+            if val is None:  # blank cell -> not stored
                 continue
             out.append({"as_of_date": d, "security_type": sec, "par_value": val})
     return out
@@ -147,6 +167,5 @@ def parse_primary_dealer(records) -> list:
         key = r.get("keyId") or r.get("seriesBreakId") or r.get("series")
         if not d or not key:
             continue
-        out.append({"as_of_date": d, "series_key": str(key),
-                    "value": _num(r.get("value"))})
+        out.append({"as_of_date": d, "series_key": str(key), "value": _num(r.get("value"))})
     return out

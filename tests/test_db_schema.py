@@ -9,8 +9,9 @@ def cols(conn):
 def test_ensure_schema_creates_tables_and_columns():
     conn = connect(":memory:")
     ensure_schema(conn, {"price": "REAL", "sector": "TEXT"})
-    tables = {r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    tables = {
+        r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+    }
     assert {"snapshots", "data_points", "metrics"} <= tables
     assert {"snapshot_id", "symbol", "price", "sector"} <= cols(conn)
 
@@ -28,7 +29,7 @@ def test_ensure_schema_warns_on_affinity_conflict(capsys):
     # store mismatched values. ensure_schema must surface that, not hide it.
     conn = connect(":memory:")
     ensure_schema(conn, {"shortFloat": "REAL"})
-    ensure_schema(conn, {"shortFloat": "TEXT"})   # conflicting affinity
+    ensure_schema(conn, {"shortFloat": "TEXT"})  # conflicting affinity
     err = capsys.readouterr().err
     assert "shortFloat" in err
     assert "REAL" in err and "TEXT" in err
@@ -37,7 +38,7 @@ def test_ensure_schema_warns_on_affinity_conflict(capsys):
 def test_ensure_schema_no_warning_when_affinity_matches(capsys):
     conn = connect(":memory:")
     ensure_schema(conn, {"price": "REAL"})
-    ensure_schema(conn, {"price": "REAL"})   # idempotent re-run, same affinity
+    ensure_schema(conn, {"price": "REAL"})  # idempotent re-run, same affinity
     assert capsys.readouterr().err == ""
 
 
@@ -47,5 +48,6 @@ def test_upsert_data_points_inserts_and_updates():
     upsert_data_points(conn, [DataPoint("zScore", "Altman Z-Score", "Tech", True)])
     upsert_data_points(conn, [DataPoint("zScore", "Z-Score", "Technical", False)])
     row = conn.execute(
-        "SELECT name, category, is_pro FROM data_points WHERE id='zScore'").fetchone()
+        "SELECT name, category, is_pro FROM data_points WHERE id='zScore'"
+    ).fetchone()
     assert row == ("Z-Score", "Technical", 0)

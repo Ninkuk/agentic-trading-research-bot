@@ -5,11 +5,15 @@ from sources.screeners.finra_short_volume import db
 def test_ensure_schema_is_idempotent():
     conn = db.connect(":memory:")
     db.ensure_schema(conn)
-    db.ensure_schema(conn)            # second call must not raise
-    tables = {r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'")}
+    db.ensure_schema(conn)  # second call must not raise
+    tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     assert {"securities", "short_volume", "days", "snapshots"} <= tables
-    views = {r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='view'")}
-    assert {"v_latest", "v_high_short_ratio", "v_ratio_spikes",
-            "v_short_streaks", "v_symbol_history", "v_date_rank"} <= views
+    views = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='view'")}
+    assert {
+        "v_latest",
+        "v_high_short_ratio",
+        "v_ratio_spikes",
+        "v_short_streaks",
+        "v_symbol_history",
+        "v_date_rank",
+    } <= views

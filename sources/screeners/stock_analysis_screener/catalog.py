@@ -13,8 +13,7 @@ TYPE_ROUTES = {
 
 def route_for(type_: str) -> str:
     if type_ not in TYPE_ROUTES:
-        raise ValueError(f"unknown screener type: {type_!r} "
-                         f"(known: {sorted(TYPE_ROUTES)})")
+        raise ValueError(f"unknown screener type: {type_!r} (known: {sorted(TYPE_ROUTES)})")
     return TYPE_ROUTES[type_]
 
 
@@ -35,8 +34,9 @@ def parse_catalog(raw: dict) -> tuple[list[DataPoint], int]:
     for node in probe.decode_nodes(raw):
         if isinstance(node, dict) and "dataPoints" in node:
             points = [
-                DataPoint(dp["id"], dp.get("name", ""), dp.get("cat", ""),
-                          bool(dp.get("proOnly", False)))
+                DataPoint(
+                    dp["id"], dp.get("name", ""), dp.get("cat", ""), bool(dp.get("proOnly", False))
+                )
                 for dp in node["dataPoints"]
                 if isinstance(dp, dict) and "id" in dp
             ]

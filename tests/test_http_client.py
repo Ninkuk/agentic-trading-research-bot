@@ -20,8 +20,9 @@ def test_http_get_retries_status_in_set_then_succeeds():
             raise _http_error(503)
         return "OK"
 
-    out = http_client.http_get("http://x", opener, frozenset({503}),
-                               base_delay=1.0, sleep=slept.append)
+    out = http_client.http_get(
+        "http://x", opener, frozenset({503}), base_delay=1.0, sleep=slept.append
+    )
     assert out == "OK"
     assert slept == [1.0, 2.0]
 
@@ -31,8 +32,7 @@ def test_http_get_does_not_retry_status_outside_set():
         raise _http_error(404)
 
     with pytest.raises(urllib.error.HTTPError) as exc:
-        http_client.http_get("http://x", opener, frozenset({503}),
-                             sleep=lambda s: None)
+        http_client.http_get("http://x", opener, frozenset({503}), sleep=lambda s: None)
     assert exc.value.code == 404
 
 
@@ -44,14 +44,14 @@ def test_http_get_retry_status_is_parameterized():
     # excluded -> raises immediately (no sleep)
     slept = []
     with pytest.raises(urllib.error.HTTPError):
-        http_client.http_get("http://x", opener, frozenset({429}),
-                             sleep=slept.append)
+        http_client.http_get("http://x", opener, frozenset({429}), sleep=slept.append)
     assert slept == []
     # included -> retried then gives up after attempts
     slept2 = []
     with pytest.raises(urllib.error.HTTPError):
-        http_client.http_get("http://x", opener, frozenset({403}), attempts=3,
-                             base_delay=1.0, sleep=slept2.append)
+        http_client.http_get(
+            "http://x", opener, frozenset({403}), attempts=3, base_delay=1.0, sleep=slept2.append
+        )
     assert slept2 == [1.0, 2.0]
 
 
@@ -60,14 +60,18 @@ def test_http_get_retries_urlerror_and_timeout():
         calls = {"n": 0}
         slept = []
 
-        def opener(url, _e=exc):
+        def opener(url, _e=exc, calls=calls):
             calls["n"] += 1
             if calls["n"] < 2:
                 raise _e
             return "OK"
 
-        assert http_client.http_get("http://x", opener, frozenset(),
-                                    base_delay=1.0, sleep=slept.append) == "OK"
+        assert (
+            http_client.http_get(
+                "http://x", opener, frozenset(), base_delay=1.0, sleep=slept.append
+            )
+            == "OK"
+        )
         assert slept == [1.0]
 
 
@@ -81,14 +85,14 @@ def test_http_get_honors_retry_after_header():
             raise _http_error(429, retry_after="7")
         return "OK"
 
-    http_client.http_get("http://x", opener, frozenset({429}),
-                        base_delay=1.0, sleep=slept.append)
+    http_client.http_get("http://x", opener, frozenset({429}), base_delay=1.0, sleep=slept.append)
     assert slept == [7.0]
 
 
 class _FakeClock:
     """Monotonic clock whose sleep() advances the clock, so RateLimiter's
     wait-until-token loop terminates deterministically without real time."""
+
     def __init__(self):
         self.t = 0.0
         self.sleeps = []
@@ -121,9 +125,9 @@ def test_rate_limiter_keys_are_independent():
 def test_rate_limiter_refills_over_elapsed_time():
     clk = _FakeClock()
     rl = http_client.RateLimiter(10.0, clock=clk.time, sleep=clk.sleep)
-    rl.acquire("sec.gov")   # consumes the one token
-    clk.t += 0.1            # 0.1s elapses -> one token refilled externally
-    rl.acquire("sec.gov")   # token available, no sleep
+    rl.acquire("sec.gov")  # consumes the one token
+    clk.t += 0.1  # 0.1s elapses -> one token refilled externally
+    rl.acquire("sec.gov")  # token available, no sleep
     assert clk.sleeps == []
 
 
@@ -135,9 +139,14 @@ def test_make_opener_acquires_limiter_before_request():
             order.append(("acquire", key))
 
     class FakeResp:
-        def read(self): return b"BODY"
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
+        def read(self):
+            return b"BODY"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
 
     def fake_urlopen(req, timeout=None):
         order.append(("request", req.full_url))
@@ -147,7 +156,8 @@ def test_make_opener_acquires_limiter_before_request():
     http_client.urllib.request.urlopen = fake_urlopen
     try:
         opener = http_client.make_opener(
-            {"User-Agent": "UA"}, limiter=FakeLimiter(), limiter_key="sec.gov")
+            {"User-Agent": "UA"}, limiter=FakeLimiter(), limiter_key="sec.gov"
+        )
         opener("http://data.sec.gov/x")
     finally:
         http_client.urllib.request.urlopen = orig
@@ -159,9 +169,14 @@ def test_make_opener_attaches_headers_and_reads_body():
     seen = {}
 
     class FakeResp:
-        def read(self): return b"BODY"
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
+        def read(self):
+            return b"BODY"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
 
     def fake_urlopen(req, timeout=None):
         seen["headers"] = dict(req.header_items())

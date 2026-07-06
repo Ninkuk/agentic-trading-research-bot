@@ -4,8 +4,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Feed:
-    feed_id: str   # PCR | VIX | VIX3M | VIX9D | VVIX
-    kind: str      # "pcr" | "vix"
+    feed_id: str  # PCR | VIX | VIX3M | VIX9D | VVIX
+    kind: str  # "pcr" | "vix"
 
 
 CATALOG: list[Feed] = [

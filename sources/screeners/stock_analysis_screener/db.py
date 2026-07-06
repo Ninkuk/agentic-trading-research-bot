@@ -2,11 +2,11 @@ import json
 import sys
 from collections.abc import Iterable
 
+from sources.common.screener_common import connect
+from sources.common.screener_common import prune as _prune
 from sources.screeners.stock_analysis_screener.catalog import DataPoint
-from sources.common.screener_common import connect, prune as _prune
 
-__all__ = ["connect", "ensure_schema", "prune", "write_snapshot",
-           "upsert_data_points"]
+__all__ = ["connect", "ensure_schema", "prune", "write_snapshot", "upsert_data_points"]
 
 _BASE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -67,10 +67,12 @@ def ensure_schema(conn, columns: dict[str, str]) -> None:
         if col not in existing:
             conn.execute(f"ALTER TABLE metrics ADD COLUMN {_quote_ident(col)} {affinity}")
         elif existing[col] and existing[col] != affinity:
-            print(f"warning: data-point '{col}' inferred as {affinity} but its "
-                  f"metrics column is {existing[col]}; keeping {existing[col]} "
-                  f"(values may be stored with mismatched affinity)",
-                  file=sys.stderr)
+            print(
+                f"warning: data-point '{col}' inferred as {affinity} but its "
+                f"metrics column is {existing[col]}; keeping {existing[col]} "
+                f"(values may be stored with mismatched affinity)",
+                file=sys.stderr,
+            )
     conn.commit()
 
 
@@ -85,8 +87,9 @@ def upsert_data_points(conn, data_points: Iterable[DataPoint]) -> None:
     conn.commit()
 
 
-def write_snapshot(conn, captured_at: str, source: str,
-                   data: dict[str, dict], column_ids: list[str]) -> int:
+def write_snapshot(
+    conn, captured_at: str, source: str, data: dict[str, dict], column_ids: list[str]
+) -> int:
     cur = conn.execute(
         "INSERT INTO snapshots (captured_at, universe_count, source) VALUES (?, ?, ?)",
         (captured_at, len(data), source),
