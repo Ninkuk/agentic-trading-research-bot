@@ -90,6 +90,51 @@ def stale_dbs(now):
     return stale
 
 
+def signals_digest():
+    """Composite + scorer context appended below the health summary.
+    Best-effort by design: these lines inform, the health layers above
+    alert — any read failure becomes a one-line note, never a crash.
+    Reads are mode=ro; the 9:15 slot runs after composite (9:05) and
+    scorer (9:10) so tonight's rows are normally already there."""
+    lines = []
+    try:
+        with sqlite3.connect("file:data/composite.db?mode=ro", uri=True) as conn:
+            regime = conn.execute(
+                "SELECT regime, vix, inputs_present, inputs_expected FROM v_latest_regime"
+            ).fetchone()
+            flagged = conn.execute("SELECT COUNT(*) FROM v_flagged").fetchone()[0]
+        if regime:
+            vix = f"{regime[1]:.1f}" if regime[1] is not None else "?"
+            lines.append(
+                f"regime: {regime[0]} (vix {vix},"
+                f" {regime[2]}/{regime[3]} inputs) · {flagged} flagged"
+            )
+    except sqlite3.Error as e:
+        lines.append(f"composite: unreadable ({type(e).__name__})")
+    try:
+        with sqlite3.connect("file:data/scorer.db?mode=ro", uri=True) as conn:
+            run = conn.execute(
+                "SELECT registered, matured, skipped FROM snapshots ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+            pending = conn.execute("SELECT COUNT(*) FROM v_pending").fetchone()[0]
+            bull5 = conn.execute(
+                "SELECT n_matured, avg_excess, hit_rate FROM v_bucket_performance"
+                " WHERE bucket='strong_bull' AND horizon=5"
+            ).fetchone()
+        if run:
+            lines.append(
+                f"scorer: {run[0]} registered, {run[1]} matured,"
+                f" {run[2]} skipped · {pending} pending"
+            )
+        if bull5 and bull5[0]:
+            exc = f"{bull5[1]:+.1%}" if bull5[1] is not None else "?"
+            hit = f"{bull5[2]:.0%}" if bull5[2] is not None else "?"
+            lines.append(f"strong_bull @5d: n={bull5[0]} exc {exc} hit {hit}")
+    except sqlite3.Error as e:
+        lines.append(f"scorer: unreadable ({type(e).__name__})")
+    return lines
+
+
 def build_summary(now_local, now_utc):
     total_runs, problems = 0, []
 
@@ -109,7 +154,11 @@ def build_summary(now_local, now_utc):
     healthy = not problems
     lines = [f"{total_runs} runs in the last 24h, {len(codes)} jobs loaded."]
     lines += problems if problems else ["All healthy."]
-    return healthy, "\n".join(lines[:30])
+    lines = lines[:30]
+    digest = signals_digest()
+    if digest:
+        lines += ["", "— signals —", *digest]
+    return healthy, "\n".join(lines)
 
 
 def main():
