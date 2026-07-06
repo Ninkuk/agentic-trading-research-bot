@@ -1,5 +1,7 @@
-"""scorer.db: the permanent efficacy dataset. prices is a rolling ledger;
-outcome tables are never pruned — they ARE the experiment.
+"""scorer.db: the permanent efficacy dataset. prices is an append-only,
+never-pruned close ledger (the system's only growing price history — also
+the future backtest store); outcome tables are never pruned either — they
+ARE the experiment.
 
 Entries are next-day closes: a snapshot registers only once the ledger
 holds a close AFTER its composite_date (registration defers otherwise), so
@@ -10,8 +12,6 @@ price-prune window its symbols skip via the forward entry guard."""
 
 import sqlite3
 from datetime import datetime, timedelta
-
-PRICE_KEEP_DAYS = 90  # must stay > 21 trading days (~31 calendar) + margin
 
 # Basis-break guard bounds: the ledger stores each day's close on that day's
 # price basis with no adjusted history to correct from, so a split shows up
@@ -502,13 +502,11 @@ def mature(conn, now_iso, benchmark="SPY") -> int:
 
 
 def prune(conn, keep_days: int, now_iso: str) -> int:
-    """Run headers + old ledger rows only. Outcome tables are the permanent
-    experiment record and are NEVER pruned."""
+    """Run headers only. The prices ledger and the outcome tables are both
+    permanent — outcomes ARE the experiment, and the ledger is the backtest
+    evidence (a few hundred MB/year; pruning it would discard history no
+    source can re-serve)."""
     header_cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    price_cutoff = (
-        (datetime.fromisoformat(now_iso) - timedelta(days=PRICE_KEEP_DAYS)).date().isoformat()
-    )
     n = conn.execute("DELETE FROM snapshots WHERE captured_at < ?", (header_cutoff,)).rowcount
-    conn.execute("DELETE FROM prices WHERE price_date < ?", (price_cutoff,))
     conn.commit()
     return n

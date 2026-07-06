@@ -245,7 +245,7 @@ def test_gap_beyond_bound_stays_pending(tmp_path):
     )
 
 
-def test_prune_never_touches_outcomes(tmp_path):
+def test_prune_only_removes_run_headers(tmp_path):
     conn = _conn(tmp_path)
     _ledger(conn, "AAPL", ["2026-01-02"])  # ancient ledger row
     _ledger(conn, "SPY", DAYS, start=500.0)
@@ -253,8 +253,8 @@ def test_prune_never_touches_outcomes(tmp_path):
     old_header = db.write_snapshot(conn, "2025-01-01T00:00:00+00:00")
     db.prune(conn, keep_days=90, now_iso=NOW)
     assert (
-        conn.execute("SELECT COUNT(*) FROM prices WHERE symbol='AAPL'").fetchone()[0] == 0
-    )  # ancient price pruned
+        conn.execute("SELECT COUNT(*) FROM prices WHERE symbol='AAPL'").fetchone()[0] == 1
+    )  # the ledger is permanent: ancient prices survive
     assert (
         conn.execute("SELECT COUNT(*) FROM regime_outcomes").fetchone()[0] == 1
     )  # outcomes untouched

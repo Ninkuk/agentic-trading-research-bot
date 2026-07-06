@@ -17,31 +17,19 @@ Each item: **problem → done when → size (S/M/L) → dependencies**.
 
 ---
 
-## Now — evidence integrity
+## Now — evidence integrity (ALL SHIPPED 2026-07-06)
 
-The scorer's outcome tables are permanent and drive future re-weighting
-decisions. Every day these issues stand, contaminated rows accumulate.
+*(Item 1, basis-break guard: maturation refuses windows containing a
+split-shaped consecutive-day move on either leg; `v_basis_breaks` is the
+audit view. Residuals live in item 8.)*
 
-*(Item 1, the scorer basis-break guard, shipped 2026-07-06: maturation now
-refuses windows containing a split-shaped consecutive-day move on either
-leg; `v_basis_breaks` is the audit view. Residuals live in item 8.)*
+*(Item 2, next-day entry: entries are the first close strictly after
+`composite_date`; registration defers until that close exists, so
+steady-state registers with a one-night lag. Pre-fix pending rows were
+wiped by a one-time migration — nothing had matured.)*
 
-*(Item 2, next-day entry, shipped 2026-07-06: entries are the first close
-strictly after `composite_date`; registration defers until that close
-exists, so steady-state registers with a one-night lag. Pre-fix pending
-rows are wiped by a one-time migration — nothing had matured.)*
-
-### 3. Permanent close-ledger retention
-
-**Problem.** `PRICE_KEEP_DAYS = 90` prunes the only growing price series in
-the system. Daily closes for a few thousand symbols cost megabytes per year;
-every pruned day is backtest evidence permanently lost. Cheapest possible
-backtesting prerequisite.
-
-**Done when.** Ledger prune removed (or retention made effectively unbounded),
-prune docstring updated, disk-growth expectation noted in `SCHEDULE.md`.
-
-**Size.** S. **Depends on.** — (do before or with #1's re-harvest window)
+*(Item 3, permanent close ledger: the prices prune and `PRICE_KEEP_DAYS`
+removed; the ledger is append-only forever — the future backtest store.)*
 
 ---
 
@@ -100,18 +88,17 @@ volatility input (ATR already in `stocks.db` metrics).
 
 ### 7. Backtesting foundation
 
-**Problem.** Signals can only be evaluated forward from now. Three blockers:
-close ledger was pruned (#3 fixes), no OHLC bar history anywhere
-(stocks/etfs metrics are latest-snapshot-only), and FRED vintages are deferred
-so macro signals can't be replayed without revision look-ahead.
+**Problem.** Signals can only be evaluated forward from now. Remaining
+blockers (the close-ledger prune was #3, shipped): no OHLC bar history
+anywhere (stocks/etfs metrics are latest-snapshot-only), and FRED vintages
+are deferred so macro signals can't be replayed without revision look-ahead.
 
 **Done when.** FRED `--vintages` backfilled and scheduled (see
 `fred-vintages` deferral note); a decision made and documented on a bar store
 (extend the close ledger vs a new OHLC slice); at least one signal replayed
 historically end-to-end as proof.
 
-**Size.** L. **Depends on.** #3; #1 (adjusted-price semantics must be settled
-before history accumulates on top).
+**Size.** L. **Depends on.** — (#1/#3 prerequisites shipped).
 
 ### 8. Signal-research backlog (open-ended)
 
