@@ -161,17 +161,14 @@ def ensure_schema(conn) -> None:
 
 
 def write_snapshot(conn, now_iso: str) -> int:
-    cur = conn.execute(
-        "INSERT INTO snapshots (captured_at) VALUES (?)", (now_iso,)
-    )
+    cur = conn.execute("INSERT INTO snapshots (captured_at) VALUES (?)", (now_iso,))
     conn.commit()  # survive later rollbacks
     return cur.lastrowid
 
 
 def finish_snapshot(conn, sid, harvested, registered, matured, skipped):
     conn.execute(
-        "UPDATE snapshots SET harvested=?, registered=?,"
-        " matured=?, skipped=? WHERE id=?",
+        "UPDATE snapshots SET harvested=?, registered=?, matured=?, skipped=? WHERE id=?",
         (harvested, registered, matured, skipped, sid),
     )
 
@@ -182,8 +179,7 @@ def insert_prices(conn, rows) -> int:
         if symbol is None or price_date is None or close is None:
             continue
         cur = conn.execute(
-            "INSERT OR IGNORE INTO prices (symbol, price_date, close)"
-            " VALUES (?, ?, ?)",
+            "INSERT OR IGNORE INTO prices (symbol, price_date, close) VALUES (?, ?, ?)",
             (symbol, price_date, close),
         )
         n += cur.rowcount
@@ -204,7 +200,7 @@ def entry_for(conn, symbol, composite_date, max_age_days):
 
 def _bench_close(conn, benchmark, price_date):
     row = conn.execute(
-        "SELECT close FROM prices WHERE symbol=?" " AND price_date=?",
+        "SELECT close FROM prices WHERE symbol=? AND price_date=?",
         (benchmark, price_date),
     ).fetchone()
     return row[0] if row else None
@@ -239,8 +235,7 @@ def register_snapshot(
         duplicate_window = (
             entry_date is not None
             and conn.execute(
-                "SELECT 1 FROM registered_snapshots WHERE entry_date = ?"
-                " LIMIT 1",
+                "SELECT 1 FROM registered_snapshots WHERE entry_date = ? LIMIT 1",
                 (entry_date,),
             ).fetchone()
             is not None
@@ -337,12 +332,7 @@ def register_snapshot(
 
 
 def registered_ids(conn):
-    return {
-        r[0]
-        for r in conn.execute(
-            "SELECT composite_snapshot_id FROM registered_snapshots"
-        )
-    }
+    return {r[0] for r in conn.execute("SELECT composite_snapshot_id FROM registered_snapshots")}
 
 
 # Maturation: the Nth distinct ledger date after entry, per symbol.
@@ -421,17 +411,11 @@ def mature(conn, now_iso, benchmark="SPY") -> int:
 def prune(conn, keep_days: int, now_iso: str) -> int:
     """Run headers + old ledger rows only. Outcome tables are the permanent
     experiment record and are NEVER pruned."""
-    header_cutoff = (
-        datetime.fromisoformat(now_iso) - timedelta(days=keep_days)
-    ).isoformat()
+    header_cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
     price_cutoff = (
-        (datetime.fromisoformat(now_iso) - timedelta(days=PRICE_KEEP_DAYS))
-        .date()
-        .isoformat()
+        (datetime.fromisoformat(now_iso) - timedelta(days=PRICE_KEEP_DAYS)).date().isoformat()
     )
-    n = conn.execute(
-        "DELETE FROM snapshots WHERE captured_at < ?", (header_cutoff,)
-    ).rowcount
+    n = conn.execute("DELETE FROM snapshots WHERE captured_at < ?", (header_cutoff,)).rowcount
     conn.execute("DELETE FROM prices WHERE price_date < ?", (price_cutoff,))
     conn.commit()
     return n

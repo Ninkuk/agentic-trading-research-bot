@@ -17,12 +17,8 @@ def _seed(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
     # WIN rises faster than SPY; LOSE falls; SPY drifts up
-    db.insert_prices(
-        conn, [("WIN", d, 100 + 5 * i) for i, d in enumerate(DAYS)]
-    )
-    db.insert_prices(
-        conn, [("LOSE", d, 100 - 5 * i) for i, d in enumerate(DAYS)]
-    )
+    db.insert_prices(conn, [("WIN", d, 100 + 5 * i) for i, d in enumerate(DAYS)])
+    db.insert_prices(conn, [("LOSE", d, 100 - 5 * i) for i, d in enumerate(DAYS)])
     db.insert_prices(conn, [("SPY", d, 500 + i) for i, d in enumerate(DAYS)])
     db.register_snapshot(
         conn,
@@ -83,8 +79,7 @@ def test_bucket_performance(tmp_path):
     rows = {
         r[0]: r
         for r in conn.execute(
-            "SELECT bucket, horizon, n_matured, avg_excess, hit_rate"
-            " FROM v_bucket_performance"
+            "SELECT bucket, horizon, n_matured, avg_excess, hit_rate FROM v_bucket_performance"
         )
     }
     assert rows["strong_bull"][2] == 1 and rows["strong_bull"][3] > 0
@@ -99,8 +94,7 @@ def test_signal_efficacy_direction_adjusted(tmp_path):
     rows = {
         r[0]: r
         for r in conn.execute(
-            "SELECT signal_id, n_matured, avg_directional_excess, hit_rate"
-            " FROM v_signal_efficacy"
+            "SELECT signal_id, n_matured, avg_directional_excess, hit_rate FROM v_signal_efficacy"
         )
     }
     # both signals called their direction correctly -> positive adj excess
@@ -112,12 +106,9 @@ def test_signal_efficacy_direction_adjusted(tmp_path):
 def test_regime_and_pending(tmp_path):
     conn = _seed(tmp_path)
     r = conn.execute(
-        "SELECT regime, n_matured, avg_bench_return"
-        " FROM v_regime_performance"
+        "SELECT regime, n_matured, avg_bench_return FROM v_regime_performance"
     ).fetchone()
     assert r[0] == "risk_on" and r[1] == 1 and r[2] > 0
     # register something unmaturable -> shows in v_pending
-    db.register_snapshot(
-        conn, 2, "2026-07-07", [], [], "mixed", (21,), "SPY", 7, NOW
-    )
+    db.register_snapshot(conn, 2, "2026-07-07", [], [], "mixed", (21,), "SPY", 7, NOW)
     assert conn.execute("SELECT COUNT(*) FROM v_pending").fetchone()[0] == 1
