@@ -69,8 +69,10 @@ INSERT OR IGNORE INTO calendar_now (id, today) VALUES (0, '');
 
 def ensure_schema(conn) -> None:
     """Create all Treasury tables (+ views from Task 4). Idempotent.
-    Drops v_upcoming_auctions before recreating to migrate off date('now')."""
+    Drops v_upcoming_auctions before recreating to migrate off date('now'),
+    and v_tga_trend to migrate off the pre-2022 close_balance-only body."""
     conn.execute("DROP VIEW IF EXISTS v_upcoming_auctions")
+    conn.execute("DROP VIEW IF EXISTS v_tga_trend")
     conn.executescript(_SCHEMA + _VIEWS)
     conn.commit()
 
@@ -164,10 +166,18 @@ def set_today(conn, now_iso: str) -> str:
 
 _VIEWS = """
 -- TGA closing balance per date with ~week-over-week (5 business-day) change.
+-- Two DTS formats: since 2022-04-18 the closing balance is its own
+-- account_type row whose value the API publishes in open_today_bal (its
+-- close_today_bal is always the literal string "null"); before that, one row
+-- per account carried a real close_today_bal. One continuous series.
 CREATE VIEW IF NOT EXISTS v_tga_trend AS
 WITH tga AS (
+    SELECT record_date, open_balance AS close_balance FROM dts_cash
+    WHERE account_type = 'Treasury General Account (TGA) Closing Balance'
+    UNION ALL
     SELECT record_date, close_balance FROM dts_cash
-    WHERE account_type LIKE '%TGA%'
+    WHERE account_type IN ('Treasury General Account (TGA)',
+                           'Federal Reserve Account')
 )
 SELECT record_date, close_balance,
        close_balance - LAG(close_balance, 5) OVER (ORDER BY record_date)

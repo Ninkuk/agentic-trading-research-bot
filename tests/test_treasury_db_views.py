@@ -36,6 +36,44 @@ def test_v_upcoming_auctions_filters_future_ordered():
     assert dates == ["2099-01-01"]          # past dropped
 
 
+def test_v_tga_trend_reads_both_dts_eras():
+    conn = _fresh()
+    db.write_dts_cash(conn, [
+        # Legacy format (pre-2022-04-18): one row per account, real close col.
+        {"record_date": "2022-04-14", "account_type": "Treasury General Account (TGA)",
+         "open_balance": 900000.0, "close_balance": 910000.0},
+        # Modern format: the closing balance is its own account_type row whose
+        # value the API publishes in open_today_bal -> open_balance.
+        {"record_date": "2022-04-18",
+         "account_type": "Treasury General Account (TGA) Opening Balance",
+         "open_balance": 910000.0, "close_balance": None},
+        {"record_date": "2022-04-18",
+         "account_type": "Treasury General Account (TGA) Closing Balance",
+         "open_balance": 920000.0, "close_balance": None},
+        # Deposits/withdrawals rows must not leak into the balance series.
+        {"record_date": "2022-04-18", "account_type": "Total TGA Deposits (Table II)",
+         "open_balance": 50000.0, "close_balance": None},
+    ])
+    rows = dict(conn.execute(
+        "SELECT record_date, close_balance FROM v_tga_trend").fetchall())
+    assert rows == {"2022-04-14": 910000.0, "2022-04-18": 920000.0}
+
+
+def test_v_tga_trend_wow_change_spans_the_format_cutover():
+    conn = _fresh()
+    legacy = [{"record_date": f"2022-04-{d:02d}",
+               "account_type": "Federal Reserve Account",
+               "open_balance": None, "close_balance": 100.0 + d}
+              for d in (8, 11, 12, 13, 14)]
+    db.write_dts_cash(conn, legacy + [
+        {"record_date": "2022-04-18",
+         "account_type": "Treasury General Account (TGA) Closing Balance",
+         "open_balance": 200.0, "close_balance": None}])
+    row = conn.execute("SELECT close_balance, wow_change FROM v_tga_trend "
+                       "WHERE record_date='2022-04-18'").fetchone()
+    assert row == (200.0, 200.0 - 108.0)    # LAG(5) reaches back into legacy era
+
+
 def test_v_debt_trend_delta_vs_prior():
     conn = _fresh()
     db.write_debt_penny(conn, [
