@@ -129,6 +129,10 @@ transient working docs (write them under `docs/superpowers/specs/<date>-<name>-d
 and `docs/superpowers/plans/<date>-<name>.md`); they're cleared once the screener ships, so
 don't expect earlier ones to still be on disk.
 
+**Everything runs on a launchd schedule** — see `docs/SCHEDULE.md` (durable reference:
+per-job slots, scheduling constraints, ops). Source of truth is `deploy/launchd/install.py`;
+after changing a screener's cadence assumptions, update both.
+
 **Data-source policy:** official primary sources only, with one approved exception —
 **stockanalysis.com** (already trusted; used by `stocks` and `earnings`). `reddit` (ApeWisdom)
 predates the policy and stays as-is. `portfolio` is account state (Robinhood via MCP),
