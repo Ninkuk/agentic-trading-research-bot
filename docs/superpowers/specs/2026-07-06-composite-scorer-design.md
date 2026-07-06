@@ -63,7 +63,10 @@ composite→scorer seam).
    write **pending** outcome rows (`INSERT OR IGNORE`) with the entry side filled in
    immediately: entry `price_date` = last ledger date ≤ the composite snapshot's date,
    entry close, and the benchmark's close on the same date. One row per (entity ×
-   horizon) for each of the three outcome kinds (below). Detach.
+   horizon) for each of the three outcome kinds (below). **One grading per trading
+   window:** weekend and same-day-rerun composite snapshots share a benchmark entry
+   date; only the first registers outcome rows (later ones record a marker only), so
+   duplicate copies of one window can never be counted as independent samples. Detach.
 3. **Mature.** Pure SQL inside `scorer.db`: for every pending row where the ledger now
    contains the Nth distinct `price_date` after entry for that symbol, `UPDATE` exit
    date, exit close, forward return, benchmark return, and `matured_at = now_iso`.
@@ -95,7 +98,8 @@ Three outcome kinds, each at horizons **5, 10, and 21 trading days** (`catalog.H
 2. **Signal outcomes** — every ticker-grain `signal_values` row (`signal_id`, `entity`,
    `score`, `via_crosswalk`): identical mechanics. This is the table that answers
    "which of the 23 signals predicts" — the input to any future catalog re-weighting or
-   pruning (~7k rows/night; trivial for SQLite).
+   pruning (~4.3k rows/night measured 2026-07-06; ~8.5k/night across all outcome
+   tables, ~3M rows/year — trivial for SQLite).
 3. **Regime outcomes** — one row per composite snapshot per horizon: the regime tag
    scored against the benchmark's (SPY's) own forward return.
 

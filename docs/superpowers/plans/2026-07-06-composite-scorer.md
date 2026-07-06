@@ -23,6 +23,16 @@
 - Offline tests only; miniature source DBs built via each source's own `ensure_schema` (stocks/etfs need `ensure_schema(conn, {"priceDate": "TEXT", "close": "REAL"})` — the metrics table's data columns are dynamic).
 - Commits: `git commit --no-gpg-sign`, no Co-Authored-By. Full suite green after every task (`uv run pytest -q`; note a pre-commit hook re-runs format/typecheck/suite).
 
+## Post-review adjustments (adversarial review, 2026-07-06)
+
+The review executed the plan's SQL against scratch DBs and recomputed scale claims from the real data. Applied:
+
+- **F1 (blocker):** the maturation SQL's correlated `OFFSET` is illegal in SQLite ("no such column: t.horizon") — replaced with a COUNT-correlated WHERE selecting the Nth post-entry date (verified: all plan-test numbers reproduce).
+- **F2 (major):** a ledger gap wider than the sources' retention could silently mature a "5-trading-day" window against a date months later; both maturation statements now carry a `julianday(exit) − julianday(entry) <= horizon*2 + 7` bound — gapped rows stay pending and visible instead of poisoning the permanent dataset. Test added.
+- **F3 (major):** weekend and same-day-rerun composite snapshots share one benchmark entry date and would register duplicate outcome sets that `v_bucket_performance` counts as independent samples (already concrete: today's two composite snapshots). Registration now grades each entry window once; later snapshots write a durable marker-only row. Test added; `registered_snapshots` gained `entry_date`.
+- **F4 (minor):** measured volumes — 4,296 signal-outcome rows/night (1,432 direction-bearing signal rows × 3 horizons), ~8.5k rows/night total, ~3M/year; harvest scans ~11k (symbol, priceDate) pairs. Spec prose corrected.
+- **Accepted (documented):** survivorship (delisted symbols never mature; permanently visible in `v_pending`), first-harvested-close-wins on source revisions, and the benign 9:05/9:10 overlap (WAL gives a consistent view; an unregistered snapshot self-heals next night).
+
 ## File Structure
 
 - Create: `sources/combiners/scorer/__init__.py` (empty), `catalog.py`, `fetch.py`, `db.py`, `run.py`
@@ -156,6 +166,7 @@ CREATE TABLE IF NOT EXISTS prices (
 CREATE TABLE IF NOT EXISTS registered_snapshots (
     composite_snapshot_id INTEGER PRIMARY KEY,
     composite_date        TEXT NOT NULL,
+    entry_date            TEXT,     -- benchmark entry; NULL if bench absent
     registered_at         TEXT NOT NULL,
     ticker_rows           INTEGER NOT NULL,
     signal_rows           INTEGER NOT NULL,
@@ -387,6 +398,41 @@ def test_bench_missing_registers_null_bench(tmp_path):
     assert row[0] is not None and row[1] is None
 
 
+def test_duplicate_entry_window_registers_marker_only(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "AAPL", DAYS)
+    _ledger(conn, "SPY", DAYS, start=500.0)
+    rows = [dict(symbol="AAPL", score_sum=2, total=2, bullish=2, bearish=0,
+                 in_portfolio=0)]
+    reg1, _ = db.register_snapshot(conn, 1, "2026-07-04", rows, [],
+                                   "risk_on", (5,), "SPY", 7, NOW)
+    # Sunday-run snapshot grades the same Friday close window
+    reg2, _ = db.register_snapshot(conn, 2, "2026-07-05", rows, [],
+                                   "risk_on", (5,), "SPY", 7, NOW)
+    assert reg1 == 2 and reg2 == 0        # ticker + regime, then marker-only
+    assert {1, 2} <= db.registered_ids(conn)
+    assert conn.execute("SELECT COUNT(*) FROM ticker_outcomes"
+                        ).fetchone()[0] == 1
+
+
+def test_gap_beyond_bound_stays_pending(tmp_path):
+    conn = _conn(tmp_path)
+    db.insert_prices(conn, [("AAPL", "2026-07-01", 100.0),
+                            ("SPY", "2026-07-01", 500.0)])
+    # ledger gap: next prices only in November (sources were down > 30d)
+    db.insert_prices(conn, [("AAPL", f"2026-11-{d:02d}", 200.0)
+                            for d in range(2, 9)])
+    db.register_snapshot(conn, 1, "2026-07-01",
+                         [dict(symbol="AAPL", score_sum=2, total=2,
+                               bullish=2, bearish=0, in_portfolio=0)],
+                         [], "risk_on", (5,), "SPY", 7, NOW)
+    # the 5th post-entry date exists (Nov 6) but violates the calendar
+    # bound -> must stay pending rather than grade the wrong window
+    assert db.mature(conn, NOW) == 0
+    assert conn.execute("SELECT COUNT(*) FROM ticker_outcomes"
+                        " WHERE matured_at IS NULL").fetchone()[0] == 1
+
+
 def test_prune_never_touches_outcomes(tmp_path):
     conn = _conn(tmp_path)
     _ledger(conn, "AAPL", ["2026-01-02"])     # ancient ledger row
@@ -458,14 +504,29 @@ def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
                       regime, horizons, benchmark, max_age_days,
                       now_iso) -> tuple:
     """All-or-nothing registration of one composite snapshot: the marker row
-    and every outcome row commit together. Returns (registered, skipped)."""
+    and every outcome row commit together. Returns (registered, skipped).
+
+    One grading per trading window (adversarial-review F3): weekend and
+    same-day-rerun composite snapshots share a benchmark entry date; only
+    the first snapshot for that entry date registers outcome rows — later
+    ones write a marker-only row so the dedupe is durable and the loop
+    never revisits them. Multi-counting duplicate windows would let
+    v_bucket_performance treat copies of one window as independent samples.
+    """
     registered = skipped = 0
+    bench_entry = entry_for(conn, benchmark, composite_date, max_age_days)
+    entry_date = bench_entry[0] if bench_entry else None
     with conn:  # transaction
+        duplicate_window = entry_date is not None and conn.execute(
+            "SELECT 1 FROM registered_snapshots WHERE entry_date = ?"
+            " LIMIT 1", (entry_date,)).fetchone() is not None
         conn.execute(
             "INSERT INTO registered_snapshots (composite_snapshot_id,"
-            " composite_date, registered_at, ticker_rows, signal_rows,"
-            " skipped) VALUES (?, ?, ?, 0, 0, 0)",
-            (csid, composite_date, now_iso))
+            " composite_date, entry_date, registered_at, ticker_rows,"
+            " signal_rows, skipped) VALUES (?, ?, ?, ?, 0, 0, 0)",
+            (csid, composite_date, entry_date, now_iso))
+        if duplicate_window:
+            return 0, 0
         for r in ticker_rows:
             entry = entry_for(conn, r["symbol"], composite_date, max_age_days)
             if entry is None:
@@ -500,7 +561,6 @@ def register_snapshot(conn, csid, composite_date, ticker_rows, signal_rows,
                      r["score"], r["via_crosswalk"], h, entry[0], entry[1],
                      bench))
                 registered += 1
-        bench_entry = entry_for(conn, benchmark, composite_date, max_age_days)
         if bench_entry is None:
             skipped += 1
         else:
@@ -525,8 +585,14 @@ def registered_ids(conn):
         "SELECT composite_snapshot_id FROM registered_snapshots")}
 
 
-# Maturation: the Nth distinct ledger date after entry, per symbol. The
-# correlated OFFSET subquery is the whole trading-day calendar.
+# Maturation: the Nth distinct ledger date after entry, per symbol.
+# NOTE: SQLite rejects a correlated OFFSET ("LIMIT 1 OFFSET t.horizon - 1"
+# fails with "no such column"), so the Nth date is selected via a
+# COUNT-correlated WHERE instead (adversarial-review F1, verified).
+# The julianday bound (F2) refuses to mature across a ledger gap wider
+# than the horizon could plausibly span (~2 calendar days per trading day
+# + a holiday week) — a gapped row stays pending and visible forever
+# rather than silently grading the wrong window into the permanent record.
 _MATURE_SYMBOL = """
 UPDATE {table} SET
   exit_date = x.xdate,
@@ -543,9 +609,15 @@ UPDATE {table} SET
 FROM (SELECT t.rowid AS rid,
              (SELECT p.price_date FROM prices p
               WHERE p.symbol = t.{sym} AND p.price_date > t.entry_date
-              ORDER BY p.price_date LIMIT 1 OFFSET t.horizon - 1) AS xdate
+                AND (SELECT COUNT(*) FROM prices q
+                     WHERE q.symbol = t.{sym}
+                       AND q.price_date > t.entry_date
+                       AND q.price_date <= p.price_date) = t.horizon
+              LIMIT 1) AS xdate
       FROM {table} t WHERE t.exit_date IS NULL) AS x
 WHERE {table}.rowid = x.rid AND x.xdate IS NOT NULL
+  AND julianday(x.xdate) - julianday({table}.entry_date)
+      <= {table}.horizon * 2 + 7
 """
 
 _MATURE_REGIME = """
@@ -560,9 +632,15 @@ UPDATE regime_outcomes SET
 FROM (SELECT t.rowid AS rid,
              (SELECT p.price_date FROM prices p
               WHERE p.symbol = :bench AND p.price_date > t.entry_date
-              ORDER BY p.price_date LIMIT 1 OFFSET t.horizon - 1) AS xdate
+                AND (SELECT COUNT(*) FROM prices q
+                     WHERE q.symbol = :bench
+                       AND q.price_date > t.entry_date
+                       AND q.price_date <= p.price_date) = t.horizon
+              LIMIT 1) AS xdate
       FROM regime_outcomes t WHERE t.exit_date IS NULL) AS x
 WHERE regime_outcomes.rowid = x.rid AND x.xdate IS NOT NULL
+  AND julianday(x.xdate) - julianday(regime_outcomes.entry_date)
+      <= regime_outcomes.horizon * 2 + 7
 """
 
 
