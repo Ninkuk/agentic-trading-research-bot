@@ -253,14 +253,17 @@ SIGNALS = [
     {
         # NEW shorting pressure (vs own 6-period base) reads as informed
         # bears arriving: bearish. Distinct from the level read above.
+        # At the old >= 1.5 floor this emitted 1,135 rows (52% of all signal
+        # rows) and skewed the composite bearish (measured 2026-07-06);
+        # >= 2.5 = 443 rows, >= 8.0 = 82 -- matching si_days_to_cover's scale.
         "signal_id": "si_spike", "db": "short_interest.db",
         "grain": "ticker", "staleness_budget_days": 25,
         "sql": """
             SELECT symbol, base_ratio,
-                   CASE WHEN base_ratio >= 2.0 THEN -2 ELSE -1 END,
+                   CASE WHEN base_ratio >= 8.0 THEN -2 ELSE -1 END,
                    settlement_date
             FROM src.v_short_interest_spikes
-            WHERE base_ratio >= 1.5
+            WHERE base_ratio >= 2.5
         """,
     },
     {
