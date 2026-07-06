@@ -22,22 +22,31 @@ Each item: **problem → done when → size (S/M/L) → dependencies**.
 The scorer's outcome tables are permanent and drive future re-weighting
 decisions. Every day these issues stand, contaminated rows accumulate.
 
-### 1. Corporate actions in the scorer price ledger (verify, then fix)
+### 1. Corporate actions in the scorer price ledger (CONFIRMED 2026-07-06)
 
 **Problem.** `scorer.db → prices` accumulates nightly closes harvested from
-`stocks.db`/`etfs.db`. stockanalysis.com serves *currently-adjusted* prices,
-so a split or large dividend after a close is harvested leaves that stored
-close on the old basis while later closes arrive on the new one. A 2:1 split
-inside a grading window fabricates a −50 % forward return; dividends bias all
-returns slightly negative. Unverified — the first task is confirming the
-behavior against a real split.
+`stocks.db`/`etfs.db`. Each source snapshot is a frozen single bar (that
+day's close as served that day), so a split changes the ledger's price basis
+mid-stream and **no adjusted history exists anywhere in the system to
+correct from** — re-harvesting re-offers the same frozen values, and
+`insert_prices` is INSERT OR IGNORE besides. Confirmed by running a
+synthetic 2:1 split through the real register/mature path: it matured a
+fabricated −49.5 % `fwd_return` into the permanent outcome tables; the
+julianday gap guard does not apply and no magnitude guard exists. Latent as
+of confirmation (ledger was one date per symbol, zero matured rows).
+Dividends cause the same basis drift in miniature (close-only returns
+understate total return; SPY benchmark partially offsets in excess terms).
 
-**Done when.** Behavior confirmed or refuted with a real example. If real:
-either the trailing ledger window is re-harvested nightly (adjustments
-propagate before any grading reads the window) or split-spanning outcomes are
-detected and quarantined; a test covers a synthetic split.
+**Done when.** Split-spanning outcomes cannot mature into the permanent
+record. Candidate mechanisms (design decision needed — nightly re-harvest is
+NOT viable, see above): (a) cross-check the ledger's raw window return
+against the provider's own split-adjusted short-horizon return columns
+(`ch1w`/`ch1m` in `stocks.db` metrics) and quarantine on disagreement;
+(b) magnitude guard that holds suspicious rows pending-forever like the gap
+guard; (c) infer split factors from basis breaks and rescale prior ledger
+rows. A test covers a synthetic split maturing (or refusing to).
 
-**Size.** S to verify, M to fix. **Depends on.** —
+**Size.** M (verification done). **Depends on.** —
 
 ### 2. Entry-price look-ahead in outcome grading
 
