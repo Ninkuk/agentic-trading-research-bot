@@ -28,6 +28,17 @@
 - CFTC `fx` asset class is scored but **not crosswalked** (net-long EUR ≠ net-long UUP; direction is incoherent at class level).
 - `edgar_insider` and `portfolio_holding` carry `score 0` (informational: Form 4 clusters are directionless at index level; holdings are not a view). Score-0 signals are excluded from bullish/bearish counts but `edgar_insider` counts toward `total`.
 
+## Post-review adjustments (adversarial review, 2026-07-06)
+
+An adversarial review with full session context ran every catalog SQL against the real DBs and simulated the vote aggregation; verdict FIX-THEN-SHIP. Applied to this plan:
+
+- **F1 (blocker):** `_mini_portfolio` fixture now supplies `position_count` (portfolio's `snapshots` requires it NOT NULL).
+- **F2 (major):** `si_days_to_cover` tightened to `>= 10` floor / `>= 20` for +2 — at the old view floor (≥5) it emitted 1,599 rows, was 1,317 tickers' only signal, and skewed the composite bullish. Smoke run now checks the score distribution.
+- **F3 (major):** `si_days_to_cover` + `ftd_persistent` family overlap documented in catalog (both read squeeze fuel; a flag from only these two is one phenomenon double-counted). Family-diverse flagging deferred deliberately.
+- **F4 (minor):** `stocks_rsi` excludes degenerate `rsi = 0` rows (real placeholder artifacts scored +2).
+- **F5 (minor):** launchd slot moved 21:00 → 21:05 to clear edgar's 15-min failure-retry window.
+- **F6 (minor):** short-interest staleness budgets 20 → 25 days (FINRA bi-monthly + ~9-day publication lag).
+
 ## File Structure
 
 - Create: `sources/combiners/__init__.py` (empty), `sources/combiners/composite/__init__.py` (empty)
@@ -913,21 +924,26 @@ SIGNALS = [
     # ------------------------------------------------ ticker grain ----
     {
         # Crowded shorts = squeeze fuel (contrarian bullish). The source
-        # view pre-filters days_to_cover >= 5 and ADV >= 100k.
+        # view pre-filters days_to_cover >= 5 / ADV >= 100k, but at >= 5
+        # this blankets ~1,600 tickers and skews the whole composite
+        # bullish (measured 2026-07-06); score only genuine extremes.
+        # FAMILY OVERLAP: this and ftd_persistent both read squeeze fuel —
+        # a flag driven by only these two is one phenomenon double-counted.
         "signal_id": "si_days_to_cover", "db": "short_interest.db",
-        "grain": "ticker", "staleness_budget_days": 20,
+        "grain": "ticker", "staleness_budget_days": 25,
         "sql": """
             SELECT symbol, days_to_cover,
-                   CASE WHEN days_to_cover >= 10 THEN 2 ELSE 1 END,
+                   CASE WHEN days_to_cover >= 20 THEN 2 ELSE 1 END,
                    settlement_date
             FROM src.v_high_days_to_cover
+            WHERE days_to_cover >= 10
         """,
     },
     {
         # NEW shorting pressure (vs own 6-period base) reads as informed
         # bears arriving: bearish. Distinct from the level read above.
         "signal_id": "si_spike", "db": "short_interest.db",
-        "grain": "ticker", "staleness_budget_days": 20,
+        "grain": "ticker", "staleness_budget_days": 25,
         "sql": """
             SELECT symbol, base_ratio,
                    CASE WHEN base_ratio >= 2.0 THEN -2 ELSE -1 END,
@@ -948,6 +964,7 @@ SIGNALS = [
     },
     {
         # Persistent fails-to-deliver = delivery stress / squeeze fuel.
+        # FAMILY OVERLAP with si_days_to_cover — see the note there.
         "signal_id": "ftd_persistent", "db": "ftd.db",
         "grain": "ticker", "staleness_budget_days": 25,
         "sql": """
@@ -981,7 +998,8 @@ SIGNALS = [
                         WHEN rsi >= 80 THEN -2 ELSE -1 END,
                    priceDate
             FROM src.v_latest
-            WHERE rsi IS NOT NULL AND (rsi <= 30 OR rsi >= 70)
+            WHERE rsi IS NOT NULL AND rsi > 0
+              AND (rsi <= 30 OR rsi >= 70)
               AND dollarVolume >= 10000000
         """,
     },
@@ -1305,7 +1323,8 @@ def _mini_fred(dirpath):
 def _mini_portfolio(dirpath):
     conn = pf_db.connect(str(dirpath / "portfolio.db"))
     pf_db.ensure_schema(conn)
-    conn.execute("INSERT INTO snapshots (captured_at) VALUES (?)", (NOW,))
+    conn.execute("INSERT INTO snapshots (captured_at, position_count)"
+                 " VALUES (?, 1)", (NOW,))
     conn.execute("INSERT INTO positions (snapshot_id, symbol, quantity)"
                  " VALUES (1, 'XOM', 10)")
     conn.commit(); conn.close()
@@ -1540,19 +1559,23 @@ git commit --no-gpg-sign -m "feat(composite): register composite dispatcher"
 uv run python main.py composite --db data/composite.db --keep-days 365
 sqlite3 data/composite.db "SELECT * FROM v_latest_regime"
 sqlite3 data/composite.db "SELECT COUNT(*) FROM v_latest_scorecard"
+sqlite3 data/composite.db "SELECT score_sum, COUNT(*) FROM v_latest_scorecard GROUP BY score_sum ORDER BY score_sum"
 sqlite3 data/composite.db "SELECT * FROM v_flagged LIMIT 10"
 ```
 
 Expected: `composite snapshot 1: N signals ok, M failed` where failures are only known-absent sources (e.g. `edgar.db` before its first evening run). `v_latest_regime` shows one row with plausible values (VIX in the teens, curve positive as of 2026-07). Investigate ANY other failure before continuing — do not ship a combiner that silently half-runs.
 
+**Sanity-check the score distribution** (the adversarial review caught the original catalog skewing structurally bullish here): the `score_sum` histogram should be roughly centered on 0 with thin tails, and the scorecard should be well under ~1,500 rows. `v_flagged` returning 0 rows on a quiet day is CORRECT — flags should be rare. If the distribution looks lopsided or a single signal dominates row counts (`SELECT signal_id, COUNT(*) FROM v_signal_detail GROUP BY signal_id`), revisit that signal's thresholds in catalog.py before installing the schedule.
+
 - [ ] **Step 2: Add the launchd job**
 
-In `deploy/launchd/install.py`, in the JOBS dict, insert before the `daily-summary` entry (nightly at 9:00pm Phoenix — after the 8:30pm edgar run, before the 9:15pm summary; every day, matching daily-summary, so weekend runs pick up Friday-published weeklies):
+In `deploy/launchd/install.py`, in the JOBS dict, insert before the `daily-summary` entry (nightly at **9:05pm** Phoenix — edgar starts 8:30pm and on failure retries after a 15-min sleep, so 9:00pm can race its retry; 9:05 clears it while leaving 10 min before the 9:15 summary. WAL keeps a concurrent read consistent regardless — worst case is same-night edgar freshness. Every day, matching daily-summary, so weekend runs pick up Friday-published weeklies):
 
 ```python
-    # -- combine (after all collectors; before the nightly summary) --
+    # -- combine (after all collectors incl. edgar's retry window;
+    #    before the nightly summary) --
     "composite": (job("composite", "--keep-days", "365"),
-                  weekly(range(7), 21, 0)),
+                  weekly(range(7), 21, 5)),
 ```
 
 Then install and verify:
@@ -1567,7 +1590,7 @@ Expected: `com.tradingbot.composite: loaded` and the label appears in `launchctl
 
 - [ ] **Step 3: Update docs**
 
-`docs/SCHEDULE.md`: add a row to the job table — `composite | 9:00pm daily | Combines all source DBs into data/composite.db (read-only attaches). Must stay after every collector's last daily slot and before daily-summary at 9:15pm.`
+`docs/SCHEDULE.md`: add a row to the job table — `composite | 9:05pm daily | Combines all source DBs into data/composite.db (read-only attaches). Must stay after every collector's last daily slot INCLUDING edgar's 15-min failure retry (~8:45pm+) and before daily-summary at 9:15pm.`
 
 `CLAUDE.md`: in the file-tree block add `└── combiners/    # 1 cross-source combiner (composite: regime + ticker scorecard)` and, in the "Architecture" prose, one sentence: combiners are the third kind — they read the other `data/` DBs ATTACHed read-only and never fetch the network; the combiner binds its own `:today` instead of reading `calendar_now`-dependent source views.
 
