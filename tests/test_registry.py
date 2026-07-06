@@ -152,3 +152,9 @@ def test_dispatch_lists_composite():
     import registry
 
     assert "composite" in registry.REGISTRY
+
+
+def test_dispatch_lists_scorer():
+    import registry
+
+    assert "scorer" in registry.REGISTRY
