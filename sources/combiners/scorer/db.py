@@ -1,5 +1,10 @@
 """scorer.db: the permanent efficacy dataset. prices is a rolling ledger;
-outcome tables are never pruned — they ARE the experiment."""
+outcome tables are never pruned — they ARE the experiment.
+
+Catch-up entries: a composite snapshot that registers late (e.g. after an
+outage) enters at whatever ledger window is current at registration time,
+not at its composite_date's own window. entry_date and composite_date are
+both stored per outcome row, so this drift is filterable after the fact."""
 
 import sqlite3
 from datetime import datetime, timedelta
@@ -28,7 +33,7 @@ CREATE TABLE IF NOT EXISTS prices (
 CREATE TABLE IF NOT EXISTS registered_snapshots (
     composite_snapshot_id INTEGER PRIMARY KEY,
     composite_date        TEXT NOT NULL,
-    entry_date            TEXT,     -- benchmark entry; NULL if bench absent
+    entry_date            TEXT,     -- ledger window anchor (MAX price_date <= composite_date); NULL if ledger empty
     registered_at         TEXT NOT NULL,
     ticker_rows           INTEGER NOT NULL,
     signal_rows           INTEGER NOT NULL,
@@ -222,21 +227,31 @@ def register_snapshot(
     and every outcome row commit together. Returns (registered, skipped).
 
     One grading per trading window (adversarial-review F3): weekend and
-    same-day-rerun composite snapshots share a benchmark entry date; only
-    the first snapshot for that entry date registers outcome rows — later
+    same-day-rerun composite snapshots share a ledger window anchor; only
+    the first snapshot for that anchor registers outcome rows — later
     ones write a marker-only row so the dedupe is durable and the loop
     never revisits them. Multi-counting duplicate windows would let
     v_bucket_performance treat copies of one window as independent samples.
+
+    The dedupe key is the ledger's window anchor (MAX price_date <=
+    composite_date across ALL symbols) rather than the benchmark's own
+    entry date: if the benchmark's price for the window never lands (e.g.
+    an etfs-only harvest failure) while ticker prices for that day exist,
+    keying off the benchmark's entry would silently fall back to a prior
+    day's close and collide with an already-registered window, durably
+    discarding an otherwise gradeable night as marker-only.
     """
     registered = skipped = 0
-    bench_entry = entry_for(conn, benchmark, composite_date, max_age_days)
-    entry_date = bench_entry[0] if bench_entry else None
     with conn:  # transaction
+        window_anchor = conn.execute(
+            "SELECT MAX(price_date) FROM prices WHERE price_date <= ?",
+            (composite_date,),
+        ).fetchone()[0]
         duplicate_window = (
-            entry_date is not None
+            window_anchor is not None
             and conn.execute(
                 "SELECT 1 FROM registered_snapshots WHERE entry_date = ? LIMIT 1",
-                (entry_date,),
+                (window_anchor,),
             ).fetchone()
             is not None
         )
@@ -244,10 +259,12 @@ def register_snapshot(
             "INSERT INTO registered_snapshots (composite_snapshot_id,"
             " composite_date, entry_date, registered_at, ticker_rows,"
             " signal_rows, skipped) VALUES (?, ?, ?, ?, 0, 0, 0)",
-            (csid, composite_date, entry_date, now_iso),
+            (csid, composite_date, window_anchor, now_iso),
         )
         if duplicate_window:
+            print(f"skip composite snapshot {csid}: window {window_anchor} already graded")
             return 0, 0
+        bench_entry = entry_for(conn, benchmark, composite_date, max_age_days)
         for r in ticker_rows:
             entry = entry_for(conn, r["symbol"], composite_date, max_age_days)
             if entry is None:

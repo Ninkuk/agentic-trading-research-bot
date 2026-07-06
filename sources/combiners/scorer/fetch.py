@@ -25,11 +25,22 @@ def harvest_prices(conn) -> list:
 
 
 def read_snapshots(conn) -> list:
-    """Composite snapshots that state an opinion (have a regime row)."""
+    """Composite snapshots that state an opinion (have a regime row).
+
+    composite_date is derived by shifting captured_at (stored UTC) back 7
+    hours before truncating to a date — Phoenix is UTC-7 fixed year-round,
+    no DST — so the nightly run (e.g. 9:05pm Phoenix = 04:05Z next day)
+    lands on the trading evening the opinion was actually formed on, not
+    the UTC calendar day. A catch-up run after an outage can still
+    register a backlog snapshot later than steady-state; entry_date and
+    composite_date are both stored per outcome row, so that drift stays
+    filterable after the fact.
+    """
     return [
         (r[0], r[1])
         for r in conn.execute(
-            "SELECT s.id, substr(s.captured_at, 1, 10) FROM src.snapshots s"
+            "SELECT s.id, substr(datetime(s.captured_at, '-7 hours'), 1, 10)"
+            " FROM src.snapshots s"
             " JOIN src.market_regime m ON m.snapshot_id = s.id"
             " ORDER BY s.id"
         )

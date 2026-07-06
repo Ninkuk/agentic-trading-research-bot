@@ -163,6 +163,48 @@ def test_duplicate_entry_window_registers_marker_only(tmp_path):
     assert conn.execute("SELECT COUNT(*) FROM ticker_outcomes").fetchone()[0] == 1
 
 
+def test_bench_gap_does_not_discard_gradeable_night(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "SPY", DAYS[:6], start=500.0)  # SPY ledger stops at 2026-07-02
+    _ledger(conn, "AAPL", DAYS)  # AAPL ledger runs through 2026-07-07
+    rows = [dict(symbol="AAPL", score_sum=2, total=2, bullish=2, bearish=0, in_portfolio=0)]
+
+    # snap 1: window anchor is 07-02 (both ledgers have that date) -> registers normally
+    reg1, skipped1 = db.register_snapshot(
+        conn, 1, "2026-07-02", rows, [], "risk_on", (5,), "SPY", 7, NOW
+    )
+    assert reg1 == 2 and skipped1 == 0  # ticker + regime
+    assert 1 in db.registered_ids(conn)
+
+    # snap 2: etfs-only harvest failure means SPY has no 07-07 price, but AAPL
+    # does -> window anchor is 07-07 (AAPL's), which differs from 07-02, so
+    # this must NOT be discarded as a duplicate window.
+    rows2 = [dict(symbol="AAPL", score_sum=1, total=1, bullish=1, bearish=0, in_portfolio=0)]
+    reg2, skipped2 = db.register_snapshot(
+        conn, 2, "2026-07-07", rows2, [], "risk_on", (5,), "SPY", 7, NOW
+    )
+    assert 2 in db.registered_ids(conn)
+    assert (
+        conn.execute(
+            "SELECT entry_date FROM registered_snapshots WHERE composite_snapshot_id = 2"
+        ).fetchone()[0]
+        == "2026-07-07"
+    )
+
+    ticker_row = conn.execute(
+        "SELECT entry_date, bench_entry_close FROM ticker_outcomes WHERE composite_snapshot_id = 2"
+    ).fetchone()
+    assert ticker_row == ("2026-07-07", None)  # SPY has no 07-07 price
+
+    # regime row: bench entry_for("SPY", "2026-07-07", 7) still finds the
+    # 07-02 close (within the 7-day staleness guard) -> registers, not skipped.
+    regime_row = conn.execute(
+        "SELECT entry_date FROM regime_outcomes WHERE composite_snapshot_id = 2"
+    ).fetchone()
+    assert regime_row == ("2026-07-02",)
+    assert reg2 == 2 and skipped2 == 0  # ticker + regime, both registered
+
+
 def test_gap_beyond_bound_stays_pending(tmp_path):
     conn = _conn(tmp_path)
     db.insert_prices(conn, [("AAPL", "2026-07-01", 100.0), ("SPY", "2026-07-01", 500.0)])
