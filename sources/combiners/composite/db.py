@@ -108,7 +108,10 @@ def write_signal_values(conn, sid: int, rows) -> int:
 
 
 def apply_crosswalk(conn, sid: int, crosswalk: dict) -> int:
-    """Fan each asset-class row out to its mapped tickers (via_crosswalk=1)."""
+    """Fan each asset-class row out to its mapped tickers (via_crosswalk=1).
+    If a direct ticker-grain row already exists for the same (snapshot_id,
+    signal_id, ticker), the fanned row is silently skipped (INSERT OR
+    IGNORE) — direct evidence wins."""
     n = 0
     for asset_class, tickers in crosswalk.items():
         rows = conn.execute(
@@ -155,7 +158,7 @@ def write_market_regime(conn, sid: int, regime_fields: dict) -> None:
             "SELECT raw_value FROM signal_values WHERE snapshot_id=?"
             " AND signal_id=? AND entity='*'", (sid, signal_id)).fetchone()
         vals[col] = row[0] if row else None
-        present += 1 if row else 0
+        present += 1 if row and row[0] is not None else 0
     t10y2y = vals.get("t10y2y")
     back = vals.get("vix_backwardation")
     conn.execute(
