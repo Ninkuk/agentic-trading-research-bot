@@ -77,7 +77,9 @@ clock without depending on any single source's calendar state. Otherwise it ship
 other source: registered in `registry.py`, dispatched via `main.py composite ...`. The
 `scorer` combiner grades composite opinions against forward returns and never feeds back —
 re-weighting the catalog is a human decision made by reading `v_signal_efficacy`/
-`v_bucket_performance`.
+`v_bucket_performance`. The scorer package also owns the decision journal (`main.py journal --input <file|->`, fed by the
+`.claude/skills/journal-sync` MCP skill like `portfolio`): human fills and passes land in scorer.db `decisions` (never pruned) and are compared to
+paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`.
 
 ### File tree
 

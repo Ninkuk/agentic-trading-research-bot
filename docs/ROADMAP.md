@@ -42,20 +42,11 @@ expose `n_bench`, a Wilson 95% CI on hit_rate, and a `reliable` flag
 2026-07-06. Residual: ticker-grain buckets stay SPY-benchmarked — see
 item 8.)*
 
-### 5. Decision journal
-
-**Problem.** The scorer grades opinions; nothing records actions. Without
-"composite said X on date D, human acted/passed, filled at P" there is no way
-to measure the paper-vs-realized gap or whether the human filter adds value.
-Robinhood MCP trade history can backfill fills via the same headless path the
-portfolio slice uses.
-
-**Done when.** A journal table keyed to composite opinions records
-acted/passed and fill price; a view joins it to matured outcomes to show
-realized-vs-paper per signal; entry is low-friction (a dispatcher fed by the
-existing MCP skill pattern).
-
-**Size.** M. **Depends on.** #2 (paper baseline must be honest first).
+*(Item 5, decision journal: `decisions` in scorer.db keyed to composite
+opinions — fills auto-matched from Robinhood order history (headless
+2:40pm `/journal-sync` slot), passes inferred in `v_flag_response` with
+explicit override; `v_decision_outcomes` (slippage, realized-vs-paper),
+`v_human_filter` (acted vs passed). Shipped 2026-07-06.)*
 
 ---
 
