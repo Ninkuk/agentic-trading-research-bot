@@ -24,3 +24,12 @@ def test_crosswalk_benchmarks_are_unbenchmarked_class_proxies():
         assert catalog.CROSSWALK_BENCHMARK.get(bench, "missing") is None, (
             f"{ticker} -> {bench}: benchmark must be a class proxy"
         )
+
+
+def test_crosswalk_benchmark_stays_in_asset_class():
+    # a mis-wired ticker (e.g. FCX -> XLE) must fail: the benchmark has to
+    # belong to the ticker's own composite asset class
+    for tickers in composite_catalog.CROSSWALK.values():
+        for t in tickers:
+            bench = catalog.CROSSWALK_BENCHMARK[t]
+            assert bench is None or bench in tickers, f"{t} -> {bench} crosses asset classes"
