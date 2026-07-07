@@ -298,6 +298,107 @@ SELECT 'signal', composite_date, signal_id || ':' || entity, horizon,
 UNION ALL
 SELECT 'regime', composite_date, COALESCE(regime, '?'), horizon,
        entry_date FROM regime_outcomes WHERE matured_at IS NULL;
+
+-- Decision-journal views. Window re-keying: the scorer grades ONE snapshot
+-- per ledger window (weekend/rerun siblings register marker-only with
+-- ticker_rows = 0; idx_owner_window is the backstop), so a decision matched
+-- to a sibling must grade against the window owner's outcome rows. A
+-- decision whose snapshot isn't registered yet has no registered_snapshots
+-- row and shows NULL paper legs until the nightly scorer catches up — the
+-- view heals itself.
+-- ONE ROW PER HORIZON: filter or group by horizon before aggregating, or
+-- every decision counts len(HORIZONS) times.
+-- aligned judges the decision against the opinion the human actually SAW
+-- (d.opinion_score_sum, captured at ingest) — a weekend rerun's score can
+-- flip sign vs the owner's graded row (owner_score_sum, also exposed).
+-- entry_slippage is signed so positive is always cost (buys: paid above
+-- paper entry; sells: received below it); fill_lag_days tells true
+-- slippage from drift on late fills. realized_return is fills-only.
+DROP VIEW IF EXISTS v_decision_outcomes;
+CREATE VIEW v_decision_outcomes AS
+SELECT d.id AS decision_id, d.symbol, d.side, d.source,
+       d.composite_snapshot_id, d.composite_date,
+       d.opinion_score_sum, d.opinion_total,
+       d.fill_date, d.fill_price, d.quantity,
+       d.exit_fill_date, d.exit_fill_price, d.note,
+       t.horizon, t.score_sum AS owner_score_sum, t.total AS owner_total,
+       t.entry_date, t.entry_close,
+       t.fwd_return, t.bench_fwd_return, t.matured_at,
+       julianday(d.fill_date) - julianday(t.entry_date) AS fill_lag_days,
+       CASE WHEN d.opinion_score_sum IS NULL THEN NULL
+            WHEN d.side = 'buy' THEN (d.opinion_score_sum > 0)
+            ELSE (d.opinion_score_sum < 0) END AS aligned,
+       CASE WHEN t.entry_close IS NULL THEN NULL
+            WHEN d.side = 'sell' THEN 1 - d.fill_price / t.entry_close
+            ELSE d.fill_price / t.entry_close - 1 END AS entry_slippage,
+       CASE WHEN d.exit_fill_price IS NULL THEN NULL
+            WHEN d.side = 'sell' THEN 1 - d.exit_fill_price / d.fill_price
+            ELSE d.exit_fill_price / d.fill_price - 1 END AS realized_return
+FROM decisions d
+LEFT JOIN registered_snapshots r
+       ON r.composite_snapshot_id = d.composite_snapshot_id
+LEFT JOIN registered_snapshots owner
+       ON owner.entry_date = r.entry_date AND owner.ticker_rows > 0
+LEFT JOIN ticker_outcomes t
+       ON t.composite_snapshot_id = owner.composite_snapshot_id
+      AND t.symbol = d.symbol
+WHERE d.action = 'acted';
+
+-- Every matured flagged opinion and what the human did about it. Thresholds
+-- are the shared FLAG_MIN_* constants (same ones the pass matcher binds;
+-- pinned to composite v_flagged by test_journal_matching). The decision
+-- lookup re-keys through the window (any sibling snapshot's decision
+-- answers the owner's flag). A decision counts as acting on the flag ONLY
+-- when its direction aligns with the flag (buy on bull, sell on bear):
+-- exit-shaped sells (first sell of a pre-journal holding, second lot of a
+-- scale-out) fall through exit-attachment as sell decisions and would
+-- otherwise flip a bull flag to 'acted', poisoning v_human_filter — the
+-- exact comparison this view exists for. Non-aligned trades stay visible
+-- in v_decision_outcomes (aligned = 0); they just don't answer the flag.
+-- MIN(action) is the precedence trick: 'acted' < 'passed' alphabetically,
+-- so acting ever beats passing. dir_excess is excess return in the flag's
+-- direction.
+DROP VIEW IF EXISTS v_flag_response;
+CREATE VIEW v_flag_response AS
+SELECT t.composite_snapshot_id, t.composite_date, t.symbol,
+       t.score_sum, t.total, t.horizon,
+       t.fwd_return, t.bench_fwd_return,
+       CASE WHEN t.bench_fwd_return IS NULL THEN NULL
+            WHEN t.score_sum > 0 THEN t.fwd_return - t.bench_fwd_return
+            ELSE t.bench_fwd_return - t.fwd_return END AS dir_excess,
+       COALESCE(
+           (SELECT MIN(d.action) FROM decisions d
+            JOIN registered_snapshots sib
+              ON sib.composite_snapshot_id = d.composite_snapshot_id
+            WHERE sib.entry_date = owner.entry_date AND d.symbol = t.symbol
+              AND (d.action = 'passed'
+                   OR (d.side = 'buy') = (t.score_sum > 0))),
+           'passed_inferred') AS response
+FROM ticker_outcomes t
+JOIN registered_snapshots owner ON owner.composite_snapshot_id = t.composite_snapshot_id
+WHERE t.matured_at IS NOT NULL
+  AND ABS(t.score_sum) >= {FLAG_MIN_ABS_SCORE} AND t.total >= {FLAG_MIN_TOTAL};
+
+-- The headline: does acting beat passing? Plain averages + n day one; the
+-- Wilson helpers can grade this once samples justify it.
+DROP VIEW IF EXISTS v_human_filter;
+CREATE VIEW v_human_filter AS
+SELECT response, horizon, COUNT(*) AS n,
+       AVG(dir_excess) AS avg_dir_excess,
+       AVG(fwd_return) AS avg_fwd_return
+FROM v_flag_response
+GROUP BY response, horizon;
+
+-- Trades nothing recommended: acted decisions with no matched opinion.
+DROP VIEW IF EXISTS v_freelance;
+CREATE VIEW v_freelance AS
+SELECT id AS decision_id, symbol, side, fill_date, fill_price, quantity,
+       exit_fill_date, exit_fill_price,
+       CASE WHEN exit_fill_price IS NULL THEN NULL
+            WHEN side = 'sell' THEN 1 - exit_fill_price / fill_price
+            ELSE exit_fill_price / fill_price - 1 END AS realized_return,
+       note, source, recorded_at
+FROM decisions WHERE action = 'acted' AND composite_snapshot_id IS NULL;
 """
 
 
