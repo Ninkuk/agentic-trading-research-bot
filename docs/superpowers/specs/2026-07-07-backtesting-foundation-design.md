@@ -133,10 +133,11 @@ Views (the actual product):
 
 ### run.py
 
-Testable `run(db_path, now_iso, fred_db_path, *, attach=..., harvest_vintages=...,
-harvest_benchmark=...)` seams + thin argparse `main(argv)` with `--db`
-(default `backtest.db` — always pass `data/backtest.db`), `--fred-db`
-(default `data/fred.db`), `--keep-days`. Flow: ensure_schema → snapshot header →
+Testable `run(db_path, db_dir="data", now_iso=None, keep_days=None,
+harvest_vintages=..., harvest_benchmark=...)` seams + thin argparse
+`main(argv)` with `--db` (default `backtest.db` — always pass
+`data/backtest.db`), `--db-dir` (default `data`, the advisor pattern;
+`fred.db` is named by `catalog.FRED_DB`), `--keep-days`. Flow: ensure_schema → snapshot header →
 attach fred → copy → detach → print `v_replay_efficacy` summary → prune.
 
 ## 4. Bar-store ADR (decision only — recorded here)
