@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS decisions (
     side                  TEXT CHECK (side IN ('buy', 'sell')),  -- NULL for passes
     composite_snapshot_id INTEGER,          -- matched opinion; NULL = freelance
     composite_date        TEXT,
+    opinion_score_sum     INTEGER,          -- matched opinion's score at ingest
+    opinion_total         INTEGER,          -- (composite.db prunes; capture now)
     fill_date             TEXT,             -- NULL for passes
     fill_price            REAL,
     quantity              REAL,
@@ -80,9 +82,16 @@ CREATE TABLE IF NOT EXISTS decisions (
                           CHECK (source IN ('mcp', 'manual')),
     recorded_at           TEXT NOT NULL
 );
--- one explicit pass per flag
+-- one explicit pass per matched flag (NULL snapshot ids are not deduped by
+-- SQLite, but ingest never writes a pass without a match)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_decisions_pass
     ON decisions (composite_snapshot_id, symbol) WHERE action = 'passed';
+
+-- Backstop for the views' window re-keying: at most one outcome-owning
+-- snapshot per entry window. register_snapshot's dedupe already guarantees
+-- this sequentially; the index makes the assumption durable.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_owner_window
+    ON registered_snapshots (entry_date) WHERE ticker_rows > 0;
 
 CREATE TABLE IF NOT EXISTS journal_runs (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -113,16 +122,21 @@ Notes:
 One JSON doc (scratchpad file or stdin), built by the skill or dictated:
 
 ```json
-{"as_of": "2026-07-07T21:40:00+00:00",
- "fills": [{"symbol": "XLE", "side": "buy", "price": 94.30, "quantity": 2,
+{"fills": [{"symbol": "XLE", "side": "buy", "price": 94.30, "quantity": 2,
             "filled_at": "2026-07-07T14:31:00+00:00",
             "order_ref": "a1b2c3..."}],
  "passes": [{"symbol": "GLD", "note": "too crowded"}]}
 ```
 
-`fill_date` is the date prefix of `filled_at` (UTC ISO; a regular-session ET
-fill always lands on the same UTC date). Rows missing symbol / side / price
-/ filled_at are skipped and counted, portfolio-parser style.
+`fill_date` is the **Phoenix-local date** of `filled_at` (shift −7h before
+truncating, exactly like `composite_date` in `fetch.read_snapshots`). Both
+sides of the match must be on one clock: with a raw UTC date, an
+extended-hours fill at 5:30pm Phoenix lands on the next UTC date and would
+match that evening's 9:05pm opinion — formed hours *after* the fill
+executed (look-ahead in the permanent record). Validation is strict:
+`filled_at` must parse with `datetime.fromisoformat`, price/quantity must
+be real numbers (bools rejected); bad rows are skipped and counted,
+portfolio-parser style.
 
 ## Matching algorithm (deterministic, in `journal.py`)
 
@@ -135,10 +149,16 @@ Per **buy** fill:
    that symbol with `composite_date < fill_date` and
    `fill_date <= composite_date + MATCH_WINDOW_DAYS`, where `composite_date`
    is `date(snapshots.captured_at)`. Most recent snapshot wins.
-2. Match → decision row with that `(composite_snapshot_id, composite_date)`.
+2. Match → decision row with that `(composite_snapshot_id, composite_date)`
+   **plus the matched opinion's own `score_sum`/`total` copied onto the
+   row** (`opinion_score_sum`, `opinion_total`). This matters for weekend
+   reruns: the graded outcome rows belong to the window *owner* snapshot,
+   whose score may differ from the sibling actually matched — alignment
+   must be judged against the opinion the human actually saw, and
+   composite.db prunes, so the score must be captured at ingest.
    No match → freelance row (`composite_snapshot_id` NULL). Matching is
-   direction-agnostic (a buy can match a bearish opinion); alignment is a
-   view concern, not a matching concern.
+   direction-agnostic (a buy can match a bearish opinion); the views then
+   classify by alignment (see `v_flag_response`).
 
 Per **sell** fill:
 
@@ -150,11 +170,15 @@ Per **sell** fill:
    same window rule as buys (freelance when none matches).
 
 Per **pass**: match the most recent *flagged* opinion for the symbol within
-the window before `as_of`; no flagged opinion in window → skipped and
-counted (a pass must answer a real flag). Flagged mirrors composite's
-`v_flagged` thresholds: `ABS(score_sum) >= 4 AND total >= 3` — a deliberate,
-commented duplication (both are hand-tunable; a catalog-style test pins
-them equal to composite's view definition).
+the window before the run's `now_iso` (Phoenix-shifted to a date, same
+clock as everything else — evening dictation answers that evening's flag);
+no flagged opinion in window → skipped and counted (a pass must answer a
+real flag). Flagged mirrors composite's `v_flagged` thresholds
+(`ABS(score_sum) >= 4 AND total >= 3`) via `FLAG_MIN_ABS_SCORE` /
+`FLAG_MIN_TOTAL` constants **defined in `scorer/db.py` and interpolated
+into the view SQL** — one definition serves both the matcher and
+`v_flag_response`, and a test pins the constants to composite's view text
+so the two systems drift together, never apart.
 
 Duplicate `order_ref`s (already in `decisions`, either leg) are skipped and
 counted. The whole ingest is one transaction with the `journal_runs` header.
@@ -187,19 +211,31 @@ view is live, so it heals itself.)
 - **`v_decision_outcomes`** — acted decisions joined to their paper baseline
   via the window re-keying above, one row per horizon (LEFT JOIN —
   freelance rows and not-yet-registered opinions appear with NULL paper
-  legs). Columns: decision fields;
+  legs). `aligned` is computed from the decision's own stored
+  `opinion_score_sum` (the opinion the human saw), not the owner's score.
+  `fill_lag_days` (`julianday(fill_date) - julianday(entry_date)`) is
+  exposed so readers can tell true slippage from drift on late fills.
+  **One row per horizon**: filter or group by `horizon` before aggregating,
+  or every decision counts three times — stated in the view comment. Columns: decision fields;
   `aligned` (side agrees with score_sum sign); `entry_slippage` =
   `(fill_price / entry_close - 1)` signed so positive is always
   cost (negated for sells); paper `fwd_return` / `bench_fwd_return`;
   `realized_return` = round-trip from fills when the exit exists
   (`exit_fill_price / fill_price - 1`, sign-flipped for sells).
-- **`v_flag_response`** — every matured flagged opinion
-  (`ABS(score_sum) >= 4 AND total >= 3` over `ticker_outcomes`) LEFT JOIN
-  decisions, with the decision side of the join re-keyed through the window
-  owner (so a pass recorded against Sunday's marker-only snapshot answers
-  Friday's graded flag): `response` = `acted` / `passed` (explicit row) /
-  `passed_inferred` (no row). Carries paper `fwd_return`, benchmark excess,
-  horizon.
+- **`v_flag_response`** — every matured flagged opinion (thresholds
+  interpolated from the shared constants) LEFT JOIN decisions, with the
+  decision side of the join re-keyed through the window owner (so a pass
+  recorded against Sunday's marker-only snapshot answers Friday's graded
+  flag): `response` = `acted` / `passed` (explicit row) / `passed_inferred`
+  (no row). **A decision counts as `acted` only when its direction aligns
+  with the flag** (buy on a bull flag, sell on a bear flag): without this
+  filter, an exit-shaped sell — the first sell of a pre-journal holding, or
+  the second lot of a scale-out, both of which legitimately fall through
+  exit-attachment — would flip a bull flag from `passed_inferred` to
+  `acted` and contaminate the acted-vs-passed comparison this feature
+  exists to make. Non-aligned trades remain fully visible in
+  `v_decision_outcomes` (`aligned = 0`); they just don't count as answering
+  the flag. Carries paper `fwd_return`, benchmark excess, horizon.
 - **`v_human_filter`** — the headline aggregate over `v_flag_response`:
   per horizon and response class, `n`, average paper excess in the flag's
   direction. If acted flags outperform passed flags, the filter adds value.
@@ -224,18 +260,35 @@ account-positions:
 Manual path (documented in the same skill): user dictates fills or passes;
 Claude builds the same JSON with `source: "manual"` and no `order_ref`.
 
-Schedule: launchd slot at **2:40pm daily**, right after the portfolio slot
-(2:30pm), headless `claude -p "/journal-sync"`. Update
-`deploy/launchd/install.py` and `docs/SCHEDULE.md` together, per policy.
-Weekend/no-fill runs write a zero-count `journal_runs` header — that is the
-"ran and found nothing" signal, matching the scorer's tolerance for quiet
-nights.
+Schedule: launchd slot at **2:40pm weekdays** (matching portfolio's
+MON–FRI cadence), right after the portfolio slot (2:30pm), headless
+`claude -p "/journal-sync"`. Update `deploy/launchd/install.py` and
+`docs/SCHEDULE.md` together, per policy. No-fill runs write a zero-count
+`journal_runs` header — that is the "ran and found nothing" signal the
+freshness check reads.
+
+The freshness check must compare like-formatted strings:
+`ran_at >= strftime('%Y-%m-%dT%H:%M:%S', 'now', '-2 hours')` — plain
+`datetime('now', ...)` renders with a space separator, and `'T' > ' '`
+lexicographically, so any same-UTC-date run would pass a "2-hour" check.
+`portfolio_snapshot.sh` has the identical latent bug against `captured_at`;
+fix it in the same commit since we're copying the pattern.
+
+Robinhood field assumptions (unverifiable offline, so the skill states
+them): the order's **average** fill price feeds `price` (a multi-execution
+order must not use the last execution's price), and the executed-at
+timestamp must be UTC ISO. Verify both on the first interactive run before
+trusting the scheduled slot.
 
 ## Error handling
 
-- Per-fill skip-and-continue with counts; one bad row never aborts the doc.
-- Ingest wraps in a single transaction; a hard failure rolls back
-  everything including the run header.
+- Per-row *validation* is skip-and-continue with counts (at parse — a
+  malformed row never aborts the doc). Ingest itself is all-or-nothing:
+  one transaction; a hard SQL failure rolls back everything including the
+  run header. (These are different layers, not a contradiction: bad *data*
+  skips, bad *execution* aborts.)
+- `run()` with fills/passes but no composite.db path raises
+  `FileNotFoundError` explicitly (never a `TypeError` from a None path).
 - Secret hygiene as everywhere: `type(e).__name__` only.
 - composite.db missing/unreadable at ingest → all fills that need matching
   become an error, not silent freelance rows: exit non-zero so the launchd
@@ -262,6 +315,25 @@ Mirrors the module layout, offline, injected `now_iso`:
 - `test_registry.py` — `journal` entry.
 - Flag-threshold pin test: journal's flagged predicate equals composite
   `v_flagged`'s.
+
+## Accepted residuals (adversarial review 2026-07-06)
+
+- **Multi-lot exits:** the first sell closes the whole decision (single
+  exit columns); a second scale-out lot becomes its own sell decision
+  (usually freelance). Its price is excluded from the original decision's
+  `realized_return`, and the exit leg drops the sell's quantity/note.
+  Alignment filtering keeps it out of `v_human_filter`; revisit if
+  scale-outs become routine.
+- **Same-timestamp round trips:** FIFO processes chronologically with buys
+  first on exact `filled_at` ties, so a tie produces a zero-duration
+  round trip. Negligible.
+- **`passed_inferred` before go-live:** flags matured before the journal
+  existed count as inferred passes. The scorer and journal both shipped
+  2026-07-06, so the pre-journal population is ~empty; documented rather
+  than coded around.
+- **Late-fill slippage mixes drift:** `entry_slippage` on a fill 3 days
+  after the paper entry is mostly market drift; `fill_lag_days` is exposed
+  so readers can filter, but no decomposition is attempted.
 
 ## Out of scope
 

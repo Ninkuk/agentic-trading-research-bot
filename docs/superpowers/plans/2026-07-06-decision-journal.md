@@ -135,6 +135,34 @@ def test_one_explicit_pass_per_flag(tmp_path):
         )
 
 
+def test_one_owner_per_window(tmp_path):
+    conn = _conn(tmp_path)
+    conn.execute(
+        "INSERT INTO registered_snapshots (composite_snapshot_id, composite_date,"
+        " entry_date, registered_at, ticker_rows, signal_rows, skipped)"
+        " VALUES (1, '2026-07-03', '2026-07-06', ?, 2, 0, 0)",
+        (NOW,),
+    )
+    with pytest.raises(sqlite3.IntegrityError):  # second owner, same window
+        conn.execute(
+            "INSERT INTO registered_snapshots (composite_snapshot_id, composite_date,"
+            " entry_date, registered_at, ticker_rows, signal_rows, skipped)"
+            " VALUES (9, '2026-07-05', '2026-07-06', ?, 3, 0, 0)",
+            (NOW,),
+        )
+    # marker-only siblings (ticker_rows = 0) are fine
+    conn.execute(
+        "INSERT INTO registered_snapshots (composite_snapshot_id, composite_date,"
+        " entry_date, registered_at, ticker_rows, signal_rows, skipped)"
+        " VALUES (2, '2026-07-05', '2026-07-06', ?, 0, 0, 0)",
+        (NOW,),
+    )
+
+
+def test_flag_constants_exist():
+    assert db.FLAG_MIN_ABS_SCORE == 4 and db.FLAG_MIN_TOTAL == 3
+
+
 def test_prune_never_touches_journal(tmp_path):
     conn = _conn(tmp_path)
     conn.execute(
@@ -165,7 +193,10 @@ Append to the `_TABLES` string (after the `regime_outcomes` block, before the cl
 -- exit_order_ref are broker order UUIDs (random ids, not account
 -- identifiers) stored only for idempotent re-ingest; UNIQUE tolerates the
 -- NULLs manual entries carry. composite_snapshot_id NULL = freelance trade
--- (nothing recommended it).
+-- (nothing recommended it). opinion_score_sum/opinion_total are the MATCHED
+-- opinion's score captured at ingest: weekend reruns can flip sign vs the
+-- window owner's graded rows, alignment must judge the opinion the human
+-- actually saw, and composite.db prunes — so capture now or never.
 CREATE TABLE IF NOT EXISTS decisions (
     id                    INTEGER PRIMARY KEY AUTOINCREMENT,
     symbol                TEXT NOT NULL,
@@ -173,6 +204,8 @@ CREATE TABLE IF NOT EXISTS decisions (
     side                  TEXT CHECK (side IN ('buy', 'sell')),
     composite_snapshot_id INTEGER,
     composite_date        TEXT,
+    opinion_score_sum     INTEGER,
+    opinion_total         INTEGER,
     fill_date             TEXT,
     fill_price            REAL,
     quantity              REAL,
@@ -186,8 +219,16 @@ CREATE TABLE IF NOT EXISTS decisions (
     recorded_at           TEXT NOT NULL
 );
 
+-- One explicit pass per MATCHED flag (SQLite treats NULL snapshot ids as
+-- distinct, but ingest never writes a pass without a match).
 CREATE UNIQUE INDEX IF NOT EXISTS idx_decisions_pass
     ON decisions (composite_snapshot_id, symbol) WHERE action = 'passed';
+
+-- Backstop for the journal views' window re-keying: at most one
+-- outcome-owning snapshot per entry window. register_snapshot's dedupe
+-- already guarantees this sequentially; the index makes it durable.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_owner_window
+    ON registered_snapshots (entry_date) WHERE ticker_rows > 0;
 
 CREATE TABLE IF NOT EXISTS journal_runs (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -200,6 +241,16 @@ CREATE TABLE IF NOT EXISTS journal_runs (
     duplicates_skipped INTEGER NOT NULL DEFAULT 0,
     skipped            INTEGER NOT NULL DEFAULT 0
 );
+```
+
+Also add the shared flag-threshold constants next to `WILSON_Z`/`RELIABLE_MIN_N` near the top of `db.py` (Task 3's matcher and Task 4's `v_flag_response` both interpolate these — ONE definition, pinned to composite's view text by `test_journal_matching`):
+
+```python
+# Flag thresholds, mirroring composite v_flagged (|score_sum| >= 4 AND
+# total >= 3). Both are hand-tunable; test_journal_matching pins these to
+# composite's view text so the journal and composite drift together.
+FLAG_MIN_ABS_SCORE = 4
+FLAG_MIN_TOTAL = 3
 ```
 
 Also extend the module docstring's first paragraph with one sentence: `decisions/journal_runs (the decision journal) are permanent for the same reason.`
@@ -226,8 +277,8 @@ git commit --no-gpg-sign -m "feat(journal): decisions + journal_runs tables in s
 - Test: `tests/test_journal_parse.py` (create)
 
 **Interfaces:**
-- Produces: `journal.parse_doc(doc) -> tuple[list, list, int]` — `(fills, passes, skipped)`. Each fill dict has keys `symbol, side, price, quantity, filled_at, fill_date, order_ref, note`; each pass dict has `symbol, note`. Fills are sorted chronologically (`filled_at`, buys before sells on ties). Raises `ValueError` if `doc` is not a dict.
-- Produces: module constants `MATCH_WINDOW_DAYS = 5`, `FLAG_MIN_ABS_SCORE = 4`, `FLAG_MIN_TOTAL = 3` (Tasks 3–4 use them).
+- Produces: `journal.parse_doc(doc) -> tuple[list, list, int]` — `(fills, passes, skipped)`. Each fill dict has keys `symbol, side, price, quantity, filled_at, fill_date, order_ref, note`; each pass dict has `symbol, note`. `fill_date` is the PHOENIX-local date of `filled_at` (UTC−7 fixed — same clock as `composite_date`). Fills are sorted chronologically (`filled_at`, buys before sells on ties). Raises `ValueError` if `doc` is not a dict.
+- Produces: module constant `MATCH_WINDOW_DAYS = 5` and helper `journal._phx_date(dt) -> str` (Task 3 uses both; the flag thresholds live in `db.py`, Task 1).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -258,9 +309,25 @@ def test_valid_doc():
     )
     assert skipped == 0
     assert fills[0]["symbol"] == "XLE"
-    assert fills[0]["fill_date"] == "2026-07-07"
+    assert fills[0]["fill_date"] == "2026-07-07"  # 14:31Z -7h = same date
     assert fills[0]["quantity"] == 2.0
     assert passes[0]["symbol"] == "GLD"  # symbols normalized upper
+
+
+def test_fill_date_is_phoenix_local():
+    # 5:30pm Phoenix on 07-06 = 00:30Z on 07-07. A raw UTC date would match
+    # the opinion formed at 9:05pm that evening — AFTER the fill (look-ahead).
+    fills, _, _ = journal.parse_doc(
+        {"fills": [_fill(filled_at="2026-07-07T00:30:00+00:00")]}
+    )
+    assert fills[0]["fill_date"] == "2026-07-06"
+
+
+def test_naive_timestamp_treated_as_utc():
+    fills, _, _ = journal.parse_doc(
+        {"fills": [_fill(filled_at="2026-07-07T14:31:00")]}
+    )
+    assert fills[0]["fill_date"] == "2026-07-07"
 
 
 def test_missing_fields_skip_and_count():
@@ -269,7 +336,10 @@ def test_missing_fields_skip_and_count():
             _fill(symbol=""),
             _fill(side="short"),
             _fill(price="94.30"),  # string price is invalid
+            _fill(price=True),  # bools are not prices
             _fill(filled_at=None),
+            _fill(filled_at="not-a-date!!"),
+            _fill(filled_at="2026-07-07"),  # date-only: ambiguous, rejected
             "not-a-dict",
             _fill(order_ref=None, note=None),  # still valid: refs optional
         ],
@@ -278,7 +348,7 @@ def test_missing_fields_skip_and_count():
     fills, passes, skipped = journal.parse_doc(doc)
     assert len(fills) == 1 and fills[0]["order_ref"] is None
     assert len(passes) == 1 and passes[0]["symbol"] == "TLT"
-    assert skipped == 6
+    assert skipped == 9
 
 
 def test_non_numeric_quantity_becomes_none():
@@ -329,22 +399,32 @@ composite.db the night it forms; once matched, the decision's
 rows and never needs composite.db again. Decisions are never pruned — they
 are the other half of the experiment."""
 
+from datetime import UTC, datetime, timedelta
+
 # Calendar days an opinion stays matchable to a later fill: covers the
 # morning-after trade plus a long weekend. Two snapshots in the window
-# resolve to the most recent one.
+# resolve to the most recent one. (Flag thresholds live in db.py — shared
+# with the v_flag_response view.)
 MATCH_WINDOW_DAYS = 5
 
-# Mirror of composite v_flagged (|score_sum| >= 4 AND total >= 3). Both are
-# hand-tunable; test_journal_matching pins them equal so they drift together.
-FLAG_MIN_ABS_SCORE = 4
-FLAG_MIN_TOTAL = 3
+
+def _phx_date(dt) -> str:
+    """Phoenix-local date (UTC-7 fixed, no DST) of an aware datetime — the
+    clock composite_date is on (see fetch.read_snapshots). fill_date must
+    share it: with a raw UTC date, an extended-hours fill at 5:30pm Phoenix
+    lands on the next UTC day and would match that evening's 9:05pm opinion
+    — formed AFTER the fill executed (look-ahead)."""
+    return (dt.astimezone(UTC) - timedelta(hours=7)).date().isoformat()
 
 
 def parse_doc(doc) -> tuple:
     """Validate one input document into (fills, passes, skipped_count).
-    Rows missing required fields are skipped and counted, never fatal.
-    Fills come back chronological (buys before sells on timestamp ties) so
-    FIFO exit attachment is deterministic regardless of doc order."""
+    Rows missing/failing required fields are skipped and counted, never
+    fatal. Fills come back chronological (buys before sells on timestamp
+    ties) so FIFO exit attachment is deterministic regardless of doc order.
+    filled_at must be a full ISO timestamp (naive = UTC); date-only strings
+    are rejected — midnight UTC would silently shift to the prior Phoenix
+    day."""
     if not isinstance(doc, dict):
         raise ValueError("document must be an object")
     fills, passes, skipped = [], [], 0
@@ -359,21 +439,31 @@ def parse_doc(doc) -> tuple:
         if (
             not symbol
             or side not in ("buy", "sell")
+            or isinstance(price, bool)
             or not isinstance(price, (int, float))
             or not isinstance(filled_at, str)
-            or len(filled_at) < 10
+            or "T" not in filled_at
         ):
             skipped += 1
             continue
+        try:
+            fill_dt = datetime.fromisoformat(filled_at)
+        except ValueError:
+            skipped += 1
+            continue
+        if fill_dt.tzinfo is None:
+            fill_dt = fill_dt.replace(tzinfo=UTC)
         quantity = f.get("quantity")
+        if isinstance(quantity, bool) or not isinstance(quantity, (int, float)):
+            quantity = None
         fills.append(
             dict(
                 symbol=symbol,
                 side=side,
                 price=float(price),
-                quantity=float(quantity) if isinstance(quantity, (int, float)) else None,
+                quantity=float(quantity) if quantity is not None else None,
                 filled_at=filled_at,
-                fill_date=filled_at[:10],
+                fill_date=_phx_date(fill_dt),
                 order_ref=f.get("order_ref"),
                 note=f.get("note"),
             )
@@ -388,7 +478,7 @@ def parse_doc(doc) -> tuple:
     return fills, passes, skipped
 ```
 
-(No imports yet — `parse_doc` and the constants are pure. Task 5 adds the imports its `run`/`main` need; adding them earlier would fail `ruff check` F401.)
+(Only the `datetime` import so far — Task 5 adds the `argparse`/`json`/`os`/`sys`/`db`/`fetch` imports its `run`/`main` need; adding them earlier would fail `ruff check` F401.)
 
 - [ ] **Step 4: Run tests to verify they pass**
 
@@ -413,10 +503,11 @@ git commit --no-gpg-sign -m "feat(journal): parse_doc validates fill/pass docume
 
 **Interfaces:**
 - Consumes: `parse_doc` fills/passes dicts (Task 2), tables from Task 1, existing `fetch.attach_ro(conn, path)` / `fetch.detach(conn)` (alias `src`).
+- Consumes: `db.FLAG_MIN_ABS_SCORE` / `db.FLAG_MIN_TOTAL` (Task 1) and `journal._phx_date` (Task 2).
 - Produces:
-  - `journal.match_opinion(conn, symbol, fill_date) -> tuple[int, str] | None` — `(composite_snapshot_id, composite_date)`.
-  - `journal.match_flagged(conn, symbol, as_of_date) -> tuple[int, str] | None`.
-  - `journal.ingest(conn, fills, passes, now_iso, skipped=0) -> dict` with keys `run_id, fills_seen, matched, freelance, exits_attached, passes_recorded, duplicates_skipped, skipped`. Task 5's `run()` calls it.
+  - `journal.match_opinion(conn, symbol, fill_date) -> tuple[int, str, int, int] | None` — `(composite_snapshot_id, composite_date, opinion_score_sum, opinion_total)`.
+  - `journal.match_flagged(conn, symbol, as_of_date) -> tuple[int, str, int, int] | None`.
+  - `journal.ingest(conn, fills, passes, now_iso, skipped=0) -> dict` with keys `run_id, fills_seen, matched, freelance, exits_attached, passes_recorded, duplicates_skipped, skipped`. Task 5's `run()` calls it. Pass matching uses the Phoenix-local date of `now_iso`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -482,13 +573,13 @@ def test_match_most_recent_in_window(tmp_path):
         tmp_path,
         [("2026-07-02", {"XLE": (5, 4)}), ("2026-07-06", {"XLE": (4, 3)})],
     )
-    assert journal.match_opinion(conn, "XLE", "2026-07-07") == (sids[1], "2026-07-06")
+    assert journal.match_opinion(conn, "XLE", "2026-07-07") == (sids[1], "2026-07-06", 4, 3)
 
 
 def test_match_window_edges(tmp_path):
     conn, sids = _scorer_with_composite(tmp_path, [("2026-07-02", {"XLE": (5, 4)})])
     # day 5 after the opinion: still matchable
-    assert journal.match_opinion(conn, "XLE", "2026-07-07") == (sids[0], "2026-07-02")
+    assert journal.match_opinion(conn, "XLE", "2026-07-07") == (sids[0], "2026-07-02", 5, 4)
     # day 6: expired
     assert journal.match_opinion(conn, "XLE", "2026-07-08") is None
     # same-day fill: the opinion forms at 9:05pm, after the close — excluded
@@ -506,13 +597,15 @@ def test_match_flagged_needs_thresholds(tmp_path):
         [("2026-07-05", {"GLD": (3, 3)}), ("2026-07-06", {"GLD": (4, 3)})],
     )
     # score 3 isn't a flag; the 07-06 flag matches, and same-day is allowed
-    assert journal.match_flagged(conn, "GLD", "2026-07-06") == (sids[1], "2026-07-06")
+    assert journal.match_flagged(conn, "GLD", "2026-07-06") == (sids[1], "2026-07-06", 4, 3)
     assert journal.match_flagged(conn, "GLD", "2026-07-05") is None
 
 
 def test_flag_thresholds_pinned_to_composite_view():
-    assert f"ABS(score_sum) >= {journal.FLAG_MIN_ABS_SCORE}" in composite_db._SCHEMA
-    assert f"total >= {journal.FLAG_MIN_TOTAL}" in composite_db._SCHEMA
+    # ONE definition (db.py) feeds both the matcher and v_flag_response;
+    # this pins it to composite's hand-tunable v_flagged text.
+    assert f"ABS(score_sum) >= {db.FLAG_MIN_ABS_SCORE}" in composite_db._SCHEMA
+    assert f"total >= {db.FLAG_MIN_TOTAL}" in composite_db._SCHEMA
 
 
 def test_ingest_buy_matched_and_freelance(tmp_path):
@@ -521,11 +614,12 @@ def test_ingest_buy_matched_and_freelance(tmp_path):
     counts = journal.ingest(conn, fills, [], NOW)
     assert counts["matched"] == 1 and counts["freelance"] == 1
     rows = conn.execute(
-        "SELECT symbol, composite_snapshot_id, composite_date, source"
+        "SELECT symbol, composite_snapshot_id, composite_date,"
+        " opinion_score_sum, opinion_total, source"
         " FROM decisions ORDER BY symbol"
     ).fetchall()
-    assert rows[0] == ("NVDA", None, None, "mcp")
-    assert rows[1] == ("XLE", sids[0], "2026-07-06", "mcp")
+    assert rows[0] == ("NVDA", None, None, None, None, "mcp")
+    assert rows[1] == ("XLE", sids[0], "2026-07-06", 5, 4, "mcp")
 
 
 def test_ingest_sell_attaches_fifo_exit(tmp_path):
@@ -556,9 +650,9 @@ def test_ingest_sell_without_open_buy_is_own_decision(tmp_path):
     counts = journal.ingest(conn, fills, [], NOW)
     assert counts["matched"] == 1 and counts["exits_attached"] == 0
     row = conn.execute(
-        "SELECT side, composite_snapshot_id FROM decisions"
+        "SELECT side, composite_snapshot_id, opinion_score_sum FROM decisions"
     ).fetchone()
-    assert row == ("sell", sids[0])  # direction-agnostic matching
+    assert row == ("sell", sids[0], -4)  # direction-agnostic matching
 
 
 def test_ingest_duplicate_order_ref_idempotent(tmp_path):
@@ -598,9 +692,10 @@ def test_ingest_pass_needs_flag(tmp_path):
     )
     assert counts["passes_recorded"] == 1 and counts["skipped"] == 1
     row = conn.execute(
-        "SELECT symbol, action, composite_snapshot_id, note, source FROM decisions"
+        "SELECT symbol, action, composite_snapshot_id, opinion_score_sum,"
+        " opinion_total, note, source FROM decisions"
     ).fetchone()
-    assert row == ("GLD", "passed", sids[0], "crowded", "manual")
+    assert row == ("GLD", "passed", sids[0], 4, 3, "crowded", "manual")
     # replaying the same pass is a no-op (partial unique index + OR IGNORE)
     counts = journal.ingest(conn, [], [dict(symbol="GLD", note="crowded")], NOW)
     assert counts["passes_recorded"] == 0
@@ -630,7 +725,13 @@ Expected: FAIL — `AttributeError: module ... has no attribute 'match_opinion'`
 
 - [ ] **Step 3: Implement matching + ingest in `journal.py`**
 
-Append to `sources/combiners/scorer/journal.py`:
+Add to the imports at the top of `sources/combiners/scorer/journal.py`:
+
+```python
+from sources.combiners.scorer import db
+```
+
+Then append:
 
 ```python
 # composite_date, exactly as the scorer registers it (Phoenix shift; see
@@ -642,37 +743,39 @@ _CDATE = "substr(datetime(s.captured_at, '-7 hours'), 1, 10)"
 def match_opinion(conn, symbol, fill_date):
     """Most recent composite opinion on `symbol` strictly BEFORE fill_date
     (the opinion forms at 9:05pm, after that day's close) and at most
-    MATCH_WINDOW_DAYS old. Direction-agnostic: alignment is a view concern.
-    Returns (composite_snapshot_id, composite_date) or None (freelance)."""
+    MATCH_WINDOW_DAYS old. Direction-agnostic: the views classify by
+    alignment. Returns (composite_snapshot_id, composite_date, score_sum,
+    total) — the score is captured because composite.db prunes and weekend
+    reruns can differ from the graded window owner — or None (freelance)."""
     row = conn.execute(
-        f"SELECT s.id, {_CDATE} FROM src.snapshots s"
+        f"SELECT s.id, {_CDATE}, t.score_sum, t.total FROM src.snapshots s"
         f" JOIN src.ticker_scores t ON t.snapshot_id = s.id AND t.symbol = ?"
         f" WHERE {_CDATE} < ? AND ? <= date({_CDATE}, ?)"
         f" ORDER BY s.id DESC LIMIT 1",
         (symbol, fill_date, fill_date, f"+{MATCH_WINDOW_DAYS} days"),
     ).fetchone()
-    return (row[0], row[1]) if row else None
+    return tuple(row) if row else None
 
 
 def match_flagged(conn, symbol, as_of_date):
     """Like match_opinion but only flagged opinions (a pass must answer a
     real flag), and same-evening passes are allowed (cdate <= as_of)."""
     row = conn.execute(
-        f"SELECT s.id, {_CDATE} FROM src.snapshots s"
+        f"SELECT s.id, {_CDATE}, t.score_sum, t.total FROM src.snapshots s"
         f" JOIN src.ticker_scores t ON t.snapshot_id = s.id AND t.symbol = ?"
         f" AND ABS(t.score_sum) >= ? AND t.total >= ?"
         f" WHERE {_CDATE} <= ? AND ? <= date({_CDATE}, ?)"
         f" ORDER BY s.id DESC LIMIT 1",
         (
             symbol,
-            FLAG_MIN_ABS_SCORE,
-            FLAG_MIN_TOTAL,
+            db.FLAG_MIN_ABS_SCORE,
+            db.FLAG_MIN_TOTAL,
             as_of_date,
             as_of_date,
             f"+{MATCH_WINDOW_DAYS} days",
         ),
     ).fetchone()
-    return (row[0], row[1]) if row else None
+    return tuple(row) if row else None
 
 
 def _seen(conn, ref):
@@ -692,7 +795,9 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
     when fills/passes are present. Fills must be chronological (parse_doc
     guarantees it) so FIFO exit attachment is deterministic."""
     matched = freelance = exits = passes_n = dupes = 0
-    as_of_date = now_iso[:10]
+    # Phoenix clock, like fill_date/composite_date: an evening-dictated pass
+    # (after the 9:05pm snapshot = next day UTC) answers THAT evening's flag.
+    as_of_date = _phx_date(datetime.fromisoformat(now_iso))
     with conn:
         for f in fills:
             if _seen(conn, f["order_ref"]):
@@ -716,14 +821,17 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
             m = match_opinion(conn, f["symbol"], f["fill_date"])
             conn.execute(
                 "INSERT INTO decisions (symbol, action, side,"
-                " composite_snapshot_id, composite_date, fill_date, fill_price,"
-                " quantity, order_ref, note, source, recorded_at)"
-                " VALUES (?, 'acted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " composite_snapshot_id, composite_date, opinion_score_sum,"
+                " opinion_total, fill_date, fill_price, quantity, order_ref,"
+                " note, source, recorded_at)"
+                " VALUES (?, 'acted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     f["symbol"],
                     f["side"],
                     m[0] if m else None,
                     m[1] if m else None,
+                    m[2] if m else None,
+                    m[3] if m else None,
                     f["fill_date"],
                     f["price"],
                     f["quantity"],
@@ -743,9 +851,10 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
                 continue
             cur = conn.execute(
                 "INSERT OR IGNORE INTO decisions (symbol, action,"
-                " composite_snapshot_id, composite_date, note, source,"
-                " recorded_at) VALUES (?, 'passed', ?, ?, ?, 'manual', ?)",
-                (p["symbol"], m[0], m[1], p["note"], now_iso),
+                " composite_snapshot_id, composite_date, opinion_score_sum,"
+                " opinion_total, note, source, recorded_at)"
+                " VALUES (?, 'passed', ?, ?, ?, ?, ?, 'manual', ?)",
+                (p["symbol"], m[0], m[1], m[2], m[3], p["note"], now_iso),
             )
             passes_n += cur.rowcount
         cur = conn.execute(
@@ -837,6 +946,8 @@ def _decide(conn, **kw):
         side="buy",
         composite_snapshot_id=1,
         composite_date="2026-07-03",
+        opinion_score_sum=5,
+        opinion_total=4,
         fill_date="2026-07-06",
         fill_price=101.0,
         recorded_at=NOW,
@@ -856,12 +967,14 @@ def test_decision_outcomes_slippage_and_paper_legs(tmp_path):
     _decide(conn)
     row = conn.execute(
         "SELECT entry_slippage, fwd_return, bench_fwd_return, aligned,"
-        " realized_return FROM v_decision_outcomes WHERE horizon = 5"
+        " realized_return, fill_lag_days FROM v_decision_outcomes"
+        " WHERE horizon = 5"
     ).fetchone()
     assert abs(row[0] - 0.01) < 1e-9  # paid 101 vs paper 100 = +1% cost
     assert row[1] == 0.04 and row[2] == 0.01
-    assert row[3] == 1  # buy on a bull flag
+    assert row[3] == 1  # buy on a bull opinion
     assert row[4] is None  # no exit yet
+    assert row[5] == 0.0  # filled on the paper entry date
 
 
 def test_decision_outcomes_realized_round_trip(tmp_path):
@@ -885,12 +998,22 @@ def test_decision_outcomes_sell_slippage_sign(tmp_path):
 
 def test_window_rekeying_marker_only_snapshot(tmp_path):
     conn = _seeded(tmp_path)
-    # decision matched to Sunday's marker-only snapshot 2
-    _decide(conn, composite_snapshot_id=2, composite_date="2026-07-05")
+    # decision matched to Sunday's marker-only snapshot 2, whose rerun score
+    # FLIPPED bearish vs Friday's owner (bull, score 5)
+    _decide(
+        conn,
+        composite_snapshot_id=2,
+        composite_date="2026-07-05",
+        opinion_score_sum=-4,
+        opinion_total=3,
+    )
     row = conn.execute(
-        "SELECT fwd_return FROM v_decision_outcomes WHERE horizon = 5"
+        "SELECT fwd_return, aligned, owner_score_sum FROM v_decision_outcomes"
+        " WHERE horizon = 5"
     ).fetchone()
-    assert row[0] == 0.04  # graded against the owning snapshot's rows
+    assert row[0] == 0.04  # paper legs graded against the owning snapshot
+    assert row[1] == 0  # ...but alignment judged vs the opinion the human SAW
+    assert row[2] == 5  # owner's score exposed alongside
 
 
 def test_freelance_rows_have_null_paper_legs(tmp_path):
@@ -916,6 +1039,24 @@ def test_flag_response_three_states(tmp_path):
         conn.execute("SELECT symbol, response FROM v_flag_response").fetchall()
     )
     assert rows["GLD"] == "passed"
+
+
+def test_flag_response_ignores_nonaligned_sell(tmp_path):
+    conn = _seeded(tmp_path)
+    # exit-shaped sell (pre-journal holding, or a scale-out second lot) that
+    # matched the bull flag's window: must NOT count as acting on the flag
+    _decide(conn, side="sell", fill_price=99.0)
+    rows = dict(
+        conn.execute("SELECT symbol, response FROM v_flag_response").fetchall()
+    )
+    assert rows["XLE"] == "passed_inferred"
+    # ...but a direction-aligned sell answers a BEAR flag; simulate by
+    # checking the buy case is unaffected
+    _decide(conn, order_ref="b-real")
+    rows = dict(
+        conn.execute("SELECT symbol, response FROM v_flag_response").fetchall()
+    )
+    assert rows["XLE"] == "acted"
 
 
 def test_flag_response_rekeys_pass_on_sibling_snapshot(tmp_path):
@@ -956,26 +1097,38 @@ Expected: FAIL — `no such table: v_decision_outcomes`.
 
 - [ ] **Step 3: Append the views to `_VIEWS` in `sources/combiners/scorer/db.py`**
 
+`_VIEWS` is already an f-string — `{FLAG_MIN_ABS_SCORE}` / `{FLAG_MIN_TOTAL}` below interpolate the Task 1 constants (that's the point: one definition for matcher and view).
+
 ```sql
 -- Decision-journal views. Window re-keying: the scorer grades ONE snapshot
 -- per ledger window (weekend/rerun siblings register marker-only with
--- ticker_rows = 0), so a decision matched to a sibling must grade against
--- the window owner's outcome rows. A decision whose snapshot isn't
--- registered yet has no registered_snapshots row and shows NULL paper legs
--- until the nightly scorer catches up — the view heals itself.
+-- ticker_rows = 0; idx_owner_window is the backstop), so a decision matched
+-- to a sibling must grade against the window owner's outcome rows. A
+-- decision whose snapshot isn't registered yet has no registered_snapshots
+-- row and shows NULL paper legs until the nightly scorer catches up — the
+-- view heals itself.
+-- ONE ROW PER HORIZON: filter or group by horizon before aggregating, or
+-- every decision counts len(HORIZONS) times.
+-- aligned judges the decision against the opinion the human actually SAW
+-- (d.opinion_score_sum, captured at ingest) — a weekend rerun's score can
+-- flip sign vs the owner's graded row (owner_score_sum, also exposed).
 -- entry_slippage is signed so positive is always cost (buys: paid above
--- paper entry; sells: received below it). realized_return is fills-only.
+-- paper entry; sells: received below it); fill_lag_days tells true
+-- slippage from drift on late fills. realized_return is fills-only.
 DROP VIEW IF EXISTS v_decision_outcomes;
 CREATE VIEW v_decision_outcomes AS
 SELECT d.id AS decision_id, d.symbol, d.side, d.source,
        d.composite_snapshot_id, d.composite_date,
+       d.opinion_score_sum, d.opinion_total,
        d.fill_date, d.fill_price, d.quantity,
        d.exit_fill_date, d.exit_fill_price, d.note,
-       t.horizon, t.score_sum, t.total, t.entry_date, t.entry_close,
+       t.horizon, t.score_sum AS owner_score_sum, t.total AS owner_total,
+       t.entry_date, t.entry_close,
        t.fwd_return, t.bench_fwd_return, t.matured_at,
-       CASE WHEN t.score_sum IS NULL THEN NULL
-            WHEN d.side = 'buy' THEN (t.score_sum > 0)
-            ELSE (t.score_sum < 0) END AS aligned,
+       julianday(d.fill_date) - julianday(t.entry_date) AS fill_lag_days,
+       CASE WHEN d.opinion_score_sum IS NULL THEN NULL
+            WHEN d.side = 'buy' THEN (d.opinion_score_sum > 0)
+            ELSE (d.opinion_score_sum < 0) END AS aligned,
        CASE WHEN t.entry_close IS NULL THEN NULL
             WHEN d.side = 'sell' THEN 1 - d.fill_price / t.entry_close
             ELSE d.fill_price / t.entry_close - 1 END AS entry_slippage,
@@ -993,11 +1146,19 @@ LEFT JOIN ticker_outcomes t
 WHERE d.action = 'acted';
 
 -- Every matured flagged opinion and what the human did about it. Thresholds
--- mirror composite v_flagged (pinned by test_journal_matching). The
--- decision lookup re-keys through the window (any sibling snapshot's
--- decision answers the owner's flag); MIN(action) is the precedence trick:
--- 'acted' < 'passed' alphabetically, so acting ever beats passing.
--- dir_excess is excess return in the flag's direction.
+-- are the shared FLAG_MIN_* constants (same ones the pass matcher binds;
+-- pinned to composite v_flagged by test_journal_matching). The decision
+-- lookup re-keys through the window (any sibling snapshot's decision
+-- answers the owner's flag). A decision counts as acting on the flag ONLY
+-- when its direction aligns with the flag (buy on bull, sell on bear):
+-- exit-shaped sells (first sell of a pre-journal holding, second lot of a
+-- scale-out) fall through exit-attachment as sell decisions and would
+-- otherwise flip a bull flag to 'acted', poisoning v_human_filter — the
+-- exact comparison this view exists for. Non-aligned trades stay visible
+-- in v_decision_outcomes (aligned = 0); they just don't answer the flag.
+-- MIN(action) is the precedence trick: 'acted' < 'passed' alphabetically,
+-- so acting ever beats passing. dir_excess is excess return in the flag's
+-- direction.
 DROP VIEW IF EXISTS v_flag_response;
 CREATE VIEW v_flag_response AS
 SELECT t.composite_snapshot_id, t.composite_date, t.symbol,
@@ -1010,12 +1171,14 @@ SELECT t.composite_snapshot_id, t.composite_date, t.symbol,
            (SELECT MIN(d.action) FROM decisions d
             JOIN registered_snapshots sib
               ON sib.composite_snapshot_id = d.composite_snapshot_id
-            WHERE sib.entry_date = owner.entry_date AND d.symbol = t.symbol),
+            WHERE sib.entry_date = owner.entry_date AND d.symbol = t.symbol
+              AND (d.action = 'passed'
+                   OR (d.side = 'buy') = (t.score_sum > 0))),
            'passed_inferred') AS response
 FROM ticker_outcomes t
 JOIN registered_snapshots owner ON owner.composite_snapshot_id = t.composite_snapshot_id
 WHERE t.matured_at IS NOT NULL
-  AND ABS(t.score_sum) >= 4 AND t.total >= 3;
+  AND ABS(t.score_sum) >= {FLAG_MIN_ABS_SCORE} AND t.total >= {FLAG_MIN_TOTAL};
 
 -- The headline: does acting beat passing? Plain averages + n day one; the
 -- Wilson helpers can grade this once samples justify it.
@@ -1127,6 +1290,13 @@ def test_run_empty_doc_needs_no_composite(tmp_path):
     assert counts["fills_seen"] == 0 and counts["run_id"] == 1
 
 
+def test_run_no_composite_path_is_loud(tmp_path):
+    # public API misuse: fills need matching but no path given — must be the
+    # promised FileNotFoundError, not a TypeError from os.path.exists(None)
+    with pytest.raises(FileNotFoundError):
+        journal.run(str(tmp_path / "scorer.db"), DOC, now_iso=NOW)
+
+
 def test_run_missing_composite_is_loud(tmp_path):
     with pytest.raises(FileNotFoundError):
         journal.run(
@@ -1199,14 +1369,14 @@ Expected: FAIL — `AttributeError: ... no attribute 'run'` and the registry ass
 
 - [ ] **Step 3: Implement `run` + `main` in `journal.py`; register**
 
-Add the imports at the top of `sources/combiners/scorer/journal.py` (directly after the module docstring):
+Extend the imports at the top of `sources/combiners/scorer/journal.py` (the `datetime` line and `db` import exist from Tasks 2–3; add the rest so the block reads):
 
 ```python
 import argparse
 import json
 import os
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sources.combiners.scorer import db, fetch
 ```
@@ -1227,6 +1397,8 @@ def run(db_path, doc, composite_db=None, now_iso=None) -> dict:
         db.ensure_schema(conn)
         need_match = bool(fills or passes)
         if need_match:
+            if not composite_db:
+                raise FileNotFoundError("composite db path required for matching")
             fetch.attach_ro(conn, composite_db)
         try:
             return ingest(conn, fills, passes, now_iso, skipped=skipped)
@@ -1342,6 +1514,7 @@ git commit --no-gpg-sign -m "feat(journal): dispatcher (run/main/--last-run) + r
 - Create: `.claude/skills/journal-sync/SKILL.md`
 - Create: `deploy/launchd/journal_sync.sh` (mode 755)
 - Modify: `deploy/launchd/install.py` (one `JOBS` entry)
+- Modify: `deploy/launchd/portfolio_snapshot.sh:17` (same latent freshness-check bug — see Step 2)
 - Modify: `docs/SCHEDULE.md` (one row)
 
 **Interfaces:**
@@ -1391,6 +1564,10 @@ against scorer.db directly.
 
    - `order_ref` = the order's id — the idempotency key; re-syncing an
      overlapping window is safe (duplicates are counted and skipped).
+   - `price` = the order's **average** fill price (a multi-execution order
+     must not use the last execution's price); `filled_at` = the executed-at
+     timestamp as full UTC ISO. Verify both field mappings on your first
+     interactive run before trusting the scheduled slot.
    - `passes` only when the user dictates them; a pass must answer a
      currently-flagged ticker or it is skipped with a message.
    - Zero fills is normal: ingest the empty doc anyway — the run header is
@@ -1408,8 +1585,10 @@ against scorer.db directly.
 
 The user dictates a trade ("bought 2 XLE at 94.30 Tuesday morning"): build
 the same document without `order_ref` (rows record as `source: manual`).
-Manual rows have no idempotency key — check `v_decision_outcomes` for an
-existing row before re-dictating.
+`filled_at` must be a full timestamp — if the user only knows the day, use
+`<date>T16:00:00+00:00` (9am Phoenix, regular session); a bare date is
+rejected by the parser. Manual rows have no idempotency key — check
+`v_decision_outcomes` for an existing row before re-dictating.
 
 ## Rules
 
@@ -1441,8 +1620,11 @@ claude -p "/journal-sync" \
     --allowedTools "mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_equity_orders,Write,Bash(uv run python main.py journal *)" \
     --output-format json
 
+# strftime, NOT datetime(): ran_at is isoformat with a 'T' separator, and
+# datetime() renders with a space — 'T' > ' ' lexicographically, so a plain
+# datetime() cutoff would count ANY same-UTC-date run as fresh.
 FRESH=$(sqlite3 data/scorer.db \
-    "SELECT COUNT(*) FROM journal_runs WHERE ran_at >= datetime('now', '-2 hours');" \
+    "SELECT COUNT(*) FROM journal_runs WHERE ran_at >= strftime('%Y-%m-%dT%H:%M:%S', 'now', '-2 hours');" \
     2>/dev/null || echo 0)
 if [ "${FRESH:-0}" -lt 1 ]; then
     echo "[$(date '+%F %T')] STALE: no journal run in the last 2h — check Robinhood MCP auth" >&2
@@ -1452,6 +1634,14 @@ echo "[$(date '+%F %T')] journal sync fresh"
 ```
 
 Then: `chmod 755 deploy/launchd/journal_sync.sh`
+
+Fix the identical latent bug in `deploy/launchd/portfolio_snapshot.sh` (its `captured_at` is also isoformat-with-'T'; the current `datetime('now', '-2 hours')` cutoff counts any same-UTC-date snapshot as "fresh within 2h", silently defeating the stale-MCP-auth alarm). Change its FRESH query to:
+
+```bash
+FRESH=$(sqlite3 data/portfolio.db \
+    "SELECT COUNT(*) FROM snapshots WHERE captured_at >= strftime('%Y-%m-%dT%H:%M:%S', 'now', '-2 hours');" \
+    2>/dev/null || echo 0)
+```
 
 - [ ] **Step 3: Register the job and document it**
 
@@ -1481,8 +1671,8 @@ Expected: list includes `'journal'`. Do NOT run the installer itself (it would t
 
 ```bash
 uv run ruff check && uv run ruff format && uv run mypy && uv run pytest
-git add .claude/skills/journal-sync/SKILL.md deploy/launchd/journal_sync.sh deploy/launchd/install.py docs/SCHEDULE.md
-git commit --no-gpg-sign -m "feat(journal): journal-sync skill + 2:40pm launchd slot"
+git add .claude/skills/journal-sync/SKILL.md deploy/launchd/journal_sync.sh deploy/launchd/install.py deploy/launchd/portfolio_snapshot.sh docs/SCHEDULE.md
+git commit --no-gpg-sign -m "feat(journal): journal-sync skill + 2:40pm launchd slot; fix freshness-check T-vs-space bug"
 ```
 
 ---
