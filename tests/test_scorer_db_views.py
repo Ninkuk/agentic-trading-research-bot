@@ -128,3 +128,102 @@ def test_v_basis_breaks_flags_split_only(tmp_path):
     sym, prev_date, price_date, ratio = rows[0]
     assert (sym, prev_date, price_date) == ("ACME", DAYS[2], DAYS[3])
     assert abs(ratio - 49.6 / 99.0) < 1e-9
+
+
+def _signal_row(conn, sig, entity, score, fwd, bench_fwd, benchmark="SPY", xw=0):
+    """Insert one matured signal outcome directly (views read the table)."""
+    conn.execute(
+        "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date,"
+        " signal_id, entity, score, via_crosswalk, horizon, entry_date,"
+        " entry_close, benchmark, bench_entry_close, exit_date, exit_close,"
+        " fwd_return, bench_fwd_return, matured_at)"
+        " VALUES (1, '2026-07-01', ?, ?, ?, ?, 5, '2026-07-02', 100.0, ?, ?,"
+        " '2026-07-10', 100.0, ?, ?, ?)",
+        (
+            sig,
+            entity,
+            score,
+            xw,
+            benchmark,
+            None if benchmark is None else 500.0,
+            fwd,
+            bench_fwd,
+            NOW,
+        ),
+    )
+
+
+def _efficacy(conn, sig):
+    return conn.execute(
+        "SELECT n_matured, n_bench, hit_rate, hit_ci_lo, hit_ci_hi,"
+        " reliable, avg_directional_return, benchmarks"
+        " FROM v_signal_efficacy WHERE signal_id = ?",
+        (sig,),
+    ).fetchone()
+
+
+def test_wilson_interval_hand_computed(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # 3 hits out of 4 (bullish rows, hit = fwd > bench_fwd)
+    for i, fwd in enumerate((0.02, 0.02, 0.02, 0.00)):
+        _signal_row(conn, "sig_a", f"T{i}", 1, fwd, 0.01)
+    n, nb, hr, lo, hi, rel, _, _ = _efficacy(conn, "sig_a")
+    assert (n, nb) == (4, 4)
+    assert abs(hr - 0.75) < 1e-9
+    # Wilson 95% for 3/4, hand-computed: z=1.96, z^2=3.8416
+    # center=0.75+3.8416/8, margin=1.96*sqrt(0.75*0.25/4+3.8416/64),
+    # denom=1+3.8416/4 -> (0.300636, 0.954414)
+    assert abs(lo - 0.300636) < 1e-4
+    assert abs(hi - 0.954414) < 1e-4
+    assert rel == 0
+
+
+def test_wilson_all_hits_not_degenerate(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for i in range(5):
+        _signal_row(conn, "sig_a", f"T{i}", 1, 0.02, 0.01)  # 5/5 hits
+    _, nb, hr, lo, hi, _, _, _ = _efficacy(conn, "sig_a")
+    assert (nb, hr) == (5, 1.0)
+    # Wald would say 100% +/- 0; Wilson: lo = 1/(1+3.8416/5) ~ 0.565509
+    assert abs(lo - 0.565509) < 1e-4
+    # float rounding can land a hair above 1.0 (1.0000000000000002)
+    assert abs(hi - 1.0) < 1e-9
+
+
+def test_reliable_flag_boundary(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for i in range(db.RELIABLE_MIN_N):
+        _signal_row(conn, "sig_30", f"T{i}", 1, 0.02, 0.01)
+    for i in range(db.RELIABLE_MIN_N - 1):
+        _signal_row(conn, "sig_29", f"T{i}", 1, 0.02, 0.01)
+    assert _efficacy(conn, "sig_30")[5] == 1
+    assert _efficacy(conn, "sig_29")[5] == 0
+
+
+def test_unbenchmarked_rows_labeled_not_hidden(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # 2 unbenchmarked (class-proxy) rows + 1 benchmarked, all bullish wins
+    _signal_row(conn, "cftc_energy", "XLE", 2, 0.05, None, benchmark=None, xw=1)
+    _signal_row(conn, "cftc_energy", "DBA", 2, 0.03, None, benchmark=None, xw=1)
+    _signal_row(conn, "cftc_energy", "XOM", 2, 0.04, 0.01, benchmark="XLE", xw=1)
+    n, nb, hr, lo, hi, rel, avg_ret, benchmarks = _efficacy(conn, "cftc_energy")
+    assert (n, nb) == (3, 1)  # n_matured - n_bench = 2 unbenchmarked
+    assert hr == 1.0  # over the 1 benchmarked row only
+    assert benchmarks == "XLE"  # states what it was measured against
+    # raw directional return covers ALL rows, benchmarked or not
+    assert abs(avg_ret - (0.05 + 0.03 + 0.04) / 3) < 1e-9
+
+
+def test_zero_bench_rows_null_ci(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    _signal_row(conn, "cftc_ags", "DBA", 2, 0.03, None, benchmark=None, xw=1)
+    n, nb, hr, lo, hi, rel, _, benchmarks = _efficacy(conn, "cftc_ags")
+    assert (n, nb) == (1, 0)
+    assert hr is None and lo is None and hi is None
+    assert rel == 0
+    assert benchmarks is None

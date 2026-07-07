@@ -23,6 +23,29 @@ from datetime import datetime, timedelta
 BASIS_BREAK_LO = 0.55  # forward splits >= 2:1 land below this
 BASIS_BREAK_HI = 1.8  # reverse splits >= 1:2 land above this
 
+# Guardrail constants for the efficacy views. Wilson (not Wald): Wald
+# collapses to zero width on small all-hit samples (5/5 -> "100% +/- 0"),
+# which is exactly the n=12-looks-brilliant failure these views must not
+# have. Crude by design — with ~144 simultaneous rows (24 signals x 3
+# horizons x crosswalk split), ~7 look significant at 95% by chance alone;
+# the human reads the CI with that in mind. sqrt() needs SQLite math
+# functions (present in CPython 3.12's bundled SQLite 3.45+).
+WILSON_Z = 1.96  # 95% score interval on hit_rate
+RELIABLE_MIN_N = 30  # benchmarked-sample floor for the reliable flag
+
+
+def _wilson(sign: str) -> str:
+    """Wilson score bound (+1 upper / -1 lower via sign) as a SQL aggregate
+    fragment over a 0/1 `hit` column; NULL hits are excluded by COUNT/AVG."""
+    z, n, p = str(WILSON_Z), "COUNT(hit)", "AVG(hit)"
+    return (
+        f"CASE WHEN {n} > 0 THEN"
+        f" ({p} + {z}*{z}/(2.0*{n})"
+        f" {sign} {z} * sqrt({p}*(1-{p})/{n} + {z}*{z}/(4.0*{n}*{n})))"
+        f" / (1 + {z}*{z}/{n}) END"
+    )
+
+
 _TABLES = """
 CREATE TABLE IF NOT EXISTS snapshots (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -139,18 +162,34 @@ SELECT bucket, horizon, COUNT(*) AS n_matured,
 FROM m GROUP BY bucket, horizon;
 
 -- Per-signal grade, direction-adjusted: excess * sign(score). Crosswalked
--- evidence is split out so mapped scores are graded separately.
+-- evidence is split out so mapped scores are graded separately. Guardrails:
+-- n_bench is the binomial n (rows with a gradable benchmark; hit_rate,
+-- avg_directional_excess and the CI only see those); n_matured - n_bench
+-- is the unbenchmarked count, which avg_directional_return (raw, no
+-- benchmark) still covers. reliable gates on n_bench, not n_matured.
 DROP VIEW IF EXISTS v_signal_efficacy;
 CREATE VIEW v_signal_efficacy AS
-SELECT signal_id, via_crosswalk, horizon, COUNT(*) AS n_matured,
-       AVG((fwd_return - bench_fwd_return)
-           * (CASE WHEN score > 0 THEN 1 ELSE -1 END))
-           AS avg_directional_excess,
-       AVG(CASE WHEN bench_fwd_return IS NULL THEN NULL
+WITH m AS (
+    SELECT signal_id, via_crosswalk, horizon, benchmark,
+           (fwd_return - bench_fwd_return)
+               * (CASE WHEN score > 0 THEN 1 ELSE -1 END) AS dir_excess,
+           fwd_return * (CASE WHEN score > 0 THEN 1 ELSE -1 END) AS dir_return,
+           CASE WHEN bench_fwd_return IS NULL THEN NULL
                 WHEN score > 0 THEN (fwd_return > bench_fwd_return)
-                ELSE (fwd_return < bench_fwd_return) END) AS hit_rate
-FROM signal_outcomes
-WHERE matured_at IS NOT NULL
+                ELSE (fwd_return < bench_fwd_return) END AS hit
+    FROM signal_outcomes WHERE matured_at IS NOT NULL
+)
+SELECT signal_id, via_crosswalk, horizon,
+       COUNT(*) AS n_matured,
+       AVG(dir_excess) AS avg_directional_excess,
+       AVG(hit) AS hit_rate,
+       AVG(dir_return) AS avg_directional_return,
+       COUNT(hit) AS n_bench,
+       {_wilson("-")} AS hit_ci_lo,
+       {_wilson("+")} AS hit_ci_hi,
+       (COUNT(hit) >= {RELIABLE_MIN_N}) AS reliable,
+       GROUP_CONCAT(DISTINCT benchmark) AS benchmarks
+FROM m
 GROUP BY signal_id, via_crosswalk, horizon;
 
 DROP VIEW IF EXISTS v_regime_performance;
