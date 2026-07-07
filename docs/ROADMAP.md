@@ -63,8 +63,13 @@ record as freelance, so the earliest rows carry no paper baseline.)*
 scorecard against real holdings — `v_book_heat`/`v_group_heat` (ATR heat,
 crosswalk groups count as one bet), `v_disagreements`, and 1%-risk-budget
 size caps in `v_latest_caps`, annotated with scorer `reliable` signal
-counts. Shipped 2026-07-07; 9:12pm daily slot between scorer and
-daily-summary.)*
+counts. Caps are fractional (`cap_shares REAL` — whole-share flooring
+zeroes every cap at small equity) and scale with equity each night;
+bearish flags carry NULL caps (long-only book — the row is the advice).
+Shipped 2026-07-07; 9:12pm daily slot installed same day, first live run
+verified against the real book (2 positions, heat 0.21 % of equity,
+coverage 1.0, XOM weak disagreement, zero caps — nothing flagged).
+Residuals live in item 8.)*
 
 ### 7. Backtesting foundation
 
@@ -101,3 +106,11 @@ Ideas that need the machinery above before they're worth building:
   `ticker_outcomes` buckets grade vs SPY even for tickers whose score is
   dominated by crosswalked commodity votes; per-ticker benchmark needs
   crosswalk provenance on ticker_scores first.
+- **Advisor enrichment** (residuals from shipped item 6) — deliberate
+  scope cuts to revisit once the views prove useful: fold advisor output
+  into the 9:15pm daily-summary digest; correlation beyond crosswalk
+  groups (QQQ + NVDA count as separate bets today — only CROSSWALK
+  siblings collapse); same-night sibling caps each see the full remaining
+  group budget (alternatives, not a shopping list — a shared-budget view
+  would close that); options positions are invisible to book heat
+  (portfolio.db is equities-only).
