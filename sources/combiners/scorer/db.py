@@ -272,6 +272,7 @@ def register_snapshot(
     benchmark,
     max_age_days,
     now_iso,
+    crosswalk_benchmark=None,
 ) -> tuple:
     """All-or-nothing registration of one composite snapshot: the marker row
     and every outcome row commit together. Returns (registered, skipped).
@@ -297,6 +298,12 @@ def register_snapshot(
     keying off the benchmark's entry would silently fall back to another
     day's close and collide with an already-registered window, durably
     discarding an otherwise gradeable night as marker-only.
+
+    Per-row benchmarks: a direct signal row is graded against `benchmark`
+    (SPY); a crosswalked row against crosswalk_benchmark[entity] — its
+    matched asset-class proxy. A class proxy maps to None and an unknown
+    crosswalk ticker resolves to None (never silently SPY): both grade
+    unbenchmarked (raw return only). ticker/regime rows stay on `benchmark`.
     """
     registered = skipped = 0
     with conn:  # transaction
@@ -359,14 +366,18 @@ def register_snapshot(
             if entry is None:
                 skipped += 1
                 continue
-            bench = _bench_close(conn, benchmark, entry[0])
+            if r["via_crosswalk"]:
+                row_bench = (crosswalk_benchmark or {}).get(r["entity"])
+            else:
+                row_bench = benchmark
+            bench = _bench_close(conn, row_bench, entry[0]) if row_bench else None
             for h in horizons:
                 cur = conn.execute(
                     "INSERT OR IGNORE INTO signal_outcomes"
                     " (composite_snapshot_id, composite_date, signal_id,"
                     "  entity, score, via_crosswalk, horizon, entry_date,"
-                    "  entry_close, bench_entry_close)"
-                    " VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    "  entry_close, benchmark, bench_entry_close)"
+                    " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                     (
                         csid,
                         composite_date,
@@ -377,6 +388,7 @@ def register_snapshot(
                         h,
                         entry[0],
                         entry[1],
+                        row_bench,
                         bench,
                     ),
                 )

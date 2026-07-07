@@ -28,25 +28,22 @@ def _mini_prices(path, symbols_start):
     conn.close()
 
 
-def _mini_composite(dirpath, date="2026-07-01"):
+def _mini_composite(dirpath, date="2026-07-01", extra_signals=None):
     conn = composite_db.connect(str(dirpath / "composite.db"))
     composite_db.ensure_schema(conn)
     sid = composite_db.write_snapshot(conn, f"{date}T21:05:00+00:00", 1)
-    composite_db.write_signal_values(
-        conn,
-        sid,
-        [
-            dict(
-                signal_id="stocks_rsi",
-                grain="ticker",
-                entity="AAPL",
-                raw_value=25.0,
-                score=1,
-                obs_date=date,
-                staleness_days=0.0,
-            )
-        ],
-    )
+    signals = [
+        dict(
+            signal_id="stocks_rsi",
+            grain="ticker",
+            entity="AAPL",
+            raw_value=25.0,
+            score=1,
+            obs_date=date,
+            staleness_days=0.0,
+        )
+    ] + list(extra_signals or [])
+    composite_db.write_signal_values(conn, sid, signals)
     composite_db.write_ticker_scores(conn, sid)
     composite_db.write_market_regime(conn, sid, {})
     conn.commit()
@@ -103,3 +100,30 @@ def test_main_argv(tmp_path, capsys):
     _mini_composite(tmp_path)
     run_mod.main(["--db", str(tmp_path / "scorer.db"), "--db-dir", str(tmp_path)])
     assert "scorer snapshot" in capsys.readouterr().out
+
+
+def test_crosswalked_signal_gets_matched_benchmark(tmp_path):
+    _mini_prices(tmp_path / "stocks.db", {"AAPL": 100.0, "XOM": 80.0})
+    _mini_prices(tmp_path / "etfs.db", {"SPY": 500.0, "XLE": 50.0})
+    _mini_composite(
+        tmp_path,
+        extra_signals=[
+            dict(
+                signal_id="cftc_energy",
+                grain="ticker",
+                entity="XOM",
+                raw_value=1.0,
+                score=1,
+                obs_date="2026-07-01",
+                staleness_days=0.0,
+                via_crosswalk=1,
+            )
+        ],
+    )
+    out = str(tmp_path / "scorer.db")
+    run_mod.run(out, str(tmp_path), now_iso=NOW)
+    conn = sqlite3.connect(out)
+    rows = dict(
+        conn.execute("SELECT entity, benchmark FROM signal_outcomes WHERE entity IN ('XOM','AAPL')")
+    )
+    assert rows == {"XOM": "XLE", "AAPL": "SPY"}

@@ -55,6 +55,7 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
                         catalog.BENCHMARK,
                         catalog.ENTRY_MAX_AGE_DAYS,
                         now_iso,
+                        crosswalk_benchmark=catalog.CROSSWALK_BENCHMARK,
                     )
                     registered += reg
                     skipped += skip

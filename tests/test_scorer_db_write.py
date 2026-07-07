@@ -367,3 +367,50 @@ def test_benchmark_break_blocks_symbol_rows(tmp_path):
         ).fetchone()[0]
         == 0
     )
+
+
+XW_BENCH = {"XOM": "XLE", "XLE": None}
+
+
+def test_signal_benchmark_resolution(tmp_path):
+    conn = _conn(tmp_path)
+    for sym, start in (
+        ("XOM", 100.0),
+        ("XLE", 50.0),
+        ("NEWX", 20.0),
+        ("AAPL", 200.0),
+        ("SPY", 500.0),
+    ):
+        _ledger(conn, sym, DAYS, start=start)
+    signal_rows = [
+        # crosswalked, mapped -> matched benchmark XLE
+        dict(signal_id="cftc_energy", entity="XOM", score=2, via_crosswalk=1),
+        # crosswalked class proxy -> explicitly unbenchmarked
+        dict(signal_id="cftc_energy", entity="XLE", score=2, via_crosswalk=1),
+        # crosswalked but unknown to the map -> fail safe to unbenchmarked
+        dict(signal_id="cftc_energy", entity="NEWX", score=2, via_crosswalk=1),
+        # direct ticker evidence -> global benchmark
+        dict(signal_id="stocks_rsi", entity="AAPL", score=1, via_crosswalk=0),
+    ]
+    db.register_snapshot(
+        conn,
+        1,
+        "2026-07-01",
+        [],
+        signal_rows,
+        "risk_on",
+        (2,),
+        "SPY",
+        7,
+        NOW,
+        crosswalk_benchmark=XW_BENCH,
+    )
+    bench = dict(conn.execute("SELECT entity, benchmark FROM signal_outcomes"))
+    assert bench == {"XOM": "XLE", "XLE": None, "NEWX": None, "AAPL": "SPY"}
+    # bench_entry_close is the row's OWN benchmark's close at the entry
+    # date (2026-07-02 = DAYS[5], close = start + 5)
+    entry = dict(conn.execute("SELECT entity, bench_entry_close FROM signal_outcomes"))
+    assert entry["XOM"] == 55.0  # XLE, not SPY
+    assert entry["XLE"] is None
+    assert entry["NEWX"] is None
+    assert entry["AAPL"] == 505.0  # SPY
