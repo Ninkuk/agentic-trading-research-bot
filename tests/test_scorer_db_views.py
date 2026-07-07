@@ -227,3 +227,42 @@ def test_zero_bench_rows_null_ci(tmp_path):
     assert hr is None and lo is None and hi is None
     assert rel == 0
     assert benchmarks is None
+
+
+def _ticker_row(conn, symbol, score_sum, fwd, bench_fwd, total=3):
+    conn.execute(
+        "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date,"
+        " symbol, score_sum, total, bullish, bearish, in_portfolio, horizon,"
+        " entry_date, entry_close, bench_entry_close, exit_date, exit_close,"
+        " fwd_return, bench_fwd_return, matured_at)"
+        " VALUES (1, '2026-07-01', ?, ?, ?, 0, 0, 0, 5, '2026-07-02', 100.0,"
+        " ?, '2026-07-10', 100.0, ?, ?, ?)",
+        (
+            symbol,
+            score_sum,
+            total,
+            None if bench_fwd is None else 500.0,
+            fwd,
+            bench_fwd,
+            NOW,
+        ),
+    )
+
+
+def test_bucket_guardrail_columns(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # strong_bull bucket: one hit, one miss, one benchmark-less row
+    _ticker_row(conn, "A", 4, 0.02, 0.01)  # hit
+    _ticker_row(conn, "B", 4, 0.00, 0.01)  # miss
+    _ticker_row(conn, "C", 4, 0.02, None)  # unbenchmarked
+    row = conn.execute(
+        "SELECT n_matured, n_bench, hit_rate, hit_ci_lo, hit_ci_hi, reliable"
+        " FROM v_bucket_performance WHERE bucket = 'strong_bull'"
+    ).fetchone()
+    assert (row[0], row[1]) == (3, 2)
+    assert abs(row[2] - 0.5) < 1e-9
+    # Wilson 95% for 1/2: hand-computed (0.094529, 0.905471)
+    assert abs(row[3] - 0.094529) < 1e-4
+    assert abs(row[4] - 0.905471) < 1e-4
+    assert row[5] == 0

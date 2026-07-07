@@ -139,7 +139,11 @@ _VIEWS = f"""
 -- Bucketing lives in views (ELT): stored rows keep raw score_sum/total.
 -- Buckets: strong_bull >= +4, bull +2..+3, neutral -1..+1, bear -3..-2,
 -- strong_bear <= -4; rows with total < 2 bucket as 'thin' regardless.
--- hit = excess in the score's direction (bull: excess > 0; bear: < 0).
+-- hit = excess in the score's direction (bull: excess > 0; bear: < 0);
+-- score_sum = 0 rows have no direction and contribute NULL hits. Buckets
+-- are SPY-benchmarked throughout (ticker rows carry no crosswalk
+-- provenance), so n_bench counts rows with a computable hit (a gradable
+-- SPY leg AND a direction).
 DROP VIEW IF EXISTS v_bucket_performance;
 CREATE VIEW v_bucket_performance AS
 WITH m AS (
@@ -149,16 +153,21 @@ WITH m AS (
                 WHEN score_sum <= -4 THEN 'strong_bear'
                 WHEN score_sum <= -2 THEN 'bear'
                 ELSE 'neutral' END AS bucket,
-           horizon, fwd_return, score_sum,
-           fwd_return - bench_fwd_return AS excess
+           horizon, fwd_return,
+           fwd_return - bench_fwd_return AS excess,
+           CASE WHEN bench_fwd_return IS NULL THEN NULL
+                WHEN score_sum > 0 THEN (fwd_return > bench_fwd_return)
+                WHEN score_sum < 0 THEN (fwd_return < bench_fwd_return) END AS hit
     FROM ticker_outcomes WHERE matured_at IS NOT NULL
 )
 SELECT bucket, horizon, COUNT(*) AS n_matured,
        AVG(fwd_return) AS avg_fwd_return,
        AVG(excess) AS avg_excess,
-       AVG(CASE WHEN excess IS NULL THEN NULL
-                WHEN score_sum > 0 THEN (excess > 0)
-                WHEN score_sum < 0 THEN (excess < 0) END) AS hit_rate
+       AVG(hit) AS hit_rate,
+       COUNT(hit) AS n_bench,
+       {_wilson("-")} AS hit_ci_lo,
+       {_wilson("+")} AS hit_ci_hi,
+       (COUNT(hit) >= {RELIABLE_MIN_N}) AS reliable
 FROM m GROUP BY bucket, horizon;
 
 -- Per-signal grade, direction-adjusted: excess * sign(score). Crosswalked
