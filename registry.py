@@ -1,5 +1,6 @@
 import sys
 
+from sources.combiners.advisor.run import main as advisor_main
 from sources.combiners.composite.run import main as composite_main
 from sources.combiners.scorer.journal import main as journal_main
 from sources.combiners.scorer.run import main as scorer_main
@@ -50,6 +51,7 @@ REGISTRY = {
     "composite": composite_main,
     "scorer": scorer_main,
     "journal": journal_main,
+    "advisor": advisor_main,
 }
 
 
