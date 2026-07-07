@@ -84,3 +84,22 @@ def test_missing_sections_ok():
 def test_non_dict_doc_raises():
     with pytest.raises(ValueError):
         journal.parse_doc(["not", "a", "dict"])
+
+
+def test_non_string_symbol_skip_and_count():
+    # Regression: non-string symbols (e.g., integers) must be skipped and counted,
+    # never raise AttributeError
+    doc = {
+        "fills": [
+            _fill(symbol=123),  # integer symbol should be skipped
+            _fill(),  # valid fill
+        ],
+        "passes": [
+            {"symbol": 456},  # integer symbol in pass should be skipped
+            {"symbol": "TLT", "note": "good"},  # valid pass
+        ],
+    }
+    fills, passes, skipped = journal.parse_doc(doc)
+    assert len(fills) == 1 and fills[0]["symbol"] == "XLE"
+    assert len(passes) == 1 and passes[0]["symbol"] == "TLT"
+    assert skipped == 2  # one fill with bad symbol, one pass with bad symbol

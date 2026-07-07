@@ -45,7 +45,8 @@ def parse_doc(doc) -> tuple:
         if not isinstance(f, dict):
             skipped += 1
             continue
-        symbol = (f.get("symbol") or "").strip().upper()
+        raw = f.get("symbol")
+        symbol = raw.strip().upper() if isinstance(raw, str) else ""
         side = f.get("side")
         price = f.get("price")
         filled_at = f.get("filled_at")
@@ -82,7 +83,11 @@ def parse_doc(doc) -> tuple:
             )
         )
     for p in doc.get("passes") or []:
-        symbol = (p.get("symbol") or "").strip().upper() if isinstance(p, dict) else ""
+        if not isinstance(p, dict):
+            skipped += 1
+            continue
+        raw = p.get("symbol")
+        symbol = raw.strip().upper() if isinstance(raw, str) else ""
         if not symbol:
             skipped += 1
             continue
