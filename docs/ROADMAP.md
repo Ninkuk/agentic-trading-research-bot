@@ -59,21 +59,12 @@ record as freelance, so the earliest rows carry no paper baseline.)*
 
 ## Later — new layers
 
-### 6. Sizing / risk advisor combiner
-
-**Problem.** Nothing joins the scorecard against actual holdings.
-`portfolio.db`'s docstring already promises the consumers ("real exposure,
-whole-book heat") that don't exist. This is decision *support*, not order
-generation — consistent with the human-execution design.
-
-**Done when.** A combiner (or composite extension) reports: current book heat
-(vol-scaled exposure per position and total), holdings today's composite
-disagrees with, and a vol-scaled size cap for any newly flagged ticker.
-CROSSWALK groups count as one bet for heat purposes.
-
-**Size.** L. **Depends on.** #4 (shipped 2026-07-06 — advice should cite
-`reliable` efficacy rows), plus a volatility input (ATR already in
-`stocks.db` metrics).
+*(Item 6, sizing/risk advisor: `advisor` combiner joins the composite
+scorecard against real holdings — `v_book_heat`/`v_group_heat` (ATR heat,
+crosswalk groups count as one bet), `v_disagreements`, and 1%-risk-budget
+size caps in `v_latest_caps`, annotated with scorer `reliable` signal
+counts. Shipped 2026-07-07; 9:12pm daily slot between scorer and
+daily-summary.)*
 
 ### 7. Backtesting foundation
 

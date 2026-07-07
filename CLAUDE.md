@@ -80,6 +80,10 @@ re-weighting the catalog is a human decision made by reading `v_signal_efficacy`
 `v_bucket_performance`. The scorer package also owns the decision journal (`main.py journal --input <file|->`, fed by the
 `.claude/skills/journal-sync` MCP skill like `portfolio`): human fills and passes land in scorer.db `decisions` (never pruned) and are compared to
 paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`.
+The `advisor` combiner joins the latest scorecard against real holdings
+(portfolio.db read via `v_latest_*` only) plus stocks/etfs ATR and scorer
+efficacy: book heat, disagreements, and vol-scaled size caps — decision
+support only, never order generation.
 
 ### File tree
 
@@ -90,7 +94,7 @@ sources/
 ├── common/       # screener_common.py, monitor_common.py, http_client.py
 ├── screeners/    # 17 point-in-time data readers (import screener_common)
 ├── monitors/     # 4 event-date calendars (import monitor_common)
-└── combiners/    # 2 cross-source combiners (composite: opinions; scorer: grades them)
+└── combiners/    # 3 cross-source combiners (composite: opinions; scorer: grades; advisor: sizes)
 ```
 
 `registry.py` and `main.py` stay at repo root — `registry.py` is the CLI dispatch table, not a

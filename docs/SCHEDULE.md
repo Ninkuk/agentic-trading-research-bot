@@ -1,6 +1,6 @@
 # Data-collection schedule
 
-Every screener/monitor/combiner runs on a launchd schedule (30 `com.tradingbot.*`
+Every screener/monitor/combiner runs on a launchd schedule (31 `com.tradingbot.*`
 LaunchAgents). **Source of truth is the `JOBS` dict in
 `deploy/launchd/install.py`** — this doc is the human-readable view; if they
 disagree, trust install.py and fix this file.
@@ -59,6 +59,7 @@ summer open (6:30am Phoenix).
 | `usda-wasde` | 12th & 16th 10:15am | WASDE lands ~9th–12th, occasionally later — the 16th probe catches stragglers |
 | `composite` | every day 9:05pm | Combines all source DBs into `data/composite.db` (read-only attaches; regime + ticker scorecard). Must stay after every collector's last daily slot INCLUDING edgar's 15-min failure retry (~8:45pm+) and before daily-summary at 9:15pm |
 | `scorer` | every day 9:10pm | Grades composite opinions: harvests closes into data/scorer.db, registers pending outcomes, matures forward returns. Must stay after composite 9:05pm. Outcome tables AND the close-price ledger are permanent (never pruned; the ledger is the future backtest store, growing a few hundred MB/year). Entries are next-day closes (no look-ahead), so a snapshot registers the night after its entry close is harvested — the newest snapshot printing `defer` is steady-state, not a failure |
+| `advisor` | every day 9:12pm | Sizing/risk advice into `data/advisor.db`: joins the composite scorecard against portfolio holdings + stocks/etfs ATR + scorer efficacy (all attached read-only). Book heat (`v_book_heat`/`v_group_heat`, crosswalk groups = one bet), holdings composite disagrees with (`v_disagreements`), and 1%-risk-budget size caps (`v_latest_caps`). Must stay after scorer 9:10pm, before daily-summary 9:15pm. Weekend runs size against Friday's 2:30pm portfolio snapshot — `portfolio_captured_at` in the header makes that auditable |
 | `daily-summary` | every day 9:15pm | ntfy digest (see below) |
 
 ## Quarterly
