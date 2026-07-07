@@ -14,7 +14,7 @@ claude -p "/account-positions" \
     --output-format json
 
 FRESH=$(sqlite3 data/portfolio.db \
-    "SELECT COUNT(*) FROM snapshots WHERE captured_at >= datetime('now', '-2 hours');" \
+    "SELECT COUNT(*) FROM snapshots WHERE captured_at >= strftime('%Y-%m-%dT%H:%M:%S', 'now', '-2 hours');" \
     2>/dev/null || echo 0)
 if [ "${FRESH:-0}" -lt 1 ]; then
     echo "[$(date '+%F %T')] STALE: no portfolio snapshot in the last 2h — check Robinhood MCP auth" >&2

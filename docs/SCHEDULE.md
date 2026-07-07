@@ -1,6 +1,6 @@
 # Data-collection schedule
 
-Every screener/monitor/combiner runs on a launchd schedule (29 `com.tradingbot.*`
+Every screener/monitor/combiner runs on a launchd schedule (30 `com.tradingbot.*`
 LaunchAgents). **Source of truth is the `JOBS` dict in
 `deploy/launchd/install.py`** — this doc is the human-readable view; if they
 disagree, trust install.py and fix this file.
@@ -26,6 +26,7 @@ summer open (6:30am Phoenix).
 | `preopen` | 4:00am | ONE serialized process: earnings → stocks → etfs → reddit baseline. Earnings watchlist = portfolio.db holdings ∪ cboe_options catalog equities (required — without `--only`, 8-K confirmation is skipped). stocks/etfs run `--keep-days 30`: their metrics rows are snapshot-scoped and only `v_latest` is read, so unpruned they grow by a full universe/day |
 | `nyfed` | 11:30am | After RRP results (~1:15pm ET) |
 | `portfolio` | 2:30pm | Headless `claude -p "/account-positions"` → Robinhood MCP; verifies a fresh snapshot landed (stale MCP auth = loud failure). Skill passes `--keep-days 365` (positions are snapshot-scoped) |
+| `journal` | 2:40pm | Headless `claude -p "/journal-sync"` → Robinhood MCP order history → `main.py journal`. Ten minutes after portfolio so a stale-auth failure shows up twice. Empty-fill days still write a run header (that's what the freshness check reads). Journal matching reads composite.db; decisions land in scorer.db (never pruned) |
 | `options-close` | 2:45pm | Settled end-of-day chains (post-close both seasons) |
 | `treasury` | 4:30pm | FiscalData + yield-curve XML |
 | `fred` | 4:40pm | Daily rate series finalized ~4:15pm ET |

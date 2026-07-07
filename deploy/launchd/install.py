@@ -62,6 +62,7 @@ JOBS = {
     "preopen": (script("preopen_batch.sh"), weekly(MON_FRI, 4, 0)),
     "nyfed": (job("nyfed"), weekly(MON_FRI, 11, 30)),
     "portfolio": (script("portfolio_snapshot.sh"), weekly(MON_FRI, 14, 30)),
+    "journal": (script("journal_sync.sh"), weekly(MON_FRI, 14, 40)),
     "options-close": (job("options", "--keep-days", "90"), weekly(MON_FRI, 14, 45)),
     "treasury": (job("treasury"), weekly(MON_FRI, 16, 30)),
     "fred": (job("fred"), weekly(MON_FRI, 16, 40)),
