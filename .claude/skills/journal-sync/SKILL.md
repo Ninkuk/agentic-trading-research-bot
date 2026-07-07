@@ -25,6 +25,11 @@ against scorer.db directly.
    - `get_equity_orders` scoped to it: **filled** orders updated since the
      bound. Never paste raw MCP payloads into the conversation (they can
      carry account identifiers).
+   - **Exclude automatic fills**: drop orders whose `placed_agent` is
+     `drip` or `recurring` — dividend reinvestments and auto-invests are
+     nobody's decision, and the journal measures decision quality (policy
+     set on the first interactive run, 2026-07-07). Keep `user` and
+     `agentic` fills.
 3. Build ONE JSON document in the scratchpad:
 
    ```json
