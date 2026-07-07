@@ -23,7 +23,7 @@ from datetime import datetime, timedelta
 BASIS_BREAK_LO = 0.55  # forward splits >= 2:1 land below this
 BASIS_BREAK_HI = 1.8  # reverse splits >= 1:2 land above this
 
-_SCHEMA = f"""
+_TABLES = """
 CREATE TABLE IF NOT EXISTS snapshots (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     captured_at TEXT NOT NULL,
@@ -73,6 +73,10 @@ CREATE TABLE IF NOT EXISTS ticker_outcomes (
     PRIMARY KEY (composite_snapshot_id, symbol, horizon)
 );
 
+-- benchmark: the symbol this row's bench_* legs are graded against.
+-- Direct rows get the global benchmark (SPY); crosswalked rows get their
+-- matched class benchmark; NULL = explicitly unbenchmarked (class proxies
+-- and unknown crosswalk tickers) -- graded on raw return only.
 CREATE TABLE IF NOT EXISTS signal_outcomes (
     composite_snapshot_id INTEGER NOT NULL,
     composite_date        TEXT NOT NULL,
@@ -83,6 +87,7 @@ CREATE TABLE IF NOT EXISTS signal_outcomes (
     horizon               INTEGER NOT NULL,
     entry_date            TEXT NOT NULL,
     entry_close           REAL NOT NULL,
+    benchmark             TEXT,
     bench_entry_close     REAL,
     exit_date             TEXT,
     exit_close            REAL,
@@ -105,12 +110,15 @@ CREATE TABLE IF NOT EXISTS regime_outcomes (
     matured_at            TEXT,
     PRIMARY KEY (composite_snapshot_id, horizon)
 );
+"""
 
+_VIEWS = f"""
 -- Bucketing lives in views (ELT): stored rows keep raw score_sum/total.
 -- Buckets: strong_bull >= +4, bull +2..+3, neutral -1..+1, bear -3..-2,
 -- strong_bear <= -4; rows with total < 2 bucket as 'thin' regardless.
 -- hit = excess in the score's direction (bull: excess > 0; bear: < 0).
-CREATE VIEW IF NOT EXISTS v_bucket_performance AS
+DROP VIEW IF EXISTS v_bucket_performance;
+CREATE VIEW v_bucket_performance AS
 WITH m AS (
     SELECT CASE WHEN total < 2 THEN 'thin'
                 WHEN score_sum >= 4 THEN 'strong_bull'
@@ -132,7 +140,8 @@ FROM m GROUP BY bucket, horizon;
 
 -- Per-signal grade, direction-adjusted: excess * sign(score). Crosswalked
 -- evidence is split out so mapped scores are graded separately.
-CREATE VIEW IF NOT EXISTS v_signal_efficacy AS
+DROP VIEW IF EXISTS v_signal_efficacy;
+CREATE VIEW v_signal_efficacy AS
 SELECT signal_id, via_crosswalk, horizon, COUNT(*) AS n_matured,
        AVG((fwd_return - bench_fwd_return)
            * (CASE WHEN score > 0 THEN 1 ELSE -1 END))
@@ -144,7 +153,8 @@ FROM signal_outcomes
 WHERE matured_at IS NOT NULL
 GROUP BY signal_id, via_crosswalk, horizon;
 
-CREATE VIEW IF NOT EXISTS v_regime_performance AS
+DROP VIEW IF EXISTS v_regime_performance;
+CREATE VIEW v_regime_performance AS
 SELECT regime, horizon, COUNT(*) AS n_matured,
        AVG(bench_fwd_return) AS avg_bench_return,
        MIN(bench_fwd_return) AS min_bench_return,
@@ -156,7 +166,8 @@ GROUP BY regime, horizon;
 -- trail for rows the basis guard holds pending (join v_pending on the
 -- entity to tell "quarantined" from merely "young"). Thresholds are the
 -- same BASIS_BREAK_* constants mature() binds as :lo/:hi.
-CREATE VIEW IF NOT EXISTS v_basis_breaks AS
+DROP VIEW IF EXISTS v_basis_breaks;
+CREATE VIEW v_basis_breaks AS
 SELECT a.symbol,
        b.price_date AS prev_date, b.close AS prev_close,
        a.price_date, a.close,
@@ -168,7 +179,8 @@ JOIN prices b ON b.symbol = a.symbol
 WHERE a.close < b.close * {BASIS_BREAK_LO} OR a.close > b.close * {BASIS_BREAK_HI};
 
 -- Registered but not yet matured: what's cooking and roughly when.
-CREATE VIEW IF NOT EXISTS v_pending AS
+DROP VIEW IF EXISTS v_pending;
+CREATE VIEW v_pending AS
 SELECT 'ticker' AS kind, composite_date, symbol AS entity, horizon,
        entry_date FROM ticker_outcomes WHERE matured_at IS NULL
 UNION ALL
@@ -188,7 +200,14 @@ def connect(path: str) -> sqlite3.Connection:
 
 
 def ensure_schema(conn) -> None:
-    conn.executescript(_SCHEMA)
+    """Tables, then the idempotent benchmark-column migration, then views.
+    Views are DROP+CREATEd every run so edits deploy nightly; the ALTER
+    must precede them because views reference signal_outcomes.benchmark."""
+    conn.executescript(_TABLES)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(signal_outcomes)")}
+    if "benchmark" not in cols:
+        conn.execute("ALTER TABLE signal_outcomes ADD COLUMN benchmark TEXT")
+    conn.executescript(_VIEWS)
     conn.commit()
 
 

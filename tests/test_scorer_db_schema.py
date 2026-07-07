@@ -47,3 +47,49 @@ def test_outcome_pk_prevents_dupes(tmp_path):
         conn.execute(ins, row)
     assert conn.execute("INSERT OR IGNORE INTO prices VALUES ('A','2026-07-02',1.0)").rowcount == 1
     assert conn.execute("INSERT OR IGNORE INTO prices VALUES ('A','2026-07-02',1.0)").rowcount == 0
+
+
+_OLD_SIGNAL_OUTCOMES = """
+CREATE TABLE signal_outcomes (
+    composite_snapshot_id INTEGER NOT NULL,
+    composite_date        TEXT NOT NULL,
+    signal_id             TEXT NOT NULL,
+    entity                TEXT NOT NULL,
+    score                 INTEGER NOT NULL,
+    via_crosswalk         INTEGER NOT NULL DEFAULT 0,
+    horizon               INTEGER NOT NULL,
+    entry_date            TEXT NOT NULL,
+    entry_close           REAL NOT NULL,
+    bench_entry_close     REAL,
+    exit_date             TEXT,
+    exit_close            REAL,
+    fwd_return            REAL,
+    bench_fwd_return      REAL,
+    matured_at            TEXT,
+    PRIMARY KEY (composite_snapshot_id, signal_id, entity, horizon)
+)
+"""
+
+
+def test_signal_outcomes_has_benchmark_column(tmp_path):
+    conn = _conn(tmp_path)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(signal_outcomes)")}
+    assert "benchmark" in cols
+
+
+def test_benchmark_column_migrates_old_db(tmp_path):
+    path = str(tmp_path / "old.db")
+    raw = sqlite3.connect(path)
+    raw.execute(_OLD_SIGNAL_OUTCOMES)
+    raw.commit()
+    raw.close()
+    conn = db.connect(path)
+    db.ensure_schema(conn)  # must ALTER the column in before creating views
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(signal_outcomes)")}
+    assert "benchmark" in cols
+    db.ensure_schema(conn)  # idempotent second run
+    views = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='view'")}
+    assert {"v_signal_efficacy", "v_bucket_performance", "v_pending"} <= views
+    # SQLite validates view column refs at QUERY time, not CREATE time —
+    # actually querying proves the migrated column satisfies the views
+    assert conn.execute("SELECT * FROM v_signal_efficacy").fetchall() == []
