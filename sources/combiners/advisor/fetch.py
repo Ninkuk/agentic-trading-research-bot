@@ -47,7 +47,9 @@ def read_flagged(conn) -> list:
 
 def read_flag_signals(conn) -> dict:
     """symbol -> contributing voting evidence as (signal_id, via_crosswalk)
-    pairs (latest snapshot; score-0 rows are informational and excluded).
+    pairs (latest snapshot; score-0 rows carry no direction, so they are
+    not evidence — this also happens to drop informational signals, which
+    always vote 0).
     Pairs, not bare ids: the scorer grades the direct and crosswalked
     splits separately, so citations must not collapse them."""
     out: dict = {}

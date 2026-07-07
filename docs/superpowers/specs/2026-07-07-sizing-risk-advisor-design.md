@@ -28,8 +28,10 @@ scorer-style:
 1. **composite.db** — latest snapshot's `ticker_scores`, `market_regime`,
    `v_flagged`, plus contributing `signal_values.signal_id`s per flagged
    ticker and the snapshot's `captured_at` for provenance.
-2. **portfolio.db** — `v_latest_positions` and `v_latest_account` only
-   (never raw tables, never writes — the portfolio invariant).
+2. **portfolio.db** — `v_latest_positions` and `v_latest_account`, plus
+   the `snapshots` header for that snapshot's `captured_at` (read-only,
+   never writes, never raw position/account rows — the portfolio
+   invariant).
 3. **stocks.db, then etfs.db** — `v_latest` rows (`atr`, `close`,
    `priceDate`) for the union of held and flagged symbols. stocks.db wins
    when a symbol appears in both; etfs.db is what resolves crosswalk proxies

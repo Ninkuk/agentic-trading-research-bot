@@ -81,7 +81,8 @@ re-weighting the catalog is a human decision made by reading `v_signal_efficacy`
 `.claude/skills/journal-sync` MCP skill like `portfolio`): human fills and passes land in scorer.db `decisions` (never pruned) and are compared to
 paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`.
 The `advisor` combiner joins the latest scorecard against real holdings
-(portfolio.db read via `v_latest_*` only) plus stocks/etfs ATR and scorer
+(portfolio.db read-only: `v_latest_*` views plus the `snapshots` header
+timestamp) plus stocks/etfs ATR and scorer
 efficacy: book heat, disagreements, and vol-scaled size caps — decision
 support only, never order generation.
 
