@@ -103,3 +103,17 @@ def test_non_string_symbol_skip_and_count():
     assert len(fills) == 1 and fills[0]["symbol"] == "XLE"
     assert len(passes) == 1 and passes[0]["symbol"] == "TLT"
     assert skipped == 2  # one fill with bad symbol, one pass with bad symbol
+
+
+def test_placed_agent_passthrough():
+    fills, _, skipped = journal.parse_doc(
+        {
+            "fills": [
+                _fill(placed_agent="drip"),
+                _fill(order_ref="r2", placed_agent=7),  # non-string -> None
+                _fill(order_ref="r3"),  # absent -> None
+            ]
+        }
+    )
+    assert skipped == 0
+    assert [f["placed_agent"] for f in fills] == ["drip", None, None]

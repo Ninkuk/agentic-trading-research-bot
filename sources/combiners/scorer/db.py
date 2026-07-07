@@ -150,6 +150,11 @@ CREATE TABLE IF NOT EXISTS regime_outcomes (
 -- opinion's score captured at ingest: weekend reruns can flip sign vs the
 -- window owner's graded rows, alignment must judge the opinion the human
 -- actually saw, and composite.db prunes — so capture now or never.
+-- placed_agent is the broker's order origin (user/agentic/drip/recurring):
+-- automatic fills (journal.AUTOMATIC_AGENTS) are journaled for the record
+-- but never matched to an opinion and never exit-attached — a reinvestment
+-- answering a flag would be coincidence, not judgment. NULL = recorded
+-- before the column existed (treated as non-automatic).
 CREATE TABLE IF NOT EXISTS decisions (
     id                    INTEGER PRIMARY KEY AUTOINCREMENT,
     symbol                TEXT NOT NULL,
@@ -167,6 +172,7 @@ CREATE TABLE IF NOT EXISTS decisions (
     order_ref             TEXT UNIQUE,
     exit_order_ref        TEXT UNIQUE,
     note                  TEXT,
+    placed_agent          TEXT,
     source                TEXT NOT NULL DEFAULT 'mcp'
                           CHECK (source IN ('mcp', 'manual')),
     recorded_at           TEXT NOT NULL
@@ -316,7 +322,7 @@ SELECT 'regime', composite_date, COALESCE(regime, '?'), horizon,
 -- slippage from drift on late fills. realized_return is fills-only.
 DROP VIEW IF EXISTS v_decision_outcomes;
 CREATE VIEW v_decision_outcomes AS
-SELECT d.id AS decision_id, d.symbol, d.side, d.source,
+SELECT d.id AS decision_id, d.symbol, d.side, d.source, d.placed_agent,
        d.composite_snapshot_id, d.composite_date,
        d.opinion_score_sum, d.opinion_total,
        d.fill_date, d.fill_price, d.quantity,
@@ -390,6 +396,8 @@ FROM v_flag_response
 GROUP BY response, horizon;
 
 -- Trades nothing recommended: acted decisions with no matched opinion.
+-- Includes automatic fills (drip/recurring, never matched by design) —
+-- filter on placed_agent to see only deliberate freelance trades.
 DROP VIEW IF EXISTS v_freelance;
 CREATE VIEW v_freelance AS
 SELECT id AS decision_id, symbol, side, fill_date, fill_price, quantity,
@@ -397,7 +405,7 @@ SELECT id AS decision_id, symbol, side, fill_date, fill_price, quantity,
        CASE WHEN exit_fill_price IS NULL THEN NULL
             WHEN side = 'sell' THEN 1 - exit_fill_price / fill_price
             ELSE exit_fill_price / fill_price - 1 END AS realized_return,
-       note, source, recorded_at
+       note, placed_agent, source, recorded_at
 FROM decisions WHERE action = 'acted' AND composite_snapshot_id IS NULL;
 """
 
@@ -410,13 +418,17 @@ def connect(path: str) -> sqlite3.Connection:
 
 
 def ensure_schema(conn) -> None:
-    """Tables, then the idempotent benchmark-column migration, then views.
-    Views are DROP+CREATEd every run so edits deploy nightly; the ALTER
-    must precede them because views reference signal_outcomes.benchmark."""
+    """Tables, then the idempotent column migrations, then views. Views are
+    DROP+CREATEd every run so edits deploy nightly; the ALTERs must precede
+    them because views reference signal_outcomes.benchmark and
+    decisions.placed_agent."""
     conn.executescript(_TABLES)
     cols = {r[1] for r in conn.execute("PRAGMA table_info(signal_outcomes)")}
     if "benchmark" not in cols:
         conn.execute("ALTER TABLE signal_outcomes ADD COLUMN benchmark TEXT")
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(decisions)")}
+    if "placed_agent" not in cols:
+        conn.execute("ALTER TABLE decisions ADD COLUMN placed_agent TEXT")
     conn.executescript(_VIEWS)
     conn.commit()
 

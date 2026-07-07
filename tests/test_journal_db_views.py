@@ -166,3 +166,20 @@ def test_human_filter_aggregates(tmp_path):
     }
     assert rows["acted"] == (1, 0.03)  # bull flag: 0.04 - 0.01
     assert rows["passed_inferred"] == (1, 0.03)
+
+
+def test_placed_agent_exposed_in_views(tmp_path):
+    conn = _seeded(tmp_path)
+    _decide(
+        conn,
+        symbol="NVDA",
+        composite_snapshot_id=None,
+        composite_date=None,
+        opinion_score_sum=None,
+        opinion_total=None,
+        placed_agent="drip",
+    )
+    assert conn.execute("SELECT placed_agent FROM v_freelance").fetchone() == ("drip",)
+    assert conn.execute(
+        "SELECT placed_agent FROM v_decision_outcomes WHERE symbol = 'NVDA'"
+    ).fetchone() == ("drip",)

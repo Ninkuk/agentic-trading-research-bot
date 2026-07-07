@@ -49,10 +49,11 @@ explicit override; `v_decision_outcomes` (slippage, realized-vs-paper),
 `v_human_filter` (acted vs passed). Shipped 2026-07-06; slot installed and
 first interactive sync run 2026-07-07 — field mappings verified against
 live orders (`average_price`, not `price`; execution timestamp). Policy
-set that run: `placed_agent` drip/recurring fills are excluded — automatic
-reinvestments are nobody's decision. Day-one caveat: fills predating the
-composite's first opinion correctly record as freelance, so the earliest
-rows carry no paper baseline.)*
+set that run: `placed_agent` drip/recurring fills are journaled but
+labeled — never matched to an opinion, never exit-attached (nobody's
+decision; visible in `v_freelance` via the `placed_agent` column).
+Day-one caveat: fills predating the composite's first opinion correctly
+record as freelance, so the earliest rows carry no paper baseline.)*
 
 ---
 

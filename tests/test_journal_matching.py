@@ -200,3 +200,32 @@ def test_manual_fill_source(tmp_path):
     conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
     journal.ingest(conn, [_fill(order_ref=None)], [], NOW)
     assert conn.execute("SELECT source FROM decisions").fetchone()[0] == "manual"
+
+
+def test_automatic_fill_recorded_but_never_matched(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    # an XLE opinion is available in-window, but a DRIP fill must not claim it
+    counts = journal.ingest(conn, [_fill(placed_agent="drip")], [], NOW)
+    assert counts["matched"] == 0 and counts["freelance"] == 1
+    row = conn.execute("SELECT composite_snapshot_id, placed_agent FROM decisions").fetchone()
+    assert row == (None, "drip")
+
+
+def test_sell_never_exits_automatic_buy(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _fill(order_ref="d1", placed_agent="drip"),  # oldest open buy, but automatic
+        _fill(order_ref="b1", filled_at="2026-07-08T14:00:00+00:00", fill_date="2026-07-08"),
+        _fill(
+            order_ref="s1",
+            side="sell",
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+    ]
+    counts = journal.ingest(conn, fills, [], NOW)
+    assert counts["exits_attached"] == 1
+    exited = conn.execute(
+        "SELECT order_ref FROM decisions WHERE exit_fill_date IS NOT NULL"
+    ).fetchall()
+    assert exited == [("b1",)]  # FIFO skipped the older drip lot

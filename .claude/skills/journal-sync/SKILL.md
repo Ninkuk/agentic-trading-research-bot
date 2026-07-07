@@ -25,18 +25,19 @@ against scorer.db directly.
    - `get_equity_orders` scoped to it: **filled** orders updated since the
      bound. Never paste raw MCP payloads into the conversation (they can
      carry account identifiers).
-   - **Exclude automatic fills**: drop orders whose `placed_agent` is
-     `drip` or `recurring` — dividend reinvestments and auto-invests are
-     nobody's decision, and the journal measures decision quality (policy
-     set on the first interactive run, 2026-07-07). Keep `user` and
-     `agentic` fills.
+   - **Label every fill**: pass the order's `placed_agent` through on each
+     fill (`user`/`agentic`/`drip`/`recurring`). Automatic fills
+     (drip/recurring) are journaled for the record but the dispatcher
+     never matches them to an opinion and never attaches them as exits —
+     they land in `v_freelance` labeled as such. (Policy revised
+     2026-07-07: label, don't exclude.)
 3. Build ONE JSON document in the scratchpad:
 
    ```json
    {"as_of": "<UTC now isoformat>",
     "fills": [{"symbol": "XLE", "side": "buy", "price": 94.30,
                "quantity": 2, "filled_at": "<order executed-at UTC ISO>",
-               "order_ref": "<order id>"}],
+               "order_ref": "<order id>", "placed_agent": "agentic"}],
     "passes": [{"symbol": "GLD", "note": "too crowded"}]}
    ```
 

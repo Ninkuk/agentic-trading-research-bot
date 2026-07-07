@@ -26,6 +26,13 @@ from sources.combiners.scorer import db, fetch
 # with the v_flag_response view.)
 MATCH_WINDOW_DAYS = 5
 
+# Broker order origins that are nobody's decision. Automatic fills are
+# journaled (labeled via decisions.placed_agent) but never matched to an
+# opinion and never attach as a decision's exit — a dividend reinvestment
+# answering a flag would be coincidence, not judgment, and a human sell
+# exiting a $5 DRIP lot would grade the wrong entry.
+AUTOMATIC_AGENTS = ("drip", "recurring")
+
 
 def _phx_date(dt) -> str:
     """Phoenix-local date (UTC-7 fixed, no DST) of an aware datetime — the
@@ -76,6 +83,7 @@ def parse_doc(doc) -> tuple:
         quantity = f.get("quantity")
         if isinstance(quantity, bool) or not isinstance(quantity, (int, float)):
             quantity = None
+        agent = f.get("placed_agent")
         fills.append(
             dict(
                 symbol=symbol,
@@ -86,6 +94,7 @@ def parse_doc(doc) -> tuple:
                 fill_date=_phx_date(fill_dt),
                 order_ref=f.get("order_ref"),
                 note=f.get("note"),
+                placed_agent=agent if isinstance(agent, str) else None,
             )
         )
     for p in doc.get("passes") or []:
@@ -171,12 +180,14 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
             if _seen(conn, f["order_ref"]):
                 dupes += 1
                 continue
-            if f["side"] == "sell":
+            automatic = f.get("placed_agent") in AUTOMATIC_AGENTS
+            if f["side"] == "sell" and not automatic:
                 open_buy = conn.execute(
                     "SELECT id FROM decisions WHERE symbol = ? AND action = 'acted'"
                     " AND side = 'buy' AND exit_fill_date IS NULL"
+                    " AND (placed_agent IS NULL OR placed_agent NOT IN (?, ?))"
                     " AND fill_date <= ? ORDER BY fill_date, id LIMIT 1",
-                    (f["symbol"], f["fill_date"]),
+                    (f["symbol"], *AUTOMATIC_AGENTS, f["fill_date"]),
                 ).fetchone()
                 if open_buy:
                     conn.execute(
@@ -186,13 +197,13 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
                     )
                     exits += 1
                     continue
-            m = match_opinion(conn, f["symbol"], f["fill_date"])
+            m = None if automatic else match_opinion(conn, f["symbol"], f["fill_date"])
             conn.execute(
                 "INSERT INTO decisions (symbol, action, side,"
                 " composite_snapshot_id, composite_date, opinion_score_sum,"
                 " opinion_total, fill_date, fill_price, quantity, order_ref,"
-                " note, source, recorded_at)"
-                " VALUES (?, 'acted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " note, placed_agent, source, recorded_at)"
+                " VALUES (?, 'acted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     f["symbol"],
                     f["side"],
@@ -205,6 +216,7 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
                     f["quantity"],
                     f["order_ref"],
                     f["note"],
+                    f.get("placed_agent"),
                     "mcp" if f["order_ref"] else "manual",
                     now_iso,
                 ),

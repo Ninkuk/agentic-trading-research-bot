@@ -133,3 +133,36 @@ def test_prune_never_touches_journal(tmp_path):
     db.prune(conn, keep_days=1, now_iso=NOW)
     assert conn.execute("SELECT COUNT(*) FROM decisions").fetchone()[0] == 1
     assert conn.execute("SELECT COUNT(*) FROM journal_runs").fetchone()[0] == 1
+
+
+def test_placed_agent_migration(tmp_path):
+    """A db created before the placed_agent column (the original shipped
+    shape) gains it via ensure_schema's idempotent ALTER."""
+    conn = db.connect(str(tmp_path / "old.db"))
+    conn.execute(
+        """CREATE TABLE decisions (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol                TEXT NOT NULL,
+            action                TEXT NOT NULL CHECK (action IN ('acted', 'passed')),
+            side                  TEXT CHECK (side IN ('buy', 'sell')),
+            composite_snapshot_id INTEGER,
+            composite_date        TEXT,
+            opinion_score_sum     INTEGER,
+            opinion_total         INTEGER,
+            fill_date             TEXT,
+            fill_price            REAL,
+            quantity              REAL,
+            exit_fill_date        TEXT,
+            exit_fill_price       REAL,
+            order_ref             TEXT UNIQUE,
+            exit_order_ref        TEXT UNIQUE,
+            note                  TEXT,
+            source                TEXT NOT NULL DEFAULT 'mcp'
+                                  CHECK (source IN ('mcp', 'manual')),
+            recorded_at           TEXT NOT NULL
+        )"""
+    )
+    db.ensure_schema(conn)  # must ALTER, then create views referencing it
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(decisions)")}
+    assert "placed_agent" in cols
+    db.ensure_schema(conn)  # and stay idempotent
