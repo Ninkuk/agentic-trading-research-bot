@@ -437,6 +437,12 @@ def registered_ids(conn):
 # so any window containing a BASIS_BREAK_* consecutive-date move — on the
 # graded leg or the benchmark leg — stays pending forever. v_basis_breaks
 # is the audit trail for what was held and why.
+# signal_outcomes rows grade against their own stored benchmark column
+# ({bench} slot): the benchmark-leg break scan self-disables when
+# benchmark IS NULL (a.symbol = NULL matches nothing), so unbenchmarked
+# rows mature with bench_fwd_return NULL, while a break in a matched
+# benchmark (e.g. XLE splits) holds its dependent rows pending — the
+# same refuse-to-grade principle as SPY today.
 
 # One break scan, embedded per leg: TRUE when any consecutive-date pair
 # whose later date falls in (entry_date, x.xdate] moves outside the
@@ -462,7 +468,7 @@ UPDATE {table} SET
                / entry_close - 1,
   bench_fwd_return = CASE WHEN bench_entry_close IS NOT NULL THEN
       (SELECT close FROM prices
-       WHERE symbol = :bench AND price_date = x.xdate)
+       WHERE symbol = {bench} AND price_date = x.xdate)
       / bench_entry_close - 1 END,
   matured_at = :now
 FROM (SELECT t.rowid AS rid,
@@ -481,7 +487,7 @@ WHERE {table}.rowid = x.rid AND x.xdate IS NOT NULL
     + _BREAK_SCAN.format(who="{table}.{sym}", t="{table}")
     + """
   AND NOT """
-    + _BREAK_SCAN.format(who=":bench", t="{table}")
+    + _BREAK_SCAN.format(who="{bench}", t="{table}")
     + "\n"
 )
 
@@ -521,11 +527,11 @@ def mature(conn, now_iso, benchmark="SPY") -> int:
         "lo": BASIS_BREAK_LO,
         "hi": BASIS_BREAK_HI,
     }
-    for table, sym in (
-        ("ticker_outcomes", "symbol"),
-        ("signal_outcomes", "entity"),
+    for table, sym, bench in (
+        ("ticker_outcomes", "symbol", ":bench"),
+        ("signal_outcomes", "entity", "signal_outcomes.benchmark"),
     ):
-        cur = conn.execute(_MATURE_SYMBOL.format(table=table, sym=sym), params)
+        cur = conn.execute(_MATURE_SYMBOL.format(table=table, sym=sym, bench=bench), params)
         n += cur.rowcount
     n += conn.execute(_MATURE_REGIME, params).rowcount
     conn.commit()

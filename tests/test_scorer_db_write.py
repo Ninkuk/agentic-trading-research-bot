@@ -414,3 +414,79 @@ def test_signal_benchmark_resolution(tmp_path):
     assert entry["XLE"] is None
     assert entry["NEWX"] is None
     assert entry["AAPL"] == 505.0  # SPY
+
+
+def _register_signal(conn, entity, xw_bench, horizons=(2,)):
+    """Register one bullish crosswalked signal opinion on DAYS[4] (2026-07-01)."""
+    return db.register_snapshot(
+        conn,
+        1,
+        "2026-07-01",
+        [],
+        [dict(signal_id="cftc_energy", entity=entity, score=2, via_crosswalk=1)],
+        "risk_on",
+        horizons,
+        "SPY",
+        7,
+        NOW,
+        crosswalk_benchmark=xw_bench,
+    )
+
+
+def test_crosswalk_row_matures_vs_own_benchmark(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "XOM", DAYS, start=100.0, step=1.0)  # entry 105 -> exit 107
+    _ledger(conn, "XLE", DAYS, start=50.0, step=5.0)  # entry 75 -> exit 85
+    _ledger(conn, "SPY", DAYS, start=500.0, step=0.0)  # flat: SPY excess would be ~0
+    _register_signal(conn, "XOM", {"XOM": "XLE"})
+    db.mature(conn, NOW)
+    row = conn.execute(
+        "SELECT fwd_return, bench_fwd_return, matured_at FROM signal_outcomes"
+    ).fetchone()
+    assert row[2] is not None
+    assert abs(row[0] - (107.0 / 105.0 - 1)) < 1e-9
+    # graded against XLE's move, NOT SPY's flat 0.0
+    assert abs(row[1] - (85.0 / 75.0 - 1)) < 1e-9
+
+
+def test_unbenchmarked_row_matures_with_null_bench(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "XLE", DAYS, start=50.0)
+    _ledger(conn, "SPY", DAYS, start=500.0)
+    _register_signal(conn, "XLE", {"XLE": None})
+    db.mature(conn, NOW)
+    row = conn.execute(
+        "SELECT fwd_return, bench_fwd_return, matured_at FROM signal_outcomes"
+    ).fetchone()
+    assert row[2] is not None and row[0] is not None
+    assert row[1] is None
+
+
+def test_matched_benchmark_split_blocks_row(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "XOM", DAYS, start=100.0)
+    # XLE 2:1 split between DAYS[2] and DAYS[3] -- inside the (2,) window
+    closes = [100.0, 101.0, 99.5, 50.2, 50.0, 50.5, 49.8, 50.1]
+    db.insert_prices(conn, list(zip(["XLE"] * 8, DAYS, closes, strict=True)))
+    _ledger(conn, "SPY", DAYS, start=500.0)
+    db.register_snapshot(
+        conn,
+        1,
+        DAYS[0],
+        [],
+        [
+            dict(signal_id="cftc_energy", entity="XOM", score=2, via_crosswalk=1),
+            dict(signal_id="stocks_rsi", entity="XOM", score=1, via_crosswalk=0),
+        ],
+        "risk_on",
+        (2,),
+        "SPY",
+        7,
+        NOW,
+        crosswalk_benchmark={"XOM": "XLE"},
+    )
+    db.mature(conn, NOW)
+    rows = dict(conn.execute("SELECT signal_id, matured_at IS NOT NULL FROM signal_outcomes"))
+    # the XLE-benchmarked row is held pending by the benchmark-leg break;
+    # the SPY-benchmarked row for the same entity matures fine
+    assert rows == {"cftc_energy": 0, "stocks_rsi": 1}
