@@ -12,9 +12,13 @@ composite.db the night it forms; once matched, the decision's
 rows and never needs composite.db again. Decisions are never pruned — they
 are the other half of the experiment."""
 
+import argparse
+import json
+import os
+import sys
 from datetime import UTC, datetime, timedelta
 
-from sources.combiners.scorer import db
+from sources.combiners.scorer import db, fetch
 
 # Calendar days an opinion stays matchable to a later fill: covers the
 # morning-after trade plus a long weekend. Two snapshots in the window
@@ -237,3 +241,87 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
             duplicates_skipped=dupes,
             skipped=skipped,
         )
+
+
+def run(db_path, doc, composite_db=None, now_iso=None) -> dict:
+    """Parse + ingest one document. composite.db is attached only when
+    something needs matching; a missing composite.db is then a HARD error —
+    silently freelancing every fill would corrupt the filter-value
+    evidence. An empty doc still writes a run header (the "ran and found
+    nothing" signal for the schedule's freshness check)."""
+    now_iso = now_iso or datetime.now(UTC).isoformat()
+    fills, passes, skipped = parse_doc(doc)
+    conn = db.connect(db_path)
+    try:
+        db.ensure_schema(conn)
+        need_match = bool(fills or passes)
+        if need_match:
+            if not composite_db:
+                raise FileNotFoundError("composite db path required for matching")
+            fetch.attach_ro(conn, composite_db)
+        try:
+            return ingest(conn, fills, passes, now_iso, skipped=skipped)
+        finally:
+            if need_match:
+                fetch.detach(conn)
+    finally:
+        conn.close()
+
+
+def main(argv=None) -> None:
+    p = argparse.ArgumentParser(
+        prog="journal",
+        description="Record human decisions (fills/passes) against composite"
+        " opinions (reads composite.db read-only for matching)",
+    )
+    p.add_argument("--db", default="scorer.db")
+    p.add_argument(
+        "--composite-db", default=None, help="composite.db path (default: alongside --db)"
+    )
+    p.add_argument("--input", help="path to the JSON document, or - for stdin")
+    p.add_argument(
+        "--last-run", action="store_true", help="print the latest run timestamp and exit"
+    )
+    a = p.parse_args(argv)
+
+    if a.last_run:
+        conn = db.connect(a.db)
+        try:
+            db.ensure_schema(conn)
+            row = conn.execute("SELECT MAX(ran_at) FROM journal_runs").fetchone()
+        finally:
+            conn.close()
+        print(row[0] or "never")
+        return
+    if not a.input:
+        p.error("--input is required unless --last-run")
+
+    try:
+        if a.input == "-":
+            doc = json.load(sys.stdin)
+        else:
+            with open(a.input, encoding="utf-8") as f:
+                doc = json.load(f)
+    except Exception as e:
+        print(f"error: cannot read input: {type(e).__name__}", file=sys.stderr)
+        raise SystemExit(1) from None
+
+    composite_path = a.composite_db or os.path.join(os.path.dirname(a.db) or ".", "composite.db")
+    try:
+        c = run(a.db, doc, composite_db=composite_path)
+    except FileNotFoundError:
+        print("error: composite db not found (fills need matching)", file=sys.stderr)
+        raise SystemExit(1) from None
+    except ValueError as e:
+        print(f"error: bad document: {type(e).__name__}", file=sys.stderr)
+        raise SystemExit(1) from None
+    print(
+        f"journal run {c['run_id']}: {c['matched']} matched,"
+        f" {c['freelance']} freelance, {c['exits_attached']} exits,"
+        f" {c['passes_recorded']} passes, {c['duplicates_skipped']} duplicates,"
+        f" {c['skipped']} skipped, into {a.db}"
+    )
+
+
+if __name__ == "__main__":
+    main()

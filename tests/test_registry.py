@@ -158,3 +158,9 @@ def test_dispatch_lists_scorer():
     import registry
 
     assert "scorer" in registry.REGISTRY
+
+
+def test_journal_registered():
+    from registry import REGISTRY
+
+    assert "journal" in REGISTRY
