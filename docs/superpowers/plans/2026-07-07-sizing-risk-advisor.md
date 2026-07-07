@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A fourth combiner (`advisor`) that joins the composite scorecard against real holdings: whole-book ATR heat, holdings the composite disagrees with, and vol-scaled size caps for flagged tickers — written to `data/advisor.db`.
+**Goal:** A third combiner (`advisor`) that joins the composite scorecard against real holdings: whole-book ATR heat, holdings the composite disagrees with, and vol-scaled size caps for flagged tickers — written to `data/advisor.db`.
 
 **Architecture:** Standard four-file combiner package (`sources/combiners/advisor/`) modeled on `sources/combiners/scorer/`. `fetch.py` has no network — it ATTACHes composite.db / portfolio.db / stocks.db / etfs.db / scorer.db read-only, one at a time. Heat and cap math are pure Python builders in `db.py`; storage is snapshot-scoped with `v_latest_*` views. Spec: `docs/superpowers/specs/2026-07-07-sizing-risk-advisor-design.md`.
 
@@ -18,6 +18,7 @@
 - **Never write SQL against portfolio.db** — read its `v_latest_*` views only. Combiners never write back into any DB they read.
 - **Read-only attaches** — `ATTACH DATABASE 'file:<path>?mode=ro'` on a connection opened with `uri=True`, one source at a time.
 - **Every commit must pass the pre-commit hook** (`ruff check`, `ruff format --check`, `mypy`, `pytest` — runs automatically on `git commit`).
+- **Run `uv run ruff format` (in place) after writing code, before every commit** — the plan's code blocks are semantically exact but not always formatter-canonical; the reformat is mechanical and required to pass the hook's `ruff format --check`.
 - **Commit flags** — use `--no-gpg-sign` (signing hangs non-interactive sessions). Do NOT add a co-author line.
 - Match house code style: minimal type annotations (annotate like `def prune(conn, keep_days: int, now_iso: str) -> int`), module docstrings stating invariants, ≤ 99-char lines.
 
@@ -49,7 +50,7 @@ def test_risk_budget_default():
 
 
 def test_ticker_group_covers_every_crosswalk_ticker():
-    for group, syms in CROSSWALK.items():
+    for _group, syms in CROSSWALK.items():  # _group: ruff B007 (unused)
         for sym in syms:
             assert catalog.TICKER_GROUP[sym] in CROSSWALK
 
@@ -219,7 +220,8 @@ CREATE TABLE IF NOT EXISTS snapshots (
     buying_power          REAL,
     portfolio_captured_at TEXT,
     composite_captured_at TEXT,
-    regime                TEXT
+    regime                TEXT,
+    sources_failed        INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS position_heat (
@@ -249,7 +251,7 @@ CREATE TABLE IF NOT EXISTS size_caps (
     score_sum            INTEGER,
     atr                  REAL,
     price                REAL,
-    cap_shares           INTEGER,
+    cap_shares           REAL,
     cap_dollars          REAL,
     group_name           TEXT,
     group_heat_pct       REAL,
@@ -275,9 +277,10 @@ JOIN v_latest_snapshot l ON p.snapshot_id = l.id;
 -- One row of book totals. heat_coverage = share of book market value with
 -- a usable ATR, so missing metrics can never silently understate heat.
 -- LEFT JOIN so an empty book still yields a row (0 positions, NULL heat).
+-- sources_failed rides along: 0 positions is only believable when 0 failed.
 DROP VIEW IF EXISTS v_book_heat;
 CREATE VIEW v_book_heat AS
-SELECT s.id AS snapshot_id, s.captured_at, s.equity,
+SELECT s.id AS snapshot_id, s.captured_at, s.equity, s.sources_failed,
        COUNT(p.symbol) AS positions,
        SUM(p.heat_dollars) AS heat_dollars,
        SUM(p.heat_pct) AS heat_pct,
@@ -286,7 +289,7 @@ SELECT s.id AS snapshot_id, s.captured_at, s.equity,
             * 1.0 / SUM(p.market_value) END AS heat_coverage
 FROM snapshots s LEFT JOIN position_heat p ON p.snapshot_id = s.id
 WHERE s.id IN (SELECT id FROM v_latest_snapshot)
-GROUP BY s.id, s.captured_at, s.equity;
+GROUP BY s.id, s.captured_at, s.equity, s.sources_failed;
 
 -- CROSSWALK groups collapsed to one bet; ungrouped symbols are their own
 -- single-member bet (exposure adds within a group).
@@ -373,9 +376,9 @@ git commit --no-gpg-sign -m "feat(advisor): advisor.db schema, latest-scoped vie
 - Consumes: Task 2's schema; `catalog.TICKER_GROUP` / `catalog.RISK_BUDGET` shapes.
 - Produces (Task 6 calls all of these):
   - `write_snapshot(conn, now_iso: str) -> int`
-  - `finish_snapshot(conn, sid, account, composite) -> None` — `account` is `{"equity","cash","buying_power","captured_at"}` or None; `composite` is `{"snapshot_id","captured_at","regime"}` or None.
+  - `finish_snapshot(conn, sid, account, composite, sources_failed=0) -> None` — `account` is `{"equity","cash","buying_power","captured_at"}` or None; `composite` is `{"snapshot_id","captured_at","regime"}` or None; `sources_failed` is the count of upstream DBs that could not be read this run.
   - `build_position_heat(positions, scorecard, metrics, equity, today, ticker_group, atr_max_age_days) -> list[dict]` — `positions` = `[{"symbol","quantity","market_value"}]`; `scorecard` = `{symbol: {"score_sum","bullish","bearish","total"}}`; `metrics` = `{symbol: {"atr","close","price_date"}}`.
-  - `build_size_caps(flagged, scorecard, metrics, heat_rows, equity, buying_power, risk_budget, ticker_group, flag_signals, reliable_ids) -> list[dict]` — `flagged` = `[symbol]`; `heat_rows` = output of `build_position_heat`; `flag_signals` = `{symbol: set(signal_id)}`; `reliable_ids` = `set(signal_id)`.
+  - `build_size_caps(flagged, scorecard, metrics, heat_rows, equity, buying_power, risk_budget, ticker_group, flag_signals, reliable_ids) -> list[dict]` — `flagged` = `[symbol]`; `heat_rows` = output of `build_position_heat`; `flag_signals` = `{symbol: set((signal_id, via_crosswalk))}`; `reliable_ids` = `set((signal_id, via_crosswalk))` — pair keys throughout, never bare signal ids.
   - `write_position_heat(conn, sid, rows) -> int`, `write_size_caps(conn, sid, rows) -> int`.
 
 - [ ] **Step 1: Write the failing test**
@@ -464,16 +467,58 @@ def test_size_cap_inverts_risk_budget():
         buying_power=1000.0,
         risk_budget=0.01,
         ticker_group=GROUPS,
-        flag_signals={"NVDA": {"sig_a", "sig_b", "sig_c"}},
-        reliable_ids={"sig_a"},
+        flag_signals={"NVDA": {("sig_a", 0), ("sig_b", 0), ("sig_c", 0)}},
+        reliable_ids={("sig_a", 0)},
     )
     (c,) = caps
-    assert c["cap_shares"] == 25  # floor(0.01*10000 / 4.0)
+    assert c["cap_shares"] == 25.0  # 0.01*10000 / 4.0 (fractional, no floor)
     assert c["cap_dollars"] == 2500.0
     assert c["direction"] == "bullish"
     assert c["exceeds_buying_power"] == 1  # 2500 > 1000
     assert c["already_held"] == 0
     assert (c["reliable_signals"], c["total_signals"]) == (1, 3)
+
+
+def test_size_cap_is_fractional_on_small_accounts():
+    # $200 account: budget $2, ATR 4.0 -> 0.5 shares. Flooring to int would
+    # zero every cap the advisor ever emits at this equity.
+    caps = db.build_size_caps(
+        ["NVDA"],
+        {"NVDA": _score(4)},
+        {"NVDA": _metric(atr=4.0, close=100.0)},
+        heat_rows=[],
+        equity=200.0,
+        buying_power=500.0,
+        risk_budget=0.01,
+        ticker_group=GROUPS,
+        flag_signals={},
+        reliable_ids=set(),
+    )
+    (c,) = caps
+    assert c["cap_shares"] == 0.5
+    assert c["cap_dollars"] == 50.0
+
+
+def test_bearish_flag_never_gets_a_buy_cap():
+    # Long-only book: a bearish flag's row IS the advice; caps stay NULL
+    # even with ATR and equity known — a buy size on an avoid signal is
+    # wrong advice.
+    caps = db.build_size_caps(
+        ["SHORTY"],
+        {"SHORTY": _score(-4)},
+        {"SHORTY": _metric(atr=2.0, close=50.0)},
+        heat_rows=[],
+        equity=10000.0,
+        buying_power=1000.0,
+        risk_budget=0.01,
+        ticker_group=GROUPS,
+        flag_signals={},
+        reliable_ids=set(),
+    )
+    (c,) = caps
+    assert c["direction"] == "bearish"
+    assert c["cap_shares"] is None and c["cap_dollars"] is None
+    assert c["exceeds_buying_power"] == 0
 
 
 def test_size_cap_shrinks_by_existing_group_heat():
@@ -499,16 +544,17 @@ def test_size_cap_shrinks_by_existing_group_heat():
         reliable_ids=set(),
     )
     (c,) = caps
-    # budget 100 - existing energy heat 20 (XOM 5x4) = 80 -> floor(80/2) = 40
-    assert c["cap_shares"] == 40
+    # budget 100 - existing energy heat 20 (XOM 5x4) = 80 -> 80/2 = 40.0
+    assert c["cap_shares"] == 40.0
     assert c["group_name"] == "energy"
     assert c["group_heat_pct"] == 0.002
 
 
 def test_size_cap_missing_atr_is_null_row():
+    # Bullish so this exercises the missing-ATR path, not the bearish one.
     caps = db.build_size_caps(
         ["MYSTERY"],
-        {"MYSTERY": _score(-4)},
+        {"MYSTERY": _score(4)},
         {},
         heat_rows=[],
         equity=10000.0,
@@ -520,7 +566,7 @@ def test_size_cap_missing_atr_is_null_row():
     )
     (c,) = caps
     assert c["cap_shares"] is None and c["cap_dollars"] is None
-    assert c["direction"] == "bearish"
+    assert c["direction"] == "bullish"
     assert c["exceeds_buying_power"] == 0
 
 
@@ -577,12 +623,11 @@ def test_finish_snapshot_tolerates_missing_upstream(tmp_path):
     conn = db.connect(str(tmp_path / "advisor.db"))
     db.ensure_schema(conn)
     sid = db.write_snapshot(conn, "2026-07-07T21:12:00+00:00")
-    db.finish_snapshot(conn, sid, None, None)  # no portfolio.db, no composite.db
+    db.finish_snapshot(conn, sid, None, None, sources_failed=3)
     conn.commit()
-    assert conn.execute("SELECT equity, regime FROM snapshots WHERE id=?", (sid,)).fetchone() == (
-        None,
-        None,
-    )
+    assert conn.execute(
+        "SELECT equity, regime, sources_failed FROM snapshots WHERE id=?", (sid,)
+    ).fetchone() == (None, None, 3)
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -607,13 +652,16 @@ def write_snapshot(conn, now_iso: str) -> int:
     return cur.lastrowid
 
 
-def finish_snapshot(conn, sid, account, composite) -> None:
+def finish_snapshot(conn, sid, account, composite, sources_failed=0) -> None:
     """Freeze account scalars + upstream provenance into the header (every
-    derived number depends on them). Either upstream may be None."""
+    derived number depends on them). Either upstream may be None.
+    sources_failed distinguishes a genuinely empty book from a night where
+    a source read failed and left the tables empty."""
     a, c = account or {}, composite or {}
     conn.execute(
         "UPDATE snapshots SET equity=?, cash=?, buying_power=?,"
-        " portfolio_captured_at=?, composite_captured_at=?, regime=? WHERE id=?",
+        " portfolio_captured_at=?, composite_captured_at=?, regime=?,"
+        " sources_failed=? WHERE id=?",
         (
             a.get("equity"),
             a.get("cash"),
@@ -621,6 +669,7 @@ def finish_snapshot(conn, sid, account, composite) -> None:
             a.get("captured_at"),
             c.get("captured_at"),
             c.get("regime"),
+            sources_failed,
             sid,
         ),
     )
@@ -687,8 +736,16 @@ def build_size_caps(
     """One row per flagged ticker. The cap inverts the risk budget and
     shrinks by heat already carried through the same crosswalk group (a
     group is one bet): allowed = max(0, budget*equity - group_heat), then
-    cap_shares = floor(allowed / ATR). exceeds_buying_power and the
-    reliable-signal counts are annotations, never gates."""
+    cap_shares = allowed / ATR — FRACTIONAL, matching Robinhood fractional
+    sizing (flooring to whole shares would zero every cap on a small
+    account). Bearish flags carry NULL caps: the book is long-only, so the
+    row itself (direction, score, group) is the advice, never a buy size.
+    Same-group sibling caps each see the same remaining budget —
+    alternatives, not a shopping list. exceeds_buying_power and the
+    reliable-evidence counts are annotations, never gates (reliable = the
+    scorer's n_bench >= 30 sample floor, not proof a signal works);
+    flag_signals/reliable_ids intersect on (signal_id, via_crosswalk)
+    pairs so crosswalk-only reliability never cites as direct evidence."""
     group_heat: dict = {}
     held = set()
     for r in heat_rows:
@@ -702,18 +759,19 @@ def build_size_caps(
         m = metrics.get(sym, {})
         atr, close = m.get("atr"), m.get("close")
         existing = group_heat.get(ticker_group.get(sym) or sym, 0.0)
+        score_sum = sc.get("score_sum")
+        direction = "bullish" if (score_sum or 0) > 0 else "bearish"
         cap_shares = cap_dollars = None
-        if atr and equity:
+        if direction == "bullish" and atr and equity:
             allowed = max(0.0, risk_budget * equity - existing)
-            cap_shares = int(allowed / atr)
+            cap_shares = allowed / atr
             if close is not None:
                 cap_dollars = cap_shares * close
         sigs = flag_signals.get(sym, set())
-        score_sum = sc.get("score_sum")
         rows.append(
             {
                 "symbol": sym,
-                "direction": "bullish" if (score_sum or 0) > 0 else "bearish",
+                "direction": direction,
                 "score_sum": score_sum,
                 "atr": atr,
                 "price": close,
@@ -952,11 +1010,11 @@ git commit --no-gpg-sign -m "test(advisor): view contracts — book heat, group 
   - `read_composite_header(conn) -> dict | None` — `{"snapshot_id", "captured_at", "regime"}`
   - `read_scorecard(conn) -> dict` — `{symbol: {"score_sum","bullish","bearish","total"}}`
   - `read_flagged(conn) -> list` — symbols, sorted
-  - `read_flag_signals(conn) -> dict` — `{symbol: set(signal_id)}` (voting ticker-grain signals)
+  - `read_flag_signals(conn) -> dict` — `{symbol: set((signal_id, via_crosswalk))}` (voting ticker-grain evidence pairs)
   - `read_account(conn) -> dict | None` — `{"equity","cash","buying_power","captured_at"}`
   - `read_positions(conn) -> list` — `[{"symbol","quantity","market_value"}]`
   - `read_metrics(conn, symbols) -> dict` — `{symbol: {"atr","close","price_date"}}`
-  - `read_reliable_signals(conn) -> set` — signal ids with any `reliable = 1` efficacy row
+  - `read_reliable_signals(conn) -> set` — `(signal_id, via_crosswalk)` pairs with any `reliable = 1` efficacy row
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1078,7 +1136,7 @@ def test_composite_readers_resolve_views_in_attached_schema(tmp_path):
     assert scorecard["NVDA"]["score_sum"] == 4 and scorecard["NVDA"]["total"] == 3
     assert scorecard["AAPL"]["score_sum"] == -1
     assert fetch.read_flagged(conn) == ["NVDA"]
-    assert fetch.read_flag_signals(conn)["NVDA"] == {"sig_a", "sig_b", "sig_c"}
+    assert fetch.read_flag_signals(conn)["NVDA"] == {("sig_a", 0), ("sig_b", 0), ("sig_c", 0)}
     fetch.detach(conn)
 
 
@@ -1112,7 +1170,7 @@ def test_read_reliable_signals(tmp_path):
     _mini_scorer(tmp_path, reliable_signal="sig_a")
     conn = _advisor_conn(tmp_path)
     fetch.attach_ro(conn, str(tmp_path / "scorer.db"))
-    assert fetch.read_reliable_signals(conn) == {"sig_a"}
+    assert fetch.read_reliable_signals(conn) == {("sig_a", 0)}
     fetch.detach(conn)
 
 
@@ -1183,13 +1241,16 @@ def read_flagged(conn) -> list:
 
 
 def read_flag_signals(conn) -> dict:
-    """symbol -> contributing voting signal ids (latest snapshot; score 0
-    rows are informational and excluded)."""
+    """symbol -> contributing voting evidence as (signal_id, via_crosswalk)
+    pairs (latest snapshot; score-0 rows are informational and excluded).
+    Pairs, not bare ids: the scorer grades the direct and crosswalked
+    splits separately, so citations must not collapse them."""
     out: dict = {}
-    for sym, sig in conn.execute(
-        "SELECT entity, signal_id FROM src.v_signal_detail WHERE grain = 'ticker' AND score != 0"
+    for sym, sig, via in conn.execute(
+        "SELECT entity, signal_id, via_crosswalk FROM src.v_signal_detail"
+        " WHERE grain = 'ticker' AND score != 0"
     ):
-        out.setdefault(sym, set()).add(sig)
+        out.setdefault(sym, set()).add((sig, via))
     return out
 
 
@@ -1232,12 +1293,14 @@ def read_metrics(conn, symbols) -> dict:
 
 
 def read_reliable_signals(conn) -> set:
-    """Signal ids with at least one reliable efficacy row (any horizon,
-    either crosswalk split) — annotation input for size_caps."""
+    """(signal_id, via_crosswalk) pairs with a reliable efficacy row at any
+    horizon — annotation input for size_caps. reliable is the scorer's
+    sample-size floor (n_bench >= 30), not proof the signal works."""
     return {
-        r[0]
+        (r[0], r[1])
         for r in conn.execute(
-            "SELECT DISTINCT signal_id FROM src.v_signal_efficacy WHERE reliable = 1"
+            "SELECT DISTINCT signal_id, via_crosswalk FROM src.v_signal_efficacy"
+            " WHERE reliable = 1"
         )
     }
 ```
@@ -1385,10 +1448,16 @@ def test_full_cycle(tmp_path):
     conn = sqlite3.connect(out)
     # header provenance frozen in
     assert conn.execute(
-        "SELECT equity, buying_power, portfolio_captured_at, composite_captured_at"
-        " FROM snapshots WHERE id = ?",
+        "SELECT equity, buying_power, portfolio_captured_at, composite_captured_at,"
+        " sources_failed FROM snapshots WHERE id = ?",
         (sid,),
-    ).fetchone() == (10000.0, 1000.0, "2026-07-07T21:30:00+00:00", "2026-07-06T21:05:00+00:00")
+    ).fetchone() == (
+        10000.0,
+        1000.0,
+        "2026-07-07T21:30:00+00:00",
+        "2026-07-06T21:05:00+00:00",
+        0,
+    )
     # heat: AAPL 10x2=20 (from stocks.db), XOM 5x4=20 (from etfs.db fallback)
     heat = dict(conn.execute("SELECT symbol, heat_dollars FROM v_latest_heat"))
     assert heat == {"AAPL": 20.0, "XOM": 20.0}
@@ -1397,7 +1466,7 @@ def test_full_cycle(tmp_path):
         "SELECT cap_shares, cap_dollars, exceeds_buying_power, direction,"
         " reliable_signals, total_signals, already_held FROM v_latest_caps"
     ).fetchone()
-    assert cap == (25, 2500.0, 1, "bullish", 1, 3, 0)
+    assert cap == (25.0, 2500.0, 1, "bullish", 1, 3, 0)
     # AAPL is a (weak) disagreement
     assert [r[0] for r in conn.execute("SELECT symbol FROM v_disagreements")] == ["AAPL"]
 
@@ -1413,7 +1482,8 @@ def test_missing_sources_skip_and_continue(tmp_path, capsys):
     assert "Traceback" not in err
     conn = sqlite3.connect(out)
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
-    assert conn.execute("SELECT positions FROM v_book_heat").fetchone()[0] == 0
+    # the header owns the distinction between "empty book" and "failed reads"
+    assert conn.execute("SELECT positions, sources_failed FROM v_book_heat").fetchone() == (0, 3)
 
 
 def test_prune_via_keep_days(tmp_path):
@@ -1478,34 +1548,45 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
         metrics: dict = {}
         reliable: set = set()
 
+        failures = 0
+
         def read_source(db_name, reader):
             """Attach one source read-only, run reader(), skip-and-continue
-            printing only the exception type (secret hygiene)."""
+            printing only the exception type (secret hygiene). Failures are
+            counted into the header so a partial night is visible."""
+            nonlocal failures
             path = os.path.join(db_dir, db_name)
             try:
                 fetch.attach_ro(conn, path)
             except Exception as e:
+                failures += 1
                 print(f"skip {db_name}: {type(e).__name__}")
                 return
             try:
                 reader()
             except Exception as e:
+                failures += 1
                 conn.rollback()
                 print(f"skip {db_name}: {type(e).__name__}")
             finally:
                 fetch.detach(conn)
 
+        # Readers assign their nonlocals only after EVERY read in the source
+        # succeeds — a failure mid-source must not apply half a source (real
+        # equity + zero positions would masquerade as an empty book).
         def read_composite():
             nonlocal composite, scorecard, flagged, flag_signals
-            composite = fetch.read_composite_header(conn)
-            scorecard = fetch.read_scorecard(conn)
-            flagged = fetch.read_flagged(conn)
-            flag_signals = fetch.read_flag_signals(conn)
+            header = fetch.read_composite_header(conn)
+            cards = fetch.read_scorecard(conn)
+            flags = fetch.read_flagged(conn)
+            sigs = fetch.read_flag_signals(conn)
+            composite, scorecard, flagged, flag_signals = header, cards, flags, sigs
 
         def read_portfolio():
             nonlocal account, positions
-            account = fetch.read_account(conn)
-            positions = fetch.read_positions(conn)
+            acct = fetch.read_account(conn)
+            pos = fetch.read_positions(conn)
+            account, positions = acct, pos
 
         def read_prices():
             for sym, m in fetch.read_metrics(conn, symbols).items():
@@ -1535,7 +1616,7 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
         )
         db.write_position_heat(conn, sid, heat_rows)
         db.write_size_caps(conn, sid, cap_rows)
-        db.finish_snapshot(conn, sid, account, composite)
+        db.finish_snapshot(conn, sid, account, composite, failures)
         conn.commit()
         if keep_days is not None:
             db.prune(conn, keep_days, now_iso)

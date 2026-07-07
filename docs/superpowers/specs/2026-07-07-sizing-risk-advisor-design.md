@@ -49,9 +49,11 @@ registered in root `registry.py` as `"advisor"`.
 ### Tables
 
 - `snapshots(id, captured_at, equity, cash, buying_power,
-  portfolio_captured_at, composite_captured_at, regime)` — one row per run.
-  Account scalars and upstream provenance freeze into the header because
-  every derived number depends on them.
+  portfolio_captured_at, composite_captured_at, regime, sources_failed)` —
+  one row per run. Account scalars and upstream provenance freeze into the
+  header because every derived number depends on them; `sources_failed`
+  counts upstream DBs that could not be read this run, distinguishing a
+  genuinely empty book from a failed read that left the tables empty.
 - `position_heat(snapshot_id, symbol, group_name, quantity, market_value,
   atr, price, price_date, heat_dollars, heat_pct, weight_pct, score_sum,
   bullish, bearish, total, atr_stale)` — one row per held position.
@@ -67,8 +69,10 @@ registered in root `registry.py` as `"advisor"`.
 
 - `v_latest_heat` — per-position heat rows (latest snapshot).
 - `v_book_heat` — one row of book totals: total `heat_dollars`/`heat_pct`,
-  position count, and `heat_coverage` = share of book market value carrying
-  a non-NULL ATR (so missing metrics can never silently understate heat).
+  position count, `heat_coverage` = share of book market value carrying
+  a non-NULL ATR (so missing metrics can never silently understate heat),
+  and the header's `sources_failed` (0 positions is only believable when
+  0 sources failed).
 - `v_group_heat` — CROSSWALK groups collapsed to one bet: `group_name`,
   summed `heat_dollars`/`heat_pct`, member symbol list. Ungrouped symbols
   appear as their own single-member rows.
@@ -87,18 +91,27 @@ registered in root `registry.py` as `"advisor"`.
 - **Size cap** for a flagged ticker:
   `allowed_heat = max(0, RISK_BUDGET × equity − existing_group_heat_dollars)`
   (already carrying the bet through a group sibling shrinks the cap), then
-  `cap_shares = floor(allowed_heat / ATR)` and
-  `cap_dollars = cap_shares × close`.
+  `cap_shares = allowed_heat / ATR` — **fractional** (Robinhood supports
+  fractional shares; flooring to whole shares zeroes every cap on a small
+  account) — and `cap_dollars = cap_shares × close`.
+  Bearish-direction flags carry NULL cap columns: the book is long-only,
+  so a buy-sized cap on an avoid signal would be wrong advice — the row
+  itself (direction, score, group) is the advice.
   `exceeds_buying_power = 1` when `cap_dollars > buying_power`
-  (informational only, not a second cap).
+  (informational only, not a second cap). Same-group sibling caps each see
+  the same remaining budget — alternatives, not a shopping list.
 - **Groups:** `TICKER_GROUP` is built in `advisor/catalog.py` from
   `composite.catalog.CROSSWALK` at import time (direct import — unlike the
   scorer's `CROSSWALK_BENCHMARK` it is not a transformation, so duplication
   buys nothing). A pin test asserts consistency with composite.
 - **Efficacy citation:** `reliable_signals` / `total_signals` per flagged
-  ticker = how many contributing `signal_id`s have a `reliable = 1` row in
-  scorer's `v_signal_efficacy`. Annotation only — it never gates or scales
-  the cap; re-weighting stays a human decision.
+  ticker = how many contributing `(signal_id, via_crosswalk)` evidence
+  pairs have a `reliable = 1` row in scorer's `v_signal_efficacy`. Pairs,
+  not bare signal ids — the scorer grades the direct and crosswalked
+  splits separately, and a signal reliable only on its crosswalked split
+  must not cite as direct evidence. `reliable` is the scorer's sample-size
+  floor (n_bench ≥ 30), not proof a signal works. Annotation only — it
+  never gates or scales the cap; re-weighting stays a human decision.
 
 ## Edge & error handling
 
@@ -115,6 +128,10 @@ registered in root `registry.py` as `"advisor"`.
   empty results, not errors.
 - **Per-item failure:** skip-and-continue with `conn.rollback()`, printing
   only `type(e).__name__` (secret-hygiene rule).
+- **Partial source read:** each source's reader applies its results
+  all-or-nothing — a failure mid-source leaves that source fully unread
+  (never real equity with zero positions masquerading as an empty book)
+  and increments `sources_failed` in the header.
 
 ## Testing
 
