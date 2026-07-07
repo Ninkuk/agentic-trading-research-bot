@@ -1,7 +1,8 @@
 """scorer.db: the permanent efficacy dataset. prices is an append-only,
 never-pruned close ledger (the system's only growing price history — also
 the future backtest store); outcome tables are never pruned either — they
-ARE the experiment.
+ARE the experiment. decisions/journal_runs (the decision journal) are permanent
+for the same reason.
 
 Entries are next-day closes: a snapshot registers only once the ledger
 holds a close AFTER its composite_date (registration defers otherwise), so
@@ -32,6 +33,12 @@ BASIS_BREAK_HI = 1.8  # reverse splits >= 1:2 land above this
 # functions (present in CPython 3.12's bundled SQLite 3.45+).
 WILSON_Z = 1.96  # 95% score interval on hit_rate
 RELIABLE_MIN_N = 30  # benchmarked-sample floor for the reliable flag
+
+# Flag thresholds, mirroring composite v_flagged (|score_sum| >= 4 AND
+# total >= 3). Both are hand-tunable; test_journal_matching pins these to
+# composite's view text so the journal and composite drift together.
+FLAG_MIN_ABS_SCORE = 4
+FLAG_MIN_TOTAL = 3
 
 
 def _wilson(sign: str) -> str:
@@ -132,6 +139,60 @@ CREATE TABLE IF NOT EXISTS regime_outcomes (
     bench_fwd_return      REAL,
     matured_at            TEXT,
     PRIMARY KEY (composite_snapshot_id, horizon)
+);
+
+-- Decision journal: what the human did about each opinion (roadmap item 5).
+-- Permanent evidence like the outcome tables; never pruned. order_ref /
+-- exit_order_ref are broker order UUIDs (random ids, not account
+-- identifiers) stored only for idempotent re-ingest; UNIQUE tolerates the
+-- NULLs manual entries carry. composite_snapshot_id NULL = freelance trade
+-- (nothing recommended it). opinion_score_sum/opinion_total are the MATCHED
+-- opinion's score captured at ingest: weekend reruns can flip sign vs the
+-- window owner's graded rows, alignment must judge the opinion the human
+-- actually saw, and composite.db prunes — so capture now or never.
+CREATE TABLE IF NOT EXISTS decisions (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol                TEXT NOT NULL,
+    action                TEXT NOT NULL CHECK (action IN ('acted', 'passed')),
+    side                  TEXT CHECK (side IN ('buy', 'sell')),
+    composite_snapshot_id INTEGER,
+    composite_date        TEXT,
+    opinion_score_sum     INTEGER,
+    opinion_total         INTEGER,
+    fill_date             TEXT,
+    fill_price            REAL,
+    quantity              REAL,
+    exit_fill_date        TEXT,
+    exit_fill_price       REAL,
+    order_ref             TEXT UNIQUE,
+    exit_order_ref        TEXT UNIQUE,
+    note                  TEXT,
+    source                TEXT NOT NULL DEFAULT 'mcp'
+                          CHECK (source IN ('mcp', 'manual')),
+    recorded_at           TEXT NOT NULL
+);
+
+-- One explicit pass per MATCHED flag (SQLite treats NULL snapshot ids as
+-- distinct, but ingest never writes a pass without a match).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_decisions_pass
+    ON decisions (composite_snapshot_id, symbol) WHERE action = 'passed';
+
+-- Backstop for the journal views' window re-keying: at most one
+-- outcome-owning snapshot per entry window. register_snapshot's dedupe
+-- already guarantees this sequentially; the index makes it durable.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_owner_window
+    ON registered_snapshots (entry_date) WHERE ticker_rows > 0;
+
+CREATE TABLE IF NOT EXISTS journal_runs (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    ran_at             TEXT NOT NULL,
+    fills_seen         INTEGER NOT NULL DEFAULT 0,
+    matched            INTEGER NOT NULL DEFAULT 0,
+    freelance          INTEGER NOT NULL DEFAULT 0,
+    exits_attached     INTEGER NOT NULL DEFAULT 0,
+    passes_recorded    INTEGER NOT NULL DEFAULT 0,
+    duplicates_skipped INTEGER NOT NULL DEFAULT 0,
+    skipped            INTEGER NOT NULL DEFAULT 0
 );
 """
 
