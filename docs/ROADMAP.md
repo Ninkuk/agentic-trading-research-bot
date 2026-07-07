@@ -35,22 +35,12 @@ removed; the ledger is append-only forever — the future backtest store.)*
 
 ## Next — evaluation hardening
 
-### 4. Statistical guardrails on efficacy views
-
-**Problem.** `v_signal_efficacy` / `v_bucket_performance` render a 68 % hit
-rate on n = 12 identically to one on n = 200, while ~144 simultaneous
-experiments (24 signals × 3 horizons × crosswalk split) guarantee some rows
-look brilliant by chance. Separately, crosswalked commodity proxies are graded
-as excess *vs SPY* — a mismatched benchmark that flatters commodity signals
-whenever equities fall.
-
-**Done when.** Views expose min-n gating (a `reliable` flag or filtered
-variant) and a crude binomial confidence interval; crosswalked outcomes are
-benchmarked against a matched proxy (e.g. the crosswalk ETF's own asset class)
-or explicitly labeled unbenchmarked.
-
-**Size.** M. **Depends on.** #1, #2 (no point hardening views over
-contaminated rows).
+*(Item 4, statistical guardrails: `v_signal_efficacy` / `v_bucket_performance`
+expose `n_bench`, a Wilson 95% CI on hit_rate, and a `reliable` flag
+(n_bench >= 30); crosswalked outcomes grade against matched class benchmarks
+(CROSSWALK_BENCHMARK), class proxies explicitly unbenchmarked. Shipped
+2026-07-06. Residual: ticker-grain buckets stay SPY-benchmarked — see
+item 8.)*
 
 ### 5. Decision journal
 
@@ -83,8 +73,9 @@ generation — consistent with the human-execution design.
 disagrees with, and a vol-scaled size cap for any newly flagged ticker.
 CROSSWALK groups count as one bet for heat purposes.
 
-**Size.** L. **Depends on.** #4 (advice should cite reliable efficacy), plus a
-volatility input (ATR already in `stocks.db` metrics).
+**Size.** L. **Depends on.** #4 (shipped 2026-07-06 — advice should cite
+`reliable` efficacy rows), plus a volatility input (ATR already in
+`stocks.db` metrics).
 
 ### 7. Backtesting foundation
 
@@ -109,10 +100,15 @@ Ideas that need the machinery above before they're worth building:
   input.
 - **Regime-conditional efficacy** — `v_signal_efficacy` × `market_regime`:
   does a signal only work risk-on? Needs sample sizes only time (and #3) buys.
-- **Weighting the composite** — still a human decision; revisit only when #4's
-  guardrails say the efficacy evidence is reliable.
+- **Weighting the composite** — still a human decision; revisit only when the
+  efficacy guardrails (shipped 2026-07-06) say the evidence is
+  reliable (`reliable` = 1 and the Wilson CI clears 0.5).
 - **Basis-guard enrichment** (residuals from shipped item 1) — cross-check
   quarantined windows against the provider's split-adjusted `ch1w`/`ch1m`
   columns to clear false positives (real crashes beyond −45 %/day) and catch
   sub-threshold splits (3:2, ratio 0.667, passes the guard). Dividend drift
   also remains unhandled (close-only returns understate total return).
+- **Matched benchmarks at ticker grain** (residual from shipped item 4) —
+  `ticker_outcomes` buckets grade vs SPY even for tickers whose score is
+  dominated by crosswalked commodity votes; per-ticker benchmark needs
+  crosswalk provenance on ticker_scores first.
