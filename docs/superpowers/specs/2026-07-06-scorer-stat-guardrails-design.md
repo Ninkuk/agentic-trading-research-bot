@@ -113,9 +113,9 @@ imports for config the caller owns — consistent with how `benchmark` and
 
 ## 5. Maturation — per-row benchmark
 
-`_MATURE_SYMBOL` gains a `bench` format slot for the three places the
-benchmark symbol appears (exit-close lookup, `bench_fwd_return`, the
-benchmark-leg break scan):
+`_MATURE_SYMBOL` gains a `bench` format slot for the two places the
+benchmark symbol appears (the exit-close lookup inside `bench_fwd_return`,
+and the benchmark-leg break scan):
 
 - `ticker_outcomes`: `:bench` (SPY), as today.
 - `signal_outcomes`: the row's own `benchmark` column.
