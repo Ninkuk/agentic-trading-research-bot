@@ -6,7 +6,7 @@ Heat/cap math is pure Python (build_* helpers) because it joins data already
 fetched from four source DBs; views only scope and aggregate."""
 
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 # Strong-disagreement thresholds, mirroring composite v_flagged
 # (|score_sum| >= 4 AND total >= 3). A schema test pins these to
@@ -150,3 +150,176 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
     conn.commit()
     return len(ids)
+
+
+def write_snapshot(conn, now_iso: str) -> int:
+    cur = conn.execute("INSERT INTO snapshots (captured_at) VALUES (?)", (now_iso,))
+    conn.commit()  # survive later per-source rollbacks
+    return cur.lastrowid
+
+
+def finish_snapshot(conn, sid, account, composite, sources_failed=0) -> None:
+    """Freeze account scalars + upstream provenance into the header (every
+    derived number depends on them). Either upstream may be None.
+    sources_failed distinguishes a genuinely empty book from a night where
+    a source read failed and left the tables empty."""
+    a, c = account or {}, composite or {}
+    conn.execute(
+        "UPDATE snapshots SET equity=?, cash=?, buying_power=?,"
+        " portfolio_captured_at=?, composite_captured_at=?, regime=?,"
+        " sources_failed=? WHERE id=?",
+        (
+            a.get("equity"),
+            a.get("cash"),
+            a.get("buying_power"),
+            a.get("captured_at"),
+            c.get("captured_at"),
+            c.get("regime"),
+            sources_failed,
+            sid,
+        ),
+    )
+
+
+def _age_days(today: str, obs_date: str) -> int:
+    return (date.fromisoformat(today) - date.fromisoformat(obs_date)).days
+
+
+def build_position_heat(
+    positions, scorecard, metrics, equity, today, ticker_group, atr_max_age_days
+) -> list:
+    """One row per held position. heat = quantity x ATR (dollars lost on a
+    one-ATR adverse day); NULL heat when the symbol has no metrics row —
+    visible, never silently dropped (v_book_heat.heat_coverage counts it)."""
+    rows = []
+    for p in positions:
+        sym = p["symbol"]
+        m = metrics.get(sym, {})
+        atr, close, pdate = m.get("atr"), m.get("close"), m.get("price_date")
+        heat_dollars = p["quantity"] * atr if atr is not None else None
+        heat_pct = heat_dollars / equity if heat_dollars is not None and equity else None
+        weight_pct = (
+            p["market_value"] / equity if p["market_value"] is not None and equity else None
+        )
+        sc = scorecard.get(sym, {})
+        atr_stale = None
+        if pdate is not None:
+            atr_stale = 1 if _age_days(today, pdate) > atr_max_age_days else 0
+        rows.append(
+            {
+                "symbol": sym,
+                "group_name": ticker_group.get(sym),
+                "quantity": p["quantity"],
+                "market_value": p["market_value"],
+                "atr": atr,
+                "price": close,
+                "price_date": pdate,
+                "heat_dollars": heat_dollars,
+                "heat_pct": heat_pct,
+                "weight_pct": weight_pct,
+                "score_sum": sc.get("score_sum"),
+                "bullish": sc.get("bullish"),
+                "bearish": sc.get("bearish"),
+                "total": sc.get("total"),
+                "atr_stale": atr_stale,
+            }
+        )
+    return rows
+
+
+def build_size_caps(
+    flagged,
+    scorecard,
+    metrics,
+    heat_rows,
+    equity,
+    buying_power,
+    risk_budget,
+    ticker_group,
+    flag_signals,
+    reliable_ids,
+) -> list:
+    """One row per flagged ticker. The cap inverts the risk budget and
+    shrinks by heat already carried through the same crosswalk group (a
+    group is one bet): allowed = max(0, budget*equity - group_heat), then
+    cap_shares = allowed / ATR — FRACTIONAL, matching Robinhood fractional
+    sizing (flooring to whole shares would zero every cap on a small
+    account). Bearish flags carry NULL caps: the book is long-only, so the
+    row itself (direction, score, group) is the advice, never a buy size.
+    Same-group sibling caps each see the same remaining budget —
+    alternatives, not a shopping list. exceeds_buying_power and the
+    reliable-evidence counts are annotations, never gates (reliable = the
+    scorer's n_bench >= 30 sample floor, not proof a signal works);
+    flag_signals/reliable_ids intersect on (signal_id, via_crosswalk)
+    pairs so crosswalk-only reliability never cites as direct evidence."""
+    group_heat: dict = {}
+    held = set()
+    for r in heat_rows:
+        held.add(r["symbol"])
+        if r["heat_dollars"] is not None:
+            bet = r["group_name"] or r["symbol"]
+            group_heat[bet] = group_heat.get(bet, 0.0) + r["heat_dollars"]
+    rows = []
+    for sym in flagged:
+        sc = scorecard.get(sym, {})
+        m = metrics.get(sym, {})
+        atr, close = m.get("atr"), m.get("close")
+        existing = group_heat.get(ticker_group.get(sym) or sym, 0.0)
+        score_sum = sc.get("score_sum")
+        direction = "bullish" if (score_sum or 0) > 0 else "bearish"
+        cap_shares = cap_dollars = None
+        if direction == "bullish" and atr and equity:
+            allowed = max(0.0, risk_budget * equity - existing)
+            cap_shares = allowed / atr
+            if close is not None:
+                cap_dollars = cap_shares * close
+        sigs = flag_signals.get(sym, set())
+        rows.append(
+            {
+                "symbol": sym,
+                "direction": direction,
+                "score_sum": score_sum,
+                "atr": atr,
+                "price": close,
+                "cap_shares": cap_shares,
+                "cap_dollars": cap_dollars,
+                "group_name": ticker_group.get(sym),
+                "group_heat_pct": existing / equity if equity else None,
+                "reliable_signals": len(sigs & reliable_ids),
+                "total_signals": len(sigs),
+                "exceeds_buying_power": 1
+                if cap_dollars is not None
+                and buying_power is not None
+                and cap_dollars > buying_power
+                else 0,
+                "already_held": 1 if sym in held else 0,
+            }
+        )
+    return rows
+
+
+def write_position_heat(conn, sid, rows) -> int:
+    conn.executemany(
+        "INSERT INTO position_heat (snapshot_id, symbol, group_name, quantity,"
+        " market_value, atr, price, price_date, heat_dollars, heat_pct,"
+        " weight_pct, score_sum, bullish, bearish, total, atr_stale)"
+        " VALUES (:sid, :symbol, :group_name, :quantity, :market_value, :atr,"
+        " :price, :price_date, :heat_dollars, :heat_pct, :weight_pct,"
+        " :score_sum, :bullish, :bearish, :total, :atr_stale)",
+        [{**r, "sid": sid} for r in rows],
+    )
+    return len(rows)
+
+
+def write_size_caps(conn, sid, rows) -> int:
+    conn.executemany(
+        "INSERT INTO size_caps (snapshot_id, symbol, direction, score_sum,"
+        " atr, price, cap_shares, cap_dollars, group_name, group_heat_pct,"
+        " reliable_signals, total_signals, exceeds_buying_power, already_held)"
+        " VALUES (:sid, :symbol, :direction, :score_sum, :atr, :price,"
+        " :cap_shares, :cap_dollars, :group_name, :group_heat_pct,"
+        " :reliable_signals, :total_signals, :exceeds_buying_power,"
+        " :already_held)",
+        [{**r, "sid": sid} for r in rows],
+    )
+    return len(rows)
