@@ -46,7 +46,13 @@ item 8.)*
 opinions — fills auto-matched from Robinhood order history (headless
 2:40pm `/journal-sync` slot), passes inferred in `v_flag_response` with
 explicit override; `v_decision_outcomes` (slippage, realized-vs-paper),
-`v_human_filter` (acted vs passed). Shipped 2026-07-06.)*
+`v_human_filter` (acted vs passed). Shipped 2026-07-06; slot installed and
+first interactive sync run 2026-07-07 — field mappings verified against
+live orders (`average_price`, not `price`; execution timestamp). Policy
+set that run: `placed_agent` drip/recurring fills are excluded — automatic
+reinvestments are nobody's decision. Day-one caveat: fills predating the
+composite's first opinion correctly record as freelance, so the earliest
+rows carry no paper baseline.)*
 
 ---
 
