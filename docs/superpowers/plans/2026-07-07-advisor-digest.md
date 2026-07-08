@@ -45,15 +45,35 @@ Exercises the pure `format_advisor_lines` with hand-built dict rows (no DB,
 no network) plus one reader-resilience test.
 """
 
+import os
 import sqlite3
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 # daily_summary.py lives in deploy/launchd and inserts the repo root on
 # sys.path itself at import; we only need its own dir on the path to import it.
 DEPLOY = Path(__file__).resolve().parents[1] / "deploy" / "launchd"
 sys.path.insert(0, str(DEPLOY))
 import daily_summary  # noqa: E402
+
+
+@pytest.fixture
+def phoenix_tz():
+    """Pin the process TZ to America/Phoenix so staleness-date assertions are
+    deterministic on any host. The advisor slot runs on a Phoenix Mac mini, so
+    this mirrors production; the digest converts UTC timestamps to local dates."""
+    old = os.environ.get("TZ")
+    os.environ["TZ"] = "America/Phoenix"
+    time.tzset()
+    yield
+    if old is None:
+        os.environ.pop("TZ", None)
+    else:
+        os.environ["TZ"] = old
+    time.tzset()
 
 
 def _book(positions=2, heat_pct=0.0021, heat_coverage=1.0, equity=200.12):
@@ -106,6 +126,14 @@ def test_book_line_null_fields():
     )[0]
     assert "cov n/a" in line
     assert "equity ?" in line
+
+
+def test_book_line_empty_book():
+    # 0 positions → v_book_heat's SUM(heat_pct)/heat_coverage are NULL
+    line = daily_summary.format_advisor_lines(
+        _book(positions=0, heat_pct=None, heat_coverage=None), [], [], _header()
+    )[0]
+    assert line == "book: n/a risk · 0 positions · cov n/a · equity $200"
 
 
 def test_sources_failed_note():
@@ -244,14 +272,15 @@ def test_staleness_same_day_no_note():
     assert not any(line.startswith("(sized vs portfolio") for line in lines)
 
 
-def test_staleness_stale_note():
+def test_staleness_stale_note(phoenix_tz):
+    # portfolio Jul 06 10:30 Phoenix, run Jul 07 21:12 Phoenix → 1 day old.
     hdr = _header(portfolio_captured_at="2026-07-06T17:30:00+00:00",
                   captured_at="2026-07-08T04:12:00+00:00")
     lines = daily_summary.format_advisor_lines(_book(), [], [], hdr)
-    assert "(sized vs portfolio from Jul 06 — 2d old)" in lines
+    assert "(sized vs portfolio from Jul 06 — 1d old)" in lines
 
 
-def test_full_nominal_block():
+def test_full_nominal_block(phoenix_tz):
     hdr = _header(portfolio_captured_at="2026-07-06T17:30:00+00:00",
                   captured_at="2026-07-08T04:12:00+00:00")
     lines = daily_summary.format_advisor_lines(_book(), [_dis()], [], hdr)
@@ -259,7 +288,7 @@ def test_full_nominal_block():
         "book: 0.21% risk · 2 positions · cov 1.0 · equity $200",
         "disagree: XOM -1 weak (energy)",
         "caps: none tonight",
-        "(sized vs portfolio from Jul 06 — 2d old)",
+        "(sized vs portfolio from Jul 06 — 1d old)",
     ]
 ```
 
@@ -298,8 +327,11 @@ def _staleness_line(header):
     pc, rc = header["portfolio_captured_at"], header["captured_at"]
     if not pc or not rc:
         return None
-    pd = dt.datetime.fromisoformat(pc).date()
-    rd = dt.datetime.fromisoformat(rc).date()
+    # Timestamps are stored UTC (+00:00). The slot runs ~9:12pm Phoenix = the
+    # NEXT UTC day, so compare LOCAL dates (astimezone) or the age reads one
+    # day high. Host TZ is Phoenix; tests pin it via the phoenix_tz fixture.
+    pd = dt.datetime.fromisoformat(pc).astimezone().date()
+    rd = dt.datetime.fromisoformat(rc).astimezone().date()
     if pd == rd:
         return None
     return f"(sized vs portfolio from {pd.strftime('%b %d')} — {(rd - pd).days}d old)"
@@ -445,7 +477,12 @@ git commit --no-gpg-sign -m "feat(digest): wire advisor block into nightly summa
 ## Notes for the implementer
 
 - **Non-ASCII glyphs matter.** The lines use `·` (U+00B7), `≤` (U+2264), `—`
-  (U+2014). Copy them exactly; ruff/tests will catch mismatches.
+  (U+2014). Copy them exactly. The *formatter tests* assert exact strings and
+  will catch mismatches — ruff will not (E501/line-length is not enabled; only
+  E4/E7/E9), and neither will mypy: `[tool.mypy] files` is `sources`, `main.py`,
+  `registry.py`, so `deploy/launchd/` is **out of mypy scope**. The new
+  functions stay untyped, consistent with the existing `signals_digest` — do
+  not add annotations expecting them to be checked.
 - **`data/advisor.db` path is relative** — the launchd wrapper runs from repo
   root, and the smoke test / tests run from repo root too. Don't absolutize it.
 - **Do not touch** `sources/combiners/advisor/*` or `notify.py` — this is a

@@ -82,7 +82,7 @@ Rendered from real data for 2026-07-07:
 book: 0.21% risk · 2 positions · cov 1.0 · equity $200
 disagree: XOM -1 weak (energy)
 caps: none tonight
-(sized vs portfolio from Jul 06 — 2d old)
+(sized vs portfolio from Jul 06 — 1d old)
 ```
 
 Formatting rules (enforced by `format_advisor_lines`, all unit-tested):
@@ -92,7 +92,8 @@ Formatting rules (enforced by `format_advisor_lines`, all unit-tested):
   - `heat_pct` is a fraction → format with Python `{:.2%}` (e.g. `0.0021` →
     `0.21%`, `0` → `0.00%`, `0.00008` → `0.01%`). The two decimal places guard
     both the "fraction printed as whole percent" bug and the collapse of small
-    non-zero risk to `0.0%`.
+    non-zero risk to `0.0%`. `heat_pct` is **NULL** when the book has 0
+    positions (`SUM` over an empty `LEFT JOIN`) → render `n/a risk`.
   - `cov` from `heat_coverage` (fraction of book with ATR data), `{:.1f}`.
     `heat_coverage` may be NULL (no positions / zero market value) → render
     `cov n/a`.
@@ -109,8 +110,10 @@ Formatting rules (enforced by `format_advisor_lines`, all unit-tested):
   `cap: {SYM} ≤ {cap_shares:.2f}sh` (cap_shares is a fractional REAL), ordered
   by symbol; when empty → `caps: none tonight`.
 - **staleness note**: compare `portfolio_captured_at` date to `captured_at`
-  (run) date. When they differ → append `(sized vs portfolio from {Mon DD} —
-  {N}d old)`. Same calendar day → omit the note entirely.
+  (run) date, **converting both UTC timestamps to local (Phoenix) time first**
+  — the slot runs ~9:12pm Phoenix = the next UTC day, so a naive UTC `.date()`
+  reads the age one day high. When the local dates differ → append `(sized vs
+  portfolio from {Mon DD} — {N}d old)`. Same local day → omit the note.
 - **source-failure note**: when `sources_failed > 0` → extra line
   `advisor: {N} sources failed`.
 - **no snapshot header at all** → the block is the single line
@@ -137,7 +140,8 @@ the module already inserts the repo root on `sys.path`.
 2. **Risk-% formatting** — `heat_pct=0.0021` → `0.21%`; `0.00008` → `0.01%`
    (non-zero); `heat_pct=0` → `0.00%`.
 2b. **NULL book fields** — NULL `heat_coverage` → `cov n/a`; NULL `equity` →
-   `equity ?`; both present render normally.
+   `equity ?`; NULL `heat_pct` (0-position book) → `n/a risk` with `0
+   positions`; all present render normally.
 3. **Disagreement labeling** — `strong=1` → `STRONG`; `strong=0` → `weak`;
    NULL `group_name` → no parens.
 4. **Multiple disagreements** — 3 rows → 3 lines in stable (`score_sum` asc,
@@ -145,8 +149,9 @@ the module already inserts the repo root on `sys.path`.
 5. **Empty disagreements** — `disagree: none`.
 6. **Caps present** — rows → `cap:` lines; **caps empty** → `caps: none
    tonight`.
-7. **Staleness** — same-day `portfolio_captured_at` → no note; 2-days-prior →
-   note with `2d old` and correct `Mon DD`.
+7. **Staleness** (local-date, TZ pinned to Phoenix in the test) — same local
+   day → no note; portfolio `Jul 06 17:30 UTC` vs run `Jul 08 04:12 UTC` →
+   `(sized vs portfolio from Jul 06 — 1d old)` (1 day in Phoenix, not 2 in UTC).
 8. **Source failures** — `sources_failed=2` → `advisor: 2 sources failed`;
    **no snapshot** (`header=None`) → single `advisor: no snapshot` line.
 9. **Reader resilience** — a simulated `sqlite3.Error` from the reader yields
