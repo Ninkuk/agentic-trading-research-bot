@@ -45,11 +45,15 @@ CREATE TABLE IF NOT EXISTS market_obs (
     PRIMARY KEY (signal_id, obs_date)
 );
 
--- The grading spine: benchmark daily closes (SP500 via fred.db
--- observations; index closes are not revised).
+-- The grading spine, keyed by benchmark symbol: SP500 (market signals, via
+-- fred.db observations) plus asset-class proxies (e.g. XLE for energy, via
+-- scorer.db's permanent price ledger). Each signal grades against ITS
+-- benchmark's forward return, never SP500 for an asset-class bet.
 CREATE TABLE IF NOT EXISTS benchmark_closes (
-    date  TEXT PRIMARY KEY,
-    close REAL NOT NULL
+    benchmark TEXT NOT NULL,
+    date      TEXT NOT NULL,
+    close     REAL NOT NULL,
+    PRIMARY KEY (benchmark, date)
 );
 """
 
@@ -69,9 +73,15 @@ def _pctile_market_signals() -> list:
     return [s for s in catalog.MARKET_OBS_SIGNALS if s.get("flag_mode") == "pctile"]
 
 
+def _benchmark_of(signal: dict) -> str:
+    return signal.get("benchmark", catalog.BENCHMARK_SERIES)
+
+
 def _flags_select(signal: dict) -> str:
+    # FRED regime signals grade vs SP500 (v_pit_signal iterates SP500 dates).
     return (
-        f"SELECT asof_date, '{signal['signal_id']}' AS signal_id, value,\n"
+        f"SELECT asof_date, '{catalog.BENCHMARK_SERIES}' AS benchmark,\n"
+        f"       '{signal['signal_id']}' AS signal_id, value,\n"
         f"       {signal['score_case']} AS score\n"
         f"FROM v_pit_signal\n"
         f"WHERE series_id = '{signal['series_id']}' AND value IS NOT NULL"
@@ -81,13 +91,14 @@ def _flags_select(signal: dict) -> str:
 def _market_flags_select(signal: dict) -> str:
     """Flag select for a non-vintage market signal: alias the stored val1/val2
     back to the column names its imported CASE expects, then apply raw_expr +
-    score_case verbatim over the as-of row (v_pit_market)."""
+    score_case verbatim over the as-of row (v_pit_market). benchmark rides
+    through so each signal grades on its own proxy spine."""
     alias_cols = ", ".join(f"{src} AS {name}" for name, src in signal["aliases"].items())
     primary = next(iter(signal["aliases"]))  # first CASE column present => a real obs
     return (
-        f"SELECT asof_date, '{signal['signal_id']}' AS signal_id,\n"
+        f"SELECT asof_date, benchmark, '{signal['signal_id']}' AS signal_id,\n"
         f"       {signal['raw_expr']} AS value, {signal['score_case']} AS score\n"
-        f"FROM (SELECT asof_date, {alias_cols} FROM v_pit_market\n"
+        f"FROM (SELECT asof_date, benchmark, {alias_cols} FROM v_pit_market\n"
         f"      WHERE signal_id = '{signal['signal_id']}')\n"
         f"WHERE {primary} IS NOT NULL"
     )
@@ -98,7 +109,7 @@ def _pctile_flags_select(signal: dict) -> str:
     recomputed as-of each date in v_pit_pcr; the imported CASE reads `pctile`
     verbatim."""
     return (
-        f"SELECT asof_date, '{signal['signal_id']}' AS signal_id,\n"
+        f"SELECT asof_date, benchmark, '{signal['signal_id']}' AS signal_id,\n"
         f"       pctile AS value, {signal['score_case']} AS score\n"
         f"FROM v_pit_pcr WHERE signal_id = '{signal['signal_id']}' AND pctile IS NOT NULL"
     )
@@ -112,11 +123,11 @@ def _pctile_view() -> str:
     sigs = _pctile_market_signals()
     if not sigs:
         return ""
-    ids = ", ".join(f"'{s['signal_id']}'" for s in sigs)
+    mapping = ", ".join(f"('{s['signal_id']}', '{_benchmark_of(s)}')" for s in sigs)
     return f"""
 DROP VIEW IF EXISTS v_pit_pcr;
 CREATE VIEW v_pit_pcr AS
-SELECT d.date AS asof_date, o.signal_id,
+SELECT d.date AS asof_date, o.signal_id, o.benchmark,
        (SELECT 100.0 * SUM(CASE WHEN h.val1 <=
                 (SELECT m3.val1 FROM market_obs m3
                   WHERE m3.signal_id = o.signal_id AND m3.obs_date <= d.date
@@ -125,8 +136,8 @@ SELECT d.date AS asof_date, o.signal_id,
         FROM (SELECT m2.val1 FROM market_obs m2
               WHERE m2.signal_id = o.signal_id AND m2.obs_date <= d.date
               ORDER BY m2.obs_date DESC LIMIT {PCTILE_WINDOW}) h) AS pctile
-FROM benchmark_closes d
-CROSS JOIN (SELECT DISTINCT signal_id FROM market_obs WHERE signal_id IN ({ids})) o;
+FROM (SELECT column1 AS signal_id, column2 AS benchmark FROM (VALUES {mapping})) o
+JOIN benchmark_closes d ON d.benchmark = o.benchmark;
 """
 
 
@@ -136,11 +147,16 @@ def _views() -> str:
         + [_market_flags_select(s) for s in _scalar_market_signals()]
         + [_pctile_flags_select(s) for s in _pctile_market_signals()]
     )
+    # signal -> benchmark map for the scalar market signals' as-of grid
+    scalar_map = ", ".join(
+        f"('{s['signal_id']}', '{_benchmark_of(s)}')" for s in _scalar_market_signals()
+    )
     return f"""
--- For every (benchmark trading date D, replay series): the value as KNOWN
+-- For every SP500 trading date D and FRED replay series: the value as KNOWN
 -- on D — the latest observation date having any vintage published on or
 -- before D, valued at its newest such vintage. NULL when nothing was
--- published yet (LEFT-JOIN-shaped miss, not an error).
+-- published yet (LEFT-JOIN-shaped miss, not an error). FRED signals grade vs
+-- SP500, so the as-of grid is SP500's dates.
 DROP VIEW IF EXISTS v_pit_signal;
 CREATE VIEW v_pit_signal AS
 SELECT d.date AS asof_date, s.series_id,
@@ -151,23 +167,25 @@ SELECT d.date AS asof_date, s.series_id,
          ORDER BY v.date DESC, v.realtime_start DESC
          LIMIT 1) AS value
 FROM benchmark_closes d
-CROSS JOIN (SELECT DISTINCT series_id FROM signal_vintages) s;
+CROSS JOIN (SELECT DISTINCT series_id FROM signal_vintages) s
+WHERE d.benchmark = '{catalog.BENCHMARK_SERIES}';
 
--- As-of read for non-vintage market signals: for every benchmark date D and
--- market signal, the val1/val2 of the latest observation on or before D (both
--- pick the SAME latest row, so they stay consistent). NULL when nothing was
--- observed yet. No revision trail -- latest obs_date <= D is the whole story.
+-- As-of read for non-vintage market signals: for every date D on the signal's
+-- OWN benchmark spine, the val1/val2 of its latest observation on or before D
+-- (both pick the SAME latest row, so they stay consistent). NULL when nothing
+-- was observed yet. No revision trail -- latest obs_date <= D is the whole
+-- story. benchmark rides through so each signal grades on its own proxy.
 DROP VIEW IF EXISTS v_pit_market;
 CREATE VIEW v_pit_market AS
-SELECT d.date AS asof_date, o.signal_id,
+SELECT d.date AS asof_date, o.signal_id, o.benchmark,
        (SELECT m.val1 FROM market_obs m
          WHERE m.signal_id = o.signal_id AND m.obs_date <= d.date
          ORDER BY m.obs_date DESC LIMIT 1) AS val1,
        (SELECT m.val2 FROM market_obs m
          WHERE m.signal_id = o.signal_id AND m.obs_date <= d.date
          ORDER BY m.obs_date DESC LIMIT 1) AS val2
-FROM benchmark_closes d
-CROSS JOIN (SELECT DISTINCT signal_id FROM market_obs) o;
+FROM (SELECT column1 AS signal_id, column2 AS benchmark FROM (VALUES {scalar_map})) o
+JOIN benchmark_closes d ON d.benchmark = o.benchmark;
 {_pctile_view()}
 -- The flag composite WOULD have emitted on each date, via the identical
 -- imported CASE expressions (see catalog.REPLAY_SIGNALS + MARKET_OBS_SIGNALS).
@@ -175,27 +193,29 @@ DROP VIEW IF EXISTS v_replay_flags;
 CREATE VIEW v_replay_flags AS
 {flags};
 
--- Benchmark spine with row numbers: horizons step in TRADING days.
+-- Benchmark spine with per-benchmark row numbers: horizons step in TRADING
+-- days within each benchmark's own date series.
 DROP VIEW IF EXISTS v_spine;
 CREATE VIEW v_spine AS
-SELECT date, close, ROW_NUMBER() OVER (ORDER BY date) AS rn
+SELECT benchmark, date, close,
+       ROW_NUMBER() OVER (PARTITION BY benchmark ORDER BY date) AS rn
 FROM benchmark_closes;
 
--- Forward benchmark returns per decision date x horizon. Entry is the
--- first close STRICTLY after asof_date (same no-overnight-look-ahead rule
--- as scorer's entry_for); exit is `horizon` spine rows after entry.
--- Unmatured dates yield NULL via LEFT JOIN.
+-- Forward returns per (benchmark, decision date, horizon). Entry is the first
+-- close STRICTLY after asof_date on THAT benchmark's spine (same
+-- no-overnight-look-ahead rule as scorer's entry_for); exit is `horizon` rows
+-- after entry. Unmatured dates yield NULL via LEFT JOIN.
 DROP VIEW IF EXISTS v_replay_returns;
 CREATE VIEW v_replay_returns AS
-SELECT d.date AS asof_date, h.horizon,
+SELECT d.benchmark, d.date AS asof_date, h.horizon,
        e.date AS entry_date, e.close AS entry_close,
        x.date AS exit_date, x.close AS exit_close,
        CASE WHEN x.close IS NOT NULL AND e.close IS NOT NULL
             THEN x.close / e.close - 1 END AS fwd_return
 FROM v_spine d
 CROSS JOIN ({_horizons_union()}) h
-LEFT JOIN v_spine e ON e.rn = d.rn + 1
-LEFT JOIN v_spine x ON x.rn = d.rn + 1 + h.horizon;
+LEFT JOIN v_spine e ON e.benchmark = d.benchmark AND e.rn = d.rn + 1
+LEFT JOIN v_spine x ON x.benchmark = d.benchmark AND x.rn = d.rn + 1 + h.horizon;
 
 -- Hit-rate scoreboard, same column shape as scorer v_signal_efficacy:
 -- hit = sign agreement between flag and forward benchmark return.
@@ -221,7 +241,7 @@ FROM (
                 WHEN f.score > 0 AND r.fwd_return > 0 THEN 1
                 ELSE 0 END AS hit
     FROM v_replay_flags f
-    JOIN v_replay_returns r ON r.asof_date = f.asof_date
+    JOIN v_replay_returns r ON r.benchmark = f.benchmark AND r.asof_date = f.asof_date
 )
 GROUP BY signal_id, direction, horizon;
 """
@@ -235,8 +255,16 @@ def connect(path: str) -> sqlite3.Connection:
 
 
 def ensure_schema(conn) -> None:
-    """Tables (CREATE IF NOT EXISTS), then views (DROP+CREATE)."""
+    """Tables (CREATE IF NOT EXISTS), a one-shot benchmark_closes migration,
+    then views (DROP+CREATE)."""
     conn.executescript(_TABLES)
+    # Migrate the pre-multi-benchmark benchmark_closes (date PK, no benchmark
+    # column) by rebuilding it: the table is a re-harvestable copy, so dropping
+    # it just defers to the next run's copy (nothing irreplaceable is lost).
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(benchmark_closes)")}
+    if "benchmark" not in cols:
+        conn.execute("DROP TABLE benchmark_closes")
+        conn.executescript(_TABLES)
     conn.executescript(_views())
     conn.commit()
 
@@ -272,9 +300,12 @@ def insert_vintages(conn, rows) -> int:
     return len(rows)
 
 
-def insert_benchmark(conn, rows) -> int:
+def insert_benchmark(conn, benchmark, rows) -> int:
     rows = list(rows)
-    conn.executemany("INSERT OR REPLACE INTO benchmark_closes (date, close) VALUES (?, ?)", rows)
+    conn.executemany(
+        "INSERT OR REPLACE INTO benchmark_closes (benchmark, date, close) VALUES (?, ?, ?)",
+        [(benchmark, date, close) for date, close in rows],
+    )
     return len(rows)
 
 

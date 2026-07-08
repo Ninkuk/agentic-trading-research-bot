@@ -11,8 +11,15 @@ def conn():
     c.close()
 
 
-def spine(c, rows):
-    c.executemany("INSERT INTO benchmark_closes (date, close) VALUES (?, ?)", rows)
+def spine(c, rows, benchmark="SP500"):
+    c.executemany(
+        "INSERT INTO benchmark_closes (benchmark, date, close) VALUES (?, ?, ?)",
+        [(benchmark, d, close) for d, close in rows],
+    )
+
+
+def bench(c, benchmark, rows):
+    spine(c, rows, benchmark=benchmark)
 
 
 def vintage(c, series, date, realtime_start, value):
@@ -184,6 +191,35 @@ def test_market_pctile_window_excludes_future_observations(conn):
     ).fetchone()
     # latest <= D is Jan-05 (value 5, the max of the visible 1..5) -> pctile 100
     assert row[0] == pytest.approx(100.0) and row[1] == 2
+
+
+def test_returns_use_per_benchmark_spine(conn):
+    # SP500 flat, XLE rising: an XLE-graded row must reflect XLE's own return,
+    # never SP500's. Proves the spine is partitioned by benchmark.
+    bench(conn, "SP500", [(f"2025-01-{d:02d}", 100.0) for d in range(1, 11)])
+    bench(conn, "XLE", [(f"2025-01-{d:02d}", 100.0 + d) for d in range(1, 11)])
+    row = conn.execute(
+        "SELECT entry_close, exit_close, fwd_return FROM v_replay_returns"
+        " WHERE benchmark = 'XLE' AND asof_date = '2025-01-01' AND horizon = 5"
+    ).fetchone()
+    assert row[0] == 102.0  # XLE next close after D (day 2)
+    assert row[1] == 107.0  # 5 XLE rows later (day 7)
+    assert row[2] == pytest.approx(107.0 / 102.0 - 1)
+
+
+def test_eia_energy_signal_graded_against_xle_not_sp500(conn):
+    # rising XLE + crude DRAW (change_pct <= -2 -> +1 bullish energy). Even
+    # with a FALLING SP500 present, the energy hit is judged on XLE.
+    bench(conn, "SP500", [(f"2025-01-{d:02d}", 200.0 - d) for d in range(1, 31)])
+    bench(conn, "XLE", [(f"2025-01-{d:02d}", 100.0 + d) for d in range(1, 31)])
+    for d in range(1, 31):
+        market_obs(conn, "eia_crude_stocks", f"2025-01-{d:02d}", -3.0)  # draw -> +1
+    row = conn.execute(
+        "SELECT n_bench, hit_rate FROM v_replay_efficacy"
+        " WHERE signal_id = 'eia_crude_stocks' AND direction = 'bullish' AND horizon = 5"
+    ).fetchone()
+    assert row[0] == 24  # graded on XLE's spine (same maturation window)
+    assert row[1] == pytest.approx(1.0)  # draw called XLE's rise correctly
 
 
 def test_market_signal_graded_against_sp500_spine(conn):

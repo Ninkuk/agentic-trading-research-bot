@@ -165,3 +165,12 @@ def test_cboe_equity_pcr_score_case_is_hoisted_constant():
     by_id = {s["signal_id"]: s for s in SIGNALS}
     assert CBOE_EQUITY_PCR_SCORE in by_id["cboe_equity_pcr"]["sql"]
     assert "pctile >= 90" in CBOE_EQUITY_PCR_SCORE
+
+
+def test_eia_score_case_is_hoisted_constant():
+    from sources.combiners.composite.catalog import EIA_WEEKLY_CHANGE_SCORE, SIGNALS
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    assert EIA_WEEKLY_CHANGE_SCORE in by_id["eia_crude_stocks"]["sql"]
+    assert EIA_WEEKLY_CHANGE_SCORE in by_id["eia_natgas_storage"]["sql"]
+    assert "change_pct <= -2.0" in EIA_WEEKLY_CHANGE_SCORE

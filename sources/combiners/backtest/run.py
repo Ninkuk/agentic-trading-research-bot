@@ -19,6 +19,7 @@ def run(
     harvest_vintages=fetch.harvest_vintages,
     harvest_benchmark=fetch.harvest_benchmark,
     harvest_market_obs=fetch.harvest_market_obs,
+    harvest_price_ledger=fetch.harvest_price_ledger,
 ):
     now_iso = now_iso or datetime.now(UTC).isoformat()
     conn = db.connect(db_path)
@@ -37,7 +38,9 @@ def run(
                 series = [s["series_id"] for s in catalog.REPLAY_SIGNALS]
                 n_vint = db.insert_vintages(conn, harvest_vintages(conn, series))
                 n_bench = db.insert_benchmark(
-                    conn, harvest_benchmark(conn, catalog.BENCHMARK_SERIES)
+                    conn,
+                    catalog.BENCHMARK_SERIES,
+                    harvest_benchmark(conn, catalog.BENCHMARK_SERIES),
                 )
             except Exception as e:
                 failures += 1
@@ -48,6 +51,35 @@ def run(
                 print(f"skip {catalog.FRED_DB}: {type(e).__name__}")
             finally:
                 conn.commit()
+                fetch.detach(conn)
+
+        # Asset-class proxy benchmarks (e.g. XLE) from scorer.db's price
+        # ledger, grouped by source DB. Same skip-and-continue discipline; a
+        # missing/young ledger just means thin asset-class coverage, not a
+        # crash. Counted into n_bench alongside SP500.
+        by_bench_db: dict[str, list] = {}
+        for b in catalog.CLASS_BENCHMARKS:
+            by_bench_db.setdefault(b["db"], []).append(b)
+        for db_name, benches in by_bench_db.items():
+            try:
+                fetch.attach_ro(conn, os.path.join(db_dir, db_name))
+            except Exception as e:
+                failures += 1
+                print(f"skip {db_name}: {type(e).__name__}")
+                continue
+            try:
+                got = 0
+                for b in benches:
+                    got += db.insert_benchmark(
+                        conn, b["symbol"], harvest_price_ledger(conn, b["symbol"])
+                    )
+                conn.commit()
+                n_bench += got
+            except Exception as e:
+                failures += 1
+                conn.rollback()
+                print(f"skip {db_name}: {type(e).__name__}")
+            finally:
                 fetch.detach(conn)
 
         # Non-vintage market-grain signals, grouped by source DB so each is

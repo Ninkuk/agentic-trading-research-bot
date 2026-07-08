@@ -8,6 +8,7 @@ from sources.combiners.composite.catalog import (
     CBOE_EQUITY_PCR_SCORE,
     CBOE_VIX_BACKWARDATION_SCORE,
     CBOE_VIX_SCORE,
+    EIA_WEEKLY_CHANGE_SCORE,
     FRED_CURVE_SCORE,
     FRED_HY_SPREAD_SCORE,
     NYFED_RRP_SCORE,
@@ -19,7 +20,17 @@ FRED_DB = "fred.db"
 CBOE_DB = "cboe_stats.db"
 NYFED_DB = "nyfed.db"
 TREASURY_DB = "treasury.db"
-BENCHMARK_SERIES = "SP500"  # grading spine; unrevised index closes
+EIA_DB = "eia.db"
+SCORER_DB = "scorer.db"
+BENCHMARK_SERIES = "SP500"  # default (market-grain) spine; unrevised index closes
+
+# Asset-class proxy benchmarks copied from scorer.db's permanent price ledger
+# (the only growing close history for these tickers). Deep history accrues over
+# time -- until then an asset-class replay grades few/no rows, which is correct
+# (degrades gracefully), not an error.
+CLASS_BENCHMARKS: list[dict[str, Any]] = [
+    {"symbol": "XLE", "db": SCORER_DB},  # energy proxy
+]
 
 # FRED regime signals: ALFRED-vintage replay (revision-aware; realtime_start
 # gives the exact as-of read).
@@ -105,15 +116,58 @@ MARKET_OBS_SIGNALS: list[dict[str, Any]] = [
         ),
         "score_case": CBOE_EQUITY_PCR_SCORE,
     },
+    # ---- asset-class grain (graded vs a sector proxy, not SP500) ----
+    # change_pct history is computed from eia_obs week-over-week (the source's
+    # v_weekly_change is latest-only). change_pct is stable at its report
+    # period, so it's a latest-scalar as-of read; graded vs XLE (energy).
+    {
+        "signal_id": "eia_crude_stocks",
+        "db": EIA_DB,
+        "benchmark": "XLE",
+        "harvest_sql": (
+            "SELECT o.period,"
+            " 100.0 * (o.value - p.value) / p.value AS change_pct, NULL"
+            " FROM src.eia_obs o"
+            " JOIN src.eia_obs p ON p.series_id = o.series_id"
+            " AND p.period = (SELECT MAX(p2.period) FROM src.eia_obs p2"
+            "                 WHERE p2.series_id = o.series_id AND p2.period < o.period)"
+            " WHERE o.series_id = 'WCESTUS1'"
+            " AND o.value IS NOT NULL AND p.value IS NOT NULL AND p.value != 0"
+        ),
+        "aliases": {"change_pct": "val1"},
+        "raw_expr": "change_pct",
+        "score_case": EIA_WEEKLY_CHANGE_SCORE,
+    },
+    {
+        "signal_id": "eia_natgas_storage",
+        "db": EIA_DB,
+        "benchmark": "XLE",
+        "harvest_sql": (
+            "SELECT o.period,"
+            " 100.0 * (o.value - p.value) / p.value AS change_pct, NULL"
+            " FROM src.eia_obs o"
+            " JOIN src.eia_obs p ON p.series_id = o.series_id"
+            " AND p.period = (SELECT MAX(p2.period) FROM src.eia_obs p2"
+            "                 WHERE p2.series_id = o.series_id AND p2.period < o.period)"
+            " WHERE o.series_id = 'NW2_EPG0_SWO_R48_BCF'"
+            " AND o.value IS NOT NULL AND p.value IS NOT NULL AND p.value != 0"
+        ),
+        "aliases": {"change_pct": "val1"},
+        "raw_expr": "change_pct",
+        "score_case": EIA_WEEKLY_CHANGE_SCORE,
+    },
 ]
 
 __all__ = [
     "BENCHMARK_SERIES",
     "CBOE_DB",
+    "CLASS_BENCHMARKS",
+    "EIA_DB",
     "FRED_DB",
     "HORIZONS",
     "MARKET_OBS_SIGNALS",
     "NYFED_DB",
     "REPLAY_SIGNALS",
+    "SCORER_DB",
     "TREASURY_DB",
 ]

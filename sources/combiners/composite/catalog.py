@@ -43,6 +43,13 @@ CBOE_EQUITY_PCR_SCORE = (
     "CASE WHEN pctile >= 90 THEN 2 WHEN pctile >= 75 THEN 1"
     " WHEN pctile <= 10 THEN -2 WHEN pctile <= 25 THEN -1 ELSE 0 END"
 )
+# EIA weekly inventory change (crude + natgas share the same CASE): a draw
+# (change_pct <= -2) is bullish energy, a build (>= 2) bearish. change_pct is
+# stable at its report period, so the replay harvests it keyed by period and
+# grades against the energy proxy (XLE), not SP500.
+EIA_WEEKLY_CHANGE_SCORE = (
+    "CASE WHEN change_pct <= -2.0 THEN 1 WHEN change_pct >= 2.0 THEN -1 ELSE 0 END"
+)
 
 SIGNALS: list[dict[str, Any]] = [
     # ------------------------------------------------ market grain ----
@@ -248,10 +255,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "eia.db",
         "grain": "asset_class",
         "staleness_budget_days": 10,
-        "sql": """
+        "sql": f"""
             SELECT 'energy', change_pct,
-                   CASE WHEN change_pct <= -2.0 THEN 1
-                        WHEN change_pct >= 2.0 THEN -1 ELSE 0 END,
+                   {EIA_WEEKLY_CHANGE_SCORE},
                    latest_period
             FROM src.v_weekly_change WHERE series_id = 'WCESTUS1'
         """,
@@ -261,10 +267,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "eia.db",
         "grain": "asset_class",
         "staleness_budget_days": 10,
-        "sql": """
+        "sql": f"""
             SELECT 'energy', change_pct,
-                   CASE WHEN change_pct <= -2.0 THEN 1
-                        WHEN change_pct >= 2.0 THEN -1 ELSE 0 END,
+                   {EIA_WEEKLY_CHANGE_SCORE},
                    latest_period
             FROM src.v_weekly_change
             WHERE series_id = 'NW2_EPG0_SWO_R48_BCF'
