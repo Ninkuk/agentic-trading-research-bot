@@ -48,33 +48,54 @@ def _pct(x, dp=1) -> str:
 
 
 def _badge(text: str, cls: str) -> str:
-    return f'<span class="badge {cls}">{_esc(text)}</span>'
+    """A verdict pill (`.pill.{cls}` — see _STYLE's ins/weak/watch/keep/anti rules)."""
+    return f'<span class="pill {cls}">{_esc(text)}</span>'
 
 
 def _regime_badge(regime) -> str:
-    cls = {"risk_on": "risk-on", "risk_off": "risk-off"}.get(regime or "", "mixed")
-    return _badge(regime or "unknown", cls)
+    label = {"risk_on": "risk-on", "risk_off": "risk-off", "mixed": "mixed"}.get(
+        regime or "", "unknown"
+    )
+    cls = {"risk_on": "tag-on", "risk_off": "tag-off"}.get(regime or "", "tag-dim")
+    return f'<span class="{cls}">{_esc(label)}</span>'
 
 
 def _rec_badge(rec) -> str:
     cls = {
-        "keep": "rec-keep",
-        "watch": "rec-watch",
-        "anti-signal": "rec-anti",
-        "insufficient evidence": "rec-insufficient",
-    }.get(rec or "", "rec-insufficient")
-    return _badge(rec or "?", cls)
+        "keep": "keep",
+        "watch": "watch",
+        "anti-signal": "anti",
+        "insufficient evidence": "ins",
+    }.get(rec or "", "ins")
+    return _badge(rec or "insufficient evidence", cls)
 
 
 def _reliable_badge(reliable) -> str:
-    return _badge("reliable", "ok") if reliable else _badge("thin", "dim")
+    return (
+        '<span class="tag-on">reliable</span>' if reliable else '<span class="tag-dim">thin</span>'
+    )
 
 
-def _table(headers: list[str], body_rows: list[str], empty: str = "no rows yet") -> str:
+def _table(
+    headers: list[str],
+    body_rows: list[str],
+    empty: str = "no rows yet",
+    numeric_from: int = 0,
+) -> str:
     if not body_rows:
         return f'<p class="empty">{_esc(empty)}</p>'
-    head = "".join(f"<th>{_esc(h)}</th>" for h in headers)
-    return f"<table><thead><tr>{head}</tr></thead><tbody>{''.join(body_rows)}</tbody></table>"
+    head = "".join(
+        f'<th class="num">{_esc(h)}</th>' if i >= numeric_from else f"<th>{_esc(h)}</th>"
+        for i, h in enumerate(headers)
+    )
+    table = f"<table><thead><tr>{head}</tr></thead><tbody>{''.join(body_rows)}</tbody></table>"
+    return f'<div class="twrap">{table}</div>'
+
+
+# Cell values built by our own helpers (never user/DB-controlled markup) may
+# pass through _cells unescaped; anything else is treated as plain text and
+# _esc'd. Explicit allowlist rather than "any string starting with '<'".
+_SAFE_HTML_PREFIXES = ("<span", "<div", "<svg", "<circle", "<polyline", "<p")
 
 
 def _cells(*values, numeric_from: int = 0) -> str:
@@ -82,13 +103,17 @@ def _cells(*values, numeric_from: int = 0) -> str:
     out = []
     for i, v in enumerate(values):
         cls = ' class="num"' if i >= numeric_from else ""
-        out.append(f"<td{cls}>{v if isinstance(v, str) and v.startswith('<') else _esc(v)}</td>")
+        if isinstance(v, str) and v.startswith(_SAFE_HTML_PREFIXES):
+            content = v
+        else:
+            content = _esc(v)
+        out.append(f"<td{cls}>{content}</td>")
     return "<tr>" + "".join(out) + "</tr>"
 
 
 def _stat_tiles(pairs: list[tuple[str, str]]) -> str:
     tiles = "".join(
-        f'<div class="tile"><div class="tile-v">{v}</div><div class="tile-k">{_esc(k)}</div></div>'
+        f'<div class="tile"><div class="v">{v}</div><div class="k">{_esc(k)}</div></div>'
         for k, v in pairs
     )
     return f'<div class="tiles">{tiles}</div>'
@@ -163,10 +188,10 @@ def _scorecard(conn, now_iso) -> str:
             _pct(r["coverage"]),
             "✓" if r["in_portfolio"] else "",
             numeric_from=1,
-        ).replace("<tr>", '<tr class="flagged">' if r["symbol"] in flagged else "<tr>")
+        ).replace("<tr>", '<tr class="flag">' if r["symbol"] in flagged else "<tr>")
         for r in rows
     ]
-    return _table(["symbol", "score", "total", "coverage", "held"], body)
+    return _table(["symbol", "score", "total", "coverage", "held"], body, numeric_from=1)
 
 
 def _signal_efficacy(conn, now_iso) -> str:
@@ -192,6 +217,7 @@ def _signal_efficacy(conn, now_iso) -> str:
         ["signal", "via", "horizon", "n", "dir excess", "hit rate", ""],
         body,
         empty="no matured signal outcomes yet",
+        numeric_from=2,
     )
 
 
@@ -217,6 +243,7 @@ def _bucket_performance(conn, now_iso) -> str:
         ["bucket", "horizon", "n", "fwd return", "excess", "hit rate", ""],
         body,
         empty="no matured buckets yet",
+        numeric_from=1,
     )
 
 
@@ -240,6 +267,7 @@ def _human_filter(conn, now_iso) -> str:
         ["response", "horizon", "n", "dir excess", "fwd return"],
         body,
         empty="no matured flagged opinions yet",
+        numeric_from=1,
     )
 
 
@@ -272,6 +300,7 @@ def _signal_recommendation(conn, now_iso) -> str:
         ["signal", "via", "horizon", "n_bench", "dir excess", "hit-rate 95% CI", "verdict"],
         body,
         empty="insufficient evidence for every signal (young scorer) — expected",
+        numeric_from=2,
     )
 
 
@@ -287,13 +316,14 @@ def _book_heat(conn, now_iso) -> str:
     if not r:
         return '<p class="empty">no advisor snapshot yet</p>'
     failed = r["sources_failed"] or 0
+    failed_cls = "tag-off" if failed else "tag-dim"
     return _stat_tiles(
         [
             ("positions", str(r["positions"] or 0)),
             ("book heat", _pct(r["heat_pct"], 2)),
             ("coverage", _num(r["heat_coverage"], 2)),
             ("equity", f"${_num(r['equity'], 0)}"),
-            ("sources failed", _badge(str(failed), "red" if failed else "dim")),
+            ("sources failed", f'<span class="{failed_cls}">{failed}</span>'),
         ]
     )
 
@@ -313,7 +343,7 @@ def _group_heat(conn, now_iso) -> str:
         )
         for r in rows
     ]
-    return _table(["bet", "members", "symbols", "heat $", "heat %"], body)
+    return _table(["bet", "members", "symbols", "heat $", "heat %"], body, numeric_from=1)
 
 
 def _disagreements(conn, now_iso) -> str:
@@ -325,12 +355,12 @@ def _disagreements(conn, now_iso) -> str:
             r["symbol"],
             f"{r['score_sum']:+d}",
             r["group_name"] or "",
-            _badge("STRONG", "red") if r["strong"] else _badge("weak", "dim"),
+            _badge("STRONG", "anti") if r["strong"] else _badge("weak", "weak"),
             numeric_from=1,
         )
         for r in rows
     ]
-    return _table(["symbol", "score", "group", ""], body, empty="no disagreements")
+    return _table(["symbol", "score", "group", ""], body, empty="no disagreements", numeric_from=1)
 
 
 def _size_caps(conn, now_iso) -> str:
@@ -355,6 +385,7 @@ def _size_caps(conn, now_iso) -> str:
         ["symbol", "dir", "score", "cap shares", "cap $", "group", "bp?"],
         body,
         empty="no caps tonight",
+        numeric_from=2,
     )
 
 
