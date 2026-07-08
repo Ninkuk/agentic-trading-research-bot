@@ -2,17 +2,7 @@
 stocks/etfs (ATR + close), and scorer (efficacy). No network anywhere in
 this package. Every reader expects its source attached as `src`."""
 
-import os
-
-
-def attach_ro(conn, db_path: str, alias: str = "src") -> None:
-    if not os.path.exists(db_path):
-        raise FileNotFoundError(db_path)
-    conn.execute(f"ATTACH DATABASE ? AS {alias}", (f"file:{db_path}?mode=ro",))
-
-
-def detach(conn, alias: str = "src") -> None:
-    conn.execute(f"DETACH DATABASE {alias}")
+from sources.common.dbattach import attach_ro, detach  # noqa: F401  (re-exported)
 
 
 def read_composite_header(conn):

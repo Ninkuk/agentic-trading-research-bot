@@ -1,20 +1,9 @@
 """Pure extraction against ATTACHed source DBs. No network anywhere in
 this package — the combiner's external feed is the local data/ dir."""
 
-import os
 from datetime import date
 
-
-def attach_ro(conn, db_path: str, alias: str = "src") -> None:
-    """Attach a source DB read-only. The connection must have been opened
-    with uri=True or the mode=ro URI is rejected by SQLite."""
-    if not os.path.exists(db_path):
-        raise FileNotFoundError(db_path)
-    conn.execute(f"ATTACH DATABASE ? AS {alias}", (f"file:{db_path}?mode=ro",))
-
-
-def detach(conn, alias: str = "src") -> None:
-    conn.execute(f"DETACH DATABASE {alias}")
+from sources.common.dbattach import attach_ro, detach  # noqa: F401  (re-exported)
 
 
 def staleness_days(today: str, obs_date):
