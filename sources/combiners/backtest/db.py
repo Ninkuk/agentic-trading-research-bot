@@ -11,6 +11,7 @@ import sqlite3
 from datetime import datetime, timedelta
 
 from sources.combiners.backtest import catalog
+from sources.combiners.scorer.db import RELIABLE_MIN_N, _wilson
 
 _TABLES = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -38,6 +39,10 @@ CREATE TABLE IF NOT EXISTS benchmark_closes (
     close REAL NOT NULL
 );
 """
+
+
+def _horizons_union() -> str:
+    return " UNION ALL ".join(f"SELECT {h} AS horizon" for h in catalog.HORIZONS)
 
 
 def _flags_select(signal: dict) -> str:
@@ -73,6 +78,56 @@ CROSS JOIN (SELECT DISTINCT series_id FROM signal_vintages) s;
 DROP VIEW IF EXISTS v_replay_flags;
 CREATE VIEW v_replay_flags AS
 {flags};
+
+-- Benchmark spine with row numbers: horizons step in TRADING days.
+DROP VIEW IF EXISTS v_spine;
+CREATE VIEW v_spine AS
+SELECT date, close, ROW_NUMBER() OVER (ORDER BY date) AS rn
+FROM benchmark_closes;
+
+-- Forward benchmark returns per decision date x horizon. Entry is the
+-- first close STRICTLY after asof_date (same no-overnight-look-ahead rule
+-- as scorer's entry_for); exit is `horizon` spine rows after entry.
+-- Unmatured dates yield NULL via LEFT JOIN.
+DROP VIEW IF EXISTS v_replay_returns;
+CREATE VIEW v_replay_returns AS
+SELECT d.date AS asof_date, h.horizon,
+       e.date AS entry_date, e.close AS entry_close,
+       x.date AS exit_date, x.close AS exit_close,
+       CASE WHEN x.close IS NOT NULL AND e.close IS NOT NULL
+            THEN x.close / e.close - 1 END AS fwd_return
+FROM v_spine d
+CROSS JOIN ({_horizons_union()}) h
+LEFT JOIN v_spine e ON e.rn = d.rn + 1
+LEFT JOIN v_spine x ON x.rn = d.rn + 1 + h.horizon;
+
+-- Hit-rate scoreboard, same column shape as scorer v_signal_efficacy:
+-- hit = sign agreement between flag and forward benchmark return.
+-- Neutral (score 0) days form their own direction group with NULL hits —
+-- reported as base rate, excluded from grading.
+DROP VIEW IF EXISTS v_replay_efficacy;
+CREATE VIEW v_replay_efficacy AS
+SELECT signal_id, direction, horizon,
+       COUNT(*) AS n_days,
+       AVG(fwd_return) AS avg_fwd_return,
+       AVG(hit) AS hit_rate,
+       COUNT(hit) AS n_bench,
+       {_wilson("-")} AS hit_ci_lo,
+       {_wilson("+")} AS hit_ci_hi,
+       (COUNT(hit) >= {RELIABLE_MIN_N}) AS reliable
+FROM (
+    SELECT f.signal_id,
+           CASE WHEN f.score < 0 THEN 'bearish'
+                WHEN f.score > 0 THEN 'bullish' ELSE 'neutral' END AS direction,
+           r.horizon, r.fwd_return,
+           CASE WHEN f.score = 0 OR r.fwd_return IS NULL THEN NULL
+                WHEN f.score < 0 AND r.fwd_return < 0 THEN 1
+                WHEN f.score > 0 AND r.fwd_return > 0 THEN 1
+                ELSE 0 END AS hit
+    FROM v_replay_flags f
+    JOIN v_replay_returns r ON r.asof_date = f.asof_date
+)
+GROUP BY signal_id, direction, horizon;
 """
 
 

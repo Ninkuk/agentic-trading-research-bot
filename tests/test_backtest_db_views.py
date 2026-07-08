@@ -78,3 +78,66 @@ def test_flags_exclude_dates_with_no_published_value(conn):
     vintage(conn, "T10Y2Y", "2025-01-09", "2025-01-15", 0.5)  # not yet published
     rows = conn.execute("SELECT * FROM v_replay_flags").fetchall()
     assert rows == []
+
+
+# ---- v_replay_returns ------------------------------------------------
+
+
+def test_returns_entry_strictly_after_and_horizon_offsets(conn):
+    spine(conn, [(f"2025-01-{d:02d}", 100.0 + d) for d in range(1, 31)])
+    row = conn.execute(
+        "SELECT entry_date, exit_date, fwd_return FROM v_replay_returns"
+        " WHERE asof_date = '2025-01-01' AND horizon = 5"
+    ).fetchone()
+    assert row[0] == "2025-01-02"  # first close STRICTLY after D
+    assert row[1] == "2025-01-07"  # 5 trading rows after entry
+    assert row[2] == pytest.approx(107.0 / 102.0 - 1)
+
+
+def test_returns_unmatured_dates_yield_null(conn):
+    spine(conn, [("2025-01-01", 100.0), ("2025-01-02", 101.0)])
+    row = conn.execute(
+        "SELECT exit_date, fwd_return FROM v_replay_returns"
+        " WHERE asof_date = '2025-01-01' AND horizon = 5"
+    ).fetchone()
+    assert row == (None, None)
+
+
+# ---- v_replay_efficacy -----------------------------------------------
+
+
+def test_efficacy_grades_bearish_flag_against_falling_benchmark(conn):
+    # 30 falling closes; curve inverted from day one -> every matured
+    # bearish day is a hit at every horizon.
+    spine(conn, [(f"2025-01-{d:02d}", 200.0 - d) for d in range(1, 31)])
+    vintage(conn, "T10Y2Y", "2025-01-01", "2025-01-01", -0.5)
+    row = conn.execute(
+        "SELECT n_bench, hit_rate, reliable FROM v_replay_efficacy"
+        " WHERE signal_id = 'fred_curve' AND direction = 'bearish' AND horizon = 5"
+    ).fetchone()
+    # 30 spine days; asof d has entry d+1, exit d+6 -> matured for d in 1..24
+    assert row[0] == 24
+    assert row[1] == pytest.approx(1.0)
+    assert row[2] == 0  # 24 < RELIABLE_MIN_N (30)
+
+
+def test_efficacy_wilson_ci_brackets_hit_rate(conn):
+    spine(conn, [(f"2025-01-{d:02d}", 200.0 - d) for d in range(1, 31)])
+    vintage(conn, "T10Y2Y", "2025-01-01", "2025-01-01", -0.5)
+    lo, hi = conn.execute(
+        "SELECT hit_ci_lo, hit_ci_hi FROM v_replay_efficacy"
+        " WHERE signal_id = 'fred_curve' AND direction = 'bearish' AND horizon = 5"
+    ).fetchone()
+    assert 0.0 < lo < 1.0  # Wilson never collapses to zero width on all-hit
+    assert hi >= 1.0 or hi == pytest.approx(1.0, abs=1e-9)
+
+
+def test_efficacy_neutral_rows_reported_but_ungraded(conn):
+    spine(conn, [(f"2025-01-{d:02d}", 100.0 + d) for d in range(1, 31)])
+    vintage(conn, "T10Y2Y", "2025-01-01", "2025-01-01", 0.5)  # not inverted -> 0
+    row = conn.execute(
+        "SELECT n_days, n_bench, hit_rate FROM v_replay_efficacy"
+        " WHERE signal_id = 'fred_curve' AND direction = 'neutral' AND horizon = 5"
+    ).fetchone()
+    assert row[0] > 0  # reported
+    assert row[1] == 0 and row[2] is None  # excluded from grading
