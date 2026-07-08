@@ -303,30 +303,59 @@ def _regime_timeline(conn, now_iso) -> str:
     return _sparkline_svg([(r["regime"], r["vix"]) for r in rows])
 
 
-def _scorecard(conn, now_iso) -> str:
-    rows = conn.execute(
-        "SELECT symbol, score_sum, total, coverage, in_portfolio,"
-        " bullish, bearish, worst_staleness_days"
-        " FROM v_latest_scorecard ORDER BY ABS(score_sum) DESC LIMIT 15"
-    ).fetchall()
-    flagged = {r["symbol"] for r in conn.execute("SELECT symbol FROM v_flagged")}
-    body = [
-        _cells(
-            r["symbol"],
-            _score_cell(r["score_sum"], r["bullish"], r["bearish"], r["symbol"] in flagged),
-            f"{r['bullish']} / {r['bearish']}",
-            _pct(r["coverage"]),
-            "—" if r["worst_staleness_days"] is None else f"{r['worst_staleness_days']:.1f}d",
-            "✓" if r["in_portfolio"] else "",
-            numeric_from=1,
-        ).replace("<tr>", '<tr class="flag">' if r["symbol"] in flagged else "<tr>")
-        for r in rows
-    ]
-    return _table(
-        ["symbol", "score", "split (bull/bear)", "coverage", "data age", "held"],
-        body,
+_SCORECARD_HEADERS = ["symbol", "score", "split (bull/bear)", "coverage", "data age", "held"]
+_SCORECARD_COLS = (
+    "symbol, score_sum, total, coverage, in_portfolio, bullish, bearish, worst_staleness_days"
+)
+
+
+def _scorecard_row(r, flagged: set) -> str:
+    cell = _cells(
+        r["symbol"],
+        _score_cell(r["score_sum"], r["bullish"], r["bearish"], r["symbol"] in flagged),
+        f"{r['bullish']} / {r['bearish']}",
+        _pct(r["coverage"]),
+        "—" if r["worst_staleness_days"] is None else f"{r['worst_staleness_days']:.1f}d",
+        "✓" if r["in_portfolio"] else "",
         numeric_from=1,
     )
+    return cell.replace("<tr>", '<tr class="flag">') if r["symbol"] in flagged else cell
+
+
+def _scorecard(conn, now_iso) -> str:
+    headline_rows = conn.execute(
+        f"SELECT {_SCORECARD_COLS} FROM v_latest_scorecard ORDER BY ABS(score_sum) DESC LIMIT 15"
+    ).fetchall()
+    flagged = {r["symbol"] for r in conn.execute("SELECT symbol FROM v_flagged")}
+
+    # v_flagged (|score_sum| >= 4 AND total >= 3) is not implied by the
+    # headline's ORDER BY ABS(score_sum) DESC LIMIT 15 — total is a second,
+    # independent gate, so a high-|score_sum|-but-low-total unflagged row can
+    # outrank a flagged one and push it past rank 15. Union in any flagged
+    # symbol the headline query missed, rather than raising the limit.
+    headline_symbols = {r["symbol"] for r in headline_rows}
+    missing_flagged = flagged - headline_symbols
+    appended_rows: list = []
+    if missing_flagged:
+        placeholders = ",".join("?" for _ in missing_flagged)
+        appended_rows = conn.execute(
+            f"SELECT {_SCORECARD_COLS} FROM v_latest_scorecard"
+            f" WHERE symbol IN ({placeholders}) ORDER BY ABS(score_sum) DESC",
+            tuple(missing_flagged),
+        ).fetchall()
+
+    body = [_scorecard_row(r, flagged) for r in (*headline_rows, *appended_rows)]
+    headline = _table(_SCORECARD_HEADERS, body, numeric_from=1)
+
+    all_rows = conn.execute(
+        f"SELECT {_SCORECARD_COLS} FROM v_latest_scorecard ORDER BY ABS(score_sum) DESC"
+    ).fetchall()
+    all_body = [_scorecard_row(r, flagged) for r in all_rows]
+    expander = (
+        f"<details><summary>Show all {len(all_rows)} scored tickers</summary>"
+        f"{_table(_SCORECARD_HEADERS, all_body, numeric_from=1)}</details>"
+    )
+    return headline + expander
 
 
 def _signal_efficacy(conn, now_iso) -> str:

@@ -58,7 +58,12 @@ SELECT *, (score_sum <= -4 AND total >= 3) AS strong FROM v_latest_heat WHERE sc
 """
 
 
-def _make_composite_db(path, regime="risk_on", vix=16.1, symbol=None, score_sum=5):
+def _make_composite_db(path, regime="risk_on", vix=16.1, symbol=None, score_sum=5, tickers=None):
+    """`tickers` (extra to the single `symbol`/`score_sum` pair) is a list of
+    dicts with keys symbol, score_sum, total, bullish, bearish, in_portfolio
+    (last defaults to 0) — for fixtures that need many scorecard rows with
+    independently-controlled total (the flagged-truncation bug needs total
+    to diverge from |score_sum| ranking)."""
     conn = sqlite3.connect(path)
     conn.executescript(_COMPOSITE_SCHEMA)
     conn.execute(
@@ -74,6 +79,18 @@ def _make_composite_db(path, regime="risk_on", vix=16.1, symbol=None, score_sum=
         conn.execute(
             "INSERT INTO ticker_scores VALUES (1, ?, 5, 0, 5, ?, 0.417, 0.5, 1)",
             (symbol, score_sum),
+        )
+    for t in tickers or []:
+        conn.execute(
+            "INSERT INTO ticker_scores VALUES (1, ?, ?, ?, ?, ?, 0.417, 0.5, ?)",
+            (
+                t["symbol"],
+                t["bullish"],
+                t["bearish"],
+                t["total"],
+                t["score_sum"],
+                t.get("in_portfolio", 0),
+            ),
         )
     conn.commit()
     conn.close()
@@ -197,6 +214,44 @@ def test_regime_expander_shows_raw_curve_spread(tmp_path):
     assert "-0.10" in html or "-0.1" in html
     assert "<summary>All regime inputs</summary>" in html
     assert "All 10 regime inputs" not in html
+
+
+def test_flagged_ticker_never_truncated(tmp_path):
+    # 15 unflagged rows with a HIGHER |score_sum| (5) but total=2 (below the
+    # v_flagged total>=3 gate) outrank a flagged ticker (|score_sum|=4,
+    # total=3) under ORDER BY ABS(score_sum) DESC LIMIT 15 -> without the
+    # union fix, the flagged ticker falls to rank 16 and is dropped.
+    unflagged = [
+        {"symbol": f"U{i}", "score_sum": 5, "total": 2, "bullish": 2, "bearish": 0}
+        for i in range(15)
+    ]
+    flagged_ticker = {"symbol": "FLAGD", "score_sum": 4, "total": 3, "bullish": 3, "bearish": 0}
+    _make_composite_db(tmp_path / "composite.db", symbol=None, tickers=[*unflagged, flagged_ticker])
+    conn = dashboard._ro(str(tmp_path), "composite.db")
+    try:
+        html = dashboard._scorecard(conn, NOW)
+    finally:
+        conn.close()
+    # Isolate the headline table from the full-universe expander below it —
+    # the expander always has every row, so checking the whole `html` string
+    # would pass even without the union fix.
+    headline_html = html.split("<details>")[0]
+    assert "FLAGD" in headline_html
+
+
+def test_scorecard_expander_counts_real_rows(tmp_path):
+    tickers = [
+        {"symbol": f"T{i}", "score_sum": i % 5, "total": 3, "bullish": 2, "bearish": 1}
+        for i in range(20)
+    ]
+    _make_composite_db(tmp_path / "composite.db", symbol=None, tickers=tickers)
+    conn = dashboard._ro(str(tmp_path), "composite.db")
+    try:
+        html = dashboard._scorecard(conn, NOW)
+    finally:
+        conn.close()
+    assert "Show all 20 scored tickers" in html
+    assert "214" not in html
 
 
 def test_section_wrapper_keeps_plain_id():
