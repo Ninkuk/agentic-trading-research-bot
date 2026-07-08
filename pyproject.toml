@@ -44,7 +44,7 @@ ignore = [
 
 [tool.mypy]
 python_version = "3.12"
-files = ["sources", "main.py", "registry.py"]
+files = ["sources", "main.py", "registry.py", "deploy"]
 check_untyped_defs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
