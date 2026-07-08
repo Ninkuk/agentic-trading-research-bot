@@ -40,6 +40,7 @@ summer open (6:30am Phoenix).
 | Job | When | Notes |
 |---|---|---|
 | `fred-vintages` | Sat 7:00am | `fred --vintages`: full ALFRED revision history into `observation_vintages` (the backtest combiner's point-in-time store + `fred.v_asof`). Windowed+paginated fetch (~80 FRED calls, ~1.7M rows re-upserted, seconds). Weekly not nightly — vintages grow one date/day, backtesting reads them occasionally, so a nightly full re-pull would be wasteful. FRED endpoint, no SEC rate-limit interaction with Sat 6am `fundamentals` |
+| `backtest` | Sat 7:30am | 4th combiner: replays composite's two FRED regime signals point-in-time vs forward SP500 returns into `data/backtest.db` (`v_replay_efficacy`). 30min after `fred-vintages` — its only inputs (vintages + SP500 closes) refresh there, so weekly not nightly (nightly would recompute identical output 6 days in 7). Reads `fred.db` read-only; `--keep-days 365` bounds snapshot headers only |
 | `econ-calendar` | Mon 5:00am | FRED release dates |
 | `fomc` | Mon 5:10am | Fed calendar page |
 | `ats` | Mon 6:45pm | FINRA ATS weekly aggregates (published Mondays, 2–4wk lag) |

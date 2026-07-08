@@ -94,6 +94,11 @@ JOBS = {
     # fresh without a wasteful nightly re-pull. FRED endpoint — no SEC
     # rate-limit interaction with the Sat 6am fundamentals job.
     "fred-vintages": (job("fred", "--vintages"), weekly([6], 7, 0)),
+    # The 4th combiner: point-in-time backtest of composite's FRED regime
+    # signals vs forward SP500 returns. Weekly, 30min after fred-vintages —
+    # its only inputs (ALFRED vintages + SP500 closes in fred.db) refresh
+    # there, so nightly would recompute identical output 6 days in 7.
+    "backtest": (job("backtest", "--keep-days", "365"), weekly([6], 7, 30)),
     # -- monthly --
     "market-calendar": (job("market_calendar"), monthly([1], 5, 0)),
     "usda-nass": (job("usda"), monthly([2], 10, 15)),

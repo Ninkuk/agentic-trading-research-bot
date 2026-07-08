@@ -1,7 +1,8 @@
-"""Point-in-time replay proof: copy vintage + benchmark rows out of
-fred.db, let the views grade what composite's FRED regime signals would
-have said each historical day. Manual analysis tool — deliberately
-unscheduled (see docs/SCHEDULE.md)."""
+"""Point-in-time replay: copy vintage + benchmark rows out of fred.db, let
+the views grade what composite's FRED regime signals would have said each
+historical day. The 4th combiner — scheduled weekly (Sat, after
+fred-vintages), not nightly, because its only inputs (ALFRED vintages +
+SP500 closes) refresh weekly there (see docs/SCHEDULE.md)."""
 
 import argparse
 import os

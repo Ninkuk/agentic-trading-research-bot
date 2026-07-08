@@ -30,7 +30,11 @@ Signals can only be evaluated forward from the day they shipped. Two blockers:
   exactly what the deferred bar store will provide).
 - No changes to composite's or scorer's runtime behavior. The one composite edit
   (§ 2) is byte-identical SQL output.
-- No scheduled slot for `backtest` — it is a manual analysis tool, not a collector.
+- No new *nightly* slot for `backtest` — it is scheduled **weekly** (Sat, after
+  `fred-vintages`), because its inputs refresh weekly; a nightly run would
+  recompute identical output six days in seven. (Corrected post-ship: an earlier
+  draft left it unscheduled/manual, which is inconsistent with this project's
+  everything-on-launchd design.)
 
 ## 1. FRED changes
 
@@ -239,9 +243,8 @@ Offline, mirroring layers:
 
 1. Land code + tests (all four gates green).
 2. One-shot vintage backfill; sanity-check counts (§ 1).
-3. Re-run `deploy/launchd/install.py` so the nightly `fred` job carries
-   `--vintages`; update `docs/SCHEDULE.md` (fred job note + a "manual tools"
-   note that `backtest` is unscheduled by design).
+3. Re-run `deploy/launchd/install.py` to install the weekly `fred-vintages`
+   and `backtest` slots (Sat 7:00 / 7:30am); update `docs/SCHEDULE.md`.
 4. Run `main.py backtest --db data/backtest.db`; read `v_replay_efficacy` —
    the multi-year readout is the roadmap proof. Record the headline numbers in
    the ROADMAP prune note.
