@@ -529,21 +529,94 @@ def _render_section(sid, title, db_name, fn, data_dir, now_iso) -> str:
     return f'<section id="{sid}"><h2>{_esc(title)}</h2>{body}</section>'
 
 
+def _edition_date(now_iso: str) -> str:
+    """'2026 · 07 · 08' (hair-space separated, mockup style). Total: any
+    unparseable now_iso degrades to its bare date-ish prefix rather than
+    raising — the masthead must always render something."""
+    try:
+        dt = datetime.fromisoformat(now_iso)
+    except Exception:
+        return _esc(now_iso[:10])
+    sep = "&#8202;·&#8202;"
+    return f"{dt.year:04d}{sep}{dt.month:02d}{sep}{dt.day:02d}"
+
+
+def _snapshot_number(data_dir: str) -> str | None:
+    """The composite.db snapshot id for the masthead. Guarded on its own:
+    a missing DB, no rows, or a NULL MAX(id) all mean "omit the snapshot
+    line" — never fabricate or print a placeholder number."""
+    try:
+        conn = _ro(data_dir, "composite.db")
+        try:
+            row = conn.execute("SELECT MAX(id) FROM snapshots").fetchone()
+        finally:
+            conn.close()
+    except Exception:
+        return None
+    if row is None or row[0] is None:
+        return None
+    return str(row[0])
+
+
 def build_page(data_dir: str, now_iso: str) -> str:
+    edition_lines = [f"Edition <b>{_edition_date(now_iso)}</b>"]
+    snapshot_no = _snapshot_number(data_dir)
+    if snapshot_no is not None:
+        edition_lines.append(f"Snapshot <b>#{_esc(snapshot_no)}</b>")
+    edition_lines.append("Nothing here places a trade")
+
+    # Hero prose lands in Step 6 (_hero_read); a total, honest placeholder
+    # until then so the page always renders.
+    hero_body = '<p class="read">Tonight\'s summary is unavailable — see the sections below.</p>'
+
     sections = "\n".join(
         _render_section(sid, title, db_name, fn, data_dir, now_iso)
         for sid, title, db_name, fn in SECTIONS
     )
+
+    gloss = """<details style="margin-top:26px">
+    <summary>The whole vocabulary, in one place</summary>
+    <dl class="gloss">
+      <dt>regime</dt><dd>The market's risk mood — risk-on, risk-off, or mixed — read from ten macro inputs.</dd>
+      <dt>VIX</dt><dd>An index of expected volatility. A fear gauge: higher means more fear priced in.</dd>
+      <dt>score</dt><dd>Sum of each signal's bullish (positive) and bearish (negative) reading for one stock.</dd>
+      <dt>split (bull/bear)</dt><dd>How many signals voted each way. Can differ from the score, which is weighted.</dd>
+      <dt>coverage</dt><dd>Share of all applicable signals that actually had an opinion on this stock.</dd>
+      <dt>data age</dt><dd>How old the freshest-to-stalest input behind this row is, in days.</dd>
+      <dt>held</dt><dd>A check mark means you currently own this stock.</dd>
+      <dt>flagged &#9733;</dt><dd>Strong agreement: absolute score of 4 or more, with at least 3 signals voting.</dd>
+      <dt>excess vs SPY</dt><dd>Average return above the S&amp;P 500 benchmark, in the direction the signal pointed.</dd>
+      <dt>hit-rate &amp; 95% range</dt><dd>How often it beat the benchmark, and where the true rate likely sits. Wide range = still noisy.</dd>
+      <dt>book at risk</dt><dd>Share of account equity you'd lose if every stop triggered at once.</dd>
+    </dl>
+  </details>"""
+
+    body_html = (
+        '<main class="page">\n'
+        '<header class="mast">\n'
+        "<div>\n"
+        '<h1 class="name">The Nightly <em>Almanac</em></h1>\n'
+        '<div class="tag">Signals, sizing &amp; reliability — read before the weekly reweighting</div>\n'
+        "</div>\n"
+        f'<div class="edition">{"<br>".join(edition_lines)}</div>\n'
+        "</header>\n"
+        '<div class="rule-thin"></div>\n'
+        '<section aria-labelledby="read-h">\n'
+        '<h2 id="read-h" class="eyebrow">Tonight\'s read</h2>\n'
+        f"{hero_body}\n"
+        "</section>\n"
+        f"{sections}\n"
+        f"{gloss}\n"
+        "</main>\n"
+    )
+
     return (
         "<!doctype html>\n"
         '<html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
         "<title>Trading Bot Dashboard</title>"
         f"<style>{_STYLE}</style></head><body>"
-        "<h1>Trading Bot Dashboard</h1>"
-        f'<p class="sub">generated {_esc(now_iso)} · snapshot of last night\'s runs'
-        " · re-weighting is a human decision</p>"
-        f"{sections}"
+        f"{body_html}"
         "</body></html>\n"
     )
 
