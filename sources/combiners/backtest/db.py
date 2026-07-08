@@ -10,6 +10,8 @@ tool — deliberately unscheduled."""
 import sqlite3
 from datetime import datetime, timedelta
 
+from sources.combiners.backtest import catalog
+
 _TABLES = """
 CREATE TABLE IF NOT EXISTS snapshots (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,6 +40,42 @@ CREATE TABLE IF NOT EXISTS benchmark_closes (
 """
 
 
+def _flags_select(signal: dict) -> str:
+    return (
+        f"SELECT asof_date, '{signal['signal_id']}' AS signal_id, value,\n"
+        f"       {signal['score_case']} AS score\n"
+        f"FROM v_pit_signal\n"
+        f"WHERE series_id = '{signal['series_id']}' AND value IS NOT NULL"
+    )
+
+
+def _views() -> str:
+    flags = "\nUNION ALL\n".join(_flags_select(s) for s in catalog.REPLAY_SIGNALS)
+    return f"""
+-- For every (benchmark trading date D, replay series): the value as KNOWN
+-- on D — the latest observation date having any vintage published on or
+-- before D, valued at its newest such vintage. NULL when nothing was
+-- published yet (LEFT-JOIN-shaped miss, not an error).
+DROP VIEW IF EXISTS v_pit_signal;
+CREATE VIEW v_pit_signal AS
+SELECT d.date AS asof_date, s.series_id,
+       (SELECT v.value FROM signal_vintages v
+         WHERE v.series_id = s.series_id
+           AND v.realtime_start <= d.date
+           AND v.value IS NOT NULL
+         ORDER BY v.date DESC, v.realtime_start DESC
+         LIMIT 1) AS value
+FROM benchmark_closes d
+CROSS JOIN (SELECT DISTINCT series_id FROM signal_vintages) s;
+
+-- The flag composite WOULD have emitted on each date, via the identical
+-- imported CASE expressions (see catalog.REPLAY_SIGNALS).
+DROP VIEW IF EXISTS v_replay_flags;
+CREATE VIEW v_replay_flags AS
+{flags};
+"""
+
+
 def connect(path: str) -> sqlite3.Connection:
     # uri=True so ATTACH 'file:...?mode=ro' works (plain paths still fine).
     conn = sqlite3.connect(path, uri=True)
@@ -48,6 +86,7 @@ def connect(path: str) -> sqlite3.Connection:
 def ensure_schema(conn) -> None:
     """Tables (CREATE IF NOT EXISTS), then views (DROP+CREATE)."""
     conn.executescript(_TABLES)
+    conn.executescript(_views())
     conn.commit()
 
 
