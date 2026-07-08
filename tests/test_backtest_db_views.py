@@ -11,8 +11,15 @@ def conn():
     c.close()
 
 
-def spine(c, rows):
-    c.executemany("INSERT INTO benchmark_closes (date, close) VALUES (?, ?)", rows)
+def spine(c, rows, benchmark="SP500"):
+    c.executemany(
+        "INSERT INTO benchmark_closes (benchmark, date, close) VALUES (?, ?, ?)",
+        [(benchmark, d, close) for d, close in rows],
+    )
+
+
+def bench(c, benchmark, rows):
+    spine(c, rows, benchmark=benchmark)
 
 
 def vintage(c, series, date, realtime_start, value):
@@ -78,6 +85,154 @@ def test_flags_exclude_dates_with_no_published_value(conn):
     vintage(conn, "T10Y2Y", "2025-01-09", "2025-01-15", 0.5)  # not yet published
     rows = conn.execute("SELECT * FROM v_replay_flags").fetchall()
     assert rows == []
+
+
+# ---- market_obs (non-vintage market-grain signals) -------------------
+
+
+def market_obs(c, signal_id, obs_date, val1, val2=None):
+    c.execute(
+        "INSERT INTO market_obs (signal_id, obs_date, val1, val2) VALUES (?, ?, ?, ?)",
+        (signal_id, obs_date, val1, val2),
+    )
+
+
+def test_market_pit_picks_latest_observation_on_or_before_asof(conn):
+    spine(conn, [("2025-01-10", 100.0)])
+    market_obs(conn, "cboe_vix", "2025-01-08", 22.0)
+    market_obs(conn, "cboe_vix", "2025-01-09", 26.0)  # newest <= asof
+    market_obs(conn, "cboe_vix", "2025-01-11", 40.0)  # future: invisible
+    row = conn.execute(
+        "SELECT val1 FROM v_pit_market WHERE asof_date = '2025-01-10' AND signal_id = 'cboe_vix'"
+    ).fetchone()
+    assert row == (26.0,)
+
+
+def test_market_flags_reuse_composite_vix_case(conn):
+    # 26 -> -1 (>=25), 12 -> +1 (<15), 20 -> 0
+    spine(conn, [("2025-01-10", 100.0), ("2025-01-11", 100.0), ("2025-01-12", 100.0)])
+    market_obs(conn, "cboe_vix", "2025-01-10", 26.0)
+    market_obs(conn, "cboe_vix", "2025-01-11", 12.0)
+    market_obs(conn, "cboe_vix", "2025-01-12", 20.0)
+    rows = dict(
+        conn.execute("SELECT asof_date, score FROM v_replay_flags WHERE signal_id = 'cboe_vix'")
+    )
+    assert rows == {"2025-01-10": -1, "2025-01-11": 1, "2025-01-12": 0}
+
+
+def test_market_backwardation_uses_both_columns(conn):
+    # close > vix3m -> -2 (backwardation); else 0
+    spine(conn, [("2025-01-10", 100.0), ("2025-01-11", 100.0)])
+    market_obs(conn, "cboe_vix_backwardation", "2025-01-10", 20.0, 18.0)  # 20>18 -> -2
+    market_obs(conn, "cboe_vix_backwardation", "2025-01-11", 15.0, 18.0)  # 15<18 -> 0
+    rows = dict(
+        conn.execute(
+            "SELECT asof_date, score FROM v_replay_flags WHERE signal_id = 'cboe_vix_backwardation'"
+        )
+    )
+    assert rows == {"2025-01-10": -2, "2025-01-11": 0}
+
+
+def test_market_liquidity_signals_reuse_composite_cases(conn):
+    # nyfed_rrp: falling RRP (change<0) -> +1 bullish; rising -> -1.
+    # tsy_tga: falling TGA (wow_change<0) -> +1 bullish; rising -> -1.
+    spine(conn, [("2025-01-10", 100.0), ("2025-01-11", 100.0)])
+    market_obs(conn, "nyfed_rrp", "2025-01-10", -5.0)  # falling -> +1
+    market_obs(conn, "nyfed_rrp", "2025-01-11", 5.0)  # rising -> -1
+    market_obs(conn, "tsy_tga", "2025-01-10", -3.0)  # falling -> +1
+    market_obs(conn, "tsy_tga", "2025-01-11", 3.0)  # rising -> -1
+    rows = {
+        (r[0], r[1]): r[2]
+        for r in conn.execute(
+            "SELECT signal_id, asof_date, score FROM v_replay_flags"
+            " WHERE signal_id IN ('nyfed_rrp', 'tsy_tga')"
+        )
+    }
+    assert rows[("nyfed_rrp", "2025-01-10")] == 1
+    assert rows[("nyfed_rrp", "2025-01-11")] == -1
+    assert rows[("tsy_tga", "2025-01-10")] == 1
+    assert rows[("tsy_tga", "2025-01-11")] == -1
+
+
+def test_market_pctile_high_when_latest_is_window_max(conn):
+    # ascending equity_pcr -> latest (highest date) is the window max ->
+    # pctile 100 -> score +2 (contrarian: panicky put buying = bullish)
+    spine(conn, [("2025-02-01", 100.0)])
+    for i in range(1, 11):
+        market_obs(conn, "cboe_equity_pcr", f"2025-01-{i:02d}", float(i))
+    row = conn.execute(
+        "SELECT value, score FROM v_replay_flags"
+        " WHERE signal_id = 'cboe_equity_pcr' AND asof_date = '2025-02-01'"
+    ).fetchone()
+    assert row[0] == pytest.approx(100.0) and row[1] == 2
+
+
+def test_market_pctile_low_when_latest_is_window_min(conn):
+    # descending equity_pcr -> latest is the window min -> pctile 10 -> -2
+    spine(conn, [("2025-02-01", 100.0)])
+    for i in range(1, 11):
+        market_obs(conn, "cboe_equity_pcr", f"2025-01-{i:02d}", float(11 - i))
+    row = conn.execute(
+        "SELECT value, score FROM v_replay_flags"
+        " WHERE signal_id = 'cboe_equity_pcr' AND asof_date = '2025-02-01'"
+    ).fetchone()
+    assert row[0] == pytest.approx(10.0) and row[1] == -2
+
+
+def test_market_pctile_window_excludes_future_observations(conn):
+    # an obs published after D must never enter the as-of window
+    spine(conn, [("2025-01-05", 100.0)])
+    for i in range(1, 6):
+        market_obs(conn, "cboe_equity_pcr", f"2025-01-{i:02d}", float(i))
+    market_obs(conn, "cboe_equity_pcr", "2025-01-20", 999.0)  # future, invisible
+    row = conn.execute(
+        "SELECT value, score FROM v_replay_flags"
+        " WHERE signal_id = 'cboe_equity_pcr' AND asof_date = '2025-01-05'"
+    ).fetchone()
+    # latest <= D is Jan-05 (value 5, the max of the visible 1..5) -> pctile 100
+    assert row[0] == pytest.approx(100.0) and row[1] == 2
+
+
+def test_returns_use_per_benchmark_spine(conn):
+    # SP500 flat, XLE rising: an XLE-graded row must reflect XLE's own return,
+    # never SP500's. Proves the spine is partitioned by benchmark.
+    bench(conn, "SP500", [(f"2025-01-{d:02d}", 100.0) for d in range(1, 11)])
+    bench(conn, "XLE", [(f"2025-01-{d:02d}", 100.0 + d) for d in range(1, 11)])
+    row = conn.execute(
+        "SELECT entry_close, exit_close, fwd_return FROM v_replay_returns"
+        " WHERE benchmark = 'XLE' AND asof_date = '2025-01-01' AND horizon = 5"
+    ).fetchone()
+    assert row[0] == 102.0  # XLE next close after D (day 2)
+    assert row[1] == 107.0  # 5 XLE rows later (day 7)
+    assert row[2] == pytest.approx(107.0 / 102.0 - 1)
+
+
+def test_eia_energy_signal_graded_against_xle_not_sp500(conn):
+    # rising XLE + crude DRAW (change_pct <= -2 -> +1 bullish energy). Even
+    # with a FALLING SP500 present, the energy hit is judged on XLE.
+    bench(conn, "SP500", [(f"2025-01-{d:02d}", 200.0 - d) for d in range(1, 31)])
+    bench(conn, "XLE", [(f"2025-01-{d:02d}", 100.0 + d) for d in range(1, 31)])
+    for d in range(1, 31):
+        market_obs(conn, "eia_crude_stocks", f"2025-01-{d:02d}", -3.0)  # draw -> +1
+    row = conn.execute(
+        "SELECT n_bench, hit_rate FROM v_replay_efficacy"
+        " WHERE signal_id = 'eia_crude_stocks' AND direction = 'bullish' AND horizon = 5"
+    ).fetchone()
+    assert row[0] == 24  # graded on XLE's spine (same maturation window)
+    assert row[1] == pytest.approx(1.0)  # draw called XLE's rise correctly
+
+
+def test_market_signal_graded_against_sp500_spine(conn):
+    # falling benchmark + high VIX (bearish score) from day one -> bearish hits
+    spine(conn, [(f"2025-01-{d:02d}", 200.0 - d) for d in range(1, 31)])
+    for d in range(1, 31):
+        market_obs(conn, "cboe_vix", f"2025-01-{d:02d}", 26.0)  # -1 bearish every day
+    row = conn.execute(
+        "SELECT n_bench, hit_rate FROM v_replay_efficacy"
+        " WHERE signal_id = 'cboe_vix' AND direction = 'bearish' AND horizon = 5"
+    ).fetchone()
+    assert row[0] == 24  # same maturation window as the fred_curve test
+    assert row[1] == pytest.approx(1.0)  # VIX-high called the fall correctly
 
 
 # ---- v_replay_returns ------------------------------------------------

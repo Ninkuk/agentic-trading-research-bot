@@ -5,6 +5,7 @@ from sources.combiners.backtest.run import main as backtest_main
 from sources.combiners.composite.run import main as composite_main
 from sources.combiners.scorer.journal import main as journal_main
 from sources.combiners.scorer.run import main as scorer_main
+from sources.combiners.scorer.scorecard import main as scorecard_main
 from sources.monitors.earnings_calendar.run import main as earnings_main
 from sources.monitors.econ_calendar.run import main as econ_calendar_main
 from sources.monitors.fomc_calendar.run import main as fomc_main
@@ -52,6 +53,7 @@ REGISTRY = {
     "composite": composite_main,
     "scorer": scorer_main,
     "journal": journal_main,
+    "scorecard": scorecard_main,
     "advisor": advisor_main,
     "backtest": backtest_main,
 }

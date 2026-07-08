@@ -23,6 +23,33 @@ FRED_CURVE_SCORE = "CASE WHEN value < 0 THEN -1 ELSE 0 END"
 FRED_HY_SPREAD_SCORE = (
     "CASE WHEN value >= 5.0 THEN -2 WHEN value >= 4.0 THEN -1 WHEN value < 3.5 THEN 1 ELSE 0 END"
 )
+# Two more market-grain regime signals the backtest combiner replays; hoisted
+# for the same reason as the FRED pair (flags cannot drift between composite
+# and the replay). Both operate on cboe_stats vix_daily columns by name, so
+# the replay's as-of view aliases its stored values back to `close`/`vix3m`.
+CBOE_VIX_SCORE = (
+    "CASE WHEN close >= 30 THEN -2 WHEN close >= 25 THEN -1 WHEN close < 15 THEN 1 ELSE 0 END"
+)
+CBOE_VIX_BACKWARDATION_SCORE = "CASE WHEN close > vix3m THEN -2 ELSE 0 END"
+# Liquidity flow signals (also replayed): the derived change columns
+# (change_vs_prior, wow_change) are stable at observation time, so the replay
+# harvests them keyed by date and reuses these CASEs verbatim.
+NYFED_RRP_SCORE = "CASE WHEN change_vs_prior < 0 THEN 1 WHEN change_vs_prior > 0 THEN -1 ELSE 0 END"
+TSY_TGA_SCORE = "CASE WHEN wow_change < 0 THEN 1 WHEN wow_change > 0 THEN -1 ELSE 0 END"
+# Contrarian PCR percentile: operates on a derived `pctile` (trailing-252
+# rank). The replay recomputes that percentile as-of each historical date in
+# a dedicated view, then reuses this CASE verbatim.
+CBOE_EQUITY_PCR_SCORE = (
+    "CASE WHEN pctile >= 90 THEN 2 WHEN pctile >= 75 THEN 1"
+    " WHEN pctile <= 10 THEN -2 WHEN pctile <= 25 THEN -1 ELSE 0 END"
+)
+# EIA weekly inventory change (crude + natgas share the same CASE): a draw
+# (change_pct <= -2) is bullish energy, a build (>= 2) bearish. change_pct is
+# stable at its report period, so the replay harvests it keyed by period and
+# grades against the energy proxy (XLE), not SP500.
+EIA_WEEKLY_CHANGE_SCORE = (
+    "CASE WHEN change_pct <= -2.0 THEN 1 WHEN change_pct >= 2.0 THEN -1 ELSE 0 END"
+)
 
 SIGNALS: list[dict[str, Any]] = [
     # ------------------------------------------------ market grain ----
@@ -59,11 +86,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "cboe_stats.db",
         "grain": "market",
         "staleness_budget_days": 5,
-        "sql": """
+        "sql": f"""
             SELECT '*', close,
-                   CASE WHEN close >= 30 THEN -2
-                        WHEN close >= 25 THEN -1
-                        WHEN close < 15 THEN 1 ELSE 0 END,
+                   {CBOE_VIX_SCORE},
                    date
             FROM src.vix_daily WHERE close IS NOT NULL
             ORDER BY date DESC LIMIT 1
@@ -74,9 +99,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "cboe_stats.db",
         "grain": "market",
         "staleness_budget_days": 5,
-        "sql": """
+        "sql": f"""
             SELECT '*', close - vix3m,
-                   CASE WHEN close > vix3m THEN -2 ELSE 0 END,
+                   {CBOE_VIX_BACKWARDATION_SCORE},
                    date
             FROM src.vix_daily
             WHERE close IS NOT NULL AND vix3m IS NOT NULL
@@ -89,7 +114,7 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "cboe_stats.db",
         "grain": "market",
         "staleness_budget_days": 5,
-        "sql": """
+        "sql": f"""
             WITH latest AS (
                 SELECT date, equity_pcr FROM src.pcr_daily
                 WHERE equity_pcr IS NOT NULL ORDER BY date DESC LIMIT 1),
@@ -103,9 +128,7 @@ SIGNALS: list[dict[str, Any]] = [
                              / (SELECT COUNT(*) FROM hist) AS pctile
                 FROM latest l)
             SELECT '*', pctile,
-                   CASE WHEN pctile >= 90 THEN 2 WHEN pctile >= 75 THEN 1
-                        WHEN pctile <= 10 THEN -2 WHEN pctile <= 25 THEN -1
-                        ELSE 0 END,
+                   {CBOE_EQUITY_PCR_SCORE},
                    date
             FROM p
         """,
@@ -164,10 +187,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "nyfed.db",
         "grain": "market",
         "staleness_budget_days": 5,
-        "sql": """
+        "sql": f"""
             SELECT '*', change_vs_prior,
-                   CASE WHEN change_vs_prior < 0 THEN 1
-                        WHEN change_vs_prior > 0 THEN -1 ELSE 0 END,
+                   {NYFED_RRP_SCORE},
                    operation_date
             FROM src.v_rrp_trend
             WHERE change_vs_prior IS NOT NULL
@@ -180,10 +202,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "treasury.db",
         "grain": "market",
         "staleness_budget_days": 7,
-        "sql": """
+        "sql": f"""
             SELECT '*', wow_change,
-                   CASE WHEN wow_change < 0 THEN 1
-                        WHEN wow_change > 0 THEN -1 ELSE 0 END,
+                   {TSY_TGA_SCORE},
                    record_date
             FROM src.v_tga_trend
             WHERE wow_change IS NOT NULL
@@ -234,10 +255,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "eia.db",
         "grain": "asset_class",
         "staleness_budget_days": 10,
-        "sql": """
+        "sql": f"""
             SELECT 'energy', change_pct,
-                   CASE WHEN change_pct <= -2.0 THEN 1
-                        WHEN change_pct >= 2.0 THEN -1 ELSE 0 END,
+                   {EIA_WEEKLY_CHANGE_SCORE},
                    latest_period
             FROM src.v_weekly_change WHERE series_id = 'WCESTUS1'
         """,
@@ -247,10 +267,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "eia.db",
         "grain": "asset_class",
         "staleness_budget_days": 10,
-        "sql": """
+        "sql": f"""
             SELECT 'energy', change_pct,
-                   CASE WHEN change_pct <= -2.0 THEN 1
-                        WHEN change_pct >= 2.0 THEN -1 ELSE 0 END,
+                   {EIA_WEEKLY_CHANGE_SCORE},
                    latest_period
             FROM src.v_weekly_change
             WHERE series_id = 'NW2_EPG0_SWO_R48_BCF'

@@ -22,3 +22,6 @@ data/
 
 # launchd job logs
 logs/
+
+# generated nightly dashboard (source lives in deploy/launchd/dashboard.py)
+reports/

@@ -126,3 +126,51 @@ def test_fred_score_cases_are_hoisted_constants():
     by_id = {s["signal_id"]: s for s in SIGNALS}
     assert FRED_CURVE_SCORE in by_id["fred_curve"]["sql"]
     assert FRED_HY_SPREAD_SCORE in by_id["fred_hy_spread"]["sql"]
+
+
+def test_cboe_score_cases_are_hoisted_constants():
+    # Hoisted so the backtest combiner replays the IDENTICAL flag expression;
+    # rendered composite SQL must be unchanged (constant interpolated back in).
+    from sources.combiners.composite.catalog import (
+        CBOE_VIX_BACKWARDATION_SCORE,
+        CBOE_VIX_SCORE,
+        SIGNALS,
+    )
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    assert CBOE_VIX_SCORE in by_id["cboe_vix"]["sql"]
+    assert CBOE_VIX_BACKWARDATION_SCORE in by_id["cboe_vix_backwardation"]["sql"]
+    # the CASEs still reference their source columns verbatim
+    assert "close >= 30" in CBOE_VIX_SCORE
+    assert "close > vix3m" in CBOE_VIX_BACKWARDATION_SCORE
+
+
+def test_liquidity_score_cases_are_hoisted_constants():
+    from sources.combiners.composite.catalog import (
+        NYFED_RRP_SCORE,
+        SIGNALS,
+        TSY_TGA_SCORE,
+    )
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    assert NYFED_RRP_SCORE in by_id["nyfed_rrp"]["sql"]
+    assert TSY_TGA_SCORE in by_id["tsy_tga"]["sql"]
+    assert "change_vs_prior" in NYFED_RRP_SCORE
+    assert "wow_change" in TSY_TGA_SCORE
+
+
+def test_cboe_equity_pcr_score_case_is_hoisted_constant():
+    from sources.combiners.composite.catalog import CBOE_EQUITY_PCR_SCORE, SIGNALS
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    assert CBOE_EQUITY_PCR_SCORE in by_id["cboe_equity_pcr"]["sql"]
+    assert "pctile >= 90" in CBOE_EQUITY_PCR_SCORE
+
+
+def test_eia_score_case_is_hoisted_constant():
+    from sources.combiners.composite.catalog import EIA_WEEKLY_CHANGE_SCORE, SIGNALS
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    assert EIA_WEEKLY_CHANGE_SCORE in by_id["eia_crude_stocks"]["sql"]
+    assert EIA_WEEKLY_CHANGE_SCORE in by_id["eia_natgas_storage"]["sql"]
+    assert "change_pct <= -2.0" in EIA_WEEKLY_CHANGE_SCORE

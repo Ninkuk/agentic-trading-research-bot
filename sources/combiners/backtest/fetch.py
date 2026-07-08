@@ -25,3 +25,22 @@ def harvest_benchmark(conn, series_id: str) -> list:
         " WHERE series_id = ? AND value IS NOT NULL ORDER BY date",
         (series_id,),
     ).fetchall()
+
+
+def harvest_market_obs(conn, harvest_sql: str) -> list:
+    """Raw (obs_date, val1, val2) rows for one non-vintage market signal, from
+    the source DB ATTACHed read-only as `src`. harvest_sql (from the catalog)
+    selects exactly those three columns; unrevised feeds need no vintage
+    trail, so plain observations suffice."""
+    return conn.execute(harvest_sql).fetchall()
+
+
+def harvest_price_ledger(conn, symbol: str) -> list:
+    """Daily (date, close) for a class-proxy benchmark from scorer.db's
+    permanent price ledger (ATTACHed read-only as `src`). This ledger is the
+    only growing close history for these tickers; it is young, so asset-class
+    coverage deepens over time rather than being available in full today."""
+    return conn.execute(
+        "SELECT price_date, close FROM src.prices WHERE symbol = ? ORDER BY price_date",
+        (symbol,),
+    ).fetchall()
