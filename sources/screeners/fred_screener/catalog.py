@@ -54,6 +54,12 @@ CATALOG: list[Series] = [
 ]
 
 
+# Themes whose series carry no ALFRED vintage history — benchmark price spines
+# (e.g. SP500) are licensed/unrevised and 400 on the vintage endpoints. run.py
+# skips --vintages for these; their plain observations are still fetched.
+VINTAGELESS_THEMES = frozenset({"benchmark"})
+
+
 def select_ids(all_ids: Iterable[str], only, exclude, add=None) -> list[str]:
     """Resolve the ordered, de-duplicated series ids to fetch: ``only`` (or the
     full catalog) minus ``exclude``, then any ``add`` ids appended. Tokens are

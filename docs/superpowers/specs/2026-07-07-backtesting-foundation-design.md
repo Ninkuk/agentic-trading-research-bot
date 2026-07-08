@@ -45,11 +45,47 @@ Signals can only be evaluated forward from the day they shipped. Two blockers:
   `(series_id, date, realtime_start)`. Accepted for simplicity. Documented
   fallback if nightly runtime ever hurts: move `--vintages` to a separate weekly
   slot (the vintage fetch is a distinct call, so splitting is mechanical).
-- **Backfill:** no new code. One manual
+- **Backfill:** one manual
   `uv run python main.py fred --db data/fred.db --vintages` run pulls the entire
   ALFRED revision history for all series. Sanity check after: row counts in
   `observation_vintages` per series > 0, and spot-check one revised series
   (e.g. `PAYEMS`) shows multiple `realtime_start` values for a single `date`.
+
+### 1a. Vintage-fetcher robustness (added 2026-07-07 after live backfill)
+
+The original single-request vintage fetch (`realtime_start=1776-07-04,
+realtime_end=9999-12-31`, no `limit`) was only ever tested offline with fakes.
+The live backfill exposed three hard FRED limits it violated:
+
+1. **2000-vintage-dates-per-request cap.** FRED returns HTTP 400 when a realtime
+   window spans more than 2000 vintage dates. Every daily-revised series
+   (`T10Y2Y` — the `fred_curve` signal — plus `DGS2/10/30`, `DFF`, `VIXCLS`,
+   `T5YIE`, `T10YIE`, `T10Y3M`) blows past it (`T10Y2Y` has 3072).
+2. **100 000-row response cap.** With no `limit`/`offset`, a heavily-revised
+   weekly series is silently truncated to the first 100 000 rows (`NFCI` real
+   count 906 368) — *incomplete* data, worse than missing.
+3. **ALFRED-absent series.** Licensed/unrevised series (`SP500`) return HTTP 400
+   "does not exist in ALFRED" — they have no vintage history and must not be
+   vintage-fetched at all.
+
+**Fix (in `fred_screener/fetch.py`):** `fetch_observation_vintages` now (a) lists
+the series' vintage dates via `/fred/series/vintagedates` (offset-paginated),
+(b) tiles them into realtime windows of ≤1500 vintage dates — tiling **from the
+earliest date** so every value's true first-publication `realtime_start` is
+captured unclamped in its owning window (FRED clamps `realtime_start` to a
+window's left edge; verified live — the clamped duplicates in later windows are
+harmless, each restating the value genuinely current at that boundary), (c)
+offset-paginates each window past the 100k cap, and (d) dedups by
+`(date, realtime_start)`. Series whose `vintagedates` is empty return `[]`.
+**In `run.py`:** benchmark-theme series (`SP500`) are skipped for vintages
+(their plain observations are the spine; they have no ALFRED history), via
+`catalog.VINTAGELESS_THEMES`.
+
+Residual: the nightly `--vintages` run now re-pulls full vintage history per
+series (several windowed+paginated calls each) — heavier than one call. Kept
+simple (correctness first); incremental "vintages since last realtime" is a
+future optimization if the nightly slot's runtime hurts. Until then `--vintages`
+stays OFF the nightly `fred` job (§ Schedule note updated).
 
 ## 2. Composite refactor (behavior-preserving)
 

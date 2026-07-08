@@ -1,3 +1,5 @@
+import json
+
 from sources.screeners.fred_screener import db, fetch
 from sources.screeners.fred_screener import run as run_mod
 from sources.screeners.fred_screener.catalog import Series
@@ -57,37 +59,119 @@ def test_v_asof_hides_not_yet_published():
     assert conn.execute("SELECT COUNT(*) FROM v_asof WHERE series_id='UNRATE'").fetchone()[0] == 0
 
 
-def test_fetch_observation_vintages_parses_and_sends_realtime_params():
-    captured = {}
+def _qs(url):
+    import urllib.parse
+
+    return dict(urllib.parse.parse_qsl(url.split("?", 1)[1]))
+
+
+def test_fetch_vintage_dates_paginates_and_sorts():
+    calls = []
 
     def fake_get(url):
-        captured["url"] = url
-        return __import__("json").dumps(
-            {
-                "observations": [
-                    {
-                        "date": "2026-05-01",
-                        "realtime_start": "2026-06-10",
-                        "realtime_end": "2026-07-10",
-                        "value": "320.0",
-                    },
-                    {
-                        "date": "2026-05-01",
-                        "realtime_start": "2026-07-11",
-                        "realtime_end": "9999-12-31",
-                        "value": ".",
-                    },
-                ]
-            }
-        )
+        assert "series/vintagedates" in url
+        off = int(_qs(url)["offset"])
+        calls.append(off)
+        alld = ["2020-03-01", "2020-01-01", "2020-02-01", "2020-04-01"]  # unsorted
+        return json.dumps({"vintage_dates": alld[off : off + 2]})
 
-    rows = fetch.fetch_observation_vintages("CPIAUCSL", "KEY", get=fake_get)
-    assert "realtime_start=1776-07-04" in captured["url"]
-    assert "realtime_end=9999-12-31" in captured["url"]
-    assert rows == [
-        {"date": "2026-05-01", "realtime_start": "2026-06-10", "value": 320.0},
-        {"date": "2026-05-01", "realtime_start": "2026-07-11", "value": None},
+    out = fetch.fetch_vintage_dates("X", "K", get=fake_get, page=2)
+    assert out == ["2020-01-01", "2020-02-01", "2020-03-01", "2020-04-01"]
+    assert calls == [0, 2, 4]  # two full pages then an empty short page -> stop
+
+
+def test_fetch_observation_vintages_windows_paginates_and_dedups():
+    # 3 vintage dates, window_max=2 -> windows [d0,d1] and [d2]; page_limit=1
+    # forces offset pagination inside window 1.
+    vds = ["2020-01-01", "2020-02-01", "2020-03-01"]
+
+    def fake_vdates(series_id, api_key, get=None, page=None):
+        return vds
+
+    obs_calls = []
+
+    def fake_get(url):
+        assert "series/observations" in url
+        q = _qs(url)
+        rt0, rt1, off = q["realtime_start"], q["realtime_end"], int(q["offset"])
+        obs_calls.append((rt0, rt1, off))
+        if (rt0, rt1) == ("2020-01-01", "2020-02-01"):
+            data = [
+                {"date": "d", "realtime_start": "2020-01-01", "value": "1"},
+                {"date": "d", "realtime_start": "2020-02-01", "value": "2"},
+            ]
+        else:
+            # window 2 returns a CLAMPED restatement of the value current at its edge
+            data = [{"date": "d", "realtime_start": "2020-03-01", "value": "2"}]
+        return json.dumps({"observations": data[off : off + 1]})
+
+    rows = fetch.fetch_observation_vintages(
+        "X", "K", get=fake_get, get_vintage_dates=fake_vdates, window_max=2, page_limit=1
+    )
+    assert sorted((r["date"], r["realtime_start"], r["value"]) for r in rows) == [
+        ("d", "2020-01-01", 1.0),
+        ("d", "2020-02-01", 2.0),
+        ("d", "2020-03-01", 2.0),
     ]
+    # window 1 offset-paginated (0, 1, then short page at 2 stops it)
+    assert ("2020-01-01", "2020-02-01", 0) in obs_calls
+    assert ("2020-01-01", "2020-02-01", 1) in obs_calls
+    # window 2 realtime bounds are its single date, fetched once
+    assert ("2020-03-01", "2020-03-01", 0) in obs_calls
+
+
+def test_fetch_observation_vintages_empty_when_series_absent_from_alfred():
+    def fake_vdates(series_id, api_key, get=None, page=None):
+        return []
+
+    def must_not_call(url):
+        raise AssertionError("observations must not be fetched when no vintage dates")
+
+    assert (
+        fetch.fetch_observation_vintages(
+            "SP500", "K", get=must_not_call, get_vintage_dates=fake_vdates
+        )
+        == []
+    )
+
+
+def test_run_skips_vintages_for_benchmark_theme():
+    """A benchmark-theme series (SP500) has no ALFRED history, so run must not
+    vintage-fetch it even under --vintages; its observations still land."""
+
+    def fake_series(series_id, api_key, get=None):
+        return {"id": series_id, "title": f"title-{series_id}", "frequency": "Daily"}
+
+    def fake_obs(series_id, api_key, start=None, get=None):
+        return [{"date": "2026-01-01", "value": 1.0}]
+
+    vintage_calls = []
+
+    def fake_vintages(series_id, api_key, start=None, get=None):
+        vintage_calls.append(series_id)
+        return [{"date": "2026-01-01", "realtime_start": "2026-02-01", "value": 1.0}]
+
+    import tempfile
+    import unittest.mock as mock
+
+    with (
+        tempfile.TemporaryDirectory() as tmp_path,
+        mock.patch.object(
+            run_mod.catalog,
+            "CATALOG",
+            [Series("SP500", "benchmark"), Series("RATE", "rates")],
+        ),
+    ):
+        run_mod.run(
+            f"{tmp_path}/fred.db",
+            api_key="K",
+            now_iso="2026-07-02T00:00:00+00:00",
+            fetch_series=fake_series,
+            fetch_obs=fake_obs,
+            vintages=True,
+            fetch_vintages=fake_vintages,
+        )
+        assert vintage_calls == ["RATE"]  # benchmark skipped, rates fetched
 
 
 def test_run_with_vintages_fetches_and_writes():

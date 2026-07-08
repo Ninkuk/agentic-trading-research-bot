@@ -41,7 +41,7 @@ def run(
                 meta = {**meta, "theme": themes.get(series_id, "custom")}
                 db.upsert_series(conn, [meta], now_iso)
                 total_obs += db.write_observations(conn, series_id, obs)
-                if vintages:
+                if vintages and themes.get(series_id) not in catalog.VINTAGELESS_THEMES:
                     try:
                         vint = fetch_vintages(series_id, api_key, start=start)
                         db.write_observation_vintages(conn, series_id, vint)

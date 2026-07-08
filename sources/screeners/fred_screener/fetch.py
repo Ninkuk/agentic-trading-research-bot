@@ -81,14 +81,91 @@ def fetch_observations(series_id: str, api_key: str, start=None, get=_http_get) 
     return parse_observations(json.loads(get(url)))
 
 
-def fetch_observation_vintages(
-    series_id: str, api_key: str, start=None, get=_http_get
+# FRED per-request caps the vintage fetch must respect (both hit in the live
+# 2026-07-07 backfill): /series/vintagedates returns at most 10000 dates/page;
+# /series/observations rejects (HTTP 400) a realtime window spanning more than
+# 2000 vintage dates and truncates any response at 100000 rows.
+_VINTAGE_DATE_PAGE = 10000
+_WINDOW_MAX_VINTAGE_DATES = 1500  # under the 2000 cap, with headroom
+_OBS_PAGE_LIMIT = 100000
+
+
+def fetch_vintage_dates(
+    series_id: str, api_key: str, get=_http_get, page=_VINTAGE_DATE_PAGE
+) -> list[str]:
+    """GET /fred/series/vintagedates; return the series' ALFRED vintage
+    (publication) dates, sorted ascending, offset-paginated past the page cap.
+    A series absent from ALFRED has no vintage dates (the caller returns [])."""
+    dates: list[str] = []
+    offset = 0
+    while True:
+        url = _build_url(
+            "series/vintagedates",
+            {"series_id": series_id, "limit": str(page), "offset": str(offset)},
+            api_key,
+        )
+        got = json.loads(get(url)).get("vintage_dates", [])
+        dates.extend(got)
+        if len(got) < page:
+            break
+        offset += page
+    return sorted(dates)
+
+
+def _fetch_vintage_window(
+    series_id, api_key, rt_start, rt_end, start, get, page_limit
 ) -> list[dict]:
-    """GET /fred/series/observations with realtime_start/end for vintage history;
-    return parsed [{date, realtime_start, value}] rows. Each observation's own
-    realtime_start is extracted."""
-    params = {"series_id": series_id, "realtime_start": "1776-07-04", "realtime_end": "9999-12-31"}
-    if start:
-        params["observation_start"] = start
-    url = _build_url("series/observations", params, api_key)
-    return parse_observation_vintages(json.loads(get(url)))
+    """All vintage rows whose realtime range intersects [rt_start, rt_end],
+    offset-paginated past the per-request row cap."""
+    rows: list[dict] = []
+    offset = 0
+    while True:
+        params = {
+            "series_id": series_id,
+            "realtime_start": rt_start,
+            "realtime_end": rt_end,
+            "limit": str(page_limit),
+            "offset": str(offset),
+        }
+        if start:
+            params["observation_start"] = start
+        url = _build_url("series/observations", params, api_key)
+        payload = json.loads(get(url))
+        n = len(payload.get("observations", []))
+        rows.extend(parse_observation_vintages(payload))
+        if n < page_limit:
+            break
+        offset += page_limit
+    return rows
+
+
+def fetch_observation_vintages(
+    series_id: str,
+    api_key: str,
+    start=None,
+    get=_http_get,
+    get_vintage_dates=fetch_vintage_dates,
+    window_max=_WINDOW_MAX_VINTAGE_DATES,
+    page_limit=_OBS_PAGE_LIMIT,
+) -> list[dict]:
+    """Full ALFRED vintage history as [{date, realtime_start, value}], robust to
+    FRED's per-request caps. FRED rejects a realtime window spanning >2000
+    vintage dates and truncates any response at 100k rows, so we list the
+    series' vintage dates, tile them into realtime windows under the cap, and
+    offset-paginate each window. Windows tile FROM THE EARLIEST date so every
+    value's true first-publication realtime_start lands unclamped in its owning
+    window (FRED clamps realtime_start to a window's left edge — the clamped
+    duplicates that produces in later windows are harmless: each restates the
+    value genuinely current at that boundary). Rows are deduped by
+    (date, realtime_start). A series with no vintage dates returns []."""
+    vdates = get_vintage_dates(series_id, api_key, get=get)
+    if not vdates:
+        return []
+    seen: dict[tuple[str, str], dict] = {}
+    for i in range(0, len(vdates), window_max):
+        window = vdates[i : i + window_max]
+        for row in _fetch_vintage_window(
+            series_id, api_key, window[0], window[-1], start, get, page_limit
+        ):
+            seen[(row["date"], row["realtime_start"])] = row
+    return list(seen.values())
