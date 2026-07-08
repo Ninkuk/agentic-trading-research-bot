@@ -358,31 +358,45 @@ def _scorecard(conn, now_iso) -> str:
     return headline + expander
 
 
+_EFFICACY_HEADERS = ["signal", "via", "horizon", "n", "dir excess", "hit rate", ""]
+_EFFICACY_COLS = (
+    "signal_id, via_crosswalk, horizon, n_matured, avg_directional_excess, hit_rate, reliable"
+)
+
+
+def _efficacy_row(r) -> str:
+    return _cells(
+        r["signal_id"],
+        "xw" if r["via_crosswalk"] else "direct",
+        str(r["horizon"]),
+        str(r["n_matured"]),
+        _pct(r["avg_directional_excess"]),
+        _pct(r["hit_rate"]),
+        _reliable_badge(r["reliable"]),
+        numeric_from=2,
+    )
+
+
 def _signal_efficacy(conn, now_iso) -> str:
     rows = conn.execute(
-        "SELECT signal_id, via_crosswalk, horizon, n_matured,"
-        " avg_directional_excess, hit_rate, reliable FROM v_signal_efficacy"
+        f"SELECT {_EFFICACY_COLS} FROM v_signal_efficacy"
         " ORDER BY reliable DESC, n_matured DESC LIMIT 40"
     ).fetchall()
-    body = [
-        _cells(
-            r["signal_id"],
-            "xw" if r["via_crosswalk"] else "direct",
-            str(r["horizon"]),
-            str(r["n_matured"]),
-            _pct(r["avg_directional_excess"]),
-            _pct(r["hit_rate"]),
-            _reliable_badge(r["reliable"]),
-            numeric_from=2,
-        )
-        for r in rows
-    ]
-    return _table(
-        ["signal", "via", "horizon", "n", "dir excess", "hit rate", ""],
-        body,
+    headline = _table(
+        _EFFICACY_HEADERS,
+        [_efficacy_row(r) for r in rows],
         empty="no matured signal outcomes yet",
         numeric_from=2,
     )
+    all_rows = conn.execute(
+        f"SELECT {_EFFICACY_COLS} FROM v_signal_efficacy ORDER BY reliable DESC, n_matured DESC"
+    ).fetchall()
+    expander = (
+        f"<details><summary>Show all {len(all_rows)} signals</summary>"
+        f"{_table(_EFFICACY_HEADERS, [_efficacy_row(r) for r in all_rows], numeric_from=2)}"
+        "</details>"
+    )
+    return headline + expander
 
 
 def _bucket_performance(conn, now_iso) -> str:

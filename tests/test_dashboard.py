@@ -254,6 +254,23 @@ def test_scorecard_expander_counts_real_rows(tmp_path):
     assert "214" not in html
 
 
+def test_signal_efficacy_has_show_all_expander(tmp_path):
+    conn = sqlite3.connect(tmp_path / "scorer.db")
+    conn.executescript(
+        "CREATE VIEW v_signal_efficacy AS "
+        "SELECT 'fred:t10y2y' AS signal_id, 0 AS via_crosswalk, 5 AS horizon,"
+        " 12 AS n_matured, 0.031 AS avg_directional_excess, 0.58 AS hit_rate, 1 AS reliable;"
+    )
+    conn.commit()
+    conn.close()
+    ro = dashboard._ro(str(tmp_path), "scorer.db")
+    try:
+        html = dashboard._signal_efficacy(ro, NOW)
+    finally:
+        ro.close()
+    assert "Show all 1 signals" in html
+
+
 def test_section_wrapper_keeps_plain_id():
     html = dashboard._render_section(
         "regime", "Regime", "composite.db", lambda c, n: "body", "Macro", "note text", "", NOW
