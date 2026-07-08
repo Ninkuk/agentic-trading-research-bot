@@ -31,6 +31,11 @@ CBOE_VIX_SCORE = (
     "CASE WHEN close >= 30 THEN -2 WHEN close >= 25 THEN -1 WHEN close < 15 THEN 1 ELSE 0 END"
 )
 CBOE_VIX_BACKWARDATION_SCORE = "CASE WHEN close > vix3m THEN -2 ELSE 0 END"
+# Liquidity flow signals (also replayed): the derived change columns
+# (change_vs_prior, wow_change) are stable at observation time, so the replay
+# harvests them keyed by date and reuses these CASEs verbatim.
+NYFED_RRP_SCORE = "CASE WHEN change_vs_prior < 0 THEN 1 WHEN change_vs_prior > 0 THEN -1 ELSE 0 END"
+TSY_TGA_SCORE = "CASE WHEN wow_change < 0 THEN 1 WHEN wow_change > 0 THEN -1 ELSE 0 END"
 
 SIGNALS: list[dict[str, Any]] = [
     # ------------------------------------------------ market grain ----
@@ -170,10 +175,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "nyfed.db",
         "grain": "market",
         "staleness_budget_days": 5,
-        "sql": """
+        "sql": f"""
             SELECT '*', change_vs_prior,
-                   CASE WHEN change_vs_prior < 0 THEN 1
-                        WHEN change_vs_prior > 0 THEN -1 ELSE 0 END,
+                   {NYFED_RRP_SCORE},
                    operation_date
             FROM src.v_rrp_trend
             WHERE change_vs_prior IS NOT NULL
@@ -186,10 +190,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "treasury.db",
         "grain": "market",
         "staleness_budget_days": 7,
-        "sql": """
+        "sql": f"""
             SELECT '*', wow_change,
-                   CASE WHEN wow_change < 0 THEN 1
-                        WHEN wow_change > 0 THEN -1 ELSE 0 END,
+                   {TSY_TGA_SCORE},
                    record_date
             FROM src.v_tga_trend
             WHERE wow_change IS NOT NULL

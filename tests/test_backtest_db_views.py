@@ -126,6 +126,27 @@ def test_market_backwardation_uses_both_columns(conn):
     assert rows == {"2025-01-10": -2, "2025-01-11": 0}
 
 
+def test_market_liquidity_signals_reuse_composite_cases(conn):
+    # nyfed_rrp: falling RRP (change<0) -> +1 bullish; rising -> -1.
+    # tsy_tga: falling TGA (wow_change<0) -> +1 bullish; rising -> -1.
+    spine(conn, [("2025-01-10", 100.0), ("2025-01-11", 100.0)])
+    market_obs(conn, "nyfed_rrp", "2025-01-10", -5.0)  # falling -> +1
+    market_obs(conn, "nyfed_rrp", "2025-01-11", 5.0)  # rising -> -1
+    market_obs(conn, "tsy_tga", "2025-01-10", -3.0)  # falling -> +1
+    market_obs(conn, "tsy_tga", "2025-01-11", 3.0)  # rising -> -1
+    rows = {
+        (r[0], r[1]): r[2]
+        for r in conn.execute(
+            "SELECT signal_id, asof_date, score FROM v_replay_flags"
+            " WHERE signal_id IN ('nyfed_rrp', 'tsy_tga')"
+        )
+    }
+    assert rows[("nyfed_rrp", "2025-01-10")] == 1
+    assert rows[("nyfed_rrp", "2025-01-11")] == -1
+    assert rows[("tsy_tga", "2025-01-10")] == 1
+    assert rows[("tsy_tga", "2025-01-11")] == -1
+
+
 def test_market_signal_graded_against_sp500_spine(conn):
     # falling benchmark + high VIX (bearish score) from day one -> bearish hits
     spine(conn, [(f"2025-01-{d:02d}", 200.0 - d) for d in range(1, 31)])

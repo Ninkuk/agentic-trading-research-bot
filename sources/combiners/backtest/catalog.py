@@ -9,11 +9,15 @@ from sources.combiners.composite.catalog import (
     CBOE_VIX_SCORE,
     FRED_CURVE_SCORE,
     FRED_HY_SPREAD_SCORE,
+    NYFED_RRP_SCORE,
+    TSY_TGA_SCORE,
 )
 from sources.combiners.scorer.catalog import HORIZONS
 
 FRED_DB = "fred.db"
 CBOE_DB = "cboe_stats.db"
+NYFED_DB = "nyfed.db"
+TREASURY_DB = "treasury.db"
 BENCHMARK_SERIES = "SP500"  # grading spine; unrevised index closes
 
 # FRED regime signals: ALFRED-vintage replay (revision-aware; realtime_start
@@ -57,6 +61,35 @@ MARKET_OBS_SIGNALS: list[dict[str, Any]] = [
         "raw_expr": "close - vix3m",
         "score_case": CBOE_VIX_BACKWARDATION_SCORE,
     },
+    {
+        # Liquidity flow: the source view's change_vs_prior is stable at the
+        # operation's own date (diff to the immediately-prior op, both known
+        # then), so harvesting it keyed by operation_date is PIT-honest. NY
+        # Fed publishes same-day -> minimal lag caveat.
+        "signal_id": "nyfed_rrp",
+        "db": NYFED_DB,
+        "harvest_sql": (
+            "SELECT operation_date, change_vs_prior, NULL FROM src.v_rrp_trend"
+            " WHERE change_vs_prior IS NOT NULL"
+        ),
+        "aliases": {"change_vs_prior": "val1"},
+        "raw_expr": "change_vs_prior",
+        "score_case": NYFED_RRP_SCORE,
+    },
+    {
+        # Same shape as nyfed_rrp: wow_change is stable at its record_date.
+        # DTS publishes next business day -> ~1-day lag caveat (with-caveat
+        # class in the spike); the scorer's next-day entry buffers the return
+        # side already.
+        "signal_id": "tsy_tga",
+        "db": TREASURY_DB,
+        "harvest_sql": (
+            "SELECT record_date, wow_change, NULL FROM src.v_tga_trend WHERE wow_change IS NOT NULL"
+        ),
+        "aliases": {"wow_change": "val1"},
+        "raw_expr": "wow_change",
+        "score_case": TSY_TGA_SCORE,
+    },
 ]
 
 __all__ = [
@@ -65,5 +98,7 @@ __all__ = [
     "FRED_DB",
     "HORIZONS",
     "MARKET_OBS_SIGNALS",
+    "NYFED_DB",
     "REPLAY_SIGNALS",
+    "TREASURY_DB",
 ]

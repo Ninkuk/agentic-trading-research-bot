@@ -143,3 +143,17 @@ def test_cboe_score_cases_are_hoisted_constants():
     # the CASEs still reference their source columns verbatim
     assert "close >= 30" in CBOE_VIX_SCORE
     assert "close > vix3m" in CBOE_VIX_BACKWARDATION_SCORE
+
+
+def test_liquidity_score_cases_are_hoisted_constants():
+    from sources.combiners.composite.catalog import (
+        NYFED_RRP_SCORE,
+        SIGNALS,
+        TSY_TGA_SCORE,
+    )
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    assert NYFED_RRP_SCORE in by_id["nyfed_rrp"]["sql"]
+    assert TSY_TGA_SCORE in by_id["tsy_tga"]["sql"]
+    assert "change_vs_prior" in NYFED_RRP_SCORE
+    assert "wow_change" in TSY_TGA_SCORE

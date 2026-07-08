@@ -33,6 +33,24 @@ def data_dir(tmp_path):
     )
     c.commit()
     c.close()
+    # nyfed.db (v_rrp_trend) + treasury.db (v_tga_trend): liquidity signals
+    # whose derived change columns are harvested keyed by date. 5 rows each.
+    c = sqlite3.connect(tmp_path / "nyfed.db")
+    c.execute("CREATE TABLE v_rrp_trend (operation_date TEXT, change_vs_prior REAL)")
+    c.executemany(
+        "INSERT INTO v_rrp_trend VALUES (?, ?)",
+        [(f"2025-01-{d:02d}", -1.0) for d in range(1, 6)],
+    )
+    c.commit()
+    c.close()
+    c = sqlite3.connect(tmp_path / "treasury.db")
+    c.execute("CREATE TABLE v_tga_trend (record_date TEXT, wow_change REAL)")
+    c.executemany(
+        "INSERT INTO v_tga_trend VALUES (?, ?)",
+        [(f"2025-01-{d:02d}", 2.0) for d in range(1, 6)],
+    )
+    c.commit()
+    c.close()
     return str(tmp_path)
 
 
@@ -51,14 +69,15 @@ def test_run_copies_and_reports(data_dir, tmp_path, capsys):
         (sid,),
     ).fetchone()
     conn.close()
-    # 30 vix rows for cboe_vix + 30 for cboe_vix_backwardation = 60 market rows
-    assert row == (1, 30, 60, 0)
+    # market_rows: 30 cboe_vix + 30 cboe_vix_backwardation + 5 nyfed_rrp
+    # + 5 tsy_tga = 70; all four source DBs present -> 0 failures
+    assert row == (1, 30, 70, 0)
 
 
 def test_run_missing_source_dbs_skip_and_count_failures(tmp_path, capsys):
     sid, n_vint, n_bench = run.run(
         str(tmp_path / "backtest.db"),
-        db_dir=str(tmp_path),  # no fred.db AND no cboe_stats.db here
+        db_dir=str(tmp_path),  # none of the source DBs exist here
         now_iso="2025-02-01T00:00:00+00:00",
     )
     assert (n_vint, n_bench) == (0, 0)
@@ -66,7 +85,7 @@ def test_run_missing_source_dbs_skip_and_count_failures(tmp_path, capsys):
     conn = db.connect(str(tmp_path / "backtest.db"))
     (failed,) = conn.execute("SELECT sources_failed FROM snapshots WHERE id = ?", (sid,)).fetchone()
     conn.close()
-    assert failed == 2  # both fred.db and cboe_stats.db missing
+    assert failed == 4  # fred.db, cboe_stats.db, nyfed.db, treasury.db all missing
 
 
 def test_run_copies_market_obs_as_of(data_dir, tmp_path):
