@@ -1,6 +1,15 @@
 from sources.screeners.fred_screener.catalog import CATALOG, Series, select_ids
 
-VALID_THEMES = {"growth", "inflation", "rates", "labor", "credit", "housing", "sentiment"}
+VALID_THEMES = {
+    "growth",
+    "inflation",
+    "rates",
+    "labor",
+    "credit",
+    "housing",
+    "sentiment",
+    "benchmark",
+}
 
 
 def test_catalog_ids_are_unique():
@@ -39,3 +48,8 @@ def test_select_ids_appends_add_after_selection():
     out = select_ids(["A", "B"], only=None, exclude=None, add=["Z", "A"])
     # add is appended; duplicates against the existing selection are dropped
     assert out == ["A", "B", "Z"]
+
+
+def test_catalog_includes_sp500_benchmark():
+    themes = {s.series_id: s.theme for s in CATALOG}
+    assert themes.get("SP500") == "benchmark"

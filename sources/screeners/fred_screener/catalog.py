@@ -5,7 +5,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Series:
     series_id: str
-    theme: str  # growth|inflation|rates|labor|credit|housing|sentiment
+    theme: str  # growth|inflation|rates|labor|credit|housing|sentiment|benchmark
 
 
 # Curated macro/regime reader. Ids verified live against the FRED API on
@@ -48,6 +48,9 @@ CATALOG: list[Series] = [
     Series("VIXCLS", "sentiment"),
     Series("STLFSI4", "sentiment"),
     Series("NFCI", "sentiment"),
+    # benchmark (grading spine for the backtest combiner; FRED licensing
+    # caps SP500 history at ~10 years)
+    Series("SP500", "benchmark"),
 ]
 
 
