@@ -254,6 +254,18 @@ def _ci_bar(hit_rate, ci_lo, ci_hi) -> str:
     )
 
 
+def _view_table(conn, sql: str, empty: str) -> str:
+    """Render every column a query returns, headers taken from
+    `cursor.description` — avoids hardcoding column names, so this works
+    against any view without coupling the page to its exact shape. Cell
+    values are escaped via `_cells` like any other rendered row."""
+    cur = conn.execute(sql)
+    headers = [d[0] for d in cur.description]
+    rows = cur.fetchall()
+    body = [_cells(*row) for row in rows]
+    return _table(headers, body, empty=empty)
+
+
 # --- section renderers (each takes an open ro conn; may raise -> caught) ----
 
 
@@ -449,6 +461,38 @@ def _human_filter(conn, now_iso) -> str:
     )
 
 
+def _regime_performance(conn, now_iso) -> str:
+    return _view_table(
+        conn,
+        "SELECT regime, horizon, n_matured, avg_bench_return, min_bench_return,"
+        " max_bench_return FROM v_regime_performance ORDER BY horizon, regime",
+        empty="no matured regime outcomes yet",
+    )
+
+
+def _pending(conn, now_iso) -> str:
+    total = conn.execute("SELECT COUNT(*) FROM v_pending").fetchone()[0]
+    table = _view_table(
+        conn,
+        "SELECT kind, composite_date, entity, horizon, entry_date FROM v_pending"
+        " ORDER BY composite_date DESC LIMIT 100",
+        empty="nothing pending — everything registered so far has matured",
+    )
+    if total > 100:
+        cap = f'<p class="cap">Showing 100 of {total} pending — capped for readability.</p>'
+        return cap + table
+    return table
+
+
+def _basis_breaks(conn, now_iso) -> str:
+    return _view_table(
+        conn,
+        "SELECT symbol, prev_date, prev_close, price_date, close, ratio"
+        " FROM v_basis_breaks ORDER BY price_date DESC",
+        empty="no basis breaks detected — an empty table is the good outcome",
+    )
+
+
 def _signal_recommendation(conn, now_iso) -> str:
     rows = conn.execute(
         "SELECT signal_id, via_crosswalk, horizon, n_bench,"
@@ -522,6 +566,49 @@ def _group_heat(conn, now_iso) -> str:
         for r in rows
     ]
     return _table(["bet", "members", "symbols", "heat $", "heat %"], body, numeric_from=1)
+
+
+def _position_heat(conn, now_iso) -> str:
+    # The view's join-key column is internal bookkeeping and must never
+    # reach the page — explicit column list, never SELECT *.
+    rows = conn.execute(
+        "SELECT symbol, group_name, quantity, market_value, price, heat_dollars,"
+        " heat_pct, weight_pct, score_sum, atr_stale FROM v_latest_heat"
+        " ORDER BY heat_dollars DESC"
+    ).fetchall()
+    body = [
+        _cells(
+            r["symbol"],
+            r["group_name"] or "",
+            _num(r["quantity"]),
+            f"${_num(r['market_value'])}",
+            f"${_num(r['price'])}",
+            f"${_num(r['heat_dollars'])}",
+            _pct(r["heat_pct"], 2),
+            _pct(r["weight_pct"], 2),
+            "—" if r["score_sum"] is None else f"{r['score_sum']:+d}",
+            "⚠" if r["atr_stale"] else "",
+            numeric_from=2,
+        )
+        for r in rows
+    ]
+    return _table(
+        [
+            "symbol",
+            "group",
+            "qty",
+            "market value",
+            "price",
+            "heat $",
+            "heat %",
+            "weight %",
+            "score",
+            "stale?",
+        ],
+        body,
+        empty="no positions with heat yet",
+        numeric_from=2,
+    )
 
 
 def _disagreements(conn, now_iso) -> str:
@@ -631,6 +718,36 @@ SECTIONS = [
         " your judgment add edge?",
     ),
     (
+        "regime-performance",
+        "Regime edge",
+        "scorer.db",
+        _regime_performance,
+        "Track record",
+        "Does the market-mood call itself have forward edge — do risk-on"
+        " nights actually precede better returns than risk-off nights? Each"
+        " row is one mood at one horizon.",
+    ),
+    (
+        "pending",
+        "In-flight opinions",
+        "scorer.db",
+        _pending,
+        "Track record",
+        "Opinions already recorded whose outcome has not matured yet — what"
+        " is still being measured, and therefore not yet in any grade above.",
+    ),
+    (
+        "basis-breaks",
+        "Data-integrity checks",
+        "scorer.db",
+        _basis_breaks,
+        "Track record",
+        "Days where a price moved so far that it looks like a split or a bad"
+        " tick rather than a real move. Surfaced so a silent data problem"
+        " cannot quietly skew every grade above. An empty table is the good"
+        " outcome.",
+    ),
+    (
         "book-heat",
         "Advisor book heat",
         "advisor.db",
@@ -648,6 +765,16 @@ SECTIONS = [
         "Your book",
         "Correlated positions collapsed into single bets (e.g. two energy"
         " names become one energy bet), because risk adds up within a group.",
+    ),
+    (
+        "position-heat",
+        "Per-position heat",
+        "advisor.db",
+        _position_heat,
+        "Your book",
+        "Risk contribution of each individual holding — the detail behind"
+        " the book and group heat totals above. “Heat” is what you would"
+        " lose if that position hit its stop.",
     ),
     (
         "disagreements",

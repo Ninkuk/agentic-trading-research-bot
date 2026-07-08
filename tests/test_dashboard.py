@@ -57,6 +57,58 @@ CREATE VIEW v_disagreements AS
 SELECT *, (score_sum <= -4 AND total >= 3) AS strong FROM v_latest_heat WHERE score_sum < 0;
 """
 
+# Minimal mirror of the ticker_outcomes/signal_outcomes/regime_outcomes/prices
+# tables and the v_regime_performance/v_pending/v_basis_breaks views from
+# sources/combiners/scorer/db.py — just enough columns to exercise Step 4's
+# new dashboard sections without pulling in the whole scorer package.
+_SCORER_SCHEMA = """
+CREATE TABLE ticker_outcomes (composite_snapshot_id INTEGER, composite_date TEXT, symbol TEXT,
+    horizon INTEGER, entry_date TEXT, matured_at TEXT);
+CREATE TABLE signal_outcomes (composite_snapshot_id INTEGER, composite_date TEXT, signal_id TEXT,
+    entity TEXT, horizon INTEGER, entry_date TEXT, matured_at TEXT);
+CREATE TABLE regime_outcomes (composite_snapshot_id INTEGER, composite_date TEXT, regime TEXT,
+    horizon INTEGER, entry_date TEXT, bench_fwd_return REAL, matured_at TEXT);
+CREATE TABLE prices (symbol TEXT, price_date TEXT, close REAL, PRIMARY KEY (symbol, price_date));
+CREATE VIEW v_regime_performance AS
+SELECT regime, horizon, COUNT(*) AS n_matured,
+       AVG(bench_fwd_return) AS avg_bench_return,
+       MIN(bench_fwd_return) AS min_bench_return,
+       MAX(bench_fwd_return) AS max_bench_return
+FROM regime_outcomes WHERE matured_at IS NOT NULL
+GROUP BY regime, horizon;
+CREATE VIEW v_pending AS
+SELECT 'ticker' AS kind, composite_date, symbol AS entity, horizon,
+       entry_date FROM ticker_outcomes WHERE matured_at IS NULL
+UNION ALL
+SELECT 'signal', composite_date, signal_id || ':' || entity, horizon,
+       entry_date FROM signal_outcomes WHERE matured_at IS NULL
+UNION ALL
+SELECT 'regime', composite_date, COALESCE(regime, '?'), horizon,
+       entry_date FROM regime_outcomes WHERE matured_at IS NULL;
+CREATE VIEW v_basis_breaks AS
+SELECT a.symbol,
+       b.price_date AS prev_date, b.close AS prev_close,
+       a.price_date, a.close,
+       a.close / b.close AS ratio
+FROM prices a
+JOIN prices b ON b.symbol = a.symbol
+ AND b.price_date = (SELECT MAX(c.price_date) FROM prices c
+                     WHERE c.symbol = a.symbol AND c.price_date < a.price_date)
+WHERE a.close < b.close * 0.55 OR a.close > b.close * 1.8;
+"""
+
+
+def _make_scorer_pending_db(path, n_pending):
+    conn = sqlite3.connect(path)
+    conn.executescript(_SCORER_SCHEMA)
+    for i in range(n_pending):
+        conn.execute(
+            "INSERT INTO ticker_outcomes VALUES (1, ?, ?, 5, ?, NULL)",
+            (NOW, f"T{i}", NOW),
+        )
+    conn.commit()
+    conn.close()
+
 
 def _make_composite_db(path, regime="risk_on", vix=16.1, symbol=None, score_sum=5, tickers=None):
     """`tickers` (extra to the single `symbol`/`score_sum` pair) is a list of
@@ -269,6 +321,64 @@ def test_signal_efficacy_has_show_all_expander(tmp_path):
     finally:
         ro.close()
     assert "Show all 1 signals" in html
+
+
+def test_view_table_renders_headers_from_description():
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.execute("CREATE TABLE toy (name TEXT, note TEXT)")
+    conn.execute("INSERT INTO toy VALUES (?, ?)", ("plain", "<script>alert(1)</script>"))
+    conn.commit()
+
+    html = dashboard._view_table(conn, "SELECT name, note FROM toy", empty="none yet")
+    assert "<th" in html and ">name<" in html and ">note<" in html
+    assert "&lt;script&gt;" in html
+    assert "<script>alert" not in html
+
+    empty_html = dashboard._view_table(conn, "SELECT name, note FROM toy WHERE 0", empty="none yet")
+    assert "none yet" in empty_html
+
+
+def test_new_sections_registered():
+    for sid in ("regime-performance", "pending", "basis-breaks", "position-heat"):
+        assert sid in dashboard.SECTION_IDS
+    for entry in dashboard.SECTIONS:
+        assert len(entry) == 6
+        _sid, _title, _db_name, _fn, kicker, note = entry
+        assert kicker
+        assert note
+
+
+def test_pending_cap_is_disclosed(tmp_path):
+    _make_scorer_pending_db(tmp_path / "scorer.db", n_pending=150)
+    conn = dashboard._ro(str(tmp_path), "scorer.db")
+    try:
+        html = dashboard._pending(conn, NOW)
+    finally:
+        conn.close()
+    assert "150" in html
+    assert 'class="cap"' in html
+
+
+def test_pending_no_cap_note_under_limit(tmp_path):
+    _make_scorer_pending_db(tmp_path / "scorer.db", n_pending=10)
+    conn = dashboard._ro(str(tmp_path), "scorer.db")
+    try:
+        html = dashboard._pending(conn, NOW)
+    finally:
+        conn.close()
+    assert 'class="cap"' not in html
+
+
+def test_position_heat_hides_snapshot_id(tmp_path):
+    _make_advisor_db(tmp_path / "advisor.db", equity=200.0, positions=[("AAPL", 3), ("MSFT", -2)])
+    conn = dashboard._ro(str(tmp_path), "advisor.db")
+    try:
+        html = dashboard._position_heat(conn, NOW)
+    finally:
+        conn.close()
+    assert "snapshot_id" not in html
+    assert "AAPL" in html and "MSFT" in html
 
 
 def test_section_wrapper_keeps_plain_id():
