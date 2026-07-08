@@ -152,6 +152,41 @@ def _sources_line(header):
     return f"advisor: {n} sources failed" if n > 0 else None
 
 
+def _disagree_lines(rows):
+    if not rows:
+        return ["disagree: none"]
+    ordered = sorted(rows, key=lambda r: (r["score_sum"], r["symbol"]))
+    out = []
+    for r in ordered:
+        tag = "STRONG" if r["strong"] else "weak"
+        grp = f" ({r['group_name']})" if r["group_name"] else ""
+        out.append(f"disagree: {r['symbol']} {r['score_sum']:+d} {tag}{grp}")
+    return out
+
+
+def _caps_lines(rows):
+    if not rows:
+        return ["caps: none tonight"]
+    return [
+        f"cap: {r['symbol']} ≤ {r['cap_shares']:.2f}sh"
+        for r in sorted(rows, key=lambda r: r["symbol"])
+    ]
+
+
+def _staleness_line(header):
+    pc, rc = header["portfolio_captured_at"], header["captured_at"]
+    if not pc or not rc:
+        return None
+    # Timestamps are stored UTC (+00:00). The slot runs ~9:12pm Phoenix = the
+    # NEXT UTC day, so compare LOCAL dates (astimezone) or the age reads one
+    # day high. Host TZ is Phoenix; tests pin it via the phoenix_tz fixture.
+    pd = dt.datetime.fromisoformat(pc).astimezone().date()
+    rd = dt.datetime.fromisoformat(rc).astimezone().date()
+    if pd == rd:
+        return None
+    return f"(sized vs portfolio from {pd.strftime('%b %d')} — {(rd - pd).days}d old)"
+
+
 def format_advisor_lines(book, disagreements, caps, header):
     """Render the advisor digest block from pre-fetched rows. Pure: no I/O.
     Rows are accessed by string key, so dict and sqlite3.Row both work."""
@@ -163,6 +198,11 @@ def format_advisor_lines(book, disagreements, caps, header):
     sources = _sources_line(header)
     if sources:
         lines.append(sources)
+    lines += _disagree_lines(disagreements)
+    lines += _caps_lines(caps)
+    stale = _staleness_line(header)
+    if stale:
+        lines.append(stale)
     return lines or ["advisor: no snapshot"]
 
 

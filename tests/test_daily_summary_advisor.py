@@ -100,3 +100,88 @@ def test_book_line_empty_book():
 def test_sources_failed_note():
     lines = daily_summary.format_advisor_lines(_book(), [], [], _header(sources_failed=2))
     assert "advisor: 2 sources failed" in lines
+
+
+def _dis(symbol="XOM", score_sum=-1, group_name="energy", strong=0):
+    return {"symbol": symbol, "score_sum": score_sum, "group_name": group_name, "strong": strong}
+
+
+def _cap(symbol="NVDA", cap_shares=3.2):
+    return {"symbol": symbol, "cap_shares": cap_shares}
+
+
+def test_disagree_weak_with_group():
+    lines = daily_summary.format_advisor_lines(_book(), [_dis()], [], _header())
+    assert "disagree: XOM -1 weak (energy)" in lines
+
+
+def test_disagree_strong_uppercase():
+    lines = daily_summary.format_advisor_lines(
+        _book(), [_dis(score_sum=-5, strong=1)], [], _header()
+    )
+    assert "disagree: XOM -5 STRONG (energy)" in lines
+
+
+def test_disagree_null_group_no_parens():
+    lines = daily_summary.format_advisor_lines(_book(), [_dis(group_name=None)], [], _header())
+    assert "disagree: XOM -1 weak" in lines
+    assert "(" not in [line for line in lines if line.startswith("disagree")][0]
+
+
+def test_disagree_multiple_stable_order():
+    rows = [_dis(symbol="CVX", score_sum=-1), _dis(symbol="XOM", score_sum=-3)]
+    lines = [
+        line
+        for line in daily_summary.format_advisor_lines(_book(), rows, [], _header())
+        if line.startswith("disagree")
+    ]
+    # ordered by score_sum asc, then symbol: XOM(-3) before CVX(-1)
+    assert lines == ["disagree: XOM -3 weak (energy)", "disagree: CVX -1 weak (energy)"]
+
+
+def test_disagree_none():
+    lines = daily_summary.format_advisor_lines(_book(), [], [], _header())
+    assert "disagree: none" in lines
+
+
+def test_caps_present():
+    lines = daily_summary.format_advisor_lines(
+        _book(),
+        [],
+        [_cap(symbol="AMD", cap_shares=1.5), _cap(symbol="NVDA", cap_shares=3.2)],
+        _header(),
+    )
+    assert "cap: AMD ≤ 1.50sh" in lines
+    assert "cap: NVDA ≤ 3.20sh" in lines
+
+
+def test_caps_none():
+    lines = daily_summary.format_advisor_lines(_book(), [], [], _header())
+    assert "caps: none tonight" in lines
+
+
+def test_staleness_same_day_no_note():
+    lines = daily_summary.format_advisor_lines(_book(), [], [], _header())
+    assert not any(line.startswith("(sized vs portfolio") for line in lines)
+
+
+def test_staleness_stale_note(phoenix_tz):
+    # portfolio Jul 06 10:30 Phoenix, run Jul 07 21:12 Phoenix → 1 day old.
+    hdr = _header(
+        portfolio_captured_at="2026-07-06T17:30:00+00:00", captured_at="2026-07-08T04:12:00+00:00"
+    )
+    lines = daily_summary.format_advisor_lines(_book(), [], [], hdr)
+    assert "(sized vs portfolio from Jul 06 — 1d old)" in lines
+
+
+def test_full_nominal_block(phoenix_tz):
+    hdr = _header(
+        portfolio_captured_at="2026-07-06T17:30:00+00:00", captured_at="2026-07-08T04:12:00+00:00"
+    )
+    lines = daily_summary.format_advisor_lines(_book(), [_dis()], [], hdr)
+    assert lines == [
+        "book: 0.21% risk · 2 positions · cov 1.0 · equity $200",
+        "disagree: XOM -1 weak (energy)",
+        "caps: none tonight",
+        "(sized vs portfolio from Jul 06 — 1d old)",
+    ]
