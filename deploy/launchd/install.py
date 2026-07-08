@@ -65,7 +65,7 @@ JOBS = {
     "journal": (script("journal_sync.sh"), weekly(MON_FRI, 14, 40)),
     "options-close": (job("options", "--keep-days", "90"), weekly(MON_FRI, 14, 45)),
     "treasury": (job("treasury"), weekly(MON_FRI, 16, 30)),
-    "fred": (job("fred"), weekly(MON_FRI, 16, 40)),
+    "fred": (job("fred", "--vintages"), weekly(MON_FRI, 16, 40)),
     "cboe-stats": (job("cboe_stats"), weekly(MON_FRI, 18, 0)),
     "short-volume": (job("short_volume"), weekly(MON_FRI, 18, 15)),
     "short-interest": (job("short_interest"), weekly(MON_FRI, 18, 30)),

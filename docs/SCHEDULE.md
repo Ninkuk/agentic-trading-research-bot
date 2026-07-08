@@ -29,7 +29,7 @@ summer open (6:30am Phoenix).
 | `journal` | 2:40pm | Headless `claude -p "/journal-sync"` → Robinhood MCP order history → `main.py journal`. Ten minutes after portfolio so a stale-auth failure shows up twice. Empty-fill days still write a run header (that's what the freshness check reads). Journal matching reads composite.db; decisions land in scorer.db (never pruned) |
 | `options-close` | 2:45pm | Settled end-of-day chains (post-close both seasons) |
 | `treasury` | 4:30pm | FiscalData + yield-curve XML |
-| `fred` | 4:40pm | Daily rate series finalized ~4:15pm ET |
+| `fred` | 4:40pm | Daily rate series finalized ~4:15pm ET. Runs `--vintages`: idempotent upsert of the full ALFRED revision history into `observation_vintages` (~31 extra API calls/run; feeds the backtest combiner's point-in-time replay). If nightly runtime ever hurts, split `--vintages` to a weekly slot — the vintage fetch is a separate call per series |
 | `cboe-stats` | 6:00pm | VIX term-structure CSVs + daily put/call ratios (SSR stats page) |
 | `short-volume` | 6:15pm | FINRA Reg SHO daily file |
 | `short-interest` | 6:30pm | Daily probe; FINRA disseminates twice-monthly on varying days, 404s are free |
@@ -96,6 +96,11 @@ summer open (6:30am Phoenix).
   cadence. Healthy = ✅ default priority; problems = ⚠️ high priority. No
   9:15pm ping at all ⇒ the machine (or login session) is down — the summary
   can't report its own absence.
+- **Backtest replay** (manual, unscheduled by design):
+  `uv run python main.py backtest --db data/backtest.db` — copies FRED
+  vintages + SP500 closes out of `data/fred.db` (read-only) and prints
+  point-in-time hit rates for the FRED regime signals. See
+  `docs/superpowers/specs/2026-07-07-backtesting-foundation-design.md`.
 - **Restarts**: plists live in `~/Library/LaunchAgents` and survive reboots,
   but jobs only run once a login session exists (they need the Keychain and
   `.env`) — keep auto-login enabled on the always-on Mac mini. Runs missed
