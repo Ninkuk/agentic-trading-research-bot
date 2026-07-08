@@ -118,13 +118,17 @@ Ideas that need the machinery above before they're worth building:
   dominated by crosswalked commodity votes; per-ticker benchmark needs
   crosswalk provenance on ticker_scores first.
 - **Advisor enrichment** (residuals from shipped item 6) — deliberate
-  scope cuts to revisit once the views prove useful: fold advisor output
-  into the 9:15pm daily-summary digest; correlation beyond crosswalk
-  groups (QQQ + NVDA count as separate bets today — only CROSSWALK
-  siblings collapse); same-night sibling caps each see the full remaining
-  group budget (alternatives, not a shopping list — a shared-budget view
-  would close that); options positions are invisible to book heat
-  (portfolio.db is equities-only).
+  scope cuts to revisit once the views prove useful. *(Digest fold SHIPPED
+  2026-07-07: advisor book heat / disagreements / size caps now render as a
+  plain-text `— advisor —` block in the 9:15pm daily-summary ntfy push —
+  `advisor_digest()` in `deploy/launchd/daily_summary.py`, mirroring
+  `signals_digest`; staleness note uses local Phoenix dates; NULL
+  `cap_shares` on bearish-flag nights guarded so the digest can't crash.)*
+  Still open: correlation beyond crosswalk groups (QQQ + NVDA count as
+  separate bets today — only CROSSWALK siblings collapse); same-night
+  sibling caps each see the full remaining group budget (alternatives, not a
+  shopping list — a shared-budget view would close that); options positions
+  are invisible to book heat (portfolio.db is equities-only).
 - **VIXEQ dispersion/correlation signal** — `cboe_stats` already carries
   VIX/VIX3M/VIX9D/VVIX and derives `v_vix_term_structure`; adding CBOE's
   VIXEQ (market-cap-weighted single-name implied vol) would let a new view
