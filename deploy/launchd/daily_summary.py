@@ -41,6 +41,43 @@ MAX_AGE_DAYS = {
 }
 DEFAULT_MAX_AGE_DAYS = 4
 
+# Snapshot column holding the count of domain rows written by the newest run,
+# per DB filename. A fresh snapshot whose count is 0 means a silent-empty
+# fetch (see plan 002) — flagged even though captured_at looks current. DBs
+# absent from this map are not count-checked (freshness-only, as before).
+ROW_COUNT_COL = {
+    "ats.db": "row_count",
+    "cboe_stats.db": "row_count",
+    "cftc.db": "row_count",
+    "composite.db": "signals_ok",
+    "earnings.db": "event_count",
+    "econ_calendar.db": "event_count",
+    "edgar.db": "filing_count",
+    "eia.db": "observation_count",
+    "etfs.db": "universe_count",
+    "fomc.db": "event_count",
+    "fred.db": "observation_count",
+    "ftd.db": "row_count",
+    "market_calendar.db": "event_count",
+    "nyfed.db": "row_count",
+    "options.db": "row_count",
+    "reddit.db": "ticker_count",
+    "sec_fundamentals.db": "fact_count",
+    "short_interest.db": "row_count",
+    "short_volume.db": "row_count",
+    "stocks.db": "universe_count",
+    "treasury.db": "row_count",
+    "usda.db": "observation_count",
+}
+
+# DBs that legitimately write zero-row snapshots on some runs — never flag
+# these for an empty count (probe days / bimonthly / empty-by-design domains).
+EMPTY_OK = {
+    "ftd.db",  # SEC fails-to-deliver probe days write zero-row snapshots
+    "short_interest.db",  # FINRA short interest is bimonthly; off-cycle runs are empty
+    "nyfed.db",  # some NY Fed domains (iorb, primary_dealer) are empty by design
+}
+
 
 def job_exit_codes():
     """{job-name: last exit code} from launchctl (None while running)."""
@@ -98,6 +135,18 @@ def stale_dbs(now):
         limit = MAX_AGE_DAYS.get(db.name, DEFAULT_MAX_AGE_DAYS)
         if age > dt.timedelta(days=limit):
             stale.append(f"{db.name}: {age.days}d old (limit {limit}d)")
+
+        col = ROW_COUNT_COL.get(db.name)
+        if col and db.name not in EMPTY_OK:
+            try:
+                with sqlite3.connect(db) as conn:
+                    n = conn.execute(
+                        f"SELECT {col} FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1"
+                    ).fetchone()[0]
+            except sqlite3.Error:
+                n = None  # column vanished / schema drift — skip the count check
+            if n == 0:
+                stale.append(f"{db.name}: newest snapshot has 0 rows (empty fetch?)")
     return stale
 
 
