@@ -208,6 +208,45 @@ def test_hero_degrades_on_empty_dir(tmp_path):
     assert "1 positions" not in html
 
 
+def test_hero_all_dbs_missing_falls_back(tmp_path):
+    # every clause fails -> exactly the single honest fallback line
+    assert dashboard._hero_read(str(tmp_path), NOW) == dashboard._HERO_FALLBACK
+
+
+def test_hero_survives_missing_advisor_db(tmp_path):
+    # composite only: the advisor-backed clauses fail, but the read still
+    # renders the regime + flagged-ticker lines instead of vanishing.
+    _make_composite_db(
+        tmp_path / "composite.db", regime="risk_off", vix=25.5, symbol="NVDA", score_sum=5
+    )
+    html = dashboard._hero_read(str(tmp_path), NOW)
+    assert html != dashboard._HERO_FALLBACK
+    assert '<b class="off">' in html  # regime sentence present
+    assert "NVDA" in html  # flagged-ticker sentence present
+    assert "Your book" not in html  # advisor clause dropped, not faked
+
+
+def test_hero_survives_missing_composite_db(tmp_path):
+    # advisor only: the composite-backed clauses fail, but the book line renders.
+    _make_advisor_db(tmp_path / "advisor.db", equity=200.0, positions=[])
+    html = dashboard._hero_read(str(tmp_path), NOW)
+    assert html != dashboard._HERO_FALLBACK
+    assert "Your book holds" in html
+    assert "The market is" not in html  # regime clause dropped, not faked
+
+
+def test_hero_no_book_makes_no_disagreement_claim(tmp_path):
+    claim = "nothing you own is being second-guessed"
+    # advisor snapshot with zero positions -> the reassuring sentence appears
+    _make_advisor_db(tmp_path / "advisor.db", equity=200.0, positions=[])
+    with_book = dashboard._hero_read(str(tmp_path), NOW)
+    assert claim in with_book
+    # advisor.db absent -> the claim must NOT appear (we have no positions data)
+    (tmp_path / "advisor.db").unlink()
+    no_book = dashboard._hero_read(str(tmp_path), NOW)
+    assert claim not in no_book
+
+
 def test_hero_pluralizes(tmp_path):
     _make_composite_db(tmp_path / "composite.db")
     _make_advisor_db(tmp_path / "advisor.db", equity=200.0, positions=[("AAPL", 2)])

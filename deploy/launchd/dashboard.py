@@ -846,9 +846,10 @@ _HERO_FALLBACK = '<p class="read">Tonight\'s summary is unavailable — see the 
 
 
 def _hero_regime_clause(data_dir: str) -> str:
-    """Regime + VIX + input coverage. May raise (missing DB/view) — the
-    caller's outer try/except is what makes _hero_read total; NULLs inside
-    an existing row degrade to honest in-sentence text instead."""
+    """Regime + VIX + input coverage. May raise (missing DB/view) — each
+    clause is guarded independently by _hero_clause, so a raise here drops
+    only this sentence, not the whole read. NULLs inside an existing row
+    degrade to honest in-sentence text instead."""
     conn = _ro(data_dir, "composite.db")
     try:
         r = conn.execute(
@@ -892,7 +893,9 @@ def _hero_regime_clause(data_dir: str) -> str:
 
 
 def _hero_book_clause(data_dir: str) -> str:
-    """Book exposure + feed health from the advisor snapshot."""
+    """Book exposure + feed health from the advisor snapshot. Guarded per
+    clause by _hero_clause — a failed advisor run drops this sentence but
+    leaves the regime/flag lines intact."""
     conn = _ro(data_dir, "advisor.db")
     try:
         r = conn.execute(
@@ -921,16 +924,25 @@ def _hero_book_clause(data_dir: str) -> str:
     return f'Your book holds <span class="n">{positions}</span> {pos_word}{risk_txt}, {failed_txt}.'
 
 
-def _hero_disagreement_clause(data_dir: str) -> str:
+def _hero_disagreement_clause(data_dir: str) -> str | None:
     """The one holding (if exactly one) whose signal has turned against it,
-    or an honest count otherwise."""
+    or an honest count otherwise. Guarded per clause by _hero_clause.
+
+    Zero `v_disagreements` rows is ambiguous — it happens both when a book
+    was captured with no disagreements AND when no book was captured at all.
+    So we first confirm an advisor snapshot exists; with none we return None
+    (this sentence is dropped) rather than claiming "nothing you own is being
+    second-guessed", which would be false when we have no positions data."""
     conn = _ro(data_dir, "advisor.db")
     try:
+        has_snapshot = conn.execute("SELECT 1 FROM v_latest_snapshot").fetchone() is not None
         rows = conn.execute(
             "SELECT symbol, strong FROM v_disagreements ORDER BY strong DESC, symbol"
         ).fetchall()
     finally:
         conn.close()
+    if not has_snapshot:
+        return None
     if not rows:
         return "No holdings to eye tonight — nothing you own is being second-guessed."
     if len(rows) == 1:
@@ -943,7 +955,8 @@ def _hero_disagreement_clause(data_dir: str) -> str:
 
 
 def _hero_flag_clause(data_dir: str) -> str:
-    """The single strongest-agreement flagged ticker tonight, if any."""
+    """The single strongest-agreement flagged ticker tonight, if any.
+    Guarded per clause by _hero_clause."""
     conn = _ro(data_dir, "composite.db")
     try:
         r = conn.execute(
@@ -959,21 +972,34 @@ def _hero_flag_clause(data_dir: str) -> str:
     )
 
 
+def _hero_clause(fn, data_dir: str) -> str | None:
+    """Run one clause helper, swallowing any failure to None so a single
+    unreadable DB/view drops only that sentence — mirrors _render_section's
+    per-section degradation. A clause may also return None to opt out
+    honestly (e.g. no advisor snapshot)."""
+    try:
+        return fn(data_dir)
+    except Exception:
+        return None
+
+
 def _hero_read(data_dir: str, now_iso: str) -> str:
     """Tonight's plain-English read, assembled from the same views the
-    sections below read. Total: any failure anywhere in composing it —
-    missing DB, dropped view, unexpected shape — degrades to a single
-    honest fallback line rather than a crash or false prose."""
-    try:
-        prose = " ".join(
-            [
-                _hero_regime_clause(data_dir),
-                _hero_book_clause(data_dir),
-                _hero_disagreement_clause(data_dir),
-                _hero_flag_clause(data_dir),
-            ]
+    sections below read. Degrades per clause, not all-or-nothing: each of
+    the four clauses is guarded independently, so a failed advisor run (say)
+    still leaves the regime and flagged-ticker lines. Only when *every*
+    clause fails or opts out does it fall back to a single honest line."""
+    clauses = [
+        _hero_clause(fn, data_dir)
+        for fn in (
+            _hero_regime_clause,
+            _hero_book_clause,
+            _hero_disagreement_clause,
+            _hero_flag_clause,
         )
-    except Exception:
+    ]
+    prose = " ".join(c for c in clauses if c)
+    if not prose:
         return _HERO_FALLBACK
     return f'<p class="read">{prose}</p>'
 
