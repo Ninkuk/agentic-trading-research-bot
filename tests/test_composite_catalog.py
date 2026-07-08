@@ -114,3 +114,15 @@ def test_extraction_sql_executes_against_source_schema(signal, tmp_path):
         conn.close()
 
     assert isinstance(rows, list)
+
+
+def test_fred_score_cases_are_hoisted_constants():
+    from sources.combiners.composite.catalog import (
+        FRED_CURVE_SCORE,
+        FRED_HY_SPREAD_SCORE,
+        SIGNALS,
+    )
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    assert FRED_CURVE_SCORE in by_id["fred_curve"]["sql"]
+    assert FRED_HY_SPREAD_SCORE in by_id["fred_hy_spread"]["sql"]

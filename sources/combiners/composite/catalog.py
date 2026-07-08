@@ -15,6 +15,15 @@ query base tables with :today instead.
 
 from typing import Any
 
+# Flag thresholds for the two FRED regime signals, hoisted so the backtest
+# combiner replays the IDENTICAL expressions (both operate on a column
+# named `value`). Interpolated back into SIGNALS below — rendered SQL is
+# unchanged.
+FRED_CURVE_SCORE = "CASE WHEN value < 0 THEN -1 ELSE 0 END"
+FRED_HY_SPREAD_SCORE = (
+    "CASE WHEN value >= 5.0 THEN -2 WHEN value >= 4.0 THEN -1 WHEN value < 3.5 THEN 1 ELSE 0 END"
+)
+
 SIGNALS: list[dict[str, Any]] = [
     # ------------------------------------------------ market grain ----
     {
@@ -22,9 +31,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "fred.db",
         "grain": "market",
         "staleness_budget_days": 7,
-        "sql": """
+        "sql": f"""
             SELECT '*', value,
-                   CASE WHEN value < 0 THEN -1 ELSE 0 END,
+                   {FRED_CURVE_SCORE},
                    date
             FROM src.observations
             WHERE series_id = 'T10Y2Y' AND value IS NOT NULL
@@ -36,11 +45,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "fred.db",
         "grain": "market",
         "staleness_budget_days": 7,
-        "sql": """
+        "sql": f"""
             SELECT '*', value,
-                   CASE WHEN value >= 5.0 THEN -2
-                        WHEN value >= 4.0 THEN -1
-                        WHEN value < 3.5 THEN 1 ELSE 0 END,
+                   {FRED_HY_SPREAD_SCORE},
                    date
             FROM src.observations
             WHERE series_id = 'BAMLH0A0HYM2' AND value IS NOT NULL
