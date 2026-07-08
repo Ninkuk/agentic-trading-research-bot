@@ -64,6 +64,63 @@ def test_build_page_is_self_contained(tmp_path):
     assert "<style>" in html  # CSS is inlined in-head
 
 
+def test_score_cell_clamps_and_signs():
+    saturated = dashboard._score_cell(9, 9, 0, True)
+    assert "width:50%" in saturated and "+9" in saturated and '<i class="p"' in saturated
+    down = dashboard._score_cell(-2, 0, 1, False)
+    assert "-2" in down and '<i class="n"' in down
+    unsaturated = dashboard._score_cell(3, 2, 0, False)
+    assert "width:30%" in unsaturated
+
+
+def test_pill_class_for_every_recommendation():
+    for state in ("keep", "watch", "anti-signal", "insufficient evidence"):
+        badge = dashboard._rec_badge(state)
+        # extract the class actually applied and confirm _STYLE defines it
+        cls = badge.split('class="pill ')[1].split('"')[0]
+        assert f".pill.{cls}" in dashboard._STYLE or f",.pill.{cls}" in dashboard._STYLE
+
+
+def test_reliability_meter_reads_n_bench_not_n_matured():
+    low = dashboard._reliability_meter(9, 30)
+    assert 'class="fil low"' in low and "9 / 30" in low
+    assert "matured" not in low
+    full = dashboard._reliability_meter(31, 30)
+    assert 'class="fil low"' not in full and "31 / 30" in full
+    assert "width:100%" in full
+
+
+def test_ci_bar_clamps_and_shows_numbers():
+    bar = dashboard._ci_bar(0.57, 0.44, 0.71)
+    assert "57%" in bar and "44" in bar and "71" in bar
+    left = int(bar.split('class="rng" style="left:')[1].split("%")[0])
+    width = int(bar.split("width:")[1].split("%")[0])
+    assert left + width <= 100
+    null_bar = dashboard._ci_bar(None, None, None)
+    assert "—" in null_bar and 'class="est"' not in null_bar
+
+
+def test_section_wrapper_keeps_plain_id():
+    html = dashboard._render_section(
+        "regime", "Regime", "composite.db", lambda c, n: "body", "Macro", "note text", "", NOW
+    )
+    assert 'id="regime"' in html
+    assert 'aria-labelledby="s-regime"' in html
+
+
+def test_sparkline_maps_value_to_height():
+    # Callers pass newest-first; here the newest snapshot (series[0]) has
+    # the max VIX, so after the internal reverse it lands last in render
+    # order. Its y must be smaller (higher on screen) than the oldest/min
+    # point's y — asserts the value->height scale isn't inverted.
+    svg = dashboard._sparkline_svg([("risk_on", 30.0), ("risk_on", 10.0)])
+    import re
+
+    ys = [float(m.group(1)) for m in re.finditer(r'cy="([\d.]+)"', svg)]
+    assert len(ys) == 2
+    assert ys[-1] < ys[0]
+
+
 def test_write_dashboard_is_atomic_replace(tmp_path):
     out = tmp_path / "sub" / "dashboard.html"
     dashboard.write_dashboard("<!doctype html><p>hi</p>", str(out))

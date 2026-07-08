@@ -28,9 +28,23 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sources.combiners.scorer import scorecard  # noqa: E402
+from sources.combiners.scorer.db import RELIABLE_MIN_N  # noqa: E402
 
 DATA_DIR = "data"
 OUTPUT_PATH = "reports/dashboard.html"
+
+# Denominator for the diverging score bar. Pinned at 5, not derived at runtime:
+#   * it reproduces the mockup exactly (+5 -> width:50%, +3 -> width:30%);
+#   * it sits just above the |score_sum| >= 4 flag threshold (composite/db.py:79),
+#     so a nearly-full bar reads as "this one crossed the flag line";
+#   * measured 2026-07-08 over all 6,215 rows of composite.db ticker_scores, the
+#     observed max |score_sum| is 3 and max total is 4, so nothing saturates today.
+# The theoretical bound is 2 * total (each signal votes -2..+2, catalog.py:2), i.e.
+# 8 at total=4. Scores past 5 therefore CAN saturate the bar in principle; that is
+# acceptable because the exact signed number is always rendered as visible text and
+# repeated in the tooltip. A fixed cap (rather than per-row 2*total) is what makes
+# bars comparable down the column.
+_SCORE_BAR_MAX = 5
 
 # --- pure formatting helpers (no I/O; unit-tested without a DB) -------------
 
@@ -119,11 +133,12 @@ def _stat_tiles(pairs: list[tuple[str, str]]) -> str:
     return f'<div class="tiles">{tiles}</div>'
 
 
-def _sparkline_svg(series: list[tuple], w: int = 480, h: int = 60) -> str:
-    """Inline SVG VIX trend, one colored dot per point (by that point's
-    regime). `series` is [(regime, vix), ...] oldest-first is not required —
-    callers pass newest-first and we reverse. Degrades to a 'no data' note
-    for < 2 usable points. Pure: coordinates computed here, zero JS/assets."""
+def _sparkline_svg(series: list[tuple], w: int = 640, h: int = 64) -> str:
+    """Inline SVG VIX trend: gradient area fill + polyline + one titled dot
+    per point (colored by that point's regime, last dot emphasized).
+    `series` is [(regime, vix), ...] oldest-first is not required — callers
+    pass newest-first and we reverse. Degrades to a 'no data' note for < 2
+    usable points. Pure: coordinates computed here, zero JS/assets."""
     pts = [(r, v) for r, v in reversed(series) if v is not None]
     if len(pts) < 2:
         return '<p class="empty">no data</p>'
@@ -131,19 +146,111 @@ def _sparkline_svg(series: list[tuple], w: int = 480, h: int = 60) -> str:
     lo, hi = min(vixes), max(vixes)
     span = (hi - lo) or 1.0  # flat series: avoid divide-by-zero
     n = len(pts)
-    coords = []
-    dots = []
+    coords: list[tuple[float, float]] = []
+    circles = []
     for i, (regime, v) in enumerate(pts):
         x = round(i / (n - 1) * (w - 8) + 4, 1)
         y = round(h - 4 - (v - lo) / span * (h - 8), 1)
-        coords.append(f"{x},{y}")
-        fill = {"risk_on": "var(--green)", "risk_off": "var(--red)"}.get(regime, "var(--amber)")
-        dots.append(f'<circle cx="{x}" cy="{y}" r="2.5" fill="{fill}"/>')
+        coords.append((x, y))
+        is_last = i == n - 1
+        fill = {"risk_on": "var(--up)", "risk_off": "var(--down)"}.get(regime, "var(--hold)")
+        radius = 4 if is_last else 3
+        stroke = ' stroke="var(--ink)" stroke-width="2"' if is_last else ""
+        label = f"point {i + 1} of {n} · VIX {_num(v, 1)} · {regime or 'regime unknown'}"
+        circles.append(
+            f'<circle cx="{x}" cy="{y}" r="{radius}" fill="{fill}"{stroke}>'
+            f"<title>{_esc(label)}</title></circle>"
+        )
+    poly = " ".join(f"{x},{y}" for x, y in coords)
+    area = (
+        f"M{coords[0][0]},{h} L"
+        + " L".join(f"{x},{y}" for x, y in coords)
+        + f" L{coords[-1][0]},{h} Z"
+    )
+    aria = f"VIX over the trailing {n} snapshots, from {_num(vixes[0], 1)} to {_num(vixes[-1], 1)}"
     return (
-        f'<svg class="spark" viewBox="0 0 {w} {h}" width="{w}" height="{h}">'
-        f'<polyline points="{" ".join(coords)}" fill="none"'
-        f' stroke="var(--line)" stroke-width="1.5"/>{"".join(dots)}</svg>'
-        f'<p class="cap">VIX, trailing {n} snapshots (dot color = regime)</p>'
+        f'<svg class="spark" role="img" viewBox="0 0 {w} {h}" preserveAspectRatio="none"'
+        f' aria-label="{_esc(aria)}">'
+        '<defs><linearGradient id="dashfade" x1="0" y1="0" x2="0" y2="1">'
+        '<stop offset="0" stop-color="#e0bd76" stop-opacity=".26"/>'
+        '<stop offset="1" stop-color="#e0bd76" stop-opacity="0"/></linearGradient></defs>'
+        f'<path d="{area}" fill="url(#dashfade)"/>'
+        f'<polyline points="{poly}" fill="none" stroke="#e0bd76" stroke-width="2"/>'
+        f"{''.join(circles)}</svg>"
+        '<p class="cap">VIX · trailing'
+        f" {n} snapshots · higher = more fear · dot color = that night's regime</p>"
+    )
+
+
+def _yn(x) -> str:
+    if x is None:
+        return "—"
+    return "yes" if x else "no"
+
+
+def _signed_num(x, dp: int = 1) -> str:
+    return "—" if x is None else f"{x:+.{dp}f}"
+
+
+def _drivers_table(rows: list[tuple[str, str]]) -> str:
+    """The regime section's <details> breakdown: a plain label/value table,
+    no header row (mirrors the mockup's `table.drivers`)."""
+    body = "".join(f'<tr><td>{_esc(k)}</td><td class="num">{v}</td></tr>' for k, v in rows)
+    return f'<div class="twrap"><table class="drivers"><tbody>{body}</tbody></table></div>'
+
+
+def _score_cell(score_sum: int, bullish: int, bearish: int, flagged: bool) -> str:
+    """The scorecard's signed-number + diverging-bar cell. Bar width is
+    clamped to _SCORE_BAR_MAX so no row's bar can exceed the track — the
+    exact signed number is always shown as visible text too."""
+    sign_cls = "up" if score_sum >= 0 else "down"
+    bar_cls = "p" if score_sum >= 0 else "n"
+    width = min(abs(score_sum) / _SCORE_BAR_MAX, 1) * 50
+    total_votes = bullish + bearish
+    vote_word = "vote" if total_votes == 1 else "votes"
+    flag_suffix = " · flagged" if flagged else ""
+    title = f"summed score {score_sum:+d} · {bullish} bullish, {bearish} bearish {vote_word}{flag_suffix}"
+    return (
+        f'<div class="scorecell"><span class="sval {sign_cls}">{score_sum:+d}</span>'
+        f'<div class="sbar" title="{_esc(title)}">'
+        f'<i class="{bar_cls}" style="width:{width:.0f}%"></i></div></div>'
+    )
+
+
+def _reliability_meter(n_bench: int | None, threshold: int) -> str:
+    """The evidence meter: how far n_bench (benchmarked calls — NOT
+    n_matured, see scorer/db.py's reliable-gates-on-n_bench note) has
+    filled toward the reliability floor."""
+    n = n_bench or 0
+    pct = min(n / threshold, 1) * 100 if threshold else 0.0
+    low_cls = " low" if n < threshold else ""
+    status = "not enough yet" if n < threshold else "enough to grade"
+    title = f"{n} benchmarked calls, threshold {threshold} — {status}"
+    return (
+        f'<div class="meter" title="{_esc(title)}"><div class="trk">'
+        f'<div class="fil{low_cls}" style="width:{pct:.0f}%"></div></div>'
+        f'<div class="lab">{n} / {threshold}</div></div>'
+    )
+
+
+def _ci_bar(hit_rate, ci_lo, ci_hi) -> str:
+    """The hit-rate confidence-interval bar: visible numbers, a range bar
+    clamped to the 0-100 track, and an estimate marker. NULLs (no bench
+    sample yet) degrade to a plain dash — no crash, no marker at 0."""
+    if hit_rate is None or ci_lo is None or ci_hi is None:
+        return '<div class="ci">—</div>'
+    hr = round(hit_rate * 100)
+    lo = max(0, min(round(ci_lo * 100), 100))
+    hi = max(0, min(round(ci_hi * 100), 100))
+    width = max(0, hi - lo)
+    est = max(0, min(hr, 100))
+    title = f"best estimate {hr}%, 95% range {lo}–{hi}%"
+    return (
+        f'<div class="ci" title="{_esc(title)}">'
+        f'<div class="num"><b>{hr}%</b> <span>· {lo}–{hi}%</span></div>'
+        f'<div class="trk"><div class="rng" style="left:{lo}%;width:{width}%"></div>'
+        f'<div class="est" style="left:{est}%"></div></div>'
+        '<div class="sc"><span>0</span><span>50</span><span>100</span></div></div>'
     )
 
 
@@ -152,17 +259,38 @@ def _sparkline_svg(series: list[tuple], w: int = 480, h: int = 60) -> str:
 
 def _regime(conn, now_iso) -> str:
     r = conn.execute(
-        "SELECT regime, vix, inputs_present, inputs_expected FROM v_latest_regime"
+        "SELECT regime, vix, inputs_present, inputs_expected,"
+        " t10y2y, curve_inverted, hy_spread, vix_backwardation,"
+        " equity_pcr_pctile, in_fomc_blackout, imminent_high_impact,"
+        " days_to_opex, rrp_change, tga_change FROM v_latest_regime"
     ).fetchone()
     if not r:
         return '<p class="empty">no regime yet</p>'
-    return _stat_tiles(
+    tiles = _stat_tiles(
         [
             ("regime", _regime_badge(r["regime"])),
             ("VIX", _num(r["vix"], 1)),
             ("inputs", f"{r['inputs_present']}/{r['inputs_expected']}"),
         ]
     )
+    drivers = _drivers_table(
+        [
+            ("VIX level", _num(r["vix"], 1)),
+            ("yield curve inverted", _yn(r["curve_inverted"])),
+            ("high-yield spread", _num(r["hy_spread"], 2)),
+            ("VIX backwardation", _yn(r["vix_backwardation"])),
+            ("put / call percentile", _pct(r["equity_pcr_pctile"])),
+            ("FOMC blackout", _yn(r["in_fomc_blackout"])),
+            ("imminent high-impact event", _yn(r["imminent_high_impact"])),
+            (
+                "days to options expiry",
+                "—" if r["days_to_opex"] is None else str(r["days_to_opex"]),
+            ),
+            ("Fed RRP change", _signed_num(r["rrp_change"])),
+            ("Treasury TGA change", _signed_num(r["tga_change"])),
+        ]
+    )
+    return tiles + f"<details><summary>All 10 regime inputs</summary>{drivers}</details>"
 
 
 def _regime_timeline(conn, now_iso) -> str:
@@ -176,22 +304,28 @@ def _regime_timeline(conn, now_iso) -> str:
 
 def _scorecard(conn, now_iso) -> str:
     rows = conn.execute(
-        "SELECT symbol, score_sum, total, coverage, in_portfolio"
+        "SELECT symbol, score_sum, total, coverage, in_portfolio,"
+        " bullish, bearish, worst_staleness_days"
         " FROM v_latest_scorecard ORDER BY ABS(score_sum) DESC LIMIT 15"
     ).fetchall()
     flagged = {r["symbol"] for r in conn.execute("SELECT symbol FROM v_flagged")}
     body = [
         _cells(
             r["symbol"],
-            f"{r['score_sum']:+d}",
-            str(r["total"]),
+            _score_cell(r["score_sum"], r["bullish"], r["bearish"], r["symbol"] in flagged),
+            f"{r['bullish']} / {r['bearish']}",
             _pct(r["coverage"]),
+            "—" if r["worst_staleness_days"] is None else f"{r['worst_staleness_days']:.1f}d",
             "✓" if r["in_portfolio"] else "",
             numeric_from=1,
         ).replace("<tr>", '<tr class="flag">' if r["symbol"] in flagged else "<tr>")
         for r in rows
     ]
-    return _table(["symbol", "score", "total", "coverage", "held"], body, numeric_from=1)
+    return _table(
+        ["symbol", "score", "split (bull/bear)", "coverage", "data age", "held"],
+        body,
+        numeric_from=1,
+    )
 
 
 def _signal_efficacy(conn, now_iso) -> str:
@@ -274,7 +408,7 @@ def _human_filter(conn, now_iso) -> str:
 def _signal_recommendation(conn, now_iso) -> str:
     rows = conn.execute(
         "SELECT signal_id, via_crosswalk, horizon, n_bench,"
-        " avg_directional_excess, hit_ci_lo, hit_ci_hi, recommendation"
+        " avg_directional_excess, hit_rate, hit_ci_lo, hit_ci_hi, recommendation"
         " FROM v_signal_recommendation"
         " ORDER BY horizon, via_crosswalk, signal_id"
     ).fetchall()
@@ -283,9 +417,9 @@ def _signal_recommendation(conn, now_iso) -> str:
             r["signal_id"],
             "xw" if r["via_crosswalk"] else "direct",
             str(r["horizon"]),
-            str(r["n_bench"]),
+            _reliability_meter(r["n_bench"], RELIABLE_MIN_N),
             _pct(r["avg_directional_excess"]),
-            f"[{_pct(r['hit_ci_lo'])}, {_pct(r['hit_ci_hi'])}]",
+            _ci_bar(r["hit_rate"], r["hit_ci_lo"], r["hit_ci_hi"]),
             _rec_badge(r["recommendation"]),
             numeric_from=2,
         )
@@ -297,7 +431,7 @@ def _signal_recommendation(conn, now_iso) -> str:
         " hold every verdict loosely. Re-weighting stays a human decision.</p>"
     )
     return caveat + _table(
-        ["signal", "via", "horizon", "n_bench", "dir excess", "hit-rate 95% CI", "verdict"],
+        ["signal", "via", "horizon", "evidence", "excess vs SPY", "hit-rate (0–100%)", "verdict"],
         body,
         empty="insufficient evidence for every signal (young scorer) — expected",
         numeric_from=2,
