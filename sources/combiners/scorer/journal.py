@@ -13,6 +13,7 @@ rows and never needs composite.db again. Decisions are never pruned — they
 are the other half of the experiment."""
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -166,6 +167,18 @@ def _seen(conn, ref):
     )
 
 
+def _dedup_ref(f) -> str:
+    """The idempotency key for a fill. A broker-supplied order_ref if present;
+    otherwise a deterministic synthetic key over the fill's identifying fields,
+    so re-ingesting the same manually-dictated fill is a no-op instead of a
+    double-book. Prefixed 'manual:' so the stored source can be recovered."""
+    ref = f.get("order_ref")
+    if ref:
+        return ref
+    canon = "|".join(str(f.get(k)) for k in ("symbol", "filled_at", "side", "price", "quantity"))
+    return "manual:" + hashlib.sha1(canon.encode("utf-8")).hexdigest()[:16]
+
+
 def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
     """One transaction: every decision row plus the journal_runs header
     commit together or not at all. Requires composite.db attached as `src`
@@ -177,7 +190,8 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
     as_of_date = _phx_date(datetime.fromisoformat(now_iso))
     with conn:
         for f in fills:
-            if _seen(conn, f["order_ref"]):
+            ref = _dedup_ref(f)
+            if _seen(conn, ref):
                 dupes += 1
                 continue
             automatic = f.get("placed_agent") in AUTOMATIC_AGENTS
@@ -193,7 +207,7 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
                     conn.execute(
                         "UPDATE decisions SET exit_fill_date = ?,"
                         " exit_fill_price = ?, exit_order_ref = ? WHERE id = ?",
-                        (f["fill_date"], f["price"], f["order_ref"], open_buy[0]),
+                        (f["fill_date"], f["price"], ref, open_buy[0]),
                     )
                     exits += 1
                     continue
@@ -214,10 +228,10 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
                     f["fill_date"],
                     f["price"],
                     f["quantity"],
-                    f["order_ref"],
+                    ref,
                     f["note"],
                     f.get("placed_agent"),
-                    "mcp" if f["order_ref"] else "manual",
+                    "manual" if ref.startswith("manual:") else "mcp",
                     now_iso,
                 ),
             )
