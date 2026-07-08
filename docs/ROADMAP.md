@@ -71,24 +71,35 @@ verified against the real book (2 positions, heat 0.21 % of equity,
 coverage 1.0, XOM weak disagreement, zero caps — nothing flagged).
 Residuals live in item 8.)*
 
-### 7. Backtesting foundation
-
-**Problem.** Signals can only be evaluated forward from now. Remaining
-blockers (the close-ledger prune was #3, shipped): no OHLC bar history
-anywhere (stocks/etfs metrics are latest-snapshot-only), and FRED vintages
-are deferred so macro signals can't be replayed without revision look-ahead.
-
-**Done when.** FRED `--vintages` backfilled and scheduled (see
-`fred-vintages` deferral note); a decision made and documented on a bar store
-(extend the close ledger vs a new OHLC slice); at least one signal replayed
-historically end-to-end as proof.
-
-**Size.** L. **Depends on.** — (#1/#3 prerequisites shipped).
+*(Item 7, backtesting foundation: the `backtest` combiner replays composite's
+two FRED regime signals point-in-time over ~10y and grades them against
+forward SP500 returns — `v_pit_signal` (value-as-known-on-D via ALFRED
+vintages), `v_replay_flags` (composite's exact hoisted score CASEs),
+`v_replay_returns` (entry strictly after D, 5/10/21d), `v_replay_efficacy`
+(Wilson-CI hit rates mirroring scorer). FRED `--vintages` backfilled +
+scheduled weekly (`fred-vintages` Sat 7am); backfilling exposed and fixed
+three live FRED caps the offline-tested fetcher never hit — the >2000
+vintage-dates 400 (windowed realtime tiling), the 100k-row truncation (offset
+pagination), and ALFRED-absent series (benchmark skip). Proof (2026-07-07,
+real data): both signals grade — `fred_hy_spread` bullish 0.61/0.63/0.70 hit
+@5/10/21d (n~580, reliable, CI clears 0.5 — the real edge); `fred_curve`
+bearish 0.39/0.36/0.33 (n=546, reliable — an inverted 2s10s was not a
+short-term SP500 short over 2016–2026). Bar store: decided **NOT** built —
+ticker bar history becomes a dedicated `bars` slice (see item 8); the close
+ledger stays evidence-only. Shipped 2026-07-07. Residuals in item 8.)*
 
 ### 8. Signal-research backlog (open-ended)
 
 Ideas that need the machinery above before they're worth building:
 
+- **Bar-store build (`bars` slice)** (deferred from shipped item 7) — the
+  backtest replays only market-grain FRED signals because ticker-grain signals
+  have no historical inputs: stocks/etfs metrics are 30-day snapshot-scoped and
+  the close ledger is close-only. A dedicated OHLCV screener (its own DB, four
+  files, live-verified fetch) unlocks ticker-grain replay when needed; the close
+  ledger stays evidence-only (provenance). Decision + rejected-alternative
+  rationale: `docs/superpowers/specs/2026-07-07-backtesting-foundation-design.md`
+  § 4.
 - **Ticker-grain options signal** — chains are already collected intraday +
   close; nothing derives per-ticker unusual IV / flow. The obvious unused
   input.
@@ -114,3 +125,22 @@ Ideas that need the machinery above before they're worth building:
   group budget (alternatives, not a shopping list — a shared-budget view
   would close that); options positions are invisible to book heat
   (portfolio.db is equities-only).
+- **VIXEQ dispersion/correlation signal** — `cboe_stats` already carries
+  VIX/VIX3M/VIX9D/VVIX and derives `v_vix_term_structure`; adding CBOE's
+  VIXEQ (market-cap-weighted single-name implied vol) would let a new view
+  compute the VIX/VIXEQ spread as an implied-correlation proxy — a regime
+  axis term structure can't see (single-name-driven vol vs systemic vol).
+  Cheap to fetch (same source, same catalog pattern). Hold until #7 ships:
+  backtest the spread's forward-return efficacy via `v_replay_efficacy`
+  before wiring it into `composite` — same lesson as composite's first
+  calibration pass, don't add scorer weight on vibes.
+- **Mine TradingView for signal ideas** — two corpora:
+  scripts (<https://www.tradingview.com/scripts/>, published Pine Script
+  indicators/strategies) and ideas (<https://www.tradingview.com/ideas/>,
+  discretionary trade write-ups / analysis). Research-only: harvest the
+  *idea* (what input, what transform, what threshold) and reimplement over
+  our own official-source data + SQL views, never depend on TradingView as a
+  feed (it fails the official-primary-source policy). Filter hard for signals
+  we can actually source (macro/positioning/flow from FRED/CFTC/FINRA/CBOE,
+  not chart-pattern TA on price we don't store); anything kept still passes
+  through #7 backtesting before earning composite weight.
