@@ -135,6 +135,37 @@ def signals_digest():
     return lines
 
 
+def _book_line(book):
+    hp = book["heat_pct"]
+    heat = f"{hp:.2%}" if hp is not None else "n/a"
+    n = book["positions"] or 0
+    pos = f"{n} position" if n == 1 else f"{n} positions"
+    hc = book["heat_coverage"]
+    cov = f"cov {hc:.1f}" if hc is not None else "cov n/a"
+    eq = book["equity"]
+    equity = f"equity ${eq:.0f}" if eq is not None else "equity ?"
+    return f"book: {heat} risk · {pos} · {cov} · {equity}"
+
+
+def _sources_line(header):
+    n = header["sources_failed"] or 0
+    return f"advisor: {n} sources failed" if n > 0 else None
+
+
+def format_advisor_lines(book, disagreements, caps, header):
+    """Render the advisor digest block from pre-fetched rows. Pure: no I/O.
+    Rows are accessed by string key, so dict and sqlite3.Row both work."""
+    if header is None:
+        return ["advisor: no snapshot"]
+    lines = []
+    if book is not None:
+        lines.append(_book_line(book))
+    sources = _sources_line(header)
+    if sources:
+        lines.append(sources)
+    return lines or ["advisor: no snapshot"]
+
+
 def build_summary(now_local, now_utc):
     total_runs, problems = 0, []
 
