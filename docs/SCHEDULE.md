@@ -97,7 +97,10 @@ summer open (6:30am Phoenix).
   counts, FAILED/STALE lines, non-zero exit codes, stale DBs vs expected
   cadence. Healthy = ✅ default priority; problems = ⚠️ high priority. No
   9:15pm ping at all ⇒ the machine (or login session) is down — the summary
-  can't report its own absence.
+  can't report its own absence. If `HEALTHCHECK_URL` is set (see
+  `.env.example`), a successful run also pings an external dead-man's switch
+  (e.g. healthchecks.io); configure that service to alarm when the ping is
+  absent by a deadline, closing exactly this gap.
 - **Backtest replay** (manual, unscheduled by design):
   `uv run python main.py backtest --db data/backtest.db` — copies FRED
   vintages + SP500 closes out of `data/fred.db` (read-only) and prints

@@ -11,10 +11,13 @@ notify exits non-zero so it surfaces in launchctl/status.sh.
 """
 
 import datetime as dt
+import os
 import re
 import sqlite3
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -323,6 +326,27 @@ def build_summary(now_local, now_utc):
     return healthy, "\n".join(lines)
 
 
+def heartbeat(get=None):
+    """Best-effort ping to an external dead-man's switch (e.g. healthchecks.io)
+    so an absent ping — a dead host/scheduler — raises an alarm the on-host
+    summary structurally cannot. No-op if HEALTHCHECK_URL is unset. Never raises
+    and never affects the exit code; a failure prints only the exception type."""
+    url = os.environ.get("HEALTHCHECK_URL")
+    if not url:
+        return
+    get = get or _default_get
+    try:
+        get(url)
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        # Never re-raise: the URL (its own auth secret) rides in the message.
+        print(f"heartbeat failed ({type(e).__name__})", file=sys.stderr)
+
+
+def _default_get(url: str) -> None:
+    with urllib.request.urlopen(url, timeout=10):
+        pass
+
+
 def main():
     try:
         healthy, summary = build_summary(dt.datetime.now(), dt.datetime.now(dt.UTC))
@@ -339,6 +363,7 @@ def main():
     except RuntimeError as e:
         print(f"notify failed ({type(e).__name__})", file=sys.stderr)
         return 1
+    heartbeat()
     print(summary)
     return 0
 
