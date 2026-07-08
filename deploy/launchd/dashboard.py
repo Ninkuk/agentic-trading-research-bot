@@ -359,18 +359,130 @@ def _size_caps(conn, now_iso) -> str:
 
 
 SECTIONS = [
-    ("regime", "Regime", "composite.db", _regime),
-    ("regime-timeline", "Regime timeline", "composite.db", _regime_timeline),
-    ("scorecard", "Ticker scorecard", "composite.db", _scorecard),
-    ("signal-efficacy", "Signal efficacy", "scorer.db", _signal_efficacy),
-    ("bucket-performance", "Bucket performance", "scorer.db", _bucket_performance),
-    ("human-filter", "Human-filter tally", "scorer.db", _human_filter),
-    ("book-heat", "Advisor book heat", "advisor.db", _book_heat),
-    ("group-heat", "Advisor group heat", "advisor.db", _group_heat),
-    ("disagreements", "Disagreements", "advisor.db", _disagreements),
-    ("size-caps", "Size caps", "advisor.db", _size_caps),
-    ("plan-001-report", "Signal recommendations", "scorer.db", _signal_recommendation),
-    ("plan-004-scorecard", "Trader scorecard", "scorer.db", _trader_scorecard),
+    (
+        "regime",
+        "Regime",
+        "composite.db",
+        _regime,
+        "Macro",
+        "The market's mood, distilled from ten macro inputs. “Risk-on” means"
+        " money is flowing toward risk; the VIX is a fear gauge — lower is"
+        " calmer. Open the drivers to see which inputs argued which way.",
+    ),
+    (
+        "regime-timeline",
+        "Regime timeline",
+        "composite.db",
+        _regime_timeline,
+        "Macro",
+        "How the market mood and the VIX fear gauge have moved across recent"
+        " nightly snapshots. Each dot is one snapshot; higher = more fear;"
+        " color = that night's regime.",
+    ),
+    (
+        "scorecard",
+        "Ticker scorecard",
+        "composite.db",
+        _scorecard,
+        "Signals",
+        "Every stock's net vote. Independent signals each lean bullish or"
+        " bearish; the number is the summed score (the bar shows it, left of"
+        " center for bearish). Split is the raw bullish/bearish count. A"
+        " ★ marks strong agreement. A tally — not a buy or sell list.",
+    ),
+    (
+        "signal-efficacy",
+        "Signal efficacy",
+        "scorer.db",
+        _signal_efficacy,
+        "Track record",
+        "Every signal's raw report card: how often it has been right so far,"
+        " and by how much it beat simply holding SPY. This is the unfiltered"
+        " table — the verdict on whether each one is trustworthy yet lives"
+        " in Signal recommendations below.",
+    ),
+    (
+        "bucket-performance",
+        "Bucket performance",
+        "scorer.db",
+        _bucket_performance,
+        "Track record",
+        "Grouping every past opinion by conviction bucket (strong-bull down"
+        " to strong-bear): did stronger scores actually produce better"
+        " forward returns than SPY?",
+    ),
+    (
+        "human-filter",
+        "Human-filter tally",
+        "scorer.db",
+        _human_filter,
+        "Track record",
+        "Of the opinions this page flagged, you either acted or passed. This"
+        " compares how the acted-on ones did versus the passed ones — did"
+        " your judgment add edge?",
+    ),
+    (
+        "book-heat",
+        "Advisor book heat",
+        "advisor.db",
+        _book_heat,
+        "Your book",
+        "How much of your account is genuinely at risk right now, adding up"
+        " what you would lose if every open position hit its stop. Coverage"
+        " says how much of the book that number actually accounts for.",
+    ),
+    (
+        "group-heat",
+        "Advisor group heat",
+        "advisor.db",
+        _group_heat,
+        "Your book",
+        "Correlated positions collapsed into single bets (e.g. two energy"
+        " names become one energy bet), because risk adds up within a group.",
+    ),
+    (
+        "disagreements",
+        "Disagreements",
+        "advisor.db",
+        _disagreements,
+        "Your book",
+        "Tickers where tonight's score points the opposite way from a"
+        " position you already hold. ‘Strong’ means the score is far"
+        " enough from neutral to be worth a look.",
+    ),
+    (
+        "size-caps",
+        "Size caps",
+        "advisor.db",
+        _size_caps,
+        "Your book",
+        "A volatility-scaled ceiling on how large each candidate position"
+        " could be — decision support, never an order. The warning marker"
+        " means the cap exceeds buying power.",
+    ),
+    (
+        "plan-001-report",
+        "Signal recommendations",
+        "scorer.db",
+        _signal_recommendation,
+        "Track record",
+        "The verdict on each signal, based on where its 95% confidence range"
+        " for hit-rate sits relative to a coin flip. ‘Keep’ means the"
+        " whole range beats 50%; ‘anti-signal’ means the whole range"
+        " loses; ‘watch’ means we cannot yet tell. Roughly 144 signals"
+        " are graded at once, so a few clear the bar by luck — hold every"
+        " verdict loosely.",
+    ),
+    (
+        "plan-004-scorecard",
+        "Trader scorecard",
+        "scorer.db",
+        _trader_scorecard,
+        "Track record",
+        "A plain-text report grading past decision quality: did filtering"
+        " help, what did execution cost, how did unrecommended (freelance)"
+        " trades do.",
+    ),
 ]
 SECTION_IDS = [s[0] for s in SECTIONS]
 
@@ -516,7 +628,7 @@ def _ro(data_dir: str, db_name: str) -> sqlite3.Connection:
     return conn
 
 
-def _render_section(sid, title, db_name, fn, data_dir, now_iso) -> str:
+def _render_section(sid, title, db_name, fn, kicker, note, data_dir, now_iso) -> str:
     try:
         conn = _ro(data_dir, db_name)
         try:
@@ -526,7 +638,14 @@ def _render_section(sid, title, db_name, fn, data_dir, now_iso) -> str:
     except Exception as e:  # missing DB, dropped view — degrade, never crash
         print(f"{db_name}: unreadable ({type(e).__name__})", file=sys.stderr)
         body = f'<p class="unavailable">{_esc(db_name)}: unreadable ({type(e).__name__})</p>'
-    return f'<section id="{sid}"><h2>{_esc(title)}</h2>{body}</section>'
+    # A degraded section still gets its margin note — what it *would* show
+    # is useful precisely when it has no data.
+    return (
+        f'<section id="{sid}" class="ledger" aria-labelledby="s-{sid}">'
+        f'<aside class="note"><p class="kicker">{_esc(kicker)}</p>'
+        f'<h2 id="s-{sid}">{_esc(title)}</h2><p>{_esc(note)}</p></aside>'
+        f'<div class="data">{body}</div></section>'
+    )
 
 
 def _edition_date(now_iso: str) -> str:
@@ -570,8 +689,8 @@ def build_page(data_dir: str, now_iso: str) -> str:
     hero_body = '<p class="read">Tonight\'s summary is unavailable — see the sections below.</p>'
 
     sections = "\n".join(
-        _render_section(sid, title, db_name, fn, data_dir, now_iso)
-        for sid, title, db_name, fn in SECTIONS
+        _render_section(sid, title, db_name, fn, kicker, note, data_dir, now_iso)
+        for sid, title, db_name, fn, kicker, note in SECTIONS
     )
 
     gloss = """<details style="margin-top:26px">
