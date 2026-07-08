@@ -49,7 +49,11 @@ def job_exit_codes():
     for line in out.splitlines():
         parts = line.split()
         if len(parts) == 3 and parts[2].startswith(PREFIX):
-            codes[parts[2][len(PREFIX) :]] = None if parts[1] == "-" else int(parts[1])
+            try:
+                code = None if parts[1] == "-" else int(parts[1])
+            except ValueError:
+                continue
+            codes[parts[2][len(PREFIX) :]] = code
     return codes
 
 
@@ -83,7 +87,14 @@ def stale_dbs(now):
         if latest is None:
             stale.append(f"{db.name}: no snapshots")
             continue
-        age = now - dt.datetime.fromisoformat(latest)
+        try:
+            captured = dt.datetime.fromisoformat(latest)
+            if captured.tzinfo is None:
+                captured = captured.replace(tzinfo=dt.UTC)
+            age = now - captured
+        except (ValueError, TypeError):
+            stale.append(f"{db.name}: unparseable captured_at")
+            continue
         limit = MAX_AGE_DAYS.get(db.name, DEFAULT_MAX_AGE_DAYS)
         if age > dt.timedelta(days=limit):
             stale.append(f"{db.name}: {age.days}d old (limit {limit}d)")
@@ -109,7 +120,7 @@ def signals_digest():
                 f"regime: {regime[0]} (vix {vix},"
                 f" {regime[2]}/{regime[3]} inputs) · {flagged} flagged"
             )
-    except sqlite3.Error as e:
+    except Exception as e:
         lines.append(f"composite: unreadable ({type(e).__name__})")
     try:
         with sqlite3.connect("file:data/scorer.db?mode=ro", uri=True) as conn:
@@ -130,7 +141,7 @@ def signals_digest():
             exc = f"{bull5[1]:+.1%}" if bull5[1] is not None else "?"
             hit = f"{bull5[2]:.0%}" if bull5[2] is not None else "?"
             lines.append(f"strong_bull @5d: n={bull5[0]} exc {exc} hit {hit}")
-    except sqlite3.Error as e:
+    except Exception as e:
         lines.append(f"scorer: unreadable ({type(e).__name__})")
     return lines
 
@@ -230,7 +241,7 @@ def advisor_digest():
                 "SELECT symbol, cap_shares FROM v_latest_caps WHERE cap_shares IS NOT NULL"
             ).fetchall()
         return format_advisor_lines(book, disagreements, caps, header)
-    except sqlite3.Error as e:
+    except Exception as e:
         return [f"advisor: unreadable ({type(e).__name__})"]
 
 
@@ -264,7 +275,11 @@ def build_summary(now_local, now_utc):
 
 
 def main():
-    healthy, summary = build_summary(dt.datetime.now(), dt.datetime.now(dt.UTC))
+    try:
+        healthy, summary = build_summary(dt.datetime.now(), dt.datetime.now(dt.UTC))
+    except Exception as e:  # never let summary assembly silence the alert
+        healthy = False
+        summary = f"summary build failed ({type(e).__name__})"
     try:
         notify.send(
             summary,
@@ -273,7 +288,7 @@ def main():
             tags=["white_check_mark"] if healthy else ["warning"],
         )
     except RuntimeError as e:
-        print(e, file=sys.stderr)
+        print(f"notify failed ({type(e).__name__})", file=sys.stderr)
         return 1
     print(summary)
     return 0
