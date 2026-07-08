@@ -842,6 +842,142 @@ def _snapshot_number(data_dir: str) -> str | None:
     return str(row[0])
 
 
+_HERO_FALLBACK = '<p class="read">Tonight\'s summary is unavailable — see the sections below.</p>'
+
+
+def _hero_regime_clause(data_dir: str) -> str:
+    """Regime + VIX + input coverage. May raise (missing DB/view) — the
+    caller's outer try/except is what makes _hero_read total; NULLs inside
+    an existing row degrade to honest in-sentence text instead."""
+    conn = _ro(data_dir, "composite.db")
+    try:
+        r = conn.execute(
+            "SELECT regime, vix, inputs_present, inputs_expected FROM v_latest_regime"
+        ).fetchone()
+    finally:
+        conn.close()
+    if not r:
+        return "Regime not yet computed for tonight."
+    regime = r["regime"]
+    cls = {"risk_on": "on", "risk_off": "off"}.get(regime or "", "mid")
+    label = {"risk_on": "risk-on", "risk_off": "risk-off"}.get(regime or "", "mixed")
+    mood = {
+        "risk_on": "leaning into risky assets",
+        "risk_off": "pulling back from risk",
+    }.get(regime or "", "sending mixed signals")
+    vix = r["vix"]
+    if vix is None:
+        vix_txt = "not available"
+    else:
+        temper = "calm" if vix < 20 else "elevated"
+        vix_txt = f'{temper} at <span class="n">{_num(vix, 1)}</span>'
+    present, expected = r["inputs_present"], r["inputs_expected"]
+    if expected:
+        if present == expected:
+            info = (
+                f' All <span class="n">{present} / {expected}</span> inputs reported'
+                " in, so this read is on full information."
+            )
+        else:
+            info = (
+                f' Only <span class="n">{present} / {expected}</span> inputs reported'
+                " in, so this read is on partial information."
+            )
+    else:
+        info = ""
+    return (
+        f'The market is <b class="{cls}">{label}</b> — {mood} — with the VIX fear'
+        f" gauge {vix_txt}.{info}"
+    )
+
+
+def _hero_book_clause(data_dir: str) -> str:
+    """Book exposure + feed health from the advisor snapshot."""
+    conn = _ro(data_dir, "advisor.db")
+    try:
+        r = conn.execute(
+            "SELECT positions, heat_pct, equity, sources_failed FROM v_book_heat"
+        ).fetchone()
+    finally:
+        conn.close()
+    if not r:
+        return "Your book hasn't been captured yet tonight."
+    positions = r["positions"] or 0
+    pos_word = "position" if positions == 1 else "positions"
+    equity = r["equity"]
+    equity_txt = (
+        "equity unknown" if equity is None else f'<span class="n">${_num(equity, 0)}</span> equity'
+    )
+    if r["heat_pct"] is None:
+        risk_txt = ""
+    else:
+        risk_txt = f' — <span class="n">{_pct(r["heat_pct"], 2)}</span> of {equity_txt} at risk'
+    failed = r["sources_failed"] or 0
+    if failed == 0:
+        failed_txt = "no feeds failed"
+    else:
+        feed_word = "feed" if failed == 1 else "feeds"
+        failed_txt = f'<span class="n">{failed}</span> {feed_word} failed'
+    return f'Your book holds <span class="n">{positions}</span> {pos_word}{risk_txt}, {failed_txt}.'
+
+
+def _hero_disagreement_clause(data_dir: str) -> str:
+    """The one holding (if exactly one) whose signal has turned against it,
+    or an honest count otherwise."""
+    conn = _ro(data_dir, "advisor.db")
+    try:
+        rows = conn.execute(
+            "SELECT symbol, strong FROM v_disagreements ORDER BY strong DESC, symbol"
+        ).fetchall()
+    finally:
+        conn.close()
+    if not rows:
+        return "No holdings to eye tonight — nothing you own is being second-guessed."
+    if len(rows) == 1:
+        strength = "strong" if rows[0]["strong"] else "weak"
+        return (
+            f'<b class="mid">One</b> holding to eye — <span class="n">{_esc(rows[0]["symbol"])}</span>'
+            f" — now leans against your position ({strength})."
+        )
+    return f'<span class="n">{len(rows)}</span> holdings to eye tonight — see Disagreements below.'
+
+
+def _hero_flag_clause(data_dir: str) -> str:
+    """The single strongest-agreement flagged ticker tonight, if any."""
+    conn = _ro(data_dir, "composite.db")
+    try:
+        r = conn.execute(
+            "SELECT symbol, score_sum FROM v_flagged ORDER BY ABS(score_sum) DESC LIMIT 1"
+        ).fetchone()
+    finally:
+        conn.close()
+    if not r:
+        return "No flagged tickers tonight — no signal cluster crossed the agreement bar."
+    return (
+        f'Strongest agreement: <span class="n">{_esc(r["symbol"])}</span>, flagged at'
+        f' <span class="n">{r["score_sum"]:+d}</span>.'
+    )
+
+
+def _hero_read(data_dir: str, now_iso: str) -> str:
+    """Tonight's plain-English read, assembled from the same views the
+    sections below read. Total: any failure anywhere in composing it —
+    missing DB, dropped view, unexpected shape — degrades to a single
+    honest fallback line rather than a crash or false prose."""
+    try:
+        prose = " ".join(
+            [
+                _hero_regime_clause(data_dir),
+                _hero_book_clause(data_dir),
+                _hero_disagreement_clause(data_dir),
+                _hero_flag_clause(data_dir),
+            ]
+        )
+    except Exception:
+        return _HERO_FALLBACK
+    return f'<p class="read">{prose}</p>'
+
+
 def build_page(data_dir: str, now_iso: str) -> str:
     edition_lines = [f"Edition <b>{_edition_date(now_iso)}</b>"]
     snapshot_no = _snapshot_number(data_dir)
@@ -849,9 +985,7 @@ def build_page(data_dir: str, now_iso: str) -> str:
         edition_lines.append(f"Snapshot <b>#{_esc(snapshot_no)}</b>")
     edition_lines.append("Nothing here places a trade")
 
-    # Hero prose lands in Step 6 (_hero_read); a total, honest placeholder
-    # until then so the page always renders.
-    hero_body = '<p class="read">Tonight\'s summary is unavailable — see the sections below.</p>'
+    hero_body = _hero_read(data_dir, now_iso)
 
     sections = "\n".join(
         _render_section(sid, title, db_name, fn, kicker, note, data_dir, now_iso)

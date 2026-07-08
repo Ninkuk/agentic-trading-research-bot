@@ -6,6 +6,7 @@ than crashing), and self-containment is asserted on the emitted HTML string.
 The per-section SQL is validated separately against live DB copies.
 """
 
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -14,6 +15,85 @@ sys.path.insert(0, str(DEPLOY))
 import dashboard  # noqa: E402
 
 NOW = "2026-07-08T21:13:00+00:00"
+
+_COMPOSITE_SCHEMA = """
+CREATE TABLE snapshots (id INTEGER PRIMARY KEY, captured_at TEXT,
+    signals_expected INTEGER, signals_ok INTEGER DEFAULT 0, signals_failed INTEGER DEFAULT 0);
+CREATE TABLE market_regime (snapshot_id INTEGER PRIMARY KEY, t10y2y REAL, curve_inverted INTEGER,
+    hy_spread REAL, vix REAL, vix_backwardation INTEGER, equity_pcr_pctile REAL,
+    in_fomc_blackout INTEGER, imminent_high_impact INTEGER, days_to_opex INTEGER,
+    rrp_change REAL, tga_change REAL, regime TEXT, inputs_expected INTEGER, inputs_present INTEGER);
+CREATE TABLE ticker_scores (snapshot_id INTEGER, symbol TEXT, bullish INTEGER DEFAULT 0,
+    bearish INTEGER DEFAULT 0, total INTEGER DEFAULT 0, score_sum INTEGER DEFAULT 0,
+    coverage REAL, worst_staleness_days REAL, in_portfolio INTEGER DEFAULT 0,
+    PRIMARY KEY (snapshot_id, symbol));
+CREATE VIEW v_latest_snapshot AS SELECT id FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1;
+CREATE VIEW v_latest_regime AS SELECT m.* FROM market_regime m JOIN v_latest_snapshot l ON m.snapshot_id = l.id;
+CREATE VIEW v_latest_scorecard AS SELECT t.* FROM ticker_scores t JOIN v_latest_snapshot l ON t.snapshot_id = l.id;
+CREATE VIEW v_flagged AS SELECT * FROM v_latest_scorecard WHERE ABS(score_sum) >= 4 AND total >= 3;
+"""
+
+_ADVISOR_SCHEMA = """
+CREATE TABLE snapshots (id INTEGER PRIMARY KEY, captured_at TEXT, equity REAL, cash REAL,
+    buying_power REAL, portfolio_captured_at TEXT, composite_captured_at TEXT, regime TEXT,
+    sources_failed INTEGER DEFAULT 0);
+CREATE TABLE position_heat (snapshot_id INTEGER, symbol TEXT, group_name TEXT, quantity REAL,
+    market_value REAL, atr REAL, price REAL, price_date TEXT, heat_dollars REAL, heat_pct REAL,
+    weight_pct REAL, score_sum INTEGER, bullish INTEGER, bearish INTEGER, total INTEGER,
+    atr_stale INTEGER, PRIMARY KEY (snapshot_id, symbol));
+CREATE VIEW v_latest_snapshot AS SELECT id FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1;
+CREATE VIEW v_latest_heat AS SELECT p.* FROM position_heat p JOIN v_latest_snapshot l ON p.snapshot_id = l.id;
+CREATE VIEW v_book_heat AS
+SELECT s.id AS snapshot_id, s.captured_at, s.equity, s.sources_failed,
+       COUNT(p.symbol) AS positions, SUM(p.heat_dollars) AS heat_dollars,
+       SUM(p.heat_pct) AS heat_pct,
+       CASE WHEN SUM(p.market_value) > 0 THEN
+            SUM(CASE WHEN p.atr IS NOT NULL THEN p.market_value ELSE 0 END) * 1.0 / SUM(p.market_value)
+       END AS heat_coverage
+FROM snapshots s LEFT JOIN position_heat p ON p.snapshot_id = s.id
+WHERE s.id IN (SELECT id FROM v_latest_snapshot)
+GROUP BY s.id, s.captured_at, s.equity, s.sources_failed;
+CREATE VIEW v_disagreements AS
+SELECT *, (score_sum <= -4 AND total >= 3) AS strong FROM v_latest_heat WHERE score_sum < 0;
+"""
+
+
+def _make_composite_db(path, regime="risk_on", vix=16.1, symbol=None, score_sum=5):
+    conn = sqlite3.connect(path)
+    conn.executescript(_COMPOSITE_SCHEMA)
+    conn.execute(
+        "INSERT INTO snapshots VALUES (1, ?, 10, 10, 0)",
+        (NOW,),
+    )
+    conn.execute(
+        "INSERT INTO market_regime VALUES"
+        " (1, -0.1, 0, 3.05, ?, 0, 0.42, 0, 0, 8, -12.3, 4.1, ?, 10, 10)",
+        (vix, regime),
+    )
+    if symbol:
+        conn.execute(
+            "INSERT INTO ticker_scores VALUES (1, ?, 5, 0, 5, ?, 0.417, 0.5, 1)",
+            (symbol, score_sum),
+        )
+    conn.commit()
+    conn.close()
+
+
+def _make_advisor_db(path, equity=200.0, positions=None, sources_failed=0):
+    conn = sqlite3.connect(path)
+    conn.executescript(_ADVISOR_SCHEMA)
+    conn.execute(
+        "INSERT INTO snapshots VALUES (1, ?, ?, 50.0, 100.0, ?, ?, 'risk_on', ?)",
+        (NOW, equity, NOW, NOW, sources_failed),
+    )
+    for symbol, score_sum in positions or []:
+        conn.execute(
+            "INSERT INTO position_heat VALUES"
+            " (1, ?, NULL, 10, 100.0, 2.0, 10.0, ?, 0.42, 0.0021, 0.5, ?, 0, 1, 1, 0)",
+            (symbol, NOW, score_sum),
+        )
+    conn.commit()
+    conn.close()
 
 
 def test_sparkline_needs_two_points():
@@ -119,6 +199,30 @@ def test_sparkline_maps_value_to_height():
     ys = [float(m.group(1)) for m in re.finditer(r'cy="([\d.]+)"', svg)]
     assert len(ys) == 2
     assert ys[-1] < ys[0]
+
+
+def test_hero_degrades_on_empty_dir(tmp_path):
+    html = dashboard._hero_read(str(tmp_path), NOW)
+    assert 'class="read"' in html
+    assert "$None" not in html
+    assert "1 positions" not in html
+
+
+def test_hero_pluralizes(tmp_path):
+    _make_composite_db(tmp_path / "composite.db")
+    _make_advisor_db(tmp_path / "advisor.db", equity=200.0, positions=[("AAPL", 2)])
+    html = dashboard._hero_read(str(tmp_path), NOW)
+    assert ">1</span> position" in html
+    assert ">1</span> positions" not in html
+    assert "$None" not in html
+
+
+def test_hero_riskoff_color(tmp_path):
+    _make_composite_db(tmp_path / "composite.db", regime="risk_off", vix=25.5)
+    _make_advisor_db(tmp_path / "advisor.db", positions=[])
+    html = dashboard._hero_read(str(tmp_path), NOW)
+    assert '<b class="off">' in html
+    assert "risk-off" in html
 
 
 def test_write_dashboard_is_atomic_replace(tmp_path):
