@@ -29,7 +29,7 @@ summer open (6:30am Phoenix).
 | `journal` | 2:40pm | Headless `claude -p "/journal-sync"` → Robinhood MCP order history → `main.py journal`. Ten minutes after portfolio so a stale-auth failure shows up twice. Empty-fill days still write a run header (that's what the freshness check reads). Journal matching reads composite.db; decisions land in scorer.db (never pruned) |
 | `options-close` | 2:45pm | Settled end-of-day chains (post-close both seasons) |
 | `treasury` | 4:30pm | FiscalData + yield-curve XML |
-| `fred` | 4:40pm | Daily rate series finalized ~4:15pm ET. Runs `--vintages`: idempotent upsert of the full ALFRED revision history into `observation_vintages` (~31 extra API calls/run; feeds the backtest combiner's point-in-time replay). If nightly runtime ever hurts, split `--vintages` to a weekly slot — the vintage fetch is a separate call per series |
+| `fred` | 4:40pm | Daily rate series finalized ~4:15pm ET. Observations only (no `--vintages`); vintages run weekly (see `fred-vintages` below) |
 | `cboe-stats` | 6:00pm | VIX term-structure CSVs + daily put/call ratios (SSR stats page) |
 | `short-volume` | 6:15pm | FINRA Reg SHO daily file |
 | `short-interest` | 6:30pm | Daily probe; FINRA disseminates twice-monthly on varying days, 404s are free |
@@ -39,6 +39,7 @@ summer open (6:30am Phoenix).
 
 | Job | When | Notes |
 |---|---|---|
+| `fred-vintages` | Sat 7:00am | `fred --vintages`: full ALFRED revision history into `observation_vintages` (the backtest combiner's point-in-time store + `fred.v_asof`). Windowed+paginated fetch (~80 FRED calls, ~1.7M rows re-upserted, seconds). Weekly not nightly — vintages grow one date/day, backtesting reads them occasionally, so a nightly full re-pull would be wasteful. FRED endpoint, no SEC rate-limit interaction with Sat 6am `fundamentals` |
 | `econ-calendar` | Mon 5:00am | FRED release dates |
 | `fomc` | Mon 5:10am | Fed calendar page |
 | `ats` | Mon 6:45pm | FINRA ATS weekly aggregates (published Mondays, 2–4wk lag) |

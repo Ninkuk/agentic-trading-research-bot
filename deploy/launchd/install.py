@@ -65,7 +65,7 @@ JOBS = {
     "journal": (script("journal_sync.sh"), weekly(MON_FRI, 14, 40)),
     "options-close": (job("options", "--keep-days", "90"), weekly(MON_FRI, 14, 45)),
     "treasury": (job("treasury"), weekly(MON_FRI, 16, 30)),
-    "fred": (job("fred", "--vintages"), weekly(MON_FRI, 16, 40)),
+    "fred": (job("fred"), weekly(MON_FRI, 16, 40)),
     "cboe-stats": (job("cboe_stats"), weekly(MON_FRI, 18, 0)),
     "short-volume": (job("short_volume"), weekly(MON_FRI, 18, 15)),
     "short-interest": (job("short_interest"), weekly(MON_FRI, 18, 30)),
@@ -87,6 +87,13 @@ JOBS = {
         weekly([6], 6, 0),
     ),
     "ftd": (job("ftd"), weekly([0], 7, 0)),
+    # ALFRED vintage backfill into data/fred.db (the backtest combiner's
+    # point-in-time store). Full re-pull is heavy (~80 windowed/paginated FRED
+    # calls, ~1.7M rows re-upserted) but vintages only grow one date/day and
+    # backtesting reads them occasionally, so weekly (not nightly) keeps them
+    # fresh without a wasteful nightly re-pull. FRED endpoint — no SEC
+    # rate-limit interaction with the Sat 6am fundamentals job.
+    "fred-vintages": (job("fred", "--vintages"), weekly([6], 7, 0)),
     # -- monthly --
     "market-calendar": (job("market_calendar"), monthly([1], 5, 0)),
     "usda-nass": (job("usda"), monthly([2], 10, 15)),

@@ -37,14 +37,12 @@ Signals can only be evaluated forward from the day they shipped. Two blockers:
 - **Catalog:** add `Series("SP500", theme="benchmark")` — daily S&P 500 close,
   ~10 years of history (FRED licensing caps the lookback), same fetch machinery.
   This is the benchmark price spine for grading replays.
-- **Schedule:** the nightly `fred` job in `deploy/launchd/install.py` becomes
-  `job("fred", "--vintages")`; update `docs/SCHEDULE.md` in the same commit.
-  Cost: ~31 extra API calls/run (one `/fred/series/observations` with
-  `realtime_start=1776-07-04, realtime_end=9999-12-31` per series) and
-  full-history payloads each night, idempotently upserted by
-  `(series_id, date, realtime_start)`. Accepted for simplicity. Documented
-  fallback if nightly runtime ever hurts: move `--vintages` to a separate weekly
-  slot (the vintage fetch is a distinct call, so splitting is mechanical).
+- **Schedule:** `--vintages` runs on its own **weekly** `fred-vintages` slot
+  (Sat 7am) in `deploy/launchd/install.py`, not the nightly `fred` job; update
+  `docs/SCHEDULE.md` in the same commit. (Original plan put it nightly; the live
+  backfill showed a `--vintages` run re-pulls full history — see § 1a — so a
+  weekly slot is the right cadence.) Rows are idempotently upserted by
+  `(series_id, date, realtime_start)`.
 - **Backfill:** one manual
   `uv run python main.py fred --db data/fred.db --vintages` run pulls the entire
   ALFRED revision history for all series. Sanity check after: row counts in
@@ -81,11 +79,12 @@ offset-paginates each window past the 100k cap, and (d) dedups by
 (their plain observations are the spine; they have no ALFRED history), via
 `catalog.VINTAGELESS_THEMES`.
 
-Residual: the nightly `--vintages` run now re-pulls full vintage history per
-series (several windowed+paginated calls each) — heavier than one call. Kept
-simple (correctness first); incremental "vintages since last realtime" is a
-future optimization if the nightly slot's runtime hurts. Until then `--vintages`
-stays OFF the nightly `fred` job (§ Schedule note updated).
+Because a `--vintages` run now re-pulls full vintage history per series
+(~80 windowed/paginated calls, ~1.7M rows re-upserted) — heavier than one
+call, and vintages only grow one date/day while backtesting reads them
+occasionally — `--vintages` is scheduled **weekly** (`fred-vintages`, Sat 7am)
+rather than on the nightly `fred` job. Incremental "vintages since last
+realtime" remains a future optimization if even the weekly runtime hurts.
 
 ## 2. Composite refactor (behavior-preserving)
 
