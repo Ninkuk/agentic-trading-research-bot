@@ -50,15 +50,15 @@ def run(
         db.finish_snapshot(conn, sid, n_vint, n_bench, failures)
         conn.commit()
         for row in conn.execute(
-            "SELECT signal_id, direction, horizon, n_bench, hit_rate,"
+            "SELECT signal_id, direction, horizon, n_days, n_bench, hit_rate,"
             " hit_ci_lo, hit_ci_hi, reliable FROM v_replay_efficacy"
             " ORDER BY signal_id, direction, horizon"
         ):
-            sig, direction, horizon, n, hr, lo, hi, rel = row
+            sig, direction, horizon, row_n_days, row_n_bench, hr, lo, hi, rel = row
             stats = (
-                f"hit {hr:.2f} (CI {lo:.2f}-{hi:.2f}, n={n})"
+                f"hit {hr:.2f} (CI {lo:.2f}-{hi:.2f}, n={row_n_bench})"
                 if hr is not None
-                else f"ungraded (n_days incl. neutral; n={n})"
+                else f"ungraded (n_days incl. neutral; n={row_n_days})"
             )
             tag = " reliable" if rel else ""
             print(f"{sig} {direction} {horizon}d: {stats}{tag}")
