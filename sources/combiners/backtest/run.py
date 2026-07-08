@@ -40,6 +40,9 @@ def run(
             except Exception as e:
                 failures += 1
                 conn.rollback()
+                n_vint = n_bench = (
+                    0  # rollback discarded the copy; header must not claim stale counts
+                )
                 print(f"skip {catalog.FRED_DB}: {type(e).__name__}")
             finally:
                 conn.commit()

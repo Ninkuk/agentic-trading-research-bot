@@ -67,3 +67,25 @@ def test_run_is_idempotent(data_dir, tmp_path):
     )
     conn.close()
     assert counts == (1, 30)
+
+
+def test_run_rolls_back_partial_copy_and_zeroes_counts(data_dir, tmp_path):
+    def boom(conn, series_id):
+        raise RuntimeError("benchmark copy failed mid-run")
+
+    sid, n_vint, n_bench = run.run(
+        str(tmp_path / "backtest.db"),
+        db_dir=data_dir,
+        now_iso="2025-02-01T00:00:00+00:00",
+        harvest_benchmark=boom,
+    )
+    assert (n_vint, n_bench) == (0, 0)
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    header = conn.execute(
+        "SELECT vintage_rows, benchmark_rows, sources_failed FROM snapshots WHERE id = ?",
+        (sid,),
+    ).fetchone()
+    data_count = conn.execute("SELECT COUNT(*) FROM signal_vintages").fetchone()[0]
+    conn.close()
+    assert header == (0, 0, 1)
+    assert data_count == 0
