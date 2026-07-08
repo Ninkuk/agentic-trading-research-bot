@@ -80,6 +80,65 @@ def test_flags_exclude_dates_with_no_published_value(conn):
     assert rows == []
 
 
+# ---- market_obs (non-vintage market-grain signals) -------------------
+
+
+def market_obs(c, signal_id, obs_date, val1, val2=None):
+    c.execute(
+        "INSERT INTO market_obs (signal_id, obs_date, val1, val2) VALUES (?, ?, ?, ?)",
+        (signal_id, obs_date, val1, val2),
+    )
+
+
+def test_market_pit_picks_latest_observation_on_or_before_asof(conn):
+    spine(conn, [("2025-01-10", 100.0)])
+    market_obs(conn, "cboe_vix", "2025-01-08", 22.0)
+    market_obs(conn, "cboe_vix", "2025-01-09", 26.0)  # newest <= asof
+    market_obs(conn, "cboe_vix", "2025-01-11", 40.0)  # future: invisible
+    row = conn.execute(
+        "SELECT val1 FROM v_pit_market WHERE asof_date = '2025-01-10' AND signal_id = 'cboe_vix'"
+    ).fetchone()
+    assert row == (26.0,)
+
+
+def test_market_flags_reuse_composite_vix_case(conn):
+    # 26 -> -1 (>=25), 12 -> +1 (<15), 20 -> 0
+    spine(conn, [("2025-01-10", 100.0), ("2025-01-11", 100.0), ("2025-01-12", 100.0)])
+    market_obs(conn, "cboe_vix", "2025-01-10", 26.0)
+    market_obs(conn, "cboe_vix", "2025-01-11", 12.0)
+    market_obs(conn, "cboe_vix", "2025-01-12", 20.0)
+    rows = dict(
+        conn.execute("SELECT asof_date, score FROM v_replay_flags WHERE signal_id = 'cboe_vix'")
+    )
+    assert rows == {"2025-01-10": -1, "2025-01-11": 1, "2025-01-12": 0}
+
+
+def test_market_backwardation_uses_both_columns(conn):
+    # close > vix3m -> -2 (backwardation); else 0
+    spine(conn, [("2025-01-10", 100.0), ("2025-01-11", 100.0)])
+    market_obs(conn, "cboe_vix_backwardation", "2025-01-10", 20.0, 18.0)  # 20>18 -> -2
+    market_obs(conn, "cboe_vix_backwardation", "2025-01-11", 15.0, 18.0)  # 15<18 -> 0
+    rows = dict(
+        conn.execute(
+            "SELECT asof_date, score FROM v_replay_flags WHERE signal_id = 'cboe_vix_backwardation'"
+        )
+    )
+    assert rows == {"2025-01-10": -2, "2025-01-11": 0}
+
+
+def test_market_signal_graded_against_sp500_spine(conn):
+    # falling benchmark + high VIX (bearish score) from day one -> bearish hits
+    spine(conn, [(f"2025-01-{d:02d}", 200.0 - d) for d in range(1, 31)])
+    for d in range(1, 31):
+        market_obs(conn, "cboe_vix", f"2025-01-{d:02d}", 26.0)  # -1 bearish every day
+    row = conn.execute(
+        "SELECT n_bench, hit_rate FROM v_replay_efficacy"
+        " WHERE signal_id = 'cboe_vix' AND direction = 'bearish' AND horizon = 5"
+    ).fetchone()
+    assert row[0] == 24  # same maturation window as the fred_curve test
+    assert row[1] == pytest.approx(1.0)  # VIX-high called the fall correctly
+
+
 # ---- v_replay_returns ------------------------------------------------
 
 

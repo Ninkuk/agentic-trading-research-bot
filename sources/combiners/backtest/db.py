@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS snapshots (
     captured_at    TEXT NOT NULL,
     vintage_rows   INTEGER NOT NULL DEFAULT 0,
     benchmark_rows INTEGER NOT NULL DEFAULT 0,
+    market_rows    INTEGER NOT NULL DEFAULT 0,
     sources_failed INTEGER NOT NULL DEFAULT 0
 );
 
@@ -30,6 +31,18 @@ CREATE TABLE IF NOT EXISTS signal_vintages (
     realtime_start TEXT NOT NULL,
     value          REAL,
     PRIMARY KEY (series_id, date, realtime_start)
+);
+
+-- Non-vintage market-grain observations: unrevised same-day exchange series
+-- copied from their source DB (val1/val2 are the raw score-input columns; the
+-- replay aliases them to the names the composite CASE expects). No
+-- realtime_start -- the as-of read is just the latest obs_date <= D.
+CREATE TABLE IF NOT EXISTS market_obs (
+    signal_id TEXT NOT NULL,
+    obs_date  TEXT NOT NULL,
+    val1      REAL,
+    val2      REAL,
+    PRIMARY KEY (signal_id, obs_date)
 );
 
 -- The grading spine: benchmark daily closes (SP500 via fred.db
@@ -54,8 +67,26 @@ def _flags_select(signal: dict) -> str:
     )
 
 
+def _market_flags_select(signal: dict) -> str:
+    """Flag select for a non-vintage market signal: alias the stored val1/val2
+    back to the column names its imported CASE expects, then apply raw_expr +
+    score_case verbatim over the as-of row (v_pit_market)."""
+    alias_cols = ", ".join(f"{src} AS {name}" for name, src in signal["aliases"].items())
+    primary = next(iter(signal["aliases"]))  # first CASE column present => a real obs
+    return (
+        f"SELECT asof_date, '{signal['signal_id']}' AS signal_id,\n"
+        f"       {signal['raw_expr']} AS value, {signal['score_case']} AS score\n"
+        f"FROM (SELECT asof_date, {alias_cols} FROM v_pit_market\n"
+        f"      WHERE signal_id = '{signal['signal_id']}')\n"
+        f"WHERE {primary} IS NOT NULL"
+    )
+
+
 def _views() -> str:
-    flags = "\nUNION ALL\n".join(_flags_select(s) for s in catalog.REPLAY_SIGNALS)
+    flags = "\nUNION ALL\n".join(
+        [_flags_select(s) for s in catalog.REPLAY_SIGNALS]
+        + [_market_flags_select(s) for s in catalog.MARKET_OBS_SIGNALS]
+    )
     return f"""
 -- For every (benchmark trading date D, replay series): the value as KNOWN
 -- on D — the latest observation date having any vintage published on or
@@ -73,8 +104,24 @@ SELECT d.date AS asof_date, s.series_id,
 FROM benchmark_closes d
 CROSS JOIN (SELECT DISTINCT series_id FROM signal_vintages) s;
 
+-- As-of read for non-vintage market signals: for every benchmark date D and
+-- market signal, the val1/val2 of the latest observation on or before D (both
+-- pick the SAME latest row, so they stay consistent). NULL when nothing was
+-- observed yet. No revision trail -- latest obs_date <= D is the whole story.
+DROP VIEW IF EXISTS v_pit_market;
+CREATE VIEW v_pit_market AS
+SELECT d.date AS asof_date, o.signal_id,
+       (SELECT m.val1 FROM market_obs m
+         WHERE m.signal_id = o.signal_id AND m.obs_date <= d.date
+         ORDER BY m.obs_date DESC LIMIT 1) AS val1,
+       (SELECT m.val2 FROM market_obs m
+         WHERE m.signal_id = o.signal_id AND m.obs_date <= d.date
+         ORDER BY m.obs_date DESC LIMIT 1) AS val2
+FROM benchmark_closes d
+CROSS JOIN (SELECT DISTINCT signal_id FROM market_obs) o;
+
 -- The flag composite WOULD have emitted on each date, via the identical
--- imported CASE expressions (see catalog.REPLAY_SIGNALS).
+-- imported CASE expressions (see catalog.REPLAY_SIGNALS + MARKET_OBS_SIGNALS).
 DROP VIEW IF EXISTS v_replay_flags;
 CREATE VIEW v_replay_flags AS
 {flags};
@@ -152,12 +199,17 @@ def write_snapshot(conn, now_iso: str) -> int:
 
 
 def finish_snapshot(
-    conn, sid: int, vintage_rows: int, benchmark_rows: int, sources_failed: int
+    conn,
+    sid: int,
+    vintage_rows: int,
+    benchmark_rows: int,
+    sources_failed: int,
+    market_rows: int = 0,
 ) -> None:
     conn.execute(
         "UPDATE snapshots SET vintage_rows = ?, benchmark_rows = ?,"
-        " sources_failed = ? WHERE id = ?",
-        (vintage_rows, benchmark_rows, sources_failed, sid),
+        " market_rows = ?, sources_failed = ? WHERE id = ?",
+        (vintage_rows, benchmark_rows, market_rows, sources_failed, sid),
     )
 
 
@@ -175,6 +227,18 @@ def insert_benchmark(conn, rows) -> int:
     rows = list(rows)
     conn.executemany("INSERT OR REPLACE INTO benchmark_closes (date, close) VALUES (?, ?)", rows)
     return len(rows)
+
+
+def insert_market_obs(conn, signal_id: str, rows) -> int:
+    """Copy a market signal's raw observations (obs_date, val1, val2) verbatim.
+    INSERT OR REPLACE so a re-copy of a revised/reposted date overwrites (the
+    accepted with-caveat behavior for these unrevised feeds)."""
+    tagged = [(signal_id, obs_date, val1, val2) for obs_date, val1, val2 in rows]
+    conn.executemany(
+        "INSERT OR REPLACE INTO market_obs (signal_id, obs_date, val1, val2) VALUES (?, ?, ?, ?)",
+        tagged,
+    )
+    return len(tagged)
 
 
 def prune(conn, keep_days: int, now_iso: str) -> int:

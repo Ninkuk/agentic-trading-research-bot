@@ -23,6 +23,14 @@ FRED_CURVE_SCORE = "CASE WHEN value < 0 THEN -1 ELSE 0 END"
 FRED_HY_SPREAD_SCORE = (
     "CASE WHEN value >= 5.0 THEN -2 WHEN value >= 4.0 THEN -1 WHEN value < 3.5 THEN 1 ELSE 0 END"
 )
+# Two more market-grain regime signals the backtest combiner replays; hoisted
+# for the same reason as the FRED pair (flags cannot drift between composite
+# and the replay). Both operate on cboe_stats vix_daily columns by name, so
+# the replay's as-of view aliases its stored values back to `close`/`vix3m`.
+CBOE_VIX_SCORE = (
+    "CASE WHEN close >= 30 THEN -2 WHEN close >= 25 THEN -1 WHEN close < 15 THEN 1 ELSE 0 END"
+)
+CBOE_VIX_BACKWARDATION_SCORE = "CASE WHEN close > vix3m THEN -2 ELSE 0 END"
 
 SIGNALS: list[dict[str, Any]] = [
     # ------------------------------------------------ market grain ----
@@ -59,11 +67,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "cboe_stats.db",
         "grain": "market",
         "staleness_budget_days": 5,
-        "sql": """
+        "sql": f"""
             SELECT '*', close,
-                   CASE WHEN close >= 30 THEN -2
-                        WHEN close >= 25 THEN -1
-                        WHEN close < 15 THEN 1 ELSE 0 END,
+                   {CBOE_VIX_SCORE},
                    date
             FROM src.vix_daily WHERE close IS NOT NULL
             ORDER BY date DESC LIMIT 1
@@ -74,9 +80,9 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "cboe_stats.db",
         "grain": "market",
         "staleness_budget_days": 5,
-        "sql": """
+        "sql": f"""
             SELECT '*', close - vix3m,
-                   CASE WHEN close > vix3m THEN -2 ELSE 0 END,
+                   {CBOE_VIX_BACKWARDATION_SCORE},
                    date
             FROM src.vix_daily
             WHERE close IS NOT NULL AND vix3m IS NOT NULL

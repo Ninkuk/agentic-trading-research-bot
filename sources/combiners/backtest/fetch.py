@@ -25,3 +25,11 @@ def harvest_benchmark(conn, series_id: str) -> list:
         " WHERE series_id = ? AND value IS NOT NULL ORDER BY date",
         (series_id,),
     ).fetchall()
+
+
+def harvest_market_obs(conn, harvest_sql: str) -> list:
+    """Raw (obs_date, val1, val2) rows for one non-vintage market signal, from
+    the source DB ATTACHed read-only as `src`. harvest_sql (from the catalog)
+    selects exactly those three columns; unrevised feeds need no vintage
+    trail, so plain observations suffice."""
+    return conn.execute(harvest_sql).fetchall()

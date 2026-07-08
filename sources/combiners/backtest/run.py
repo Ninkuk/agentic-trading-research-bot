@@ -18,13 +18,14 @@ def run(
     keep_days=None,
     harvest_vintages=fetch.harvest_vintages,
     harvest_benchmark=fetch.harvest_benchmark,
+    harvest_market_obs=fetch.harvest_market_obs,
 ):
     now_iso = now_iso or datetime.now(UTC).isoformat()
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)
         sid = db.write_snapshot(conn, now_iso)
-        n_vint = n_bench = failures = 0
+        n_vint = n_bench = n_market = failures = 0
         path = os.path.join(db_dir, catalog.FRED_DB)
         try:
             fetch.attach_ro(conn, path)
@@ -48,7 +49,37 @@ def run(
             finally:
                 conn.commit()
                 fetch.detach(conn)
-        db.finish_snapshot(conn, sid, n_vint, n_bench, failures)
+
+        # Non-vintage market-grain signals, grouped by source DB so each is
+        # attached once. Same skip-and-continue discipline as the FRED block:
+        # a missing/failed source counts as a failure and rolls back only its
+        # own copy, never the already-committed FRED data.
+        by_db: dict[str, list] = {}
+        for s in catalog.MARKET_OBS_SIGNALS:
+            by_db.setdefault(s["db"], []).append(s)
+        for db_name, sigs in by_db.items():
+            try:
+                fetch.attach_ro(conn, os.path.join(db_dir, db_name))
+            except Exception as e:
+                failures += 1
+                print(f"skip {db_name}: {type(e).__name__}")
+                continue
+            try:
+                got = 0
+                for s in sigs:
+                    got += db.insert_market_obs(
+                        conn, s["signal_id"], harvest_market_obs(conn, s["harvest_sql"])
+                    )
+                conn.commit()
+                n_market += got
+            except Exception as e:
+                failures += 1
+                conn.rollback()  # discard this DB's partial copy; counts stay honest
+                print(f"skip {db_name}: {type(e).__name__}")
+            finally:
+                fetch.detach(conn)
+
+        db.finish_snapshot(conn, sid, n_vint, n_bench, failures, n_market)
         conn.commit()
         for row in conn.execute(
             "SELECT signal_id, direction, horizon, n_days, n_bench, hit_rate,"
@@ -82,6 +113,9 @@ def main(argv=None):
     a = p.parse_args(argv)
     sid, n_vint, n_bench = run(a.db, a.db_dir, keep_days=a.keep_days)
     print(f"backtest snapshot {sid}: {n_vint} vintages, {n_bench} closes, into {a.db}")
+
+
+__all__ = ["main", "run"]
 
 
 if __name__ == "__main__":

@@ -126,3 +126,20 @@ def test_fred_score_cases_are_hoisted_constants():
     by_id = {s["signal_id"]: s for s in SIGNALS}
     assert FRED_CURVE_SCORE in by_id["fred_curve"]["sql"]
     assert FRED_HY_SPREAD_SCORE in by_id["fred_hy_spread"]["sql"]
+
+
+def test_cboe_score_cases_are_hoisted_constants():
+    # Hoisted so the backtest combiner replays the IDENTICAL flag expression;
+    # rendered composite SQL must be unchanged (constant interpolated back in).
+    from sources.combiners.composite.catalog import (
+        CBOE_VIX_BACKWARDATION_SCORE,
+        CBOE_VIX_SCORE,
+        SIGNALS,
+    )
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    assert CBOE_VIX_SCORE in by_id["cboe_vix"]["sql"]
+    assert CBOE_VIX_BACKWARDATION_SCORE in by_id["cboe_vix_backwardation"]["sql"]
+    # the CASEs still reference their source columns verbatim
+    assert "close >= 30" in CBOE_VIX_SCORE
+    assert "close > vix3m" in CBOE_VIX_BACKWARDATION_SCORE

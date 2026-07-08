@@ -4,12 +4,20 @@ drift) and horizons imported from the scorer (grading windows match)."""
 
 from typing import Any
 
-from sources.combiners.composite.catalog import FRED_CURVE_SCORE, FRED_HY_SPREAD_SCORE
+from sources.combiners.composite.catalog import (
+    CBOE_VIX_BACKWARDATION_SCORE,
+    CBOE_VIX_SCORE,
+    FRED_CURVE_SCORE,
+    FRED_HY_SPREAD_SCORE,
+)
 from sources.combiners.scorer.catalog import HORIZONS
 
 FRED_DB = "fred.db"
+CBOE_DB = "cboe_stats.db"
 BENCHMARK_SERIES = "SP500"  # grading spine; unrevised index closes
 
+# FRED regime signals: ALFRED-vintage replay (revision-aware; realtime_start
+# gives the exact as-of read).
 REPLAY_SIGNALS: list[dict[str, Any]] = [
     {"signal_id": "fred_curve", "series_id": "T10Y2Y", "score_case": FRED_CURVE_SCORE},
     {
@@ -19,4 +27,43 @@ REPLAY_SIGNALS: list[dict[str, Any]] = [
     },
 ]
 
-__all__ = ["BENCHMARK_SERIES", "FRED_DB", "HORIZONS", "REPLAY_SIGNALS"]
+# Non-vintage market-grain signals: unrevised, same-day-published exchange
+# series with no ALFRED vintage trail. Their point-in-time read is simply
+# "latest observation on or before D" (the with-caveat class from the spike —
+# a repost of an old date would overwrite silently, accepted). Each copies its
+# raw score-input columns into market_obs.val1/val2, and the replay aliases
+# those back to the column names the imported composite CASE expects, so the
+# SAME flag is replayed. All graded against the shared SP500 spine.
+#   harvest_sql : SELECT (obs_date, val1, val2) from the src DB (val2 NULL ok)
+#   aliases     : CASE-column-name -> stored column ('val1' | 'val2')
+#   raw_expr    : the raw_value shown, in terms of the aliased names
+MARKET_OBS_SIGNALS: list[dict[str, Any]] = [
+    {
+        "signal_id": "cboe_vix",
+        "db": CBOE_DB,
+        "harvest_sql": "SELECT date, close, NULL FROM src.vix_daily WHERE close IS NOT NULL",
+        "aliases": {"close": "val1"},
+        "raw_expr": "close",
+        "score_case": CBOE_VIX_SCORE,
+    },
+    {
+        "signal_id": "cboe_vix_backwardation",
+        "db": CBOE_DB,
+        "harvest_sql": (
+            "SELECT date, close, vix3m FROM src.vix_daily"
+            " WHERE close IS NOT NULL AND vix3m IS NOT NULL"
+        ),
+        "aliases": {"close": "val1", "vix3m": "val2"},
+        "raw_expr": "close - vix3m",
+        "score_case": CBOE_VIX_BACKWARDATION_SCORE,
+    },
+]
+
+__all__ = [
+    "BENCHMARK_SERIES",
+    "CBOE_DB",
+    "FRED_DB",
+    "HORIZONS",
+    "MARKET_OBS_SIGNALS",
+    "REPLAY_SIGNALS",
+]
