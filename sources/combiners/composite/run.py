@@ -9,7 +9,7 @@ Skip-and-continue per signal; failures print exception type names only."""
 
 import argparse
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sources.combiners.composite import catalog, db, fetch
 
@@ -18,7 +18,7 @@ def run(
     db_path, db_dir, now_iso=None, only=None, exclude=None, add=None, keep_days=None, signals=None
 ):
     now_iso = now_iso or datetime.now(UTC).isoformat()
-    today = now_iso[:10]
+    today = (datetime.fromisoformat(now_iso) - timedelta(hours=7)).strftime("%Y-%m-%d")
     if signals is None:
         signals = catalog.select_ids(only, exclude, add)
     conn = db.connect(db_path)

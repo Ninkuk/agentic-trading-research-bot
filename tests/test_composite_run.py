@@ -33,6 +33,13 @@ BROKEN_SIG = {
     "staleness_budget_days": 0,
     "sql": "SELECT nope FROM src.does_not_exist",
 }
+PHX_TODAY_SIG = {
+    "signal_id": "phx_today",
+    "db": "fred.db",
+    "grain": "market",
+    "staleness_budget_days": 0,
+    "sql": "SELECT '*', 1, 0, :today",
+}
 PF_SIG = {
     "signal_id": "portfolio_holding",
     "db": "portfolio.db",
@@ -121,6 +128,20 @@ def test_run_phase2_failure_is_loud_and_header_honest(tmp_path, capsys, monkeypa
     captured = capsys.readouterr().out
     assert "combine failed: RuntimeError" in captured
     assert "boom-secret" not in captured
+
+
+def test_run_derives_today_on_shared_phoenix_clock(tmp_path):
+    # 9:05pm Phoenix on Jul 7 is 4:05am UTC on Jul 8 (Phoenix is fixed UTC-7,
+    # no DST). :today must bind to the Phoenix trading date (2026-07-07),
+    # matching scorer/journal's _phx_date shift, not the raw UTC date.
+    _mini_fred(tmp_path)
+    out = str(tmp_path / "composite.db")
+    evening_utc_now = "2026-07-08T04:05:00+00:00"
+    run_mod.run(out, str(tmp_path), now_iso=evening_utc_now, signals=[PHX_TODAY_SIG])
+    conn = sqlite3.connect(out)
+    assert conn.execute(
+        "SELECT obs_date, staleness_days FROM signal_values WHERE signal_id='phx_today'"
+    ).fetchone() == ("2026-07-07", 0)
 
 
 def test_main_argv_roundtrip(tmp_path, capsys):
