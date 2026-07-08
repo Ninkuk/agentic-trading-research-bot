@@ -54,8 +54,19 @@ CREATE TABLE IF NOT EXISTS benchmark_closes (
 """
 
 
+PCTILE_WINDOW = 252  # trailing rows for the PCR percentile (matches composite hist)
+
+
 def _horizons_union() -> str:
     return " UNION ALL ".join(f"SELECT {h} AS horizon" for h in catalog.HORIZONS)
+
+
+def _scalar_market_signals() -> list:
+    return [s for s in catalog.MARKET_OBS_SIGNALS if s.get("flag_mode", "scalar") == "scalar"]
+
+
+def _pctile_market_signals() -> list:
+    return [s for s in catalog.MARKET_OBS_SIGNALS if s.get("flag_mode") == "pctile"]
 
 
 def _flags_select(signal: dict) -> str:
@@ -82,10 +93,48 @@ def _market_flags_select(signal: dict) -> str:
     )
 
 
+def _pctile_flags_select(signal: dict) -> str:
+    """Flag select for a windowed percentile signal: the percentile is
+    recomputed as-of each date in v_pit_pcr; the imported CASE reads `pctile`
+    verbatim."""
+    return (
+        f"SELECT asof_date, '{signal['signal_id']}' AS signal_id,\n"
+        f"       pctile AS value, {signal['score_case']} AS score\n"
+        f"FROM v_pit_pcr WHERE signal_id = '{signal['signal_id']}' AND pctile IS NOT NULL"
+    )
+
+
+def _pctile_view() -> str:
+    """v_pit_pcr: for every benchmark date D and percentile signal, the rank
+    (0-100] of the latest observation <= D within the trailing PCTILE_WINDOW
+    observations <= D -- the composite's percentile, recomputed as-of. Empty
+    string when no percentile signal exists (avoids an IN () syntax error)."""
+    sigs = _pctile_market_signals()
+    if not sigs:
+        return ""
+    ids = ", ".join(f"'{s['signal_id']}'" for s in sigs)
+    return f"""
+DROP VIEW IF EXISTS v_pit_pcr;
+CREATE VIEW v_pit_pcr AS
+SELECT d.date AS asof_date, o.signal_id,
+       (SELECT 100.0 * SUM(CASE WHEN h.val1 <=
+                (SELECT m3.val1 FROM market_obs m3
+                  WHERE m3.signal_id = o.signal_id AND m3.obs_date <= d.date
+                  ORDER BY m3.obs_date DESC LIMIT 1)
+            THEN 1 ELSE 0 END) / COUNT(*)
+        FROM (SELECT m2.val1 FROM market_obs m2
+              WHERE m2.signal_id = o.signal_id AND m2.obs_date <= d.date
+              ORDER BY m2.obs_date DESC LIMIT {PCTILE_WINDOW}) h) AS pctile
+FROM benchmark_closes d
+CROSS JOIN (SELECT DISTINCT signal_id FROM market_obs WHERE signal_id IN ({ids})) o;
+"""
+
+
 def _views() -> str:
     flags = "\nUNION ALL\n".join(
         [_flags_select(s) for s in catalog.REPLAY_SIGNALS]
-        + [_market_flags_select(s) for s in catalog.MARKET_OBS_SIGNALS]
+        + [_market_flags_select(s) for s in _scalar_market_signals()]
+        + [_pctile_flags_select(s) for s in _pctile_market_signals()]
     )
     return f"""
 -- For every (benchmark trading date D, replay series): the value as KNOWN
@@ -119,7 +168,7 @@ SELECT d.date AS asof_date, o.signal_id,
          ORDER BY m.obs_date DESC LIMIT 1) AS val2
 FROM benchmark_closes d
 CROSS JOIN (SELECT DISTINCT signal_id FROM market_obs) o;
-
+{_pctile_view()}
 -- The flag composite WOULD have emitted on each date, via the identical
 -- imported CASE expressions (see catalog.REPLAY_SIGNALS + MARKET_OBS_SIGNALS).
 DROP VIEW IF EXISTS v_replay_flags;

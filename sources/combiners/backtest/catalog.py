@@ -5,6 +5,7 @@ drift) and horizons imported from the scorer (grading windows match)."""
 from typing import Any
 
 from sources.combiners.composite.catalog import (
+    CBOE_EQUITY_PCR_SCORE,
     CBOE_VIX_BACKWARDATION_SCORE,
     CBOE_VIX_SCORE,
     FRED_CURVE_SCORE,
@@ -89,6 +90,20 @@ MARKET_OBS_SIGNALS: list[dict[str, Any]] = [
         "aliases": {"wow_change": "val1"},
         "raw_expr": "wow_change",
         "score_case": TSY_TGA_SCORE,
+    },
+    {
+        # Windowed, not latest-scalar: the score reads a trailing-252
+        # percentile that must be recomputed as-of each date (an old
+        # percentile isn't stable when the window slides). flag_mode="pctile"
+        # routes it through the dedicated v_pit_pcr view; only the raw
+        # equity_pcr is copied (val1), and the CASE reuses `pctile` verbatim.
+        "signal_id": "cboe_equity_pcr",
+        "db": CBOE_DB,
+        "flag_mode": "pctile",
+        "harvest_sql": (
+            "SELECT date, equity_pcr, NULL FROM src.pcr_daily WHERE equity_pcr IS NOT NULL"
+        ),
+        "score_case": CBOE_EQUITY_PCR_SCORE,
     },
 ]
 

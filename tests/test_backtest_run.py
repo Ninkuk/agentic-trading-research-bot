@@ -31,6 +31,12 @@ def data_dir(tmp_path):
         "INSERT INTO vix_daily VALUES (?, ?, ?)",
         [(f"2025-01-{d:02d}", 26.0, 24.0) for d in range(1, 31)],
     )
+    # pcr_daily for the windowed cboe_equity_pcr signal (8 obs)
+    c.execute("CREATE TABLE pcr_daily (date TEXT, equity_pcr REAL)")
+    c.executemany(
+        "INSERT INTO pcr_daily VALUES (?, ?)",
+        [(f"2025-01-{d:02d}", 0.5 + 0.05 * d) for d in range(1, 9)],
+    )
     c.commit()
     c.close()
     # nyfed.db (v_rrp_trend) + treasury.db (v_tga_trend): liquidity signals
@@ -69,9 +75,9 @@ def test_run_copies_and_reports(data_dir, tmp_path, capsys):
         (sid,),
     ).fetchone()
     conn.close()
-    # market_rows: 30 cboe_vix + 30 cboe_vix_backwardation + 5 nyfed_rrp
-    # + 5 tsy_tga = 70; all four source DBs present -> 0 failures
-    assert row == (1, 30, 70, 0)
+    # market_rows: 30 cboe_vix + 30 cboe_vix_backwardation + 8 cboe_equity_pcr
+    # + 5 nyfed_rrp + 5 tsy_tga = 78; all source DBs present -> 0 failures
+    assert row == (1, 30, 78, 0)
 
 
 def test_run_missing_source_dbs_skip_and_count_failures(tmp_path, capsys):

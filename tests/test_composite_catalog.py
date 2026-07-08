@@ -157,3 +157,11 @@ def test_liquidity_score_cases_are_hoisted_constants():
     assert TSY_TGA_SCORE in by_id["tsy_tga"]["sql"]
     assert "change_vs_prior" in NYFED_RRP_SCORE
     assert "wow_change" in TSY_TGA_SCORE
+
+
+def test_cboe_equity_pcr_score_case_is_hoisted_constant():
+    from sources.combiners.composite.catalog import CBOE_EQUITY_PCR_SCORE, SIGNALS
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    assert CBOE_EQUITY_PCR_SCORE in by_id["cboe_equity_pcr"]["sql"]
+    assert "pctile >= 90" in CBOE_EQUITY_PCR_SCORE

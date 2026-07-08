@@ -36,6 +36,13 @@ CBOE_VIX_BACKWARDATION_SCORE = "CASE WHEN close > vix3m THEN -2 ELSE 0 END"
 # harvests them keyed by date and reuses these CASEs verbatim.
 NYFED_RRP_SCORE = "CASE WHEN change_vs_prior < 0 THEN 1 WHEN change_vs_prior > 0 THEN -1 ELSE 0 END"
 TSY_TGA_SCORE = "CASE WHEN wow_change < 0 THEN 1 WHEN wow_change > 0 THEN -1 ELSE 0 END"
+# Contrarian PCR percentile: operates on a derived `pctile` (trailing-252
+# rank). The replay recomputes that percentile as-of each historical date in
+# a dedicated view, then reuses this CASE verbatim.
+CBOE_EQUITY_PCR_SCORE = (
+    "CASE WHEN pctile >= 90 THEN 2 WHEN pctile >= 75 THEN 1"
+    " WHEN pctile <= 10 THEN -2 WHEN pctile <= 25 THEN -1 ELSE 0 END"
+)
 
 SIGNALS: list[dict[str, Any]] = [
     # ------------------------------------------------ market grain ----
@@ -100,7 +107,7 @@ SIGNALS: list[dict[str, Any]] = [
         "db": "cboe_stats.db",
         "grain": "market",
         "staleness_budget_days": 5,
-        "sql": """
+        "sql": f"""
             WITH latest AS (
                 SELECT date, equity_pcr FROM src.pcr_daily
                 WHERE equity_pcr IS NOT NULL ORDER BY date DESC LIMIT 1),
@@ -114,9 +121,7 @@ SIGNALS: list[dict[str, Any]] = [
                              / (SELECT COUNT(*) FROM hist) AS pctile
                 FROM latest l)
             SELECT '*', pctile,
-                   CASE WHEN pctile >= 90 THEN 2 WHEN pctile >= 75 THEN 1
-                        WHEN pctile <= 10 THEN -2 WHEN pctile <= 25 THEN -1
-                        ELSE 0 END,
+                   {CBOE_EQUITY_PCR_SCORE},
                    date
             FROM p
         """,

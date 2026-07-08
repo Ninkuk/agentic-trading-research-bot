@@ -147,6 +147,45 @@ def test_market_liquidity_signals_reuse_composite_cases(conn):
     assert rows[("tsy_tga", "2025-01-11")] == -1
 
 
+def test_market_pctile_high_when_latest_is_window_max(conn):
+    # ascending equity_pcr -> latest (highest date) is the window max ->
+    # pctile 100 -> score +2 (contrarian: panicky put buying = bullish)
+    spine(conn, [("2025-02-01", 100.0)])
+    for i in range(1, 11):
+        market_obs(conn, "cboe_equity_pcr", f"2025-01-{i:02d}", float(i))
+    row = conn.execute(
+        "SELECT value, score FROM v_replay_flags"
+        " WHERE signal_id = 'cboe_equity_pcr' AND asof_date = '2025-02-01'"
+    ).fetchone()
+    assert row[0] == pytest.approx(100.0) and row[1] == 2
+
+
+def test_market_pctile_low_when_latest_is_window_min(conn):
+    # descending equity_pcr -> latest is the window min -> pctile 10 -> -2
+    spine(conn, [("2025-02-01", 100.0)])
+    for i in range(1, 11):
+        market_obs(conn, "cboe_equity_pcr", f"2025-01-{i:02d}", float(11 - i))
+    row = conn.execute(
+        "SELECT value, score FROM v_replay_flags"
+        " WHERE signal_id = 'cboe_equity_pcr' AND asof_date = '2025-02-01'"
+    ).fetchone()
+    assert row[0] == pytest.approx(10.0) and row[1] == -2
+
+
+def test_market_pctile_window_excludes_future_observations(conn):
+    # an obs published after D must never enter the as-of window
+    spine(conn, [("2025-01-05", 100.0)])
+    for i in range(1, 6):
+        market_obs(conn, "cboe_equity_pcr", f"2025-01-{i:02d}", float(i))
+    market_obs(conn, "cboe_equity_pcr", "2025-01-20", 999.0)  # future, invisible
+    row = conn.execute(
+        "SELECT value, score FROM v_replay_flags"
+        " WHERE signal_id = 'cboe_equity_pcr' AND asof_date = '2025-01-05'"
+    ).fetchone()
+    # latest <= D is Jan-05 (value 5, the max of the visible 1..5) -> pctile 100
+    assert row[0] == pytest.approx(100.0) and row[1] == 2
+
+
 def test_market_signal_graded_against_sp500_spine(conn):
     # falling benchmark + high VIX (bearish score) from day one -> bearish hits
     spine(conn, [(f"2025-01-{d:02d}", 200.0 - d) for d in range(1, 31)])
