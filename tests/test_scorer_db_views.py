@@ -229,6 +229,74 @@ def test_zero_bench_rows_null_ci(tmp_path):
     assert benchmarks is None
 
 
+def _recommendation(conn, sig):
+    return conn.execute(
+        "SELECT via_crosswalk, horizon, n_bench, avg_directional_excess,"
+        " hit_rate, hit_ci_lo, hit_ci_hi, reliable, recommendation"
+        " FROM v_signal_recommendation WHERE signal_id = ?",
+        (sig,),
+    ).fetchone()
+
+
+def test_recommendation_insufficient_evidence_below_min_n(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # 4 benchmarked rows (< RELIABLE_MIN_N) -> not reliable, no verdict
+    for i, fwd in enumerate((0.02, 0.02, 0.02, 0.00)):
+        _signal_row(conn, "sig_thin", f"T{i}", 1, fwd, 0.01)
+    row = _recommendation(conn, "sig_thin")
+    assert row[2] == 4 and row[7] == 0  # n_bench=4, reliable=0
+    assert row[8] == "insufficient evidence"
+
+
+def test_recommendation_keep_ci_above_half(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # 30 all-hit rows -> reliable, hit_ci_lo > 0.5 -> keep
+    for i in range(db.RELIABLE_MIN_N):
+        _signal_row(conn, "sig_keep", f"T{i}", 1, 0.02, 0.01)
+    row = _recommendation(conn, "sig_keep")
+    assert row[7] == 1 and row[5] > 0.5  # reliable, ci_lo above coin flip
+    assert row[8] == "keep"
+
+
+def test_recommendation_anti_signal_ci_below_half(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # 30 all-miss bullish rows (fwd < bench) -> reliable, hit_ci_hi < 0.5
+    for i in range(db.RELIABLE_MIN_N):
+        _signal_row(conn, "sig_anti", f"T{i}", 1, 0.00, 0.01)
+    row = _recommendation(conn, "sig_anti")
+    assert row[7] == 1 and row[6] < 0.5  # reliable, ci_hi below coin flip
+    assert row[8] == "anti-signal"
+
+
+def test_recommendation_watch_ci_straddles_half(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # 15 hits + 15 misses of 30 -> reliable, CI straddles 0.5 -> watch
+    for i in range(db.RELIABLE_MIN_N // 2):
+        _signal_row(conn, "sig_watch", f"H{i}", 1, 0.02, 0.01)  # hit
+    for i in range(db.RELIABLE_MIN_N // 2):
+        _signal_row(conn, "sig_watch", f"M{i}", 1, 0.00, 0.01)  # miss
+    row = _recommendation(conn, "sig_watch")
+    assert row[7] == 1 and row[5] < 0.5 < row[6]  # reliable, CI straddles
+    assert row[8] == "watch"
+
+
+def test_recommendation_crosswalk_split_kept_separate(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # same signal_id, direct vs crosswalk -> two rows, never merged
+    _signal_row(conn, "sig_split", "DIR", 1, 0.02, 0.01, xw=0)
+    _signal_row(conn, "sig_split", "XW", 1, 0.02, 0.01, benchmark="XLE", xw=1)
+    rows = conn.execute(
+        "SELECT via_crosswalk FROM v_signal_recommendation"
+        " WHERE signal_id = 'sig_split' ORDER BY via_crosswalk"
+    ).fetchall()
+    assert [r[0] for r in rows] == [0, 1]
+
+
 def _ticker_row(conn, symbol, score_sum, fwd, bench_fwd, total=3):
     conn.execute(
         "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date,"

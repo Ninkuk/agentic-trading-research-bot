@@ -268,6 +268,32 @@ SELECT signal_id, via_crosswalk, horizon,
 FROM m
 GROUP BY signal_id, via_crosswalk, horizon;
 
+-- Decision-support verdict per signal (roadmap: signal-efficacy reweighting
+-- report). Pure passthrough of v_signal_efficacy plus one derived label a
+-- human reads before hand-editing composite/catalog.py — it NEVER feeds back
+-- into composite scoring (re-weighting stays a human decision, CLAUDE.md
+-- invariant). The four states are mutually exclusive and checked in order:
+--   reliable = 0 (n_bench < RELIABLE_MIN_N)  -> 'insufficient evidence'
+--   else hit_ci_hi < 0.5 (whole 95% CI below a coin flip) -> 'anti-signal'
+--   else hit_ci_lo > 0.5 (whole 95% CI above a coin flip) -> 'keep'
+--   else (CI straddles 0.5, directionally unproven)       -> 'watch'
+-- reliable is re-derived from n_bench here rather than trusting the flag, so
+-- a future loosening of the efficacy view's gate can't silently promote a
+-- thin signal to a verdict. via_crosswalk stays split (never merged): direct
+-- and crosswalk evidence are distinct rows, same as v_signal_efficacy.
+DROP VIEW IF EXISTS v_signal_recommendation;
+CREATE VIEW v_signal_recommendation AS
+SELECT signal_id, via_crosswalk, horizon,
+       n_matured, n_bench, avg_directional_excess,
+       hit_rate, hit_ci_lo, hit_ci_hi, reliable,
+       CASE
+           WHEN n_bench < {RELIABLE_MIN_N} THEN 'insufficient evidence'
+           WHEN hit_ci_hi < 0.5 THEN 'anti-signal'
+           WHEN hit_ci_lo > 0.5 THEN 'keep'
+           ELSE 'watch'
+       END AS recommendation
+FROM v_signal_efficacy;
+
 DROP VIEW IF EXISTS v_regime_performance;
 CREATE VIEW v_regime_performance AS
 SELECT regime, horizon, COUNT(*) AS n_matured,
