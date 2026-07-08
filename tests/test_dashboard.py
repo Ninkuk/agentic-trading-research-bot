@@ -208,6 +208,16 @@ def test_hero_degrades_on_empty_dir(tmp_path):
     assert "1 positions" not in html
 
 
+def test_hero_clause_logs_failure_type_only(capsys):
+    def boom(_data_dir):
+        raise ValueError("secret=abc123")
+
+    assert dashboard._hero_clause(boom, "unused") is None
+    err = capsys.readouterr().err
+    assert "ValueError" in err  # the exception type is logged
+    assert "secret" not in err and "abc123" not in err  # message never leaks
+
+
 def test_hero_all_dbs_missing_falls_back(tmp_path):
     # every clause fails -> exactly the single honest fallback line
     assert dashboard._hero_read(str(tmp_path), NOW) == dashboard._HERO_FALLBACK

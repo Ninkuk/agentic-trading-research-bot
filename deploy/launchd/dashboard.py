@@ -979,7 +979,8 @@ def _hero_clause(fn, data_dir: str) -> str | None:
     honestly (e.g. no advisor snapshot)."""
     try:
         return fn(data_dir)
-    except Exception:
+    except Exception as e:  # log by type only (an exception may carry an api_key)
+        print(f"hero {fn.__name__}: unreadable ({type(e).__name__})", file=sys.stderr)
         return None
 
 
