@@ -185,3 +185,18 @@ def test_full_nominal_block(phoenix_tz):
         "caps: none tonight",
         "(sized vs portfolio from Jul 06 — 1d old)",
     ]
+
+
+def test_null_portfolio_captured_at_no_staleness_note():
+    """When portfolio_captured_at is None (advisor ran before first portfolio
+    sync), emit no staleness note and do not raise."""
+    lines = daily_summary.format_advisor_lines(_book(), [], [], _header(portfolio_captured_at=None))
+    assert not any(line.startswith("(sized vs portfolio") for line in lines)
+
+
+def test_reader_unreadable_returns_note(monkeypatch):
+    def boom(*args, **kwargs):
+        raise sqlite3.OperationalError("no such table: snapshots")
+
+    monkeypatch.setattr(daily_summary.sqlite3, "connect", boom)
+    assert daily_summary.advisor_digest() == ["advisor: unreadable (OperationalError)"]

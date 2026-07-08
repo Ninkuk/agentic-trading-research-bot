@@ -203,7 +203,31 @@ def format_advisor_lines(book, disagreements, caps, header):
     stale = _staleness_line(header)
     if stale:
         lines.append(stale)
+    # Fallback for degenerate empty case; header is not None → real no-snapshot is caught above.
     return lines or ["advisor: no snapshot"]
+
+
+def advisor_digest():
+    """Advisor book view appended below the signals block. Best-effort:
+    any read failure becomes a one-line note, never a crash. mode=ro; the
+    9:15 slot runs after advisor (9:12) so tonight's rows are normally present."""
+    try:
+        with sqlite3.connect("file:data/advisor.db?mode=ro", uri=True) as conn:
+            conn.row_factory = sqlite3.Row
+            header = conn.execute(
+                "SELECT captured_at, portfolio_captured_at, sources_failed "
+                "FROM snapshots WHERE id IN (SELECT id FROM v_latest_snapshot)"
+            ).fetchone()
+            book = conn.execute(
+                "SELECT positions, heat_pct, heat_coverage, equity FROM v_book_heat"
+            ).fetchone()
+            disagreements = conn.execute(
+                "SELECT symbol, score_sum, group_name, strong FROM v_disagreements"
+            ).fetchall()
+            caps = conn.execute("SELECT symbol, cap_shares FROM v_latest_caps").fetchall()
+        return format_advisor_lines(book, disagreements, caps, header)
+    except sqlite3.Error as e:
+        return [f"advisor: unreadable ({type(e).__name__})"]
 
 
 def build_summary(now_local, now_utc):
@@ -229,6 +253,9 @@ def build_summary(now_local, now_utc):
     digest = signals_digest()
     if digest:
         lines += ["", "— signals —", *digest]
+    advisor = advisor_digest()
+    if advisor:
+        lines += ["", "— advisor —", *advisor]
     return healthy, "\n".join(lines)
 
 
