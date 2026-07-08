@@ -176,3 +176,9 @@ def test_dispatch_lists_backtest():
     import registry
 
     assert "backtest" in registry.REGISTRY
+
+
+def test_scorecard_registered():
+    from registry import REGISTRY
+
+    assert "scorecard" in REGISTRY
