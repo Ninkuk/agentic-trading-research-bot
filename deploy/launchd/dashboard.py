@@ -276,6 +276,7 @@ def _regime(conn, now_iso) -> str:
     drivers = _drivers_table(
         [
             ("VIX level", _num(r["vix"], 1)),
+            ("10y–2y spread", _signed_num(r["t10y2y"], 2)),
             ("yield curve inverted", _yn(r["curve_inverted"])),
             ("high-yield spread", _num(r["hy_spread"], 2)),
             ("VIX backwardation", _yn(r["vix_backwardation"])),
@@ -290,7 +291,7 @@ def _regime(conn, now_iso) -> str:
             ("Treasury TGA change", _signed_num(r["tga_change"])),
         ]
     )
-    return tiles + f"<details><summary>All 10 regime inputs</summary>{drivers}</details>"
+    return tiles + f"<details><summary>All regime inputs</summary>{drivers}</details>"
 
 
 def _regime_timeline(conn, now_iso) -> str:

@@ -180,6 +180,25 @@ def test_ci_bar_clamps_and_shows_numbers():
     assert "—" in null_bar and 'class="est"' not in null_bar
 
 
+def test_yn_helper():
+    assert dashboard._yn(1) == "yes"
+    assert dashboard._yn(0) == "no"
+    assert dashboard._yn(None) == "—"
+
+
+def test_regime_expander_shows_raw_curve_spread(tmp_path):
+    _make_composite_db(tmp_path / "composite.db")
+    conn = dashboard._ro(str(tmp_path), "composite.db")
+    try:
+        html = dashboard._regime(conn, NOW)
+    finally:
+        conn.close()
+    assert "10y–2y spread" in html
+    assert "-0.10" in html or "-0.1" in html
+    assert "<summary>All regime inputs</summary>" in html
+    assert "All 10 regime inputs" not in html
+
+
 def test_section_wrapper_keeps_plain_id():
     html = dashboard._render_section(
         "regime", "Regime", "composite.db", lambda c, n: "body", "Macro", "note text", "", NOW
