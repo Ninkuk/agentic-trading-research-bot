@@ -1204,6 +1204,14 @@ def build_page(data_dir: str, now_iso: str) -> str:
       <dt>excess vs SPY</dt><dd>Average return above the S&amp;P 500 benchmark, in the direction the signal pointed.</dd>
       <dt>hit-rate &amp; 95% range</dt><dd>How often it beat the benchmark, and where the true rate likely sits. Wide range = still noisy.</dd>
       <dt>book at risk</dt><dd>Share of account equity you'd lose if every stop triggered at once.</dd>
+      <dt>10y&ndash;2y spread</dt><dd>The 10-year Treasury yield minus the 2-year yield. A negative number means the curve is inverted &mdash; a classic recession-risk signal.</dd>
+      <dt>RRP</dt><dd>The Federal Reserve's overnight reverse repo facility, where cash is parked overnight. A falling balance means money is flowing back into the financial system.</dd>
+      <dt>TGA</dt><dd>The U.S. Treasury's general account &mdash; its checking account at the Fed. A rising balance pulls cash out of the banking system; a falling one adds it back.</dd>
+      <dt>put / call percentile</dt><dd>Where today's ratio of put options traded to call options traded ranks against its own recent history. A high percentile means unusually heavy hedging or bearish betting.</dd>
+      <dt>pending / in-flight opinion</dt><dd>An opinion already recorded whose forward-return outcome has not been measured yet, because not enough time has passed.</dd>
+      <dt>basis break</dt><dd>A price move so large between two consecutive trading days that it looks like an unadjusted stock split rather than a real move &mdash; flagged so it cannot silently distort a return calculation.</dd>
+      <dt>heat</dt><dd>What you would lose in dollars if a position hit its stop-loss price &mdash; a measure of real risk, not simply how much money is invested.</dd>
+      <dt>ATR</dt><dd>Average True Range &mdash; a stock's typical daily price swing in dollars, used to size a stop distance and, from it, this page's heat number.</dd>
     </dl>
   </details>"""
 
