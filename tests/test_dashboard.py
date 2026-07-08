@@ -339,6 +339,75 @@ def test_view_table_renders_headers_from_description():
     assert "none yet" in empty_html
 
 
+def test_view_table_aligns_only_numeric_columns():
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.execute("CREATE TABLE toy (name TEXT, n INT, x REAL, code TEXT)")
+    conn.execute("INSERT INTO toy VALUES (?, ?, ?, ?)", ("risk_on", 5, 0.5, "007"))
+    conn.commit()
+
+    html = dashboard._view_table(conn, "SELECT name, n, x, code FROM toy", empty="none")
+    # text columns: header and cell carry no num class
+    assert "<th>name</th>" in html
+    assert "<td>risk_on</td>" in html
+    # digits-as-text in a TEXT column is still non-numeric
+    assert "<th>code</th>" in html
+    assert "<td>007</td>" in html
+    # numeric columns: header and cell are right-aligned
+    assert '<th class="num">n</th>' in html
+    assert '<th class="num">x</th>' in html
+    assert '<td class="num">5</td>' in html
+    assert '<td class="num">0.5</td>' in html
+
+
+def test_view_table_all_null_column_is_not_numeric():
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.execute("CREATE TABLE toy (label TEXT, maybe REAL)")
+    conn.execute("INSERT INTO toy VALUES (?, NULL)", ("a",))
+    conn.commit()
+    html = dashboard._view_table(conn, "SELECT label, maybe FROM toy", empty="none")
+    # an all-None column is non-numeric (no num class) and renders empty, no crash
+    assert "<th>maybe</th>" in html
+    assert "<td></td>" in html
+
+
+def test_view_table_applies_formatter_map():
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.execute("CREATE TABLE toy (x REAL)")
+    conn.execute("INSERT INTO toy VALUES (0.5)")
+    conn.commit()
+    html = dashboard._view_table(conn, "SELECT x FROM toy", empty="none", fmt={"x": dashboard._pct})
+    assert "50.0%" in html
+    assert ">0.5<" not in html  # raw fraction not shown
+    assert '<td class="num">50.0%</td>' in html  # formatted column stays right-aligned
+
+
+def test_regime_performance_shows_percent_returns(tmp_path):
+    conn = sqlite3.connect(tmp_path / "scorer.db")
+    conn.executescript(
+        "CREATE TABLE regime_outcomes (regime TEXT, horizon INTEGER, bench_fwd_return REAL,"
+        " matured_at TEXT);"
+        "CREATE VIEW v_regime_performance AS"
+        " SELECT regime, horizon, COUNT(*) AS n_matured,"
+        " AVG(bench_fwd_return) AS avg_bench_return,"
+        " MIN(bench_fwd_return) AS min_bench_return,"
+        " MAX(bench_fwd_return) AS max_bench_return"
+        " FROM regime_outcomes WHERE matured_at IS NOT NULL GROUP BY regime, horizon;"
+    )
+    conn.execute("INSERT INTO regime_outcomes VALUES ('risk_on', 5, 0.0123, ?)", (NOW,))
+    conn.commit()
+    conn.close()
+    ro = dashboard._ro(str(tmp_path), "scorer.db")
+    try:
+        html = dashboard._regime_performance(ro, NOW)
+    finally:
+        ro.close()
+    assert "%" in html
+    assert "0.0123" not in html  # raw fraction never shown
+
+
 def test_new_sections_registered():
     for sid in ("regime-performance", "pending", "basis-breaks", "position-heat"):
         assert sid in dashboard.SECTION_IDS

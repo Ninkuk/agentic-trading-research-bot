@@ -23,6 +23,7 @@ import html as _html
 import os
 import sqlite3
 import sys
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -254,16 +255,53 @@ def _ci_bar(hit_rate, ci_lo, ci_hi) -> str:
     )
 
 
-def _view_table(conn, sql: str, empty: str) -> str:
+def _view_table(
+    conn,
+    sql: str,
+    empty: str,
+    fmt: dict[str, Callable[[object], str]] | None = None,
+) -> str:
     """Render every column a query returns, headers taken from
     `cursor.description` — avoids hardcoding column names, so this works
-    against any view without coupling the page to its exact shape. Cell
-    values are escaped via `_cells` like any other rendered row."""
+    against any view without coupling the page to its exact shape.
+
+    Alignment is decided per column FROM THE DATA, not by position: a column
+    is numeric (right-aligned, `class="num"`) only if its non-NULL values are
+    all int/float (bools excluded, and an all-NULL column counts as
+    non-numeric). A positional `numeric_from` can't express "columns 2, 4, 5",
+    which is exactly what a view like v_basis_breaks (text, date, num, date,
+    num, num) needs. `fmt` optionally maps a column name to a formatter (e.g.
+    `_pct`) applied before escaping; a formatted column is treated as numeric
+    for alignment. Every value is `_esc`'d — nothing from a view is trusted."""
+    fmt = fmt or {}
     cur = conn.execute(sql)
     headers = [d[0] for d in cur.description]
     rows = cur.fetchall()
-    body = [_cells(*row) for row in rows]
-    return _table(headers, body, empty=empty)
+    if not rows:
+        return f'<p class="empty">{_esc(empty)}</p>'
+    numeric = []
+    for j, h in enumerate(headers):
+        if h in fmt:
+            numeric.append(True)
+            continue
+        vals = [row[j] for row in rows if row[j] is not None]
+        numeric.append(
+            bool(vals) and all(isinstance(v, int | float) and not isinstance(v, bool) for v in vals)
+        )
+    head = "".join(
+        f'<th class="num">{_esc(h)}</th>' if numeric[j] else f"<th>{_esc(h)}</th>"
+        for j, h in enumerate(headers)
+    )
+    body_rows = []
+    for row in rows:
+        tds = []
+        for j, h in enumerate(headers):
+            raw = fmt[h](row[j]) if h in fmt else row[j]
+            cls = ' class="num"' if numeric[j] else ""
+            tds.append(f"<td{cls}>{_esc(raw)}</td>")
+        body_rows.append("<tr>" + "".join(tds) + "</tr>")
+    table = f"<table><thead><tr>{head}</tr></thead><tbody>{''.join(body_rows)}</tbody></table>"
+    return f'<div class="twrap">{table}</div>'
 
 
 # --- section renderers (each takes an open ro conn; may raise -> caught) ----
@@ -467,6 +505,14 @@ def _regime_performance(conn, now_iso) -> str:
         "SELECT regime, horizon, n_matured, avg_bench_return, min_bench_return,"
         " max_bench_return FROM v_regime_performance ORDER BY horizon, regime",
         empty="no matured regime outcomes yet",
+        # Returns are raw fractions in the view; render as % to match every
+        # other return/rate on the page (_signal_efficacy, _bucket_performance,
+        # _human_filter, _position_heat). horizon/n_matured stay bare counts.
+        fmt={
+            "avg_bench_return": _pct,
+            "min_bench_return": _pct,
+            "max_bench_return": _pct,
+        },
     )
 
 
