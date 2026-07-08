@@ -167,10 +167,12 @@ def _disagree_lines(rows):
 def _caps_lines(rows):
     if not rows:
         return ["caps: none tonight"]
-    return [
-        f"cap: {r['symbol']} ≤ {r['cap_shares']:.2f}sh"
-        for r in sorted(rows, key=lambda r: r["symbol"])
-    ]
+    out = []
+    for r in sorted(rows, key=lambda r: r["symbol"]):
+        cs = r["cap_shares"]
+        sh = f"{cs:.2f}sh" if cs is not None else "n/a"
+        out.append(f"cap: {r['symbol']} ≤ {sh}")
+    return out
 
 
 def _staleness_line(header):
@@ -224,7 +226,9 @@ def advisor_digest():
             disagreements = conn.execute(
                 "SELECT symbol, score_sum, group_name, strong FROM v_disagreements"
             ).fetchall()
-            caps = conn.execute("SELECT symbol, cap_shares FROM v_latest_caps").fetchall()
+            caps = conn.execute(
+                "SELECT symbol, cap_shares FROM v_latest_caps WHERE cap_shares IS NOT NULL"
+            ).fetchall()
         return format_advisor_lines(book, disagreements, caps, header)
     except sqlite3.Error as e:
         return [f"advisor: unreadable ({type(e).__name__})"]

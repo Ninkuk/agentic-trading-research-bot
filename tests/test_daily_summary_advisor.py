@@ -160,6 +160,25 @@ def test_caps_none():
     assert "caps: none tonight" in lines
 
 
+def test_caps_null_cap_shares_renders_na():
+    # Bearish/ATR-less flags write cap_shares=NULL by design (long-only book).
+    lines = daily_summary.format_advisor_lines(
+        _book(), [], [_cap(symbol="XOM", cap_shares=None)], _header()
+    )
+    assert "cap: XOM ≤ n/a" in lines
+
+
+def test_caps_mixed_null_and_normal():
+    lines = daily_summary.format_advisor_lines(
+        _book(),
+        [],
+        [_cap(symbol="XOM", cap_shares=None), _cap(symbol="NVDA", cap_shares=3.2)],
+        _header(),
+    )
+    assert "cap: XOM ≤ n/a" in lines
+    assert "cap: NVDA ≤ 3.20sh" in lines
+
+
 def test_staleness_same_day_no_note():
     lines = daily_summary.format_advisor_lines(_book(), [], [], _header())
     assert not any(line.startswith("(sized vs portfolio") for line in lines)
