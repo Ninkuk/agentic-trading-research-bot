@@ -137,6 +137,11 @@ JOBS = {
     "composite": (job("composite", "--keep-days", "365"), weekly(range(7), 21, 5)),
     "scorer": (job("scorer", "--keep-days", "365"), weekly(range(7), 21, 10)),
     "advisor": (job("advisor", "--keep-days", "365"), weekly(range(7), 21, 12)),
+    # Static HTML dashboard: renders composite/scorer/advisor rows read-only
+    # into reports/dashboard.html. Between advisor (9:12) and daily-summary
+    # (9:15) so it reflects tonight's rows; a separate process, so a render
+    # bug can never delay or suppress the 9:15pm health ntfy.
+    "dashboard": (script("dashboard.sh"), weekly(range(7), 21, 13)),
     # -- observability (every day, after the 8:30pm edgar run + retry) --
     "daily-summary": (script("daily_summary.sh"), weekly(range(7), 21, 15)),
 }
