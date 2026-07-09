@@ -19,6 +19,7 @@ Two kinds of coverage:
     from the schema it reads.
 """
 
+import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -282,7 +283,7 @@ def test_signal_efficacy_has_show_all_expander(tmp_path):
 def test_view_table_renders_headers_from_description():
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    conn.execute("create table toy (name TEXT, note TEXT)")
+    conn.execute("CREATE TABLE toy (name TEXT, note TEXT)")
     conn.execute("INSERT INTO toy VALUES (?, ?)", ("plain", "<script>alert(1)</script>"))
     conn.commit()
 
@@ -298,7 +299,7 @@ def test_view_table_renders_headers_from_description():
 def test_view_table_aligns_only_numeric_columns():
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    conn.execute("create table toy (name TEXT, n INT, x REAL, code TEXT)")
+    conn.execute("CREATE TABLE toy (name TEXT, n INT, x REAL, code TEXT)")
     conn.execute("INSERT INTO toy VALUES (?, ?, ?, ?)", ("risk_on", 5, 0.5, "007"))
     conn.commit()
 
@@ -319,7 +320,7 @@ def test_view_table_aligns_only_numeric_columns():
 def test_view_table_all_null_column_is_not_numeric():
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    conn.execute("create table toy (label TEXT, maybe REAL)")
+    conn.execute("CREATE TABLE toy (label TEXT, maybe REAL)")
     conn.execute("INSERT INTO toy VALUES (?, NULL)", ("a",))
     conn.commit()
     html = dashboard._view_table(conn, "SELECT label, maybe FROM toy", empty="none")
@@ -331,7 +332,7 @@ def test_view_table_all_null_column_is_not_numeric():
 def test_view_table_applies_formatter_map():
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    conn.execute("create table toy (x REAL)")
+    conn.execute("CREATE TABLE toy (x REAL)")
     conn.execute("INSERT INTO toy VALUES (0.5)")
     conn.commit()
     html = dashboard._view_table(conn, "SELECT x FROM toy", empty="none", fmt={"x": dashboard._pct})
@@ -420,8 +421,6 @@ def test_sparkline_maps_value_to_height():
     # order. Its y must be smaller (higher on screen) than the oldest/min
     # point's y — asserts the value->height scale isn't inverted.
     svg = dashboard._sparkline_svg([("risk_on", 30.0), ("risk_on", 10.0)])
-    import re
-
     ys = [float(m.group(1)) for m in re.finditer(r'cy="([\d.]+)"', svg)]
     assert len(ys) == 2
     assert ys[-1] < ys[0]
@@ -520,6 +519,15 @@ def test_main_writes_page_and_returns_zero(tmp_path, monkeypatch):
 
 # --- populated-DB fixture: real rows via each combiner's own db.py, for
 # every one of the 16 section renderers (plan 003) ---------------------------
+#
+# THE RULE (enforced by test_no_handrolled_combiner_schema below): every
+# fixture in this file builds its schema ONLY via composite_db / scorer_db /
+# advisor_db's real `ensure_schema`. Never hand-roll a CREATE TABLE / CREATE
+# VIEW that replicates a combiner's own table or view — a hand-rolled replica
+# silently diverges from production, the suite stays green, and the dashboard
+# blanks the section. Rows may be inserted directly, but the SCHEMA must be the
+# real one. (The generic `toy` tables for the pure _view_table helper are fine:
+# `toy` is nobody's production table.)
 
 _REGIME_SIGNAL_VALUES = {
     "fred_curve": -0.42,
@@ -1051,3 +1059,56 @@ def test_no_populated_section_degrades(section, populated_data_dir):
     html = dashboard._render_section(sid, title, db_name, fn, kicker, note, populated_data_dir, NOW)
     assert 'class="unavailable"' not in html, f"{sid} degraded against a populated DB"
     assert 'class="empty"' not in html, f"{sid} rendered zero rows"
+
+
+def _combiner_schema_names() -> set[str]:
+    """Every table/view name owned by a combiner, read out of the real
+    schema (not a hardcoded list) by running each ensure_schema against an
+    in-memory DB — so the forbidden set grows automatically when a combiner
+    gains a view tomorrow."""
+    names: set[str] = set()
+    for mod in (composite_db, scorer_db, advisor_db):
+        conn = sqlite3.connect(":memory:")
+        mod.ensure_schema(conn)
+        names |= {
+            r[0]
+            for r in conn.execute("SELECT name FROM sqlite_master WHERE type IN ('table', 'view')")
+        }
+        conn.close()
+    return names
+
+
+def test_no_handrolled_combiner_schema():
+    """The fixtures must build combiner schema ONLY via composite_db /
+    scorer_db / advisor_db's real ensure_schema — never a hand-rolled CREATE
+    TABLE / CREATE VIEW that replicates a combiner's own table or view.
+
+    Why this is the invariant Plan 003 exists to protect: a hand-rolled replica
+    of a production schema silently diverges the day a combiner renames a
+    column or reshapes a view. The fixture keeps building the OLD shape, every
+    test here stays green, and the live dashboard blanks the affected section
+    with no alert. Only the real ensure_schema guarantees the fixture and
+    production can never drift apart.
+
+    Self-maintaining: the forbidden set is derived from the combiners
+    themselves, so a view added upstream tomorrow is protected automatically
+    without editing this test. The generic `toy` tables for the pure
+    _view_table helper are unaffected — `toy` is nobody's production name."""
+    source = Path(__file__).read_text(encoding="utf-8")
+    forbidden = _combiner_schema_names()
+    # Find the identifier named by each CREATE TABLE / CREATE VIEW in this
+    # file's own source (case-insensitive, tolerating IF NOT EXISTS).
+    declared = {
+        m.group(1)
+        for m in re.finditer(
+            r"create\s+(?:table|view)\s+(?:if\s+not\s+exists\s+)?([A-Za-z_][A-Za-z0-9_]*)",
+            source,
+            re.IGNORECASE,
+        )
+    }
+    offenders = sorted(declared & forbidden)
+    assert not offenders, (
+        f"hand-rolled combiner schema in this test file: {offenders} — build fixtures"
+        " via composite_db / scorer_db / advisor_db.ensure_schema instead (see the"
+        " module docstring and the fixtures' THE RULE comment)"
+    )
