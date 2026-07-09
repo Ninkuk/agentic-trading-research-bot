@@ -1,109 +1,50 @@
 """Tests for the zero-dependency nightly HTML dashboard generator.
 
-Offline, like the rest of the suite: resilience is exercised by pointing the
-generator at an empty data dir (every section degrades to 'unavailable' rather
-than crashing), and self-containment is asserted on the emitted HTML string.
-The per-section SQL is validated separately against live DB copies.
+Offline, like the rest of the suite. Fixtures build real per-combiner schemas
+via each combiner's own `db.ensure_schema` (never a hand-rolled replica of
+production table/view DDL) — that is the whole point: a hand-rolled mimic of
+a production schema is exactly the drift risk this file exists to catch, so
+if a combiner view's shape changes, these fixtures either keep working (real
+schema) or a renderer's SQL breaks loudly here instead of silently blanking a
+section on the live dashboard.
+
+Two kinds of coverage:
+  * resilience — pointing the generator at an empty data dir (every section
+    degrades to 'unavailable' rather than crashing) and self-containment
+    asserted on the emitted HTML string.
+  * positive path — a `populated_data_dir` fixture with real rows in all
+    three DBs, so every one of the 16 section renderers is exercised against
+    actual data, and `test_no_populated_section_degrades` (parametrized over
+    every registered section) fails loudly if a renderer's SQL ever drifts
+    from the schema it reads.
 """
 
 import sqlite3
 import sys
 from pathlib import Path
 
+import pytest
+
 DEPLOY = Path(__file__).resolve().parents[1] / "deploy" / "launchd"
 sys.path.insert(0, str(DEPLOY))
 import dashboard  # noqa: E402
 
+from sources.combiners.advisor import db as advisor_db  # noqa: E402
+from sources.combiners.composite import catalog as composite_catalog  # noqa: E402
+from sources.combiners.composite import db as composite_db  # noqa: E402
+from sources.combiners.scorer import db as scorer_db  # noqa: E402
+
 NOW = "2026-07-08T21:13:00+00:00"
-
-_COMPOSITE_SCHEMA = """
-CREATE TABLE snapshots (id INTEGER PRIMARY KEY, captured_at TEXT,
-    signals_expected INTEGER, signals_ok INTEGER DEFAULT 0, signals_failed INTEGER DEFAULT 0);
-CREATE TABLE market_regime (snapshot_id INTEGER PRIMARY KEY, t10y2y REAL, curve_inverted INTEGER,
-    hy_spread REAL, vix REAL, vix_backwardation INTEGER, equity_pcr_pctile REAL,
-    in_fomc_blackout INTEGER, imminent_high_impact INTEGER, days_to_opex INTEGER,
-    rrp_change REAL, tga_change REAL, regime TEXT, inputs_expected INTEGER, inputs_present INTEGER);
-CREATE TABLE ticker_scores (snapshot_id INTEGER, symbol TEXT, bullish INTEGER DEFAULT 0,
-    bearish INTEGER DEFAULT 0, total INTEGER DEFAULT 0, score_sum INTEGER DEFAULT 0,
-    coverage REAL, worst_staleness_days REAL, in_portfolio INTEGER DEFAULT 0,
-    PRIMARY KEY (snapshot_id, symbol));
-CREATE VIEW v_latest_snapshot AS SELECT id FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1;
-CREATE VIEW v_latest_regime AS SELECT m.* FROM market_regime m JOIN v_latest_snapshot l ON m.snapshot_id = l.id;
-CREATE VIEW v_latest_scorecard AS SELECT t.* FROM ticker_scores t JOIN v_latest_snapshot l ON t.snapshot_id = l.id;
-CREATE VIEW v_flagged AS SELECT * FROM v_latest_scorecard WHERE ABS(score_sum) >= 4 AND total >= 3;
-"""
-
-_ADVISOR_SCHEMA = """
-CREATE TABLE snapshots (id INTEGER PRIMARY KEY, captured_at TEXT, equity REAL, cash REAL,
-    buying_power REAL, portfolio_captured_at TEXT, composite_captured_at TEXT, regime TEXT,
-    sources_failed INTEGER DEFAULT 0);
-CREATE TABLE position_heat (snapshot_id INTEGER, symbol TEXT, group_name TEXT, quantity REAL,
-    market_value REAL, atr REAL, price REAL, price_date TEXT, heat_dollars REAL, heat_pct REAL,
-    weight_pct REAL, score_sum INTEGER, bullish INTEGER, bearish INTEGER, total INTEGER,
-    atr_stale INTEGER, PRIMARY KEY (snapshot_id, symbol));
-CREATE VIEW v_latest_snapshot AS SELECT id FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1;
-CREATE VIEW v_latest_heat AS SELECT p.* FROM position_heat p JOIN v_latest_snapshot l ON p.snapshot_id = l.id;
-CREATE VIEW v_book_heat AS
-SELECT s.id AS snapshot_id, s.captured_at, s.equity, s.sources_failed,
-       COUNT(p.symbol) AS positions, SUM(p.heat_dollars) AS heat_dollars,
-       SUM(p.heat_pct) AS heat_pct,
-       CASE WHEN SUM(p.market_value) > 0 THEN
-            SUM(CASE WHEN p.atr IS NOT NULL THEN p.market_value ELSE 0 END) * 1.0 / SUM(p.market_value)
-       END AS heat_coverage
-FROM snapshots s LEFT JOIN position_heat p ON p.snapshot_id = s.id
-WHERE s.id IN (SELECT id FROM v_latest_snapshot)
-GROUP BY s.id, s.captured_at, s.equity, s.sources_failed;
-CREATE VIEW v_disagreements AS
-SELECT *, (score_sum <= -4 AND total >= 3) AS strong FROM v_latest_heat WHERE score_sum < 0;
-"""
-
-# Minimal mirror of the ticker_outcomes/signal_outcomes/regime_outcomes/prices
-# tables and the v_regime_performance/v_pending/v_basis_breaks views from
-# sources/combiners/scorer/db.py — just enough columns to exercise Step 4's
-# new dashboard sections without pulling in the whole scorer package.
-_SCORER_SCHEMA = """
-CREATE TABLE ticker_outcomes (composite_snapshot_id INTEGER, composite_date TEXT, symbol TEXT,
-    horizon INTEGER, entry_date TEXT, matured_at TEXT);
-CREATE TABLE signal_outcomes (composite_snapshot_id INTEGER, composite_date TEXT, signal_id TEXT,
-    entity TEXT, horizon INTEGER, entry_date TEXT, matured_at TEXT);
-CREATE TABLE regime_outcomes (composite_snapshot_id INTEGER, composite_date TEXT, regime TEXT,
-    horizon INTEGER, entry_date TEXT, bench_fwd_return REAL, matured_at TEXT);
-CREATE TABLE prices (symbol TEXT, price_date TEXT, close REAL, PRIMARY KEY (symbol, price_date));
-CREATE VIEW v_regime_performance AS
-SELECT regime, horizon, COUNT(*) AS n_matured,
-       AVG(bench_fwd_return) AS avg_bench_return,
-       MIN(bench_fwd_return) AS min_bench_return,
-       MAX(bench_fwd_return) AS max_bench_return
-FROM regime_outcomes WHERE matured_at IS NOT NULL
-GROUP BY regime, horizon;
-CREATE VIEW v_pending AS
-SELECT 'ticker' AS kind, composite_date, symbol AS entity, horizon,
-       entry_date FROM ticker_outcomes WHERE matured_at IS NULL
-UNION ALL
-SELECT 'signal', composite_date, signal_id || ':' || entity, horizon,
-       entry_date FROM signal_outcomes WHERE matured_at IS NULL
-UNION ALL
-SELECT 'regime', composite_date, COALESCE(regime, '?'), horizon,
-       entry_date FROM regime_outcomes WHERE matured_at IS NULL;
-CREATE VIEW v_basis_breaks AS
-SELECT a.symbol,
-       b.price_date AS prev_date, b.close AS prev_close,
-       a.price_date, a.close,
-       a.close / b.close AS ratio
-FROM prices a
-JOIN prices b ON b.symbol = a.symbol
- AND b.price_date = (SELECT MAX(c.price_date) FROM prices c
-                     WHERE c.symbol = a.symbol AND c.price_date < a.price_date)
-WHERE a.close < b.close * 0.55 OR a.close > b.close * 1.8;
-"""
 
 
 def _make_scorer_pending_db(path, n_pending):
-    conn = sqlite3.connect(path)
-    conn.executescript(_SCORER_SCHEMA)
+    conn = scorer_db.connect(str(path))
+    scorer_db.ensure_schema(conn)
     for i in range(n_pending):
         conn.execute(
-            "INSERT INTO ticker_outcomes VALUES (1, ?, ?, 5, ?, NULL)",
+            "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date, symbol,"
+            " score_sum, total, bullish, bearish, horizon, entry_date, entry_close,"
+            " matured_at) VALUES (1, ?, ?, 0, 0, 0, 0, 5, ?, 100.0, NULL)",
             (NOW, f"T{i}", NOW),
         )
     conn.commit()
@@ -115,9 +56,17 @@ def _make_composite_db(path, regime="risk_on", vix=16.1, symbol=None, score_sum=
     dicts with keys symbol, score_sum, total, bullish, bearish, in_portfolio
     (last defaults to 0) — for fixtures that need many scorecard rows with
     independently-controlled total (the flagged-truncation bug needs total
-    to diverge from |score_sum| ranking)."""
-    conn = sqlite3.connect(path)
-    conn.executescript(_COMPOSITE_SCHEMA)
+    to diverge from |score_sum| ranking).
+
+    Builds on composite/db.py's real `ensure_schema` (not a hand-rolled
+    replica) — schema drift between this fixture and production is
+    structurally impossible. ticker_scores/market_regime rows are still
+    inserted directly (rather than derived via write_ticker_scores from
+    signal_values) because several callers need combinations — e.g.
+    score_sum=5 with total=2 — that no real per-signal scoring could ever
+    produce; that is the whole point of some of those tests."""
+    conn = composite_db.connect(str(path))
+    composite_db.ensure_schema(conn)
     conn.execute(
         "INSERT INTO snapshots VALUES (1, ?, 10, 10, 0)",
         (NOW,),
@@ -149,8 +98,8 @@ def _make_composite_db(path, regime="risk_on", vix=16.1, symbol=None, score_sum=
 
 
 def _make_advisor_db(path, equity=200.0, positions=None, sources_failed=0):
-    conn = sqlite3.connect(path)
-    conn.executescript(_ADVISOR_SCHEMA)
+    conn = advisor_db.connect(str(path))
+    advisor_db.ensure_schema(conn)
     conn.execute(
         "INSERT INTO snapshots VALUES (1, ?, ?, 50.0, 100.0, ?, ?, 'risk_on', ?)",
         (NOW, equity, NOW, NOW, sources_failed),
@@ -307,11 +256,18 @@ def test_scorecard_expander_counts_real_rows(tmp_path):
 
 
 def test_signal_efficacy_has_show_all_expander(tmp_path):
-    conn = sqlite3.connect(tmp_path / "scorer.db")
-    conn.executescript(
-        "CREATE VIEW v_signal_efficacy AS "
-        "SELECT 'fred:t10y2y' AS signal_id, 0 AS via_crosswalk, 5 AS horizon,"
-        " 12 AS n_matured, 0.031 AS avg_directional_excess, 0.58 AS hit_rate, 1 AS reliable;"
+    # A real signal_outcomes row through scorer/db.py's own ensure_schema and
+    # v_signal_efficacy — not a hand-rolled view mimicking its column set.
+    conn = scorer_db.connect(str(tmp_path / "scorer.db"))
+    scorer_db.ensure_schema(conn)
+    conn.execute(
+        "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date,"
+        " signal_id, entity, score, via_crosswalk, horizon, entry_date,"
+        " entry_close, benchmark, bench_entry_close, exit_date, exit_close,"
+        " fwd_return, bench_fwd_return, matured_at)"
+        " VALUES (1, '2026-07-01', 'fred:t10y2y', 'GME', 1, 0, 5, '2026-07-02',"
+        " 100.0, 'SPY', 500.0, '2026-07-09', 106.2, 0.031, 0.0, ?)",
+        (NOW,),
     )
     conn.commit()
     conn.close()
@@ -326,7 +282,7 @@ def test_signal_efficacy_has_show_all_expander(tmp_path):
 def test_view_table_renders_headers_from_description():
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    conn.execute("CREATE TABLE toy (name TEXT, note TEXT)")
+    conn.execute("create table toy (name TEXT, note TEXT)")
     conn.execute("INSERT INTO toy VALUES (?, ?)", ("plain", "<script>alert(1)</script>"))
     conn.commit()
 
@@ -342,7 +298,7 @@ def test_view_table_renders_headers_from_description():
 def test_view_table_aligns_only_numeric_columns():
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    conn.execute("CREATE TABLE toy (name TEXT, n INT, x REAL, code TEXT)")
+    conn.execute("create table toy (name TEXT, n INT, x REAL, code TEXT)")
     conn.execute("INSERT INTO toy VALUES (?, ?, ?, ?)", ("risk_on", 5, 0.5, "007"))
     conn.commit()
 
@@ -363,7 +319,7 @@ def test_view_table_aligns_only_numeric_columns():
 def test_view_table_all_null_column_is_not_numeric():
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    conn.execute("CREATE TABLE toy (label TEXT, maybe REAL)")
+    conn.execute("create table toy (label TEXT, maybe REAL)")
     conn.execute("INSERT INTO toy VALUES (?, NULL)", ("a",))
     conn.commit()
     html = dashboard._view_table(conn, "SELECT label, maybe FROM toy", empty="none")
@@ -375,7 +331,7 @@ def test_view_table_all_null_column_is_not_numeric():
 def test_view_table_applies_formatter_map():
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    conn.execute("CREATE TABLE toy (x REAL)")
+    conn.execute("create table toy (x REAL)")
     conn.execute("INSERT INTO toy VALUES (0.5)")
     conn.commit()
     html = dashboard._view_table(conn, "SELECT x FROM toy", empty="none", fmt={"x": dashboard._pct})
@@ -385,18 +341,18 @@ def test_view_table_applies_formatter_map():
 
 
 def test_regime_performance_shows_percent_returns(tmp_path):
-    conn = sqlite3.connect(tmp_path / "scorer.db")
-    conn.executescript(
-        "CREATE TABLE regime_outcomes (regime TEXT, horizon INTEGER, bench_fwd_return REAL,"
-        " matured_at TEXT);"
-        "CREATE VIEW v_regime_performance AS"
-        " SELECT regime, horizon, COUNT(*) AS n_matured,"
-        " AVG(bench_fwd_return) AS avg_bench_return,"
-        " MIN(bench_fwd_return) AS min_bench_return,"
-        " MAX(bench_fwd_return) AS max_bench_return"
-        " FROM regime_outcomes WHERE matured_at IS NOT NULL GROUP BY regime, horizon;"
+    # A real regime_outcomes row + scorer/db.py's own v_regime_performance —
+    # not a hand-rolled table/view pair reproducing its shape.
+    conn = scorer_db.connect(str(tmp_path / "scorer.db"))
+    scorer_db.ensure_schema(conn)
+    conn.execute(
+        "INSERT INTO regime_outcomes (composite_snapshot_id, composite_date, regime,"
+        " horizon, entry_date, bench_entry_close, exit_date, bench_exit_close,"
+        " bench_fwd_return, matured_at)"
+        " VALUES (1, '2026-07-01', 'risk_on', 5, '2026-07-02', 500.0,"
+        " '2026-07-09', 506.15, 0.0123, ?)",
+        (NOW,),
     )
-    conn.execute("INSERT INTO regime_outcomes VALUES ('risk_on', 5, 0.0123, ?)", (NOW,))
     conn.commit()
     conn.close()
     ro = dashboard._ro(str(tmp_path), "scorer.db")
@@ -560,3 +516,538 @@ def test_main_writes_page_and_returns_zero(tmp_path, monkeypatch):
     rc = dashboard.main()
     assert rc == 0
     assert out.exists() and "Trading Bot Dashboard" in out.read_text(encoding="utf-8")
+
+
+# --- populated-DB fixture: real rows via each combiner's own db.py, for
+# every one of the 16 section renderers (plan 003) ---------------------------
+
+_REGIME_SIGNAL_VALUES = {
+    "fred_curve": -0.42,
+    "fred_hy_spread": 3.05,
+    "cboe_vix_backwardation": 0,
+    "cboe_equity_pcr": 0.42,
+    "fomc_blackout": 0,
+    "econ_imminent": 0,
+    "mcal_days_to_opex": 8,
+    "nyfed_rrp": -12.3,
+    "tsy_tga": 4.1,
+}
+
+
+def _write_market_signals(conn, sid, vix):
+    """One market-grain signal_values row per composite/catalog.py's
+    REGIME_FIELDS key, so write_market_regime (the real production function)
+    derives market_regime exactly as a live run would."""
+    vals = dict(_REGIME_SIGNAL_VALUES, cboe_vix=vix)
+    composite_db.write_signal_values(
+        conn,
+        sid,
+        [
+            dict(
+                signal_id=signal_id,
+                grain="market",
+                entity="*",
+                raw_value=raw,
+                score=0,
+                obs_date="2026-07-07",
+                staleness_days=1.0,
+            )
+            for signal_id, raw in vals.items()
+        ],
+    )
+
+
+def _build_composite_db(path):
+    """composite.db with 2 snapshots (>=2 points for the regime timeline
+    sparkline) and, on the latest, one flagged ticker (FLAG1, held) and one
+    non-flagged ticker (PLAIN1) — via real write_signal_values +
+    write_ticker_scores/write_market_regime, not direct table pokes."""
+    conn = composite_db.connect(str(path))
+    composite_db.ensure_schema(conn)
+
+    older = composite_db.write_snapshot(conn, "2026-07-07T21:13:00+00:00", 10)
+    _write_market_signals(conn, older, vix=18.4)
+    composite_db.write_market_regime(conn, older, composite_catalog.REGIME_FIELDS)
+
+    latest = composite_db.write_snapshot(conn, NOW, 10)
+    _write_market_signals(conn, latest, vix=16.1)
+    composite_db.write_market_regime(conn, latest, composite_catalog.REGIME_FIELDS)
+
+    # FLAG1: 4 bullish ticker signals -> score_sum 4, total 4 -> flagged
+    # (|score_sum| >= 4 AND total >= 3).
+    composite_db.write_signal_values(
+        conn,
+        latest,
+        [
+            dict(
+                signal_id=f"sig_{c}",
+                grain="ticker",
+                entity="FLAG1",
+                raw_value=1.0,
+                score=1,
+                obs_date="2026-07-07",
+                staleness_days=0.5,
+            )
+            for c in "abcd"
+        ],
+    )
+    # Mark FLAG1 as held (informational signal; never votes).
+    composite_db.write_signal_values(
+        conn,
+        latest,
+        [
+            dict(
+                signal_id="portfolio_holding",
+                grain="ticker",
+                entity="FLAG1",
+                raw_value=None,
+                score=0,
+                obs_date="2026-07-07",
+                staleness_days=0.0,
+            )
+        ],
+    )
+    # PLAIN1: one bullish signal -> score_sum 1, total 1 -> not flagged.
+    composite_db.write_signal_values(
+        conn,
+        latest,
+        [
+            dict(
+                signal_id="sig_a",
+                grain="ticker",
+                entity="PLAIN1",
+                raw_value=1.0,
+                score=1,
+                obs_date="2026-07-07",
+                staleness_days=0.5,
+            )
+        ],
+    )
+    composite_db.write_ticker_scores(conn, latest)
+    conn.commit()
+    conn.close()
+
+
+def _matured_signal_row(
+    conn, signal_id, entity, score, fwd_return, bench_fwd_return, horizon=5, benchmark="SPY"
+):
+    """Insert one matured signal_outcomes row directly — mirrors
+    tests/test_scorer_db_views.py's own `_signal_row` helper (the model this
+    plan's fixture is asked to follow)."""
+    conn.execute(
+        "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date,"
+        " signal_id, entity, score, via_crosswalk, horizon, entry_date,"
+        " entry_close, benchmark, bench_entry_close, exit_date, exit_close,"
+        " fwd_return, bench_fwd_return, matured_at)"
+        " VALUES (1, '2026-07-01', ?, ?, ?, 0, ?, '2026-07-02', 100.0, ?, 500.0,"
+        " '2026-07-09', 104.0, ?, ?, ?)",
+        (signal_id, entity, score, horizon, benchmark, fwd_return, bench_fwd_return, NOW),
+    )
+
+
+def _matured_ticker_row(
+    conn, symbol, score_sum, total, bullish, bearish, fwd_return, bench_fwd_return, in_portfolio=0
+):
+    """Mirrors tests/test_scorer_db_views.py's own `_ticker_row` helper."""
+    conn.execute(
+        "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date,"
+        " symbol, score_sum, total, bullish, bearish, in_portfolio, horizon,"
+        " entry_date, entry_close, bench_entry_close, exit_date, exit_close,"
+        " fwd_return, bench_fwd_return, matured_at)"
+        " VALUES (1, '2026-07-01', ?, ?, ?, ?, ?, ?, 5, '2026-07-02', 100.0, 500.0,"
+        " '2026-07-09', 104.0, ?, ?, ?)",
+        (
+            symbol,
+            score_sum,
+            total,
+            bullish,
+            bearish,
+            in_portfolio,
+            fwd_return,
+            bench_fwd_return,
+            NOW,
+        ),
+    )
+
+
+def _build_scorer_db(path):
+    """scorer.db with real rows behind every one of v_signal_efficacy,
+    v_bucket_performance, v_human_filter, v_signal_recommendation,
+    v_regime_performance, v_pending, and v_basis_breaks — modeled on
+    tests/test_scorer_db_views.py and tests/test_journal_db_views.py."""
+    conn = scorer_db.connect(str(path))
+    scorer_db.ensure_schema(conn)
+
+    conn.execute(
+        "INSERT INTO registered_snapshots (composite_snapshot_id, composite_date,"
+        " entry_date, registered_at, ticker_rows, signal_rows, skipped)"
+        " VALUES (1, '2026-07-01', '2026-07-02', ?, 2, 1, 0)",
+        (NOW,),
+    )
+
+    # v_bucket_performance: strong_bull (hit) + thin (total < 2).
+    _matured_ticker_row(conn, "FLAG1", 4, 4, 4, 0, 0.04, 0.01, in_portfolio=1)
+    _matured_ticker_row(conn, "PLAIN1", 1, 1, 1, 0, 0.02, 0.01)
+
+    # v_pending: one still-unmatured ticker outcome.
+    conn.execute(
+        "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date,"
+        " symbol, score_sum, total, bullish, bearish, horizon, entry_date,"
+        " entry_close, matured_at) VALUES (1, '2026-07-08', 'PEND1', 0, 0, 0, 0,"
+        " 21, '2026-07-08', 100.0, NULL)"
+    )
+
+    # v_signal_efficacy / v_signal_recommendation.
+    _matured_signal_row(conn, "sig_test_a", "FLAG1", 1, 0.04, 0.01)
+
+    # v_regime_performance.
+    conn.execute(
+        "INSERT INTO regime_outcomes (composite_snapshot_id, composite_date, regime,"
+        " horizon, entry_date, bench_entry_close, exit_date, bench_exit_close,"
+        " bench_fwd_return, matured_at)"
+        " VALUES (1, '2026-07-01', 'risk_on', 5, '2026-07-02', 500.0,"
+        " '2026-07-09', 520.0, 0.04, ?)",
+        (NOW,),
+    )
+
+    # v_basis_breaks: ACME's close halves between consecutive ledger dates.
+    conn.execute(
+        "INSERT INTO prices (symbol, price_date, close) VALUES"
+        " ('ACME', '2026-06-30', 100.0), ('ACME', '2026-07-01', 48.0)"
+    )
+
+    # v_human_filter / v_decision_outcomes / v_freelance (also feeds the
+    # trader scorecard's build_report).
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, composite_snapshot_id,"
+        " composite_date, opinion_score_sum, opinion_total, fill_date,"
+        " fill_price, quantity, recorded_at)"
+        " VALUES ('FLAG1', 'acted', 'buy', 1, '2026-07-01', 4, 4, '2026-07-02',"
+        " 101.0, 10, ?)",
+        (NOW,),
+    )
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, fill_date, fill_price,"
+        " exit_fill_date, exit_fill_price, quantity, recorded_at)"
+        " VALUES ('NVDA', 'acted', 'buy', '2026-07-01', 100.0, '2026-07-09',"
+        " 110.0, 5, ?)",
+        (NOW,),
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def _build_advisor_db(path):
+    """advisor.db with 3 held positions (one strong disagreement: XOM) and
+    one size-cap row — via write_position_heat/write_size_caps, the same
+    writers tests/test_advisor_db_views.py uses."""
+    conn = advisor_db.connect(str(path))
+    advisor_db.ensure_schema(conn)
+    sid = advisor_db.write_snapshot(conn, NOW)
+    heat_rows = [
+        {
+            "symbol": "AAPL",
+            "group_name": None,
+            "quantity": 10.0,
+            "market_value": 1500.0,
+            "atr": 3.0,
+            "price": 150.0,
+            "price_date": "2026-07-08",
+            "heat_dollars": 30.0,
+            "heat_pct": 0.003,
+            "weight_pct": 0.15,
+            "score_sum": 2,
+            "bullish": 2,
+            "bearish": 0,
+            "total": 2,
+            "atr_stale": 0,
+        },
+        {
+            "symbol": "XOM",
+            "group_name": "energy",
+            "quantity": 5.0,
+            "market_value": 500.0,
+            "atr": 2.0,
+            "price": 100.0,
+            "price_date": "2026-07-08",
+            "heat_dollars": 10.0,
+            "heat_pct": 0.001,
+            "weight_pct": 0.05,
+            "score_sum": -4,
+            "bullish": 0,
+            "bearish": 4,
+            "total": 4,
+            "atr_stale": 0,
+        },
+        {
+            "symbol": "XLE",
+            "group_name": "energy",
+            "quantity": 3.0,
+            "market_value": 300.0,
+            "atr": 1.5,
+            "price": 100.0,
+            "price_date": "2026-07-01",
+            "heat_dollars": 4.5,
+            "heat_pct": 0.00045,
+            "weight_pct": 0.03,
+            "score_sum": 1,
+            "bullish": 1,
+            "bearish": 0,
+            "total": 1,
+            "atr_stale": 1,
+        },
+    ]
+    advisor_db.write_position_heat(conn, sid, heat_rows)
+    cap_rows = [
+        {
+            "symbol": "NVDA",
+            "direction": "bullish",
+            "score_sum": 4,
+            "atr": 4.0,
+            "price": 100.0,
+            "cap_shares": 25.0,
+            "cap_dollars": 2500.0,
+            "group_name": None,
+            "group_heat_pct": 0.0,
+            "reliable_signals": 1,
+            "total_signals": 3,
+            "exceeds_buying_power": 1,
+            "already_held": 0,
+        },
+    ]
+    advisor_db.write_size_caps(conn, sid, cap_rows)
+    advisor_db.finish_snapshot(
+        conn,
+        sid,
+        {"equity": 10000.0, "cash": 500.0, "buying_power": 200.0, "captured_at": NOW},
+        {"captured_at": NOW, "regime": "risk_on"},
+        sources_failed=0,
+    )
+    conn.commit()
+    conn.close()
+
+
+@pytest.fixture
+def populated_data_dir(tmp_path):
+    """A tmp_path with composite.db, scorer.db, and advisor.db populated via
+    each combiner's own db.py — real schemas/views throughout, no hand-rolled
+    DDL — so every one of dashboard.SECTIONS' 16 renderers has at least one
+    real row to show."""
+    _build_composite_db(tmp_path / "composite.db")
+    _build_scorer_db(tmp_path / "scorer.db")
+    _build_advisor_db(tmp_path / "advisor.db")
+    return str(tmp_path)
+
+
+def test_populated_fixture_has_no_unavailable_sections(populated_data_dir):
+    html = dashboard.build_page(populated_data_dir, NOW)
+    assert 'class="unavailable"' not in html
+
+
+# --- Step 2: one positive-path test per section renderer --------------------
+
+
+def test_regime_renders_values(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "composite.db")
+    try:
+        html = dashboard._regime(conn, NOW)
+    finally:
+        conn.close()
+    assert "16.1" in html  # VIX, the latest snapshot
+    assert '<span class="tag-on">risk-on</span>' in html  # _regime_badge's real markup
+    assert "<summary>All regime inputs</summary>" in html
+    assert "10y–2y spread" in html
+    assert "-0.42" in html  # signed t10y2y we inserted
+
+
+def test_regime_timeline_renders_positive(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "composite.db")
+    try:
+        html = dashboard._regime_timeline(conn, NOW)
+    finally:
+        conn.close()
+    assert "<polyline" in html
+    assert "no data" not in html
+
+
+def test_scorecard_shows_flagged_and_split(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "composite.db")
+    try:
+        html = dashboard._scorecard(conn, NOW)
+    finally:
+        conn.close()
+    headline_html = html.split("<details>")[0]
+    assert '<tr class="flag"><td>FLAG1</td>' in headline_html
+    assert "4 / 0" in headline_html  # FLAG1's bullish/bearish split
+    assert "<tr><td>PLAIN1</td>" in headline_html  # non-flagged: plain <tr>
+
+
+def test_signal_efficacy_renders_rows(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._signal_efficacy(conn, NOW)
+    finally:
+        conn.close()
+    assert "sig_test_a" in html
+    assert '<span class="tag-dim">thin</span>' in html  # n_bench=1 < RELIABLE_MIN_N
+
+
+def test_bucket_performance_renders_rows(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._bucket_performance(conn, NOW)
+    finally:
+        conn.close()
+    assert "strong_bull" in html
+    assert "thin" in html
+
+
+def test_human_filter_renders_rows(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._human_filter(conn, NOW)
+    finally:
+        conn.close()
+    assert "acted" in html
+
+
+def test_regime_performance_section_renders(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._regime_performance(conn, NOW)
+    finally:
+        conn.close()
+    assert "risk_on" in html
+
+
+def test_pending_section_renders(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._pending(conn, NOW)
+    finally:
+        conn.close()
+    assert "PEND1" in html
+
+
+def test_basis_breaks_section_renders(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._basis_breaks(conn, NOW)
+    finally:
+        conn.close()
+    assert "ACME" in html
+
+
+def test_signal_recommendation_renders_rows(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._signal_recommendation(conn, NOW)
+    finally:
+        conn.close()
+    assert "sig_test_a" in html
+    assert "1 / 30" in html  # reliability meter reads n_bench, not n_matured
+    assert "n_matured" not in html
+    rng = html.split('class="rng" style="left:')[1]
+    left = int(rng.split("%")[0])
+    width = int(rng.split("width:")[1].split("%")[0])
+    assert left + width <= 100  # CI bar's range stays within the track
+
+
+def test_trader_scorecard_renders(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._trader_scorecard(conn, NOW)
+    finally:
+        conn.close()
+    assert html.startswith("<pre>")
+    assert "Trader Decision-Quality Scorecard" in html
+    assert "acted" in html
+
+
+def test_book_heat_and_group_heat_render(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "advisor.db")
+    try:
+        book_html = dashboard._book_heat(conn, NOW)
+        group_html = dashboard._group_heat(conn, NOW)
+    finally:
+        conn.close()
+    assert '<div class="v">3</div>' in book_html  # 3 positions tile
+    assert "energy" in group_html  # XOM + XLE collapsed into one bet
+    assert "AAPL" in group_html  # ungrouped symbol is its own bet
+
+
+def test_position_heat_never_shows_snapshot_id(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "advisor.db")
+    try:
+        html = dashboard._position_heat(conn, NOW)
+    finally:
+        conn.close()
+    assert "snapshot_id" not in html
+    assert "AAPL" in html and "XOM" in html and "XLE" in html
+
+
+def test_disagreements_render(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "advisor.db")
+    try:
+        html = dashboard._disagreements(conn, NOW)
+    finally:
+        conn.close()
+    assert "XOM" in html
+    assert '<span class="pill anti">STRONG</span>' in html
+
+
+def test_size_caps_render(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "advisor.db")
+    try:
+        html = dashboard._size_caps(conn, NOW)
+    finally:
+        conn.close()
+    assert "NVDA" in html
+    assert "⚠" in html  # exceeds_buying_power marker
+
+
+def test_hero_read_positive_path(populated_data_dir):
+    html = dashboard._hero_read(populated_data_dir, NOW)
+    assert html != dashboard._HERO_FALLBACK
+    assert "risk-on" in html
+    assert ">3</span> position" in html  # 3 positions, correct pluralization
+    assert "FLAG1" in html  # strongest-agreement flagged ticker
+    assert "$None" not in html
+    assert "1 positions" not in html
+
+
+# --- Step 3: parametrized guard against silent degradation of a populated
+# section, plus the coverage contract that every section has a positive-path
+# test above -----------------------------------------------------------------
+
+_SECTIONS_WITH_POSITIVE_TEST = {
+    "regime",
+    "regime-timeline",
+    "scorecard",
+    "signal-efficacy",
+    "bucket-performance",
+    "human-filter",
+    "regime-performance",
+    "pending",
+    "basis-breaks",
+    "book-heat",
+    "group-heat",
+    "position-heat",
+    "disagreements",
+    "size-caps",
+    "plan-001-report",
+    "plan-004-scorecard",
+}
+
+
+def test_every_section_has_a_positive_path_test():
+    assert set(dashboard.SECTION_IDS) == _SECTIONS_WITH_POSITIVE_TEST
+
+
+@pytest.mark.parametrize("section", dashboard.SECTIONS, ids=lambda s: s[0])
+def test_no_populated_section_degrades(section, populated_data_dir):
+    sid, title, db_name, fn, kicker, note = section
+    html = dashboard._render_section(sid, title, db_name, fn, kicker, note, populated_data_dir, NOW)
+    assert 'class="unavailable"' not in html, f"{sid} degraded against a populated DB"
+    assert 'class="empty"' not in html, f"{sid} rendered zero rows"
