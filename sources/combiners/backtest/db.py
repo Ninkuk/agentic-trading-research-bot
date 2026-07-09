@@ -255,8 +255,8 @@ def connect(path: str) -> sqlite3.Connection:
 
 
 def ensure_schema(conn) -> None:
-    """Tables (CREATE IF NOT EXISTS), a one-shot benchmark_closes migration,
-    then views (DROP+CREATE)."""
+    """Tables (CREATE IF NOT EXISTS), one-shot column migrations, then views
+    (DROP+CREATE)."""
     conn.executescript(_TABLES)
     # Migrate the pre-multi-benchmark benchmark_closes (date PK, no benchmark
     # column) by rebuilding it: the table is a re-harvestable copy, so dropping
@@ -265,6 +265,11 @@ def ensure_schema(conn) -> None:
     if "benchmark" not in cols:
         conn.execute("DROP TABLE benchmark_closes")
         conn.executescript(_TABLES)
+    # snapshots is the provenance header -- widen it in place rather than
+    # rebuilding: dropping it would discard run history that nothing re-derives.
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(snapshots)")}
+    if "market_rows" not in cols:
+        conn.execute("ALTER TABLE snapshots ADD COLUMN market_rows INTEGER NOT NULL DEFAULT 0")
     conn.executescript(_views())
     conn.commit()
 
