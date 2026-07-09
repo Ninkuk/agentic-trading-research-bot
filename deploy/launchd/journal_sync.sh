@@ -8,8 +8,10 @@ set -uo pipefail
 source "$(dirname "$0")/env.sh"
 
 echo "[$(date '+%F %T')] start: journal sync"
+# NOT haiku -- see the note in portfolio_snapshot.sh: it improvises tools the
+# allowlist does not grant and mistakes the resulting denial for stale MCP auth.
 claude -p "/journal-sync" \
-    --model haiku \
+    --model sonnet \
     --allowedTools "mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_equity_orders,Write,Bash(uv run python main.py journal *)" \
     --output-format json
 

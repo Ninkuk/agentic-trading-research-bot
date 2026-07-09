@@ -8,8 +8,13 @@ set -uo pipefail
 source "$(dirname "$0")/env.sh"
 
 echo "[$(date '+%F %T')] start: portfolio snapshot"
+# NOT haiku: it improvises tools outside --allowedTools (reaching for Edit or a
+# Bash heredoc where the allowlist grants Write) and then reports the MCP
+# connector as unauthenticated rather than retrying. Verified 2026-07-08 --
+# haiku failed this slot 3/3 while sonnet ran it clean. The allowlist is the
+# write-scope guarantee, so fix the model, never widen the list.
 claude -p "/account-positions" \
-    --model haiku \
+    --model sonnet \
     --allowedTools "mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_portfolio,mcp__claude_ai_Robinhood_MCP__get_equity_positions,Write,Bash(uv run python main.py portfolio *)" \
     --output-format json
 
