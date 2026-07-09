@@ -22,7 +22,7 @@ FRESH=$(sqlite3 data/portfolio.db \
     "SELECT COUNT(*) FROM snapshots WHERE captured_at >= strftime('%Y-%m-%dT%H:%M:%S', 'now', '-2 hours');" \
     2>/dev/null || echo 0)
 if [ "${FRESH:-0}" -lt 1 ]; then
-    echo "[$(date '+%F %T')] STALE: no portfolio snapshot in the last 2h — check Robinhood MCP auth" >&2
+    echo "[$(date '+%F %T')] STALE: no portfolio snapshot in the last 2h — read permission_denials in the JSON above before suspecting MCP auth" >&2
     exit 1
 fi
 echo "[$(date '+%F %T')] portfolio snapshot fresh"

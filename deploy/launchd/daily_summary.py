@@ -26,6 +26,8 @@ from sources.common import notify  # noqa: E402
 LOGS = Path("logs")
 DATA = Path("data")
 PREFIX = "com.tradingbot."
+# This script's own StandardOutPath, named for its job in install.py's JOBS.
+SELF_LOG = "daily-summary.log"
 _TS = re.compile(r"^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]")
 _BAD = ("FAILED", "STALE", "Traceback", "Error:")
 
@@ -307,6 +309,12 @@ def build_summary(now_local, now_utc):
 
     since = now_local - dt.timedelta(hours=24)
     for log in sorted(LOGS.glob("*.log")):
+        # Skip our own launchd StandardOutPath: this function prints every
+        # problem it finds, so re-reading that file would re-report yesterday's
+        # problems (and write them again), keeping the alert red long after the
+        # underlying job recovered.
+        if log.name == SELF_LOG:
+            continue
         runs, bad = scan_log(log, since)
         total_runs += runs
         problems.extend(bad)
