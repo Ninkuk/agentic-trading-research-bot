@@ -35,7 +35,7 @@ def test_upsert_firms_up_no_duplicate():
 
 def test_v_imminent_high_impact_filters_high_within_horizon():
     conn = _fresh()
-    monitor_common.set_today(conn, "2026-08-01T00:00:00+00:00", horizon_days=14)
+    monitor_common.set_today(conn, "2026-08-01T12:00:00+00:00", horizon_days=14)
     sub = str(CPI.release_id)
     monitor_common.upsert_events(
         conn,
@@ -53,7 +53,7 @@ def test_v_imminent_high_impact_excludes_med_impact_release():
     # With a med-impact release in the catalog (JOLTS), prove the impact='high'
     # filter actually drops a med row that is otherwise inside the horizon.
     conn = _fresh()
-    monitor_common.set_today(conn, "2026-08-01T00:00:00+00:00", horizon_days=14)
+    monitor_common.set_today(conn, "2026-08-01T12:00:00+00:00", horizon_days=14)
     monitor_common.upsert_events(
         conn,
         [
@@ -68,7 +68,7 @@ def test_v_imminent_high_impact_excludes_med_impact_release():
 
 def test_v_upcoming_releases_joins_catalog_impact_and_label():
     conn = _fresh()
-    monitor_common.set_today(conn, "2026-08-01T00:00:00+00:00")
+    monitor_common.set_today(conn, "2026-08-01T12:00:00+00:00")
     monitor_common.upsert_events(
         conn, [_evt("cpi_release", "2026-08-12", str(CPI.release_id))], "t"
     )

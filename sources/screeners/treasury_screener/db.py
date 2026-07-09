@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from sources.common.clock import phx_date
 from sources.common.screener_common import connect
 
 __all__ = [
@@ -217,8 +218,10 @@ def prune(conn, keep_days, now_iso) -> int:
 
 def set_today(conn, now_iso: str) -> str:
     """Set the calendar_now singleton from the injected now_iso (monitor_common
-    pattern). v_upcoming_auctions filters on this — never date('now')."""
-    today = datetime.fromisoformat(now_iso).date().isoformat()
+    pattern). v_upcoming_auctions filters on this — never date('now'). The date
+    is Phoenix-local: the 4:30pm slot leaves only 30min before the UTC rollover,
+    so a late run would otherwise record tomorrow."""
+    today = phx_date(now_iso)
     conn.execute("UPDATE calendar_now SET today=? WHERE id=0", (today,))
     conn.commit()
     return today

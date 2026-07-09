@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sources.combiners.scorer import scorecard  # noqa: E402
 from sources.combiners.scorer.db import RELIABLE_MIN_N  # noqa: E402
+from sources.common.clock import phx_date  # noqa: E402
 
 DATA_DIR = "data"
 OUTPUT_PATH = "reports/dashboard.html"
@@ -1031,15 +1032,16 @@ def _render_section(sid, title, db_name, fn, kicker, note, data_dir, now_iso) ->
 
 
 def _edition_date(now_iso: str) -> str:
-    """'2026 · 07 · 08' (hair-space separated, mockup style). Total: any
-    unparseable now_iso degrades to its bare date-ish prefix rather than
+    """'2026 · 07 · 08' (hair-space separated, mockup style). The Phoenix date,
+    not the UTC one — the 9:13pm render slot is already tomorrow in UTC. Total:
+    any unparseable now_iso degrades to its bare date-ish prefix rather than
     raising — the masthead must always render something."""
     try:
-        dt = datetime.fromisoformat(now_iso)
+        y, m, d = phx_date(now_iso).split("-")
     except Exception:
         return _esc(now_iso[:10])
     sep = "&#8202;·&#8202;"
-    return f"{dt.year:04d}{sep}{dt.month:02d}{sep}{dt.day:02d}"
+    return f"{y}{sep}{m}{sep}{d}"
 
 
 def _snapshot_number(data_dir: str) -> str | None:

@@ -134,6 +134,15 @@ source itself. Import a screener/monitor/combiner's internals as `sources.screen
 
 ## Invariants (these repeat across the codebase — preserve them)
 
+- **Timestamps are UTC; calendar dates are Phoenix.** Never slice a date out of a timestamp
+  (`now_iso[:10]`) — always `phx_date(now_iso)` from `sources/common/clock.py`. UTC midnight is
+  17:00 Phoenix and eight launchd jobs run after it (cboe_stats 6pm .. daily-summary 9:15pm), so
+  `[:10]` yields *tomorrow* for every one of them. `composite` stamps `obs_date` on the Phoenix
+  date and `journal` matches fills on it; anything comparing against those must agree or ages
+  come out a day high and a fill can appear to precede the opinion it answered. The offset is a
+  bare `timedelta(hours=7)` only because America/Phoenix has no DST — an ET-anchored clock could
+  not do this. Test fixtures for evening jobs must straddle the rollover (e.g.
+  `2026-07-08T04:12:00+00:00`, not `...T21:12:00+00:00`) or they cannot catch a mixup.
 - **Determinism / no wall-clock in the hot path.** Time enters as an injected `now_iso` (UTC
   `isoformat()`) parameter. Monitor views filter on the `calendar_now.today` singleton row (set
   via `set_today(conn, now_iso)`), **never** `date('now')` — this is what makes tests reproducible.

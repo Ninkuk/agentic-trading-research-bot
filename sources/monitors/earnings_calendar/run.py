@@ -4,6 +4,7 @@ import sys
 from datetime import UTC, date, datetime, timedelta
 
 import sources.common.monitor_common as monitor_common
+from sources.common.clock import phx_date
 from sources.monitors.earnings_calendar import db, fetch
 
 
@@ -67,7 +68,7 @@ def run(
     (snapshot_id, event_count). Feed drift aborts loudly; a transient feed
     failure preserves the last-good calendar."""
     now_iso = now_iso or datetime.now(UTC).isoformat()
-    today = datetime.fromisoformat(now_iso).date().isoformat()
+    today = phx_date(now_iso)
     watch = {t.strip().upper() for t in only} if only else None
 
     conn = db.connect(db_path)

@@ -25,7 +25,7 @@ def _evt(event_type, event_date, subtype="", event_time="14:00", status="confirm
 
 
 def test_v_next_fomc_picks_next_meeting_with_days_until_and_has_sep():
-    conn = _fresh("2026-03-01T00:00:00+00:00")
+    conn = _fresh("2026-03-01T12:00:00+00:00")
     monitor_common.upsert_events(
         conn,
         [
@@ -41,7 +41,7 @@ def test_v_next_fomc_picks_next_meeting_with_days_until_and_has_sep():
 
 
 def test_v_in_blackout_true_inside_window_false_outside():
-    conn = _fresh("2026-03-14T00:00:00+00:00")
+    conn = _fresh("2026-03-14T12:00:00+00:00")
     monitor_common.upsert_events(
         conn,
         [
@@ -56,12 +56,12 @@ def test_v_in_blackout_true_inside_window_false_outside():
         "t",
     )
     assert conn.execute("SELECT in_blackout FROM v_in_blackout").fetchone()[0] == 1
-    monitor_common.set_today(conn, "2026-03-25T00:00:00+00:00")  # after window
+    monitor_common.set_today(conn, "2026-03-25T12:00:00+00:00")  # after window
     assert conn.execute("SELECT in_blackout FROM v_in_blackout").fetchone()[0] == 0
 
 
 def test_v_upcoming_fomc_events_orders_and_labels():
-    conn = _fresh("2026-03-01T00:00:00+00:00")
+    conn = _fresh("2026-03-01T12:00:00+00:00")
     monitor_common.upsert_events(
         conn,
         [

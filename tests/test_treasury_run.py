@@ -2,7 +2,7 @@ import sqlite3
 
 from sources.screeners.treasury_screener import run as runmod
 
-NOW = "2026-07-03T00:00:00+00:00"
+NOW = "2026-07-03T12:00:00+00:00"
 
 
 def _raw_debt(dates):
@@ -158,7 +158,7 @@ def test_run_keep_days_prunes_snapshots_not_facts(tmp_path):
         db_path,
         only=["debt_penny"],
         fetch_dataset=fetch_dataset,
-        now_iso="2026-01-01T00:00:00+00:00",
+        now_iso="2026-01-01T12:00:00+00:00",
     )
     runmod.run(db_path, only=["debt_penny"], fetch_dataset=fetch_dataset, now_iso=NOW, keep_days=30)
     conn = sqlite3.connect(db_path)

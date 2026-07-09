@@ -25,7 +25,7 @@ def _evt(ticker, event_date, status="scheduled", source="stockanalysis", mktcap=
 
 
 def test_v_upcoming_earnings_filters_future_orders_by_date_then_mktcap():
-    conn = _fresh("2026-07-06T00:00:00+00:00")
+    conn = _fresh("2026-07-06T12:00:00+00:00")
     monitor_common.upsert_events(
         conn,
         [
@@ -40,7 +40,7 @@ def test_v_upcoming_earnings_filters_future_orders_by_date_then_mktcap():
 
 
 def test_v_imminent_earnings_respects_horizon():
-    conn = _fresh("2026-07-06T00:00:00+00:00", horizon=7)
+    conn = _fresh("2026-07-06T12:00:00+00:00", horizon=7)
     monitor_common.upsert_events(
         conn,
         [
@@ -54,7 +54,7 @@ def test_v_imminent_earnings_respects_horizon():
 
 
 def test_v_this_week_earnings_mon_to_fri():
-    conn = _fresh("2026-07-06T00:00:00+00:00")  # Monday
+    conn = _fresh("2026-07-06T12:00:00+00:00")  # Monday
     monitor_common.upsert_events(
         conn,
         [
@@ -69,7 +69,7 @@ def test_v_this_week_earnings_mon_to_fri():
 
 
 def test_v_earnings_confirmed_only_edgar_verified():
-    conn = _fresh("2026-07-06T00:00:00+00:00")
+    conn = _fresh("2026-07-06T12:00:00+00:00")
     monitor_common.upsert_events(
         conn,
         [

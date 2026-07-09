@@ -45,7 +45,7 @@ def test_next_early_close_returns_next_on_or_after():
 
 def test_v_upcoming_closures_lists_holidays_and_early_closes_from_today():
     conn = _fresh()
-    monitor_common.set_today(conn, "2026-06-01T00:00:00+00:00")
+    monitor_common.set_today(conn, "2026-06-01T12:00:00+00:00")
     monitor_common.upsert_events(
         conn,
         [
@@ -63,7 +63,7 @@ def test_v_upcoming_closures_lists_holidays_and_early_closes_from_today():
 
 def test_v_next_opex_returns_soonest_expiration():
     conn = _fresh()
-    monitor_common.set_today(conn, "2026-08-01T00:00:00+00:00")
+    monitor_common.set_today(conn, "2026-08-01T12:00:00+00:00")
     monitor_common.upsert_events(
         conn,
         [

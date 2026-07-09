@@ -8,11 +8,14 @@ import os
 from datetime import UTC, datetime
 
 from sources.combiners.advisor import catalog, db, fetch
+from sources.common.clock import phx_date
 
 
 def run(db_path, db_dir, now_iso=None, keep_days=None):
     now_iso = now_iso or datetime.now(UTC).isoformat()
-    today = now_iso[:10]  # one-clock rule: all staleness is judged on this
+    # One-clock rule: all staleness is judged on this. Phoenix, not UTC — the
+    # 9:12pm slot is already tomorrow in UTC, and obs_date is Phoenix-stamped.
+    today = phx_date(now_iso)
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)

@@ -2,7 +2,7 @@ import sqlite3
 
 from sources.monitors.earnings_calendar import run as runmod
 
-NOW = "2026-07-06T00:00:00+00:00"
+NOW = "2026-07-06T12:00:00+00:00"
 
 
 def _row(ticker, date):
@@ -127,7 +127,7 @@ def test_run_keep_days_prunes_snapshots_not_events(tmp_path):
     runmod.run(
         db_path,
         fetch_forward=lambda: [_row("A", "2026-07-08")],
-        now_iso="2026-01-01T00:00:00+00:00",
+        now_iso="2026-01-01T12:00:00+00:00",
     )
     runmod.run(db_path, fetch_forward=lambda: [_row("A", "2026-07-08")], now_iso=NOW, keep_days=30)
     conn = sqlite3.connect(db_path)

@@ -4,6 +4,7 @@ import sys
 from datetime import UTC, datetime
 
 import sources.common.monitor_common as monitor_common
+from sources.common.clock import phx_date
 from sources.monitors.econ_calendar import catalog, db, fetch
 
 
@@ -25,7 +26,7 @@ def run(
     run, and only type(e).__name__ is logged (a FRED URL embeds the api_key)."""
     api_key = fetch.require_api_key(api_key or os.environ.get("FRED_API_KEY"))
     now_iso = now_iso or datetime.now(UTC).isoformat()
-    today = datetime.fromisoformat(now_iso).date().isoformat()
+    today = phx_date(now_iso)
 
     ids = catalog.select_ids(only, exclude)
     by_id = {r.release_id: r for r in catalog.CATALOG}

@@ -3,7 +3,7 @@ import sqlite3
 from sources.monitors.fomc_calendar import fetch
 from sources.monitors.fomc_calendar import run as runmod
 
-NOW = "2026-01-01T00:00:00+00:00"
+NOW = "2026-01-01T12:00:00+00:00"
 MEETING = {
     "start_date": "2026-03-17",
     "end_date": "2026-03-18",
@@ -47,9 +47,9 @@ def test_run_transient_fetch_failure_preserves_calendar_and_hides_secret(tmp_pat
 
 def test_run_keep_days_prunes_snapshots_not_events(tmp_path):
     db_path = str(tmp_path / "fomc.db")
-    runmod.run(db_path, fetch_calendar=lambda: [MEETING], now_iso="2026-01-01T00:00:00+00:00")
+    runmod.run(db_path, fetch_calendar=lambda: [MEETING], now_iso="2026-01-01T12:00:00+00:00")
     runmod.run(
-        db_path, fetch_calendar=lambda: [MEETING], now_iso="2026-06-01T00:00:00+00:00", keep_days=30
+        db_path, fetch_calendar=lambda: [MEETING], now_iso="2026-06-01T12:00:00+00:00", keep_days=30
     )
     conn = sqlite3.connect(db_path)
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1

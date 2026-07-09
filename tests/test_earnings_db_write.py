@@ -2,7 +2,7 @@ import json
 
 from sources.monitors.earnings_calendar import run as runmod
 
-NOW = "2026-07-06T00:00:00+00:00"
+NOW = "2026-07-06T12:00:00+00:00"
 
 
 def _row(ticker, date, timing="amc", name="X"):

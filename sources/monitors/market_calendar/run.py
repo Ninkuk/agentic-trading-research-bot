@@ -2,6 +2,7 @@ import argparse
 from datetime import UTC, datetime
 
 import sources.common.monitor_common as monitor_common
+from sources.common.clock import phx_date
 from sources.monitors.market_calendar import catalog, compute, db, fetch
 
 _NYSE_URL = "https://www.nyse.com/trade/hours-calendars"
@@ -35,7 +36,7 @@ def run(db_path, years=2, horizon_days=7, keep_days=None, refresh=False, pages=N
     rows disappear. Deterministic and network-free unless refresh/pages given.
     Returns (snapshot_id, event_count)."""
     now_iso = now_iso or datetime.now(UTC).isoformat()
-    today = datetime.fromisoformat(now_iso).date().isoformat()
+    today = phx_date(now_iso)
     start_year = int(today[:4])
 
     eq_hol = dict(catalog.EQUITY_HOLIDAYS)

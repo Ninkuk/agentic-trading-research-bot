@@ -1142,3 +1142,24 @@ def test_no_handrolled_combiner_schema():
         " via composite_db / scorer_db / advisor_db.ensure_schema instead (see the"
         " module docstring and the fixtures' THE RULE comment)"
     )
+
+
+def test_edition_date_is_the_phoenix_date_not_utc():
+    """The masthead prints the Phoenix date.
+
+    Regression: _edition_date formatted datetime.now(UTC) directly. The 9:13pm
+    Phoenix render slot is already the next UTC day, so the masthead announced
+    tomorrow's edition every single night.
+    """
+    # 2026-07-08 21:13 Phoenix == 2026-07-09 04:13 UTC
+    assert _strip(dashboard._edition_date("2026-07-09T04:13:00+00:00")) == "2026·07·08"
+    # ...and a pre-rollover instant on the same Phoenix day agrees.
+    assert _strip(dashboard._edition_date("2026-07-08T23:40:00+00:00")) == "2026·07·08"
+
+
+def test_edition_date_degrades_on_unparseable_input():
+    assert dashboard._edition_date("not-a-timestamp") == "not-a-time"
+
+
+def _strip(s):
+    return s.replace("&#8202;", "")

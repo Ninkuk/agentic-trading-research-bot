@@ -21,6 +21,7 @@ from datetime import UTC, datetime
 
 from sources.combiners.scorer import db
 from sources.combiners.scorer.journal import AUTOMATIC_AGENTS
+from sources.common.clock import phx_date
 
 # Suppression floor: a (response|horizon) or (aligned|horizon) cell with fewer
 # matured rows than this shows "insufficient data (n=k)" instead of an average.
@@ -160,7 +161,7 @@ def build_report(conn, now_iso: str) -> str:
     """Assemble the text scorecard. Read-only over scorer.db's journal views;
     every section renders its header + an explicit body even when empty, so a
     thin period is visibly thin rather than silently missing."""
-    label = now_iso[:7]  # YYYY-MM — the period the report is generated for
+    label = phx_date(now_iso)[:7]  # YYYY-MM — the period the report is generated for
     parts = [
         f"=== Trader Decision-Quality Scorecard — {label} ===",
         "",

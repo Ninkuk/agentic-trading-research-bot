@@ -2,7 +2,7 @@ import sqlite3
 
 from sources.monitors.econ_calendar import run as runmod
 
-NOW = "2026-08-01T00:00:00+00:00"
+NOW = "2026-08-01T12:00:00+00:00"
 
 
 def _raw(release_id, dates):
@@ -73,7 +73,7 @@ def test_run_keep_days_prunes_snapshots_not_future_events(tmp_path):
         return _raw(release_id, ["2026-12-31"])  # far-future event
 
     runmod.run(
-        db_path, only=["10"], api_key="K", fetch_one=fetch_one, now_iso="2026-01-01T00:00:00+00:00"
+        db_path, only=["10"], api_key="K", fetch_one=fetch_one, now_iso="2026-01-01T12:00:00+00:00"
     )  # old snapshot
     runmod.run(
         db_path, only=["10"], api_key="K", fetch_one=fetch_one, now_iso=NOW, keep_days=30

@@ -6,7 +6,10 @@ from sources.combiners.scorer import db as scorer_db
 from sources.screeners.portfolio_screener import db as portfolio_db
 from sources.screeners.stock_analysis_screener import db as stocks_db
 
-NOW = "2026-07-07T21:12:00+00:00"
+# The real 9:12pm-Phoenix advisor slot, which is already the NEXT UTC day.
+# Fixtures must straddle the rollover or they cannot catch a UTC/Phoenix mixup:
+# this instant is Phoenix 2026-07-07 but UTC 2026-07-08.
+NOW = "2026-07-08T04:12:00+00:00"
 PRICE_COLS = {"priceDate": "TEXT", "close": "REAL", "atr": "REAL"}
 
 
@@ -31,7 +34,8 @@ def _mini_composite(dirpath):
         _sig("sig_c", "NVDA", 1),  # NVDA: +4 over 3 votes -> flagged
         _sig("stocks_rsi", "AAPL", -1),  # AAPL: held + negative -> disagreement
     ]
-    sid = composite_db.write_snapshot(conn, "2026-07-06T21:05:00+00:00", len(signals))
+    # composite's own 9:05pm slot on Phoenix 2026-07-06 -> 04:05 UTC the 7th
+    sid = composite_db.write_snapshot(conn, "2026-07-07T04:05:00+00:00", len(signals))
     composite_db.write_signal_values(conn, sid, signals)
     composite_db.write_ticker_scores(conn, sid)
     composite_db.write_market_regime(conn, sid, {})
@@ -130,7 +134,7 @@ def test_full_cycle(tmp_path):
         10000.0,
         1000.0,
         "2026-07-07T21:30:00+00:00",
-        "2026-07-06T21:05:00+00:00",
+        "2026-07-07T04:05:00+00:00",
         0,
     )
     # heat: AAPL 10x2=20 (from stocks.db), XOM 5x4=20 (from etfs.db fallback)
@@ -168,6 +172,42 @@ def test_prune_via_keep_days(tmp_path):
     run_mod.run(out, str(tmp_path), now_iso=NOW, keep_days=30)
     conn = sqlite3.connect(out)
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
+
+
+def test_atr_staleness_is_judged_on_the_phoenix_date(tmp_path):
+    """A priceDate exactly ATR_MAX_AGE_DAYS old is fresh, not stale.
+
+    Regression: advisor derived `today` from now_iso[:10] (UTC). At the 9:12pm
+    Phoenix slot that is already tomorrow, so every ATR age came out one day
+    high and this 5-day-old price tripped atr_stale a day early — eating the
+    holiday margin ATR_MAX_AGE_DAYS was sized for.
+    """
+    _mini_composite(tmp_path)
+    _mini_portfolio(tmp_path)
+    # NOW is Phoenix 2026-07-07; 5 calendar days back is exactly the budget.
+    for name, rows in (("stocks.db", [("AAPL", 100.0, 2.0)]), ("etfs.db", [("XOM", 80.0, 4.0)])):
+        conn = stocks_db.connect(str(tmp_path / name))
+        stocks_db.ensure_schema(conn, PRICE_COLS)
+        conn.execute(
+            "INSERT INTO snapshots (captured_at, universe_count, source) VALUES (?, ?, 's')",
+            ("2026-07-07T11:00:00+00:00", len(rows)),
+        )
+        sid = conn.execute("SELECT MAX(id) FROM snapshots").fetchone()[0]
+        for sym, close, atr in rows:
+            conn.execute(
+                'INSERT INTO metrics (snapshot_id, symbol, "priceDate", "close", "atr")'
+                " VALUES (?, ?, ?, ?, ?)",
+                (sid, sym, "2026-07-02", close, atr),
+            )
+        conn.commit()
+        conn.close()
+    _mini_scorer(tmp_path)
+
+    out = str(tmp_path / "advisor.db")
+    run_mod.run(out, str(tmp_path), now_iso=NOW)
+    conn = sqlite3.connect(out)
+    stale = dict(conn.execute("SELECT symbol, atr_stale FROM v_latest_heat"))
+    assert stale == {"AAPL": 0, "XOM": 0}
 
 
 def test_main_argv(tmp_path, capsys):

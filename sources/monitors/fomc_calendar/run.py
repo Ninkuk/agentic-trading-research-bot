@@ -4,6 +4,7 @@ import sys
 from datetime import UTC, date, datetime, timedelta
 
 import sources.common.monitor_common as monitor_common
+from sources.common.clock import phx_date
 from sources.monitors.fomc_calendar import db, fetch
 
 _EVENT_TYPES = (
@@ -101,7 +102,7 @@ def run(
     (snapshot_id, event_count). A whole-page parse error aborts loudly; a
     transient fetch failure preserves the last-good calendar."""
     now_iso = now_iso or datetime.now(UTC).isoformat()
-    today = datetime.fromisoformat(now_iso).date().isoformat()
+    today = phx_date(now_iso)
 
     conn = db.connect(db_path)
     try:

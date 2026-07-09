@@ -17,9 +17,10 @@ import hashlib
 import json
 import os
 import sys
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from sources.combiners.scorer import db, fetch
+from sources.common.clock import phx_date
 
 # Calendar days an opinion stays matchable to a later fill: covers the
 # morning-after trade plus a long weekend. Two snapshots in the window
@@ -36,12 +37,12 @@ AUTOMATIC_AGENTS = ("drip", "recurring")
 
 
 def _phx_date(dt) -> str:
-    """Phoenix-local date (UTC-7 fixed, no DST) of an aware datetime — the
-    clock composite_date is on (see fetch.read_snapshots). fill_date must
-    share it: with a raw UTC date, an extended-hours fill at 5:30pm Phoenix
-    lands on the next UTC day and would match that evening's 9:05pm opinion
-    — formed AFTER the fill executed (look-ahead)."""
-    return (dt.astimezone(UTC) - timedelta(hours=7)).date().isoformat()
+    """Phoenix-local date of an aware datetime — the clock composite_date is on
+    (see fetch.read_snapshots). fill_date must share it: with a raw UTC date, an
+    extended-hours fill at 5:30pm Phoenix lands on the next UTC day and would
+    match that evening's 9:05pm opinion — formed AFTER the fill executed
+    (look-ahead)."""
+    return phx_date(dt)
 
 
 def parse_doc(doc) -> tuple:

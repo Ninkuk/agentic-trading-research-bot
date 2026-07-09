@@ -2,7 +2,7 @@ import sqlite3
 
 from sources.monitors.market_calendar import run as runmod
 
-NOW = "2026-06-01T00:00:00+00:00"
+NOW = "2026-06-01T12:00:00+00:00"
 
 
 def test_run_writes_holidays_early_closes_and_opex(tmp_path):
@@ -41,7 +41,7 @@ def test_run_is_idempotent_no_duplicates(tmp_path):
 
 def test_run_keep_days_prunes_snapshots_not_future_events(tmp_path):
     db_path = str(tmp_path / "m.db")
-    runmod.run(db_path, years=1, now_iso="2026-01-01T00:00:00+00:00")  # old snap
+    runmod.run(db_path, years=1, now_iso="2026-01-01T12:00:00+00:00")  # old snap
     runmod.run(db_path, years=1, now_iso=NOW, keep_days=30)  # prunes
     conn = sqlite3.connect(db_path)
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1

@@ -65,7 +65,7 @@ def test_v_upcoming_auctions_filters_future_ordered():
             },
         ],
     )
-    db.set_today(conn, "2050-01-01T00:00:00+00:00")
+    db.set_today(conn, "2050-01-01T12:00:00+00:00")
     dates = [r[0] for r in conn.execute("SELECT auction_date FROM v_upcoming_auctions")]
     assert dates == ["2099-01-01"]  # past dropped
 

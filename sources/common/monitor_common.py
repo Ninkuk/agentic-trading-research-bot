@@ -8,6 +8,7 @@ with set_today() — never date('now'), so tests are deterministic."""
 
 from datetime import datetime, timedelta
 
+from sources.common.clock import phx_date
 from sources.common.screener_common import connect
 
 __all__ = [
@@ -84,8 +85,12 @@ def ensure_schema(conn) -> None:
 
 def set_today(conn, now_iso: str, horizon_days: int = 7) -> str:
     """Set the calendar_now singleton from the injected now_iso. Returns today
-    as YYYY-MM-DD. Every view's :today derives from here — never date('now')."""
-    today = datetime.fromisoformat(now_iso).date().isoformat()
+    as YYYY-MM-DD. Every view's :today derives from here — never date('now').
+
+    The date is Phoenix-local, not UTC: a run after 17:00 Phoenix is already the
+    next UTC day, and a day-ahead `today` would make v_upcoming hide events
+    happening today and stop replace_forward_window from re-deleting them."""
+    today = phx_date(now_iso)
     conn.execute(
         "UPDATE calendar_now SET today=?, horizon_days=? WHERE id=0", (today, horizon_days)
     )
