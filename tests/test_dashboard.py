@@ -155,12 +155,42 @@ def test_build_page_degrades_when_all_dbs_missing(tmp_path):
         assert f'id="{sid}"' in html
 
 
+# An external asset can only be pulled in through one of these carriers. The
+# check is a property of the markup, not a blacklist of host-ish words: "cdn"
+# as a bare substring both false-positives on page *data* (CDNA is a real
+# ticker in composite.db) and misses a protocol-relative <img src="//cdn.x/y">.
+# Every carrier below needs punctuation a symbol or date can never contain.
+_EXTERNAL_ASSET_CARRIERS = ("src=", "href=", "<link", "<script", "@font-face", "@import")
+
+
+def _assert_no_external_asset(html: str) -> None:
+    lower = html.lower()
+    for carrier in _EXTERNAL_ASSET_CARRIERS:
+        assert carrier not in lower, f"external-asset carrier {carrier!r} in page"
+    assert "http://" not in lower and "https://" not in lower
+    # url(...) is legal only as an internal SVG fragment ref, e.g. url(#dashfade)
+    assert re.findall(r"url\((?!#)", lower) == [], "url() pointing outside the document"
+
+
 def test_build_page_is_self_contained(tmp_path):
     html = dashboard.build_page(str(tmp_path), NOW)
-    # hard constraint: no external assets — no CDN, no link/script src, no font
-    for forbidden in ("http://", "https://", "cdn", "<link", "<script", "@font-face", "googleapis"):
-        assert forbidden not in html.lower()
+    _assert_no_external_asset(html)
     assert "<style>" in html  # CSS is inlined in-head
+
+
+def test_self_containment_holds_for_real_world_tickers(tmp_path):
+    """Page *data* must never be able to trip the self-containment check.
+
+    The old assertion forbade the substring "cdn" anywhere in the output. It
+    passed only because it rendered an empty data dir: `composite.db` holds the
+    real ticker CDNA, so the moment the page has rows the blacklist fires on a
+    document that is perfectly self-contained. Carriers, not words.
+    """
+    _make_composite_db(tmp_path / "composite.db", symbol="CDNA", score_sum=5)
+    html = dashboard.build_page(str(tmp_path), NOW)
+    assert "CDNA" in html  # the row really rendered; we are not asserting on an empty page
+    assert "cdn" in html.lower()  # ...and it really does contain the old forbidden substring
+    _assert_no_external_asset(html)
 
 
 def test_score_cell_clamps_and_signs():
