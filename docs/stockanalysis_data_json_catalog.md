@@ -11,8 +11,8 @@ data endpoint that backs every page on stockanalysis.com. This complements the
 Probe any route yourself with the bundled decoder:
 
 ```bash
-python -m stock_analysis_screener.probe /stocks/AAPL/statistics/
-python -m stock_analysis_screener.probe --keys /markets/gainers/ /ipos/2024/
+uv run python -m sources.screeners.stock_analysis_screener.probe /stocks/AAPL/statistics/
+uv run python -m sources.screeners.stock_analysis_screener.probe --keys /markets/gainers/ /ipos/2024/
 ```
 
 ## 1. The technique
@@ -27,6 +27,12 @@ same data the page hydrates from.
 - **Limit:** a few hub/interactive routes (`/markets/`, `/quote/{index}/`,
   `/stocks/compare/`, `/etf/compare/`) stream their content client-side, so
   their `__data.json` contains only session cookies — nothing to harvest.
+- **Do not exist** (HTTP 404, verified 2026-07-09 — don't re-probe):
+  `/stocks/{T}/` + `short-interest`, `institutional`, `insider-trading`,
+  `ownership`, `holders`, `peers`, `earnings`, `options`, `profile`,
+  `sec-filings`, `valuation`, `chart`. Short interest lives in the screener
+  data-points (`shortFloat`, `shortShares`, `shortRatio`, §6); ownership in
+  `sharesInsiders`/`sharesInstitutions`.
 
 ## 2. Decoding the payload (`devalue`)
 
@@ -61,6 +67,12 @@ non-US listings mirror the identical schema under `/quote/{exchange}/{T}/…`
 | `…/financials/cash-flow-statement/` | Cash-flow statement |
 | `…/financials/ratios/` | Ratios |
 | `…/financials/segments/` | **Pro-gated** — `info` placeholder only |
+| `…/financials/full/` | **Pro-gated** — `info` placeholder only |
+| `/stocks/{T}/metrics/` | **Operating metrics & breakdowns.** `annualMetrics`/`quarterlyMetrics`/`trailingMetrics`, each `{name, type, count, values:[{x: date, y: number}]}` — **raw numbers**. Groups: Revenue by Segment, Revenue by Geography, Gross Profit/Margin by Type, Operating Expense Breakdown, plus company-specific operating metrics (AAPL: Global Active Devices). **Not** Pro-gated, unlike `financials/segments/` — this is the free path to segment and geography splits. Carries `sourceLastUpdated` |
+| `/stocks/{T}/revenue/` | `stats` (revenue, revenue_growth, employees, ps_ratio, revenue_per_employee, last_reported) + `data.annual`/`.quarterly` series — **raw integers**, no suffix strings. Also `peers`, `news` |
+| `/stocks/{T}/transcripts/` | Index of earnings-call transcripts (AAPL: **74**, back ~18 years). Each `{id, quartrEventId, fiscalYear, quarterLabel, detailSlug, eventDate, files}` |
+| `/stocks/{T}/transcripts/{detailSlug}/` | **Full transcript.** `transcriptQuarter.transcriptTurns` = list of `{speakerName, role, company, paragraphs}`, where `paragraphs` nests `{text, startSec, endSec}` per sentence (audio-aligned — the text is *not* on a flat `text` key). Plus `summaryShort`, `summaryLongHtml`, `audioUrl`, `files`. Source: Quartr |
+| `/stocks/{T}/ratings/` | Per-analyst rating actions: `{action_rt, firm, analyst, slug, pt_now, pt_old, date}` |
 | `/stocks/{T}/statistics/` | 20 grouped blocks: valuation, margins, ratios, scores (Altman Z), fairValue (some `proOnly`), shortSelling, shares, dividends, taxes, analystForecasts |
 | `/stocks/{T}/dividend/` | Full dividend history, yield, payout, chart |
 | `/stocks/{T}/company/` | Profile: description, executives, contact, filings, logoURL |
@@ -122,6 +134,39 @@ sectors/industries, full ratings history) · `/analysts/top-stocks/`
 | `/private/{slug}/` | Private-company profiles (valuation, funding, Forge/Hiive links) |
 | `/symbol-lookup/?q=…` | Autocomplete search |
 
+## 3b. Field-shape traps (per-ticker routes)
+
+Verified live against `AAPL`, 2026-07-09. Each of these silently corrupts a
+valuation rather than erroring.
+
+> ⚠️ **On `/stocks/{T}/` (overview), every numeric-looking field is a *string*
+> with a magnitude suffix.** `marketCap` → `"4.64T"`, `sharesOut` → `"14.69B"`,
+> `revenue` → `"451.44B"`. There is no full-precision variant on this route.
+
+> ⚠️ **On `/stocks/{T}/statistics/`, read `hover`, not `value`.** Each row of a
+> block's `data` list is `{id, title, value, hover}`. `value` is the rounded
+> display string (`'4.64T'`); **`hover` is the exact figure** as a
+> comma-separated integer (`'4,644,435,714,320'`). This route is the cheapest
+> exact source of `marketCap`, `enterpriseValue`, `fcf`, `capex`, and `debt` —
+> one request, no suffix parsing.
+
+> ⚠️ **In `financials/*` `financialData`, index 0 is `"TTM"`, not a fiscal
+> year.** Always check `datekey` before indexing: `datekey[0] == 'TTM'` and
+> `datekey[1]` is the last completed fiscal year. On AAPL, `fcf[0]` = 129.17B
+> (TTM) but `fcf[1]` = 98.77B (FY2025). "The latest value" and "the last
+> reported year" are different numbers, and nothing in the payload says so.
+> These arrays *are* raw integers, unlike the overview's strings.
+
+> ⚠️ **`netCash` is net *cash*, not net debt.** AAPL's `netCash` = +61.88B means
+> it holds net cash; anything expecting a net-*debt* input takes the negative.
+> `debt` (84.71B) is gross. `enterpriseValue` is published directly, so prefer
+> it over bridging market cap yourself.
+
+The cash-flow route also exposes `leveredFCF` (equity, post-interest) and
+`unleveredFCF` (firm) alongside plain `fcf` (= `ncfo` − `capex`). Pair a levered
+flow with market cap and an unlevered flow with enterprise value; mixing them is
+a silent error worth ~57bps on AAPL.
+
 ## 4. Bulk screeners + the data-points API
 
 Hitting `/stocks/screener/__data.json` returns the **entire universe in one
@@ -136,6 +181,12 @@ GET /_api/endpoints/screener/data-points?type=s&ids=<space-separated ids>
 
 `type`: `s` stocks · `e` ETFs · `f` mutual funds. `ids` are the data-point ids
 from §6. Response shape: `{data: {data: {TICKER: {id: value, ...}}}}`.
+
+> ⚠️ **This endpoint has no ticker filter — it returns the whole universe**
+> (5,599 stock rows, verified 2026-07-09). Its values are clean raw numbers
+> (`enterpriseValue`, `fcf`, `netCash`, `wacc`), which makes it tempting for a
+> single-name lookup. Don't: use `/stocks/{T}/statistics/` and read `hover`
+> instead. Reserve this for genuine cross-sectional work.
 `catalog.fetch_catalog()` decodes the `dataPoints` catalog + universe count from
 the screener `__data.json`; `fetch.fetch_data_points(ids, type_)` pulls values.
 

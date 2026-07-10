@@ -24,18 +24,15 @@ should end here.
 
 **Live numbers come from the wire, not the warehouse.** `data/*.db` holds
 whatever the last scheduled run captured, which may be days stale. A research
-session wants today's figures. Fetch them with the repo's decoder:
+session wants today's figures.
+
+Read **`docs/stockanalysis_data_json_catalog.md`** first — it is the route map,
+the decoder, and the field gotchas. Never scrape the rendered HTML page. One
+call gets almost everything this skill needs:
 
 ```bash
-uv run python -m sources.screeners.stock_analysis_screener.probe --keys /stocks/AAPL/
-uv run python -m sources.screeners.stock_analysis_screener.probe /stocks/AAPL/financials/cash-flow-statement/
+uv run python -m sources.screeners.stock_analysis_screener.probe /stocks/AAPL/statistics/
 ```
-
-**Never fetch the rendered HTML page** (`https://stockanalysis.com/stocks/aapl/`).
-The site is a SvelteKit app: every route has a sibling `__data.json` returning
-the server's `load()` output, and `probe.py` already decodes its `devalue`
-format. The HTML is a hydration shell — scraping it is fragile and yields less
-than the endpoint it hydrates from. See `docs/stockanalysis_data_json_catalog.md`.
 
 Then read `data/*.db` read-only, as the **point-in-time record** — what was
 known when, not what is true now:
@@ -127,28 +124,21 @@ Then, explicitly:
 Do not guess the "right" multiple. A multiple is shorthand for a DCF. Instead,
 hold the assumptions fixed and solve for the return the market already implies.
 
-**Pull the inputs live.** From `page_data("/stocks/<TICKER>/")`:
-`marketCap` — a **string with a magnitude suffix** (`"4.64T"`, `"14.69B"`), so
-parse it; every numeric-looking overview field is a string. From
-`page_data("/stocks/<TICKER>/financials/cash-flow-statement/")["financialData"]`:
-`fcf`, `leveredFCF`, `unleveredFCF`, `capex` — these are **raw integers**. From
-the balance sheet: `debt`, `netCash`, `totalcash`.
+**Pull the inputs live** from `page_data("/stocks/<TICKER>/statistics/")` — its
+`valuation`, `cashFlow`, and `balanceSheet` blocks carry `marketCap`,
+`enterpriseValue`, `fcf`, `capex`, and `debt` in one request. Read each row's
+**`hover`** field, not `value`: `hover` is the exact figure
+(`'4,644,435,714,320'`), while `value` is a rounded display string (`'4.64T'`).
 
-**The array trap: index 0 is `"TTM"`, not a fiscal year.** Check `datekey` before
-you index. `datekey[0] == "TTM"` and `datekey[1]` is the last completed fiscal
-year. Reaching for "the latest value" and "the last reported year" gives you two
-different numbers.
+Pair the flow to the value or the answer is quietly wrong. `enterpriseValue` is
+given directly, so you rarely need the `--net-debt` bridge — pass EV as
+`--market-cap` and leave `--net-debt` at zero. If you instead take
+`leveredFCF`/`unleveredFCF` from the `financials/cash-flow-statement/` route,
+mind that route's own traps, which the catalog documents.
 
-**`netCash` is net *cash*, so `--net-debt` takes its negative.** A company with
-$61.9B net cash passes `--net-debt -61.9`.
-
-Pair the flow to the value or the answer is quietly wrong:
-
-- `unleveredFCF` (firm) → enterprise value → pass `--net-debt`.
-- `leveredFCF` (equity) → market cap → **no** `--net-debt`.
-
-On AAPL those two pairings differ by ~57bps. Mixing them is the classic silent
-DCF error, which is why the solver never guesses which flow it was handed.
+Mixing a levered flow with enterprise value (or the reverse) is the classic
+silent DCF error, which is why the solver never guesses which flow it was
+handed. On AAPL the two pairings differ by ~57bps.
 
 ```bash
 uv run python -m tools.valuation.reverse_dcf \

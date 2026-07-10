@@ -25,15 +25,9 @@ Then, in order:
 - **Earnings-call transcripts.** For a deep look, read many years. The point
   is not the quarter; it is learning what management has and has not ever said.
 - **stockanalysis.com** — this project's single vetted non-primary source, and
-  the fastest way to a company's aggregated financial history. Reach it through
-  the `__data.json` endpoint, never by scraping the HTML page:
-
-  ```bash
-  uv run python -m sources.screeners.stock_analysis_screener.probe --keys /stocks/AAPL/
-  ```
-
-  `robots.txt` disallows nothing for generic agents; no key is needed. Be a
-  polite client. Full route catalog: `docs/stockanalysis_data_json_catalog.md`.
+  the fastest way to a company's aggregated financial history. Never scrape the
+  HTML page. **`docs/stockanalysis_data_json_catalog.md`** is the route map, the
+  decoder, and the field gotchas; read it rather than rediscovering the site.
   It is an aggregator, not a filer — when a number matters to the thesis,
   confirm it against the filing.
 
