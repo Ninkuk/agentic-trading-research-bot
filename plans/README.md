@@ -14,6 +14,7 @@ declined worktree isolation), each with an independent adversarial reviewer.
 | 003 | [Advisor exit advice: ATR stops and trims](003-advisor-exit-advice.md) | P2 | M | 000 | **DONE** — reviewer: SOUND |
 | 004 | [Options integration design spike](004-options-blind-spot-spike.md) | P2 | M (spike) | — | **DONE** — reviewer: FLAWED → spec revised |
 | 005 | [Backfill the benchmark proxies (replaces 001)](005-price-ledger-backfill.md) | P1 | M | 000 | **DONE** — 118,644 rows; `eia_*` now graded |
+| 006 | [Qualitative stock-research skills](006-stock-research-skills.md) | P2 | M | — | **DONE** |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED.
 
