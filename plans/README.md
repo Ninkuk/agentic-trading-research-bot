@@ -15,11 +15,27 @@ declined worktree isolation), each with an independent adversarial reviewer.
 | 004 | [Options integration design spike](004-options-blind-spot-spike.md) | P2 | M (spike) | — | **DONE** — reviewer: FLAWED → spec revised |
 | 005 | [Backfill the benchmark proxies (replaces 001)](005-price-ledger-backfill.md) | P1 | M | 000 | **DONE** — 118,644 rows; `eia_*` now graded |
 | 006 | [Qualitative stock-research skills](006-stock-research-skills.md) | P2 | M | — | **DONE** |
-| 007 | [Research corpus (Unit 3)](007-research-corpus.md) | P2 | S–M | 006 | **TODO** |
+| 007 | [Research corpus (Unit 3)](007-research-corpus.md) | P2 | S–M | 006 | **DONE** — 1 Critical + 2 Important caught in review |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED.
 
 ## What happened
+
+**Plan 007's review loop caught a thesis-inverting bug the implementer had waved through.** The
+documented transcript fetch loop elected the "issuer" from the most recent call. But
+`/stocks/{T}/transcripts/` interleaves earnings calls with *conference presentations*, and a
+conference is a 1:1 dialogue in which the host bank ties or out-speaks management. Five of Verizon's
+six most recent events elected a bank — two by exact ties (19-19, 46-46) broken by dict insertion
+order. With `issuer="JPMorgan"`, `classify_side` inverts every turn: Verizon's own speech becomes an
+outside analyst's question, every concept count collapses to zero, and the research session concludes
+"management never discussed market share." That is precisely the falsehood the unit exists to prevent.
+Fixed by electing the issuer once, from turns pooled across all calls, preferring `data/stocks.db`'s
+authoritative name. The implementer had observed the wrong issuer and reasoned it away as a truncation
+artifact.
+
+Task 2 shipped a second silent-wrong-answer: `coverage()` sorted `eventDate` lexicographically and
+accepted malformed dates without complaint unless `ipo_date` happened to be supplied. Both defects came
+from the plan's own reference code, not from the implementers.
 
 **Plan 001's step-1 spike did its job and stopped the plan** — then found
 something bigger. Probing whether stockanalysis's `/history/` endpoint returns
