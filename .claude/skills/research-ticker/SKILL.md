@@ -98,6 +98,11 @@ Use `references/disclosure-hunt.md` for *where to look*. Its three questions,
 in order: does the information exist; can it be triangulated or found
 elsewhere; and if not, does its absence kill the thesis?
 
+When a thread turns on what management has said over the years, search the
+transcript corpus rather than reading it — see *Searching the transcript corpus*
+there. Print its coverage before you print a hit, and remember the corpus can
+show you that something **was** said, never that it never was.
+
 ## Phase 3 — The thesis
 
 Write it in plain language. **It does not need to be clever.** "This is a good
