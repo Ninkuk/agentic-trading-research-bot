@@ -122,10 +122,23 @@ def classify_side(turn: dict, issuer: str) -> str:
 def issuer_from_turns(turns: Sequence[dict]) -> str | None:
     """The most common ``company`` across turns — the issuer, or None if nobody is named.
 
-    Management speaks far more than any single bank on its own call (Verizon: 3,234
-    management turns against Morgan Stanley's 383), so the mode is the issuer. Use this
-    rather than guessing a spelling, and rather than ``transcriptMeta.title``, which is
-    wrong for XOM.
+    Pooled across many calls, management dominates the turn count (Verizon: 3,234
+    management turns against Morgan Stanley's 383), so the mode is the issuer. Pass
+    turns pooled from many calls, never a single call's turns.
+
+    ``/stocks/{T}/transcripts/`` interleaves earnings calls (many-to-one: many
+    analysts, one management team — management wins the count) with conference
+    presentations (one-to-one: a host bank's moderator and one executive — the bank
+    ties or beats management on turn count). Electing an issuer from one conference
+    call is unsafe: on Verizon's 2026-05-18 JPMorgan conference this returns
+    "JPMorgan" (19 turns each, a tie), not "Verizon". Ties resolve by
+    ``Counter.most_common``'s first-seen insertion order — deterministic, but
+    arbitrary, and not a signal that the tied name is correct.
+
+    Use this rather than guessing a spelling, and rather than ``transcriptMeta.title``,
+    which is wrong for XOM. Prefer an explicit issuer name from the caller (e.g.
+    ``data/stocks.db``'s ``n`` column) when one is available; treat this function as
+    the fallback / cross-check, not the primary source.
     """
     named = Counter(
         turn["company"]

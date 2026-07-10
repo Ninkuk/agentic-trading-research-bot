@@ -112,6 +112,34 @@ def test_issuer_from_turns_is_none_when_nobody_is_attributed() -> None:
     assert issuer_from_turns([turn(None), turn("  ")]) is None
 
 
+def test_issuer_from_turns_is_unreliable_on_a_single_conference_call() -> None:
+    # A conference presentation is 1:1 (one bank moderator, one executive), so the
+    # host bank can tie management on turn count within that single call. Verizon's
+    # 2026-05-18 JPMorgan conference ties 19-19; `most_common` breaks the tie by
+    # first-seen insertion order, so whichever name appears first in `turns` wins —
+    # not necessarily the real issuer. Electing an issuer from one call is unsafe;
+    # this test pins that hazard so a "fix" that makes it look safe fails loudly.
+    conference_turns = [turn("JPMorgan")] * 19 + [turn("Verizon")] * 19
+    assert issuer_from_turns(conference_turns) == "JPMorgan"
+
+
+def test_issuer_from_turns_tie_breaks_by_first_seen_insertion_order() -> None:
+    # Same tie, opposite insertion order: the winner flips. This is the arbitrary
+    # part — assert it explicitly so nobody mistakes the tie-break for a signal.
+    conference_turns = [turn("Verizon")] * 19 + [turn("JPMorgan")] * 19
+    assert issuer_from_turns(conference_turns) == "Verizon"
+
+
+def test_pooling_calls_before_electing_the_issuer_finds_the_real_issuer() -> None:
+    # The supported usage: pool turns from many calls (a tied conference call plus
+    # an earnings call, where management dominates) before calling
+    # `issuer_from_turns`. Pooled, the issuer wins outright.
+    conference_turns = [turn("JPMorgan")] * 19 + [turn("Verizon")] * 19
+    earnings_turns = [turn("Verizon")] * 40 + [turn("Morgan Stanley")] * 5
+    pooled = conference_turns + earnings_turns
+    assert issuer_from_turns(pooled) == "Verizon"
+
+
 def index(*dates: str) -> list[dict]:
     return [{"eventDate": d, "quarterLabel": "Q1", "detailSlug": f"s-{d}"} for d in dates]
 

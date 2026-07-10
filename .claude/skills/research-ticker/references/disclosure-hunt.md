@@ -100,6 +100,14 @@ So:
 Call `coverage(index, ipo_date)` and print it *before* any hit list. Take `ipo_date`
 from `data/stocks.db`; the helper is pure and will not fetch it.
 
+The index interleaves earnings calls with conference presentations. An earnings call
+is many-to-one — many analysts, one management team — so management dominates the
+turn count. A conference presentation is one-to-one: the host bank's moderator asks,
+one executive answers, so the bank ties or beats management on turn count within that
+single call. Elect the issuer once, from every fetched call pooled together, never
+from one call — `rows[0]` is the most recent event, and for a name that does a lot of
+conferences that is often a bank's, not the company's.
+
 ### The loop
 
 ```python
@@ -112,6 +120,7 @@ from tools.research.transcripts import (
 )
 
 TICKER = "VZ"
+ISSUER_NAME = "Verizon Communications Inc."   # data/stocks.db `n` column — authoritative
 
 index = page_data(f"/stocks/{TICKER}/transcripts/")
 if not isinstance(index, dict) or "transcripts" not in index:
@@ -120,7 +129,7 @@ rows = index["transcripts"]
 
 print(coverage(rows, ipo_date="2000-07-03"))   # PRINT THIS FIRST. ipo_date from data/stocks.db
 
-calls, issuer = [], None
+calls = []
 for row in rows:
     try:
         body = page_data(f"/stocks/{TICKER}/transcripts/{row['detailSlug']}/")
@@ -129,10 +138,16 @@ for row in rows:
         print(f"skip {row['eventDate']}: {type(exc).__name__}")   # never str(exc) — it carries the URL
         continue
     calls.append((row["eventDate"], turns))
-    issuer = issuer or issuer_from_turns(turns)      # the corpus names itself; do not guess
     time.sleep(0.7)                                  # unofficial endpoint; be a polite client
 
-print("issuer:", issuer)                             # sanity-check this before trusting a count
+# Elect the issuer ONCE, after every call is fetched, from turns POOLED across all
+# of them — never inside the loop above, and never from a single call. `n` from
+# data/stocks.db is the authoritative name; issuer_from_turns is the fallback and
+# the cross-check, not the primary source.
+pooled_turns = [t for _, turns in calls for t in turns]
+issuer = ISSUER_NAME or issuer_from_turns(pooled_turns)
+
+print("issuer:", issuer, "| pooled mode:", issuer_from_turns(pooled_turns))
 sides = Counter(classify_side(t, issuer) for _, turns in calls for t in turns)
 print(sides)
 print("outside firms:", sorted({t["company"] for _, ts in calls for t in ts
@@ -150,9 +165,15 @@ for stat in scan_concepts(docs, LEXICON):
 ~78 seconds for a 76-call corpus. Write the JSONL to your scratchpad if you want to
 re-search without re-fetching; never to `data/` and never to `research/`.
 
-**Check the `issuer` and the `outside firms` list before you trust any count.** If a
-division of the company ("Verizon Consumer Group") shows up under *outside firms*, the
-issuer string is wrong and every `df` below it is understated.
+**Check the printed `issuer` and the `outside firms` list before you trust any count —
+every time, not just when something looks off.** A bank's name printed as `issuer`
+means the election went wrong: `classify_side` will then label every real disclosure
+`outside` and every analyst question `management`, and every `df` below it is
+worthless. A division of the company ("Verizon Consumer Group") showing up inside
+`outside firms` is the same failure from the other side — the issuer string doesn't
+match the corpus's own spelling, so real management turns are being counted as
+outside ones. Either sighting means stop and re-derive `issuer` before reading
+anything scan_concepts prints.
 
 ### Reading the result
 
