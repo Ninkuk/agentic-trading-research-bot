@@ -31,10 +31,22 @@ direction ("I'm long X"), ask them to state the thesis in two sentences first
    step of the five sounds clever. Say the count out loud in the verdict.
 
 2. **Attack each condition independently.** For each, spend real effort trying
-   to make it false. Under genuine uncertainty, **default to refuted** — say
-   the condition is unsupported, not that it is probably fine. (Known bias:
-   this pushes toward inaction. Accepted deliberately — a false SOUND costs
-   money, a false UNPROVEN costs an opportunity.)
+   to make it false. Under genuine uncertainty, **never credit the condition** —
+   uncertainty withholds SOUND, it never earns it.
+
+   Then say *which kind* of uncertainty you hit, because they route to
+   different verdicts and are constantly confused:
+
+   - **You attacked it, and the evidence stands against it.** The condition is
+     *refuted*. → FLAWED.
+   - **You could not attack it, because the evidence needed does not exist in
+     any disclosure.** The condition is *unverifiable*. Mark it UNKNOWN and
+     go to step 6. → UNPROVEN.
+
+   A condition you merely find *uncomfortable* is neither. Go and check it.
+   (Known bias: refusing to credit an unproven condition pushes toward
+   inaction. Accepted deliberately — a false SOUND costs money, a false
+   UNPROVEN costs an opportunity.)
 
 3. **Run the standing checks.** Every thesis gets all of these:
 
@@ -81,11 +93,13 @@ Close with exactly one, matching the vocabulary this repo's plan reviewers use:
 
 - **SOUND** — every load-bearing condition survived a real attack. Say which
   attack came closest to landing.
-- **FLAWED** — at least one load-bearing condition is refuted. Name it, show
-  the evidence, and say whether the thesis is repairable or dead.
-- **UNPROVEN** — no condition was refuted, but at least one could not be
-  checked. Name what is missing and where it would have to come from. This is
-  a real verdict, not a failure to reach one.
+- **FLAWED** — you attacked at least one load-bearing condition and the
+  evidence stands against it. Name it, show the evidence, and say whether the
+  thesis is repairable or dead.
+- **UNPROVEN** — nothing was refuted, but at least one load-bearing condition
+  could not be attacked at all: the evidence needed does not exist. Name what
+  is missing and where it would have to come from. This is a real verdict, not
+  a failure to reach one.
 
 Then state, in one sentence, what evidence would flip your verdict.
 
