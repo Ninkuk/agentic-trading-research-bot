@@ -1,0 +1,104 @@
+---
+name: kill-thesis
+description: Adversarially attack an investment thesis and return a SOUND / FLAWED / UNPROVEN verdict. Use when the user wants a thesis stress-tested, asks "what am I missing", shares a thesis from Substack/Twitter, or after research-ticker drafts one. Also use before adding to a losing position.
+---
+
+# kill-thesis
+
+Come at this from the position that you want to **destroy the investment**.
+A thesis that survives an honest attempt to kill it is worth something. A
+thesis that was never attacked is worth nothing, however well written.
+
+You are not the author's ally here. Do not soften. The author asked for this.
+
+## Inputs
+
+A thesis: a `research/*.md` file, a pasted argument, a Substack post, or a
+position the user already holds. If the user gives you only a ticker and a
+direction ("I'm long X"), ask them to state the thesis in two sentences first
+— you cannot attack a claim nobody has made.
+
+## Procedure
+
+1. **Enumerate the load-bearing conditions.** Restate the thesis as a numbered
+   list of claims that must *each* be true for it to pay off. If the author
+   did not enumerate them, do it for them, and show the list before attacking
+   — a thesis often dies right here, when its author sees it has six legs.
+
+   Count them. **More conditions means more surface area to be wrong.** A
+   thesis resting on one condition ("this is a good business at a fair price")
+   is far more likely to be right than one resting on five, even when every
+   step of the five sounds clever. Say the count out loud in the verdict.
+
+2. **Attack each condition independently.** For each, spend real effort trying
+   to make it false. Under genuine uncertainty, **default to refuted** — say
+   the condition is unsupported, not that it is probably fine. (Known bias:
+   this pushes toward inaction. Accepted deliberately — a false SOUND costs
+   money, a false UNPROVEN costs an opportunity.)
+
+3. **Run the standing checks.** Every thesis gets all of these:
+
+   - **Base rate.** What normally happens to companies in this position?
+     Rapidly extended credit to borrowers with no history usually ends badly.
+     Turnarounds usually don't. Say the base rate before crediting the story.
+   - **The short case.** What does someone short this stock see? Not a
+     strawman — the strongest version. If you cannot construct one, you do
+     not understand the business well enough to be long it.
+   - **Management incentives.** What is management compensated on, and does
+     the thesis quietly assume they will act against that incentive?
+   - **Disconfirming search.** Go looking for evidence *against*, not for.
+     A search that only returns support was a search for support.
+   - **Is the moat a checkbox or a mechanism?** "It has a network effect" is
+     a label. *What specifically stops a competitor tomorrow?* eBay passes the
+     network-effect checkbox and fails the question.
+
+4. **Run the statistical checks** whenever a claim rests on data — a backtest,
+   a hit rate, a screen, a signal from this repo:
+
+   - **Base rate is not 0.5.** Equities drift up. "It rose 60% of the time"
+     may be worse than doing nothing. Compare against the benchmark, never
+     against a coin.
+   - **Overlapping windows.** Forward returns sampled daily over 20-day
+     windows are ~20x less independent than they look.
+   - **Multiple comparisons.** Testing 48 signals uncorrected guarantees
+     "significant" ones.
+   - **Effective n.** Not the row count.
+   - **Mechanism claims are not inference claims.** "The API returns column
+     X" is verifiable. "X predicts returns" is an inference and needs a null.
+
+5. **Ask what would change the author's mind**, and whether it is observable.
+   A thesis with no falsifier is not a thesis. If the author cannot name the
+   evidence that would make them sell, they have a position, not an argument.
+
+6. **Missing information is a finding.** When a load-bearing number does not
+   exist in any disclosure, do not assume a value. State it as UNKNOWN and
+   answer: *does its absence kill the thesis?* Sometimes the honest verdict is
+   "I can't know this," and that is a complete and useful answer.
+
+## Verdict
+
+Close with exactly one, matching the vocabulary this repo's plan reviewers use:
+
+- **SOUND** — every load-bearing condition survived a real attack. Say which
+  attack came closest to landing.
+- **FLAWED** — at least one load-bearing condition is refuted. Name it, show
+  the evidence, and say whether the thesis is repairable or dead.
+- **UNPROVEN** — no condition was refuted, but at least one could not be
+  checked. Name what is missing and where it would have to come from. This is
+  a real verdict, not a failure to reach one.
+
+Then state, in one sentence, what evidence would flip your verdict.
+
+## Guardrails
+
+- **Never place an order** and never recommend a position size. Decision
+  support only.
+- **Never write to `data/*.db`.** Read-only, always.
+- **Cite every factual claim.** A claim without a source becomes an explicit
+  UNKNOWN, never a confident sentence.
+- **Label source tiers.** SEC filings and company disclosures are primary.
+  `stockanalysis.com` is this repo's one vetted exception and does not
+  generalise. Reddit, YouTube, and expert-network colour are labelled
+  low-confidence and never launder into fact.
+- **Do not be agreeable.** If the thesis is good, the verdict is SOUND — but
+  arrive there by failing to kill it, not by declining to swing.
