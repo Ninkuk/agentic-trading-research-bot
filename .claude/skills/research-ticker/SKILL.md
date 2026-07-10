@@ -22,15 +22,34 @@ the best ideas often come from noticing a product you use, not from a screen.
 The goal of this phase is to **kick the stock out quickly**. Most research
 should end here.
 
-Read, read-only:
+**Live numbers come from the wire, not the warehouse.** `data/*.db` holds
+whatever the last scheduled run captured, which may be days stale. A research
+session wants today's figures. Fetch them with the repo's decoder:
+
+```bash
+uv run python -m sources.screeners.stock_analysis_screener.probe --keys /stocks/AAPL/
+uv run python -m sources.screeners.stock_analysis_screener.probe /stocks/AAPL/financials/cash-flow-statement/
+```
+
+**Never fetch the rendered HTML page** (`https://stockanalysis.com/stocks/aapl/`).
+The site is a SvelteKit app: every route has a sibling `__data.json` returning
+the server's `load()` output, and `probe.py` already decodes its `devalue`
+format. The HTML is a hydration shell — scraping it is fragile and yields less
+than the endpoint it hydrates from. See `docs/stockanalysis_data_json_catalog.md`.
+
+Then read `data/*.db` read-only, as the **point-in-time record** — what was
+known when, not what is true now:
 
 - `data/sec_fundamentals.db` — `v_screener` for `net_margin`, `roe`,
   `debt_to_equity`, revenue and income history; `companies` for ticker→CIK.
-- `data/stocks.db` — price and market-cap metrics.
+- `data/stocks.db` — the last captured price and market-cap metrics.
 - `data/earnings.db` — next report date (do not research into an earnings print
   and pretend the timing is irrelevant).
 - `data/composite.db` — if the name was flagged, read `ticker_scores` and
   `signal_values` so you know what the machine already thinks and why.
+
+Where the live probe and the DB disagree, the probe wins for *today's* numbers
+and the DB tells you *when the machine last looked*. Say which you used.
 
 Kill it now if:
 
@@ -106,7 +125,30 @@ Then, explicitly:
 ## Phase 4 — What return is already priced in?
 
 Do not guess the "right" multiple. A multiple is shorthand for a DCF. Instead,
-hold the assumptions fixed and solve for the return the market already implies:
+hold the assumptions fixed and solve for the return the market already implies.
+
+**Pull the inputs live.** From `page_data("/stocks/<TICKER>/")`:
+`marketCap` — a **string with a magnitude suffix** (`"4.64T"`, `"14.69B"`), so
+parse it; every numeric-looking overview field is a string. From
+`page_data("/stocks/<TICKER>/financials/cash-flow-statement/")["financialData"]`:
+`fcf`, `leveredFCF`, `unleveredFCF`, `capex` — these are **raw integers**. From
+the balance sheet: `debt`, `netCash`, `totalcash`.
+
+**The array trap: index 0 is `"TTM"`, not a fiscal year.** Check `datekey` before
+you index. `datekey[0] == "TTM"` and `datekey[1]` is the last completed fiscal
+year. Reaching for "the latest value" and "the last reported year" gives you two
+different numbers.
+
+**`netCash` is net *cash*, so `--net-debt` takes its negative.** A company with
+$61.9B net cash passes `--net-debt -61.9`.
+
+Pair the flow to the value or the answer is quietly wrong:
+
+- `unleveredFCF` (firm) → enterprise value → pass `--net-debt`.
+- `leveredFCF` (equity) → market cap → **no** `--net-debt`.
+
+On AAPL those two pairings differ by ~57bps. Mixing them is the classic silent
+DCF error, which is why the solver never guesses which flow it was handed.
 
 ```bash
 uv run python -m tools.valuation.reverse_dcf \
