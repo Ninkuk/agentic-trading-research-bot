@@ -161,10 +161,23 @@ def coverage(index: list[dict], ipo_date: str | None = None) -> Coverage:
     ``ipo_date`` is supplied by the caller (from ``data/stocks.db``), never fetched:
     this module has no network and no clock. ``uncovered_years`` is None when it is
     absent or when the corpus is empty, and clamps at 0.0 rather than going negative.
+
+    Every truthy ``eventDate`` must be zero-padded ISO-8601 (``YYYY-MM-DD``); a falsy
+    one ("", None, or a missing key) is skipped when computing the span but still
+    counted in ``n_calls``. A present-but-malformed ``eventDate`` — including a
+    non-zero-padded one like ``"2024-1-5"`` — raises ``ValueError`` (via
+    ``date.fromisoformat``) naming the offending value. It is never silently skipped,
+    and dates are never ordered as raw strings: lexicographic sort gets non-zero-padded
+    or otherwise irregular dates chronologically wrong.
     """
-    dates = sorted(row["eventDate"] for row in index if row.get("eventDate"))
-    first = dates[0] if dates else None
-    last = dates[-1] if dates else None
+    dated = [
+        (date.fromisoformat(row["eventDate"]), row["eventDate"])
+        for row in index
+        if row.get("eventDate")
+    ]
+    dated.sort(key=lambda pair: pair[0])
+    first = dated[0][1] if dated else None
+    last = dated[-1][1] if dated else None
 
     uncovered: float | None = None
     if first is not None and ipo_date:

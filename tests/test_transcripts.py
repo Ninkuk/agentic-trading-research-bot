@@ -148,3 +148,28 @@ def test_coverage_ignores_rows_with_no_event_date() -> None:
     cov = coverage([{"eventDate": "2024-01-01"}, {"detailSlug": "orphan"}])
     assert cov.n_calls == 2
     assert cov.first == cov.last == "2024-01-01"
+
+
+def test_coverage_rejects_a_malformed_event_date_without_ipo_date() -> None:
+    with pytest.raises(ValueError, match="Jul 10, 2026"):
+        coverage([{"eventDate": "Jul 10, 2026"}])
+
+
+def test_coverage_rejects_a_malformed_event_date_with_ipo_date() -> None:
+    with pytest.raises(ValueError, match="Jul 10, 2026"):
+        coverage([{"eventDate": "Jul 10, 2026"}], ipo_date="1983-11-21")
+
+
+def test_coverage_rejects_a_non_zero_padded_date_rather_than_misordering_it() -> None:
+    # Raw-string sort would silently put "2024-1-5" after "2024-01-10" (lexicographic
+    # '1' > '0'), reporting the wrong `last`. On this repo's Python (3.12.7),
+    # date.fromisoformat rejects the non-zero-padded form outright, so the old wrong
+    # answer (last == "2024-1-5") is impossible either way: it now raises instead.
+    with pytest.raises(ValueError, match="2024-1-5"):
+        coverage([{"eventDate": "2024-1-5"}, {"eventDate": "2024-01-10"}])
+
+
+def test_coverage_skips_an_empty_string_event_date_without_raising() -> None:
+    cov = coverage([{"eventDate": ""}, {"eventDate": "2024-01-01"}])
+    assert cov.n_calls == 2
+    assert cov.first == cov.last == "2024-01-01"
