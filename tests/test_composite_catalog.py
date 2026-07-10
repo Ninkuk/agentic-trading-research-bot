@@ -1,4 +1,5 @@
 import sqlite3
+from pathlib import Path
 
 import pytest
 
@@ -167,10 +168,70 @@ def test_cboe_equity_pcr_score_case_is_hoisted_constant():
     assert "pctile >= 90" in CBOE_EQUITY_PCR_SCORE
 
 
-def test_eia_score_case_is_hoisted_constant():
-    from sources.combiners.composite.catalog import EIA_WEEKLY_CHANGE_SCORE, SIGNALS
+def test_eia_score_cases_are_separate_hoisted_constants():
+    """Crude and natgas must be DIFFERENT constants, even while the two
+    expressions are identical today. They shared one until 2026-07-09, which
+    made either impossible to retune without silently retuning the other.
+
+    Asserted on the source, not on object identity: Python interns equal string
+    literals, so `EIA_CRUDE is not EIA_NATGAS` is False even when they are two
+    genuinely independent assignments. The invariant is syntactic — each name
+    binds its own literal, neither aliases the other."""
+    import ast
+
+    from sources.combiners.composite.catalog import (
+        EIA_CRUDE_CHANGE_SCORE,
+        EIA_NATGAS_CHANGE_SCORE,
+        SIGNALS,
+    )
 
     by_id = {s["signal_id"]: s for s in SIGNALS}
-    assert EIA_WEEKLY_CHANGE_SCORE in by_id["eia_crude_stocks"]["sql"]
-    assert EIA_WEEKLY_CHANGE_SCORE in by_id["eia_natgas_storage"]["sql"]
-    assert "change_pct <= -2.0" in EIA_WEEKLY_CHANGE_SCORE
+    assert EIA_CRUDE_CHANGE_SCORE in by_id["eia_crude_stocks"]["sql"]
+    assert EIA_NATGAS_CHANGE_SCORE in by_id["eia_natgas_storage"]["sql"]
+    assert "change_pct <= -2.0" in EIA_CRUDE_CHANGE_SCORE
+
+    src = Path(catalog.__file__).read_text()
+    assigned = {}
+    for node in ast.walk(ast.parse(src)):
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            t = node.targets[0]
+            if isinstance(t, ast.Name) and t.id.startswith("EIA_"):
+                assigned[t.id] = node.value
+
+    assert set(assigned) == {"EIA_CRUDE_CHANGE_SCORE", "EIA_NATGAS_CHANGE_SCORE"}
+    for name, value in assigned.items():
+        assert isinstance(value, ast.Constant), f"{name} must bind its own literal"
+    # ...and neither is an alias of the other (that would re-couple them).
+    assert not any(isinstance(v, ast.Name) for v in assigned.values())
+
+
+def test_backtest_replays_each_eia_signal_with_its_own_constant():
+    """The replay must stay matched to composite per signal — that is what makes
+    "flags cannot drift" true after the split. Asserted syntactically for the
+    same interning reason."""
+    import ast
+
+    from sources.combiners.backtest import catalog as bt
+
+    src = Path(bt.__file__).read_text()
+    want = {
+        "eia_crude_stocks": "EIA_CRUDE_CHANGE_SCORE",
+        "eia_natgas_storage": "EIA_NATGAS_CHANGE_SCORE",
+    }
+    seen = {}
+    for node in ast.walk(ast.parse(src)):
+        if not isinstance(node, ast.Dict):
+            continue
+        keys = {k.value for k in node.keys if isinstance(k, ast.Constant)}
+        if "signal_id" not in keys or "score_case" not in keys:
+            continue
+        d = {
+            k.value: v
+            for k, v in zip(node.keys, node.values, strict=True)
+            if isinstance(k, ast.Constant)
+        }
+        sig = d["signal_id"]
+        if isinstance(sig, ast.Constant) and sig.value in want:
+            assert isinstance(d["score_case"], ast.Name)
+            seen[sig.value] = d["score_case"].id
+    assert seen == want

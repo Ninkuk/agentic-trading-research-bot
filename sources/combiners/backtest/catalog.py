@@ -8,7 +8,8 @@ from sources.combiners.composite.catalog import (
     CBOE_EQUITY_PCR_SCORE,
     CBOE_VIX_BACKWARDATION_SCORE,
     CBOE_VIX_SCORE,
-    EIA_WEEKLY_CHANGE_SCORE,
+    EIA_CRUDE_CHANGE_SCORE,
+    EIA_NATGAS_CHANGE_SCORE,
     FRED_CURVE_SCORE,
     FRED_HY_SPREAD_SCORE,
     NYFED_RRP_SCORE,
@@ -136,10 +137,11 @@ MARKET_OBS_SIGNALS: list[dict[str, Any]] = [
         ),
         "aliases": {"change_pct": "val1"},
         "raw_expr": "change_pct",
-        "score_case": EIA_WEEKLY_CHANGE_SCORE,
+        "score_case": EIA_CRUDE_CHANGE_SCORE,
     },
     {
         "signal_id": "eia_natgas_storage",
+        "publication_lag_days": 7,  # week ends Fri; WNGSR released Thu 10:30 ET (+1 on holiday weeks)
         "db": EIA_DB,
         "benchmark": "XLE",
         "harvest_sql": (
@@ -154,7 +156,7 @@ MARKET_OBS_SIGNALS: list[dict[str, Any]] = [
         ),
         "aliases": {"change_pct": "val1"},
         "raw_expr": "change_pct",
-        "score_case": EIA_WEEKLY_CHANGE_SCORE,
+        "score_case": EIA_NATGAS_CHANGE_SCORE,
     },
 ]
 

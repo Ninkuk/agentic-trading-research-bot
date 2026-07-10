@@ -43,11 +43,21 @@ CBOE_EQUITY_PCR_SCORE = (
     "CASE WHEN pctile >= 90 THEN 2 WHEN pctile >= 75 THEN 1"
     " WHEN pctile <= 10 THEN -2 WHEN pctile <= 25 THEN -1 ELSE 0 END"
 )
-# EIA weekly inventory change (crude + natgas share the same CASE): a draw
-# (change_pct <= -2) is bullish energy, a build (>= 2) bearish. change_pct is
-# stable at its report period, so the replay harvests it keyed by period and
-# grades against the energy proxy (XLE), not SP500.
-EIA_WEEKLY_CHANGE_SCORE = (
+# EIA weekly inventory change: a draw (change_pct <= -2) is bullish energy, a
+# build (>= 2) bearish. change_pct is stable at its report period; the replay
+# harvests it keyed by period (shifted to the release date) and grades against
+# the energy proxy (XLE), not SP500.
+#
+# Crude and natgas are SEPARATE constants that happen to be identical today.
+# They shared one expression until 2026-07-09, which made either one impossible
+# to retune without silently retuning the other — they are different physical
+# commodities on different weekly release schedules (WPSR Wed vs WNGSR Thu) and
+# there is no reason their thresholds must agree. Keep them apart even while
+# equal; a test pins each signal to its own constant.
+EIA_CRUDE_CHANGE_SCORE = (
+    "CASE WHEN change_pct <= -2.0 THEN 1 WHEN change_pct >= 2.0 THEN -1 ELSE 0 END"
+)
+EIA_NATGAS_CHANGE_SCORE = (
     "CASE WHEN change_pct <= -2.0 THEN 1 WHEN change_pct >= 2.0 THEN -1 ELSE 0 END"
 )
 
@@ -257,7 +267,7 @@ SIGNALS: list[dict[str, Any]] = [
         "staleness_budget_days": 10,
         "sql": f"""
             SELECT 'energy', change_pct,
-                   {EIA_WEEKLY_CHANGE_SCORE},
+                   {EIA_CRUDE_CHANGE_SCORE},
                    latest_period
             FROM src.v_weekly_change WHERE series_id = 'WCESTUS1'
         """,
@@ -269,7 +279,7 @@ SIGNALS: list[dict[str, Any]] = [
         "staleness_budget_days": 10,
         "sql": f"""
             SELECT 'energy', change_pct,
-                   {EIA_WEEKLY_CHANGE_SCORE},
+                   {EIA_NATGAS_CHANGE_SCORE},
                    latest_period
             FROM src.v_weekly_change
             WHERE series_id = 'NW2_EPG0_SWO_R48_BCF'
