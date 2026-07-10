@@ -95,13 +95,22 @@ Raise `ValueError` — the caller made a mistake:
 - `target_value <= 0`, or an empty `cash_flows`.
 - `terminal_growth >= 1.0`. No finite present value exists at any `r`.
 
-Return `None` — the input was valid, the equation has no root in the bracket:
+Return `None` — the input was valid, the equation has no usable root in the
+bracket, which is the **open** interval `(terminal_growth, MAX_RATE)`:
 
-- Present value at `r = 1.0` still exceeds `target_value`, i.e. the market
-  prices a return above 100%. Report no-solution-in-bracket. **Never clamp to
-  the bracket edge**, which would silently report 100% as though it were a
-  solution — the exact class of silent-wrong-answer bug this repo's
-  no-silent-row-drops invariant exists to prevent.
+- Present value at `r = MAX_RATE` **meets or exceeds** `target_value`, i.e. the
+  market prices a return at or above 100%. Report no-solution-in-bracket.
+  **Never clamp to the bracket edge**, which would silently report 100% as
+  though it were a solution — the exact class of silent-wrong-answer bug this
+  repo's no-silent-row-drops invariant exists to prevent.
+
+  The equality case is refused deliberately, and it is a *false negative*: when
+  `target_value` equals present value at `MAX_RATE`, a true root exists at
+  exactly `MAX_RATE`. We refuse it anyway. A caller cannot distinguish that
+  true edge root from a clamp by looking at the returned value, and a 100%/yr
+  implied return is never actionable. Both bracket guards are therefore
+  inclusive of equality. The same reasoning applies at the lower edge.
+  (Decided 2026-07-09 after a Task 3 stress test surfaced the case.)
 
 **Determinism.** Pure. No `datetime.now()`. Growth rates and horizon are
 arguments, never defaults derived from the clock.
