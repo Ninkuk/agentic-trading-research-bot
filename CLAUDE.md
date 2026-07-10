@@ -31,7 +31,7 @@ uv run pytest tests/test_fred_run.py::test_run_upserts_observations  # single te
 # Reverse DCF: what annual return does today's price already imply?
 uv run python -m tools.valuation.reverse_dcf \
   --market-cap 1000 --base-fcf 100 --growth 0.05 0.05 0.05 --terminal-growth 0.02
-# exit 0 solved · 1 no solution in (g, 1.0] · 2 refused input
+# exit 0 solved · 1 no solution in (g, 1.0) · 2 refused input
 
 # Lint / format / types (config in pyproject.toml; all must pass before commit)
 uv run ruff check                      # lint (add --fix for autofixes)
