@@ -32,6 +32,12 @@ Then, in order:
   decoder, and the field gotchas; read it rather than rediscovering the site.
   It is an aggregator, not a filer — when a number matters to the thesis,
   confirm it against the filing.
+- **What changed since the last disclosure.** The 10-K and the latest call are
+  point-in-time; on a fast-moving thesis the decisive fact is usually dated
+  *after* them. Sweep the ticker's `news` feed, post-call 8-Ks, and — when the
+  thesis turns on an external race — a dated web search for the *rival*, not the
+  company. A later event that contradicts management's framing outranks the
+  framing. This is the recency reconciliation the skill's Phase 2 requires.
 
 ## 2. If it isn't disclosed, can it be triangulated or found elsewhere?
 

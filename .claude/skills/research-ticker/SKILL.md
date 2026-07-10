@@ -126,6 +126,14 @@ management said over the years); do both, and do this one first. **Disclosure
 cadence is itself a signal** — a call resumed after years of silence, or a
 letter that stopped, is material. Read the change; don't just count the rows.
 
+**Then reconcile it against what happened since.** That call is up to a quarter
+stale, and on a fast-moving competitive or regulatory thesis the facts that move
+the stock happen *between* calls — do not treat the latest transcript as current
+state. Sweep for events dated after it: the ticker's `news` feed, 8-Ks, and
+(when the thesis turns on an external race) a dated web search for the *rival*,
+not the company. A post-call event that contradicts management's framing is the
+thread; silence since the call is itself a reading.
+
 When a thread turns on what management has said over the years, search the
 transcript corpus rather than reading it — see *Searching the transcript corpus*
 there. Print its coverage before you print a hit, and remember the corpus can
@@ -201,6 +209,15 @@ that turns an interesting name into a pass. The distortion scales with net debt,
 which is why you must never sanity-check this pairing on a debt-free company: on
 AAPL, whose net *cash* is 1.3% of market cap, the identical mistake moves the
 answer by 4bps (4.36% → 4.40%) and hides completely.
+
+**If margins are mid-expansion, one FCF growth rate hides the upside.** A flat
+`--growth` path can't express a business whose operating margin is well below a
+credible steady state and still climbing (a post-profitability platform dialing
+back subsidies — Uber, and its kind). The value is in the margin lever the flat
+rate fixes. Model bookings × margin — grow the top line and the margin
+separately — or front-load `--growth` above the revenue rate for the expansion
+years and fade it. Say which you did. A single-rate run understates such a name;
+don't quote it as the ceiling.
 
 Read the output honestly:
 
