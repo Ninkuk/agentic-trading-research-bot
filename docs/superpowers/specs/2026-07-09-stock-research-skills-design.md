@@ -78,7 +78,7 @@ plus `net_debt` for unlevered ones. The caller bridges explicitly; the module
 never guesses which kind of cash flow it was handed.
 
 **Method.** Bisection, not Newton-Raphson. Present value is strictly monotone
-decreasing in the discount rate `r` across the open interval `(g, 1.0]`: as
+decreasing in the discount rate `r` across the half-open interval `(g, 1.0]`: as
 `r → g⁺` the terminal term `CF_n · (1 + g) / (r − g)` diverges to `+∞`, and at
 `r = 1.0` the discounted sum is near zero. A strictly monotone function with a
 bracketed sign change is bisection's unconditionally-convergent case. Newton's
