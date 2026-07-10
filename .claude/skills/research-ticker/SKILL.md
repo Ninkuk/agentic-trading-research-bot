@@ -54,16 +54,11 @@ Kill it now if:
   analysis and a bad place to start. Say so, and ask the user whether to go on.
 - **Heavy leverage** relative to its cash generation.
 
-**STOP CLAUSE — this one is not optional.** If the business rests on domain
-science you have not established — biotech efficacy, semiconductor process
-physics, a novel chemistry — **stop and say so**. Do not proceed and do not
-bluff. The right next step is to go learn the domain, not to write a thesis
-whose foundations are decorative. Tell the user plainly:
-
-> I can't research this responsibly without understanding <domain> first.
-> Everything downstream would be confidence without competence.
-
-Then offer to research the domain instead, or a different name.
+Where the business rests on domain science — biotech efficacy, semiconductor
+process physics, a novel chemistry — do not bluff it and do not quit over it.
+Say what you cannot evaluate, bound it if you can, and mark it UNKNOWN. A moat
+you cannot assess is an unassessed moat, not an absent one; write that down and
+let Phase 3 count it among the load-bearing conditions.
 
 ## Phase 1 — What is the business?
 
