@@ -11,7 +11,8 @@ dangerous — speaker attribution, the concept lexicon, and coverage arithmetic 
 functions over already-decoded dicts, so they land in `tools/research/transcripts.py` beside
 `tools/valuation/reverse_dcf.py` (no network, no DB, no clock) and are pinned by fixtures. The
 76-call fetch loop is trivial, regenerated per session, and stays as prose in the skill's
-`references/disclosure-hunt.md`. Nothing lands under `sources/`.
+`references/disclosure-hunt.md`. No new code lands under `sources/`; the single exception is
+Task 5's one-line User-Agent change to the existing `probe.py`.
 
 **Tech Stack:** Python 3.12, stdlib only (`re`, `dataclasses`, `datetime.date`). `pytest` for
 tests. Decoding is already shipped: `sources.screeners.stock_analysis_screener.probe.page_data`.
@@ -695,9 +696,9 @@ def test_default_lexicon_covers_the_disclosure_probes() -> None:
 
 
 def test_default_lexicon_patterns_all_compile() -> None:
-    for patterns in LEXICON.values():
-        for pattern in patterns:
-            re.compile(pattern)
+    patterns = [p for ps in LEXICON.values() for p in ps]
+    compiled = [re.compile(p) for p in patterns]
+    assert len(compiled) == len(patterns)
 
 
 def test_lexicon_separates_market_share_from_wallet_share() -> None:
