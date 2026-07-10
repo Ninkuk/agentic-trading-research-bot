@@ -182,3 +182,7 @@ def test_scorecard_registered():
     from registry import REGISTRY
 
     assert "scorecard" in REGISTRY
+
+
+def test_dispatch_lists_pricehistory():
+    assert "pricehistory" in registry.REGISTRY
