@@ -129,6 +129,13 @@ single call. Elect the issuer once, from every fetched call pooled together, nev
 from one call — `rows[0]` is the most recent event, and for a name that does a lot of
 conferences that is often a bank's, not the company's.
 
+**Non-US listing?** Swap `/stocks/{TICKER}/` for `/quote/{exchange}/{TICKER}/`
+in *both* `page_data` calls below (find the `@exchange/TICKER` slug via
+`/symbol-lookup/?q=`). `/stocks/CSU/…` raises rather than 404s cleanly, so this
+is silent breakage, not an obvious error. Pass `ipo_date=None` — `stocks.db` has
+no row for a non-US name — and set `ISSUER_NAME` yourself, since there is then no
+local name to elect from.
+
 ### The loop
 
 ```python

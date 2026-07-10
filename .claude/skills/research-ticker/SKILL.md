@@ -34,6 +34,23 @@ call gets almost everything this skill needs:
 uv run python -m sources.screeners.stock_analysis_screener.probe /stocks/AAPL/statistics/
 ```
 
+**Resolve the route first — it is not always `/stocks/`.** US equities live
+under `/stocks/{T}/`; every non-US listing (a large share of the best
+compounders) lives under `/quote/{exchange}/{T}/` and needs the exchange
+segment on *every* subsequent call — statistics, financials, transcripts alike.
+Look it up before you probe, and carry the prefix through:
+
+```bash
+uv run python -m sources.screeners.stock_analysis_screener.probe '/symbol-lookup/?q=CSU'
+# results[0].s -> '@tsx/CSU'  =>  use /quote/tsx/CSU/statistics/ , /quote/tsx/CSU/financials/ , ...
+```
+
+For a `/quote/` name the point-in-time DBs below are **empty** — `stocks.db`,
+`sec_fundamentals.db`, and `composite.db` are US-universe only, and it files on
+its home regulator (SEDAR+, etc.), not SEC EDGAR. The live probe is then your
+*only* structured source; say so, drop the DB cross-checks, and lean harder on
+the latest call (Phase 2).
+
 Then read `data/*.db` read-only, as the **point-in-time record** — what was
 known when, not what is true now:
 
@@ -98,6 +115,17 @@ Use `references/disclosure-hunt.md` for *where to look*. Its three questions,
 in order: does the information exist; can it be triangulated or found
 elsewhere; and if not, does its absence kill the thesis?
 
+**Read the single most recent call before you write the business up.** The
+latest earnings call / AGM transcript (`.../transcripts/` → newest
+`detailSlug`) is one fetch and the highest-value current-state source there is:
+this quarter's organic-vs-total growth split, capital deployed, guidance, and —
+most valuable — management's own framing of the exact risk the market is pricing
+*right now*. The drawdown or pop that made the name worth a look is usually
+explained there. This is a different job from the corpus *search* below (what
+management said over the years); do both, and do this one first. **Disclosure
+cadence is itself a signal** — a call resumed after years of silence, or a
+letter that stopped, is material. Read the change; don't just count the rows.
+
 When a thread turns on what management has said over the years, search the
 transcript corpus rather than reading it — see *Searching the transcript corpus*
 there. Print its coverage before you print a hit, and remember the corpus can
@@ -145,6 +173,20 @@ downstream will catch a mismatch — it just returns a confident wrong number.
 disagree: `fcf` 129.17B, `leveredFCF` 97.69B, `unleveredFCF` 119.20B. If you
 take a flow from `financials/cash-flow-statement/` instead, pair it by the name
 it actually carries, and mind that route's own traps.
+
+**Minority interests break the FCF↔market-cap pairing too.** If the company
+consolidates subsidiaries it does not wholly own — a `minorityInterest` line on
+`/financials/`, or a known holdco (CSU consolidates Topicus/Lumine; Brookfield,
+many Japanese/Korean holdcos) — consolidated `fcf` includes cash belonging to
+the minority holders while market cap prices only the parent's share. Paired,
+the yield reads too high. Haircut FCF to the owner share before you solve. Mind
+the trap: the `minorityInterest` *net-income* line **understates** the cash
+claim whenever heavy acquired-intangible amortization depresses subsidiary GAAP
+income (exactly the holdco case) — reach for the cash-flow distributions to
+minorities, or the company's own owner-earnings metric, not the NCI income line.
+On CSU, consolidated FCF is ~15× market cap but owner FCF is ~19× — the
+difference between "not expensive" and "fairly priced," and the whole reason a
+holdco can look cheaper than it is.
 
 ```bash
 # Verizon: levered FCF 20.27B against MARKET CAP 176.4B — not EV of 368.4B.
