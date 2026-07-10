@@ -947,6 +947,7 @@ from tools.research.transcripts import (
 )
 
 TICKER = "VZ"
+ISSUER_NAME = "Verizon Communications Inc."   # data/stocks.db `n` column — authoritative
 
 index = page_data(f"/stocks/{TICKER}/transcripts/")
 if not isinstance(index, dict) or "transcripts" not in index:
@@ -955,7 +956,7 @@ rows = index["transcripts"]
 
 print(coverage(rows, ipo_date="2000-07-03"))   # PRINT THIS FIRST. ipo_date from data/stocks.db
 
-calls, issuer = [], None
+calls = []
 for row in rows:
     try:
         body = page_data(f"/stocks/{TICKER}/transcripts/{row['detailSlug']}/")
@@ -964,10 +965,16 @@ for row in rows:
         print(f"skip {row['eventDate']}: {type(exc).__name__}")   # never str(exc) — it carries the URL
         continue
     calls.append((row["eventDate"], turns))
-    issuer = issuer or issuer_from_turns(turns)      # the corpus names itself; do not guess
     time.sleep(0.7)                                  # unofficial endpoint; be a polite client
 
-print("issuer:", issuer)                             # sanity-check this before trusting a count
+# Elect the issuer ONCE, after every call is fetched, from turns POOLED across all
+# of them — never inside the loop above, and never from a single call. `n` from
+# data/stocks.db is the authoritative name; issuer_from_turns is the fallback and
+# the cross-check, not the primary source.
+pooled_turns = [t for _, turns in calls for t in turns]
+issuer = ISSUER_NAME or issuer_from_turns(pooled_turns)
+
+print("issuer:", issuer, "| pooled mode:", issuer_from_turns(pooled_turns))
 sides = Counter(classify_side(t, issuer) for _, turns in calls for t in turns)
 print(sides)
 print("outside firms:", sorted({t["company"] for _, ts in calls for t in ts
@@ -1176,6 +1183,20 @@ git commit --no-gpg-sign -m "docs(plans): index 007, the research corpus"
 ---
 
 ## What adversarial review broke
+
+- **Task 4 shipped a CRITICAL defect, and the implementer talked itself out of it.** The documented fetch
+  loop elected the issuer inside the per-call loop (`issuer = issuer or issuer_from_turns(turns)`), i.e.
+  from `rows[0]`, the most recent event. The transcripts index interleaves earnings calls with **conference
+  presentations**, and a conference is a 1:1 dialogue in which the host bank ties or beats management on
+  turn count. Measured on VZ, newest-first: `JPMorgan` (19 v 19 — a tie broken by dict insertion order),
+  `MoffettNathanson` (46 v 46), `Deutsche Bank` (39 v 38), `Morgan Stanley` (38 v 37). Five of six recent
+  calls elected a bank; only the one real earnings call elected `Verizon`. With a bank as issuer,
+  `classify_side` inverts every turn, every `df` collapses, and the session concludes "management never
+  said X" — the precise falsehood this unit exists to prevent. Fixed in `c1b1d45`: elect once, from turns
+  pooled across all calls, preferring `data/stocks.db`'s `n`; three tests pin the hazard.
+  Root cause was the plan's own `issuer_from_turns` docstring, which asserted management out-speaks any
+  bank "on its own call". False for conference presentations. This also promoted Task 1's tie-break Minor:
+  ties are not theoretical, they occur on the newest call.
 
 - **Task 2, as first written, was wrong.** `coverage()` sorted `eventDate` as raw strings and never
   validated them. A malformed date (`"Jul 10, 2026"`) was silently accepted into `first`/`last` when
