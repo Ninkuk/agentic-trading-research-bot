@@ -16,7 +16,12 @@ import sys
 import urllib.request
 
 BASE = "https://stockanalysis.com"
-_UA = {"User-Agent": "Mozilla/5.0"}
+_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+"""Descriptive, per the catalog's "real User-Agent" note and edgar_screener's precedent.
+
+Not a browser spoof: the research corpus loop issues ~77 requests per session, and a
+polite client says who it is. stockanalysis.com enforces no UA policy either way.
+"""
 
 
 def unflatten(values):
