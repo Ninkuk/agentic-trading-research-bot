@@ -64,9 +64,13 @@ def read_account(conn):
 
 
 def read_positions(conn) -> list:
+    """avg_cost is nullable in portfolio.db (the broker does not always report
+    it). NULL means "entry unknown" — never zero."""
     return [
-        {"symbol": r[0], "quantity": r[1], "market_value": r[2]}
-        for r in conn.execute("SELECT symbol, quantity, market_value FROM src.v_latest_positions")
+        {"symbol": r[0], "quantity": r[1], "market_value": r[2], "avg_cost": r[3]}
+        for r in conn.execute(
+            "SELECT symbol, quantity, market_value, avg_cost FROM src.v_latest_positions"
+        )
     ]
 
 

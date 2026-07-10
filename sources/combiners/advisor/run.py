@@ -108,15 +108,21 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
             flag_signals,
             reliable,
         )
+        exit_rows = db.build_exit_advice(
+            heat_rows,
+            catalog.STOP_ATR_MULTIPLE,
+            catalog.TRIM_FRACTION_STRONG,
+        )
         db.write_position_heat(conn, sid, heat_rows)
         db.write_size_caps(conn, sid, cap_rows)
+        db.write_exit_advice(conn, sid, exit_rows)
         db.finish_snapshot(conn, sid, account, composite, failures)
         conn.commit()
         if keep_days is not None:
             db.prune(conn, keep_days, now_iso)
     finally:
         conn.close()
-    return sid, len(heat_rows), len(cap_rows)
+    return sid, len(heat_rows), len(cap_rows), len(exit_rows)
 
 
 def main(argv=None):
@@ -129,8 +135,11 @@ def main(argv=None):
     p.add_argument("--db-dir", default="data")
     p.add_argument("--keep-days", type=int, default=None)
     a = p.parse_args(argv)
-    sid, n_heat, n_caps = run(a.db, a.db_dir, keep_days=a.keep_days)
-    print(f"advisor snapshot {sid}: {n_heat} positions, {n_caps} caps, into {a.db}")
+    sid, n_heat, n_caps, n_exit = run(a.db, a.db_dir, keep_days=a.keep_days)
+    print(
+        f"advisor snapshot {sid}: {n_heat} positions, {n_caps} caps,"
+        f" {n_exit} exit rows, into {a.db}"
+    )
 
 
 if __name__ == "__main__":

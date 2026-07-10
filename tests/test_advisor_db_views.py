@@ -7,6 +7,7 @@ def _row(**kw):
         "group_name": None,
         "quantity": 1.0,
         "market_value": 100.0,
+        "avg_cost": None,
         "atr": 1.0,
         "price": 100.0,
         "price_date": "2026-07-07",
@@ -134,3 +135,17 @@ def test_latest_caps_scope(tmp_path):
     _seed(conn, "2026-07-06T21:12:00+00:00", [], [dict(cap, symbol="STALE")])
     _seed(conn, "2026-07-07T21:12:00+00:00", [], [cap])
     assert [r[0] for r in conn.execute("SELECT symbol FROM v_latest_caps")] == ["NVDA"]
+
+
+def test_v_exit_advice_scopes_to_the_latest_snapshot(tmp_path):
+    conn = db.connect(str(tmp_path / "advisor.db"))
+    db.ensure_schema(conn)
+    old = db.write_snapshot(conn, "2026-07-06T21:12:00+00:00")
+    new = db.write_snapshot(conn, "2026-07-07T21:12:00+00:00")
+    for sid, sym in ((old, "OLD"), (new, "NEW")):
+        conn.execute(
+            "INSERT INTO exit_advice (snapshot_id, symbol, quantity) VALUES (?, ?, 1.0)",
+            (sid, sym),
+        )
+    conn.commit()
+    assert [r[0] for r in conn.execute("SELECT symbol FROM v_exit_advice")] == ["NEW"]

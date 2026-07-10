@@ -13,6 +13,20 @@ RISK_BUDGET = 0.01
 # (5 covers a weekend plus a holiday).
 ATR_MAX_AGE_DAYS = 5
 
+# --- exit advice (plan 003) -------------------------------------------------
+# ATR multiple for the suggested stop. 2x ATR is the common swing default and
+# is coherent with RISK_BUDGET: a cap-sized entry stopped at 2 ATR risks about
+# twice the one-ATR budget, which is the intended worst case for a gap-free
+# exit. Hand-tuned like every other threshold here.
+STOP_ATR_MULTIPLE = 2.0
+
+# Fraction of a position to trim when the composite STRONGLY disagrees
+# (score_sum <= -STRONG_MIN_ABS_SCORE AND total >= STRONG_MIN_TOTAL). Half, not
+# all: the composite is one opinion and has never been graded — v_signal_efficacy
+# is empty until the price ledger deepens. A full exit would over-trust an
+# unmeasured signal. Weak disagreement suggests no trim; the row is the advice.
+TRIM_FRACTION_STRONG = 0.5
+
 COMPOSITE_DB = "composite.db"
 PORTFOLIO_DB = "portfolio.db"
 SCORER_DB = "scorer.db"

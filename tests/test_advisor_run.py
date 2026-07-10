@@ -126,7 +126,7 @@ def _full_fixture(tmp_path):
 def test_full_cycle(tmp_path):
     _full_fixture(tmp_path)
     out = str(tmp_path / "advisor.db")
-    sid, n_heat, n_caps = run_mod.run(out, str(tmp_path), now_iso=NOW)
+    sid, n_heat, n_caps, n_exit = run_mod.run(out, str(tmp_path), now_iso=NOW)
     assert (n_heat, n_caps) == (2, 1)  # AAPL + XOM held; NVDA flagged
     conn = sqlite3.connect(out)
     # header provenance frozen in
@@ -156,7 +156,7 @@ def test_full_cycle(tmp_path):
 
 def test_missing_sources_skip_and_continue(tmp_path, capsys):
     out = str(tmp_path / "advisor.db")
-    sid, n_heat, n_caps = run_mod.run(out, str(tmp_path), now_iso=NOW)
+    sid, n_heat, n_caps, n_exit = run_mod.run(out, str(tmp_path), now_iso=NOW)
     assert (n_heat, n_caps) == (0, 0)
     err = capsys.readouterr().out
     # composite, portfolio, scorer missing -> 3 skips; price DBs are never
@@ -218,3 +218,29 @@ def test_main_argv(tmp_path, capsys):
     _full_fixture(tmp_path)
     run_mod.main(["--db", str(tmp_path / "advisor.db"), "--db-dir", str(tmp_path)])
     assert "advisor snapshot" in capsys.readouterr().out
+
+
+def test_run_writes_one_exit_advice_row_per_held_position(tmp_path):
+    """size_caps covers only FLAGGED tickers; exit_advice covers every HELD
+    position. The two tables legitimately differ in row count."""
+    _mini_composite(tmp_path)
+    _mini_portfolio(tmp_path)
+    _mini_prices(tmp_path / "stocks.db", [("AAPL", 100.0, 2.0), ("NVDA", 100.0, 4.0)])
+    _mini_prices(tmp_path / "etfs.db", [("XOM", 80.0, 4.0)])
+    _mini_scorer(tmp_path)
+
+    out = str(tmp_path / "advisor.db")
+    sid, n_heat, n_caps, n_exit = run_mod.run(out, str(tmp_path), now_iso=NOW)
+    assert n_exit == n_heat, "one exit row per held position"
+
+    conn = sqlite3.connect(out)
+    rows = conn.execute(
+        "SELECT symbol, price, atr, stop_price, strong, trim_shares FROM v_exit_advice"
+        " ORDER BY symbol"
+    ).fetchall()
+    assert rows, "no exit advice written"
+    for sym, price, atr, stop, strong, trim in rows:
+        if atr is not None and stop is not None:
+            assert stop == pytest.approx(price - 2.0 * atr), sym
+            assert stop < price, sym
+        assert (trim is not None) == bool(strong), sym
