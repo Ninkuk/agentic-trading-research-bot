@@ -608,7 +608,7 @@ uv run python -m tools.valuation.reverse_dcf \
   --market-cap 1000 --base-fcf 100 --growth 0.05 0.05 0.05 --terminal-growth 0.02
 ```
 
-Expected: a line beginning `implied_discount_rate:` with a rate near 12%.
+Expected: a line beginning `implied_discount_rate:` reading `0.1304  (13.04% per year)`.
 
 - [ ] **Step 6: Run all gates, then commit**
 
@@ -1142,7 +1142,7 @@ uv run python -m tools.valuation.reverse_dcf \
   --market-cap 1000 --base-fcf 100 --growth 0.05 0.05 0.05 --terminal-growth 0.02
 ```
 
-Expected: four green gates, 1173 tests, and an implied rate near 12%.
+Expected: four green gates, 1173 tests, and an implied rate of 13.04%.
 
 Then the real gate, which no test can supply: run `research-ticker` against one
 ticker you already hold and one you passed on, and read the two documents. If
