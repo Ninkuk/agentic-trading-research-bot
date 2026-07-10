@@ -478,6 +478,30 @@ def test_coverage_ignores_rows_with_no_event_date() -> None:
     cov = coverage([{"eventDate": "2024-01-01"}, {"detailSlug": "orphan"}])
     assert cov.n_calls == 2
     assert cov.first == cov.last == "2024-01-01"
+
+
+def test_coverage_rejects_a_malformed_event_date_without_ipo_date() -> None:
+    with pytest.raises(ValueError, match="Jul 10, 2026"):
+        coverage([{"eventDate": "Jul 10, 2026"}])
+
+
+def test_coverage_rejects_a_malformed_event_date_with_ipo_date() -> None:
+    with pytest.raises(ValueError, match="Jul 10, 2026"):
+        coverage([{"eventDate": "Jul 10, 2026"}], ipo_date="1983-11-21")
+
+
+def test_coverage_rejects_a_non_zero_padded_date_rather_than_misordering_it() -> None:
+    # Raw-string sort would put "2024-1-5" after "2024-01-10" (lexicographic '1' > '0'),
+    # reporting the wrong `last`. On Python 3.12, date.fromisoformat rejects the
+    # non-zero-padded form outright, so the old wrong answer is impossible: it raises.
+    with pytest.raises(ValueError, match="2024-1-5"):
+        coverage([{"eventDate": "2024-1-5"}, {"eventDate": "2024-01-10"}])
+
+
+def test_coverage_skips_an_empty_string_event_date_without_raising() -> None:
+    cov = coverage([{"eventDate": ""}, {"eventDate": "2024-01-01"}])
+    assert cov.n_calls == 2
+    assert cov.first == cov.last == "2024-01-01"
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -523,10 +547,21 @@ def coverage(index: list[dict], ipo_date: str | None = None) -> Coverage:
     ``ipo_date`` is supplied by the caller (from ``data/stocks.db``), never fetched:
     this module has no network and no clock. ``uncovered_years`` is None when it is
     absent or when the corpus is empty, and clamps at 0.0 rather than going negative.
+
+    Every truthy ``eventDate`` must be zero-padded ISO-8601 (``YYYY-MM-DD``); a falsy
+    one ("", None, or a missing key) is skipped when computing the span but still
+    counted in ``n_calls``. A present-but-malformed ``eventDate`` raises ``ValueError``
+    naming the offending value. It is never silently skipped, and dates are never
+    ordered as raw strings.
     """
-    dates = sorted(row["eventDate"] for row in index if row.get("eventDate"))
-    first = dates[0] if dates else None
-    last = dates[-1] if dates else None
+    dated = [
+        (date.fromisoformat(row["eventDate"]), row["eventDate"])
+        for row in index
+        if row.get("eventDate")
+    ]
+    dated.sort(key=lambda pair: pair[0])
+    first = dated[0][1] if dated else None
+    last = dated[-1][1] if dated else None
 
     uncovered: float | None = None
     if first is not None and ipo_date:
@@ -545,7 +580,7 @@ def coverage(index: list[dict], ipo_date: str | None = None) -> Coverage:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `uv run pytest tests/test_transcripts.py -q`
-Expected: `24 passed`
+Expected: `28 passed`
 
 - [ ] **Step 5: Run the full gates**
 
@@ -808,7 +843,7 @@ def scan_concepts(
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `uv run pytest tests/test_transcripts.py -q`
-Expected: `34 passed`
+Expected: `38 passed`
 
 - [ ] **Step 5: Run the full gates**
 
@@ -1139,6 +1174,21 @@ git commit --no-gpg-sign -m "docs(plans): index 007, the research corpus"
 ```
 
 ---
+
+## What adversarial review broke
+
+- **Task 2, as first written, was wrong.** `coverage()` sorted `eventDate` as raw strings and never
+  validated them. A malformed date (`"Jul 10, 2026"`) was silently accepted into `first`/`last` when
+  `ipo_date` was absent, and raised only when it was present — an inconsistent failure mode in the one
+  function whose entire job is to stop silent degradation. Lexicographic sort also reported
+  `last == "2024-1-5"` over `"2024-01-10"`. Fixed in `5808de9`: parse every date before sorting, raise
+  on anything non-ISO, and say so in the docstring. Four regression tests added.
+  (Same hazard class CLAUDE.md already documents for `prune`: string comparison of timestamps is only
+  correct because every writer stores a fixed-width `isoformat()`.)
+- The fix brief asserted `date.fromisoformat("2024-1-5")` succeeds on Python 3.11+. It does not — 3.11
+  relaxed ISO-8601 parsing but never allowed unpadded components. The fix subagent caught this and
+  asserted the observed `ValueError` instead of the assumed success. Verify interpreter behavior; do not
+  reason about it from release notes.
 
 ## Out of scope (do not build)
 
