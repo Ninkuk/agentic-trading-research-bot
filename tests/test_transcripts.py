@@ -42,6 +42,12 @@ def test_flatten_tolerates_a_turn_with_no_paragraphs() -> None:
     assert flatten_turn({"speakerName": "Operator"}) == ""
 
 
+def test_flatten_tolerates_a_sentence_with_no_text() -> None:
+    # One malformed sentence anywhere in a 76-call corpus must not abort the session.
+    t = {"paragraphs": [[{"startSec": 0.0}]]}
+    assert flatten_turn(t) == ""
+
+
 def test_management_is_recognised_despite_a_mislabelled_role() -> None:
     # Verizon Q1 2022: CFO Matt Ellis is tagged role="Analyst". `company` is the truth.
     assert classify_side(turn("Verizon", role="Analyst"), "Verizon") == MANAGEMENT
@@ -282,3 +288,10 @@ def test_lexicon_separates_market_share_from_wallet_share() -> None:
     stats = {s.concept: s.df for s in scan_concepts(docs, LEXICON)}
     assert stats["wallet share"] == 1
     assert stats["market share"] == 0
+
+
+def test_scan_rejects_a_concept_with_no_patterns() -> None:
+    # "|".join([]) == "" and re.compile("") matches every document — a concept with
+    # no patterns would silently read as mentioned in every call.
+    with pytest.raises(ValueError, match="ghost"):
+        scan_concepts([("2024-01-01", "x")], {"ghost": []})

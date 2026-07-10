@@ -113,8 +113,10 @@ Matching rules:
   `company='Crocs, Inc.'` in the same call. Test short-form-inside-long-form.
 - **Never derive the issuer string from `transcriptMeta.title`.** XOM's reads
   `"ExxonMobil Holdings Corporation"` — a stockanalysis data bug; the company has no "Holdings".
-  It would fail to match its own turns, which use `company='ExxonMobil'`. Take the issuer name
-  from `data/stocks.db` (`n`), or from the modal `company` across turns.
+  It would fail to match its own turns, which use `company='ExxonMobil'`. `data/stocks.db` has no
+  company-name column — `metrics`/`v_latest` carries `symbol`, not `n` or any name field. Take the
+  issuer name from the modal `company` across turns (`issuer_from_turns`), or pass one explicitly
+  if you already know it.
 - Morgan Stanley is **not** a counterexample. On MS's own call, only Ted Pick and Sharon Yeshaya
   carry `company='Morgan Stanley'`; every outside analyst carries their own firm. Verified.
 

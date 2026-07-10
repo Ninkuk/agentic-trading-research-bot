@@ -932,8 +932,29 @@ So:
   market share twice in twenty years is a finding. The same silence across AT&T's
   twelve calls since 2021 is nothing at all.
 
-Call `coverage(index, ipo_date)` and print it *before* any hit list. Take `ipo_date`
-from `data/stocks.db`; the helper is pure and will not fetch it.
+Call `coverage(index, ipo_date)` and print it *before* any hit list. Read `ipo_date`
+with a plain, read-only query — the skill never writes to `data/*.db`:
+
+```
+sqlite3 data/stocks.db "SELECT ipoDate FROM v_latest WHERE symbol='VZ';"
+-- 2000-07-03
+```
+
+`ipoDate` is NULL for roughly 45% of the 5,601-row universe — **including AT&T, this
+section's own headline example** — because stockanalysis itself returns `ipoDate: None`
+for those tickers. It is not a gap in this repo's screener:
+
+```
+sqlite3 data/stocks.db "SELECT ipoDate FROM v_latest WHERE symbol='T';"
+-- (empty)
+```
+
+Treat a ticker missing from `v_latest` entirely the same way. Either case, pass
+`ipo_date=None`; `coverage()` then returns `uncovered_years=None` instead of a number.
+When that happens, report the corpus span (`n_calls`, `first`, `last`) and say plainly
+that the pre-corpus history is unquantified. Never imply the corpus is complete, and
+never write "management never said X" — that is the binding rule above, applied to the
+missing-`ipoDate` case.
 
 ### The loop
 
@@ -947,14 +968,18 @@ from tools.research.transcripts import (
 )
 
 TICKER = "VZ"
-ISSUER_NAME = "Verizon Communications Inc."   # data/stocks.db `n` column — authoritative
+ISSUER_NAME = None   # set this yourself only if you already know the legal name —
+                      # data/stocks.db has no company-name column, so there is no
+                      # local source of truth to read it from
 
 index = page_data(f"/stocks/{TICKER}/transcripts/")
 if not isinstance(index, dict) or "transcripts" not in index:
     raise SystemExit(f"{TICKER}: no transcript corpus exists")   # BABA, TSM, SAP, SONY, pre-IPO SPACs
 rows = index["transcripts"]
 
-print(coverage(rows, ipo_date="2000-07-03"))   # PRINT THIS FIRST. ipo_date from data/stocks.db
+print(coverage(rows, ipo_date="2000-07-03"))   # PRINT THIS FIRST. From a read-only
+                                                # sqlite3 SELECT against data/stocks.db;
+                                                # pass None if the row is NULL or absent
 
 calls = []
 for row in rows:
@@ -967,10 +992,13 @@ for row in rows:
     calls.append((row["eventDate"], turns))
     time.sleep(0.7)                                  # unofficial endpoint; be a polite client
 
-# Elect the issuer ONCE, after every call is fetched, from turns POOLED across all
-# of them — never inside the loop above, and never from a single call. `n` from
-# data/stocks.db is the authoritative name; issuer_from_turns is the fallback and
-# the cross-check, not the primary source.
+# Elect the issuer ONCE, after every call is fetched, from turns POOLED across all of
+# them — never inside the loop above, and never from a single call.
+# issuer_from_turns is the PRIMARY source: pooled across every fetched call it is
+# live-verified correct, and the print below lets you eyeball it. Set ISSUER_NAME
+# above only when you already know the legal name; never derive it from
+# transcriptMeta.title — XOM's reads "ExxonMobil Holdings Corporation", and the
+# company has no "Holdings", so matching on it would silently exclude its own turns.
 pooled_turns = [t for _, turns in calls for t in turns]
 issuer = ISSUER_NAME or issuer_from_turns(pooled_turns)
 
@@ -1193,7 +1221,9 @@ git commit --no-gpg-sign -m "docs(plans): index 007, the research corpus"
   calls elected a bank; only the one real earnings call elected `Verizon`. With a bank as issuer,
   `classify_side` inverts every turn, every `df` collapses, and the session concludes "management never
   said X" — the precise falsehood this unit exists to prevent. Fixed in `c1b1d45`: elect once, from turns
-  pooled across all calls, preferring `data/stocks.db`'s `n`; three tests pin the hazard.
+  pooled across all calls, preferring an explicit caller-supplied issuer name when one is given; three
+  tests pin the hazard. (That fix's own comment claimed the explicit name would come from `data/stocks.db`'s
+  `n` column — see the final-review entry below: no such column exists.)
   Root cause was the plan's own `issuer_from_turns` docstring, which asserted management out-speaks any
   bank "on its own call". False for conference presentations. This also promoted Task 1's tie-break Minor:
   ties are not theoretical, they occur on the newest call.
@@ -1210,6 +1240,24 @@ git commit --no-gpg-sign -m "docs(plans): index 007, the research corpus"
   relaxed ISO-8601 parsing but never allowed unpadded components. The fix subagent caught this and
   asserted the observed `ValueError` instead of the assumed success. Verify interpreter behavior; do not
   reason about it from release notes.
+
+- **Final whole-branch review: `data/stocks.db`'s `n` column was fabricated, and it survived four task
+  reviews.** Every draft of this plan and of `disclosure-hunt.md` asserted `ISSUER_NAME = "..."` came from
+  `data/stocks.db` `n` — "authoritative" — and told the agent to "take `ipo_date`" from the same source.
+  Verified live: `metrics`/`v_latest` has no `n` column and no company-name column at all (columns are
+  `snapshot_id, symbol, marketCap, ..., ipoDate, ...`). `n` is a stockanalysis payload field that this repo
+  never persists. An agent following the doc as written runs `SELECT n ...` and gets `no such column: n`.
+  There is no reliable local company-name source; `sec_fundamentals.db`'s `companies` table exists but
+  holds only 52 rows and does not include VZ, T, CROX, or XOM. Fixed by making `issuer_from_turns` the
+  stated primary source in the prose (it already was, functionally — the docstring says so — but the
+  worked example told the reader to override it with a column that isn't there), with `ISSUER_NAME = None`
+  the default. Also found in the same pass: `ipoDate` **is** a real column, but it is NULL for 2,519 of
+  5,601 rows (~45%) — including AT&T, the coverage table's own headline example of a thin corpus. That is
+  upstream (stockanalysis returns `ipoDate: None` for those tickers), not a bug in this repo's screener.
+  `disclosure-hunt.md` now shows the real read-only query, states the ~45% NULL rate plainly, and says what
+  to write when `uncovered_years` comes back `None`: report the corpus span and call the pre-corpus history
+  unquantified — never "management never said X." Lesson: a claim about a schema needs to be checked against
+  the schema, not carried forward by four separate reviewers who each trusted the previous draft.
 
 ## Out of scope (do not build)
 

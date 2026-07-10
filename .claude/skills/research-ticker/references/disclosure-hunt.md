@@ -97,8 +97,29 @@ So:
   market share twice in twenty years is a finding. The same silence across AT&T's
   twelve calls since 2021 is nothing at all.
 
-Call `coverage(index, ipo_date)` and print it *before* any hit list. Take `ipo_date`
-from `data/stocks.db`; the helper is pure and will not fetch it.
+Call `coverage(index, ipo_date)` and print it *before* any hit list. Read `ipo_date`
+with a plain, read-only query — the skill never writes to `data/*.db`:
+
+```
+sqlite3 data/stocks.db "SELECT ipoDate FROM v_latest WHERE symbol='VZ';"
+-- 2000-07-03
+```
+
+`ipoDate` is NULL for roughly 45% of the 5,601-row universe — **including AT&T, this
+section's own headline example** — because stockanalysis itself returns `ipoDate: None`
+for those tickers. It is not a gap in this repo's screener:
+
+```
+sqlite3 data/stocks.db "SELECT ipoDate FROM v_latest WHERE symbol='T';"
+-- (empty)
+```
+
+Treat a ticker missing from `v_latest` entirely the same way. Either case, pass
+`ipo_date=None`; `coverage()` then returns `uncovered_years=None` instead of a number.
+When that happens, report the corpus span (`n_calls`, `first`, `last`) and say plainly
+that the pre-corpus history is unquantified. Never imply the corpus is complete, and
+never write "management never said X" — that is the binding rule above, applied to the
+missing-`ipoDate` case.
 
 The index interleaves earnings calls with conference presentations. An earnings call
 is many-to-one — many analysts, one management team — so management dominates the
@@ -120,14 +141,17 @@ from tools.research.transcripts import (
 )
 
 TICKER = "VZ"
-ISSUER_NAME = "Verizon Communications Inc."   # data/stocks.db `n` column — authoritative
+ISSUER_NAME = None   # set this yourself only if you already know the legal name —
+                      # data/stocks.db has no company-name column, so there is no
+                      # local source of truth to read it from
 
 index = page_data(f"/stocks/{TICKER}/transcripts/")
 if not isinstance(index, dict) or "transcripts" not in index:
     raise SystemExit(f"{TICKER}: no transcript corpus exists")   # BABA, TSM, SAP, SONY, pre-IPO SPACs
 rows = index["transcripts"]
 
-print(coverage(rows, ipo_date="2000-07-03"))   # PRINT THIS FIRST. ipo_date from data/stocks.db
+print(coverage(rows, ipo_date="2000-07-03"))   # PRINT THIS FIRST. From the sqlite3 SELECT
+                                                # above; pass None if the row is NULL or absent
 
 calls = []
 for row in rows:
@@ -140,10 +164,13 @@ for row in rows:
     calls.append((row["eventDate"], turns))
     time.sleep(0.7)                                  # unofficial endpoint; be a polite client
 
-# Elect the issuer ONCE, after every call is fetched, from turns POOLED across all
-# of them — never inside the loop above, and never from a single call. `n` from
-# data/stocks.db is the authoritative name; issuer_from_turns is the fallback and
-# the cross-check, not the primary source.
+# Elect the issuer ONCE, after every call is fetched, from turns POOLED across all of
+# them — never inside the loop above, and never from a single call.
+# issuer_from_turns is the PRIMARY source: pooled across every fetched call it is
+# live-verified correct, and the print below lets you eyeball it. Set ISSUER_NAME
+# above only when you already know the legal name; never derive it from
+# transcriptMeta.title — XOM's reads "ExxonMobil Holdings Corporation", and the
+# company has no "Holdings", so matching on it would silently exclude its own turns.
 pooled_turns = [t for _, turns in calls for t in turns]
 issuer = ISSUER_NAME or issuer_from_turns(pooled_turns)
 

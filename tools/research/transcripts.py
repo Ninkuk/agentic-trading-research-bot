@@ -62,10 +62,14 @@ def flatten_turn(turn: dict) -> str:
     ``paragraphs`` is ``list[list[dict]]`` — a list of paragraphs, each a list of
     sentences ``{text, startSec, endSec}``. Two levels, not one. Sentences join with
     a space, paragraphs with a blank line. A turn with no ``paragraphs`` yields "".
+
+    A sentence missing ``text`` contributes "" rather than raising ``KeyError``: this
+    call sits outside the fetch loop's per-call ``try``, so one malformed sentence
+    anywhere in a 76-call corpus must not abort the whole session.
     """
     paragraphs = turn.get("paragraphs") or []
     return "\n\n".join(
-        " ".join(sentence["text"] for sentence in paragraph) for paragraph in paragraphs
+        " ".join(sentence.get("text", "") for sentence in paragraph) for paragraph in paragraphs
     )
 
 
@@ -265,9 +269,15 @@ def scan_concepts(
 
     A concept with ``df == 0`` is still returned. That silence is the finding — but
     read it against ``coverage()``: absent from the corpus is not absent from history.
+
+    Raises ``ValueError`` naming the concept when its pattern list is empty:
+    ``"|".join([])`` is ``""``, and ``re.compile("")`` matches every document, which
+    would silently report a fabricated concept as present in the entire corpus.
     """
     stats: list[ConceptStat] = []
     for concept, patterns in lexicon.items():
+        if not patterns:
+            raise ValueError(f"concept {concept!r} has no patterns to match against")
         matcher = re.compile("|".join(patterns), re.IGNORECASE)
         hit_dates = sorted(event_date for event_date, text in docs if matcher.search(text))
         stats.append(
