@@ -323,7 +323,15 @@ def test_implied_rate_never_returns_the_bracket_edge_as_a_solution() -> None:
     flows = project_cash_flows(100.0, [0.05] * 5)
     result = implied_discount_rate(1.0, flows, 0.02)
     assert result is None, f"clamped to {result} instead of refusing"
-    assert result != MAX_RATE
+
+
+def test_implied_rate_stays_strictly_inside_the_bracket_when_solvable() -> None:
+    # The other side of the same guard: a solvable input must land strictly
+    # between the bounds, never on MAX_RATE.
+    flows = project_cash_flows(100.0, [0.05] * 5)
+    rate = implied_discount_rate(200.0, flows, 0.02)
+    assert rate is not None
+    assert 0.02 < rate < MAX_RATE
 
 
 def test_implied_rate_solution_always_exceeds_terminal_growth() -> None:
@@ -425,7 +433,7 @@ def implied_discount_rate(
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_reverse_dcf.py -v`
-Expected: PASS (17 passed)
+Expected: PASS (18 passed)
 
 - [ ] **Step 5: Run all gates**
 
@@ -589,7 +597,7 @@ if __name__ == "__main__":  # pragma: no cover
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_reverse_dcf.py -v`
-Expected: PASS (21 passed)
+Expected: PASS (22 passed)
 
 - [ ] **Step 5: Verify the CLI by hand**
 
@@ -1108,8 +1116,8 @@ Add a line to the **Workflow** section noting that `research/` holds
 - [ ] **Step 3: Run all gates**
 
 Run: `uv run ruff check && uv run ruff format --check && uv run mypy && uv run pytest`
-Expected: all pass. Confirm the test count rose by 21 from the pre-plan baseline
-of 1151 → **1172**.
+Expected: all pass. Confirm the test count rose by 22 from the pre-plan baseline
+of 1151 → **1173**.
 
 - [ ] **Step 4: Commit**
 
@@ -1134,7 +1142,7 @@ uv run python -m tools.valuation.reverse_dcf \
   --market-cap 1000 --base-fcf 100 --growth 0.05 0.05 0.05 --terminal-growth 0.02
 ```
 
-Expected: four green gates, 1172 tests, and an implied rate near 12%.
+Expected: four green gates, 1173 tests, and an implied rate near 12%.
 
 Then the real gate, which no test can supply: run `research-ticker` against one
 ticker you already hold and one you passed on, and read the two documents. If
