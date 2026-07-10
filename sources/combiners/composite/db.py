@@ -105,7 +105,15 @@ def ensure_schema(conn) -> None:
 
 # Signals that inform but do not vote (score is structurally 0 and the
 # signal is excluded from bullish/bearish/total and coverage).
-INFORMATIONAL_SIGNALS = frozenset({"portfolio_holding"})
+#
+# `total` is COUNT(*), i.e. evidence BREADTH, not a vote count — and v_flagged
+# gates on `total >= 3`. So a non-informational score-0 row still widens the
+# evidence base. earnings_imminent must be listed here: an earnings date says
+# nothing about direction, and counting it would let a ticker cross the flag
+# threshold *because* it reports soon — the exact inverse of that gate's intent.
+# (edgar_insider is deliberately NOT here: a Form 4 cluster is real, if
+# directionless, evidence about the ticker.)
+INFORMATIONAL_SIGNALS = frozenset({"portfolio_holding", "earnings_imminent"})
 
 
 def write_snapshot(conn, now_iso: str, signals_expected: int) -> int:

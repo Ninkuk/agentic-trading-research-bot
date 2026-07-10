@@ -2,7 +2,9 @@ import sqlite3
 
 import pytest
 
+from sources.combiners.composite import catalog as cat
 from sources.combiners.composite import run as run_mod
+from sources.monitors.earnings_calendar import db as earnings_db
 from sources.screeners.fred_screener import db as fred_db
 from sources.screeners.portfolio_screener import db as pf_db
 
@@ -151,3 +153,78 @@ def test_main_argv_roundtrip(tmp_path, capsys):
     )
     out = capsys.readouterr().out
     assert "composite snapshot" in out and "1 signals ok" in out
+
+
+# --- earnings_imminent: per-ticker event gate (plan 002) --------------------
+
+EARNINGS_SIG = next(s for s in cat.SIGNALS if s["signal_id"] == "earnings_imminent")
+
+
+def _mini_earnings(tmp_path, rows):
+    """rows: (event_date, ticker). Real monitor schema; PK is
+    (event_type, event_date, subtype), so one ticker CAN hold several forward
+    rows (a tentative estimate plus a confirmed date)."""
+    conn = earnings_db.connect(str(tmp_path / "earnings.db"))
+    earnings_db.ensure_schema(conn)
+    conn.executemany(
+        "INSERT INTO events (event_type, event_date, subtype, source, fetched_at)"
+        " VALUES ('earnings', ?, ?, 'test', '2026-07-08T04:05:00+00:00')",
+        rows,
+    )
+    conn.commit()
+    conn.close()
+
+
+# 9:05pm Phoenix Jul 7 == 04:05Z Jul 8. The fixture MUST straddle the rollover:
+# with a 21:05Z stamp a naive UTC date-slice would coincide with the Phoenix
+# date and the test could not catch a clock mixup.
+EVENING = "2026-07-08T04:05:00+00:00"
+PHX_TODAY = "2026-07-07"
+
+
+def test_run_emits_one_earnings_imminent_row_per_ticker(tmp_path):
+    _mini_earnings(
+        tmp_path,
+        [
+            ("2026-07-09", "AAPL"),  # +2 days
+            ("2026-07-12", "AAPL"),  # +5 days: same ticker, must collapse to MIN
+            ("2026-07-10", "MSFT"),  # +3 days
+            ("2026-08-06", "NVDA"),  # +30 days: outside the 7-day window
+            ("2026-07-06", "TSLA"),  # yesterday: already reported
+        ],
+    )
+    out = str(tmp_path / "composite.db")
+    run_mod.run(out, str(tmp_path), now_iso=EVENING, signals=[EARNINGS_SIG])
+
+    conn = sqlite3.connect(out)
+    rows = conn.execute(
+        "SELECT entity, raw_value, score, grain, obs_date FROM signal_values"
+        " WHERE signal_id='earnings_imminent' ORDER BY entity"
+    ).fetchall()
+
+    assert rows == [
+        ("AAPL", 2.0, 0, "ticker", PHX_TODAY),
+        ("MSFT", 3.0, 0, "ticker", PHX_TODAY),
+    ]
+
+
+def test_earnings_imminent_binds_today_on_the_phoenix_clock(tmp_path):
+    """A ticker reporting on the Phoenix date itself is 0 days out. Under a raw
+    UTC slice `today` would be 2026-07-08 and this row would fall out of the
+    window's lower bound entirely."""
+    _mini_earnings(tmp_path, [("2026-07-07", "AAPL")])
+    out = str(tmp_path / "composite.db")
+    run_mod.run(out, str(tmp_path), now_iso=EVENING, signals=[EARNINGS_SIG])
+    conn = sqlite3.connect(out)
+    assert conn.execute(
+        "SELECT entity, raw_value, obs_date FROM signal_values WHERE signal_id='earnings_imminent'"
+    ).fetchone() == ("AAPL", 0.0, PHX_TODAY)
+
+
+def test_earnings_imminent_empty_source_yields_no_rows(tmp_path):
+    _mini_earnings(tmp_path, [])
+    out = str(tmp_path / "composite.db")
+    sid, ok, failed = run_mod.run(out, str(tmp_path), now_iso=EVENING, signals=[EARNINGS_SIG])
+    assert failed == 0, "an empty forward calendar is normal, not a failure"
+    conn = sqlite3.connect(out)
+    assert conn.execute("SELECT COUNT(*) FROM signal_values").fetchone()[0] == 0

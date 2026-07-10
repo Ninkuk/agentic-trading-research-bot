@@ -207,3 +207,124 @@ def test_prune_cascades_all_children(tmp_path):
             conn.execute(f"SELECT COUNT(*) FROM {t} WHERE snapshot_id=?", (old,)).fetchone()[0] == 0
         )
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
+
+
+# --- earnings_imminent must not widen the evidence base (plan 002) ----------
+
+
+def _acme(conn, sid, with_earnings):
+    sigs = [
+        dict(
+            signal_id="si_days_to_cover",
+            grain="ticker",
+            entity="ACME",
+            raw_value=12.0,
+            score=2,
+            obs_date="2026-07-07",
+            staleness_days=0.0,
+        ),
+        dict(
+            signal_id="ftd_persistent",
+            grain="ticker",
+            entity="ACME",
+            raw_value=11.0,
+            score=2,
+            obs_date="2026-07-07",
+            staleness_days=0.0,
+        ),
+    ]
+    if with_earnings:
+        sigs.append(
+            dict(
+                signal_id="earnings_imminent",
+                grain="ticker",
+                entity="ACME",
+                raw_value=2,
+                score=0,
+                obs_date="2026-07-07",
+                staleness_days=0.0,
+            )
+        )
+    db.write_signal_values(conn, sid, sigs)
+    db.write_ticker_scores(conn, sid)
+    db.write_market_regime(conn, sid, {})
+    conn.commit()
+
+
+def test_earnings_imminent_is_informational_and_never_creates_a_flag(tmp_path):
+    """`total` is COUNT(*) — evidence breadth, not votes — and v_flagged gates on
+    `total >= 3`. If earnings_imminent counted, a ticker with two real votes
+    summing to |4| would become flagged BECAUSE it reports earnings soon: the
+    exact inverse of the gate's purpose. Regression for that inversion."""
+    assert "earnings_imminent" in db.INFORMATIONAL_SIGNALS
+
+    conn = db.connect(str(tmp_path / "composite.db"))
+    db.ensure_schema(conn)
+
+    sid = db.write_snapshot(conn, "2026-07-08T04:05:00+00:00", 3)
+    _acme(conn, sid, with_earnings=True)
+    with_e = conn.execute(
+        "SELECT score_sum, total FROM ticker_scores WHERE snapshot_id=?", (sid,)
+    ).fetchone()
+    flagged = conn.execute("SELECT COUNT(*) FROM v_flagged WHERE symbol='ACME'").fetchone()[0]
+
+    assert with_e == (4, 2), "earnings row must not widen `total`"
+    assert flagged == 0, "an earnings date must never push a ticker over total >= 3"
+
+
+def test_earnings_imminent_does_not_dilute_coverage(tmp_path):
+    """coverage = total / distinct VOTING ticker signals. An informational row
+    must not enter that denominator, or EVERY ticker's coverage drops the day
+    the gate ships.
+
+    The discriminating case is a ticker with NO earnings row: if
+    earnings_imminent counted, `applicable` would be 3 while BETA's own total
+    stays 2, giving 0.667. A fixture where every ticker carries every signal
+    yields 1.0 either way and proves nothing."""
+    conn = db.connect(str(tmp_path / "composite.db"))
+    db.ensure_schema(conn)
+    sid = db.write_snapshot(conn, "2026-07-08T04:05:00+00:00", 3)
+
+    sigs = []
+    for sym in ("ACME", "BETA"):
+        sigs += [
+            dict(
+                signal_id="si_days_to_cover",
+                grain="ticker",
+                entity=sym,
+                raw_value=12.0,
+                score=2,
+                obs_date="2026-07-07",
+                staleness_days=0.0,
+            ),
+            dict(
+                signal_id="ftd_persistent",
+                grain="ticker",
+                entity=sym,
+                raw_value=11.0,
+                score=2,
+                obs_date="2026-07-07",
+                staleness_days=0.0,
+            ),
+        ]
+    # only ACME reports earnings
+    sigs.append(
+        dict(
+            signal_id="earnings_imminent",
+            grain="ticker",
+            entity="ACME",
+            raw_value=2,
+            score=0,
+            obs_date="2026-07-07",
+            staleness_days=0.0,
+        )
+    )
+    db.write_signal_values(conn, sid, sigs)
+    db.write_ticker_scores(conn, sid)
+    conn.commit()
+
+    cov = dict(
+        conn.execute("SELECT symbol, coverage FROM ticker_scores WHERE snapshot_id=?", (sid,))
+    )
+    assert cov["BETA"] == 1.0, f"coverage of an earnings-free ticker diluted to {cov['BETA']}"
+    assert cov["ACME"] == 1.0, f"coverage of the earnings ticker diluted to {cov['ACME']}"

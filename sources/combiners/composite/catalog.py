@@ -417,6 +417,42 @@ SIGNALS: list[dict[str, Any]] = [
         """,
     },
     {
+        # Gate, not direction: score 0. A ticker reporting within the window
+        # carries event risk no technical signal prices in, so the row
+        # annotates the scorecard rather than voting on it. Consumers that
+        # grade or cite evidence already drop score-0 ticker rows
+        # (scorer/fetch.read_signal_rows, advisor/fetch.read_flag_signals).
+        # One-clock rule: earnings.db's v_imminent_earnings filters on its own
+        # calendar_now, so query the events base table with :today instead.
+        # MIN + GROUP BY: a ticker can carry more than one forward earnings row
+        # (a tentative estimate and a confirmed date both land in `events`),
+        # and composite requires one row per (signal, entity). signal_values is
+        # INSERT OR IGNORE on (snapshot_id, signal_id, entity), so a duplicate
+        # would be swallowed silently and scan order would pick the winner.
+        # raw_value = whole days until the print. The window is INCLUSIVE at
+        # both ends (0..7), i.e. 8 calendar days: a ticker printing today reads
+        # 0. This matches the BETWEEN semantics of the source's own
+        # v_imminent_earnings, which this SQL re-expresses against base tables.
+        # CAST(... AS INTEGER) truncates toward zero; that is exact only while
+        # event_date stays date-only (it is: monitor_common stores YYYY-MM-DD).
+        "signal_id": "earnings_imminent",
+        "db": "earnings.db",
+        "grain": "ticker",
+        "staleness_budget_days": 0,
+        "sql": """
+            SELECT e.subtype,
+                   CAST(julianday(MIN(e.event_date)) - julianday(:today)
+                        AS INTEGER),
+                   0, :today
+            FROM src.events e
+            WHERE e.event_type = 'earnings'
+              AND e.subtype IS NOT NULL
+              AND e.event_date >= :today
+              AND e.event_date <= date(:today, '+7 days')
+            GROUP BY e.subtype
+        """,
+    },
+    {
         # Live holdings: informational only (never votes; sets in_portfolio).
         "signal_id": "portfolio_holding",
         "db": "portfolio.db",
