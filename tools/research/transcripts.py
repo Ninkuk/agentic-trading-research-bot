@@ -13,7 +13,7 @@ decoding lives in ``stock_analysis_screener.probe``.
 
 import re
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 
@@ -191,3 +191,80 @@ def coverage(index: list[dict], ipo_date: str | None = None) -> Coverage:
         ipo_date=ipo_date,
         uncovered_years=uncovered,
     )
+
+
+LEXICON: dict[str, tuple[str, ...]] = {
+    "market share": (r"market share", r"share of (?:the )?market", r"share gain"),
+    "wallet share": (r"share of wallet", r"wallet share"),
+    "penetration": (r"penetration",),
+    "churn": (r"churn",),
+    "ARPU": (r"\barpu\b", r"average revenue per (?:user|account|subscriber)"),
+    "take rate": (r"take rate",),
+    "attach rate": (r"attach rate", r"attachment rate"),
+    "pricing power": (r"pricing power", r"price increase", r"pricing action"),
+    "unit economics": (r"unit economics",),
+    "cohort": (r"cohort",),
+    "lifetime value": (r"lifetime value", r"\bltv\b", r"customer lifetime"),
+    "CAC": (r"\bcac\b", r"customer acquisition cost"),
+    "capacity utilization": (r"utilization",),
+    "backlog": (r"backlog",),
+    "retention": (r"retention",),
+    "we don't disclose": (
+        r"(?:don't|do not|won't|will not) (?:disclose|break out|provide)",
+        r"no longer (?:report|disclose|break out)",
+    ),
+}
+"""Curated, ticker-independent disclosure concepts, each with its synonym set.
+
+Fixed before any ticker is seen, so a scan cannot be anchored by what an agent
+noticed earlier in the session. Synonyms live inside the concept so that a zero
+result means zero across the whole set — not zero for the one word somebody
+guessed. `market share` and `wallet share` are separate entries on purpose: a
+company may disclose one and not the other.
+"""
+
+
+@dataclass(frozen=True)
+class ConceptStat:
+    """How often a concept appears across a corpus — in documents, never in hits."""
+
+    concept: str
+    df: int
+    n_docs: int
+    first: str | None
+    last: str | None
+    seasons: int
+
+
+def scan_concepts(
+    docs: Sequence[tuple[str, str]],
+    lexicon: Mapping[str, Sequence[str]] = LEXICON,
+) -> list[ConceptStat]:
+    """Count, for each concept, how many documents mention it — rarest first.
+
+    ``docs`` is a sequence of ``(event_date, text)``; pass one entry per call, with
+    ``text`` being that call's management-side turns only (see ``classify_side``).
+
+    Reports document frequency, not hit counts. Management repeats talking points
+    quarterly, so hits are not independent observations: a naive grep of Verizon's
+    corpus finds 82 mentions of "market share" where the honest figure is 39 calls
+    across 8 years. ``seasons`` counts distinct calendar years, collapsing repeats.
+
+    A concept with ``df == 0`` is still returned. That silence is the finding — but
+    read it against ``coverage()``: absent from the corpus is not absent from history.
+    """
+    stats: list[ConceptStat] = []
+    for concept, patterns in lexicon.items():
+        matcher = re.compile("|".join(patterns), re.IGNORECASE)
+        hit_dates = sorted(event_date for event_date, text in docs if matcher.search(text))
+        stats.append(
+            ConceptStat(
+                concept=concept,
+                df=len(hit_dates),
+                n_docs=len(docs),
+                first=hit_dates[0] if hit_dates else None,
+                last=hit_dates[-1] if hit_dates else None,
+                seasons=len({event_date[:4] for event_date in hit_dates}),
+            )
+        )
+    return sorted(stats, key=lambda stat: (stat.df, stat.concept))

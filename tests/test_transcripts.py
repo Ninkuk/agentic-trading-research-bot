@@ -1,14 +1,19 @@
+import re
+
 import pytest
 
 from tools.research.transcripts import (
+    LEXICON,
     MANAGEMENT,
     OUTSIDE,
     UNATTRIBUTED,
+    ConceptStat,
     Coverage,
     classify_side,
     coverage,
     flatten_turn,
     issuer_from_turns,
+    scan_concepts,
 )
 
 VZ_LONG = "Verizon Communications Inc."
@@ -173,3 +178,79 @@ def test_coverage_skips_an_empty_string_event_date_without_raising() -> None:
     cov = coverage([{"eventDate": ""}, {"eventDate": "2024-01-01"}])
     assert cov.n_calls == 2
     assert cov.first == cov.last == "2024-01-01"
+
+
+def test_scan_counts_documents_not_hits() -> None:
+    # "churn" five times in one call is ONE observation, not five.
+    docs = [("2024-01-01", "churn churn churn churn churn")]
+    (stat,) = scan_concepts(docs, {"churn": [r"churn"]})
+    assert stat.df == 1
+    assert stat.n_docs == 1
+
+
+def test_scan_reports_span_and_distinct_seasons() -> None:
+    docs = [
+        ("2019-06-18", "we took market share"),
+        ("2019-11-01", "market share again"),
+        ("2026-05-13", "still taking market share"),
+        ("2022-01-01", "nothing relevant here"),
+    ]
+    (stat,) = scan_concepts(docs, {"market share": [r"market share"]})
+    assert stat.df == 3
+    assert stat.n_docs == 4
+    assert stat.first == "2019-06-18"
+    assert stat.last == "2026-05-13"
+    assert stat.seasons == 2  # 2019 and 2026 — not 3
+
+
+def test_scan_reports_a_concept_that_never_appears() -> None:
+    # An absent concept must still be reported, with df=0. Silence is the finding.
+    docs = [("2024-01-01", "we discuss churn constantly")]
+    (stat,) = scan_concepts(docs, {"CAC": [r"\bcac\b", r"customer acquisition cost"]})
+    assert stat.df == 0
+    assert stat.first is None
+    assert stat.last is None
+    assert stat.seasons == 0
+
+
+def test_scan_matches_any_synonym_in_the_set() -> None:
+    docs = [("2024-01-01", "our share of wallet is growing")]
+    (stat,) = scan_concepts(docs, {"wallet share": [r"share of wallet", r"wallet share"]})
+    assert stat.df == 1
+
+
+def test_scan_is_case_insensitive() -> None:
+    docs = [("2024-01-01", "Market Share leadership")]
+    (stat,) = scan_concepts(docs, {"market share": [r"market share"]})
+    assert stat.df == 1
+
+
+def test_scan_orders_results_rarest_first() -> None:
+    docs = [("2024-01-01", "churn"), ("2025-01-01", "churn and market share")]
+    stats = scan_concepts(docs, {"churn": [r"churn"], "market share": [r"market share"]})
+    assert [s.concept for s in stats] == ["market share", "churn"]
+
+
+def test_scan_over_an_empty_corpus_reports_every_concept_as_absent() -> None:
+    stats = scan_concepts([], {"churn": [r"churn"]})
+    assert stats == [ConceptStat("churn", df=0, n_docs=0, first=None, last=None, seasons=0)]
+
+
+def test_default_lexicon_covers_the_disclosure_probes() -> None:
+    assert "market share" in LEXICON
+    assert "we don't disclose" in LEXICON
+    assert all(patterns for patterns in LEXICON.values())
+
+
+def test_default_lexicon_patterns_all_compile() -> None:
+    patterns = [p for ps in LEXICON.values() for p in ps]
+    compiled = [re.compile(p) for p in patterns]
+    assert len(compiled) == len(patterns)
+
+
+def test_lexicon_separates_market_share_from_wallet_share() -> None:
+    # A firm may disclose one and not the other; conflating them hides that.
+    docs = [("2024-01-01", "our share of wallet grew")]
+    stats = {s.concept: s.df for s in scan_concepts(docs, LEXICON)}
+    assert stats["wallet share"] == 1
+    assert stats["market share"] == 0
