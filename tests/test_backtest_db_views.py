@@ -270,8 +270,9 @@ def test_efficacy_grades_bearish_flag_against_falling_benchmark(conn):
         "SELECT n_bench, hit_rate, reliable FROM v_replay_efficacy"
         " WHERE signal_id = 'fred_curve' AND direction = 'bearish' AND horizon = 5"
     ).fetchone()
-    # 30 spine days; asof d has entry d+1, exit d+6 -> matured for d in 1..24
-    assert row[0] == 24
+    # ONE vintage observation, forward-filled across 24 matured as-of days.
+    # That is one measurement, not 24 (see v_replay_efficacy's report grain).
+    assert row[0] == 1
     assert row[1] == pytest.approx(1.0)
     assert row[2] == 0  # 24 < RELIABLE_MIN_N (30)
 
@@ -296,3 +297,208 @@ def test_efficacy_neutral_rows_reported_but_ungraded(conn):
     ).fetchone()
     assert row[0] > 0  # reported
     assert row[1] == 0 and row[2] is None  # excluded from grading
+
+
+# --- baseline: hit_rate is meaningless without the benchmark's own drift -----
+
+
+def _spine(conn, benchmark, closes, start="2026-01-01"):
+    """closes[i] is the close on trading day i (dates need only be ordered)."""
+    import datetime as dt
+
+    d0 = dt.date.fromisoformat(start)
+    conn.executemany(
+        "INSERT OR REPLACE INTO benchmark_closes (benchmark, date, close) VALUES (?,?,?)",
+        [(benchmark, (d0 + dt.timedelta(days=i)).isoformat(), c) for i, c in enumerate(closes)],
+    )
+    conn.commit()
+
+
+def test_baseline_measures_unconditional_drift(tmp_path):
+    """A monotonically rising spine must report p_up = 1.0 — the null a bullish
+    flag has to beat."""
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    _spine(conn, "UP", [100.0 + i for i in range(40)])
+    rows = dict(conn.execute("SELECT horizon, p_up FROM v_benchmark_baseline WHERE benchmark='UP'"))
+    assert rows[5] == 1.0 and rows[10] == 1.0
+    downs = dict(
+        conn.execute("SELECT horizon, p_down FROM v_benchmark_baseline WHERE benchmark='UP'")
+    )
+    assert downs[5] == 0.0
+
+
+def test_baseline_is_per_benchmark(tmp_path):
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    _spine(conn, "UP", [100.0 + i for i in range(40)])
+    _spine(conn, "DOWN", [100.0 - i for i in range(40)])
+    got = dict(conn.execute("SELECT benchmark, p_up FROM v_benchmark_baseline WHERE horizon = 5"))
+    assert got == {"UP": 1.0, "DOWN": 0.0}
+
+
+def test_excess_subtracts_the_directional_baseline(tmp_path):
+    """A bullish flag on an always-rising spine has hit_rate 1.0 and excess 0.0:
+    it did exactly as well as doing nothing. That is the whole point."""
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    _spine(conn, "SP500", [100.0 + i for i in range(40)])
+    # cboe_vix score is bullish when close < 15
+    conn.executemany(
+        "INSERT OR REPLACE INTO market_obs (signal_id, obs_date, val1, val2) VALUES (?,?,?,NULL)",
+        [
+            ("cboe_vix", d, 10.0)
+            for (d,) in conn.execute("SELECT date FROM benchmark_closes WHERE benchmark='SP500'")
+        ],
+    )
+    conn.commit()
+    row = conn.execute(
+        "SELECT hit_rate, baseline, excess, beats_baseline FROM v_replay_efficacy"
+        " WHERE signal_id='cboe_vix' AND direction='bullish' AND horizon=5"
+    ).fetchone()
+    assert row is not None
+    hit, base, excess, beats = row
+    assert hit == 1.0 and base == 1.0
+    assert excess == 0.0, "a flag that matches pure drift has zero edge"
+    assert beats == 0, "and must not be reported as beating the baseline"
+
+
+def test_reliable_stays_a_sample_size_floor_not_a_verdict(tmp_path):
+    """The advisor reads `reliable` as n_bench >= 30 and nothing more
+    (advisor/fetch.read_reliable_signals). Adding a baseline must not silently
+    redefine it."""
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    sql = conn.execute("SELECT sql FROM sqlite_master WHERE name='v_replay_efficacy'").fetchone()[0]
+    assert "n_bench >= 30) AS reliable" in sql.replace("g.", "")
+
+
+def _vix_flags(conn, level):
+    """Stamp every spine date with one VIX level. CBOE_VIX_SCORE: >=30 -> -2,
+    >=25 -> -1, <15 -> +1, else 0."""
+    conn.executemany(
+        "INSERT OR REPLACE INTO market_obs (signal_id, obs_date, val1, val2) VALUES (?,?,?,NULL)",
+        [
+            ("cboe_vix", d, level)
+            for (d,) in conn.execute("SELECT date FROM benchmark_closes WHERE benchmark='SP500'")
+        ],
+    )
+    conn.commit()
+
+
+def test_excess_uses_p_down_for_a_bearish_flag(tmp_path):
+    """The bearish arm must subtract p_down, not p_up. On an always-rising spine
+    a bearish flag hits 0.0 and p_down is 0.0, so excess is 0.0 — it did exactly
+    as badly as the drift implies. Using p_up would give -1.0."""
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    _spine(conn, "SP500", [100.0 + i for i in range(40)])
+    _vix_flags(conn, 31.0)  # bearish
+    hit, base, excess, beats = conn.execute(
+        "SELECT hit_rate, baseline, excess, beats_baseline FROM v_replay_efficacy"
+        " WHERE signal_id='cboe_vix' AND direction='bearish' AND horizon=5"
+    ).fetchone()
+    assert (hit, base) == (0.0, 0.0)
+    assert excess == 0.0, "bearish excess must be hit - p_down"
+    assert beats == 0
+
+
+def test_beats_baseline_bearish_arm_compares_against_p_down(tmp_path):
+    """A bearish flag on a spine that ALWAYS falls hits 1.0, and p_down is 1.0 —
+    indistinguishable from drift. Comparing the CI against p_up (0.0) would
+    wrongly report it as beating the baseline."""
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    _spine(conn, "SP500", [200.0 - i for i in range(40)])
+    _vix_flags(conn, 31.0)
+    hit, base, beats = conn.execute(
+        "SELECT hit_rate, baseline, beats_baseline FROM v_replay_efficacy"
+        " WHERE signal_id='cboe_vix' AND direction='bearish' AND horizon=5"
+    ).fetchone()
+    assert (hit, base) == (1.0, 1.0)
+    assert beats == 0, "a bearish flag matching pure downward drift has no edge"
+
+
+def test_beats_baseline_is_null_for_neutral_and_ungraded_rows(tmp_path):
+    """score 0 carries no direction, so there is nothing to beat. A NULL here is
+    the honest answer; 0 would read as 'tested and failed'."""
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    _spine(conn, "SP500", [100.0 + i for i in range(40)])
+    _vix_flags(conn, 20.0)  # neutral: 15 <= 20 < 25
+    row = conn.execute(
+        "SELECT direction, n_bench, hit_rate, baseline, excess, beats_baseline"
+        " FROM v_replay_efficacy WHERE signal_id='cboe_vix' AND horizon=5"
+    ).fetchone()
+    direction, n_bench, hit, base, excess, beats = row
+    assert direction == "neutral" and n_bench == 0 and hit is None
+    assert beats is None, "neutral rows must not claim a verdict"
+
+
+# --- report grain: n counts observations, not forward-filled days ------------
+
+
+def test_efficacy_counts_observations_not_forward_filled_days(tmp_path):
+    """A weekly report is served on ~5 consecutive as-of dates by v_pit_market's
+    forward-fill. Those five days are ONE measurement. Counting them as five
+    inflated n ~5x and shrank every Wilson interval to match — that is how
+    `eia_crude bearish 10d` came to read n=339 when only 67 reports existed."""
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    _spine(conn, "SP500", [100.0 + i for i in range(40)])
+
+    # Two observations, 10 calendar days apart -> each forward-fills across many
+    # as-of dates. cboe_vix < 15 is bullish.
+    conn.executemany(
+        "INSERT OR REPLACE INTO market_obs (signal_id, obs_date, val1, val2) VALUES (?,?,?,NULL)",
+        [("cboe_vix", "2026-01-01", 10.0), ("cboe_vix", "2026-01-11", 10.0)],
+    )
+    conn.commit()
+
+    n_obs, n_days, n_bench = conn.execute(
+        "SELECT n_obs, n_days, n_bench FROM v_replay_efficacy"
+        " WHERE signal_id='cboe_vix' AND direction='bullish' AND horizon=5"
+    ).fetchone()
+
+    assert n_obs == 2, f"two observations, got n_obs={n_obs}"
+    assert n_days > n_obs, "n_days still reports the forward-filled span"
+    assert n_bench <= n_obs, "graded count can never exceed the observation count"
+
+
+def test_wilson_interval_is_computed_on_the_observation_count(tmp_path):
+    """The CI must widen when the honest n is small. Same data as above: with
+    n_obs=2 the interval must be very wide, not the narrow one 20 forward-filled
+    days would produce."""
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    _spine(conn, "SP500", [100.0 + i for i in range(40)])
+    conn.executemany(
+        "INSERT OR REPLACE INTO market_obs (signal_id, obs_date, val1, val2) VALUES (?,?,?,NULL)",
+        [("cboe_vix", "2026-01-01", 10.0), ("cboe_vix", "2026-01-11", 10.0)],
+    )
+    conn.commit()
+    n_bench, lo, hi = conn.execute(
+        "SELECT n_bench, hit_ci_lo, hit_ci_hi FROM v_replay_efficacy"
+        " WHERE signal_id='cboe_vix' AND direction='bullish' AND horizon=5"
+    ).fetchone()
+    assert n_bench <= 2
+    assert hi - lo > 0.4, f"CI width {hi - lo:.3f} — computed on days, not observations?"
+
+
+def test_reliable_floor_now_counts_observations(tmp_path):
+    """`reliable` is still only a sample-size floor, but the sample it counts is
+    now observations. 40 forward-filled days behind 2 reports is not 40 samples."""
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    _spine(conn, "SP500", [100.0 + i for i in range(40)])
+    conn.executemany(
+        "INSERT OR REPLACE INTO market_obs (signal_id, obs_date, val1, val2) VALUES (?,?,?,NULL)",
+        [("cboe_vix", "2026-01-01", 10.0), ("cboe_vix", "2026-01-11", 10.0)],
+    )
+    conn.commit()
+    n_days, reliable = conn.execute(
+        "SELECT n_days, reliable FROM v_replay_efficacy"
+        " WHERE signal_id='cboe_vix' AND direction='bullish' AND horizon=5"
+    ).fetchone()
+    assert n_days >= 30, "the inflated day count would have cleared the floor"
+    assert reliable == 0, "2 observations must not be called reliable"

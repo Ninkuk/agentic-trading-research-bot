@@ -8,7 +8,7 @@ knowable that day, and how the benchmark moved afterward. Manual analysis
 tool — deliberately unscheduled."""
 
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sources.combiners.backtest import catalog
 from sources.combiners.scorer.db import RELIABLE_MIN_N, _wilson
@@ -81,7 +81,7 @@ def _flags_select(signal: dict) -> str:
     # FRED regime signals grade vs SP500 (v_pit_signal iterates SP500 dates).
     return (
         f"SELECT asof_date, '{catalog.BENCHMARK_SERIES}' AS benchmark,\n"
-        f"       '{signal['signal_id']}' AS signal_id, value,\n"
+        f"       '{signal['signal_id']}' AS signal_id, value, source_date,\n"
         f"       {signal['score_case']} AS score\n"
         f"FROM v_pit_signal\n"
         f"WHERE series_id = '{signal['series_id']}' AND value IS NOT NULL"
@@ -97,8 +97,9 @@ def _market_flags_select(signal: dict) -> str:
     primary = next(iter(signal["aliases"]))  # first CASE column present => a real obs
     return (
         f"SELECT asof_date, benchmark, '{signal['signal_id']}' AS signal_id,\n"
-        f"       {signal['raw_expr']} AS value, {signal['score_case']} AS score\n"
-        f"FROM (SELECT asof_date, benchmark, {alias_cols} FROM v_pit_market\n"
+        f"       {signal['raw_expr']} AS value, source_date,\n"
+        f"       {signal['score_case']} AS score\n"
+        f"FROM (SELECT asof_date, benchmark, source_date, {alias_cols} FROM v_pit_market\n"
         f"      WHERE signal_id = '{signal['signal_id']}')\n"
         f"WHERE {primary} IS NOT NULL"
     )
@@ -110,7 +111,8 @@ def _pctile_flags_select(signal: dict) -> str:
     verbatim."""
     return (
         f"SELECT asof_date, benchmark, '{signal['signal_id']}' AS signal_id,\n"
-        f"       pctile AS value, {signal['score_case']} AS score\n"
+        f"       pctile AS value, asof_date AS source_date,\n"
+        f"       {signal['score_case']} AS score\n"
         f"FROM v_pit_pcr WHERE signal_id = '{signal['signal_id']}' AND pctile IS NOT NULL"
     )
 
@@ -165,7 +167,15 @@ SELECT d.date AS asof_date, s.series_id,
            AND v.realtime_start <= d.date
            AND v.value IS NOT NULL
          ORDER BY v.date DESC, v.realtime_start DESC
-         LIMIT 1) AS value
+         LIMIT 1) AS value,
+       -- The OBSERVATION this as-of date is reading. Two as-of dates that read
+       -- the same observation are not two independent measurements.
+       (SELECT v.date FROM signal_vintages v
+         WHERE v.series_id = s.series_id
+           AND v.realtime_start <= d.date
+           AND v.value IS NOT NULL
+         ORDER BY v.date DESC, v.realtime_start DESC
+         LIMIT 1) AS source_date
 FROM benchmark_closes d
 CROSS JOIN (SELECT DISTINCT series_id FROM signal_vintages) s
 WHERE d.benchmark = '{catalog.BENCHMARK_SERIES}';
@@ -183,7 +193,12 @@ SELECT d.date AS asof_date, o.signal_id, o.benchmark,
          ORDER BY m.obs_date DESC LIMIT 1) AS val1,
        (SELECT m.val2 FROM market_obs m
          WHERE m.signal_id = o.signal_id AND m.obs_date <= d.date
-         ORDER BY m.obs_date DESC LIMIT 1) AS val2
+         ORDER BY m.obs_date DESC LIMIT 1) AS val2,
+       -- The OBSERVATION being served. A weekly report forward-fills across ~5
+       -- trading days; those 5 days are ONE measurement, not five.
+       (SELECT m.obs_date FROM market_obs m
+         WHERE m.signal_id = o.signal_id AND m.obs_date <= d.date
+         ORDER BY m.obs_date DESC LIMIT 1) AS source_date
 FROM (SELECT column1 AS signal_id, column2 AS benchmark FROM (VALUES {scalar_map})) o
 JOIN benchmark_closes d ON d.benchmark = o.benchmark;
 {_pctile_view()}
@@ -217,33 +232,98 @@ CROSS JOIN ({_horizons_union()}) h
 LEFT JOIN v_spine e ON e.benchmark = d.benchmark AND e.rn = d.rn + 1
 LEFT JOIN v_spine x ON x.benchmark = d.benchmark AND x.rn = d.rn + 1 + h.horizon;
 
--- Hit-rate scoreboard, same column shape as scorer v_signal_efficacy:
--- hit = sign agreement between flag and forward benchmark return.
+-- Unconditional drift of each benchmark: how often it rises (or falls) over a
+-- horizon, across every as-of date. This is the NULL a flag must beat.
+-- Comparing hit_rate to 0.5 is wrong: SP500 rose 68.5% of 21-day windows in
+-- this sample, so ANY bullish flag "wins" ~0.69 by doing nothing, and any
+-- bearish flag "loses". Both are drift, not skill.
+DROP VIEW IF EXISTS v_benchmark_baseline;
+CREATE VIEW v_benchmark_baseline AS
+SELECT d.benchmark, h.horizon,
+       COUNT(*) AS n_windows,
+       AVG(x.close > e.close) AS p_up,
+       AVG(x.close < e.close) AS p_down
+FROM v_spine d
+CROSS JOIN ({_horizons_union()}) h
+JOIN v_spine e ON e.benchmark = d.benchmark AND e.rn = d.rn + 1
+JOIN v_spine x ON x.benchmark = d.benchmark AND x.rn = d.rn + 1 + h.horizon
+GROUP BY d.benchmark, h.horizon;
+
+-- Hit-rate scoreboard, same column shape as scorer v_signal_efficacy plus a
+-- baseline. hit = sign agreement between flag and forward benchmark return.
 -- Neutral (score 0) days form their own direction group with NULL hits —
 -- reported as base rate, excluded from grading.
+--
+-- READ `excess`, NOT `hit_rate`. `reliable` is a SAMPLE-SIZE floor only
+-- (n_bench >= RELIABLE_MIN_N), matching the scorer's meaning that the advisor
+-- depends on — it never meant "this signal works". `beats_baseline` is the
+-- weaker, honest claim: the benchmark's own drift lies outside the flag's
+-- Wilson interval, so the result is distinguishable from doing nothing.
+--
+-- `beats_baseline` is NOMINAL and UNCORRECTED. This view emits ~48 graded rows
+-- (signals x directions x horizons), so at a per-row 95% interval roughly 2
+-- flags are expected by chance alone. Treat a lone flag as a lead, not a
+-- result; trust a signal whose flag holds across horizons AND directions on a
+-- large n. Measured 2026-07-09: 11 rows flagged, of which only ~7 survive a
+-- Bonferroni-corrected two-proportion test — `fred_hy_spread bearish` (n=53)
+-- does not. The scorer's own v_signal_efficacy carries the same caveat in its
+-- docstring; this is the replay's version of it.
 DROP VIEW IF EXISTS v_replay_efficacy;
 CREATE VIEW v_replay_efficacy AS
-SELECT signal_id, direction, horizon,
-       COUNT(*) AS n_days,
-       AVG(fwd_return) AS avg_fwd_return,
-       AVG(hit) AS hit_rate,
-       COUNT(hit) AS n_bench,
-       {_wilson("-")} AS hit_ci_lo,
-       {_wilson("+")} AS hit_ci_hi,
-       (COUNT(hit) >= {RELIABLE_MIN_N}) AS reliable
+SELECT g.signal_id, g.direction, g.horizon,
+       g.n_obs,
+       g.n_days,
+       g.avg_fwd_return,
+       g.hit_rate,
+       g.n_bench,
+       g.hit_ci_lo,
+       g.hit_ci_hi,
+       (g.n_bench >= {RELIABLE_MIN_N}) AS reliable,
+       CASE g.direction WHEN 'bullish' THEN b.p_up
+                        WHEN 'bearish' THEN b.p_down END AS baseline,
+       g.hit_rate - CASE g.direction WHEN 'bullish' THEN b.p_up
+                                     WHEN 'bearish' THEN b.p_down END AS excess,
+       CASE WHEN g.direction = 'neutral' OR g.n_bench = 0 THEN NULL
+            WHEN (CASE g.direction WHEN 'bullish' THEN b.p_up ELSE b.p_down END)
+                 NOT BETWEEN g.hit_ci_lo AND g.hit_ci_hi
+            THEN 1 ELSE 0 END AS beats_baseline
 FROM (
-    SELECT f.signal_id,
-           CASE WHEN f.score < 0 THEN 'bearish'
-                WHEN f.score > 0 THEN 'bullish' ELSE 'neutral' END AS direction,
-           r.horizon, r.fwd_return,
-           CASE WHEN f.score = 0 OR r.fwd_return IS NULL THEN NULL
-                WHEN f.score < 0 AND r.fwd_return < 0 THEN 1
-                WHEN f.score > 0 AND r.fwd_return > 0 THEN 1
-                ELSE 0 END AS hit
-    FROM v_replay_flags f
-    JOIN v_replay_returns r ON r.benchmark = f.benchmark AND r.asof_date = f.asof_date
-)
-GROUP BY signal_id, direction, horizon;
+    -- One row per OBSERVATION, not per forward-filled trading day. A weekly EIA
+    -- report is served on ~5 consecutive as-of dates; those are ONE measurement.
+    -- Grading them as five inflated n ~5x and shrank every confidence interval
+    -- to match (eia_crude bearish 10d read n=339 when only 67 reports existed).
+    -- Keep the FIRST as-of date each observation was actionable on.
+    SELECT signal_id, benchmark, direction, horizon,
+           COUNT(*) AS n_obs,
+           SUM(days) AS n_days,
+           AVG(fwd_return) AS avg_fwd_return,
+           AVG(hit) AS hit_rate,
+           COUNT(hit) AS n_bench,
+           {_wilson("-")} AS hit_ci_lo,
+           {_wilson("+")} AS hit_ci_hi
+    FROM (
+        SELECT signal_id, benchmark, source_date, horizon,
+               MIN(asof_date) AS first_asof,
+               direction, fwd_return, hit,
+               COUNT(*) AS days
+        FROM (
+            SELECT f.signal_id, f.benchmark, f.source_date, f.asof_date,
+                   CASE WHEN f.score < 0 THEN 'bearish'
+                        WHEN f.score > 0 THEN 'bullish' ELSE 'neutral' END AS direction,
+                   r.horizon, r.fwd_return,
+                   CASE WHEN f.score = 0 OR r.fwd_return IS NULL THEN NULL
+                        WHEN f.score < 0 AND r.fwd_return < 0 THEN 1
+                        WHEN f.score > 0 AND r.fwd_return > 0 THEN 1
+                        ELSE 0 END AS hit
+            FROM v_replay_flags f
+            JOIN v_replay_returns r ON r.benchmark = f.benchmark AND r.asof_date = f.asof_date
+        )
+        GROUP BY signal_id, benchmark, source_date, horizon
+    )
+    GROUP BY signal_id, benchmark, direction, horizon
+) g
+LEFT JOIN v_benchmark_baseline b
+       ON b.benchmark = g.benchmark AND b.horizon = g.horizon;
 """
 
 
@@ -314,11 +394,35 @@ def insert_benchmark(conn, benchmark, rows) -> int:
     return len(rows)
 
 
-def insert_market_obs(conn, signal_id: str, rows) -> int:
-    """Copy a market signal's raw observations (obs_date, val1, val2) verbatim.
+def insert_market_obs(conn, signal_id: str, rows, publication_lag_days: int = 0) -> int:
+    """Copy a market signal's raw observations, stamping each with the date the
+    value became PUBLICLY KNOWN — not the period it describes.
+
+    `v_pit_market` serves "latest obs_date <= as-of date" and the replay enters
+    at the next trading close, so an observation stamped with its period date is
+    consumed days before it existed. EIA's crude report covers the week ending
+    Friday but is not released until the following Wednesday; replaying it at
+    the Friday stamp let the backtest trade on a number nobody had.
+    `publication_lag_days` (from the catalog) shifts obs_date forward to close
+    that hole. Same-session feeds pass 0 and keep their date verbatim.
+
+    The whole signal is DELETEd first: harvest_sql re-copies the full series
+    every run, and shifting a date changes the (signal_id, obs_date) primary
+    key, so stale un-shifted rows would otherwise survive forever and keep
+    serving the look-ahead value.
+
     INSERT OR REPLACE so a re-copy of a revised/reposted date overwrites (the
     accepted with-caveat behavior for these unrevised feeds)."""
-    tagged = [(signal_id, obs_date, val1, val2) for obs_date, val1, val2 in rows]
+    conn.execute("DELETE FROM market_obs WHERE signal_id = ?", (signal_id,))
+    tagged = []
+    for obs_date, val1, val2 in rows:
+        if publication_lag_days:
+            published = (
+                date.fromisoformat(obs_date) + timedelta(days=publication_lag_days)
+            ).isoformat()
+        else:
+            published = obs_date
+        tagged.append((signal_id, published, val1, val2))
     conn.executemany(
         "INSERT OR REPLACE INTO market_obs (signal_id, obs_date, val1, val2) VALUES (?, ?, ?, ?)",
         tagged,

@@ -100,7 +100,10 @@ def run(
                 got = 0
                 for s in sigs:
                     got += db.insert_market_obs(
-                        conn, s["signal_id"], harvest_market_obs(conn, s["harvest_sql"])
+                        conn,
+                        s["signal_id"],
+                        harvest_market_obs(conn, s["harvest_sql"]),
+                        s.get("publication_lag_days", 0),
                     )
                 conn.commit()
                 n_market += got
@@ -113,18 +116,53 @@ def run(
 
         db.finish_snapshot(conn, sid, n_vint, n_bench, failures, n_market)
         conn.commit()
+        # Print `excess` beside `hit`: a bare hit rate is unreadable against a
+        # benchmark that drifts up 61-68% of the time. `reliable` is a
+        # sample-size floor, NOT evidence the signal works — `beats baseline`
+        # is the honest (still weak) claim.
+        graded, flagged = conn.execute(
+            "SELECT COUNT(*), COALESCE(SUM(beats_baseline), 0) FROM v_replay_efficacy"
+            " WHERE direction != 'neutral' AND n_bench > 0"
+        ).fetchone()
+        expected_noise = graded * 0.05
+        print(
+            f"-- {graded} graded rows, {flagged} flagged. n counts OBSERVATIONS"
+            " (reports), not forward-filled days. Flags are NOMINAL 95%,"
+            f" uncorrected: ~{expected_noise:.0f} are expected by chance."
+            " Overlapping forward windows from consecutive reports make even the"
+            " observation count optimistic. Trust nothing on a lone flag."
+        )
         for row in conn.execute(
-            "SELECT signal_id, direction, horizon, n_days, n_bench, hit_rate,"
-            " hit_ci_lo, hit_ci_hi, reliable FROM v_replay_efficacy"
-            " ORDER BY signal_id, direction, horizon"
+            "SELECT signal_id, direction, horizon, n_obs, n_days, n_bench, hit_rate,"
+            " hit_ci_lo, hit_ci_hi, reliable, baseline, excess, beats_baseline"
+            " FROM v_replay_efficacy ORDER BY signal_id, direction, horizon"
         ):
-            sig, direction, horizon, row_n_days, row_n_bench, hr, lo, hi, rel = row
-            stats = (
-                f"hit {hr:.2f} (CI {lo:.2f}-{hi:.2f}, n={row_n_bench})"
-                if hr is not None
-                else f"ungraded (n_days incl. neutral; n={row_n_days})"
-            )
+            (
+                sig,
+                direction,
+                horizon,
+                n_obs,
+                row_n_days,
+                row_n_bench,
+                hr,
+                lo,
+                hi,
+                rel,
+                base,
+                exc,
+                beats,
+            ) = row
+            if hr is None:
+                stats = f"ungraded (n_obs incl. neutral; n_obs={n_obs})"
+            else:
+                # n is OBSERVATIONS (reports), not forward-filled days.
+                stats = (
+                    f"hit {hr:.2f} vs base {base:.2f} -> excess {exc:+.3f}"
+                    f" (CI {lo:.2f}-{hi:.2f}, n={row_n_bench} obs / {row_n_days} days)"
+                )
             tag = " reliable" if rel else ""
+            if beats:
+                tag += " ANTI-SIGNAL" if exc < 0 else " beats baseline"
             print(f"{sig} {direction} {horizon}d: {stats}{tag}")
         if keep_days is not None:
             db.prune(conn, keep_days, now_iso)
