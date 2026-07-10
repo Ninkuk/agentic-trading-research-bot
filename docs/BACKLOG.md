@@ -15,14 +15,23 @@ signals. Only the two CFTC signals remain.
 
 **Why deferred, not just unbuilt.** Two independent reasons:
 
-1. **Data availability.** Asset-class signals grade against a sector proxy
-   (energy→XLE, metals→GLD, …), never SP500 — grading a sector bet against
-   equities flatters it whenever equities fall. The only growing close history
-   for those proxies is `scorer.db`'s permanent `prices` ledger (the
-   system's designated backtest store), which is only a few days deep today.
-   Until it accumulates months of proxy closes, any asset-class replay grades
-   ~zero rows regardless of the code — the same reason the already-shipped
-   `eia_*` signals harvest deep signal history but currently grade empty.
+1. ~~**Data availability.**~~ **RESOLVED 2026-07-09 (plan 005).** Asset-class
+   signals grade against a sector proxy (energy→XLE, metals→GLD, …), never
+   SP500 — grading a sector bet against equities flatters it whenever equities
+   fall. Those proxies used to have only a few days of closes in `scorer.db`'s
+   permanent `prices` ledger, so any asset-class replay graded ~zero rows.
+
+   `main.py pricehistory --db data/scorer.db` (one-shot, never scheduled)
+   backfilled all 18 crosswalk proxies from stockanalysis's history API:
+   **118,644 rows**, XLE to 1998-12-23, GLD to 2004-11-19, DBA to 2007-01-08,
+   TLT to 2002-07-29. `CLASS_BENCHMARKS` now carries XLE/GLD/DBA/TLT, so
+   **step 1 of the build recipe below is done.** The `eia_*` signals went from
+   `n_bench = 0` to 339–1,595 graded rows per direction/horizon.
+
+   Note `v_pit_market` anchors each signal's as-of value onto the *benchmark's*
+   trading-day spine, so `n_days` is bounded by the benchmark's close count —
+   that, not signal depth, was always the bottleneck. A `neutral` row still
+   shows `n_bench = 0` by design (`hit` is NULL when `score = 0`).
 2. **Unvalidatable-now complexity.** CFTC is the one *hard* signal in the
    batch. Its composite input is `AVG(cot_index)` per asset class, where
    `cot_index` is a **3-year rolling percentile** of net positioning computed

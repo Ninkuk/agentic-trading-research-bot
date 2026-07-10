@@ -107,7 +107,9 @@ def _make_advisor_db(path, equity=200.0, positions=None, sources_failed=0):
     )
     for symbol, score_sum in positions or []:
         conn.execute(
-            "INSERT INTO position_heat VALUES"
+            "INSERT INTO position_heat (snapshot_id, symbol, group_name, quantity,"
+            " market_value, atr, price, price_date, heat_dollars, heat_pct,"
+            " weight_pct, score_sum, bullish, bearish, total, atr_stale) VALUES"
             " (1, ?, NULL, 10, 100.0, 2.0, 10.0, ?, 0.42, 0.0021, 0.5, ?, 0, 1, 1, 0)",
             (symbol, NOW, score_sum),
         )
@@ -789,6 +791,7 @@ def _build_advisor_db(path):
             "group_name": None,
             "quantity": 10.0,
             "market_value": 1500.0,
+            "avg_cost": None,
             "atr": 3.0,
             "price": 150.0,
             "price_date": "2026-07-08",
@@ -806,6 +809,7 @@ def _build_advisor_db(path):
             "group_name": "energy",
             "quantity": 5.0,
             "market_value": 500.0,
+            "avg_cost": None,
             "atr": 2.0,
             "price": 100.0,
             "price_date": "2026-07-08",
@@ -823,6 +827,7 @@ def _build_advisor_db(path):
             "group_name": "energy",
             "quantity": 3.0,
             "market_value": 300.0,
+            "avg_cost": None,
             "atr": 1.5,
             "price": 100.0,
             "price_date": "2026-07-01",

@@ -5,13 +5,51 @@ from sources.common.dbattach import attach_ro, detach  # noqa: F401  (re-exporte
 
 
 def harvest_prices(conn) -> list:
-    """(symbol, price_date, close) across ALL retained source snapshots —
-    INSERT OR IGNORE downstream dedupes, and re-harvesting nightly
-    self-heals ledger gaps within the source's retention window."""
-    return conn.execute(
-        'SELECT DISTINCT symbol, "priceDate", "close" FROM src.metrics'
-        ' WHERE "priceDate" IS NOT NULL AND "close" IS NOT NULL'
-    ).fetchall()
+    """(symbol, price_date, close) across ALL retained source snapshots.
+
+    Two rules, both learned the hard way (see plans/000-*.md):
+
+    1) Read "price", NOT "close". stockanalysis names these from a live-quote
+       perspective: `price` is the last close for `priceDate`, while `close` is
+       the PREVIOUS session's close. Harvesting "close" stamped every close with
+       the NEXT trading day's date, handing entry_for() the composite date's own
+       close — the exact overnight look-ahead that function exists to prevent.
+
+    2) Only harvest a priceDate once it has SETTLED, i.e. from a snapshot taken
+       on a LATER Phoenix calendar day. `close` was always settled by
+       construction (it names a finished session), which is why rule 1's bug
+       hid: switching to `price` exposes same-day, mid-session reads. A snapshot
+       captured the evening of D reports an unsettled `price` for priceDate=D
+       (measured 2026-07-08: NVDA 201.01 vs a 204.12 close). Phoenix is UTC-7
+       year-round, so the shift is a bare '-7 hours' (cf. read_snapshots).
+
+    MIN(s.id) makes the pick deterministic when several settled snapshots carry
+    the same priceDate. They do NOT always agree — 186 such pairs in stocks.db
+    disagree, nearly all sub-$5 names restated across a split (INLF 2026-07-02
+    spans 0.0216..4.32). MIN picks the earliest settled report, i.e. the close
+    as first published, which is the point-in-time value an opinion could have
+    acted on; a later restatement is a basis change and belongs to
+    v_basis_breaks, not to a silent overwrite. Without the aggregate,
+    INSERT OR IGNORE would freeze whichever row the scan happened to yield
+    first — deterministic only by accident."""
+    # SQLite resolves an unknown double-quoted identifier to a STRING LITERAL,
+    # so a metrics table without a `price` column would quietly harvest the
+    # text 'price' into the permanent ledger. Fail the source instead: run()
+    # catches this per-DB and skips it loudly.
+    cols = {r[1] for r in conn.execute("PRAGMA src.table_info(metrics)")}
+    missing = {"symbol", "priceDate", "price"} - cols
+    if missing:
+        raise ValueError(f"src.metrics missing column(s): {', '.join(sorted(missing))}")
+    return [
+        (r[0], r[1], r[2])
+        for r in conn.execute(
+            'SELECT m.symbol, m."priceDate", m."price", MIN(s.id)'
+            " FROM src.metrics m JOIN src.snapshots s ON s.id = m.snapshot_id"
+            ' WHERE m."priceDate" IS NOT NULL AND m."price" IS NOT NULL'
+            "   AND substr(datetime(s.captured_at, '-7 hours'), 1, 10) > m.\"priceDate\""
+            ' GROUP BY m.symbol, m."priceDate"'
+        )
+    ]
 
 
 def read_snapshots(conn) -> list:

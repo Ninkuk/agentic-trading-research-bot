@@ -4,6 +4,7 @@ from sources.combiners.advisor.run import main as advisor_main
 from sources.combiners.backtest.run import main as backtest_main
 from sources.combiners.composite.run import main as composite_main
 from sources.combiners.scorer.journal import main as journal_main
+from sources.combiners.scorer.pricehistory import main as pricehistory_main
 from sources.combiners.scorer.run import main as scorer_main
 from sources.combiners.scorer.scorecard import main as scorecard_main
 from sources.monitors.earnings_calendar.run import main as earnings_main
@@ -56,6 +57,7 @@ REGISTRY = {
     "scorecard": scorecard_main,
     "advisor": advisor_main,
     "backtest": backtest_main,
+    "pricehistory": pricehistory_main,
 }
 
 

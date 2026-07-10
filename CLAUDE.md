@@ -23,7 +23,7 @@ uv run python main.py --list          # print all registered dispatcher names
 # data/<name>.db or you'll create a stray DB at repo root.
 
 # Tests (fully offline — no network, no real API keys needed)
-uv run pytest                          # full suite (~700 tests, <1s)
+uv run pytest                          # full suite (~1150 tests, ~2s)
 uv run pytest tests/test_fred_run.py   # one file
 uv run pytest -k regime                # by name substring
 uv run pytest tests/test_fred_run.py::test_run_upserts_observations  # single test
@@ -85,6 +85,15 @@ The `advisor` combiner joins the latest scorecard against real holdings
 timestamp) plus stocks/etfs ATR and scorer
 efficacy: book heat, disagreements, and vol-scaled size caps — decision
 support only, never order generation.
+The `backtest` combiner replays composite's FRED/market signals against ALFRED vintages
+(point-in-time — `publication_lag_days` keeps a report out of the replay until it was actually
+released) and grades them in `v_replay_efficacy`. Read `excess`/`beats_baseline` there, never
+`hit_rate` alone — the benchmarks drift upward, so a bullish flag "wins" by doing nothing;
+`v_benchmark_baseline` is the null to compare against, and the flags are nominal and
+uncorrected across ~48 comparisons. Weekly (Sat, after `fred-vintages`). Two read-only
+reporters ship alongside:
+`main.py scorecard` (grades the human's decisions from the journal views; SELECT-only) and
+`main.py pricehistory` (manual one-shot ledger backfill — never scheduled).
 
 ### File tree
 
@@ -95,7 +104,8 @@ sources/
 ├── common/       # screener_common.py, monitor_common.py, http_client.py
 ├── screeners/    # 17 point-in-time data readers (import screener_common)
 ├── monitors/     # 4 event-date calendars (import monitor_common)
-└── combiners/    # 3 cross-source combiners (composite: opinions; scorer: grades; advisor: sizes)
+└── combiners/    # 4 cross-source combiners (composite: opinions; scorer: grades;
+                  #   advisor: sizes; backtest: point-in-time replay)
 ```
 
 `registry.py` and `main.py` stay at repo root — `registry.py` is the CLI dispatch table, not a
@@ -162,10 +172,11 @@ source itself. Import a screener/monitor/combiner's internals as `sources.screen
 
 ## Workflow for a new screener/monitor
 
-The repo follows **spec → plan → build**. The design spec and implementation plan are
-transient working docs (write them under `docs/superpowers/specs/<date>-<name>-design.md`
-and `docs/superpowers/plans/<date>-<name>.md`); they're cleared once the screener ships, so
-don't expect earlier ones to still be on disk.
+The repo follows **spec → plan → build**. Design specs are transient working docs under
+`docs/superpowers/specs/<date>-<name>-design.md`. Implementation plans are **checked in** at
+`plans/<NNN>-<name>.md`, indexed by a status table in `plans/README.md` (TODO | IN PROGRESS |
+DONE | BLOCKED | REJECTED) — they persist after shipping and record what adversarial review
+broke, which is often the most useful thing in them.
 
 **Everything runs on a launchd schedule** — see `docs/SCHEDULE.md` (durable reference:
 per-job slots, scheduling constraints, ops). Source of truth is `deploy/launchd/install.py`;

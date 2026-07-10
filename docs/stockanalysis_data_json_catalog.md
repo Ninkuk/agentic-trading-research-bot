@@ -185,17 +185,25 @@ fetch them live with `catalog.fetch_catalog()` against the respective screener.
 
 ### Price & Volume (26)
 
+> ⚠️ **`close` is NOT the close for `priceDate`.** These fields are named from a
+> live-quote perspective: **`price` is the last close for `priceDate`**, while
+> **`close` is the PREVIOUS session's close**. Verified against CBOE and the
+> `/history/` endpoint (SPY `priceDate=2026-07-07`: `price=747.71` = that day's
+> close, `close=751.28` = 07-06's close). Harvesting `close` as if it were the
+> close for `priceDate` shifts every row forward one trading day — it is exactly
+> the bug `plans/000-price-ledger-off-by-one-session.md` repairs. Use `price`.
+
 | id | name |
 |---|---|
-| `price` | Stock Price |
+| `price` | Stock Price — **the close for `priceDate`** |
 | `change` | Price Change 1D |
 | `volume` | Volume |
 | `dollarVolume` | Dollar Volume |
 | `open` | Open Price |
 | `low` | Low Price |
 | `high` | High Price |
-| `close` | Previous Close |
-| `priceDate` | Stock Price Date |
+| `close` | **Previous Close** — the session *before* `priceDate`. Not what you want. |
+| `priceDate` | Stock Price Date — the session `price` closed on |
 | `premarketPrice` | Premarket Price |
 | `premarketChangePercent` | Premarket % Change |
 | `premarketVolume` | Premarket Volume |

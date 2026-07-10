@@ -5,6 +5,7 @@ prune; the permanent record lives upstream (scorer.db), not here.
 Heat/cap math is pure Python (build_* helpers) because it joins data already
 fetched from four source DBs; views only scope and aggregate."""
 
+import math
 import sqlite3
 from datetime import date, datetime, timedelta
 
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS position_heat (
     group_name   TEXT,
     quantity     REAL NOT NULL,
     market_value REAL,
+    avg_cost     REAL,
     atr          REAL,
     price        REAL,
     price_date   TEXT,
@@ -62,6 +64,27 @@ CREATE TABLE IF NOT EXISTS size_caps (
     total_signals        INTEGER,
     exceeds_buying_power INTEGER NOT NULL DEFAULT 0,
     already_held         INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (snapshot_id, symbol)
+);
+
+-- Exit side. One row per HELD position (not just disagreements): a stop is
+-- advice you want BEFORE the thesis breaks. Every NULL is load-bearing —
+-- see build_exit_advice.
+CREATE TABLE IF NOT EXISTS exit_advice (
+    snapshot_id       INTEGER NOT NULL REFERENCES snapshots(id),
+    symbol            TEXT NOT NULL,
+    quantity          REAL NOT NULL,
+    price             REAL,
+    avg_cost          REAL,
+    atr               REAL,
+    atr_stale         INTEGER NOT NULL DEFAULT 0,
+    score_sum         INTEGER,
+    total             INTEGER,
+    strong            INTEGER NOT NULL DEFAULT 0,
+    stop_price        REAL,
+    stop_distance_pct REAL,
+    unrealized_pct    REAL,
+    trim_shares       REAL,
     PRIMARY KEY (snapshot_id, symbol)
 );
 """
@@ -120,6 +143,14 @@ DROP VIEW IF EXISTS v_latest_caps;
 CREATE VIEW v_latest_caps AS
 SELECT c.* FROM size_caps c
 JOIN v_latest_snapshot l ON c.snapshot_id = l.id;
+
+-- The exit side of v_latest_caps. One row per held position; size_caps covers
+-- only FLAGGED tickers, so the two have different row counts — never join them
+-- naively. trim_shares is non-NULL only where strong = 1.
+DROP VIEW IF EXISTS v_exit_advice;
+CREATE VIEW v_exit_advice AS
+SELECT e.* FROM exit_advice e
+JOIN v_latest_snapshot l ON e.snapshot_id = l.id;
 """
 
 
@@ -131,21 +162,27 @@ def connect(path: str) -> sqlite3.Connection:
 
 
 def ensure_schema(conn) -> None:
-    """Tables (CREATE IF NOT EXISTS), then views (DROP+CREATE)."""
+    """Tables (CREATE IF NOT EXISTS), the idempotent column migrations, then
+    views (DROP+CREATE). CREATE TABLE IF NOT EXISTS never widens an existing
+    table, so a DB written before a column was added needs the explicit ALTER
+    (same pattern as scorer/db.py and backtest/db.py)."""
     conn.executescript(_TABLES)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(position_heat)")}
+    if "avg_cost" not in cols:
+        conn.execute("ALTER TABLE position_heat ADD COLUMN avg_cost REAL")
     conn.executescript(_VIEWS)
     conn.commit()
 
 
 def prune(conn, keep_days: int, now_iso: str) -> int:
-    """Cascade position_heat + size_caps then snapshot headers (fully
-    snapshot-scoped, same pattern as portfolio.db)."""
+    """Cascade position_heat + size_caps + exit_advice then snapshot headers
+    (fully snapshot-scoped, same pattern as portfolio.db)."""
     cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
     ids = [r[0] for r in conn.execute("SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,))]
     if not ids:
         return 0
     qmarks = ",".join("?" * len(ids))
-    for child in ("position_heat", "size_caps"):
+    for child in ("position_heat", "size_caps", "exit_advice"):
         conn.execute(f"DELETE FROM {child} WHERE snapshot_id IN ({qmarks})", ids)
     conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
     conn.commit()
@@ -181,6 +218,12 @@ def finish_snapshot(conn, sid, account, composite, sources_failed=0) -> None:
     )
 
 
+def _finite(x) -> bool:
+    """True only for a real, usable number. NaN slips through every
+    comparison guard (NaN <= 0 is False), so it must be excluded by name."""
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
 def _age_days(today: str, obs_date: str) -> int:
     return (date.fromisoformat(today) - date.fromisoformat(obs_date)).days
 
@@ -211,6 +254,7 @@ def build_position_heat(
                 "group_name": ticker_group.get(sym),
                 "quantity": p["quantity"],
                 "market_value": p["market_value"],
+                "avg_cost": p.get("avg_cost"),
                 "atr": atr,
                 "price": close,
                 "price_date": pdate,
@@ -222,6 +266,86 @@ def build_position_heat(
                 "bearish": sc.get("bearish"),
                 "total": sc.get("total"),
                 "atr_stale": atr_stale,
+            }
+        )
+    return rows
+
+
+def build_exit_advice(heat_rows, stop_atr_multiple, trim_fraction_strong) -> list:
+    """One row per HELD position — every row in position_heat, not just the
+    disagreements: a stop is advice you want BEFORE the thesis breaks.
+
+    `strong` mirrors composite v_flagged (score_sum <= -STRONG_MIN_ABS_SCORE AND
+    total >= STRONG_MIN_TOTAL) and is the ONLY trigger for a trim.
+
+    NULL discipline, matching build_size_caps — a plausible-but-wrong number is
+    worse than an absent one:
+      * atr missing OR atr_stale  -> stop_price/stop_distance_pct are NULL. An
+        ATR-derived stop from a stale ATR looks authoritative and isn't.
+      * a computed stop <= 0      -> NULL (low price, high ATR; a stop below
+        zero is not advice).
+      * avg_cost missing or zero  -> unrealized_pct is NULL, never 0. Zero would
+        read as "flat", not "unknown". Zero avg_cost is real (gifted shares).
+      * not strong                -> trim_shares is NULL; the row is the advice.
+
+    Shares stay FRACTIONAL (no flooring), matching cap_shares and Robinhood
+    fractional sizing: flooring would zero every trim on a small position.
+    Decision support only — this never emits an order."""
+    rows = []
+    for r in heat_rows:
+        atr, price = r.get("atr"), r.get("price")
+        quantity = r["quantity"]
+        # A short leg would want a stop ABOVE entry and a positive trim of a
+        # negative quantity; both formulas below assume long. The book is
+        # long-only today, so refuse rather than emit a plausible inversion.
+        is_long = _finite(quantity) and quantity > 0
+
+        usable_atr = (
+            is_long and _finite(atr) and _finite(price) and atr > 0 and not r.get("atr_stale")
+        )
+
+        stop_price = price - stop_atr_multiple * atr if usable_atr else None
+        if stop_price is not None and stop_price <= 0:
+            stop_price = None
+        stop_distance_pct = (
+            100.0 * (price - stop_price) / price if stop_price is not None and price else None
+        )
+
+        # avg_cost must be strictly positive: 0 is "unknown/gifted" and a
+        # negative cost basis (never seen from the broker) would invert the sign.
+        avg_cost = r.get("avg_cost")
+        unrealized_pct = (
+            100.0 * (price - avg_cost) / avg_cost
+            if _finite(avg_cost) and avg_cost > 0 and _finite(price)
+            else None
+        )
+
+        score_sum, total = r.get("score_sum"), r.get("total")
+        strong = (
+            score_sum is not None
+            and total is not None
+            and score_sum <= -STRONG_MIN_ABS_SCORE
+            and total >= STRONG_MIN_TOTAL
+        )
+        # `strong` still reports (it mirrors v_disagreements), but a trim size
+        # is only meaningful for a long leg.
+        trim_shares = quantity * trim_fraction_strong if (strong and is_long) else None
+
+        rows.append(
+            {
+                "symbol": r["symbol"],
+                "quantity": r["quantity"],
+                "price": price,
+                "avg_cost": avg_cost,
+                "atr": atr,
+                "atr_stale": 1 if r.get("atr_stale") else 0,
+                "score_sum": score_sum,
+                "total": total,
+                "strong": 1 if strong else 0,
+                "stop_price": stop_price,
+                "stop_distance_pct": stop_distance_pct,
+                "unrealized_pct": unrealized_pct,
+                "trim_shares": trim_shares,
             }
         )
     return rows
@@ -301,11 +425,24 @@ def build_size_caps(
 def write_position_heat(conn, sid, rows) -> int:
     conn.executemany(
         "INSERT INTO position_heat (snapshot_id, symbol, group_name, quantity,"
-        " market_value, atr, price, price_date, heat_dollars, heat_pct,"
+        " market_value, avg_cost, atr, price, price_date, heat_dollars, heat_pct,"
         " weight_pct, score_sum, bullish, bearish, total, atr_stale)"
-        " VALUES (:sid, :symbol, :group_name, :quantity, :market_value, :atr,"
-        " :price, :price_date, :heat_dollars, :heat_pct, :weight_pct,"
+        " VALUES (:sid, :symbol, :group_name, :quantity, :market_value, :avg_cost,"
+        " :atr, :price, :price_date, :heat_dollars, :heat_pct, :weight_pct,"
         " :score_sum, :bullish, :bearish, :total, :atr_stale)",
+        [{**r, "sid": sid} for r in rows],
+    )
+    return len(rows)
+
+
+def write_exit_advice(conn, sid, rows) -> int:
+    conn.executemany(
+        "INSERT INTO exit_advice (snapshot_id, symbol, quantity, price, avg_cost,"
+        " atr, atr_stale, score_sum, total, strong, stop_price, stop_distance_pct,"
+        " unrealized_pct, trim_shares)"
+        " VALUES (:sid, :symbol, :quantity, :price, :avg_cost, :atr, :atr_stale,"
+        " :score_sum, :total, :strong, :stop_price, :stop_distance_pct,"
+        " :unrealized_pct, :trim_shares)",
         [{**r, "sid": sid} for r in rows],
     )
     return len(rows)

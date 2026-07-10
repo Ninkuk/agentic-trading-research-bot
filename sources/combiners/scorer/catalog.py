@@ -43,3 +43,12 @@ CROSSWALK_BENCHMARK: dict[str, str | None] = {
     "QQQ": "SPY",
     "IWM": "SPY",
 }
+
+# One-shot historical backfill roster for `main.py pricehistory` (plan 005).
+# Exactly the crosswalk proxies and their fan-out tickers: these are the only
+# symbols the scorer benchmarks against and the backtest replays against, so
+# they are the only ones whose history the ledger needs deep. A ticker-universe
+# backfill (~11k symbols) is deliberately NOT here — it would hammer an
+# unofficial endpoint and needs its own plan. Derived, never retyped, so the two
+# cannot drift.
+BACKFILL_SYMBOLS: tuple[str, ...] = tuple(sorted(CROSSWALK_BENCHMARK))

@@ -786,6 +786,54 @@ def mature(conn, now_iso, benchmark="SPY") -> int:
     return n
 
 
+_OUTCOME_TABLES = ("signal_outcomes", "ticker_outcomes", "regime_outcomes")
+
+
+def matured_counts(conn) -> dict:
+    """table -> count of rows whose forward return has already been computed."""
+    return {
+        t: conn.execute(f"SELECT COUNT(*) FROM {t} WHERE matured_at IS NOT NULL").fetchone()[0]
+        for t in _OUTCOME_TABLES
+    }
+
+
+def rebuild_prices(conn) -> tuple[int, int, int]:
+    """Destructive one-shot repair for the off-by-one-session price ledger.
+
+    Background: harvest_prices used to read stockanalysis's "close" column,
+    which is the PREVIOUS session's close, so every ledger row carried a real
+    close stamped with the NEXT trading day's date. Because insert_prices is
+    INSERT OR IGNORE, a corrected harvester cannot overwrite those rows — they
+    must be deleted first. Unmatured outcome rows hold entry_close values read
+    from the bad ledger, so they are deleted too and re-register on the next
+    run; their registered_snapshots gate rows go with them (registered_ids()
+    would otherwise skip re-registration forever).
+
+    REFUSES to run when any outcome row has matured: that row's forward return
+    was computed from mislabeled closes and cannot be silently repaired.
+
+    Returns (prices_deleted, outcomes_deleted, registrations_deleted)."""
+    matured = matured_counts(conn)
+    if any(matured.values()):
+        raise RuntimeError(
+            "refusing to rebuild: matured outcome rows exist "
+            f"({', '.join(f'{t}={n}' for t, n in matured.items() if n)}). "
+            "Their forward returns came from mislabeled closes; repair them "
+            "deliberately before rebuilding."
+        )
+
+    prices = conn.execute("DELETE FROM prices").rowcount
+    outcomes = 0
+    for t in _OUTCOME_TABLES:
+        outcomes += conn.execute(f"DELETE FROM {t} WHERE matured_at IS NULL").rowcount
+    # The guard above proved every outcome row is unmatured, and the loop just
+    # deleted all of them — so no registration can still be backing one. Clear
+    # them unconditionally rather than keep an unreachable "survivor" filter.
+    regs = conn.execute("DELETE FROM registered_snapshots").rowcount
+    conn.commit()
+    return prices, outcomes, regs
+
+
 def prune(conn, keep_days: int, now_iso: str) -> int:
     """Run headers only. The prices ledger and the outcome tables are both
     permanent — outcomes ARE the experiment, and the ledger is the backtest

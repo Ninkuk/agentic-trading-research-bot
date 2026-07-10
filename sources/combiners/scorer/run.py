@@ -9,11 +9,16 @@ from datetime import UTC, datetime
 from sources.combiners.scorer import catalog, db, fetch
 
 
-def run(db_path, db_dir, now_iso=None, keep_days=None):
+def run(db_path, db_dir, now_iso=None, keep_days=None, rebuild_prices=False):
     now_iso = now_iso or datetime.now(UTC).isoformat()
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)
+        if rebuild_prices:
+            # One-shot repair, never scheduled. Must precede the harvest: the
+            # ledger is INSERT OR IGNORE, so stale rows win until deleted.
+            dropped, outcomes, regs = db.rebuild_prices(conn)
+            print(f"rebuild: {dropped} prices, {outcomes} outcomes, {regs} registrations dropped")
         sid = db.write_snapshot(conn, now_iso)
         harvested = registered = matured = skipped = 0
         # 1) harvest
@@ -84,8 +89,16 @@ def main(argv=None):
     p.add_argument("--db", default="scorer.db")
     p.add_argument("--db-dir", default="data")
     p.add_argument("--keep-days", type=int, default=None)
+    p.add_argument(
+        "--rebuild-prices",
+        action="store_true",
+        help="ONE-SHOT REPAIR, never schedule: delete the price ledger and every"
+        " unmatured outcome, then re-harvest. Refuses if any outcome has matured.",
+    )
     a = p.parse_args(argv)
-    sid, harvested, registered, matured, skipped = run(a.db, a.db_dir, keep_days=a.keep_days)
+    sid, harvested, registered, matured, skipped = run(
+        a.db, a.db_dir, keep_days=a.keep_days, rebuild_prices=a.rebuild_prices
+    )
     print(
         f"scorer snapshot {sid}: {harvested} prices, {registered}"
         f" registered, {matured} matured, {skipped} skipped, into {a.db}"

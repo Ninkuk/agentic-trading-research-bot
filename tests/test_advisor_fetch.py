@@ -1,3 +1,5 @@
+import pytest
+
 from sources.combiners.advisor import db as advisor_db
 from sources.combiners.advisor import fetch
 from sources.combiners.composite import db as composite_db
@@ -5,7 +7,9 @@ from sources.combiners.scorer import db as scorer_db
 from sources.screeners.portfolio_screener import db as portfolio_db
 from sources.screeners.stock_analysis_screener import db as stocks_db
 
-PRICE_COLS = {"priceDate": "TEXT", "close": "REAL", "atr": "REAL"}
+# `price` is the close FOR priceDate; `close` is stockanalysis's PREVIOUS
+# close. Fixtures write them distinct so reading the wrong one cannot pass.
+PRICE_COLS = {"priceDate": "TEXT", "close": "REAL", "price": "REAL", "atr": "REAL"}
 
 
 def _advisor_conn(tmp_path):
@@ -64,9 +68,9 @@ def _mini_prices(path, rows):
     sid = conn.execute("SELECT MAX(id) FROM snapshots").fetchone()[0]
     for sym, close, atr in rows:
         conn.execute(
-            'INSERT INTO metrics (snapshot_id, symbol, "priceDate", "close", "atr")'
-            " VALUES (?, ?, ?, ?, ?)",
-            (sid, sym, "2026-07-07", close, atr),
+            'INSERT INTO metrics (snapshot_id, symbol, "priceDate", "close", "price", "atr")'
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (sid, sym, "2026-07-07", close - 1.0, close, atr),
         )
     conn.commit()
     conn.close()
@@ -160,6 +164,16 @@ def test_read_metrics_filters_to_requested_symbols(tmp_path):
     fetch.detach(conn)
 
 
+def test_read_metrics_reads_price_not_previous_close(tmp_path):
+    """Regression: sizing and heat must use the close FOR price_date, which is
+    stockanalysis's `price`. Fixture writes price=100.0, close=99.0."""
+    _mini_prices(tmp_path / "stocks.db", [("AAPL", 100.0, 2.0)])
+    conn = _advisor_conn(tmp_path)
+    fetch.attach_ro(conn, str(tmp_path / "stocks.db"))
+    assert fetch.read_metrics(conn, {"AAPL"})["AAPL"]["close"] == 100.0
+    fetch.detach(conn)
+
+
 def test_read_reliable_signals(tmp_path):
     _mini_scorer(tmp_path, reliable_signal="sig_a")
     conn = _advisor_conn(tmp_path)
@@ -175,3 +189,20 @@ def test_attach_ro_missing_file_raises(tmp_path):
         raise AssertionError("expected FileNotFoundError")
     except FileNotFoundError:
         pass
+
+
+def test_read_metrics_raises_when_price_column_absent(tmp_path):
+    """SQLite resolves an unknown double-quoted identifier to a string literal,
+    so a v_latest without `price` would return the text 'price' as a close and
+    blow up later inside heat arithmetic. Fail at the read instead."""
+    path = tmp_path / "noprice.db"
+    conn = stocks_db.connect(str(path))
+    stocks_db.ensure_schema(conn, {"priceDate": "TEXT", "close": "REAL", "atr": "REAL"})
+    conn.commit()
+    conn.close()
+
+    c = _advisor_conn(tmp_path)
+    fetch.attach_ro(c, str(path))
+    with pytest.raises(ValueError, match="price"):
+        fetch.read_metrics(c, {"AAPL"})
+    fetch.detach(c)

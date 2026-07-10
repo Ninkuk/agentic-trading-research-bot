@@ -1,4 +1,5 @@
 import sqlite3
+from pathlib import Path
 
 import pytest
 
@@ -21,6 +22,7 @@ KNOWN_DBS = {
     "reddit.db",
     "stocks.db",
     "edgar.db",
+    "earnings.db",
     "portfolio.db",
 }
 ASSET_CLASSES = {"ags", "rates", "energy", "softs", "metals", "fx", "equity_index"}
@@ -78,6 +80,7 @@ DB_MODULES = {
     "reddit.db": "sources.screeners.reddit_screener.db",
     "stocks.db": "sources.screeners.stock_analysis_screener.db",
     "edgar.db": "sources.screeners.edgar_screener.db",
+    "earnings.db": "sources.monitors.earnings_calendar.db",
     "portfolio.db": "sources.screeners.portfolio_screener.db",
 }
 
@@ -167,10 +170,153 @@ def test_cboe_equity_pcr_score_case_is_hoisted_constant():
     assert "pctile >= 90" in CBOE_EQUITY_PCR_SCORE
 
 
-def test_eia_score_case_is_hoisted_constant():
-    from sources.combiners.composite.catalog import EIA_WEEKLY_CHANGE_SCORE, SIGNALS
+def test_eia_score_cases_are_separate_hoisted_constants():
+    """Crude and natgas must be DIFFERENT constants, even while the two
+    expressions are identical today. They shared one until 2026-07-09, which
+    made either impossible to retune without silently retuning the other.
+
+    Asserted on the source, not on object identity: Python interns equal string
+    literals, so `EIA_CRUDE is not EIA_NATGAS` is False even when they are two
+    genuinely independent assignments. The invariant is syntactic — each name
+    binds its own literal, neither aliases the other."""
+    import ast
+
+    from sources.combiners.composite.catalog import (
+        EIA_CRUDE_CHANGE_SCORE,
+        EIA_NATGAS_CHANGE_SCORE,
+        SIGNALS,
+    )
 
     by_id = {s["signal_id"]: s for s in SIGNALS}
-    assert EIA_WEEKLY_CHANGE_SCORE in by_id["eia_crude_stocks"]["sql"]
-    assert EIA_WEEKLY_CHANGE_SCORE in by_id["eia_natgas_storage"]["sql"]
-    assert "change_pct <= -2.0" in EIA_WEEKLY_CHANGE_SCORE
+    assert EIA_CRUDE_CHANGE_SCORE in by_id["eia_crude_stocks"]["sql"]
+    assert EIA_NATGAS_CHANGE_SCORE in by_id["eia_natgas_storage"]["sql"]
+    assert "change_pct <= -2.0" in EIA_CRUDE_CHANGE_SCORE
+
+    src = Path(catalog.__file__).read_text()
+    assigned = {}
+    for node in ast.walk(ast.parse(src)):
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            t = node.targets[0]
+            if isinstance(t, ast.Name) and t.id.startswith("EIA_"):
+                assigned[t.id] = node.value
+
+    assert set(assigned) == {"EIA_CRUDE_CHANGE_SCORE", "EIA_NATGAS_CHANGE_SCORE"}
+    for name, value in assigned.items():
+        assert isinstance(value, ast.Constant), f"{name} must bind its own literal"
+    # ...and neither is an alias of the other (that would re-couple them).
+    assert not any(isinstance(v, ast.Name) for v in assigned.values())
+
+
+def test_backtest_replays_each_eia_signal_with_its_own_constant():
+    """The replay must stay matched to composite per signal — that is what makes
+    "flags cannot drift" true after the split. Asserted syntactically for the
+    same interning reason."""
+    import ast
+
+    from sources.combiners.backtest import catalog as bt
+
+    src = Path(bt.__file__).read_text()
+    want = {
+        "eia_crude_stocks": "EIA_CRUDE_CHANGE_SCORE",
+        "eia_natgas_storage": "EIA_NATGAS_CHANGE_SCORE",
+    }
+    seen = {}
+    for node in ast.walk(ast.parse(src)):
+        if not isinstance(node, ast.Dict):
+            continue
+        keys = {k.value for k in node.keys if isinstance(k, ast.Constant)}
+        if "signal_id" not in keys or "score_case" not in keys:
+            continue
+        d = {
+            k.value: v
+            for k, v in zip(node.keys, node.values, strict=True)
+            if isinstance(k, ast.Constant)
+        }
+        sig = d["signal_id"]
+        if isinstance(sig, ast.Constant) and sig.value in want:
+            assert isinstance(d["score_case"], ast.Name)
+            seen[sig.value] = d["score_case"].id
+    assert seen == want
+
+
+# --- earnings_imminent: per-ticker event gate (plan 002) --------------------
+
+
+def _earnings_signal():
+    return next(s for s in catalog.SIGNALS if s["signal_id"] == "earnings_imminent")
+
+
+def test_earnings_imminent_is_a_ticker_grain_zero_score_gate():
+    s = _earnings_signal()
+    assert s["grain"] == "ticker"
+    assert s["db"] == "earnings.db"
+    # Forward-looking: obs_date is :today by construction, so nothing to age.
+    assert s["staleness_budget_days"] == 0
+    # score literal is 0 -> the row annotates, never votes.
+    assert "0, :today" in s["sql"]
+
+
+def test_earnings_imminent_not_in_regime_fields():
+    """REGIME_FIELDS is market-grain only; a ticker signal there would try to
+    write a per-symbol value into the single market_regime row."""
+    assert "earnings_imminent" not in catalog.REGIME_FIELDS
+
+
+def test_earnings_imminent_sql_obeys_the_one_clock_rule():
+    """earnings.db's v_imminent_earnings filters on its own calendar_now
+    singleton — a different clock from composite's bound :today."""
+    sql = _earnings_signal()["sql"]
+    for forbidden in ("v_imminent", "v_upcoming", "calendar_now", "v_asof"):
+        assert forbidden not in sql, forbidden
+
+
+def test_no_signal_reads_a_calendar_dependent_view():
+    """The one-clock rule, enforced across the whole catalog, not just the new
+    signal — this is the invariant stated in catalog.py's module docstring."""
+    for s in catalog.SIGNALS:
+        for forbidden in ("v_imminent", "v_upcoming", "calendar_now", "v_asof"):
+            assert forbidden not in s["sql"], f"{s['signal_id']} reads {forbidden}"
+
+
+def test_earnings_imminent_selectable_by_select_ids():
+    only = catalog.select_ids(["earnings_imminent"], None, None)
+    assert [s["signal_id"] for s in only] == ["earnings_imminent"]
+    excl = catalog.select_ids(None, ["earnings_imminent"], None)
+    assert "earnings_imminent" not in [s["signal_id"] for s in excl]
+
+
+def test_earnings_imminent_emits_exactly_one_row_per_ticker(tmp_path):
+    """Composite's signal_values PK is (snapshot_id, signal_id, entity) and the
+    writer is INSERT OR IGNORE, so a duplicate entity is silently swallowed and
+    whichever row the scan yields FIRST wins. That makes a run-level assertion
+    unable to see a missing GROUP BY. Assert on the extraction itself, where a
+    duplicate is still visible: one forward row per ticker, at the NEAREST date.
+
+    The fixture stores the far date first so a missing MIN/GROUP BY cannot pass
+    by accident."""
+    import importlib
+
+    mod = importlib.import_module("sources.monitors.earnings_calendar.db")
+    path = str(tmp_path / "earnings.db")
+    conn = mod.connect(path)
+    mod.ensure_schema(conn)
+    conn.executemany(
+        "INSERT INTO events (event_type, event_date, subtype, source, fetched_at)"
+        " VALUES ('earnings', ?, ?, 'test', '2026-07-06T00:00:00+00:00')",
+        [("2026-07-12", "AAPL"), ("2026-07-09", "AAPL"), ("2026-07-10", "MSFT")],
+    )
+    conn.commit()
+    conn.close()
+
+    c = sqlite3.connect(":memory:", uri=True)
+    try:
+        fetch.attach_ro(c, path)
+        rows = fetch.extract(c, _earnings_signal(), today="2026-07-07")
+    finally:
+        c.close()
+
+    entities = [r["entity"] for r in rows]
+    assert entities == sorted(set(entities)), f"duplicate entity emitted: {entities}"
+    by = {r["entity"]: r["raw_value"] for r in rows}
+    assert by == {"AAPL": 2, "MSFT": 3}, "must report days to the NEAREST print"
+    assert all(r["score"] == 0 for r in rows), "gate must never vote"
