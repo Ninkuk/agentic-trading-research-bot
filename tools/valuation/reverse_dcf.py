@@ -8,6 +8,8 @@ bet; a high implied return on conservative ones is an interesting one.
 Pure: no network, no database, no wall clock. Every input is an argument.
 """
 
+import argparse
+import sys
 from collections.abc import Sequence
 
 MAX_RATE = 1.0
@@ -118,3 +120,68 @@ def implied_discount_rate(
         else:
             high = midpoint
     return (low + high) / 2.0
+
+
+def enterprise_value(market_cap: float, net_debt: float = 0.0) -> float:
+    """Bridge equity value to enterprise value.
+
+    Pair unlevered (firm) cash flows with this; pair levered (equity) cash flows
+    with `market_cap` alone. Mixing the two is the classic silent DCF error, so
+    the caller states the bridge explicitly rather than the solver assuming it.
+    """
+    return market_cap + net_debt
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="reverse_dcf",
+        description="Solve for the annual return a market price already implies.",
+    )
+    parser.add_argument("--market-cap", type=float, required=True)
+    parser.add_argument(
+        "--net-debt",
+        type=float,
+        default=0.0,
+        help=(
+            "Positive for net debt, negative for net cash. "
+            "Supply only when --base-fcf is unlevered."
+        ),
+    )
+    parser.add_argument(
+        "--base-fcf",
+        type=float,
+        required=True,
+        help="Trailing free cash flow. Must be positive.",
+    )
+    parser.add_argument(
+        "--growth",
+        type=float,
+        nargs="+",
+        required=True,
+        help="One growth rate per explicit forecast year, e.g. 0.08 0.06 0.04",
+    )
+    parser.add_argument("--terminal-growth", type=float, required=True)
+    args = parser.parse_args(argv)
+
+    try:
+        flows = project_cash_flows(args.base_fcf, args.growth)
+        target = enterprise_value(args.market_cap, args.net_debt)
+        rate = implied_discount_rate(target, flows, args.terminal_growth)
+    except ValueError as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 2
+
+    if rate is None:
+        print(
+            f"no solution in ({args.terminal_growth}, {MAX_RATE}] — "
+            f"the price implies a return above {MAX_RATE:.0%}"
+        )
+        return 1
+
+    print(f"implied_discount_rate: {rate:.4f}  ({rate:.2%} per year)")
+    print(f"horizon_years: {len(flows)}  terminal_growth: {args.terminal_growth:.2%}")
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

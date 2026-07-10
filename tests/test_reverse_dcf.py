@@ -2,7 +2,9 @@ import pytest
 
 from tools.valuation.reverse_dcf import (
     MAX_RATE,
+    enterprise_value,
     implied_discount_rate,
+    main,
     present_value,
     project_cash_flows,
 )
@@ -146,3 +148,72 @@ def test_implied_rate_refuses_a_target_exactly_at_the_max_rate_edge() -> None:
     terminal_growth = 0.4527459297022468
     target_at_edge = present_value(flows, MAX_RATE, terminal_growth)
     assert implied_discount_rate(target_at_edge, flows, terminal_growth) is None
+
+
+def test_enterprise_value_bridges_net_debt() -> None:
+    assert enterprise_value(1_000.0, 250.0) == pytest.approx(1_250.0)
+    assert enterprise_value(1_000.0, -100.0) == pytest.approx(900.0)  # net cash
+    assert enterprise_value(1_000.0) == pytest.approx(1_000.0)
+
+
+def test_main_prints_the_implied_rate(capsys: pytest.CaptureFixture[str]) -> None:
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--base-fcf",
+            "100",
+            "--growth",
+            "0.05",
+            "0.05",
+            "0.05",
+            "--terminal-growth",
+            "0.02",
+        ]
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "implied_discount_rate" in out
+
+
+def test_main_reports_no_solution_without_pretending(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = main(
+        [
+            "--market-cap",
+            "1",
+            "--base-fcf",
+            "100",
+            "--growth",
+            "0.05",
+            "0.05",
+            "0.05",
+            "--terminal-growth",
+            "0.02",
+        ]
+    )
+    assert code == 1
+    out = capsys.readouterr().out
+    assert "no solution" in out.lower()
+    # It must not also print a rate. A clamping CLI would emit both.
+    assert "implied_discount_rate" not in out
+
+
+def test_main_reports_a_refusal_without_a_traceback(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--base-fcf",
+            "-5",
+            "--growth",
+            "0.05",
+            "--terminal-growth",
+            "0.02",
+        ]
+    )
+    assert code == 2
+    assert "base_fcf" in capsys.readouterr().err
