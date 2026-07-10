@@ -72,15 +72,29 @@ def read_positions(conn) -> list:
 
 def read_metrics(conn, symbols) -> dict:
     """symbol -> {atr, close, price_date} from a price DB's v_latest.
-    Column names are stockanalysis.com camelCase — keep them quoted."""
+    Column names are stockanalysis.com camelCase — keep them quoted.
+
+    The close for `priceDate` is the "price" column, NOT "close": stockanalysis
+    names these from a live-quote perspective, so `close` is the PREVIOUS
+    session's close (docs/stockanalysis_data_json_catalog.md). The returned key
+    stays `close` because that is what it is — the closing price for price_date."""
     syms = sorted(symbols)
     if not syms:
         return {}
+    # Same trap scorer.fetch.harvest_prices guards: SQLite resolves an unknown
+    # double-quoted identifier to a STRING LITERAL, so a v_latest without
+    # `price` would hand every caller the text 'price' as a close. run()'s
+    # per-source handler turns this into a loud skip, not silent arithmetic on
+    # a string.
+    cols = {r[1] for r in conn.execute("PRAGMA src.table_info(v_latest)")}
+    missing = {"symbol", "atr", "price", "priceDate"} - cols
+    if missing:
+        raise ValueError(f"src.v_latest missing column(s): {', '.join(sorted(missing))}")
     qmarks = ",".join("?" * len(syms))
     return {
         r[0]: {"atr": r[1], "close": r[2], "price_date": r[3]}
         for r in conn.execute(
-            f'SELECT symbol, "atr", "close", "priceDate" FROM src.v_latest'
+            f'SELECT symbol, "atr", "price", "priceDate" FROM src.v_latest'
             f" WHERE symbol IN ({qmarks})",
             syms,
         )

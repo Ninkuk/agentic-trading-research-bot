@@ -1,5 +1,7 @@
 import sqlite3
 
+import pytest
+
 from sources.combiners.advisor import run as run_mod
 from sources.combiners.composite import db as composite_db
 from sources.combiners.scorer import db as scorer_db
@@ -10,7 +12,9 @@ from sources.screeners.stock_analysis_screener import db as stocks_db
 # Fixtures must straddle the rollover or they cannot catch a UTC/Phoenix mixup:
 # this instant is Phoenix 2026-07-07 but UTC 2026-07-08.
 NOW = "2026-07-08T04:12:00+00:00"
-PRICE_COLS = {"priceDate": "TEXT", "close": "REAL", "atr": "REAL"}
+# `price` is the close FOR priceDate; `close` is stockanalysis's PREVIOUS
+# close. Fixtures write them distinct so reading the wrong one cannot pass.
+PRICE_COLS = {"priceDate": "TEXT", "close": "REAL", "price": "REAL", "atr": "REAL"}
 
 
 def _sig(signal_id, entity, score):
@@ -68,9 +72,9 @@ def _mini_prices(path, rows):
     sid = conn.execute("SELECT MAX(id) FROM snapshots").fetchone()[0]
     for sym, close, atr in rows:
         conn.execute(
-            'INSERT INTO metrics (snapshot_id, symbol, "priceDate", "close", "atr")'
-            " VALUES (?, ?, ?, ?, ?)",
-            (sid, sym, "2026-07-07", close, atr),
+            'INSERT INTO metrics (snapshot_id, symbol, "priceDate", "close", "price", "atr")'
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (sid, sym, "2026-07-07", close - 1.0, close, atr),
         )
     conn.commit()
     conn.close()
@@ -195,9 +199,9 @@ def test_atr_staleness_is_judged_on_the_phoenix_date(tmp_path):
         sid = conn.execute("SELECT MAX(id) FROM snapshots").fetchone()[0]
         for sym, close, atr in rows:
             conn.execute(
-                'INSERT INTO metrics (snapshot_id, symbol, "priceDate", "close", "atr")'
-                " VALUES (?, ?, ?, ?, ?)",
-                (sid, sym, "2026-07-02", close, atr),
+                'INSERT INTO metrics (snapshot_id, symbol, "priceDate", "close", "price", "atr")'
+                " VALUES (?, ?, ?, ?, ?, ?)",
+                (sid, sym, "2026-07-02", close - 1.0, close, atr),
             )
         conn.commit()
         conn.close()

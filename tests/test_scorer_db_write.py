@@ -490,3 +490,97 @@ def test_matched_benchmark_split_blocks_row(tmp_path):
     # the XLE-benchmarked row is held pending by the benchmark-leg break;
     # the SPY-benchmarked row for the same entity matures fine
     assert rows == {"cftc_energy": 0, "stocks_rsi": 1}
+
+
+# --- rebuild_prices: one-shot repair of the off-by-one-session ledger --------
+
+
+def _outcome(conn, table, csid=1, matured=None):
+    if table == "regime_outcomes":
+        conn.execute(
+            "INSERT INTO regime_outcomes (composite_snapshot_id, composite_date, regime,"
+            " horizon, entry_date, bench_entry_close, matured_at) VALUES (?,?,?,?,?,?,?)",
+            (csid, "2026-07-06", "mixed", 5, "2026-07-07", 100.0, matured),
+        )
+    elif table == "ticker_outcomes":
+        conn.execute(
+            "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date, symbol,"
+            " score_sum, total, bullish, bearish, horizon, entry_date, entry_close,"
+            " matured_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            (csid, "2026-07-06", "AAPL", 4, 3, 3, 0, 5, "2026-07-07", 100.0, matured),
+        )
+    else:
+        conn.execute(
+            "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date, signal_id,"
+            " entity, score, horizon, entry_date, entry_close, matured_at)"
+            " VALUES (?,?,?,?,?,?,?,?,?)",
+            (csid, "2026-07-06", "stocks_rsi", "AAPL", 2, 5, "2026-07-07", 100.0, matured),
+        )
+
+
+def _registration(conn, csid=1, ticker_rows=1):
+    conn.execute(
+        "INSERT INTO registered_snapshots (composite_snapshot_id, composite_date, entry_date,"
+        " registered_at, ticker_rows, signal_rows, skipped) VALUES (?,?,?,?,?,?,0)",
+        (csid, "2026-07-06", f"2026-07-0{6 + csid}", NOW, ticker_rows, 1),
+    )
+
+
+def test_rebuild_prices_clears_ledger_unmatured_outcomes_and_registrations(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "AAPL", DAYS)
+    for t in ("signal_outcomes", "ticker_outcomes", "regime_outcomes"):
+        _outcome(conn, t)
+    _registration(conn)
+    conn.commit()
+
+    prices, outcomes, regs = db.rebuild_prices(conn)
+
+    assert (prices, outcomes, regs) == (len(DAYS), 3, 1)
+    for t in (
+        "prices",
+        "signal_outcomes",
+        "ticker_outcomes",
+        "regime_outcomes",
+        "registered_snapshots",
+    ):
+        assert conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] == 0, t
+
+
+def test_rebuild_prices_refuses_when_any_outcome_matured(tmp_path):
+    """A matured row's forward return came from mislabeled closes; deleting the
+    ledger under it would strand an unrepairable result."""
+    conn = _conn(tmp_path)
+    _ledger(conn, "AAPL", DAYS)
+    _outcome(conn, "signal_outcomes", matured=NOW)
+    _outcome(conn, "ticker_outcomes")  # unmatured; must survive the refusal
+    conn.commit()
+
+    try:
+        db.rebuild_prices(conn)
+    except RuntimeError as e:
+        assert "signal_outcomes=1" in str(e)
+        assert "ticker_outcomes" not in str(e)  # only non-zero tables named
+    else:
+        raise AssertionError("expected RuntimeError")
+
+    assert conn.execute("SELECT COUNT(*) FROM prices").fetchone()[0] == len(DAYS)
+    assert conn.execute("SELECT COUNT(*) FROM signal_outcomes").fetchone()[0] == 1
+    assert conn.execute("SELECT COUNT(*) FROM ticker_outcomes").fetchone()[0] == 1
+
+
+def test_rebuild_prices_is_idempotent_on_an_empty_db(tmp_path):
+    conn = _conn(tmp_path)
+    assert db.rebuild_prices(conn) == (0, 0, 0)
+    assert db.rebuild_prices(conn) == (0, 0, 0)
+
+
+def test_matured_counts_reports_per_table(tmp_path):
+    conn = _conn(tmp_path)
+    _outcome(conn, "regime_outcomes", matured=NOW)
+    conn.commit()
+    assert db.matured_counts(conn) == {
+        "signal_outcomes": 0,
+        "ticker_outcomes": 0,
+        "regime_outcomes": 1,
+    }
