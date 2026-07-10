@@ -173,7 +173,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if rate is None:
         print(
-            f"no solution in ({args.terminal_growth}, {MAX_RATE}] — "
+            f"no solution in ({args.terminal_growth}, {MAX_RATE}) — "
             f"the price implies a return above {MAX_RATE:.0%}"
         )
         return 1

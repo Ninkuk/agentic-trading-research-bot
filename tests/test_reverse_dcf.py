@@ -87,7 +87,7 @@ def test_implied_rate_falls_when_price_rises() -> None:
 
 def test_implied_rate_returns_none_when_priced_above_the_bracket() -> None:
     # A market cap so low that even a 100% discount rate overvalues it:
-    # no root in (g, 1.0]. Report no-solution, never clamp to 1.0.
+    # no root in (g, 1.0). Report no-solution, never clamp to 1.0.
     flows = project_cash_flows(100.0, [0.05] * 5)
     result = implied_discount_rate(1.0, flows, 0.02)
     assert result is None
