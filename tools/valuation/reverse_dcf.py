@@ -78,10 +78,12 @@ def implied_discount_rate(
     or enterprise value for unlevered ones. The caller bridges; this function
     never guesses which kind of cash flow it was handed.
 
-    Returns the implied rate, or None when no rate in `(terminal_growth, MAX_RATE]`
-    prices the flows at `target_value` — i.e. the market implies a return above
-    MAX_RATE. Returning None rather than clamping to MAX_RATE is deliberate: a
-    clamped edge is a wrong answer wearing the costume of a right one.
+    Returns the implied rate, or None when no rate in `(terminal_growth, MAX_RATE)`
+    prices the flows at `target_value`. This includes the case where present value
+    at MAX_RATE meets or exceeds `target_value` — i.e. the market implies a return
+    at or above MAX_RATE. Refusing an exact root at a bracket edge is deliberate: a
+    caller cannot distinguish a true edge root from a clamped one, and a 100%/yr
+    implied return is not actionable.
 
     Raises ValueError on malformed input.
     """
