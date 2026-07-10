@@ -28,3 +28,31 @@ def project_cash_flows(base_fcf: float, growth_rates: Sequence[float]) -> list[f
         cash_flow *= 1.0 + growth
         flows.append(cash_flow)
     return flows
+
+
+def present_value(
+    cash_flows: Sequence[float],
+    rate: float,
+    terminal_growth: float,
+) -> float:
+    """Discount `cash_flows` at `rate`, plus a Gordon-growth terminal value.
+
+    Strictly decreasing in `rate` over `(terminal_growth, inf)` — the property
+    that makes bisection an unconditionally convergent solver here.
+    """
+    if not cash_flows:
+        raise ValueError("cash_flows must not be empty")
+    if rate <= terminal_growth:
+        raise ValueError(
+            f"rate must exceed terminal_growth for a finite value; "
+            f"got rate={rate}, terminal_growth={terminal_growth}"
+        )
+
+    value = 0.0
+    for period, cash_flow in enumerate(cash_flows, start=1):
+        value += cash_flow / (1.0 + rate) ** period
+
+    horizon = len(cash_flows)
+    terminal = cash_flows[-1] * (1.0 + terminal_growth) / (rate - terminal_growth)
+    value += terminal / (1.0 + rate) ** horizon
+    return value
