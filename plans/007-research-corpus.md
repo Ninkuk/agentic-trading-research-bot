@@ -100,7 +100,8 @@ in the same call.
 
 *Containment in either direction, after stripping legal suffixes,* also fails. Verizon's turns
 carry five different strings — `Verizon`, `Verizon Communications`, `Verizon Communications Inc.`,
-`Verizon Consumer`, `Verizon Consumer Group`. Pass the long legal name from `data/stocks.db` and
+`Verizon Consumer`, `Verizon Consumer Group`. Pass the long legal name (however you obtained it —
+`data/stocks.db` has no name column; see the final-review entry below) and
 `"verizon communications"` neither contains nor is contained by `"verizon consumer"`, so **115
 turns by Verizon's own Consumer Group CEO classify as analyst questions.** Measured, not guessed.
 
