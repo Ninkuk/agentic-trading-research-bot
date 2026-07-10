@@ -98,10 +98,15 @@ def implied_discount_rate(
     high = MAX_RATE
 
     # present_value is strictly decreasing in rate, so a root exists in
-    # [low, high] iff pv(high) <= target <= pv(low).
-    if present_value(cash_flows, high, terminal_growth) > target_value:
+    # (low, high) iff pv(high) < target < pv(low). Both comparisons below are
+    # deliberately inclusive of equality: if the target sits exactly at either
+    # edge's present value, the "solution" is indistinguishable from having no
+    # solution at all (an exact root at MAX_RATE looks identical to a target
+    # that's just barely out of reach) — refuse rather than let the bisection
+    # loop converge onto the edge and report it as a real answer.
+    if present_value(cash_flows, high, terminal_growth) >= target_value:
         return None
-    if present_value(cash_flows, low, terminal_growth) < target_value:
+    if present_value(cash_flows, low, terminal_growth) <= target_value:
         return None
 
     for _ in range(_ITERATIONS):

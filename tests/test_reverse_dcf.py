@@ -134,3 +134,15 @@ def test_implied_rate_rejects_terminal_growth_at_or_above_max_rate() -> None:
 def test_implied_rate_rejects_empty_cash_flows() -> None:
     with pytest.raises(ValueError, match="cash_flows"):
         implied_discount_rate(1_000.0, [], 0.02)
+
+
+def test_implied_rate_refuses_a_target_exactly_at_the_max_rate_edge() -> None:
+    # Regression guard: a target equal to present_value(cash_flows, MAX_RATE, g)
+    # puts the true root exactly on the bracket edge. That's indistinguishable
+    # from "no solution" to the caller, so refuse rather than let bisection
+    # converge onto MAX_RATE and hand back a clamped answer wearing the
+    # costume of a real one.
+    flows = project_cash_flows(123.20103504793464, [0.29324039980786637])
+    terminal_growth = 0.4527459297022468
+    target_at_edge = present_value(flows, MAX_RATE, terminal_growth)
+    assert implied_discount_rate(target_at_edge, flows, terminal_growth) is None
