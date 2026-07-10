@@ -4,7 +4,9 @@ from tools.research.transcripts import (
     MANAGEMENT,
     OUTSIDE,
     UNATTRIBUTED,
+    Coverage,
     classify_side,
+    coverage,
     flatten_turn,
     issuer_from_turns,
 )
@@ -103,3 +105,46 @@ def test_issuer_from_turns_picks_the_modal_company() -> None:
 
 def test_issuer_from_turns_is_none_when_nobody_is_attributed() -> None:
     assert issuer_from_turns([turn(None), turn("  ")]) is None
+
+
+def index(*dates: str) -> list[dict]:
+    return [{"eventDate": d, "quarterLabel": "Q1", "detailSlug": f"s-{d}"} for d in dates]
+
+
+def test_coverage_reports_span_and_count() -> None:
+    cov = coverage(index("2021-03-12", "2026-06-09", "2023-01-01"))
+    assert cov.n_calls == 3
+    assert cov.first == "2021-03-12"
+    assert cov.last == "2026-06-09"
+
+
+def test_coverage_of_an_empty_index_is_not_an_error() -> None:
+    # BABA, TSM, SAP, SONY have no corpus at all. This is a normal outcome.
+    cov = coverage([])
+    assert cov == Coverage(n_calls=0, first=None, last=None, ipo_date=None, uncovered_years=None)
+
+
+def test_uncovered_years_measures_the_gap_from_ipo_to_first_call() -> None:
+    # AT&T: 12 calls from 2021, but listed long before.
+    cov = coverage(index("2021-03-12"), ipo_date="1983-11-21")
+    assert cov.uncovered_years == pytest.approx(37.3, abs=0.1)
+
+
+def test_uncovered_years_is_none_without_an_ipo_date() -> None:
+    assert coverage(index("2021-03-12")).uncovered_years is None
+
+
+def test_uncovered_years_is_zero_when_coverage_predates_the_ipo() -> None:
+    # Never report a negative gap; clamp at zero.
+    cov = coverage(index("2010-05-13"), ipo_date="2012-01-01")
+    assert cov.uncovered_years == 0.0
+
+
+def test_uncovered_years_is_none_when_the_index_is_empty() -> None:
+    assert coverage([], ipo_date="1983-11-21").uncovered_years is None
+
+
+def test_coverage_ignores_rows_with_no_event_date() -> None:
+    cov = coverage([{"eventDate": "2024-01-01"}, {"detailSlug": "orphan"}])
+    assert cov.n_calls == 2
+    assert cov.first == cov.last == "2024-01-01"

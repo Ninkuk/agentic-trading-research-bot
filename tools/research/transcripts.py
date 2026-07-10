@@ -14,6 +14,8 @@ decoding lives in ``stock_analysis_screener.probe``.
 import re
 from collections import Counter
 from collections.abc import Sequence
+from dataclasses import dataclass
+from datetime import date
 
 MANAGEMENT = "management"
 """The issuer's own people. A statement here is a disclosure."""
@@ -131,3 +133,48 @@ def issuer_from_turns(turns: Sequence[dict]) -> str | None:
         if isinstance(turn.get("company"), str) and turn["company"].strip()
     )
     return named.most_common(1)[0][0] if named else None
+
+
+_DAYS_PER_YEAR = 365.25
+
+
+@dataclass(frozen=True)
+class Coverage:
+    """What the corpus actually spans — the denominator for every search over it."""
+
+    n_calls: int
+    first: str | None
+    last: str | None
+    ipo_date: str | None
+    uncovered_years: float | None
+
+
+def coverage(index: list[dict], ipo_date: str | None = None) -> Coverage:
+    """Summarize a transcript index: how many calls, spanning what, missing how much.
+
+    Transcript depth tracks the data provider's onboarding date, not the company's
+    history, and the payload does not say so. AT&T returns twelve calls beginning in
+    2021; Alibaba returns none at all. A search over such a corpus can establish that
+    management *said* something, never that they never did — so callers must print
+    this before they print a hit list.
+
+    ``ipo_date`` is supplied by the caller (from ``data/stocks.db``), never fetched:
+    this module has no network and no clock. ``uncovered_years`` is None when it is
+    absent or when the corpus is empty, and clamps at 0.0 rather than going negative.
+    """
+    dates = sorted(row["eventDate"] for row in index if row.get("eventDate"))
+    first = dates[0] if dates else None
+    last = dates[-1] if dates else None
+
+    uncovered: float | None = None
+    if first is not None and ipo_date:
+        gap_days = (date.fromisoformat(first) - date.fromisoformat(ipo_date)).days
+        uncovered = max(0.0, gap_days / _DAYS_PER_YEAR)
+
+    return Coverage(
+        n_calls=len(index),
+        first=first,
+        last=last,
+        ipo_date=ipo_date,
+        uncovered_years=uncovered,
+    )
