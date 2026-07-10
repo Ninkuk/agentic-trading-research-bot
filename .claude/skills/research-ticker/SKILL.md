@@ -125,30 +125,40 @@ Do not guess the "right" multiple. A multiple is shorthand for a DCF. Instead,
 hold the assumptions fixed and solve for the return the market already implies.
 
 **Pull the inputs live** from `page_data("/stocks/<TICKER>/statistics/")` — its
-`valuation`, `cashFlow`, and `balanceSheet` blocks carry `marketCap`,
-`enterpriseValue`, `fcf`, `capex`, and `debt` in one request. Read each row's
-**`hover`** field, not `value`: `hover` is the exact figure
-(`'4,644,435,714,320'`), while `value` is a rounded display string (`'4.64T'`).
+`valuation`, `cashFlow`, and `balanceSheet` blocks carry market cap, enterprise
+value, `fcf`, `capex`, and `debt` in one request. Read each row's **`hover`**
+field, not `value`: `hover` is the exact figure (`'4,644,435,714,320'`), while
+`value` is a rounded display string (`'4.64T'`). The market-cap row's id is
+`marketcap` — lowercased, unlike the `marketCap` used everywhere else.
 
-Pair the flow to the value or the answer is quietly wrong. `enterpriseValue` is
-given directly, so you rarely need the `--net-debt` bridge — pass EV as
-`--market-cap` and leave `--net-debt` at zero. If you instead take
-`leveredFCF`/`unleveredFCF` from the `financials/cash-flow-statement/` route,
-mind that route's own traps, which the catalog documents.
+**`fcf` on this route is a levered (equity) flow, so pair it with market cap.**
+It is computed as `ncfo + capex`, and `ncfo` is post-interest under US GAAP —
+the debt has already been served. Pass **market cap** as `--market-cap` and
+leave `--net-debt` at zero. Enterprise value sits on the same page and is the
+wrong denominator for this flow: it re-counts the debt you just paid.
 
-Mixing a levered flow with enterprise value (or the reverse) is the classic
-silent DCF error, which is why the solver never guesses which flow it was
-handed. On AAPL the two pairings differ by ~57bps.
+Unlevered (firm) cash flow is what pairs with enterprise value; only then pass
+`--net-debt`. The solver never guesses which flow it was handed, so nothing
+downstream will catch a mismatch — it just returns a confident wrong number.
+
+`fcf` is also **not** stockanalysis's own `leveredFCF`. On AAPL TTM all three
+disagree: `fcf` 129.17B, `leveredFCF` 97.69B, `unleveredFCF` 119.20B. If you
+take a flow from `financials/cash-flow-statement/` instead, pair it by the name
+it actually carries, and mind that route's own traps.
 
 ```bash
+# Verizon: levered FCF 20.27B against MARKET CAP 176.4B — not EV of 368.4B.
 uv run python -m tools.valuation.reverse_dcf \
-  --market-cap <mkt cap> --base-fcf <trailing FCF> \
-  --growth 0.08 0.06 0.04 --terminal-growth 0.025
+  --market-cap 176400000000 --base-fcf 20270000000 \
+  --growth 0.02 0.02 0.02 --terminal-growth 0.015
+# implied_discount_rate: 0.1332  (13.32% per year)
 ```
 
-Levered (equity) free cash flow pairs with market cap. Unlevered (firm) cash
-flow pairs with enterprise value — pass `--net-debt`. Mixing them is the
-classic silent DCF error.
+Hand that same flow to enterprise value and it prints **7.16%** — a 616bp error
+that turns an interesting name into a pass. The distortion scales with net debt,
+which is why you must never sanity-check this pairing on a debt-free company: on
+AAPL, whose net *cash* is 1.3% of market cap, the identical mistake moves the
+answer by 4bps (4.36% → 4.40%) and hides completely.
 
 Read the output honestly:
 
