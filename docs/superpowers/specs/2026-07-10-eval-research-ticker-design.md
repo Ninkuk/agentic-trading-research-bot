@@ -1,6 +1,6 @@
 # eval-research-ticker — design
 
-**Status:** approved (design) · **Date:** 2026-07-10
+**Status:** shipped, GREEN-validated (3/3 fresh no-repo agents) · **Date:** 2026-07-10
 
 ## Problem
 
