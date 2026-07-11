@@ -219,6 +219,15 @@ separately — or front-load `--growth` above the revenue rate for the expansion
 years and fade it. Say which you did. A single-rate run understates such a name;
 don't quote it as the ceiling.
 
+**An "asset-light" claim is a balance-sheet question, not a vibe.** Before you
+trust a low-capex base — management's "capital-light" framing, a sell-side
+note's, or your own read of tiny trailing capex — pull the 10-K
+commitments-and-contingencies footnote (usually a few pages after the debt
+note). A multi-year purchase or capacity obligation there — vehicle buys,
+minimum-volume take-or-pay, cloud/chip reservations — is future capex the
+trailing capex doesn't show yet, and a headwind to the base FCF you feed
+`reverse_dcf`. A business is only as asset-light as its commitments let it be.
+
 Read the output honestly:
 
 - A **low** implied return on **optimistic** assumptions is a bad bet.

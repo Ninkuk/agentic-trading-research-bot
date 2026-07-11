@@ -38,6 +38,13 @@ Then, in order:
   thesis turns on an external race — a dated web search for the *rival*, not the
   company. A later event that contradicts management's framing outranks the
   framing. This is the recency reconciliation the skill's Phase 2 requires.
+- **The commitments-and-contingencies footnote**, a few pages past the debt
+  note in the 10-K. Purchase and capacity obligations booked here — vehicle
+  buys, minimum-volume take-or-pay, cloud/chip reservations — are future capex
+  that trailing `capex` doesn't show yet, and the place a "capital-light" claim
+  (the company's own or a covering analyst's) gets falsified. Read it before
+  Phase 4; a commitment here that's absent from trailing capex is a headwind to
+  the DCF's base FCF, not decoration.
 
 ## 2. If it isn't disclosed, can it be triangulated or found elsewhere?
 
