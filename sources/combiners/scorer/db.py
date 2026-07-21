@@ -34,11 +34,11 @@ BASIS_BREAK_HI = 1.8  # reverse splits >= 1:2 land above this
 WILSON_Z = 1.96  # 95% score interval on hit_rate
 RELIABLE_MIN_N = 30  # benchmarked-sample floor for the reliable flag
 
-# Flag thresholds, mirroring composite v_flagged (|score_sum| >= 4 AND
-# total >= 3). Both are hand-tunable; test_journal_matching pins these to
+# Flag thresholds, mirroring composite v_flagged (|score_sum| >= 3 AND
+# total >= 2). Both are hand-tunable; test_journal_matching pins these to
 # composite's view text so the journal and composite drift together.
-FLAG_MIN_ABS_SCORE = 4
-FLAG_MIN_TOTAL = 3
+FLAG_MIN_ABS_SCORE = 3
+FLAG_MIN_TOTAL = 2
 
 
 def _wilson(sign: str) -> str:

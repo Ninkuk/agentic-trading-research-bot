@@ -78,10 +78,10 @@ def test_match_requires_symbol_scored(tmp_path):
 def test_match_flagged_needs_thresholds(tmp_path):
     conn, sids = _scorer_with_composite(
         tmp_path,
-        [("2026-07-05", {"GLD": (3, 3)}), ("2026-07-06", {"GLD": (4, 3)})],
+        [("2026-07-05", {"GLD": (2, 2)}), ("2026-07-06", {"GLD": (3, 2)})],
     )
-    # score 3 isn't a flag; the 07-06 flag matches, and same-day is allowed
-    assert journal.match_flagged(conn, "GLD", "2026-07-06") == (sids[1], "2026-07-06", 4, 3)
+    # score 2 isn't a flag; the 07-06 flag matches, and same-day is allowed
+    assert journal.match_flagged(conn, "GLD", "2026-07-06") == (sids[1], "2026-07-06", 3, 2)
     assert journal.match_flagged(conn, "GLD", "2026-07-05") is None
 
 

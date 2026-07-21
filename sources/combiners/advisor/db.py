@@ -10,10 +10,10 @@ import sqlite3
 from datetime import date, datetime, timedelta
 
 # Strong-disagreement thresholds, mirroring composite v_flagged
-# (|score_sum| >= 4 AND total >= 3). A schema test pins these to
+# (|score_sum| >= 3 AND total >= 2). A schema test pins these to
 # composite.db's view text so the two drift together.
-STRONG_MIN_ABS_SCORE = 4
-STRONG_MIN_TOTAL = 3
+STRONG_MIN_ABS_SCORE = 3
+STRONG_MIN_TOTAL = 2
 
 _TABLES = """
 CREATE TABLE IF NOT EXISTS snapshots (

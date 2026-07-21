@@ -315,15 +315,15 @@ def test_unrealized_pct_sign_and_magnitude():
 
 
 def test_trim_only_when_strong():
-    # mirrors composite v_flagged: score_sum <= -4 AND total >= 3
-    assert _one(score_sum=-3, total=5)["trim_shares"] is None  # score floor
-    assert _one(score_sum=-9, total=2)["trim_shares"] is None  # total floor
-    assert _one(score_sum=-4, total=3)["trim_shares"] == 5.0  # both met
-    assert _one(score_sum=4, total=5)["trim_shares"] is None  # bullish
+    # mirrors composite v_flagged: score_sum <= -3 AND total >= 2
+    assert _one(score_sum=-2, total=5)["trim_shares"] is None  # score floor
+    assert _one(score_sum=-9, total=1)["trim_shares"] is None  # total floor
+    assert _one(score_sum=-3, total=2)["trim_shares"] == 5.0  # both met
+    assert _one(score_sum=3, total=5)["trim_shares"] is None  # bullish
 
 
 def test_strong_flag_matches_trim_presence():
-    for kw in ({"score_sum": -4, "total": 3}, {"score_sum": -3, "total": 5}):
+    for kw in ({"score_sum": -3, "total": 2}, {"score_sum": -2, "total": 5}):
         r = _one(**kw)
         assert bool(r["strong"]) == (r["trim_shares"] is not None)
 

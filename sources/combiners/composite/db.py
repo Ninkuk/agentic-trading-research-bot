@@ -72,11 +72,17 @@ CREATE VIEW IF NOT EXISTS v_latest_scorecard AS
 SELECT t.* FROM ticker_scores t
 JOIN v_latest_snapshot l ON t.snapshot_id = l.id;
 
--- Flag thresholds are hand-set and tunable; edit here (|score_sum| >= 4
--- with at least 3 voting signals present).
-CREATE VIEW IF NOT EXISTS v_flagged AS
+-- Flag thresholds are hand-set and tunable; edit here (|score_sum| >= 3
+-- with at least 2 voting signals present). Recalibrated 2026-07-20 against
+-- the first 18 real snapshots: the original 4/3 gate was never met once —
+-- the firing ticker signals draw from nearly disjoint universes, so 3
+-- co-occurring signals essentially never happen. 3/2 would have flagged 14
+-- symbols over those two weeks (~1/day). DROP+CREATE (not IF NOT EXISTS)
+-- so a threshold edit reaches existing DBs on the next run.
+DROP VIEW IF EXISTS v_flagged;
+CREATE VIEW v_flagged AS
 SELECT * FROM v_latest_scorecard
-WHERE ABS(score_sum) >= 4 AND total >= 3;
+WHERE ABS(score_sum) >= 3 AND total >= 2;
 
 -- The future paper-trading dataset: composite over time.
 CREATE VIEW IF NOT EXISTS v_score_history AS

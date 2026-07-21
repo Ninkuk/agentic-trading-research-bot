@@ -253,23 +253,30 @@ def _acme(conn, sid, with_earnings):
 
 def test_earnings_imminent_is_informational_and_never_creates_a_flag(tmp_path):
     """`total` is COUNT(*) — evidence breadth, not votes — and v_flagged gates on
-    `total >= 3`. If earnings_imminent counted, a ticker with two real votes
-    summing to |4| would become flagged BECAUSE it reports earnings soon: the
-    exact inverse of the gate's purpose. Regression for that inversion."""
+    `total >= 2`. If earnings_imminent counted, an earnings date would widen the
+    evidence base toward the flag gate: the exact inverse of that gate's intent.
+    (With per-signal scores capped at +/-2, |score_sum| >= 3 already forces two
+    voting signals, so the row can't be pivotal today — this pins the exclusion
+    itself: with/without earnings must be byte-identical in score and flag.)"""
     assert "earnings_imminent" in db.INFORMATIONAL_SIGNALS
 
-    conn = db.connect(str(tmp_path / "composite.db"))
-    db.ensure_schema(conn)
+    rows = {}
+    for label, with_earnings in (("with", True), ("without", False)):
+        conn = db.connect(str(tmp_path / f"composite_{label}.db"))
+        db.ensure_schema(conn)
+        sid = db.write_snapshot(conn, "2026-07-08T04:05:00+00:00", 3)
+        _acme(conn, sid, with_earnings=with_earnings)
+        rows[label] = (
+            conn.execute(
+                "SELECT score_sum, total FROM ticker_scores WHERE snapshot_id=?", (sid,)
+            ).fetchone(),
+            conn.execute("SELECT COUNT(*) FROM v_flagged WHERE symbol='ACME'").fetchone()[0],
+        )
 
-    sid = db.write_snapshot(conn, "2026-07-08T04:05:00+00:00", 3)
-    _acme(conn, sid, with_earnings=True)
-    with_e = conn.execute(
-        "SELECT score_sum, total FROM ticker_scores WHERE snapshot_id=?", (sid,)
-    ).fetchone()
-    flagged = conn.execute("SELECT COUNT(*) FROM v_flagged WHERE symbol='ACME'").fetchone()[0]
-
-    assert with_e == (4, 2), "earnings row must not widen `total`"
-    assert flagged == 0, "an earnings date must never push a ticker over total >= 3"
+    assert rows["with"][0] == (4, 2), "earnings row must not widen `total`"
+    assert rows["with"] == rows["without"], (
+        "an earnings date must never change the score or flag status"
+    )
 
 
 def test_earnings_imminent_does_not_dilute_coverage(tmp_path):
