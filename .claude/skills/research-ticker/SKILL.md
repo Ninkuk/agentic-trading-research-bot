@@ -65,6 +65,14 @@ known when, not what is true now:
 Where the live probe and the DB disagree, the probe wins for *today's* numbers
 and the DB tells you *when the machine last looked*. Say which you used.
 
+**Print the operating-leverage trajectory before you triage.** Put revenue and
+operating income side by side for every year available and state which direction
+operating leverage runs — positive, flat, or negative. A company whose revenue
+has multiplied while operating income went sideways or backwards is a different
+business from the one its cash flow describes, and the income statement is where
+stock compensation is actually charged. State the direction explicitly; "it is
+loss-making" is a level, not a direction, and does not substitute for it.
+
 Kill it now if:
 
 - **Persistently loss-making.** Not disqualifying, but it is a genuinely harder
