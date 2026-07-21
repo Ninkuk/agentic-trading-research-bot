@@ -1,6 +1,6 @@
 ---
 name: research-ticker
-description: Research a stock end-to-end — business, moat, thesis, reverse-DCF valuation, adversarial review — and write a thesis to research/<TICKER>-<DATE>.md. Use when the user asks to research/analyse/dig into a ticker, wants a thesis on a name, or asks whether a composite-flagged ticker is actually worth owning.
+description: Research a stock end-to-end — business, moat, thesis, reverse-DCF valuation, adversarial review — and write a thesis to research/<TICKER>-<DATE>.md. Use when the user asks to research/analyse/dig into a ticker, wants a thesis on a name, or asks whether a composite-flagged ticker is actually worth owning, or whether the options market is already pricing in the move a thesis needs.
 ---
 
 # research-ticker
@@ -59,6 +59,12 @@ known when, not what is true now:
 - `data/stocks.db` — the last captured price and market-cap metrics.
 - `data/earnings.db` — next report date (do not research into an earnings print
   and pretend the timing is irrelevant).
+- **Robinhood MCP `get_earnings_results`** — the trailing 8 quarters of
+  estimate vs actual EPS. Read the **pattern**, not any single quarter: chronic
+  beats-by-a-hair indicate managed guidance; large misses indicate execution
+  risk. **This is a different thing from `earnings_calendar`'s forward
+  `eps_est`** above, which is a scheduling input only — the two happen to
+  share a name but neither substitutes for the other.
 - `data/composite.db` — if the name was flagged, read `ticker_scores` and
   `signal_values` so you know what the machine already thinks and why.
 
@@ -122,6 +128,10 @@ You cannot know in advance which facts are relevant. Nobody hands you the list.
 Use `references/disclosure-hunt.md` for *where to look*. Its three questions,
 in order: does the information exist; can it be triangulated or found
 elsewhere; and if not, does its absence kill the thesis?
+
+**One thread is not optional** — use `.claude/skills/shared/options-read.md`
+and record its finding (or "no listed options / illiquid / path-2 stopgap")
+even when nothing else in Phase 2 flagged it.
 
 **Read the single most recent call before you write the business up.** The
 latest earnings call / AGM transcript (`.../transcripts/` → newest
@@ -245,6 +255,12 @@ Read the output honestly:
 - `refused` (exit 2) means the input was a category error — usually a
   loss-making base FCF. Go back to Phase 0.
 
+**Check the precision of the implied return against the vol.** When ATM IV
+exceeds 50%, quote the implied discount rate to the nearest whole percent and
+say the range is wide; a figure like "13.32%" on a name the options market
+prices at 60% vol is arithmetic, not knowledge. Never widen a conclusion's
+confidence to match a narrow-looking number.
+
 State the assumptions in the write-up. The number is worthless without them.
 If you also quote a forward multiple, do not look out more than ~3 years —
 beyond that it is not evidence.
@@ -265,7 +281,10 @@ Write `research/<TICKER>-<YYYY-MM-DD>.md` with these sections, then commit it:
    kill-thesis verdict and the load-bearing condition count.
 2. **Business** — created / captured / protected.
 3. **Threads pulled** — including the dead ends, and what they ruled out.
-4. **Valuation** — the implied return, and every assumption behind it.
+4. **Valuation** — the implied return, and every assumption behind it. Add
+   the options-implied move where available: name the path used (path 1 —
+   CBOE `iv30` percentile from `data/options.db`; path 2 — the Robinhood
+   stopgap) and the DTE, or state explicitly "no listed options."
 5. **Falsifiers** — what would make you sell.
 6. **UNKNOWNs** — what could not be found, where it would come from, and
    whether its absence kills the thesis.
@@ -284,3 +303,17 @@ Write `research/<TICKER>-<YYYY-MM-DD>.md` with these sections, then commit it:
   expert-network material are labelled low-confidence, always.
 - **It is a complete and respectable outcome to say "I don't know how I feel
   about this one."** There are other companies. Go back to the list.
+- **Options data informs the equity thesis only.** It answers "is the market
+  pricing in this catalyst," never "what should I buy." If asked directly —
+  "should I buy the calls?" — reply with one sentence: this skill does not
+  size or recommend options positions; that decision and its risk are the
+  user's alone. Then stop. Do not follow with a strike or expiry "as
+  information" — that is the same violation wearing a hedge.
+- **`get_financials` is banned** — use `data/sec_fundamentals.db` or live
+  EDGAR. This is a **provenance** rule, not a freshness rule: SEC filings are
+  the audited primary source for financials specifically, and this does not
+  reverse Phase 0's live-over-stale preference for price and statistics data.
+- **ATR comes from `advisor`**, which derives it from stockanalysis-derived
+  data for its stop and `cap_shares` math — do not call Robinhood's
+  technical-indicator endpoint and create a second, conflicting stop distance
+  for the same name.
