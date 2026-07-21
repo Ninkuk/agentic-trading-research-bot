@@ -44,6 +44,14 @@ returns `implied_volatility`, `delta`, `gamma`, `theta`, `vega`, `rho`,
   source in CLAUDE.md. Catalog (24 symbols): AAPL AMD AMZN AVGO BABA BAC COIN
   DIS GOOGL IWM JPM META MSFT MSTR NFLX NVDA PLTR QQQ SMCI SPX SPY TSLA VIX XOM.
 
+  **It writes `data/options.db`, not `data/cboe_options.db`** — the DB is named
+  for the registry key (`options`), and the launchd jobs are `options-intraday`
+  (hourly, 6:30am–1:30pm weekdays) and `options-close` (2:45pm). A grep for
+  "cboe" in the schedule finds only `cboe-stats` and misses both. It is fully
+  live: ~476MB, 124k option rows per run. Verify a DB's real path from
+  `logs/<job>.log`, which prints the exact command, rather than inferring it
+  from the package name.
+
 **Rejected:**
 
 - `get_financials` — returns 4 fields (revenue, gross profit, net income, net
@@ -83,7 +91,7 @@ Both skills must state **when** to read it, or it will never be opened.
 
 #### Source selection (checked in order)
 
-1. **Ticker in the CBOE catalog AND `data/cboe_options.db` has usable history**
+1. **Ticker in the CBOE catalog AND `data/options.db` has usable history**
    → read `v_iv_rank` (`iv30`, `iv_rank`, `iv_percentile`, `n_days`) and
    `v_latest_sentiment` (put/call volume and OI ratios). Own-history percentile
    is the preferred baseline: it answers "is IV high *for this name*" without
@@ -94,12 +102,22 @@ Both skills must state **when** to read it, or it will never be opened.
 only once history accumulates. Check `n_days` before trusting `iv_percentile`:
 require `n_days >= 60` to quote a percentile at all, and label it low-confidence
 below `n_days >= 252` (roughly one year, the span needed before a percentile
-covers a full seasonal cycle of the name's own vol). If the table is absent, the
-DB is empty, or `n_days < 60`, fall through to path 2 and **say which path was
-used**. As of 2026-07-21
-`data/cboe_options.db` is 0 bytes and `options` is registered but unscheduled,
-so path 1 is currently unavailable for every ticker. This is expected to change
-once the screener is scheduled; the gate makes the transition automatic.
+covers a full seasonal cycle of the name's own vol). If the table is absent or
+`n_days < 60`, fall through to path 2 and **say which path was used**.
+
+The screener has run hourly since 2026-07-02, so `n_days` was **13** on
+2026-07-21 and grows one per trading day — path 1 clears the 60-day gate around
+mid-September 2026 and the 252-day confidence bar in mid-2027. Until then every
+ticker takes path 2. The gate makes that transition automatic with no code
+change; nothing needs switching on.
+
+**Tenor mismatch — never mix the two paths.** `iv30` is a 30-day
+constant-maturity figure; a path-2 ATM IV is read off one specific expiry. They
+are different measurements and disagree materially. On AAPL 2026-07-21 CBOE
+`iv30` was 29.6% while the 10-day earnings-straddling ATM IV was 37.5% — 8
+points apart on the same name in the same minute, purely from tenor. Never
+compare a path-1 number against a path-2 number, and never carry one forward as
+though it were the other.
 
 #### Procedure (path 2)
 
@@ -314,12 +332,15 @@ Protects the skill's identity as the dispatcher-persistence path.
    a counterweight. The skill already accepts an inaction bias deliberately; the
    risk is that it compounds silently. Flagged, not resolved — worth a cap or a
    reachability requirement before the next one-directional check is added.
-2. **`cboe_options` is registered but unscheduled with an empty DB.** Path 1 is
-   dead until it runs, and `v_iv_rank` needs weeks of history after that.
-   Out of scope for a skills-only batch; recommended as a separate change.
+2. **Path 1 is gated off by history depth, not by anything broken.** The
+   screener runs hourly and `data/options.db` is healthy; `n_days` was 13 on
+   2026-07-21 against a 60-day gate. Every ticker therefore takes path 2 —
+   the labelled stopgap — until roughly mid-September 2026. Nothing to fix,
+   but the batch ships in its weaker configuration and should be re-read once
+   the gate clears.
 3. **No test coverage.** This logic lives in skill prose, consistent with how
    `research-ticker` and `kill-thesis` already work, so it is not a new failure
    mode — but the date-boundary and lot-accounting risks above have no
    regression net.
-4. **`composite` and `advisor` do not read `cboe_options.db` at all.**
+4. **`composite` and `advisor` do not read `data/options.db` at all.**
    Pre-existing gap, noted during review, unaddressed here.
