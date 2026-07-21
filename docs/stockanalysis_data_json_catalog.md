@@ -24,15 +24,50 @@ same data the page hydrates from.
 - **URL rule:** append `__data.json` to the route (before any query string).
   `/stocks/AAPL/statistics/` → `/stocks/AAPL/statistics/__data.json`.
   Query params carry through: `/stocks/AAPL/financials/__data.json?p=quarterly`.
+- **Canonical case:** page routes 301 to lowercase (`/stocks/AAPL/` →
+  `/stocks/aapl/`). `urllib` follows it, so uppercase tickers are fine.
 - **Limit:** a few hub/interactive routes (`/markets/`, `/quote/{index}/`,
   `/stocks/compare/`, `/etf/compare/`) stream their content client-side, so
   their `__data.json` contains only session cookies — nothing to harvest.
-- **Do not exist** (HTTP 404, verified 2026-07-09 — don't re-probe):
-  `/stocks/{T}/` + `short-interest`, `institutional`, `insider-trading`,
-  `ownership`, `holders`, `peers`, `earnings`, `options`, `profile`,
-  `sec-filings`, `valuation`, `chart`. Short interest lives in the screener
-  data-points (`shortFloat`, `shortShares`, `shortRatio`, §6); ownership in
-  `sharesInsiders`/`sharesInstitutions`.
+
+### Don't guess routes — read the app's own route table
+
+The client bundle ships the complete SvelteKit route dictionary. This is the
+authoritative list (167 routes as of 2026-07-09); enumerate from it rather than
+probing hunches:
+
+```bash
+ENTRY=$(curl -sL --compressed https://stockanalysis.com/stocks/aapl/ \
+        | grep -oE '_app/immutable/entry/app\.[A-Za-z0-9_-]+\.js' | head -1)
+curl -sL --compressed "https://stockanalysis.com/$ENTRY" \
+  | grep -oE '"/[^"]*":\[' | tr -d '":[' | sort
+```
+
+The same crawl over `_app/immutable/**` chunks is how the `_api` surface in §4
+was found — grep the chunks for `/_api/`.
+
+**Two payload signatures mean "nothing here":**
+
+- **Layout node only** (keys `ab`, `cookies`, `session`, `theme`, `user`, …) —
+  the route has no server `load()`. E.g. `/tools/`, `/changelog/`, and
+  `/quote/{T}/` *without* an exchange segment.
+- **`{info: …}` alone** — gated or invalid. Pro-gated pages
+  (`financials/segments/`, `financials/full/`) and bogus slugs
+  (`/stocks/AAPL/metrics/not-a-metric/`) share this shape. An invalid metric
+  slug returns HTTP 200, not 404 — check for `metric` in the keys.
+
+**Do not exist** (HTTP 404, verified 2026-07-09 — don't re-probe):
+`/stocks/{T}/` + `short-interest`, `institutional`, `insider-trading`,
+`ownership`, `holders`, `peers`, `earnings`, `options`, `profile`,
+`sec-filings`, `valuation`, `chart`, `holdings`. Short interest lives in the
+screener data-points (`shortFloat`, `shortShares`, `shortRatio`, §6); ownership
+in `sharesInsiders`/`sharesInstitutions`.
+
+> ⚠️ **`sec-filings` 404s but `filings` does not.** An earlier pass probed the
+> wrong slug and concluded there were no filings. `/stocks/{T}/filings/` is real
+> and carries direct PDF links (below). Likewise `chart` 404s under a ticker but
+> exists at `/chart/{T}/`, and `holdings` 404s under `/stocks/` but exists under
+> `/quote/`. A 404 on one slug says nothing about the sibling.
 
 ## 2. Decoding the payload (`devalue`)
 
@@ -57,6 +92,12 @@ Use `stock_analysis_screener.probe.page_data(path)` to get it decoded.
 non-US listings mirror the identical schema under `/quote/{exchange}/{T}/…`
 (e.g. `/quote/adx/2POINTZERO/`). ETFs under `/etf/{T}/…`.
 
+The `exchange` segment is optional in the route (`/quote/[[exchange]]/[symbol]`)
+but **omitting it yields a layout-only payload** — always pass it. The two
+families are not identical: `/stocks/` has `metrics/` and `/quote/` does not;
+`/quote/` has `holdings/` and `/stocks/` does not (both 404 the other way). On
+non-US listings `holdings/` and `filings/` return `{info}` — present but unfed.
+
 ### Per-ticker (stocks & international quotes)
 
 | Route (+ `/__data.json`) | Key payload |
@@ -64,16 +105,19 @@ non-US listings mirror the identical schema under `/quote/{exchange}/{T}/…`
 | `/stocks/{T}/` | Overview: revenue, netIncome, eps(+growth), peRatio/forwardPE, marketCap, beta, sharesOut, dividend, earningsDate, analyst target, infoTable, news. Every numeric field here is a **suffixed string** (`marketCap` → `"4.64T"`); no full-precision variant on this route |
 | `/stocks/{T}/financials/` | Income statement (`financialData`, `map`, `period`, `availableSources`). `?p=quarterly` for quarterly. `financialData` arrays are **raw integers**, but **index 0 is `"TTM"`, not a fiscal year** — check `datekey` before indexing (AAPL `fcf[0]`=129.17B TTM vs `fcf[1]`=98.77B FY2025) |
 | `…/financials/balance-sheet/` | Balance sheet (same shape). `debt` is gross; `netCash` is net **cash** (AAPL +61.88B), so a net-*debt* input takes its negative |
-| `…/financials/cash-flow-statement/` | Cash-flow statement. Also `leveredFCF` (equity, post-interest) and `unleveredFCF` (firm) beside plain `fcf` (= `ncfo` − `capex`). Pair levered with market cap, unlevered with enterprise value |
+| `…/financials/cash-flow-statement/` | Cash-flow statement. Also `leveredFCF` (equity, post-interest) and `unleveredFCF` (firm) beside plain `fcf`. **`capex` is stored negative**, so `fcf` = `ncfo` **+** `capex` (AAPL TTM: 140.222B + −11.048B = 129.174B). All three differ — AAPL TTM `fcf` 129.17B, `leveredFCF` 97.69B, `unleveredFCF` 119.20B — so **`fcf != leveredFCF`**. Plain `fcf` is post-interest, i.e. levered: pair it with **market cap**. Pair `unleveredFCF` with enterprise value |
 | `…/financials/ratios/` | Ratios |
 | `…/financials/segments/` | **Pro-gated** — `info` placeholder only |
 | `…/financials/full/` | **Pro-gated** — `info` placeholder only |
-| `/stocks/{T}/metrics/` | **Operating metrics & breakdowns.** `annualMetrics`/`quarterlyMetrics`/`trailingMetrics`, each `{name, type, count, values:[{x: date, y: number}]}` — **raw numbers**. Groups: Revenue by Segment, Revenue by Geography, Gross Profit/Margin by Type, Operating Expense Breakdown, plus company-specific operating metrics (AAPL: Global Active Devices). **Not** Pro-gated, unlike `financials/segments/` — this is the free path to segment and geography splits. Carries `sourceLastUpdated` |
+| `/stocks/{T}/metrics/` | **Operating metrics & breakdowns.** `annualMetrics`/`quarterlyMetrics`/`trailingMetrics`, each `{name, type, count, values:[{x: date, y: number}]}` — **raw numbers**. Groups: Revenue by Segment, Revenue by Geography, Gross Profit/Margin by Type, Operating Expense Breakdown, plus company-specific operating metrics (AAPL: Global Active Devices). **Not** Pro-gated, unlike `financials/segments/` — this is the free path to segment and geography splits. Carries `sourceLastUpdated`, `groups`, `navigationItems` |
+| `/stocks/{T}/metrics/{metric}/` | One breakdown in isolation (`{data, metric}`). Slug = the `navigationItems` title kebab-cased: `revenue-by-segment`, `revenue-by-geography`, `gross-profit-by-type`, `gross-margin-by-type`, `operating-expense-breakdown`. An unknown slug returns **200 with `{info}`**, not 404. Stocks only — `/quote/…/metrics/` 404s |
+| `/stocks/{T}/filings/` | **IR document index with direct PDF URLs.** `events` = fiscal events `{eventId, title, eventDate, fiscalYear, fiscalPeriod, filings:[{id, type, title, fileUrl}]}`. AAPL: 87 events, 2011→2026. `type` ∈ `earnings_release`, `quarterly_report`, `annual_report`, `proxy`, `slides`, `press_release`. `fileUrl` is a **Quartr**-hosted PDF, *not* SEC EDGAR — for EDGAR use this repo's `edgar` screener. Also on `/quote/…/filings/` (but unfed for non-US) |
+| `/stocks/{T}/filings/{id}/` | **Same payload**, only `selectedId` differs — the id selects a PDF client-side. Don't fetch per-id; the index already has every `fileUrl` |
 | `/stocks/{T}/revenue/` | `stats` (revenue, revenue_growth, employees, ps_ratio, revenue_per_employee, last_reported) + `data.annual`/`.quarterly` series — **raw integers**, no suffix strings. Also `peers`, `news` |
-| `/stocks/{T}/transcripts/` | Index of earnings-call transcripts (AAPL: **74**, back ~18 years). Each `{id, quartrEventId, fiscalYear, quarterLabel, detailSlug, eventDate, files}` |
-| `/stocks/{T}/transcripts/{detailSlug}/` | **Full transcript.** `transcriptQuarter.transcriptTurns` = list of `{speakerName, role, company, paragraphs}`, where `paragraphs` nests `{text, startSec, endSec}` per sentence (audio-aligned — the text is *not* on a flat `text` key). Plus `summaryShort`, `summaryLongHtml`, `audioUrl`, `files`. Source: Quartr |
+| `/stocks/{T}/transcripts/` | Index under key `transcripts` (AAPL **74**, back ~18 years; VZ **76**, only back to 2019 — depth varies sharply by ticker). Each `{id, quartrEventId, fiscalYear, quarterLabel, detailSlug, eventDate, eventTitle, files}`. ⚠️ **Not only earnings calls** — conference presentations are interleaved (`eventTitle` "J.P. Morgan 54th Annual…", `quarterLabel` "FY 2026"). Filter on `eventTitle`/`quarterLabel` if you want the quarterly calls alone |
+| `/stocks/{T}/transcripts/{detailSlug}/` | **Full transcript** (~35k chars ≈ 8.6k tokens each; a 76-call corpus is ~2.6M chars ≈ 650k tokens, but fetches in ~25s at 0.33s/call). `transcriptQuarter.transcriptTurns` = list of `{speakerName, role, company, paragraphs}`. ⚠️ **`paragraphs` is `list[list[dict]]`** — a list of paragraphs, each a list of *sentences* `{text, startSec, endSec}` (audio-aligned). Two levels, not one: `[s['text'] for p in turn['paragraphs'] for s in p]`. Plus `summaryShort`, `summaryLongHtml` (AI-generated — tier low-confidence), `audioUrl`, `files`. Source: Quartr |
 | `/stocks/{T}/ratings/` | Per-analyst rating actions: `{action_rt, firm, analyst, slug, pt_now, pt_old, date}` |
-| `/stocks/{T}/statistics/` | 20 grouped blocks: valuation, margins, ratios, scores (Altman Z), fairValue (some `proOnly`), shortSelling, shares, dividends, taxes, analystForecasts. Each block's `data` rows are `{id, title, value, hover}` — **`hover` is the exact figure** (`'4,644,435,714,320'`), `value` the rounded display string. Cheapest exact source of `marketCap`, `enterpriseValue`, `fcf`, `capex`, `debt` in one request |
+| `/stocks/{T}/statistics/` | 20 grouped blocks: valuation, margins, ratios, scores (Altman Z), fairValue (some `proOnly`), shortSelling, shares, dividends, taxes, analystForecasts. Each block's `data` rows are `{id, title, value, hover}` — **`hover` is the exact figure** (`'4,644,435,714,320'`), `value` the rounded display string. Cheapest exact source of market cap, `enterpriseValue`, `fcf`, `capex`, `debt` in one request. ⚠️ The market-cap row's id is **`marketcap`**, lowercased — everywhere else in this catalog it is `marketCap`. Keying on `marketCap` here silently finds nothing |
 | `/stocks/{T}/dividend/` | Full dividend history, yield, payout, chart |
 | `/stocks/{T}/company/` | Profile: description, executives, contact, filings, logoURL |
 | `/stocks/{T}/forecast/` | priceTargets (avg/median/low/high/count), per-analyst `ratings` (firm/analyst/PT/rating + track record), monthly consensus `recommendations`, EPS/revenue `estimates` |
@@ -88,7 +132,13 @@ non-US listings mirror the identical schema under `/quote/{exchange}/{T}/…`
 | `/etf/{T}/` | aum, nav, expenseRatio, dividendYield, payout*, holdings, performance, provider |
 | `/etf/{T}/holdings/` | Holdings + sector/country/asset allocation |
 | `/etf/{T}/dividend/` | Dividend history + chart |
+| `/etf/{T}/history/` | OHLCV bars, same `{o,h,l,c,a,v,t,ch}` shape as `/stocks/{T}/history/`; header carries `source` (`tiingo`) + `updated` |
+| `/etf/provider/` | Provider directory (`etfs`, `default_columns`) |
 | `/etf/provider/{slug}/` | All provider ETFs as a screener grid (e.g. `vanguard`) |
+| `/etf/list/new/` | Newly listed ETFs as a screener grid |
+
+These four are the *only* ETF sub-routes — `/etf/{T}/metrics/` and the other
+stock tabs 404.
 
 ### Bulk universe dumps (see §4)
 
@@ -97,15 +147,25 @@ non-US listings mirror the identical schema under `/quote/{exchange}/{T}/…`
 | `/stocks/screener/` | **5,595 stocks** | **310** |
 | `/etf/screener/` | **5,447 ETFs** | **110** |
 | `/tools/mutf-screener/` | **23,922 funds** | **83** |
+| `/ipos/screener/` | **450 IPOs** | own catalog |
+
+Row counts drift daily (the stock universe read 5,601 on 2026-07-09) — read
+`resultsCount` rather than hard-coding.
 
 ### Market movers & discovery (see §5 for the query DSL)
 
 | Route | Contents |
 |---|---|
 | `/markets/gainers/` · `/losers/` · `/active/` | Ranked movers + full `query` filter object |
-| `/markets/premarket/` · `/markets/premarket/gainers/` | Pre-market movers |
+| `/markets/premarket/` · `/premarket/gainers/` · `/premarket/losers/` | Pre-market movers |
+| `/markets/afterhours/` · `/afterhours/gainers/` · `/afterhours/losers/` | After-hours movers. The bare `/afterhours/` carries **both** `gainers` and `losers` plus `chartData` in one payload |
+| `/markets/heatmap/` | S&P 500 treemap: `heatmap.labels` (sector → constituent), `time` (`1D`), `expanded` |
+| `/markets/gainers/{range}/` · `/losers/{range}/` | **No page data** (`{widthMode}`) — hydrated client-side via §4's `table` endpoint |
 | `/trending/` | Most-viewed stocks (`views` metric) |
 | `/analysts/top-stocks/` | Top analyst-rated stocks (screener grid) |
+
+The mover pages carry `tradingTimestamps` alongside `query` — use it rather than
+inferring the session from a `priceDate`.
 
 ### Corporate actions — all `{action, data, fullCount, props, type}`
 
@@ -115,7 +175,9 @@ non-US listings mirror the identical schema under `/quote/{exchange}/{T}/…`
 ### IPOs
 
 `/ipos/` (recent + upcoming) · `/ipos/calendar/` (this/next-week/later) ·
-`/ipos/statistics/` · `/ipos/withdrawn/` · `/ipos/{year}/` (e.g. `/ipos/2024/`)
+`/ipos/statistics/` · `/ipos/withdrawn/` · `/ipos/{year}/` (e.g. `/ipos/2024/`) ·
+`/ipos/filings/` (S-1s in registration) · `/ipos/news/` · `/ipos/screener/`
+(450 rows, own `dataPoints` catalog)
 
 ### Analysts
 
@@ -130,34 +192,94 @@ sectors/industries, full ratings history) · `/analysts/top-stocks/`
 | `/news/` · `/news/all-stocks/` · `/news/press-releases/` | News feeds |
 | `/stocks/industry/` · `/industry/sectors/` · `/industry/all/` | Sector/industry directories |
 | `/stocks/industry/{name}/` | Industry constituents + stats (e.g. `semiconductors`) |
-| `/list/` · `/list/exchanges/` · `/list/{exchange}/` | Curated & per-exchange lists (stock + ETF grids) |
+| `/stocks/sector/{sector}/` | Sector constituents (500-row page, `isPaginated`) + aggregate `stats`: `stocks`, `marketCap`, `revenue`, `grossProfit`, `operatingIncome`, `netIncome`, `fcf` |
+| `/list/` · `/list/exchanges/` · `/list/{slug}/` | Curated & per-exchange lists (stock + ETF grids). The segment is a **slug**, not an exchange code — `/list/nasdaq-stocks/`, not `/list/nasdaq/` |
 | `/private/{slug}/` | Private-company profiles (valuation, funding, Forge/Hiive links) |
-| `/symbol-lookup/?q=…` | Autocomplete search |
+| `/symbol-lookup/?q=…` | Autocomplete search (`/lookup/` has no page data) |
+| `/market-bullets/` · `/market-bullets/{permalink}/` | Market-commentary newsletters |
+| `/term/{slug}/` | Glossary entry (`content`, `related`, author/reviewer, dates) |
+| `/blog/` · `/article/{slug}/` · `/contributor/{slug}/` | Editorial content |
+| `/chart/{T}/` | `{info, noindex}` — series load client-side; use `/stocks/{T}/history/` |
+| `/tools/etf-reverse-lookup/` | `{symbol, widthMode}` — client-side; no ETF-holder data server-side |
 
-## 4. Bulk screeners + the data-points API
+## 4. The `_api/endpoints` surface
+
+Behind the pages sits a plain-JSON API (no `devalue`, no auth, no key). All
+endpoints answer `{"status": 200, "data": …}`. Found by grepping the
+`_app/immutable/**` chunks for `/_api/`; verified live 2026-07-09.
 
 Hitting `/stocks/screener/__data.json` returns the **entire universe in one
 request** (~1 MB) with a fixed default column set
 (`s, n, marketCap, price, change, industry, volume, peRatio`) plus a `dataPoints`
-catalog and `dataPointCategories`. To pull *arbitrary* columns for the whole
-universe, use the companion JSON API (already wired in `fetch.py`):
+catalog and `dataPointCategories`. `catalog.fetch_catalog()` decodes that catalog
++ universe count. But for anything beyond the default columns, use the API below.
+
+### `screener/table` — the general query endpoint
 
 ```
-GET /_api/endpoints/screener/data-points?type=s&ids=<space-separated ids>
+GET /_api/endpoints/screener/table?type=s&i=stocks&m=marketCap&s=desc&c=s,n,marketCap,fcf
 ```
 
-`type`: `s` stocks · `e` ETFs · `f` mutual funds. `ids` are the data-point ids
-from §6. Response shape: `{data: {data: {TICKER: {id: value, ...}}}}`.
-**No ticker filter** — it returns the whole universe (5,599 stock rows), so it
-is for cross-sectional work, not single-name lookups; use `/stocks/{T}/statistics/`
-for those.
-`catalog.fetch_catalog()` decodes the `dataPoints` catalog + universe count from
-the screener `__data.json`; `fetch.fetch_data_points(ids, type_)` pulls values.
+| Param | Meaning |
+|---|---|
+| `type` | `s` stocks · `e` ETFs · `f` mutual funds |
+| `i` | index: `stocks` · `etf` · `funds` · `stock-movers` |
+| `m` | main / sort field (any §6 id); appended to `c` if absent |
+| `s` | sort direction, `asc` \| `desc` |
+| `c` | columns, comma-separated §6 ids |
+| `sc` | secondary sort column |
+| `cn` | row cap (page size). **Omit to get the whole universe** |
+| `f` | filters, comma-separated §5 terms (each URL-encoded; a literal `%` is sent as a space) |
+| `se` | free-text search over ticker **and** name |
+| `p` | page number — ignored when `se` is present |
+| `dd` | `true` to dedupe |
+| `bypassCache` | `true` to skip the edge cache |
+
+This strictly dominates `data-points`: arbitrary columns, plus filtering,
+sorting, and search. With no `cn` it returns all 5,601 stock rows.
+
+> ⚠️ **`i` is not optional in practice.** Without it the query spans every
+> listing worldwide and reports market cap **in the listing currency**. Sorting
+> by `marketCap` desc then returns `BVC-NVDACO` at `1.6e16` (Colombian pesos)
+> before any US row. With `i=stocks` you get `NVDA` at `4.9e12` USD. A harvest
+> that omits `i` is silently denominated in a mix of currencies.
+
+> ⚠️ **`resultsCount` is the number of rows in *this* response**, always equal to
+> `len(data)`. It is not the total number of matches, so you cannot use it to
+> size a pagination loop.
+
+**There *is* a single-name lookup.** `se` is a substring search, so
+`?se=AAPL&c=<any columns>` returns exactly one row with full-precision values —
+the arbitrary-column, single-ticker query. Match on ticker is not guaranteed
+unique (`se=apple` also matches *Maui Land & Pineapple*), so verify the returned
+`s` field. `se` takes one term; it is not a comma-separated symbol list.
+
+Values are full-precision and cross-check against the other routes: `se=AAPL`
+with `c=s,n,marketCap,fcf` yields `marketCap=4644435714320` (= the `hover` on
+`/statistics/`) and `fcf=129174000000` (= `financialData.fcf[0]`, the **TTM**
+figure, not FY2025's 98.77B). Flow metrics on this endpoint are trailing-twelve,
+so don't mix them with a fiscal-year row pulled from `/financials/`.
+
+### The rest
+
+| Endpoint | Returns |
+|---|---|
+| `screener/data-points?type=s&ids=marketCap+fcf` | `{data:{data:{TICKER:{id:value}}}}` — whole universe (5,601 rows), **no ticker filter**. `ids` are `+`-joined (a URL-encoded space). Wired as `fetch.fetch_data_points(ids, type_)` |
+| `screener/data-point?type=s&id=peRatio` | Singular. `{data:{data:[[TICKER, value], …]}}` — **sparse**: rows with no value are dropped (2,983 of 5,601 for `peRatio`). Optional `&c={country}`, `&mod=variable` |
+| `market-cap/chart?symbol=AAPL` | `[[epoch_ms, marketCap], …]` back to 1998 |
+| `custom/financialsWidget?symbol=AAPL&period=quarterly` | `[{period, revenue, earnings, revenueGrowth, earningsGrowth}]` — raw integers |
+| `watchlist?symbols=A,B&columns=…` | ⚠️ **Trap.** Reads like the ideal ticker×column endpoint, but unauthenticated it returns `{s, n:""}` stubs and **silently ignores `columns`** — HTTP 200, no error. Use `screener/table` with `se`. |
+
+The remaining `_api` families (`admin/*`, `alerts/*`, `brokerage/*`,
+`notifications/*`) are authenticated account surfaces — out of scope.
 
 ## 5. Screener / movers query DSL
 
 The movers and trending pages expose the server-side query object under `query`
-in their `__data.json`. It is the same filter grammar the screener uses:
+in their `__data.json`. It is the same filter grammar the screener uses — and the
+same object §4's `table` endpoint takes apart into query params (`index`→`i`,
+`main`→`m`, `sortDirection`→`s`, `columns`→`c`, `count`→`cn`, `filters`→`f`). So
+a `query` lifted from any mover page can be replayed against `table` verbatim.
 
 ```jsonc
 {
