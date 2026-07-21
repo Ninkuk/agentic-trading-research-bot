@@ -121,17 +121,33 @@ BASE_ARGS = [
 
 
 def test_cli_prints_both_move_figures(capsys):
+    """Pin each value to ITS OWN row, not just anywhere in stdout.
+
+    A value/label swap (6.21% on the mean row, 4.95% on the 1-sigma row)
+    must fail this test even though both figures still appear somewhere.
+    """
     assert main(BASE_ARGS) == 0
-    out = capsys.readouterr().out
-    assert "4.95%" in out
-    assert "6.21%" in out
+    lines = capsys.readouterr().out.splitlines()
+    mean_line = next(ln for ln in lines if "expected absolute move" in ln)
+    sigma_line = next(ln for ln in lines if ln.strip().startswith("1-sigma move"))
+    assert "4.95%" in mean_line
+    assert "6.21%" not in mean_line
+    assert "6.21%" in sigma_line
+    assert "4.95%" not in sigma_line
 
 
 def test_cli_labels_the_straddle_figure_as_a_mean_not_a_ceiling(capsys):
+    """The row that carries 4.95% must be the one labeled MEAN/not-a-ceiling.
+
+    Asserting "mean" and "not a ceiling" appear anywhere in stdout would
+    still pass if a regression attached those words to the 1-sigma row
+    instead of the straddle row — this pins label and value together.
+    """
     main(BASE_ARGS)
-    out = capsys.readouterr().out.lower()
-    assert "mean" in out
-    assert "not a ceiling" in out
+    lines = capsys.readouterr().out.splitlines()
+    mean_value_line = next(ln for ln in lines if "4.95%" in ln)
+    assert "mean" in mean_value_line.lower()
+    assert "not a ceiling" in mean_value_line.lower()
 
 
 def test_cli_emits_explicit_yes_no_rows_for_both_windows(tmp_path, capsys):
@@ -169,3 +185,44 @@ def test_cli_does_not_refute_a_sub_two_sigma_requirement(capsys):
 def test_cli_refuses_bad_input_with_exit_2(capsys):
     assert main([*BASE_ARGS[:-2], "--dte", "0"]) == 2
     assert "refused" in capsys.readouterr().err
+
+
+def test_cli_refuses_non_positive_required_move_with_exit_2(capsys):
+    """Finding 1 regression: refutes_timing's ValueError must not escape main()."""
+    assert main([*BASE_ARGS, "--required-move", "0"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""  # no half-printed table before the refusal
+    assert "refused:" in captured.err
+
+
+def test_cli_refuses_missing_closes_file_with_exit_2(tmp_path, capsys):
+    """Finding 2 regression: a missing --closes file must refuse, not crash."""
+    missing = tmp_path / "does-not-exist.json"
+    assert main([*BASE_ARGS, "--closes", str(missing)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "refused:" in captured.err
+
+
+def test_cli_refuses_malformed_closes_json_with_exit_2(tmp_path, capsys):
+    """Finding 2 regression: malformed JSON must refuse, not crash."""
+    closes = tmp_path / "closes.json"
+    closes.write_text("{not valid json")
+    assert main([*BASE_ARGS, "--closes", str(closes)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "refused:" in captured.err
+
+
+def test_cli_refuses_non_numeric_closes_payload_with_exit_2(tmp_path, capsys):
+    """Finding 2 regression: a bool (or other non-number) in the payload must refuse.
+
+    isinstance(True, int) is True in Python, so this also checks bool is
+    explicitly rejected rather than silently treated as a price of 1.0/0.0.
+    """
+    closes = tmp_path / "closes.json"
+    closes.write_text(json.dumps([100.0, True, 101.0]))
+    assert main([*BASE_ARGS, "--closes", str(closes)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "refused:" in captured.err

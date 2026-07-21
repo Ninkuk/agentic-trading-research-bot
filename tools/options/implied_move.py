@@ -88,6 +88,32 @@ def _render(rows: list[tuple[str, str]]) -> str:
     return "\n".join(f"{label.ljust(width)}  {value}" for label, value in rows)
 
 
+def _load_closes(path: str) -> list[float]:
+    """Load and validate a closes JSON file.
+
+    Raises ValueError (never a raw FileNotFoundError, JSONDecodeError, or
+    TypeError) so every bad-input path funnels through the same refusal
+    handling in main().
+    """
+    try:
+        with open(path, encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except FileNotFoundError:
+        raise ValueError(f"closes file not found: {path}") from None
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"closes file is not valid JSON: {exc}") from None
+
+    if not isinstance(payload, list):
+        raise ValueError("closes file must contain a JSON array of numbers")
+
+    closes: list[float] = []
+    for item in payload:
+        if isinstance(item, bool) or not isinstance(item, (int, float)):
+            raise ValueError(f"closes file must contain only numbers, found {type(item).__name__}")
+        closes.append(float(item))
+    return closes
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m tools.options.implied_move",
@@ -113,9 +139,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    # All domain validation happens here, before any row is built or printed.
+    # A caller must never see a half-printed table followed by an error.
     try:
         expected = expected_absolute_move(args.call_mark, args.put_mark, args.spot)
         sigma = one_sigma_move(args.iv, args.dte)
+
+        closes: list[float] | None = None
+        if args.closes:
+            closes = _load_closes(args.closes)
+
+        refutation: tuple[bool, float, float] | None = None
+        if args.required_move is not None:
+            refutation = refutes_timing(args.required_move, args.iv, args.dte)
     except ValueError as exc:
         print(f"refused: {exc}", file=sys.stderr)
         return 2
@@ -128,21 +164,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         ("1-sigma move", f"{sigma * 100:.2f}%"),
     ]
 
-    if args.closes:
-        with open(args.closes, encoding="utf-8") as handle:
-            closes = json.load(handle)
+    if closes is not None:
         for window in (60, 20):
             try:
                 rv = realized_vol(closes, window)
             except ValueError:
+                # A valid-but-short series is NOT a refusal — the table must
+                # still render this window's rows, visibly UNKNOWN.
                 rows.append((f"RV{window}", "insufficient history"))
                 rows.append((f"IV > RV{window}?", "UNKNOWN"))
                 continue
             rows.append((f"RV{window}", f"{rv * 100:.2f}%"))
             rows.append((f"IV > RV{window}?", "YES" if args.iv > rv else "NO"))
 
-    if args.required_move is not None:
-        refuted, k, probability = refutes_timing(args.required_move, args.iv, args.dte)
+    if refutation is not None:
+        refuted, k, probability = refutation
         rows += [
             ("thesis requires", f"{args.required_move * 100:.2f}%"),
             ("that is", f"{k:.2f} sigma"),
