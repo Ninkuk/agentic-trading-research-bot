@@ -130,8 +130,9 @@ though it were the other.
    **If no listed expiry falls near it, abstain and mark the check
    NOT APPLICABLE.** Substituting the next earnings date for an unrelated
    catalyst measures the wrong event and can refute a correct timing claim.
-3. **Honor BMO/AMC** — `earnings_calendar` stores `event_time` precisely because
-   it matters. A BMO report on day D reprices during D's session; an AMC report
+3. **Honor before-open vs after-close** — `earnings_calendar` stores
+   `event_time` as the literal string `before open` or `after close`, precisely
+   because it matters. A BMO report on day D reprices during D's session; an AMC report
    on day D reprices at D+1's open. Anchoring on `event_date` alone picks the
    wrong expiry for every AMC name.
 4. **Resolve "today" as a Phoenix date.** These are interactive sessions, not

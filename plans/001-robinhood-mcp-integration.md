@@ -307,12 +307,12 @@ def refutes_timing(
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_implied_move.py -v`
-Expected: PASS — 15 passed
+Expected: PASS — 17 passed
 
 - [ ] **Step 5: Run the full gates**
 
 Run: `uv run ruff check && uv run ruff format --check && uv run mypy && uv run pytest -q`
-Expected: all clean; test count rises from 1217 to 1232.
+Expected: all clean; test count rises from 1217 to 1234.
 
 - [ ] **Step 6: Commit**
 
@@ -405,8 +405,8 @@ def test_cli_reports_refutation_with_the_implied_probability(capsys):
 def test_cli_does_not_refute_a_sub_two_sigma_requirement(capsys):
     main([*BASE_ARGS, "--required-move", "0.10"])
     out = capsys.readouterr().out
-    assert "refutes timing claim" in out
-    assert out.rstrip().endswith("NO")
+    assert "refutes timing claim (> 2 sigma)?" in out
+    assert [ln for ln in out.splitlines() if "refutes timing claim" in ln][0].endswith("NO")
 
 
 def test_cli_refuses_bad_input_with_exit_2(capsys):
@@ -518,7 +518,7 @@ import sys
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_implied_move.py -v`
-Expected: PASS — 22 passed
+Expected: PASS — 24 passed
 
 - [ ] **Step 5: Verify the real invocation by hand**
 
@@ -582,7 +582,8 @@ Create `.claude/skills/shared/options-read.md` containing, in order:
    AAPL 2026-07-21 was 29.6% vs 37.5%.
 4. **Path 2 procedure**, steps 1–6 from the spec: resolve chain (absent → stop
    and say so); resolve the catalyst *from the thesis*, abstaining when no
-   expiry aligns; honour BMO/AMC `event_time`; resolve "today" as a Phoenix
+   expiry aligns; honour `event_time` (stored as the literal strings `before open` /
+   `after close`); resolve "today" as a Phoenix
    date; find ATM quoting with `expiration_dates` AND `strike_price` always;
    apply the scaled liquidity gate.
 5. **The exact command** to compute and print the table:
@@ -911,7 +912,7 @@ against v_decision_outcomes without a schema change."
 - [ ] **Step 1: Run the full gates**
 
 Run: `uv run ruff check && uv run ruff format --check && uv run mypy && uv run pytest -q`
-Expected: all clean, 1232 tests passing.
+Expected: all clean, 1241 tests passing.
 
 - [ ] **Step 2: Confirm path selection reports honestly**
 
