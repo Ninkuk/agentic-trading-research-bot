@@ -226,3 +226,31 @@ def test_cli_refuses_non_numeric_closes_payload_with_exit_2(tmp_path, capsys):
     captured = capsys.readouterr()
     assert captured.out == ""
     assert "refused:" in captured.err
+
+
+def test_cli_refuses_directory_as_closes_with_exit_2(tmp_path, capsys):
+    """Finding 1 regression: OSError (IsADirectoryError) must refuse, not crash.
+
+    A directory passed as --closes should exit 2, not exit 1 with a traceback.
+    """
+    closes_dir = tmp_path / "closes_dir"
+    closes_dir.mkdir()
+    assert main([*BASE_ARGS, "--closes", str(closes_dir)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "refused:" in captured.err
+
+
+def test_cli_refuses_nan_in_closes_payload_with_exit_2(tmp_path, capsys):
+    """Finding 2 regression: NaN / Infinity in JSON payload must refuse, not crash.
+
+    JSON allows bare NaN/Infinity (non-standard), but they must be rejected
+    rather than passed through to statistics.stdev() where they cause confusion.
+    """
+    closes = tmp_path / "closes.json"
+    # Write raw NaN directly (json.dumps won't emit it by default)
+    closes.write_text("[100.0, NaN, 101.0]")
+    assert main([*BASE_ARGS, "--closes", str(closes)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "refused:" in captured.err

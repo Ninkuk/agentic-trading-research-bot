@@ -98,8 +98,8 @@ def _load_closes(path: str) -> list[float]:
     try:
         with open(path, encoding="utf-8") as handle:
             payload = json.load(handle)
-    except FileNotFoundError:
-        raise ValueError(f"closes file not found: {path}") from None
+    except OSError as exc:
+        raise ValueError(f"cannot read closes file: {path} ({exc.strerror})") from None
     except json.JSONDecodeError as exc:
         raise ValueError(f"closes file is not valid JSON: {exc}") from None
 
@@ -110,6 +110,8 @@ def _load_closes(path: str) -> list[float]:
     for item in payload:
         if isinstance(item, bool) or not isinstance(item, (int, float)):
             raise ValueError(f"closes file must contain only numbers, found {type(item).__name__}")
+        if not math.isfinite(item):
+            raise ValueError(f"closes file must contain only finite numbers, found {item}")
         closes.append(float(item))
     return closes
 
