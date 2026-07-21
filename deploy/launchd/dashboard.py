@@ -379,7 +379,7 @@ def _scorecard(conn, now_iso) -> str:
     ).fetchall()
     flagged = {r["symbol"] for r in conn.execute("SELECT symbol FROM v_flagged")}
 
-    # v_flagged (|score_sum| >= 4 AND total >= 3) is not implied by the
+    # v_flagged (|score_sum| >= 3 AND total >= 2) is not implied by the
     # headline's ORDER BY ABS(score_sum) DESC LIMIT 15 — total is a second,
     # independent gate, so a high-|score_sum|-but-low-total unflagged row can
     # outrank a flagged one and push it past rank 15. Union in any flagged

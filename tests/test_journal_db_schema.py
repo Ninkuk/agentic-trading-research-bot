@@ -119,7 +119,7 @@ def test_one_owner_per_window(tmp_path):
 
 
 def test_flag_constants_exist():
-    assert db.FLAG_MIN_ABS_SCORE == 4 and db.FLAG_MIN_TOTAL == 3
+    assert db.FLAG_MIN_ABS_SCORE == 3 and db.FLAG_MIN_TOTAL == 2
 
 
 def test_prune_never_touches_journal(tmp_path):

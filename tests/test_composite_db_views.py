@@ -73,146 +73,43 @@ def test_score_history_spans_snapshots(tmp_path):
 
 
 def test_flagged_isolates_each_threshold(tmp_path):
-    """Verify v_flagged applies both thresholds independently.
-    - HIGHSUM_LOWTOT: score_sum=4 (passes sum), total=2 (fails total) -> not flagged
-    - LOWSUM_HIGHTOT: score_sum=3 (fails sum), total=3 (passes total) -> not flagged
-    - AT_BOUNDARY: score_sum=4, total=3 -> flagged (both at boundary)
-    - NEG_BOUNDARY: score_sum=-4, total=3 -> flagged (ABS applies)
+    """Verify v_flagged applies both thresholds (|score_sum| >= 3, total >= 2).
+
+    With per-signal scores capped at +/-2, |score_sum| >= 3 already implies
+    total >= 2, so "passes sum, fails total" is unconstructible — the total
+    gate is belt-and-braces against a future widening of the score range.
+    - SINGLE_MAX: one signal at the +2 cap -> score_sum=2, total=1 -> not flagged
+    - LOWSUM_HIGHTOT: score_sum=2 (fails sum), total=2 (passes total) -> not flagged
+    - AT_BOUNDARY: score_sum=3, total=2 -> flagged (both at boundary)
+    - NEG_BOUNDARY: score_sum=-3, total=2 -> flagged (ABS applies)
     """
     conn = db.connect(str(tmp_path / "c2.db"))
     db.ensure_schema(conn)
     sid = db.write_snapshot(conn, T2, 1)
 
-    # HIGHSUM_LOWTOT: 2 signals, both score 2 -> score_sum 4, total 2
-    db.write_signal_values(
-        conn,
-        sid,
-        [
-            dict(
-                signal_id="s0",
-                grain="ticker",
-                entity="HIGHSUM_LOWTOT",
-                raw_value=1.0,
-                score=2,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-            dict(
-                signal_id="s1",
-                grain="ticker",
-                entity="HIGHSUM_LOWTOT",
-                raw_value=1.0,
-                score=2,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-        ],
-    )
-
-    # LOWSUM_HIGHTOT: 3 signals, scores 1,1,1 -> score_sum 3, total 3
-    db.write_signal_values(
-        conn,
-        sid,
-        [
-            dict(
-                signal_id="s0",
-                grain="ticker",
-                entity="LOWSUM_HIGHTOT",
-                raw_value=1.0,
-                score=1,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-            dict(
-                signal_id="s1",
-                grain="ticker",
-                entity="LOWSUM_HIGHTOT",
-                raw_value=1.0,
-                score=1,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-            dict(
-                signal_id="s2",
-                grain="ticker",
-                entity="LOWSUM_HIGHTOT",
-                raw_value=1.0,
-                score=1,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-        ],
-    )
-
-    # AT_BOUNDARY: 3 signals, scores 2,1,1 -> score_sum 4, total 3
-    db.write_signal_values(
-        conn,
-        sid,
-        [
-            dict(
-                signal_id="s0",
-                grain="ticker",
-                entity="AT_BOUNDARY",
-                raw_value=1.0,
-                score=2,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-            dict(
-                signal_id="s1",
-                grain="ticker",
-                entity="AT_BOUNDARY",
-                raw_value=1.0,
-                score=1,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-            dict(
-                signal_id="s2",
-                grain="ticker",
-                entity="AT_BOUNDARY",
-                raw_value=1.0,
-                score=1,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-        ],
-    )
-
-    # NEG_BOUNDARY: 3 signals, scores -2,-1,-1 -> score_sum -4, total 3
-    db.write_signal_values(
-        conn,
-        sid,
-        [
-            dict(
-                signal_id="s0",
-                grain="ticker",
-                entity="NEG_BOUNDARY",
-                raw_value=1.0,
-                score=-2,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-            dict(
-                signal_id="s1",
-                grain="ticker",
-                entity="NEG_BOUNDARY",
-                raw_value=1.0,
-                score=-1,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-            dict(
-                signal_id="s2",
-                grain="ticker",
-                entity="NEG_BOUNDARY",
-                raw_value=1.0,
-                score=-1,
-                obs_date="2026-07-03",
-                staleness_days=1.0,
-            ),
-        ],
-    )
+    cases = {
+        "SINGLE_MAX": [2],
+        "LOWSUM_HIGHTOT": [1, 1],
+        "AT_BOUNDARY": [2, 1],
+        "NEG_BOUNDARY": [-2, -1],
+    }
+    for entity, scores in cases.items():
+        db.write_signal_values(
+            conn,
+            sid,
+            [
+                dict(
+                    signal_id=f"s{i}",
+                    grain="ticker",
+                    entity=entity,
+                    raw_value=1.0,
+                    score=score,
+                    obs_date="2026-07-03",
+                    staleness_days=1.0,
+                )
+                for i, score in enumerate(scores)
+            ],
+        )
 
     db.write_ticker_scores(conn, sid)
 
