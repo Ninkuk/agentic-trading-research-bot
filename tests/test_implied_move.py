@@ -72,12 +72,26 @@ def test_realized_vol_rejects_insufficient_history():
 def test_refutes_timing_when_thesis_needs_more_than_two_sigma():
     refuted, k, prob = refutes_timing(0.30, AAPL_IV, AAPL_DTE)
     assert refuted is True
-    assert k == pytest.approx(4.8305, abs=1e-3)
-    assert prob == pytest.approx(1.3619e-06, rel=1e-3)
+    assert k == pytest.approx(4.2245023058879125, rel=1e-9)
+    assert prob == pytest.approx(2.3946940006176614e-05, rel=1e-9)
+
+
+def test_refutes_timing_uses_the_lognormal_transform_it_documents():
+    """k must come from log1p(required_move)/sigma, not required_move/sigma.
+
+    sigma*sqrt(T) is the stdev of LOG returns, so dividing an ARITHMETIC
+    return by it overstates k and biases toward MORE refutation. A silent
+    revert to the arithmetic form makes k jump back to 4.83, so pin the gap.
+    """
+    sigma = one_sigma_move(AAPL_IV, AAPL_DTE)
+    _, k, _ = refutes_timing(0.30, AAPL_IV, AAPL_DTE)
+    arithmetic_k = 0.30 / sigma
+    assert k < arithmetic_k - 0.5
+    assert k == pytest.approx(math.log1p(0.30) / sigma, rel=1e-12)
 
 
 def test_does_not_refute_between_one_and_two_sigma():
-    """1.61 sigma is the market being less optimistic, NOT a refutation."""
+    """1.53 sigma is the market being less optimistic, NOT a refutation."""
     refuted, k, _ = refutes_timing(0.10, AAPL_IV, AAPL_DTE)
     assert refuted is False
     assert 1.0 < k < REFUTE_SIGMAS
@@ -171,7 +185,7 @@ def test_cli_reports_insufficient_history_rather_than_silently_skipping(tmp_path
 def test_cli_reports_refutation_with_the_implied_probability(capsys):
     main([*BASE_ARGS, "--required-move", "0.30"])
     out = capsys.readouterr().out
-    assert "4.83 sigma" in out
+    assert "4.22 sigma" in out
     assert "YES" in out
 
 
@@ -236,6 +250,34 @@ def test_cli_refuses_directory_as_closes_with_exit_2(tmp_path, capsys):
     closes_dir = tmp_path / "closes_dir"
     closes_dir.mkdir()
     assert main([*BASE_ARGS, "--closes", str(closes_dir)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "refused:" in captured.err
+
+
+def test_cli_refuses_non_positive_close_rather_than_blaming_history(tmp_path, capsys):
+    """A single 0.0 in a LONG, valid-length series is corrupt data, not short history.
+
+    Before the fix, realized_vol's positivity ValueError was caught by the RV
+    loop's `except ValueError` and rendered as "insufficient history" for BOTH
+    windows at exit 0 — including RV20, whose window does not even contain the
+    bad point. Corrupt prices must refuse, loudly, at exit 2.
+    """
+    closes = tmp_path / "closes.json"
+    payload = [100.0 + i * 0.5 for i in range(71)]
+    payload[40] = 0.0
+    closes.write_text(json.dumps(payload))
+    assert main([*BASE_ARGS, "--closes", str(closes)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "refused:" in captured.err
+    assert "insufficient history" not in captured.err
+
+
+def test_cli_refuses_negative_close_with_exit_2(tmp_path, capsys):
+    closes = tmp_path / "closes.json"
+    closes.write_text(json.dumps([100.0, -101.0, 102.0]))
+    assert main([*BASE_ARGS, "--closes", str(closes)]) == 2
     captured = capsys.readouterr()
     assert captured.out == ""
     assert "refused:" in captured.err

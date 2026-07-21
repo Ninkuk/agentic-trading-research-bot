@@ -72,13 +72,19 @@ def refutes_timing(
     a lognormal. Refutation requires the thesis to need a move beyond `sigmas`
     sigma — a claim about probability, not a vague "the market disagrees".
 
+    `required_move` is an ARITHMETIC return (0.30 = +30%), while `sigma * sqrt(T)`
+    is the standard deviation of LOG returns. So the required move is converted
+    with `math.log1p` before it is divided by sigma — mixing the two scales
+    overstates k, and overstating k biases toward MORE refutation, which is the
+    exact direction this module exists to prevent.
+
     Between 1 and `sigmas` sigma the market is merely less optimistic than the
     thesis. That is NOT a refutation and must not be reported as one.
     """
     if required_move <= 0:
         raise ValueError("required_move must be positive")
     sigma = one_sigma_move(iv, days_to_expiry)
-    k = required_move / sigma
+    k = math.log1p(required_move) / sigma
     probability = math.erfc(k / math.sqrt(2))
     return k > sigmas, k, probability
 
@@ -112,6 +118,12 @@ def _load_closes(path: str) -> list[float]:
             raise ValueError(f"closes file must contain only numbers, found {type(item).__name__}")
         if not math.isfinite(item):
             raise ValueError(f"closes file must contain only finite numbers, found {item}")
+        # Positivity is validated HERE, not in realized_vol, so corrupt price data
+        # exits 2 with a `refused:` line instead of being flattened into the RV
+        # loop's "insufficient history" — which reports bad data as a depth problem,
+        # and does so even for windows that never touch the bad point.
+        if item <= 0:
+            raise ValueError(f"closes must be positive, found {item}")
         closes.append(float(item))
     return closes
 
