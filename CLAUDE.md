@@ -182,11 +182,13 @@ a data pipeline.
 
 ## Workflow for a new screener/monitor
 
-The repo follows **spec → plan → build**. Design specs are transient working docs under
-`docs/superpowers/specs/<date>-<name>-design.md`. Implementation plans are **checked in** at
-`plans/<NNN>-<name>.md`, indexed by a status table in `plans/README.md` (TODO | IN PROGRESS |
-DONE | BLOCKED | REJECTED) — they persist after shipping and record what adversarial review
-broke, which is often the most useful thing in them.
+The repo follows **spec → plan → build**. Both artifacts are transient: design specs at
+`docs/superpowers/specs/<date>-<name>-design.md`, implementation plans at
+`plans/<NNN>-<name>.md` indexed by a status table in `plans/README.md` (TODO | IN PROGRESS |
+DONE | BLOCKED | REJECTED). Once a batch ships, clear it in a `docs:` commit — git history is
+the durable record of what adversarial review broke, which is often the most useful thing in
+them. Both directories are absent between batches; recreate `plans/README.md` with the first
+plan of the next one.
 
 **Everything runs on a launchd schedule** — see `docs/SCHEDULE.md` (durable reference:
 per-job slots, scheduling constraints, ops). Source of truth is `deploy/launchd/install.py`;
