@@ -53,3 +53,6 @@ directly.
   the dispatcher. Everything else it touches is read-only.
 - Positions missing symbol or a numeric quantity are skipped and counted by
   the parser — mention the skip count rather than retrying by hand.
+- Tax lots (`get_equity_tax_lots`) are available live and are **deliberately not
+  persisted** — this command writes only the blended position snapshot. Read
+  them at decision time via `kill-thesis`, not here.
