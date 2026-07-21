@@ -69,8 +69,28 @@ against scorer.db directly.
 
    - Call `get_realized_pnl` (Robinhood MCP, read-only) for the same window
      as the sync, scoped to the pinned "Agentic" account (number ending
-     1936) — the same account pinned in step 2.
-   - Compare the broker's figures against the fills just ingested.
+     1936) — the same account pinned in step 2. This tool returns
+     **aggregate, bucketed TOTALS only, never individual trades** (its own
+     schema says so), so it can answer "do the totals agree" and nothing
+     finer.
+   - **Mind the three clocks.** The `--last-run` bound from step 1 is a UTC
+     ISO timestamp; `get_realized_pnl`'s `start_date`/`end_date` are
+     `YYYY-MM-DD` interpreted at midnight **US/Eastern by default**; and this
+     repo's calendar-date convention is **Phoenix** (a CLAUDE.md invariant —
+     `composite` stamps `obs_date` on the Phoenix date and `journal` matches
+     fills on it). Convert the UTC bound to a Phoenix calendar date with
+     `phx_date` semantics, and pass `timezone="America/Phoenix"` so the
+     broker's bucket boundaries agree with `obs_date`. Skip either step and
+     window edges manufacture phantom divergences — the "cry wolf and be
+     ignored" failure the tolerance model below exists to prevent.
+   - For the **per-trade** comparison, use `get_pnl_trade_history` instead —
+     it lists closed trades individually, but offers **preset spans only**
+     (`week` / `month` / `3month` / `ytd` / `all`), so the sync window is not
+     directly expressible. Choose the nearest **enclosing** preset span and
+     filter client-side down to the sync window before comparing.
+   - Compare the broker's figures against the fills just ingested: totals
+     from `get_realized_pnl`, trade-by-trade from the filtered
+     `get_pnl_trade_history`.
    - **Expected divergence** — note it, don't flag it as a sync bug:
      - T+1 trade-vs-settlement drift at window edges.
      - drip/recurring fills, which land in `v_freelance` by design (step 2)

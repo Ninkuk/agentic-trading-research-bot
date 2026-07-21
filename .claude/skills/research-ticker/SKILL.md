@@ -62,9 +62,14 @@ known when, not what is true now:
 - **Robinhood MCP `get_earnings_results`** — the trailing 8 quarters of
   estimate vs actual EPS. Read the **pattern**, not any single quarter: chronic
   beats-by-a-hair indicate managed guidance; large misses indicate execution
-  risk. **This is a different thing from `earnings_calendar`'s forward
-  `eps_est`** above, which is a scheduling input only — the two happen to
-  share a name but neither substitutes for the other.
+  risk. The **actuals** are cross-checkable against an official source —
+  `data/sec_fundamentals.db` `v_screener.eps_diluted` — so cross-check them and
+  say if they disagree; only the **estimate** side is genuinely new here.
+  **The estimate is also a different thing from the forward `eps_est`** carried
+  by `data/earnings.db`'s `v_upcoming_earnings` view, which is a scheduling
+  input only — the two happen to share a name but neither substitutes for the
+  other. (There is no `earnings_calendar` table: that is the source package's
+  name; its dispatcher is `earnings` and its DB is `data/earnings.db`.)
 - `data/composite.db` — if the name was flagged, read `ticker_scores` and
   `signal_values` so you know what the machine already thinks and why.
 
@@ -255,8 +260,10 @@ Read the output honestly:
 - `refused` (exit 2) means the input was a category error — usually a
   loss-making base FCF. Go back to Phase 0.
 
-**Check the precision of the implied return against the vol.** When ATM IV
-exceeds 50%, quote the implied discount rate to the nearest whole percent and
+**Check the precision of the implied return against the vol.** When the path-2
+ATM IV (or, on path 1, `iv30` — the tenor rule forbids treating one as the
+other, but either crossing the line is enough of a warning) exceeds 50%, quote
+the implied discount rate to the nearest whole percent and
 say the range is wide; a figure like "13.32%" on a name the options market
 prices at 60% vol is arithmetic, not knowledge. Never widen a conclusion's
 confidence to match a narrow-looking number.
@@ -289,7 +296,9 @@ Write `research/<TICKER>-<YYYY-MM-DD>.md` with these sections, then commit it:
 6. **UNKNOWNs** — what could not be found, where it would come from, and
    whether its absence kills the thesis.
 7. **Sources** — every claim, tiered: primary filings; `stockanalysis.com`
-   (this repo's one vetted exception); low-confidence colour.
+   (this repo's one vetted exception); broker/market microstructure (Robinhood
+   MCP quotes, option chains, earnings estimates — real-time market state, not
+   a researched disclosure); low-confidence colour.
 
 ## Guardrails
 
@@ -301,6 +310,13 @@ Write `research/<TICKER>-<YYYY-MM-DD>.md` with these sections, then commit it:
 - **Official primary sources first.** `stockanalysis.com` is the single vetted
   exception and does not generalise to other aggregators. Reddit, YouTube, and
   expert-network material are labelled low-confidence, always.
+- **Broker/market microstructure is its own source tier**, below primary
+  filings and distinct from `stockanalysis.com`. Robinhood MCP quotes, option
+  chains, and tax lots are real-time account and market state, not a
+  researched disclosure — label them as this tier, not as primary or as the
+  `stockanalysis.com` exception. It is admissible only where no
+  already-integrated official source covers this ticker or field, and refused
+  wherever it duplicates one.
 - **It is a complete and respectable outcome to say "I don't know how I feel
   about this one."** There are other companies. Go back to the list.
 - **Options data informs the equity thesis only.** It answers "is the market

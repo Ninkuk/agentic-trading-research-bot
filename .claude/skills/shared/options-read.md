@@ -14,6 +14,15 @@ the DB's history, not a judgment call.
    `v_latest_sentiment` (put/call volume and OI ratios). Own-history
    percentile is the preferred baseline — it answers "is IV high *for this
    name*" without picking a realized-vol window at all.
+
+   **Path 1 supplies context only (`iv_rank` / `iv_percentile` / put-call
+   ratios); the 2-sigma timing refutation runs on path 2 exclusively.** It has
+   no timing machinery: the tenor rule below forbids using `iv30` as an ATM IV,
+   and `refutes_timing` needs an ATM IV plus a DTE, so path 1 structurally
+   cannot feed the CLI. When the gate clears, run both and report path 1's
+   percentile alongside path 2's table — do not substitute one for the other,
+   or the timing check silently gets *weaker* on exactly the names with the
+   most history.
 2. **Otherwise** → Robinhood MCP, with the implied-vs-realized method below.
 
 The 24-symbol CBOE catalog: AAPL AMD AMZN AVGO BABA BAC COIN DIS GOOGL IWM JPM
@@ -71,12 +80,21 @@ a percentile computed from one has no meaning applied to the other.
    NOT APPLICABLE.** Substituting the next earnings date for an unrelated
    catalyst measures the wrong event, and can "refute" a correct timing claim
    by testing something the thesis never asserted.
-3. **Honor before-open vs after-close.** `earnings.db` stores `event_time` as
-   the literal strings **`before open`** / **`after close`** — not am/pm —
+3. **Honor before-open vs after-close.** `data/earnings.db` stores `event_time`
+   as the literal strings **`before open`** / **`after close`** — not am/pm —
    precisely because it changes which session absorbs the move. A BMO report
    on day D reprices during D's own session; an AMC report on day D reprices
    at D+1's open. Anchoring on `event_date` alone picks the wrong expiry for
    every AMC name.
+
+   Query the view **`v_upcoming_earnings`** (it exposes `event_date`,
+   `event_time`, `ticker`, and `eps_est`); `event_time` also sits on the
+   underlying `events` table. There is **no `earnings_calendar` table** —
+   that is the source package's name (its registry/dispatcher name is
+   `earnings`), and querying it fails with "no such table". These views are
+   pinned to the last run's `calendar_now.today`, not to your session's
+   today — check it (`SELECT today FROM calendar_now;`) before trusting
+   "next earnings".
 4. **Resolve "today" as a Phoenix date.** These are interactive sessions, not
    launchd jobs, but the invariant is the same one that governs the rest of
    this repo: UTC midnight is 17:00 Phoenix, so a UTC-clocked evening session
@@ -91,6 +109,28 @@ a percentile computed from one has no meaning applied to the other.
    tenors, but footnote it when an ex-dividend date falls inside the window.
 6. **Apply the scaled liquidity gate** — see the four constants below.
    Failing it → mark UNRELIABLE; it may not move a verdict.
+7. **Build the closes array**, or the RV60/RV20 rows never populate and the
+   "elevated" rule below is dead on arrival. Fetch roughly 90 daily bars:
+
+   ```
+   get_equity_historicals(
+     symbols=[TICKER],
+     interval="day",
+     adjustment_type="split",
+     start_time="<~130 calendar days back, RFC3339 UTC, e.g. 2026-03-13T00:00:00Z>",
+   )
+   ```
+
+   130 calendar days is ~90 trading days — enough for the 60-return window
+   plus slack for holidays. Extract each bar's **`close_price`**, oldest
+   first, into a plain JSON array, write it to the scratchpad, and pass that
+   path as `--closes`.
+
+   **Gotcha: `adjustment_type="all"` is INTRADAY-ONLY** per the tool's own
+   schema. With `interval="day"` you must pass `"split"` (which is also the
+   default, and the right one for a volatility series — dividend adjustment
+   would smear a discrete drop across the history). The design spec says
+   `"all"`; the spec is wrong on this point.
 
 ## 4. The command
 
@@ -118,16 +158,25 @@ ATM IV                                        37.52%
 expected absolute move (MEAN, not a ceiling)  4.95%
 1-sigma move                                  6.21%
 thesis requires                               30.00%
-that is                                       4.83 sigma
-P(|move| >= required)                         0.000136%
+that is                                       4.22 sigma
+P(|move| >= required)                         0.002395%
 refutes timing claim (> 2 sigma)?             YES
 ```
 
-The CLI's contract: **exit 0 means it computed and printed the table above;
-exit 2 means it refused the input** (bad spot, negative mark, malformed
-`--closes` file, non-finite number) and printed nothing but a `refused:`
-line to stderr. There is no partial output on a refusal — never carry forward
-a half-printed table.
+The `sigma` figure is a **log**-return multiple: the CLI converts
+`--required-move` with `log1p` before dividing by `σ√T`, because `σ√T` is the
+standard deviation of log returns. Mixing the two scales overstates the sigma
+multiple and biases toward false refutation.
+
+The CLI's contract:
+
+- **exit 0** — it computed and printed the table above.
+- **exit 2** — either a **usage error** (argparse rejected the arguments and
+  printed a usage block), or a **domain refusal** (bad spot, negative mark,
+  non-positive or non-finite close, malformed `--closes` file), which prints a
+  single `refused:` line to stderr and nothing else. Read stderr to tell them
+  apart; a domain refusal never prints a partial table, so never carry forward
+  half a table.
 
 ## 5. How to read it
 
@@ -143,7 +192,28 @@ design did exactly that, and it would have produced false verdicts: citing a
 cases out of ten, because 4.95% was never a bound in the first place. Gate any
 verdict on the **1-sigma move**, never on the straddle mean.
 
-When realized vol is available (via `--closes`), build the comparison table
+**1 sigma is the unit, not the threshold.** Refutation requires the required
+move to exceed **2 sigma** — roughly a 5% outcome. Between 1 and 2 sigma the
+market is merely less optimistic than the thesis; that is not a refutation.
+Always pass `--required-move` when a thesis states one, and quote the CLI's
+`refutes timing claim` row rather than deciding the threshold yourself.
+
+**Options evidence has a one-way valve: it can only cut, never confirm.**
+Refutation is measured against the 1-sigma move, never the straddle figure.
+Refute a timing condition only when the thesis needs a move beyond **2 sigma**
+— roughly a 5% outcome — and state the sigma multiple and the implied
+probability in the finding. Mark the condition FLAWED only above the 2-sigma
+line, and the refutation stops there — it may not spread to undated
+conditions, because a thesis can be right about the destination and wrong
+about the calendar. An implied move that matches or exceeds what the thesis
+requires is **NOT evidence for anything**: it may not strengthen a thesis, may
+not raise a conviction level, and may not be written into a valuation or
+business section as support. If you catch yourself writing "the options market
+agrees" without immediately following it with "which is not evidence for the
+thesis," delete the sentence.
+
+When realized vol is available (via `--closes` — build the array per procedure
+step 7; without it these rows never populate), build the comparison table
 before interpreting it, in this shape:
 
 | metric | value |

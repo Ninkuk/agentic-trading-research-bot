@@ -108,7 +108,10 @@ the answer per lot, not per position.
    Refutation is measured against the 1-sigma move, never the straddle figure.
    Refute the timing condition only when the thesis needs a move beyond
    **2 sigma** — roughly a 5% outcome — and state the sigma multiple and the
-   implied probability in the finding. Between 1 and 2 sigma the market is
+   implied probability in the finding (the CLI prints this threshold in its
+   verdict row — quote that row, don't restate the number; `REFUTE_SIGMAS` in
+   `tools/options/implied_move.py` owns it and this prose can drift from it).
+   Between 1 and 2 sigma the market is
    merely less optimistic than the thesis; that is not a refutation and must
    not be written as one. Mark the condition FLAWED only above the 2-sigma
    line, and the refutation stops there — it may not spread to undated
