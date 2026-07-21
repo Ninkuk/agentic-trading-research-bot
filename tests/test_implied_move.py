@@ -1,3 +1,4 @@
+import json
 import math
 
 import pytest
@@ -5,6 +6,7 @@ import pytest
 from tools.options.implied_move import (
     REFUTE_SIGMAS,
     expected_absolute_move,
+    main,
     one_sigma_move,
     realized_vol,
     refutes_timing,
@@ -102,3 +104,68 @@ def test_expected_absolute_move_rejects_bad_input(kwargs):
 def test_one_sigma_move_rejects_bad_input(iv, dte):
     with pytest.raises(ValueError):
         one_sigma_move(iv, dte)
+
+
+BASE_ARGS = [
+    "--call-mark",
+    "8.425",
+    "--put-mark",
+    "7.800",
+    "--spot",
+    "327.70",
+    "--iv",
+    "0.375211",
+    "--dte",
+    "10",
+]
+
+
+def test_cli_prints_both_move_figures(capsys):
+    assert main(BASE_ARGS) == 0
+    out = capsys.readouterr().out
+    assert "4.95%" in out
+    assert "6.21%" in out
+
+
+def test_cli_labels_the_straddle_figure_as_a_mean_not_a_ceiling(capsys):
+    main(BASE_ARGS)
+    out = capsys.readouterr().out.lower()
+    assert "mean" in out
+    assert "not a ceiling" in out
+
+
+def test_cli_emits_explicit_yes_no_rows_for_both_windows(tmp_path, capsys):
+    closes = tmp_path / "closes.json"
+    closes.write_text(json.dumps([100.0 + i * 0.5 for i in range(70)]))
+    main([*BASE_ARGS, "--closes", str(closes)])
+    out = capsys.readouterr().out
+    assert "IV > RV60?" in out
+    assert "IV > RV20?" in out
+
+
+def test_cli_reports_insufficient_history_rather_than_silently_skipping(tmp_path, capsys):
+    closes = tmp_path / "closes.json"
+    closes.write_text(json.dumps([100.0 + i for i in range(25)]))
+    main([*BASE_ARGS, "--closes", str(closes)])
+    out = capsys.readouterr().out
+    assert "insufficient history" in out
+    assert "IV > RV20?" in out
+
+
+def test_cli_reports_refutation_with_the_implied_probability(capsys):
+    main([*BASE_ARGS, "--required-move", "0.30"])
+    out = capsys.readouterr().out
+    assert "4.83 sigma" in out
+    assert "YES" in out
+
+
+def test_cli_does_not_refute_a_sub_two_sigma_requirement(capsys):
+    main([*BASE_ARGS, "--required-move", "0.10"])
+    out = capsys.readouterr().out
+    assert "refutes timing claim (> 2 sigma)?" in out
+    assert [ln for ln in out.splitlines() if "refutes timing claim" in ln][0].endswith("NO")
+
+
+def test_cli_refuses_bad_input_with_exit_2(capsys):
+    assert main([*BASE_ARGS[:-2], "--dte", "0"]) == 2
+    assert "refused" in capsys.readouterr().err

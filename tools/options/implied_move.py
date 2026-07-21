@@ -13,8 +13,11 @@ refutations.
 
 from __future__ import annotations
 
+import argparse
+import json
 import math
 import statistics
+import sys
 from collections.abc import Sequence
 
 TRADING_DAYS = 252
@@ -78,3 +81,81 @@ def refutes_timing(
     k = required_move / sigma
     probability = math.erfc(k / math.sqrt(2))
     return k > sigmas, k, probability
+
+
+def _render(rows: list[tuple[str, str]]) -> str:
+    width = max(len(label) for label, _ in rows)
+    return "\n".join(f"{label.ljust(width)}  {value}" for label, value in rows)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="python -m tools.options.implied_move",
+        description=(
+            "Print the options-implied move table. The straddle figure is a MEAN, never a ceiling."
+        ),
+    )
+    parser.add_argument("--call-mark", type=float, required=True)
+    parser.add_argument("--put-mark", type=float, required=True)
+    parser.add_argument("--spot", type=float, required=True)
+    parser.add_argument("--iv", type=float, required=True, help="ATM IV as a decimal, e.g. 0.3752")
+    parser.add_argument("--dte", type=int, required=True, help="calendar days to expiry")
+    parser.add_argument(
+        "--closes",
+        default=None,
+        help="path to a JSON file holding daily closes, oldest first",
+    )
+    parser.add_argument(
+        "--required-move",
+        type=float,
+        default=None,
+        help="move the thesis needs, as a decimal (0.30 = 30%%)",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        expected = expected_absolute_move(args.call_mark, args.put_mark, args.spot)
+        sigma = one_sigma_move(args.iv, args.dte)
+    except ValueError as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 2
+
+    rows: list[tuple[str, str]] = [
+        ("spot", f"{args.spot:.2f}"),
+        ("dte (calendar days)", str(args.dte)),
+        ("ATM IV", f"{args.iv * 100:.2f}%"),
+        ("expected absolute move (MEAN, not a ceiling)", f"{expected * 100:.2f}%"),
+        ("1-sigma move", f"{sigma * 100:.2f}%"),
+    ]
+
+    if args.closes:
+        with open(args.closes, encoding="utf-8") as handle:
+            closes = json.load(handle)
+        for window in (60, 20):
+            try:
+                rv = realized_vol(closes, window)
+            except ValueError:
+                rows.append((f"RV{window}", "insufficient history"))
+                rows.append((f"IV > RV{window}?", "UNKNOWN"))
+                continue
+            rows.append((f"RV{window}", f"{rv * 100:.2f}%"))
+            rows.append((f"IV > RV{window}?", "YES" if args.iv > rv else "NO"))
+
+    if args.required_move is not None:
+        refuted, k, probability = refutes_timing(args.required_move, args.iv, args.dte)
+        rows += [
+            ("thesis requires", f"{args.required_move * 100:.2f}%"),
+            ("that is", f"{k:.2f} sigma"),
+            ("P(|move| >= required)", f"{probability:.6%}"),
+            (
+                f"refutes timing claim (> {REFUTE_SIGMAS:g} sigma)?",
+                "YES" if refuted else "NO",
+            ),
+        ]
+
+    print(_render(rows))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
