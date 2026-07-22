@@ -2,8 +2,10 @@ from datetime import UTC, datetime
 
 from deploy.launchd.publish_dashboard import (
     NOINDEX_META,
+    ROBOTS_TXT,
     inject_noindex,
     is_fresh,
+    stage,
 )
 
 
@@ -46,3 +48,28 @@ def test_inject_noindex_without_head_tag():
 def test_inject_noindex_is_idempotent():
     once = inject_noindex("<html><head></head></html>")
     assert inject_noindex(once) == once
+
+
+def test_stage_writes_three_files(tmp_path):
+    stage("<html><head></head><body>hi</body></html>", tmp_path)
+    assert (tmp_path / "index.html").exists()
+    assert (tmp_path / ".nojekyll").exists()
+    assert (tmp_path / "robots.txt").exists()
+
+
+def test_stage_index_has_noindex_and_content(tmp_path):
+    stage("<html><head></head><body>hi</body></html>", tmp_path)
+    out = (tmp_path / "index.html").read_text(encoding="utf-8")
+    assert NOINDEX_META in out
+    assert "hi" in out
+
+
+def test_stage_robots_disallows_all(tmp_path):
+    stage("<html></html>", tmp_path)
+    assert (tmp_path / "robots.txt").read_text(encoding="utf-8") == ROBOTS_TXT
+    assert "Disallow: /" in ROBOTS_TXT
+
+
+def test_stage_nojekyll_is_empty(tmp_path):
+    stage("<html></html>", tmp_path)
+    assert (tmp_path / ".nojekyll").read_text(encoding="utf-8") == ""

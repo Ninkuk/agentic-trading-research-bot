@@ -48,3 +48,15 @@ def inject_noindex(html: str) -> str:
     if "<head>" in html:
         return html.replace("<head>", "<head>" + NOINDEX_META, 1)
     return NOINDEX_META + html
+
+
+def stage(html: str, dest: Path) -> None:
+    """Write the publishable tree into dest.
+
+    .nojekyll disables Jekyll processing: the dashboard is already self-contained
+    HTML with no external asset of any kind, so Jekyll could only add latency and
+    a chance of mangling it.
+    """
+    (dest / "index.html").write_text(inject_noindex(html), encoding="utf-8")
+    (dest / ".nojekyll").write_text("", encoding="utf-8")
+    (dest / "robots.txt").write_text(ROBOTS_TXT, encoding="utf-8")
