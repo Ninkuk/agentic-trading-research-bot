@@ -31,6 +31,32 @@ SELF_LOG = "daily-summary.log"
 _TS = re.compile(r"^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]")
 _BAD = ("FAILED", "STALE", "Traceback", "Error:")
 
+# How long a job may run before the digest calls it hung. INTERIM two-tier
+# stopgap: replace with measured per-job values once env.sh's `end:` lines have
+# accumulated (~2 weeks). A stopgap with no recorded end date becomes permanent.
+#
+# A threshold only matters for a job still plausibly running at 21:15 (the
+# digest fires once, nightly) -- i.e. one that starts within roughly an hour
+# of it. Measured gaps: dashboard 2min, advisor 3min, scorer 5min, composite
+# 10min -- all safe under the default tier. `edgar` (20:30, 45min before the
+# digest) is the only slow-tier entry that is actually load-bearing today;
+# every other _SLOW_JOBS entry starts 2h-17h earlier; if still alive at
+# digest time it would be flagged under either tier, so those are defensive
+# against future schedule changes rather than currently load-bearing.
+_HUNG_DEFAULT_MIN = 15
+_HUNG_SLOW_MIN = 60
+_SLOW_JOBS = {
+    "fred-vintages",  # ~80 API calls, ~1.7M rows re-upserted
+    "preopen",  # one screener step, not the whole 4-step run, drives this budget
+    "portfolio",  # headless `claude -p`
+    "journal",  # headless `claude -p`
+    "backtest",  # point-in-time replay
+    "ftd-full",  # re-ingests 24 months
+    "short-interest-full",  # re-ingests ~12 months
+    "fundamentals-bulk",  # downloads + ingests a DERA quarterly ZIP
+    "edgar",  # starts 45min before the digest AND has a designed sleep 900 retry pause
+}
+
 # Max acceptable age (days) of the newest snapshot, by DB filename. Defaults
 # to 4 (daily jobs surviving a weekend + a holiday). Slower cadences:
 MAX_AGE_DAYS = {
@@ -85,7 +111,15 @@ EMPTY_OK = {
 
 
 def job_exit_codes():
-    """{job-name: last exit code} from launchctl (None while running)."""
+    """{job-name: launchctl's last-exit-status column}.
+
+    NOT a running-vs-not indicator, despite appearances. `launchctl list`
+    prints 0 in this column both for "exited cleanly" and for "has never
+    exited" (see status.sh), and -- the part that matters here -- a job that
+    is CURRENTLY RUNNING still shows its PREVIOUS exit status in this column,
+    not a sentinel. Verified live: all 35 jobs read 0 here, including one
+    caught mid-run. Use running_jobs() for a running/not signal instead.
+    """
     out = subprocess.run(["launchctl", "list"], capture_output=True, text=True).stdout
     codes = {}
     for line in out.splitlines():
@@ -99,10 +133,39 @@ def job_exit_codes():
     return codes
 
 
+def running_jobs():
+    """{job names} currently running, per launchctl's PID column.
+
+    `launchctl list`'s three columns are PID, last-exit-status, label. As
+    job_exit_codes documents, the exit-status column is ambiguous -- 0 means
+    both "exited cleanly" and "never exited", and it holds a RUNNING job's
+    PREVIOUS status, not a sentinel -- so it cannot answer "is this running
+    right now". The PID column can: a running job shows a real PID there, an
+    idle one shows "-". status.sh resolves the same ambiguity via
+    `launchctl print` instead; this resolves it via the PID column so the
+    digest can check all jobs with one `launchctl list` call here (a second,
+    separate call is made by job_exit_codes() -- a job that exits between the
+    two is simply not reported that night; harmless, since it self-corrects
+    the following night).
+    """
+    out = subprocess.run(["launchctl", "list"], capture_output=True, text=True).stdout
+    running = set()
+    for line in out.splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[2].startswith(PREFIX) and parts[0] != "-":
+            running.add(parts[2][len(PREFIX) :])
+    return running
+
+
 def scan_log(path, since):
     """(runs_started, [bad lines]) within the window. Untimestamped lines
     (e.g. tracebacks) inherit the in-window state of the last timestamped
-    line, so a crash between two starts is attributed correctly."""
+    line, so a crash between two starts is attributed correctly.
+
+    Counts only `start:` lines as a run -- env.sh's step_start emits `step:`
+    for sub-steps of a multi-step wrapper (cftc_weekly.sh, preopen_batch.sh),
+    which must NOT inflate the "N runs in 24h" headline the way they would if
+    step_start reused the `start:` shape."""
     runs, bad, in_window = 0, [], False
     for line in path.read_text(errors="replace").splitlines():
         m = _TS.match(line)
@@ -116,6 +179,89 @@ def scan_log(path, since):
         if any(marker in line for marker in _BAD):
             bad.append(f"{path.stem}: {line.strip()[:160]}")
     return runs, bad
+
+
+def last_progress(path):
+    """Timestamp of the most recent `start:` or `step:` line, or None.
+
+    Returns a NAIVE datetime in LOCAL (Phoenix) time: wrapper logs are stamped
+    by bash `date`, and build_summary compares against now_local. Do NOT route
+    this through phx_date -- that converts UTC-stored instants and would be
+    wrong here.
+
+    A job progressing through env.sh's step_start markers must keep resetting
+    its clock -- that is the correct hang semantic (a STUCK step should trip
+    the tier; a job still moving through steps should not) -- so this counts
+    `step:` lines as progress too, same as `start:`. The consequence: for a
+    multi-step wrapper (cftc_weekly.sh, preopen_batch.sh) the age this
+    returns is the CURRENT STEP's, not the whole run's, so the hung-job tier
+    budgets a stuck step, not total runtime. This matters for the planned
+    follow-up that derives measured per-job thresholds from these logs (see
+    _HUNG_DEFAULT_MIN's docstring) -- those thresholds would be per-step
+    budgets for multi-step jobs, not whole-run ones.
+    """
+    newest = None
+    for line in path.read_text(errors="replace").splitlines():
+        if "start:" not in line and "step:" not in line:
+            continue
+        m = _TS.match(line)
+        if not m:
+            continue
+        try:
+            ts = dt.datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            continue
+        if newest is None or ts > newest:
+            newest = ts
+    return newest
+
+
+def hung_jobs(running, now_local):
+    """[problem lines] for jobs in `running` that have been running past their limit.
+
+    `running` is a set of job names currently running (see running_jobs()).
+    Membership in that set IS the running signal -- launchctl's exit-status
+    column cannot supply one (see job_exit_codes), so without a set built
+    from the PID column a hung job is invisible, and launchd will not
+    re-spawn it while the instance is alive.
+
+    A running job with NO determinable start (missing log, or a log with no
+    parseable `start:`/`step:` marker) is reported rather than skipped -- a
+    wrapper that hangs BEFORE reaching job_start (a stalled `source .env`,
+    slow PATH resolution) would otherwise leave an empty log and stay
+    invisible forever, which is the exact class of invisibility this feature
+    exists to remove.
+
+    Detection only: never kills or restarts anything.
+    """
+    problems = []
+    for job in sorted(running):
+        if f"{job}.log" == SELF_LOG:  # the digest is running as it builds this
+            continue
+        try:
+            path = LOGS / f"{job}.log"
+            if not path.exists():
+                problems.append(f"{job}: running with no log — start time unknown")
+                continue
+            started = last_progress(path)
+            if started is None:
+                problems.append(f"{job}: running with an unparseable log — start time unknown")
+                continue
+            minutes = (now_local - started).total_seconds() / 60
+        except Exception as e:
+            # main() DOES wrap build_summary in try/except Exception -- an
+            # uncaught error here would still reach ntfy, just as a generic
+            # "summary build failed" at high priority instead of a specific
+            # digest. This guard is kept anyway so ONE job's degenerate log
+            # (e.g. a directory where a file is expected) can't blank out
+            # every other problem line build_summary would otherwise report
+            # -- staleness, other hung jobs, signals/advisor context.
+            problems.append(f"{job}: hang check failed ({type(e).__name__})")
+            continue
+        limit = _HUNG_SLOW_MIN if job in _SLOW_JOBS else _HUNG_DEFAULT_MIN
+        if minutes > limit:
+            problems.append(f"{job}: running {int(minutes)}min (limit {limit}min) — possible hang")
+    return problems
 
 
 def stale_dbs(now):
@@ -306,6 +452,7 @@ def build_summary(now_local, now_utc):
     for job, code in sorted(codes.items()):
         if code not in (None, 0):
             problems.append(f"{job}: last exit {code}")
+    problems.extend(hung_jobs(running_jobs(), now_local))
 
     since = now_local - dt.timedelta(hours=24)
     for log in sorted(LOGS.glob("*.log")):

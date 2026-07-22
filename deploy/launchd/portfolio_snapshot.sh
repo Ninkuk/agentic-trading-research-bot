@@ -7,7 +7,7 @@
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
 
-echo "[$(date '+%F %T')] start: portfolio snapshot"
+job_start "portfolio snapshot"
 # NOT haiku: it improvises tools outside --allowedTools (reaching for Edit or a
 # Bash heredoc where the allowlist grants Write) and then reports the MCP
 # connector as unauthenticated rather than retrying. Verified 2026-07-08 --

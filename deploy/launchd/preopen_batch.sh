@@ -4,10 +4,17 @@
 # -> reddit baseline. Skip-and-continue per job.
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
+job_start "preopen"
 
 step() {
-    echo "[$(date '+%F %T')] start: $*"
-    uv run python main.py "$@" || echo "[$(date '+%F %T')] FAILED($?): $*" >&2
+    step_start "$@"
+    # Capture $? into `rc` BEFORE it's used: word expansion runs $(date) first,
+    # which resets $? to 0, so `echo "...FAILED($?)..."` on the `||` branch
+    # always prints 0 -- verified: bash -c 'false || echo "$(date) FAILED($?)"'.
+    uv run python main.py "$@" || {
+        rc=$?
+        echo "[$(date '+%F %T')] FAILED($rc): $*" >&2
+    }
 }
 
 # Earnings watchlist = current portfolio holdings + the cboe_options catalog

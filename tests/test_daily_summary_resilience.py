@@ -46,6 +46,8 @@ def test_build_summary_degrades_never_raises(tmp_path, monkeypatch):
     # to False since build_summary treats any problem line as unhealthy.
     _make_snapshots_db(tmp_path / "broken.db", "not-a-date")
     monkeypatch.setattr(daily_summary, "DATA", tmp_path)
+    monkeypatch.setattr(daily_summary, "job_exit_codes", lambda: {})
+    monkeypatch.setattr(daily_summary, "running_jobs", lambda: set())
     healthy, summary = daily_summary.build_summary(
         daily_summary.dt.datetime.now(), daily_summary.dt.datetime.now(daily_summary.dt.UTC)
     )

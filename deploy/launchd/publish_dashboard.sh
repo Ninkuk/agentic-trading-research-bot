@@ -4,5 +4,5 @@
 # ntfy, so a hung push can neither delay nor suppress that health alert.
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
-echo "[$(date '+%F %T')] start: publish dashboard"
+job_start "publish dashboard"
 uv run python deploy/launchd/publish_dashboard.py

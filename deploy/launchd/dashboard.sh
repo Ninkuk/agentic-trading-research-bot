@@ -4,5 +4,5 @@
 # ntfy (9:15pm); a separate process, so a failure here cannot delay that alert.
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
-echo "[$(date '+%F %T')] start: dashboard"
+job_start "dashboard"
 uv run python deploy/launchd/dashboard.py
