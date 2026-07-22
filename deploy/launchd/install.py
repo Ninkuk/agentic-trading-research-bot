@@ -148,7 +148,9 @@ JOBS = {
     # AFTER daily-summary (9:15), not before: a hung push must not be able to
     # delay or suppress the health ntfy. Refuses to publish a stale file, so a
     # failed 9:13 dashboard run surfaces here rather than silently republishing
-    # yesterday's page under tonight's timestamp.
+    # yesterday's page under tonight's timestamp. Git calls are bounded: push
+    # at 300s, other git calls at 120s, so the job cannot exceed ~13min worst
+    # case.
     "publish-dashboard": (script("publish_dashboard.sh"), weekly(range(7), 21, 20)),
 }
 

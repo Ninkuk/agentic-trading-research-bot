@@ -2,6 +2,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from deploy.launchd.publish_dashboard import (
+    GIT_TIMEOUT_DEFAULT,
+    GIT_TIMEOUT_PUSH,
     NOINDEX_META,
     ROBOTS_TXT,
     inject_noindex,
@@ -98,10 +100,10 @@ class FakeGit:
         stderr="",
         timeout_on=None,
     ):
-        # (cwd, argv, "did cwd/index.html exist at call time") -- the third field
-        # is captured live because dest is a tempfile.TemporaryDirectory that is
-        # gone by the time a test can inspect it after publish() returns.
-        self.calls: list[tuple[str | None, list[str], bool]] = []
+        # (cwd, argv, "did cwd/index.html exist at call time", timeout) -- the
+        # third field is captured live because dest is a tempfile.TemporaryDirectory
+        # that is gone by the time a test can inspect it after publish() returns.
+        self.calls: list[tuple[str | None, list[str], bool, float | None]] = []
         self.fail_on = fail_on
         self.remote = remote
         self.stderr = stderr
@@ -109,9 +111,9 @@ class FakeGit:
 
     def __call__(self, argv, cwd=None, capture_output=False, text=False, timeout=None):
         index_present = cwd is not None and (Path(cwd) / "index.html").exists()
-        self.calls.append((cwd, argv, index_present))
+        self.calls.append((cwd, argv, index_present, timeout))
         args = argv[1:]
-        if self.timeout_on is not None and args[0] == self.timeout_on:
+        if self.timeout_on is not None and args[0] == self.timeout_on and timeout is not None:
             raise subprocess.TimeoutExpired(cmd=argv, timeout=timeout)
         if self.fail_on is not None and args[0] == self.fail_on:
             return subprocess.CompletedProcess(argv, 1, "", self.stderr or "fatal: boom")
@@ -119,14 +121,26 @@ class FakeGit:
         return subprocess.CompletedProcess(argv, 0, stdout, "")
 
     def argv_for(self, subcommand):
-        return next((argv for _cwd, argv, _idx in self.calls if argv[1] == subcommand), None)
+        return next(
+            (argv for _cwd, argv, _idx, _timeout in self.calls if argv[1] == subcommand), None
+        )
 
     def cwd_for(self, subcommand):
-        return next((cwd for cwd, argv, _idx in self.calls if argv[1] == subcommand), None)
+        return next(
+            (cwd for cwd, argv, _idx, _timeout in self.calls if argv[1] == subcommand), None
+        )
 
     def index_present_for(self, subcommand):
         """Whether cwd/index.html existed at the moment this subcommand ran."""
-        return next((idx for _cwd, argv, idx in self.calls if argv[1] == subcommand), None)
+        return next(
+            (idx for _cwd, argv, idx, _timeout in self.calls if argv[1] == subcommand), None
+        )
+
+    def timeout_for(self, subcommand):
+        """The timeout value that was passed to run() for this subcommand."""
+        return next(
+            (timeout for _cwd, argv, _idx, timeout in self.calls if argv[1] == subcommand), None
+        )
 
 
 def _repo_with_dashboard(tmp_path, mtime_epoch):
@@ -212,6 +226,23 @@ def test_publish_reports_git_timeout_loudly_and_without_secrets(tmp_path):
     assert publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=msgs.append) == 1
     assert any("FAILED" in m and "timed out" in m for m in msgs)
     assert "ghp_TIMEOUTSECRET" not in " ".join(msgs)
+
+
+def test_publish_gives_push_the_larger_timeout_budget(tmp_path):
+    """push touches the network and gets GIT_TIMEOUT_PUSH; local ops get the default.
+
+    The equality checks alone are insufficient: production code always wires
+    GIT_TIMEOUT_PUSH into the push call, so `timeout_for("push") ==
+    GIT_TIMEOUT_PUSH` would hold trivially even if the two constants were
+    collapsed to the same value. The explicit `>` assertion is what actually
+    pins push having a strictly larger budget than a local git call.
+    """
+    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    git = FakeGit()
+    publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=lambda m: None)
+    assert git.timeout_for("push") == GIT_TIMEOUT_PUSH
+    assert git.timeout_for("init") == GIT_TIMEOUT_DEFAULT
+    assert GIT_TIMEOUT_PUSH > GIT_TIMEOUT_DEFAULT
 
 
 def test_publish_stages_and_operates_outside_the_live_worktree(tmp_path):

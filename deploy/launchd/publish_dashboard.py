@@ -31,7 +31,7 @@ from sources.common.clock import phx_date  # noqa: E402
 DASHBOARD_PATH = "reports/dashboard.html"
 BRANCH = "gh-pages"
 NOINDEX_META = '<meta name="robots" content="noindex,nofollow">'
-# The noindex meta tag above is the control that actually works -- it is honored
+# The noindex meta tag above is the only crawler control that works here -- it is honored
 # by crawlers that fetch this page. robots.txt is a per-ORIGIN file: this is a
 # project page (ninkuk.github.io/agentic-trading-bot/), so robots.txt only ever
 # lands at .../agentic-trading-bot/robots.txt, a path no crawler consults (they
