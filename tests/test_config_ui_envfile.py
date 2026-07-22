@@ -60,3 +60,14 @@ def test_apply_none_removes_assignment_keeps_everything_else():
 
 def test_apply_none_for_absent_key_is_noop():
     assert config_ui.apply_updates(SAMPLE, {"NOT_THERE": None}) == SAMPLE
+
+
+def test_set_prefers_active_line_over_earlier_commented_default():
+    out = config_ui.apply_updates("#FOO=1\nFOO=2\n", {"FOO": "3"})
+    assert config_ui.parse_env(out)["FOO"] == "3"
+    assert out == "#FOO=1\nFOO=3\n"
+
+
+def test_clear_with_commented_default_and_active_line_removes_active():
+    out = config_ui.apply_updates("#FOO=1\nFOO=2\n", {"FOO": None})
+    assert out == "#FOO=1\n"

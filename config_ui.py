@@ -46,6 +46,9 @@ def apply_updates(text: str, updates: dict[str, str | None]) -> str:
         return text
     pending = dict(updates)
     lines = text.splitlines(keepends=True)
+    active_keys = {
+        m.group("key") for m in (_ASSIGN.match(line.rstrip("\n")) for line in lines) if m
+    }
     out_lines: list[str] = []
     for line in lines:
         bare = line.rstrip("\n")
@@ -60,7 +63,7 @@ def apply_updates(text: str, updates: dict[str, str | None]) -> str:
             out_lines.append(f"{key}={value}{comment}\n")
             continue
         mc = _COMMENTED.match(bare)
-        if mc and mc.group("key") in pending:
+        if mc and mc.group("key") in pending and mc.group("key") not in active_keys:
             key = mc.group("key")
             value = pending.pop(key)
             if value is None:
