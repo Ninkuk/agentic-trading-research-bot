@@ -32,9 +32,8 @@ same data the page hydrates from.
 
 ### Don't guess routes — read the app's own route table
 
-The client bundle ships the complete SvelteKit route dictionary. This is the
-authoritative list (167 routes as of 2026-07-09); enumerate from it rather than
-probing hunches:
+The client bundle ships the complete SvelteKit route dictionary — the
+authoritative list (167 routes as of 2026-07-09). Enumerate from it:
 
 ```bash
 ENTRY=$(curl -sL --compressed https://stockanalysis.com/stocks/aapl/ \
@@ -43,8 +42,8 @@ curl -sL --compressed "https://stockanalysis.com/$ENTRY" \
   | grep -oE '"/[^"]*":\[' | tr -d '":[' | sort
 ```
 
-The same crawl over `_app/immutable/**` chunks is how the `_api` surface in §4
-was found — grep the chunks for `/_api/`.
+The same crawl over `_app/immutable/**` chunks finds the `_api` surface (§4) —
+grep for `/_api/`.
 
 **Two payload signatures mean "nothing here":**
 
@@ -63,11 +62,10 @@ was found — grep the chunks for `/_api/`.
 screener data-points (`shortFloat`, `shortShares`, `shortRatio`, §6); ownership
 in `sharesInsiders`/`sharesInstitutions`.
 
-> ⚠️ **`sec-filings` 404s but `filings` does not.** An earlier pass probed the
-> wrong slug and concluded there were no filings. `/stocks/{T}/filings/` is real
-> and carries direct PDF links (below). Likewise `chart` 404s under a ticker but
-> exists at `/chart/{T}/`, and `holdings` 404s under `/stocks/` but exists under
-> `/quote/`. A 404 on one slug says nothing about the sibling.
+> ⚠️ **A 404 on one slug says nothing about the sibling.** `sec-filings` 404s but
+> `/stocks/{T}/filings/` is real and carries direct PDF links (below); `chart` 404s
+> under a ticker but exists at `/chart/{T}/`; `holdings` 404s under `/stocks/` but
+> exists under `/quote/`.
 
 ## 2. Decoding the payload (`devalue`)
 
@@ -117,7 +115,7 @@ non-US listings `holdings/` and `filings/` return `{info}` — present but unfed
 | `/stocks/{T}/transcripts/` | Index under key `transcripts` (AAPL **74**, back ~18 years; VZ **76**, only back to 2019 — depth varies sharply by ticker). Each `{id, quartrEventId, fiscalYear, quarterLabel, detailSlug, eventDate, eventTitle, files}`. ⚠️ **Not only earnings calls** — conference presentations are interleaved (`eventTitle` "J.P. Morgan 54th Annual…", `quarterLabel` "FY 2026"). Filter on `eventTitle`/`quarterLabel` if you want the quarterly calls alone |
 | `/stocks/{T}/transcripts/{detailSlug}/` | **Full transcript** (~35k chars ≈ 8.6k tokens each; a 76-call corpus is ~2.6M chars ≈ 650k tokens, but fetches in ~25s at 0.33s/call). `transcriptQuarter.transcriptTurns` = list of `{speakerName, role, company, paragraphs}`. ⚠️ **`paragraphs` is `list[list[dict]]`** — a list of paragraphs, each a list of *sentences* `{text, startSec, endSec}` (audio-aligned). Two levels, not one: `[s['text'] for p in turn['paragraphs'] for s in p]`. Plus `summaryShort`, `summaryLongHtml` (AI-generated — tier low-confidence), `audioUrl`, `files`. Source: Quartr |
 | `/stocks/{T}/ratings/` | Per-analyst rating actions: `{action_rt, firm, analyst, slug, pt_now, pt_old, date}` |
-| `/stocks/{T}/statistics/` | 20 grouped blocks: valuation, margins, ratios, scores (Altman Z), fairValue (some `proOnly`), shortSelling, shares, dividends, taxes, analystForecasts. Each block's `data` rows are `{id, title, value, hover}` — **`hover` is the exact figure** (`'4,644,435,714,320'`), `value` the rounded display string. Cheapest exact source of market cap, `enterpriseValue`, `fcf`, `capex`, `debt` in one request. ⚠️ The market-cap row's id is **`marketcap`**, lowercased — everywhere else in this catalog it is `marketCap`. Keying on `marketCap` here silently finds nothing. ⚠️ **The `incomeStatement` block's TTM flow rows can disagree with `/financials/` — trust `/financials/`** (see the note below the table) |
+| `/stocks/{T}/statistics/` | 20 grouped blocks: valuation, margins, ratios, scores (Altman Z), fairValue (some `proOnly`), shortSelling, shares, dividends, taxes, analystForecasts. Each block's `data` rows are `{id, title, value, hover}` — **`hover` is the exact figure** (`'4,644,435,714,320'`), `value` the rounded display string. Cheapest exact source of market cap, `enterpriseValue`, `fcf`, `capex`, `debt` in one request. ⚠️ The market-cap row's id is **`marketcap`**, lowercased — everywhere else in this catalog it is `marketCap`. Keying on `marketCap` here silently finds nothing. ⚠️ **The `incomeStatement` block's TTM flow rows can disagree with `/financials/`** — which route wins depends on the field; see the notes below the table |
 | `/stocks/{T}/dividend/` | Full dividend history, yield, payout, chart |
 | `/stocks/{T}/company/` | Profile: description, executives, contact, filings, logoURL |
 | `/stocks/{T}/forecast/` | priceTargets (avg/median/low/high/count), per-analyst `ratings` (firm/analyst/PT/rating + track record), monthly consensus `recommendations`, EPS/revenue `estimates` |
@@ -136,12 +134,10 @@ non-US listings `holdings/` and `filings/` return `{info}` — present but unfed
 > | INTC | **+2,006.0M** | **−2,214.0M** — sign flips |
 > | BBAI | **−77.8M** | **−216.9M** — −61% vs −170% margin |
 >
-> Clean income statements agree to the cent; only names carrying unusual charges
-> diverge — i.e. exactly the distressed names where the margin is load-bearing.
-> `revenue`, `fcf`, `capex` and `ncfo` agree everywhere tested. For `opinc`/`ebitda`,
-> `/financials/` is the one that reconciles (BBAI: four quarterly columns sum to
-> −217.0M; FY2025 `grossProfit` 28.5 − `totalOperatingExpenses` 242.4 = −213.9). Not
-> the TTM-vs-fiscal-year `[0]` indexing trap above — these are both genuinely TTM.
+> Only names carrying unusual charges diverge — i.e. the distressed ones where the
+> margin is load-bearing. `/financials/` reconciles (BBAI's four quarterly columns
+> sum to −217.0M); `revenue`, `fcf`, `capex` and `ncfo` agree on both routes. Not
+> the `[0]` TTM-vs-fiscal-year trap above — both figures here are genuinely TTM.
 >
 > ⚠️ **`netIncome[0]` on `/financials/` can be one QUARTER, not four.** EOSE
 > 2026-07-22: `/statistics/` −1,013,340,000 vs `/financials/` +826,557,000 — a sign
@@ -165,8 +161,8 @@ non-US listings `holdings/` and `filings/` return `{info}` — present but unfed
 | `/etf/provider/{slug}/` | All provider ETFs as a screener grid (e.g. `vanguard`) |
 | `/etf/list/new/` | Newly listed ETFs as a screener grid |
 
-These four are the *only* ETF sub-routes — `/etf/{T}/metrics/` and the other
-stock tabs 404.
+The per-ticker ETF routes are only these four (`/`, `holdings/`, `dividend/`,
+`history/`) — `/etf/{T}/metrics/` and the other stock tabs 404.
 
 ### Bulk universe dumps (see §4)
 
@@ -177,8 +173,8 @@ stock tabs 404.
 | `/tools/mutf-screener/` | **23,922 funds** | **83** |
 | `/ipos/screener/` | **450 IPOs** | own catalog |
 
-Row counts drift daily (the stock universe read 5,601 on 2026-07-09) — read
-`resultsCount` rather than hard-coding.
+Row counts drift daily (the stock universe read 5,601 on 2026-07-09) — read them
+off an unfiltered dump rather than hard-coding, minding §4's `resultsCount` caveat.
 
 ### Market movers & discovery (see §5 for the query DSL)
 
@@ -276,7 +272,7 @@ sorting, and search. With no `cn` it returns all 5,601 stock rows.
 > `len(data)`. It is not the total number of matches, so you cannot use it to
 > size a pagination loop.
 
-**There *is* a single-name lookup.** `se` is a substring search, so
+**Single-name lookup:** `se` is a substring search, so
 `?se=AAPL&c=<any columns>` returns exactly one row with full-precision values —
 the arbitrary-column, single-ticker query. Match on ticker is not guaranteed
 unique (`se=apple` also matches *Maui Land & Pineapple*), so verify the returned
@@ -354,9 +350,8 @@ fetch them live with `catalog.fetch_catalog()` against the respective screener.
 > live-quote perspective: **`price` is the last close for `priceDate`**, while
 > **`close` is the PREVIOUS session's close**. Verified against CBOE and the
 > `/history/` endpoint (SPY `priceDate=2026-07-07`: `price=747.71` = that day's
-> close, `close=751.28` = 07-06's close). Harvesting `close` as if it were the
-> close for `priceDate` shifts every row forward one trading day — it is exactly
-> the bug `plans/000-price-ledger-off-by-one-session.md` repairs. Use `price`.
+> close, `close=751.28` = 07-06's close). Harvesting `close` as the close for
+> `priceDate` shifts every row forward one trading day. Use `price`.
 
 | id | name |
 |---|---|
