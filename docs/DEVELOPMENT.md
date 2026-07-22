@@ -1,10 +1,5 @@
 # Developer guide
 
-Technical companion to the plain-English [README](../README.md). Contributor
-invariants — the rules that repeat across the codebase — live in
-[CLAUDE.md](../CLAUDE.md). Trading terms are defined in the
-[glossary](GLOSSARY.md).
-
 A signal-collection layer for discretionary trading: ~20 independent
 **screeners** and **monitors** that each read one official data source (SEC,
 FRED, CFTC, FINRA, CBOE, Treasury, NY Fed, EIA, USDA, …) into a per-source
@@ -13,8 +8,8 @@ those databases read-only and produce a market regime, a per-ticker scorecard,
 position-sizing guidance, and a point-in-time backtest of the whole thing.
 
 There is no order-placement path anywhere in this repository — the only account
-interaction is *reading* positions and fills. The live dashboard
-(https://ninkuk.github.io/agentic-trading-research-bot/) is regenerated nightly at
+interaction is _reading_ positions and fills. The live dashboard
+(<https://ninkuk.github.io/agentic-trading-research-bot/>) is regenerated nightly at
 9:13pm Phoenix, published at 9:20pm, and marked `noindex`.
 
 ```bash
@@ -86,16 +81,16 @@ calendars all work out of the box. `FRED_API_KEY`, `EIA_API_KEY`, and
 
 ## What it collects
 
-| | Sources |
-|---|---|
-| **Macro / rates** | `fred` (FRED + ALFRED vintages), `treasury` (auctions, yield curve), `nyfed` (RRP, SOFR), `econ_calendar`, `fomc` |
+|                        | Sources                                                                                                           |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Macro / rates**      | `fred` (FRED + ALFRED vintages), `treasury` (auctions, yield curve), `nyfed` (RRP, SOFR), `econ_calendar`, `fomc` |
 | **Positioning / flow** | `cftc` (COT, three families), `short_interest`, `short_volume`, `ats` (FINRA dark-pool), `ftd` (fails-to-deliver) |
-| **Options / vol** | `options` (CBOE chains, hourly), `cboe_stats` (VIX term structure, put/call) |
-| **Equities** | `stocks`, `fundamentals` (SEC XBRL frames), `edgar` (filing activity), `earnings` |
-| **Commodities** | `eia` (petroleum, natural gas), `usda` (NASS, WASDE) |
-| **Sentiment** | `reddit` (ApeWisdom) |
-| **Calendars** | `market_calendar` (holidays, OPEX — network-free) |
-| **Account** | `portfolio`, `journal` — read-only position and fill state |
+| **Options / vol**      | `options` (CBOE chains, hourly), `cboe_stats` (VIX term structure, put/call)                                      |
+| **Equities**           | `stocks`, `fundamentals` (SEC XBRL frames), `edgar` (filing activity), `earnings`                                 |
+| **Commodities**        | `eia` (petroleum, natural gas), `usda` (NASS, WASDE)                                                              |
+| **Sentiment**          | `reddit` (ApeWisdom)                                                                                              |
+| **Calendars**          | `market_calendar` (holidays, OPEX — network-free)                                                                 |
+| **Account**            | `portfolio`, `journal` — read-only position and fill state                                                        |
 
 The four combiners touch no network at all; they ATTACH the source databases
 read-only:
@@ -145,7 +140,7 @@ obvious:
   than silently doubled across the `www.` and `data.` hostnames.
 - **Timestamps are UTC; calendar dates are Phoenix.** Slicing a date out of a
   UTC timestamp (`now_iso[:10]`) is a bug here — UTC midnight is 5pm Phoenix
-  and eight scheduled jobs run after it, so the naive slice yields *tomorrow*
+  and eight scheduled jobs run after it, so the naive slice yields _tomorrow_
   for every one of them. Use `phx_date()`.
 
 ## Development
