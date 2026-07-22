@@ -331,6 +331,14 @@ scratchpad:
                    "doc": "<TICKER>-<DATE>.md",
                    "note": "<one line: the load-bearing reason>"}]}
 
+`verdict` answers only the writeup's §1 OWNERSHIP call — would I own this at
+today's price? — `buy` if yes, `pass` otherwise. It is orthogonal to the
+kill-thesis SOUND/FLAWED/UNPROVEN label required by the Output section: that
+label grades the thesis's robustness, not its direction, so a FLAWED or
+UNPROVEN thesis can still log `buy` if §1 concludes ownership, and a SOUND
+one can log `pass`. Summarize the kill-thesis label in `note` if it's the
+load-bearing reason, but never let it decide `verdict` — §1 does.
+
 then ingest:
 
     uv run python main.py journal --db data/scorer.db --input <scratchpad>/verdict.json
