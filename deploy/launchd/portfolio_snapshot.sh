@@ -13,9 +13,15 @@ job_start "portfolio snapshot"
 # connector as unauthenticated rather than retrying. Verified 2026-07-08 --
 # haiku failed this slot 3/3 while sonnet ran it clean. The allowlist is the
 # write-scope guarantee, so fix the model, never widen the list.
+# --permission-mode default is load-bearing: a global defaultMode=auto in
+# ~/.claude/settings.json AUTO-APPROVES tools outside --allowedTools in
+# headless runs (proven 2026-07-22 by a research-nightly session committing
+# an unreviewed file). Pinning the mode makes this allowlist a real envelope;
+# Skill (loads /account-positions) and TodoWrite become explicit for that reason.
 claude -p "/account-positions" \
     --model sonnet \
-    --allowedTools "mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_portfolio,mcp__claude_ai_Robinhood_MCP__get_equity_positions,Write,Bash(uv run python main.py portfolio *)" \
+    --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_portfolio,mcp__claude_ai_Robinhood_MCP__get_equity_positions,Write,Bash(uv run python main.py portfolio *)" \
+    --permission-mode default \
     --output-format json
 
 FRESH=$(sqlite3 data/portfolio.db \

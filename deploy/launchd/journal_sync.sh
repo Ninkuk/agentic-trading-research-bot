@@ -10,9 +10,15 @@ source "$(dirname "$0")/env.sh"
 job_start "journal sync"
 # NOT haiku -- see the note in portfolio_snapshot.sh: it improvises tools the
 # allowlist does not grant and mistakes the resulting denial for stale MCP auth.
+# --permission-mode default is load-bearing: a global defaultMode=auto in
+# ~/.claude/settings.json AUTO-APPROVES tools outside --allowedTools in
+# headless runs (proven 2026-07-22 by a research-nightly session committing
+# an unreviewed file). Pinning the mode makes this allowlist a real envelope;
+# Skill (loads /journal-sync) and TodoWrite become explicit for that reason.
 claude -p "/journal-sync" \
     --model sonnet \
-    --allowedTools "mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_equity_orders,Write,Bash(uv run python main.py journal *)" \
+    --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_equity_orders,Write,Bash(uv run python main.py journal *)" \
+    --permission-mode default \
     --output-format json
 
 # strftime, NOT datetime(): ran_at is isoformat with a 'T' separator, and
