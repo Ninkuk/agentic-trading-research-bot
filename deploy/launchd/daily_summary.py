@@ -236,7 +236,14 @@ def hung_jobs(running, now_local):
             if started is None:
                 continue
             minutes = (now_local - started).total_seconds() / 60
-        except Exception as e:  # build_summary runs outside main's try
+        except Exception as e:
+            # main() DOES wrap build_summary in try/except Exception -- an
+            # uncaught error here would still reach ntfy, just as a generic
+            # "summary build failed" at high priority instead of a specific
+            # digest. This guard is kept anyway so ONE job's degenerate log
+            # (e.g. a directory where a file is expected) can't blank out
+            # every other problem line build_summary would otherwise report
+            # -- staleness, other hung jobs, signals/advisor context.
             problems.append(f"{job}: hang check failed ({type(e).__name__})")
             continue
         limit = _HUNG_SLOW_MIN if job in _SLOW_JOBS else _HUNG_DEFAULT_MIN
