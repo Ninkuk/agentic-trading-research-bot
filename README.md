@@ -1,5 +1,7 @@
 # Agentic Trading Research Bot
 
+[![CI](https://github.com/Ninkuk/agentic-trading-research-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/Ninkuk/agentic-trading-research-bot/actions/workflows/ci.yml)
+
 **A research assistant for the stock market.**
 
 Every day, this project visits about twenty official public sources — mostly
