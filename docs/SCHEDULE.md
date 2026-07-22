@@ -110,7 +110,19 @@ summer open (6:30am Phoenix).
   e.g. `edgar`'s post-throttle `sleep 900`) it's reported as a possible hang.
   Detection only — it never kills or restarts a job. For a multi-step
   wrapper, the age measured is the CURRENT STEP's, not the whole run's,
-  since `step:` resets the clock same as `start:` does.
+  since `step:` resets the clock same as `start:` does. A running job whose
+  start time can't be determined is reported rather than skipped: `<job>:
+  running with no log — start time unknown` (no `logs/<job>.log` at all) or
+  `<job>: running with an unparseable log — start time unknown` (a log with
+  no parseable `start:`/`step:` line).
+  Known limitation: `edgar` starts at 8:30pm, 45 minutes before the 9:15pm
+  digest, so its measured age is always ~45min — permanently under the
+  60-minute slow tier it needs to avoid false-alarming on its designed
+  post-throttle `sleep 900` retry pause. A genuinely wedged `edgar` is
+  therefore not caught the same night; it surfaces in the following night's
+  digest at ~25h old instead. Accepted cost of a fixed tier, to be closed by
+  the planned follow-up to measured per-job thresholds (see
+  `_HUNG_DEFAULT_MIN`'s docstring in `daily_summary.py`).
 - **Nightly push**: `daily_summary.py` sends an ntfy digest at 9:15pm — run
   counts, FAILED/STALE lines, non-zero exit codes, stale DBs vs expected
   cadence, possible hangs (see above). Healthy = ✅ default priority; problems

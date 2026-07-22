@@ -47,7 +47,7 @@ _HUNG_DEFAULT_MIN = 15
 _HUNG_SLOW_MIN = 60
 _SLOW_JOBS = {
     "fred-vintages",  # ~80 API calls, ~1.7M rows re-upserted
-    "preopen",  # four screeners serially
+    "preopen",  # one screener step, not the whole 4-step run, drives this budget
     "portfolio",  # headless `claude -p`
     "journal",  # headless `claude -p`
     "backtest",  # point-in-time replay
@@ -143,7 +143,10 @@ def running_jobs():
     right now". The PID column can: a running job shows a real PID there, an
     idle one shows "-". status.sh resolves the same ambiguity via
     `launchctl print` instead; this resolves it via the PID column so the
-    digest can check all jobs with a single `launchctl list` call.
+    digest can check all jobs with one `launchctl list` call here (a second,
+    separate call is made by job_exit_codes() -- a job that exits between the
+    two is simply not reported that night; harmless, since it self-corrects
+    the following night).
     """
     out = subprocess.run(["launchctl", "list"], capture_output=True, text=True).stdout
     running = set()
