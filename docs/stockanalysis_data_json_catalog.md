@@ -117,13 +117,32 @@ non-US listings `holdings/` and `filings/` return `{info}` — present but unfed
 | `/stocks/{T}/transcripts/` | Index under key `transcripts` (AAPL **74**, back ~18 years; VZ **76**, only back to 2019 — depth varies sharply by ticker). Each `{id, quartrEventId, fiscalYear, quarterLabel, detailSlug, eventDate, eventTitle, files}`. ⚠️ **Not only earnings calls** — conference presentations are interleaved (`eventTitle` "J.P. Morgan 54th Annual…", `quarterLabel` "FY 2026"). Filter on `eventTitle`/`quarterLabel` if you want the quarterly calls alone |
 | `/stocks/{T}/transcripts/{detailSlug}/` | **Full transcript** (~35k chars ≈ 8.6k tokens each; a 76-call corpus is ~2.6M chars ≈ 650k tokens, but fetches in ~25s at 0.33s/call). `transcriptQuarter.transcriptTurns` = list of `{speakerName, role, company, paragraphs}`. ⚠️ **`paragraphs` is `list[list[dict]]`** — a list of paragraphs, each a list of *sentences* `{text, startSec, endSec}` (audio-aligned). Two levels, not one: `[s['text'] for p in turn['paragraphs'] for s in p]`. Plus `summaryShort`, `summaryLongHtml` (AI-generated — tier low-confidence), `audioUrl`, `files`. Source: Quartr |
 | `/stocks/{T}/ratings/` | Per-analyst rating actions: `{action_rt, firm, analyst, slug, pt_now, pt_old, date}` |
-| `/stocks/{T}/statistics/` | 20 grouped blocks: valuation, margins, ratios, scores (Altman Z), fairValue (some `proOnly`), shortSelling, shares, dividends, taxes, analystForecasts. Each block's `data` rows are `{id, title, value, hover}` — **`hover` is the exact figure** (`'4,644,435,714,320'`), `value` the rounded display string. Cheapest exact source of market cap, `enterpriseValue`, `fcf`, `capex`, `debt` in one request. ⚠️ The market-cap row's id is **`marketcap`**, lowercased — everywhere else in this catalog it is `marketCap`. Keying on `marketCap` here silently finds nothing |
+| `/stocks/{T}/statistics/` | 20 grouped blocks: valuation, margins, ratios, scores (Altman Z), fairValue (some `proOnly`), shortSelling, shares, dividends, taxes, analystForecasts. Each block's `data` rows are `{id, title, value, hover}` — **`hover` is the exact figure** (`'4,644,435,714,320'`), `value` the rounded display string. Cheapest exact source of market cap, `enterpriseValue`, `fcf`, `capex`, `debt` in one request. ⚠️ The market-cap row's id is **`marketcap`**, lowercased — everywhere else in this catalog it is `marketCap`. Keying on `marketCap` here silently finds nothing. ⚠️ **The `incomeStatement` block's TTM flow rows can disagree with `/financials/` — trust `/financials/`** (see the note below the table) |
 | `/stocks/{T}/dividend/` | Full dividend history, yield, payout, chart |
 | `/stocks/{T}/company/` | Profile: description, executives, contact, filings, logoURL |
 | `/stocks/{T}/forecast/` | priceTargets (avg/median/low/high/count), per-analyst `ratings` (firm/analyst/PT/rating + track record), monthly consensus `recommendations`, EPS/revenue `estimates` |
 | `/stocks/{T}/history/` | OHLCV bars `{o,h,l,c,a,v,t,ch}`, range-adjustable, back to 1982 |
 | `/stocks/{T}/employees/` | Headcount history (annual/quarterly) + peers |
 | `/stocks/{T}/market-cap/` | Market-cap history, performance, peers |
+
+> ⚠️ **Take `operatingIncome`, `ebitda` and their margins from `/financials/`, not
+> `/statistics/`.** `/statistics/`'s `incomeStatement` block excludes impairment- and
+> restructuring-type charges from operating expense; `/financials/` includes them.
+> Both are labelled TTM and nothing marks the difference. TTM `opinc`, 2026-07-21:
+>
+> | | `/statistics/` | `/financials/` |
+> |---|---|---|
+> | AAPL / MSFT | 147,366.0M / 148,957.0M | identical ✅ |
+> | INTC | **+2,006.0M** | **−2,214.0M** — sign flips |
+> | BBAI | **−77.8M** | **−216.9M** — −61% vs −170% margin |
+>
+> Clean income statements agree to the cent; only names carrying unusual charges
+> diverge — i.e. exactly the distressed names where the margin is load-bearing.
+> `revenue`, `netinc`, `fcf`, `capex` and `ncfo` agree everywhere tested, so this is
+> narrow, not a reason to distrust the route. `/financials/` is the one that
+> reconciles (BBAI: four quarterly columns sum to −217.0M; FY2025 `grossProfit` 28.5
+> − `totalOperatingExpenses` 242.4 = −213.9). Not the TTM-vs-fiscal-year `[0]`
+> indexing trap above — these are both genuinely TTM.
 
 ### Per-ETF
 
