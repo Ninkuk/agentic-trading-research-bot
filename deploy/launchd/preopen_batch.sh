@@ -4,9 +4,10 @@
 # -> reddit baseline. Skip-and-continue per job.
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
+job_start "preopen"
 
 step() {
-    job_start "$@"
+    step_start "$@"
     uv run python main.py "$@" || echo "[$(date '+%F %T')] FAILED($?): $*" >&2
 }
 

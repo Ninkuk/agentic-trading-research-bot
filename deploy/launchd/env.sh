@@ -23,3 +23,13 @@ job_start() {
 job_end() {
     echo "[$(date '+%F %T')] end: $JOB_LABEL ($(( $(date +%s) - JOB_T0 ))s, exit $1)"
 }
+
+# Per-step marker for scripts that run several sub-steps in one job (e.g. a
+# family/ticker loop, or a step() helper). Bash only has ONE EXIT trap per
+# shell, so calling job_start per step would repeatedly clobber JOB_T0 /
+# JOB_LABEL and leave the final end line reporting just the last step's
+# duration under the last step's name. step_start only echoes the start
+# line -- it never touches the whole-run timer or the trap.
+step_start() {
+    echo "[$(date '+%F %T')] start: $*"
+}
