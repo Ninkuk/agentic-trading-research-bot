@@ -23,6 +23,21 @@ def test_allowlist_never_contains_order_tools():
         assert forbidden not in research_nightly.ALLOWED_TOOLS
 
 
+def test_allowlist_bash_entries_are_enumerated_not_catchall():
+    entries = research_nightly.ALLOWED_TOOLS.split(",")
+    assert "Bash(uv run python *)" not in entries
+    allowed_bash = {
+        "Bash(uv run python -m sources.screeners.stock_analysis_screener.probe *)",
+        "Bash(uv run python -m tools.valuation.reverse_dcf *)",
+        "Bash(uv run python -m tools.options.implied_move *)",
+        "Bash(uv run python main.py journal *)",
+    }
+    bash_entries = [e for e in entries if e.startswith("Bash(")]
+    assert bash_entries
+    for entry in bash_entries:
+        assert entry in allowed_bash
+
+
 def test_build_command_shape():
     cmd = research_nightly.build_command("EOSE", "opus")
     assert cmd[0] == "claude"
