@@ -296,9 +296,10 @@ Write `research/<TICKER>-<YYYY-MM-DD>.md` with these sections, then commit it:
 6. **UNKNOWNs** — what could not be found, where it would come from, and
    whether its absence kills the thesis.
 7. **Sources** — every claim, tiered: primary filings; `stockanalysis.com`
-   (this repo's one vetted exception); broker/market microstructure (Robinhood
-   MCP quotes, option chains, earnings estimates — real-time market state, not
-   a researched disclosure); low-confidence colour.
+   (this repo's one vetted exception); broker/market microstructure (see the
+   data-source policy in `CLAUDE.md` — real-time market state, not a
+   researched disclosure, admissible only where no already-integrated
+   official source covers this ticker or field); low-confidence colour.
 
 ## Guardrails
 
@@ -311,10 +312,10 @@ Write `research/<TICKER>-<YYYY-MM-DD>.md` with these sections, then commit it:
   exception and does not generalise to other aggregators. Reddit, YouTube, and
   expert-network material are labelled low-confidence, always.
 - **Broker/market microstructure is its own source tier**, below primary
-  filings and distinct from `stockanalysis.com`. Robinhood MCP quotes, option
-  chains, and tax lots are real-time account and market state, not a
-  researched disclosure — label them as this tier, not as primary or as the
-  `stockanalysis.com` exception. It is admissible only where no
+  filings and distinct from `stockanalysis.com` — see the data-source policy
+  in `CLAUDE.md` for what it covers. It is real-time account and market
+  state, not a researched disclosure — label it as this tier, not as primary
+  or as the `stockanalysis.com` exception. It is admissible only where no
   already-integrated official source covers this ticker or field, and refused
   wherever it duplicates one.
 - **It is a complete and respectable outcome to say "I don't know how I feel

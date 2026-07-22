@@ -172,7 +172,9 @@ Then state, in one sentence, what evidence would flip your verdict.
   user's alone. Then stop. Do not follow with a strike or expiry "as
   information" — that is the same violation wearing a hedge.
 - **Broker/market microstructure is its own source tier**, below primary
-  filings and distinct from `stockanalysis.com`. Robinhood MCP quotes, option
-  chains, and tax lots are real-time account and market state, not a
-  researched disclosure — label them as this tier, not as primary or as the
-  `stockanalysis.com` exception.
+  filings and distinct from `stockanalysis.com` — see the data-source policy
+  in `CLAUDE.md` for what it covers. It is real-time account and market
+  state, not a researched disclosure — label it as this tier, not as primary
+  or as the `stockanalysis.com` exception. It is admissible only where no
+  already-integrated official source covers this ticker or field, and
+  refused wherever it duplicates one.

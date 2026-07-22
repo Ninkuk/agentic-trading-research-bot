@@ -6,8 +6,11 @@ be checked against it — nothing here sizes a position or recommends a trade.
 
 ## 1. Source selection
 
-Two paths, checked in order. Which one applies is a fact about the ticker and
-the DB's history, not a judgment call.
+Two paths. Path 2 always runs — it is the sole source of the timing table.
+Path 1 adds its own-history percentile as context whenever it clears the gate
+below, alongside path 2's table, not instead of it — this is not a strict
+either/or once that gate clears. Which paths apply is a fact about the
+ticker and the DB's history, not a judgment call.
 
 1. **Ticker in the CBOE catalog AND `data/options.db` has usable history** →
    read `v_iv_rank` (`iv30`, `iv_rank`, `iv_percentile`, `n_days`) and
@@ -23,7 +26,9 @@ the DB's history, not a judgment call.
    percentile alongside path 2's table — do not substitute one for the other,
    or the timing check silently gets *weaker* on exactly the names with the
    most history.
-2. **Otherwise** → Robinhood MCP, with the implied-vs-realized method below.
+2. **Always** → Robinhood MCP, with the implied-vs-realized method below;
+   this is what produces the printed timing table in every case, whether or
+   not path 1 also applies.
 
 The 24-symbol CBOE catalog: AAPL AMD AMZN AVGO BABA BAC COIN DIS GOOGL IWM JPM
 META MSFT MSTR NFLX NVDA PLTR QQQ SMCI SPX SPY TSLA VIX XOM. Anything else is
@@ -39,8 +44,8 @@ the package name.
 history accumulates: require `n_days >= 60` before quoting a percentile at
 all, and label it low-confidence below `n_days >= 252` (roughly one year — the
 span needed to cover a full seasonal cycle of the name's own vol). If the
-table is absent or `n_days < 60`, fall through to path 2 and **say which path
-was used** in the write-up.
+table is absent or `n_days < 60`, path 1 does not apply this run — proceed
+with path 2 alone and **say which paths were used** in the write-up.
 
 **As of 2026-07-21, `n_days` was 13 against the 60-day gate.** The screener
 has run hourly since 2026-07-02 and gains one day per trading day, so path 1
@@ -100,13 +105,34 @@ a percentile computed from one has no meaning applied to the other.
    this repo: UTC midnight is 17:00 Phoenix, so a UTC-clocked evening session
    reads tomorrow's date and every days-to-expiry figure comes out one day
    short.
-5. **Find ATM and quote both legs.** Spot from `get_equity_quotes`, then
-   `get_option_instruments` **always with both `expiration_dates` AND
-   `strike_price`**. Unfiltered, that endpoint returns the full ladder per
-   (chain, expiration, type) — 88 contracts for one expiry, one side, across
-   24 expirations. Nearest-strike-to-spot is a slight approximation to the
-   true 50-delta strike (the forward sits above spot); sub-1% at short
-   tenors, but footnote it when an ex-dividend date falls inside the window.
+5. **Find ATM and quote both legs.** Three calls, in this order:
+   - **Spot** ← `get_equity_quotes`.
+   - **The two ATM contract UUIDs** ← `get_option_instruments`, **always
+     with both `expiration_dates` AND `strike_price`**. Unfiltered, that
+     endpoint returns the full ladder per (chain, expiration, type) — 88
+     contracts for one expiry, one side, across 24 expirations. This call
+     only lists contracts (`id`, `strike_price`, `type`, `expiration_date`,
+     `state`, `tradability`) — it returns no marks, no IV, no open interest,
+     and cannot feed any of the CLI's required arguments on its own.
+     Nearest-strike-to-spot is a slight approximation to the true 50-delta
+     strike (the forward sits above spot); sub-1% at short tenors, but
+     footnote it when an ex-dividend date falls inside the window.
+   - **Marks, IV, and liquidity** ← `get_option_quotes`, called **once with
+     both UUIDs** (`instrument_ids`). Per contract it returns `mark_price`,
+     `adjusted_mark_price`, `bid_price`, `ask_price`, `bid_size`, `ask_size`,
+     `implied_volatility`, `delta`, `gamma`, `theta`, `vega`, `rho`,
+     `open_interest`, `volume`, `previous_close_price`, `break_even_price`,
+     `updated_at`. This is the only call in the chain that returns any of
+     them:
+     - `--call-mark` / `--put-mark` ← each leg's `mark_price` from this
+       response.
+     - `--iv` ← the **mean** of the call and put `implied_volatility` from
+       this same response, never one leg alone. In the worked AAPL example
+       below, 0.375211 is exactly the mean of the call's 0.379756 and the
+       put's 0.370666.
+     - The liquidity gate's inputs (step 6) — `open_interest`, `volume`,
+       `bid_price`, `ask_price` — also come from this same response; no
+       extra call is needed.
 6. **Apply the scaled liquidity gate** — see the four constants below.
    Failing it → mark UNRELIABLE; it may not move a verdict.
 7. **Build the closes array**, or the RV60/RV20 rows never populate and the
@@ -188,9 +214,11 @@ roughly 20% *below* the true 1-sigma move (`σ√T`). On the AAPL fixture above,
 
 **Never treat the straddle figure as a maximum.** An earlier version of this
 design did exactly that, and it would have produced false verdicts: citing a
-"±4.95% maximum" to refute a thesis needing a 6% move is wrong in over four
-cases out of ten, because 4.95% was never a bound in the first place. Gate any
-verdict on the **1-sigma move**, never on the straddle mean.
+"±4.95% maximum" to refute a thesis needing a 6% move is still wrong, because
+4.95% was never a bound in the first place — under this lognormal, P(|move|
+>= 6%) is **34.8%**, better than one case in three, not the near-zero rate a
+"maximum" framing implies. Gate any verdict on the **1-sigma move**, never on
+the straddle mean.
 
 **1 sigma is the unit, not the threshold.** Refutation requires the required
 move to exceed **2 sigma** — roughly a 5% outcome. Between 1 and 2 sigma the
@@ -248,7 +276,7 @@ Robinhood cannot close this gap from the inside: `get_option_historicals`
 returns price OHLC only, with no per-bar IV, so an own-history IV percentile
 is unobtainable from that source — that is exactly what path 1's `v_iv_rank`
 provides and path 2 cannot. Path 1 is the real answer; path 2 is a stopgap.
-**Say in the write-up which path was used**, every time — a reader cannot
+**Say in the write-up which paths were used**, every time — a reader cannot
 otherwise tell whether "IV looks elevated" survived a full-history percentile
 check or just a two-window trailing comparison during the one window most
 likely to fool it.

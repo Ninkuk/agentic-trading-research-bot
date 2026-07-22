@@ -86,8 +86,13 @@ against scorer.db directly.
    - For the **per-trade** comparison, use `get_pnl_trade_history` instead —
      it lists closed trades individually, but offers **preset spans only**
      (`week` / `month` / `3month` / `ytd` / `all`), so the sync window is not
-     directly expressible. Choose the nearest **enclosing** preset span and
-     filter client-side down to the sync window before comparing.
+     directly expressible. Choose the nearest **enclosing** preset span.
+     **The tool is paginated** (`cursor` / `next_cursor`): follow
+     `next_cursor` until that enclosing span is **fully retrieved**, then
+     filter client-side down to the sync window — reading only page 1 and
+     filtering against a truncated list fabricates unexplained divergences
+     (journaled fills that look like they have no broker counterpart, purely
+     because the counterpart was on a page you never fetched).
    - Compare the broker's figures against the fills just ingested: totals
      from `get_realized_pnl`, trade-by-trade from the filtered
      `get_pnl_trade_history`.
