@@ -106,3 +106,19 @@ def test_main_all_failed_exits_nonzero(tmp_path, monkeypatch):
     monkeypatch.setenv("RESEARCH_DIR", str(tmp_path / "research"))
     # No DBs -> empty selection -> clean exit 0.
     assert research_nightly.main(invoke=lambda c, t: (1, ""), now_iso=NOW) == 0
+
+
+def test_result_excerpt_tail_one_line_and_total():
+    doc = json.dumps({"result": "line1\n" + "x" * 600 + " THE END"})
+    exc = research_nightly._result_excerpt(doc)
+    assert exc.endswith("THE END") and len(exc) <= 500 and "\n" not in exc
+    assert research_nightly._result_excerpt("not json") == ""
+    assert research_nightly._result_excerpt(json.dumps({})) == ""
+
+
+def test_run_night_failure_prints_session_tail(tmp_path, capsys):
+    def invoke(cmd, timeout_s):
+        return 0, json.dumps({"result": "declined to write because reasons"})
+
+    research_nightly.run_night(["X"], invoke, tmp_path, TODAY, "opus")
+    assert "declined to write" in capsys.readouterr().out

@@ -147,6 +147,20 @@ def parse_denials(stdout: str) -> list[str]:
         return []
 
 
+def _result_excerpt(stdout: str, limit: int = 500) -> str:
+    """Tail of the session's `result` text, whitespace-collapsed to one line,
+    for failure logs. Total: garbage in, "" out. Without this a failed night
+    is undebuggable from the job log — the session JSON is captured, never
+    printed, so the model's own explanation of why no thesis landed would be
+    lost (the same lesson as portfolio_snapshot.sh keeping its JSON in-log)."""
+    try:
+        doc = json.loads(stdout)
+        text = str(doc.get("result", "") or "")
+        return " ".join(text.split())[-limit:]
+    except (json.JSONDecodeError, AttributeError, TypeError):
+        return ""
+
+
 def verify_thesis(research_dir: Path, ticker: str, today: str, min_bytes: int = 2048) -> bool:
     """A fresh thesis is tonight's Phoenix-dated file above a floor that
     catches empty/aborted writes (a real thesis runs far larger)."""
@@ -188,6 +202,9 @@ def run_night(
             ok.append(ticker)
         else:
             print(f"  {ticker}: FAILED (rc={rc}, fresh thesis absent or too small)")
+            excerpt = _result_excerpt(out)
+            if excerpt:
+                print(f"  {ticker}: session tail: {excerpt}")
             failed.append(ticker)
     return ok, failed
 
