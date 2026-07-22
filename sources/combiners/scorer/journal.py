@@ -17,7 +17,7 @@ import hashlib
 import json
 import os
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from sources.combiners.scorer import db, fetch
 from sources.common.clock import phx_date
@@ -46,16 +46,17 @@ def _phx_date(dt) -> str:
 
 
 def parse_doc(doc) -> tuple:
-    """Validate one input document into (fills, passes, skipped_count).
+    """Validate one input document into (fills, passes, verdicts, skipped_count).
     Rows missing/failing required fields are skipped and counted, never
     fatal. Fills come back chronological (buys before sells on timestamp
     ties) so FIFO exit attachment is deterministic regardless of doc order.
     filled_at must be a full ISO timestamp (naive = UTC); date-only strings
     are rejected — midnight UTC would silently shift to the prior Phoenix
-    day."""
+    day. verdict_date must be a bare YYYY-MM-DD Phoenix calendar date;
+    timestamps are rejected."""
     if not isinstance(doc, dict):
         raise ValueError("document must be an object")
-    fills, passes, skipped = [], [], 0
+    fills, passes, verdicts, skipped = [], [], [], 0
     for f in doc.get("fills") or []:
         if not isinstance(f, dict):
             skipped += 1
@@ -109,8 +110,37 @@ def parse_doc(doc) -> tuple:
             skipped += 1
             continue
         passes.append(dict(symbol=symbol, note=p.get("note")))
+    for v in doc.get("verdicts") or []:
+        if not isinstance(v, dict):
+            skipped += 1
+            continue
+        raw = v.get("symbol")
+        symbol = raw.strip().upper() if isinstance(raw, str) else ""
+        verdict = v.get("verdict")
+        vdate = v.get("verdict_date")
+        # A bare Phoenix calendar date, NOT a timestamp: research-ticker
+        # stamps the run's Phoenix date directly, so unlike filled_at there
+        # is no UTC instant to convert — a timestamp here is a bug upstream.
+        ok_date = isinstance(vdate, str) and len(vdate) == 10
+        if ok_date and isinstance(vdate, str):
+            try:
+                date.fromisoformat(vdate)
+            except ValueError:
+                ok_date = False
+        if not symbol or verdict not in ("buy", "pass") or not ok_date:
+            skipped += 1
+            continue
+        verdicts.append(
+            dict(
+                symbol=symbol,
+                verdict=verdict,
+                verdict_date=vdate,
+                doc=v.get("doc"),
+                note=v.get("note"),
+            )
+        )
     fills.sort(key=lambda f: (f["filled_at"], 0 if f["side"] == "buy" else 1))
-    return fills, passes, skipped
+    return fills, passes, verdicts, skipped
 
 
 # composite_date, exactly as the scorer registers it (Phoenix shift; see
@@ -277,7 +307,7 @@ def run(db_path, doc, composite_db=None, now_iso=None) -> dict:
     evidence. An empty doc still writes a run header (the "ran and found
     nothing" signal for the schedule's freshness check)."""
     now_iso = now_iso or datetime.now(UTC).isoformat()
-    fills, passes, skipped = parse_doc(doc)
+    fills, passes, _verdicts, skipped = parse_doc(doc)
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)
