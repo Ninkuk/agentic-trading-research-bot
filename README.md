@@ -92,8 +92,13 @@ cd agentic-trading-research-bot && ./setup.sh
 ```
 
 The setup asks before changing anything on your machine, and free API keys
-are only needed later, for a few extra data sources. Details in the
-developer guide below.
+are only needed later, for a few extra data sources.
+
+Prefer not to fiddle with a terminal? If you use
+[Claude Code](https://claude.com/claude-code), open the cloned folder and ask
+it to _"set this up"_ — one of the playbooks that ships in this repository
+walks the AI through the same setup, explains anything that fails, and helps
+you sign up for the free keys. Details in the developer guide below.
 
 ## For developers
 
