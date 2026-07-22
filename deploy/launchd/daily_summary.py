@@ -31,6 +31,22 @@ SELF_LOG = "daily-summary.log"
 _TS = re.compile(r"^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]")
 _BAD = ("FAILED", "STALE", "Traceback", "Error:")
 
+# How long a job may run before the digest calls it hung. INTERIM two-tier
+# stopgap: replace with measured per-job values once env.sh's `end:` lines have
+# accumulated (~2 weeks). A stopgap with no recorded end date becomes permanent.
+_HUNG_DEFAULT_MIN = 15
+_HUNG_SLOW_MIN = 60
+_SLOW_JOBS = {
+    "fred-vintages",  # ~80 API calls, ~1.7M rows re-upserted
+    "preopen",  # four screeners serially
+    "portfolio",  # headless `claude -p`
+    "journal",  # headless `claude -p`
+    "backtest",  # point-in-time replay
+    "ftd-full",  # re-ingests 24 months
+    "short-interest-full",  # re-ingests ~12 months
+    "fundamentals-bulk",  # downloads + ingests a DERA quarterly ZIP
+}
+
 # Max acceptable age (days) of the newest snapshot, by DB filename. Defaults
 # to 4 (daily jobs surviving a weekend + a holiday). Slower cadences:
 MAX_AGE_DAYS = {
@@ -116,6 +132,62 @@ def scan_log(path, since):
         if any(marker in line for marker in _BAD):
             bad.append(f"{path.stem}: {line.strip()[:160]}")
     return runs, bad
+
+
+def last_start(path):
+    """Timestamp of the most recent `start:` line, or None if there isn't one.
+
+    Returns a NAIVE datetime in LOCAL (Phoenix) time: wrapper logs are stamped
+    by bash `date`, and build_summary compares against now_local. Do NOT route
+    this through phx_date -- that converts UTC-stored instants and would be
+    wrong here.
+    """
+    newest = None
+    for line in path.read_text(errors="replace").splitlines():
+        if "start:" not in line:
+            continue
+        m = _TS.match(line)
+        if not m:
+            continue
+        try:
+            ts = dt.datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            continue
+        if newest is None or ts > newest:
+            newest = ts
+    return newest
+
+
+def hung_jobs(codes, now_local):
+    """[problem lines] for jobs that have been running past their limit.
+
+    launchctl reports a running job's exit code as None, which build_summary's
+    `code not in (None, 0)` check skips -- so without this a hung job is
+    invisible, and launchd will not re-spawn it while the instance is alive.
+
+    Detection only: never kills or restarts anything.
+    """
+    problems = []
+    for job, code in sorted(codes.items()):
+        if code is not None:  # not running
+            continue
+        if f"{job}.log" == SELF_LOG:  # the digest is running as it builds this
+            continue
+        try:
+            path = LOGS / f"{job}.log"
+            if not path.exists():
+                continue
+            started = last_start(path)
+            if started is None:
+                continue
+            minutes = (now_local - started).total_seconds() / 60
+        except Exception as e:  # build_summary runs outside main's try
+            problems.append(f"{job}: hang check failed ({type(e).__name__})")
+            continue
+        limit = _HUNG_SLOW_MIN if job in _SLOW_JOBS else _HUNG_DEFAULT_MIN
+        if minutes > limit:
+            problems.append(f"{job}: running {int(minutes)}min (limit {limit}min) — possible hang")
+    return problems
 
 
 def stale_dbs(now):
