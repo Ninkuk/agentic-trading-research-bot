@@ -10,7 +10,14 @@ data source (SEC, FRED, CFTC, FINRA, CBOE, Treasury, NY Fed, EIA, USDA, …) int
 SQLite database, then derive signals in SQL views.
 
 **Zero runtime third-party dependencies** — everything is stdlib (`urllib`, `sqlite3`, `json`,
-`argparse`). Python 3.12, managed with `uv`. The only dev dependency is `pytest`.
+`argparse`). Python 3.12, managed with `uv`. Dev dependencies are only `pytest`, `ruff`, `mypy`.
+
+**This repo is public.** Nothing sensitive has ever been committed and it stays that way:
+`data/`, `logs/`, `reports/`, `scratchpad/`, `.env`, and personal `.claude/` config are all
+gitignored. Before adding a file that holds account state, API keys, or fetched market data,
+check it against `.gitignore` first. `.claude/skills/` **is** tracked — those skills are
+load-bearing (see the `portfolio`/`journal` note below), so don't "clean them up" as local
+config. Reader-facing orientation lives in `README.md`; this file is contributor guidance.
 
 ## Commands
 
@@ -23,7 +30,7 @@ uv run python main.py --list          # print all registered dispatcher names
 # data/<name>.db or you'll create a stray DB at repo root.
 
 # Tests (fully offline — no network, no real API keys needed)
-uv run pytest                          # full suite (~1150 tests, ~2s)
+uv run pytest                          # full suite (~1250 tests, ~2s)
 uv run pytest tests/test_fred_run.py   # one file
 uv run pytest -k regime                # by name substring
 uv run pytest tests/test_fred_run.py::test_run_upserts_observations  # single test
@@ -36,7 +43,7 @@ uv run python -m tools.valuation.reverse_dcf \
 # Lint / format / types (config in pyproject.toml; all must pass before commit)
 uv run ruff check                      # lint (add --fix for autofixes)
 uv run ruff format                     # format in place (--check to only verify)
-uv run mypy                            # type-check sources/, main.py, registry.py
+uv run mypy                            # type-check sources/, deploy/, tools/, main.py, registry.py
 
 # Dependencies are stdlib-only by design (ruff/mypy/pytest are dev-group only).
 # Avoid adding runtime deps; if genuinely unavoidable, add via `uv add` and
@@ -183,13 +190,17 @@ is a MEAN, never a ceiling). Not registered in `registry.py`; they are not data 
 
 ## Workflow for a new screener/monitor
 
-The repo follows **spec → plan → build**. Both artifacts are transient: design specs at
-`docs/superpowers/specs/<date>-<name>-design.md`, implementation plans at
+The repo follows **spec → plan → build**. Both artifacts are transient and **local-only** —
+design specs at `docs/superpowers/specs/<date>-<name>-design.md`, implementation plans at
 `plans/<NNN>-<name>.md` indexed by a status table in `plans/README.md` (TODO | IN PROGRESS |
-DONE | BLOCKED | REJECTED). Once a batch ships, clear it in a `docs:` commit — git history is
-the durable record of what adversarial review broke, which is often the most useful thing in
-them. Both directories are absent between batches; recreate `plans/README.md` with the first
-plan of the next one.
+DONE | BLOCKED | REJECTED). Both paths are gitignored, so recreate `plans/README.md` with the
+first plan of a batch and let the files sit untracked; there is no `docs:` commit to clear
+them and no need to `git rm` anything.
+
+Because they are never committed, **the commit message is the only durable record of what
+adversarial review broke** — which is usually the most valuable thing a plan produces. Write
+it into the commit body when a plan ships: the failure a reviewer found, not just the feature
+that landed. (Plans committed before 2026-07-21 still live in history and can be read there.)
 
 **Everything runs on a launchd schedule** — see `docs/SCHEDULE.md` (durable reference:
 per-job slots, scheduling constraints, ops). Source of truth is `deploy/launchd/install.py`;

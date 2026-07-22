@@ -15,8 +15,10 @@ screener.db
 # MCP payloads staged for `main.py portfolio|journal --input` (live account state)
 scratchpad/
 
-# Personal Claude Code overrides (not for the repo)
-.claude/settings.local.json
+# Claude Code: the project skills ship (account-positions and journal-sync are the
+# only paths live account state enters the system), personal config does not.
+.claude/*
+!.claude/skills/
 
 data/
 
@@ -28,3 +30,8 @@ logs/
 
 # generated nightly dashboard (source lives in deploy/launchd/dashboard.py)
 reports/
+
+# transient spec -> plan -> build artifacts (git history is the durable record)
+plans/
+docs/plans/
+docs/superpowers/
