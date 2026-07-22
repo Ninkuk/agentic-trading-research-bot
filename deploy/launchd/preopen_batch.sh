@@ -6,7 +6,7 @@ set -uo pipefail
 source "$(dirname "$0")/env.sh"
 
 step() {
-    echo "[$(date '+%F %T')] start: $*"
+    job_start "$@"
     uv run python main.py "$@" || echo "[$(date '+%F %T')] FAILED($?): $*" >&2
 }
 

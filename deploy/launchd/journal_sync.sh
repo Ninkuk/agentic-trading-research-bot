@@ -7,7 +7,7 @@
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
 
-echo "[$(date '+%F %T')] start: journal sync"
+job_start "journal sync"
 # NOT haiku -- see the note in portfolio_snapshot.sh: it improvises tools the
 # allowlist does not grant and mistakes the resulting denial for stale MCP auth.
 claude -p "/journal-sync" \

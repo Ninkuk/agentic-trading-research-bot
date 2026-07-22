@@ -5,7 +5,7 @@
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
 
-echo "[$(date '+%F %T')] start: edgar"
+job_start "edgar"
 if ! uv run python main.py edgar --db data/edgar.db --keep-days 90; then
     echo "[$(date '+%F %T')] edgar failed; retrying in 15 min" >&2
     sleep 900

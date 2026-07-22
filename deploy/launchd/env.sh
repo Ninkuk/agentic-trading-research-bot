@@ -7,3 +7,19 @@ if [ -f .env ]; then
     . ./.env
     set +a
 fi
+
+# Run-duration instrumentation. job_start records t0 and installs an EXIT trap,
+# so the matching end line is emitted on EVERY exit path -- including one taken
+# by `set -e` on a failing command, where a trailing call would never run.
+# Setting the trap inside job_start (not at file scope) guarantees JOB_T0 and
+# JOB_LABEL are already set before the trap can fire, which matters under `set -u`.
+job_start() {
+    JOB_T0=$(date +%s)
+    JOB_LABEL="$*"
+    echo "[$(date '+%F %T')] start: $*"
+    trap 'job_end "$?"' EXIT
+}
+
+job_end() {
+    echo "[$(date '+%F %T')] end: $JOB_LABEL ($(( $(date +%s) - JOB_T0 ))s, exit $1)"
+}
