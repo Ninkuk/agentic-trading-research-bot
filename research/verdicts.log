@@ -5,3 +5,4 @@
 # at ten verdicts). Nothing in sources/ reads this file.
 2026-07-10 CSU UNPROVEN conditions=6 refuted=0 unknown=3
 2026-07-21 BBAI UNPROVEN conditions=4 refuted=0 unknown=1
+2026-07-22 EOSE FLAWED conditions=5 refuted=2 unknown=3
