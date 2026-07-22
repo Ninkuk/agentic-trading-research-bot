@@ -1,6 +1,6 @@
 # Data-collection schedule
 
-Every screener/monitor/combiner runs on a launchd schedule (35 `com.tradingbot.*`
+Every screener/monitor/combiner runs on a launchd schedule (36 `com.tradingbot.*`
 LaunchAgents). **Source of truth is the `JOBS` dict in
 `deploy/launchd/install.py`** — this doc is the human-readable view; if they
 disagree, trust install.py and fix this file.
@@ -65,6 +65,7 @@ summer open (6:30am Phoenix).
 | `dashboard` | every day 9:13pm | Renders `composite`/`scorer`/`advisor` rows read-only into `reports/dashboard.html` (a self-contained static file; see `deploy/launchd/dashboard.py`). After advisor 9:12pm so it reflects tonight's rows; a separate process from daily-summary, so a render bug can never delay or suppress the 9:15pm ntfy. Each section is independently try/excepted — a missing DB/view degrades to an "unavailable" note, never a crash |
 | `daily-summary` | every day 9:15pm | ntfy digest (see below) |
 | `publish-dashboard` | every day 9:20pm | Force-pushes `reports/dashboard.html` to the `gh-pages` branch behind GitHub Pages (https://ninkuk.github.io/agentic-trading-research-bot/). **After** the 9:15pm ntfy by design — a hung push must not delay or suppress the health alert. Refuses to publish unless the file's mtime is tonight's *Phoenix* date, so a failed 9:13pm dashboard run fails loudly here instead of silently republishing yesterday's page. Single-commit orphan branch, force-pushed from a temp dir; the live worktree is never touched. Git calls are now bounded — push at 300s, other git calls at 120s — so the job cannot exceed roughly 13 minutes worst case. The page carries live account positions, so it ships `<meta name="robots" content="noindex,nofollow">` — the only crawler control that works here. It also publishes a `robots.txt`, but that lands at the project-page path `.../agentic-trading-research-bot/robots.txt`, which no crawler ever consults (robots.txt is per-origin, fetched only from `ninkuk.github.io/robots.txt`) — it is inert here, not a second layer of protection |
+| `research-nightly` | every day 10:00pm | Headless `claude -p "/research-ticker <T>"` per selected ticker (≤`RESEARCH_NIGHTLY_MAX`, default 3, on `RESEARCH_NIGHTLY_MODEL`, default opus). Selects tonight's new `v_flagged` names first, then stale flagged, then stale held (`RESEARCH_STALE_DAYS`, default 30). Read-only tool allowlist — order tools never granted. Success = fresh `research/<T>-<date>.md` ≥2KB; exits nonzero only if ALL selected fail. Theses sit untracked until human review |
 
 ## Quarterly
 

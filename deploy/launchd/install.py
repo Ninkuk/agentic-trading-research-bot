@@ -152,6 +152,10 @@ JOBS = {
     # at 300s, other git calls at 120s, so the job cannot exceed ~13min worst
     # case.
     "publish-dashboard": (script("publish_dashboard.sh"), weekly(range(7), 21, 20)),
+    # -- agentic research (after the combine chain, summary, and publish:
+    #    selects from TONIGHT's v_flagged; up to RESEARCH_NIGHTLY_MAX
+    #    headless `claude -p /research-ticker` runs, ~20min each) --
+    "research-nightly": (script("research_nightly.sh"), weekly(range(7), 22, 0)),
 }
 
 
