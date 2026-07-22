@@ -222,6 +222,13 @@ def hung_jobs(running, now_local):
     from the PID column a hung job is invisible, and launchd will not
     re-spawn it while the instance is alive.
 
+    A running job with NO determinable start (missing log, or a log with no
+    parseable `start:`/`step:` marker) is reported rather than skipped -- a
+    wrapper that hangs BEFORE reaching job_start (a stalled `source .env`,
+    slow PATH resolution) would otherwise leave an empty log and stay
+    invisible forever, which is the exact class of invisibility this feature
+    exists to remove.
+
     Detection only: never kills or restarts anything.
     """
     problems = []
@@ -231,9 +238,11 @@ def hung_jobs(running, now_local):
         try:
             path = LOGS / f"{job}.log"
             if not path.exists():
+                problems.append(f"{job}: running with no log — start time unknown")
                 continue
             started = last_progress(path)
             if started is None:
+                problems.append(f"{job}: running with an unparseable log — start time unknown")
                 continue
             minutes = (now_local - started).total_seconds() / 60
         except Exception as e:

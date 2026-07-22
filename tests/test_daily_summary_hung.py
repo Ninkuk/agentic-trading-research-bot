@@ -69,16 +69,28 @@ def test_job_absent_from_running_set_is_never_reported(tmp_path, monkeypatch):
     assert daily_summary.hung_jobs(set(), NOW) == []
 
 
-def test_missing_log_does_not_crash(tmp_path, monkeypatch):
+def test_running_job_with_no_log_is_reported_not_silently_skipped(tmp_path, monkeypatch):
+    """A wrapper that hangs BEFORE reaching job_start (stalled `source .env`,
+    slow PATH resolution) leaves no log at all. That must not crash -- and
+    must not stay silent either: silence here is the exact invisibility this
+    feature exists to remove."""
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
-    assert daily_summary.hung_jobs({"ghost"}, NOW) == []
+    out = daily_summary.hung_jobs({"ghost"}, NOW)
+    assert len(out) == 1
+    assert "ghost" in out[0]
 
 
-def test_empty_and_unparseable_logs_do_not_crash(tmp_path, monkeypatch):
+def test_running_job_with_unparseable_log_is_reported_not_silently_skipped(tmp_path, monkeypatch):
+    """A log with no parseable start marker (empty, or garbage) must not
+    crash, and -- same reasoning as the no-log case -- must not be silently
+    dropped either."""
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
     (tmp_path / "empty.log").write_text("")
     (tmp_path / "garbage.log").write_text("no timestamp here\n[not-a-date] start: x\n")
-    assert daily_summary.hung_jobs({"empty", "garbage"}, NOW) == []
+    out = daily_summary.hung_jobs({"empty", "garbage"}, NOW)
+    assert len(out) == 2
+    assert any("empty" in line for line in out)
+    assert any("garbage" in line for line in out)
 
 
 def test_last_start_wins_over_earlier_ones(tmp_path, monkeypatch):
