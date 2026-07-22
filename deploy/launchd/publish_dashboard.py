@@ -17,7 +17,11 @@ wearing a fresh publication time -- worse than an honest failure, which is the
 same judgment dashboard.py applies to its own generation-failed page.
 """
 
+import re
+import subprocess
 import sys
+import tempfile
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -60,3 +64,62 @@ def stage(html: str, dest: Path) -> None:
     (dest / "index.html").write_text(inject_noindex(html), encoding="utf-8")
     (dest / ".nojekyll").write_text("", encoding="utf-8")
     (dest / "robots.txt").write_text(ROBOTS_TXT, encoding="utf-8")
+
+
+class GitError(RuntimeError):
+    """A git invocation returned non-zero."""
+
+
+# A remote may embed credentials (https://user:token@host). Never log one.
+_CREDS = re.compile(r"(https://)[^/@\s]*@")
+
+
+def _redact(text: str) -> str:
+    return _CREDS.sub(r"\1<redacted>@", text)
+
+
+def _git(
+    run: Callable[..., subprocess.CompletedProcess], cwd: Path, *args: str
+) -> subprocess.CompletedProcess:
+    result = run(["git", *args], cwd=str(cwd), capture_output=True, text=True)
+    if result.returncode != 0:
+        raise GitError(
+            _redact(f"git {args[0]} failed ({result.returncode}): {result.stderr.strip()}")
+        )
+    return result
+
+
+def publish(
+    *,
+    now_iso: str,
+    repo_root: Path,
+    run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+    log: Callable[[str], None] = print,
+) -> int:
+    """Force-push the current dashboard to BRANCH. Returns 0 on success, 1 on failure."""
+    html_path = repo_root / DASHBOARD_PATH
+    if not html_path.exists():
+        log(f"FAILED: {DASHBOARD_PATH} missing — did the 9:13pm dashboard job run?")
+        return 1
+    today = phx_date(now_iso)
+    if not is_fresh(html_path.stat().st_mtime, now_iso):
+        log(f"STALE: {DASHBOARD_PATH} is not from {today} (Phoenix) — refusing to publish")
+        return 1
+
+    try:
+        remote = _git(run, repo_root, "remote", "get-url", "origin").stdout.strip()
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp)
+            stage(html_path.read_text(encoding="utf-8"), dest)
+            _git(run, dest, "init", "-q", "-b", BRANCH)
+            _git(run, dest, "add", "-A")
+            # --no-gpg-sign is mandatory: see the module docstring in the plan and
+            # test_publish_commit_disables_gpg_signing. Without it this hangs forever.
+            _git(run, dest, "commit", "-q", "--no-gpg-sign", "-m", f"dashboard {today}")
+            _git(run, dest, "push", "--force", "--quiet", remote, f"HEAD:{BRANCH}")
+    except GitError as e:
+        log(f"FAILED: {e}")
+        return 1
+
+    log(f"published {today} dashboard to {BRANCH}")
+    return 0

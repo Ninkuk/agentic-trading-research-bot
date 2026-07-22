@@ -73,3 +73,107 @@ def test_stage_robots_disallows_all(tmp_path):
 def test_stage_nojekyll_is_empty(tmp_path):
     stage("<html></html>", tmp_path)
     assert (tmp_path / ".nojekyll").read_text(encoding="utf-8") == ""
+
+
+import subprocess
+
+from deploy.launchd.publish_dashboard import publish
+
+FRESH_NOW = "2026-07-22T04:20:00+00:00"  # 9:20pm Phoenix on 2026-07-21
+
+
+class FakeGit:
+    """Stands in for subprocess.run. Records argv; never touches a real repo."""
+
+    def __init__(self, fail_on=None, remote="https://github.com/Ninkuk/x.git", stderr=""):
+        self.calls: list[list[str]] = []
+        self.fail_on = fail_on
+        self.remote = remote
+        self.stderr = stderr
+
+    def __call__(self, argv, cwd=None, capture_output=False, text=False):
+        self.calls.append(argv)
+        args = argv[1:]
+        if self.fail_on is not None and args[0] == self.fail_on:
+            return subprocess.CompletedProcess(argv, 1, "", self.stderr or "fatal: boom")
+        stdout = f"{self.remote}\n" if args[:2] == ["remote", "get-url"] else ""
+        return subprocess.CompletedProcess(argv, 0, stdout, "")
+
+    def argv_for(self, subcommand):
+        return next((a for a in self.calls if a[1] == subcommand), None)
+
+
+def _repo_with_dashboard(tmp_path, mtime_epoch):
+    (tmp_path / "reports").mkdir()
+    html = tmp_path / "reports" / "dashboard.html"
+    html.write_text("<html><head></head><body>book</body></html>", encoding="utf-8")
+    import os
+
+    os.utime(html, (mtime_epoch, mtime_epoch))
+    return tmp_path
+
+
+def test_publish_returns_zero_on_fresh_file(tmp_path):
+    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    git = FakeGit()
+    assert publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=lambda m: None) == 0
+
+
+def test_publish_force_pushes_to_gh_pages(tmp_path):
+    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    git = FakeGit()
+    publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=lambda m: None)
+    push = git.argv_for("push")
+    assert "--force" in push
+    assert "HEAD:gh-pages" in push
+
+
+def test_publish_commit_disables_gpg_signing(tmp_path):
+    """commit.gpgsign=true + gpg.format=ssh + 1Password is set globally.
+
+    A non-interactive commit without --no-gpg-sign blocks on the 1Password
+    approval prompt forever, hanging the launchd job every night with no error.
+    """
+    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    git = FakeGit()
+    publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=lambda m: None)
+    assert "--no-gpg-sign" in git.argv_for("commit")
+
+
+def test_publish_refuses_stale_file_and_runs_no_git(tmp_path):
+    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 20, 4, 13))  # two days back
+    git = FakeGit()
+    msgs: list[str] = []
+    assert publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=msgs.append) == 1
+    assert git.calls == []
+    assert any("STALE" in m for m in msgs)
+
+
+def test_publish_refuses_missing_file(tmp_path):
+    git = FakeGit()
+    msgs: list[str] = []
+    assert publish(now_iso=FRESH_NOW, repo_root=tmp_path, run=git, log=msgs.append) == 1
+    assert git.calls == []
+
+
+def test_publish_reports_push_failure_loudly(tmp_path):
+    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    git = FakeGit(fail_on="push")
+    msgs: list[str] = []
+    assert publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=msgs.append) == 1
+    assert any("FAILED" in m for m in msgs)
+
+
+def test_publish_redacts_credentials_in_git_errors(tmp_path):
+    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    git = FakeGit(fail_on="push", stderr="fatal: https://user:ghp_SECRET@github.com/x.git")
+    msgs: list[str] = []
+    publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=msgs.append)
+    assert "ghp_SECRET" not in " ".join(msgs)
+
+
+def test_publish_does_not_modify_source_html(tmp_path):
+    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    before = (repo / "reports" / "dashboard.html").read_text(encoding="utf-8")
+    publish(now_iso=FRESH_NOW, repo_root=repo, run=FakeGit(), log=lambda m: None)
+    assert (repo / "reports" / "dashboard.html").read_text(encoding="utf-8") == before
