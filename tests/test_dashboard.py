@@ -157,20 +157,27 @@ def test_build_page_degrades_when_all_dbs_missing(tmp_path):
         assert f'id="{sid}"' in html
 
 
+# An external asset can only be pulled in through one of these carriers. The
+# check is a property of the markup, not a blacklist of host-ish words: "cdn"
+# as a bare substring both false-positives on page *data* (CDNA is a real
 # ticker in composite.db) and misses a protocol-relative <img src="//cdn.x/y">.
 # Every carrier below needs punctuation a symbol or date can never contain.
 _EXTERNAL_ASSET_CARRIERS = ("src=", "href=", "<link", "<script", "@font-face", "@import")
 
 # <a href="#..."> (jump nav) and <a href="https://..."> (repo/glossary links)
 # are the one legal href form: navigation, which loads nothing. Everything
-# else is held to the original zero-external-reference bar.
+# else is held to the original zero-external-reference bar. The tag must
+# carry exactly href and nothing else — any other attribute (ping=, style=
+# with a url(...) load) is a smuggling vector that blanking the whole tag
+# would otherwise hide from the carrier/url() scans below.
 _A_TAG = re.compile(r"<a\s[^>]*>", re.I)
+_A_HREF_ONLY = re.compile(r'^<a href="([^"]*)">$', re.I)
 
 
 def _assert_no_external_asset(html: str) -> None:
     for tag in _A_TAG.findall(html):
-        m = re.search(r'href="([^"]*)"', tag, re.I)
-        assert m is not None, f"<a> without href: {tag!r}"
+        m = _A_HREF_ONLY.match(tag)
+        assert m is not None, f"<a> must carry exactly href and nothing else: {tag!r}"
         assert m.group(1).startswith(("#", "https://")), f"asset-capable link: {tag!r}"
     lower = _A_TAG.sub("<a>", html).lower()
     for carrier in _EXTERNAL_ASSET_CARRIERS:
@@ -1211,3 +1218,9 @@ def test_anchor_allowance_still_rejects_assets():
         _assert_no_external_asset('<a href="http://insecure.example">x</a>')
     with pytest.raises(AssertionError):
         _assert_no_external_asset('<link rel="stylesheet" href="x.css">')
+    with pytest.raises(AssertionError):
+        _assert_no_external_asset('<a href="#x" ping="https://evil.example/beacon">x</a>')
+    with pytest.raises(AssertionError):
+        _assert_no_external_asset(
+            '<a href="#x" style="background:url(https://evil.example/t.png)">x</a>'
+        )
