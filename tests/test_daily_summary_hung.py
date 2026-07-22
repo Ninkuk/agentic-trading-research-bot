@@ -94,6 +94,22 @@ def test_last_start_wins_over_earlier_ones(tmp_path, monkeypatch):
     assert daily_summary.hung_jobs({"fred"}, NOW) == []
 
 
+def test_last_progress_returns_the_newest_step_marker(tmp_path):
+    """A multi-step wrapper (cftc_weekly.sh, preopen_batch.sh) emits one
+    `start:` line for the whole run, then a `step:` line per sub-step.
+    last_progress must return the newest of EITHER, so a job still
+    progressing through steps keeps resetting its clock -- the age reported
+    is the current step's, not the whole run's."""
+    start = NOW - daily_summary.dt.timedelta(minutes=20)
+    step = NOW - daily_summary.dt.timedelta(minutes=2)
+    path = tmp_path / "cftc.log"
+    path.write_text(
+        f"[{start:%Y-%m-%d %H:%M:%S}] start: cftc\n"
+        f"[{step:%Y-%m-%d %H:%M:%S}] step: cftc --family tff\n"
+    )
+    assert daily_summary.last_progress(path) == step
+
+
 def test_running_jobs_detects_running_via_pid_column_not_status_column(monkeypatch):
     """The captured line that motivated this fix: a RUNNING job (reddit-intraday,
     mid-run) reads a real PID in column 0 and 0 -- not a sentinel -- in the

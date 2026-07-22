@@ -38,8 +38,19 @@ job_end() {
 # family/ticker loop, or a step() helper). Bash only has ONE EXIT trap per
 # shell, so calling job_start per step would repeatedly clobber JOB_T0 /
 # JOB_LABEL and leave the final end line reporting just the last step's
-# duration under the last step's name. step_start only echoes the start
+# duration under the last step's name. step_start only echoes a progress
 # line -- it never touches the whole-run timer or the trap.
+#
+# Emits `step:`, NOT `start:` -- deliberately distinct from job_start's line
+# shape. A `start:` line means "a run began"; daily_summary.py's scan_log
+# counts only those for its "N runs in 24h" headline, and its hang-detector
+# (last_progress) needs to tell "the run started" apart from "the run is
+# still making progress" while still treating both as evidence the job is
+# alive. Before this, step_start emitted `start:` too, so a multi-step
+# wrapper's last_start picked up the CURRENT STEP's timestamp under a "run
+# start" label, silently turning a whole-run budget into a per-step one
+# (cftc_weekly.sh: 3x; preopen_batch.sh: 4x) and inflating the run count by
+# the same factor.
 step_start() {
-    echo "[$(date '+%F %T')] start: $*"
+    echo "[$(date '+%F %T')] step: $*"
 }

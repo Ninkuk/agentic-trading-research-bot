@@ -157,7 +157,12 @@ def running_jobs():
 def scan_log(path, since):
     """(runs_started, [bad lines]) within the window. Untimestamped lines
     (e.g. tracebacks) inherit the in-window state of the last timestamped
-    line, so a crash between two starts is attributed correctly."""
+    line, so a crash between two starts is attributed correctly.
+
+    Counts only `start:` lines as a run -- env.sh's step_start emits `step:`
+    for sub-steps of a multi-step wrapper (cftc_weekly.sh, preopen_batch.sh),
+    which must NOT inflate the "N runs in 24h" headline the way they would if
+    step_start reused the `start:` shape."""
     runs, bad, in_window = 0, [], False
     for line in path.read_text(errors="replace").splitlines():
         m = _TS.match(line)
@@ -173,17 +178,28 @@ def scan_log(path, since):
     return runs, bad
 
 
-def last_start(path):
-    """Timestamp of the most recent `start:` line, or None if there isn't one.
+def last_progress(path):
+    """Timestamp of the most recent `start:` or `step:` line, or None.
 
     Returns a NAIVE datetime in LOCAL (Phoenix) time: wrapper logs are stamped
     by bash `date`, and build_summary compares against now_local. Do NOT route
     this through phx_date -- that converts UTC-stored instants and would be
     wrong here.
+
+    A job progressing through env.sh's step_start markers must keep resetting
+    its clock -- that is the correct hang semantic (a STUCK step should trip
+    the tier; a job still moving through steps should not) -- so this counts
+    `step:` lines as progress too, same as `start:`. The consequence: for a
+    multi-step wrapper (cftc_weekly.sh, preopen_batch.sh) the age this
+    returns is the CURRENT STEP's, not the whole run's, so the hung-job tier
+    budgets a stuck step, not total runtime. This matters for the planned
+    follow-up that derives measured per-job thresholds from these logs (see
+    _HUNG_DEFAULT_MIN's docstring) -- those thresholds would be per-step
+    budgets for multi-step jobs, not whole-run ones.
     """
     newest = None
     for line in path.read_text(errors="replace").splitlines():
-        if "start:" not in line:
+        if "start:" not in line and "step:" not in line:
             continue
         m = _TS.match(line)
         if not m:
@@ -216,7 +232,7 @@ def hung_jobs(running, now_local):
             path = LOGS / f"{job}.log"
             if not path.exists():
                 continue
-            started = last_start(path)
+            started = last_progress(path)
             if started is None:
                 continue
             minutes = (now_local - started).total_seconds() / 60
