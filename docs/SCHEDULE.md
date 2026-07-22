@@ -106,8 +106,7 @@ summer open (6:30am Phoenix).
 - **Backtest replay** (manual, unscheduled by design):
   `uv run python main.py backtest --db data/backtest.db` — copies FRED
   vintages + SP500 closes out of `data/fred.db` (read-only) and prints
-  point-in-time hit rates for the FRED regime signals. See
-  `docs/superpowers/specs/2026-07-07-backtesting-foundation-design.md`.
+  point-in-time hit rates for the FRED regime signals.
 - **Restarts**: plists live in `~/Library/LaunchAgents` and survive reboots,
   but jobs only run once a login session exists (they need the Keychain and
   `.env`) — keep auto-login enabled on the always-on Mac mini. Runs missed

@@ -155,8 +155,7 @@ a percentile computed from one has no meaning applied to the other.
    **Gotcha: `adjustment_type="all"` is INTRADAY-ONLY** per the tool's own
    schema. With `interval="day"` you must pass `"split"` (which is also the
    default, and the right one for a volatility series — dividend adjustment
-   would smear a discrete drop across the history). The design spec says
-   `"all"`; the spec is wrong on this point.
+   would smear a discrete drop across the history).
 
 ## 4. The command
 
