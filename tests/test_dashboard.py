@@ -157,16 +157,22 @@ def test_build_page_degrades_when_all_dbs_missing(tmp_path):
         assert f'id="{sid}"' in html
 
 
-# An external asset can only be pulled in through one of these carriers. The
-# check is a property of the markup, not a blacklist of host-ish words: "cdn"
-# as a bare substring both false-positives on page *data* (CDNA is a real
 # ticker in composite.db) and misses a protocol-relative <img src="//cdn.x/y">.
 # Every carrier below needs punctuation a symbol or date can never contain.
 _EXTERNAL_ASSET_CARRIERS = ("src=", "href=", "<link", "<script", "@font-face", "@import")
 
+# <a href="#..."> (jump nav) and <a href="https://..."> (repo/glossary links)
+# are the one legal href form: navigation, which loads nothing. Everything
+# else is held to the original zero-external-reference bar.
+_A_TAG = re.compile(r"<a\s[^>]*>", re.I)
+
 
 def _assert_no_external_asset(html: str) -> None:
-    lower = html.lower()
+    for tag in _A_TAG.findall(html):
+        m = re.search(r'href="([^"]*)"', tag, re.I)
+        assert m is not None, f"<a> without href: {tag!r}"
+        assert m.group(1).startswith(("#", "https://")), f"asset-capable link: {tag!r}"
+    lower = _A_TAG.sub("<a>", html).lower()
     for carrier in _EXTERNAL_ASSET_CARRIERS:
         assert carrier not in lower, f"external-asset carrier {carrier!r} in page"
     assert "http://" not in lower and "https://" not in lower
@@ -1170,3 +1176,38 @@ def test_edition_date_degrades_on_unparseable_input():
 
 def _strip(s):
     return s.replace("&#8202;", "")
+
+
+def test_first_visit_intro_links_out(tmp_path):
+    html = dashboard.build_page(str(tmp_path), NOW)
+    assert "First time here" in html
+    assert f'href="{dashboard._REPO_URL}"' in html
+    assert f'href="{dashboard._REPO_URL}/blob/main/docs/GLOSSARY.md"' in html
+
+
+def test_jump_nav_derived_from_sections_and_anchors_resolve(tmp_path):
+    html = dashboard.build_page(str(tmp_path), NOW)
+    nav = re.search(r'<nav class="jump"[^>]*>(.*?)</nav>', html, re.S)
+    assert nav is not None
+    hrefs = re.findall(r'href="#([^"]+)"', nav.group(1))
+    kickers = list(dict.fromkeys(s[4] for s in dashboard.SECTIONS))
+    assert len(hrefs) == len(kickers)  # one link per group, no hand-written drift
+    for sid in hrefs:
+        assert f'<section id="{sid}"' in html
+
+
+def test_footer_provenance_and_disclaimer(tmp_path):
+    html = dashboard.build_page(str(tmp_path), NOW)
+    foot = re.search(r"<footer.*?</footer>", html, re.S)
+    assert foot is not None
+    assert "not investment advice" in foot.group(0)
+    assert f'href="{dashboard._REPO_URL}"' in foot.group(0)
+
+
+def test_anchor_allowance_still_rejects_assets():
+    with pytest.raises(AssertionError):
+        _assert_no_external_asset('<img src="https://evil.example/x.png">')
+    with pytest.raises(AssertionError):
+        _assert_no_external_asset('<a href="http://insecure.example">x</a>')
+    with pytest.raises(AssertionError):
+        _assert_no_external_asset('<link rel="stylesheet" href="x.css">')

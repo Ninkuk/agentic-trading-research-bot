@@ -48,6 +48,21 @@ OUTPUT_PATH = "reports/dashboard.html"
 # bars comparable down the column.
 _SCORE_BAR_MAX = 5
 
+_REPO_URL = "https://github.com/Ninkuk/agentic-trading-research-bot"
+
+_INTRO = (
+    '<details class="intro"><summary>First time here? What this page is</summary>'
+    "<p>Every day, small programs collect numbers from official public sources"
+    " — the Federal Reserve, the SEC, the Treasury, and more — and every"
+    " evening they write this page: the market's overall mood, a scorecard of"
+    " stocks whose numbers stand out, and a running record of how past"
+    " opinions worked out. Nothing here places a trade; a human makes every"
+    " decision. The code and data pipeline are open source: read"
+    f' <a href="{_REPO_URL}">how it works</a> or the plain-English'
+    f' <a href="{_REPO_URL}/blob/main/docs/GLOSSARY.md">glossary</a>.</p>'
+    "</details>"
+)
+
 # --- pure formatting helpers (no I/O; unit-tested without a DB) -------------
 
 
@@ -1002,6 +1017,15 @@ summary:focus-visible{outline:2px solid var(--brass);outline-offset:3px;border-r
   .mast{flex-direction:column;align-items:flex-start;gap:10px;}
   .mast .edition{text-align:left;}
 }
+
+.intro{margin:14px 0 0;color:var(--muted);font-size:14px;}
+.intro summary{cursor:pointer;color:var(--brass);}
+.intro a{color:var(--brass);}
+.jump{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0 0;font-size:13px;}
+.jump a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--edge);}
+.jump a:hover{color:var(--fg);}
+.colophon{margin-top:34px;color:var(--faint);font-size:13px;}
+.colophon a{color:var(--muted);}
 """.strip()
 
 
@@ -1224,6 +1248,26 @@ def _hero_read(data_dir: str, now_iso: str) -> str:
     return f'<p class="read">{prose}</p>'
 
 
+def _jump_nav() -> str:
+    """One link per section group, derived from SECTIONS' kicker field so the
+    nav can never drift from the page."""
+    first_sid: dict[str, str] = {}
+    for sid, _title, _db, _fn, kicker, _note in SECTIONS:
+        first_sid.setdefault(kicker, sid)
+    links = "".join(f'<a href="#{sid}">{_esc(k)}</a>' for k, sid in first_sid.items())
+    return f'<nav class="jump" aria-label="Sections">{links}</nav>'
+
+
+def _footer() -> str:
+    return (
+        '<footer class="colophon"><div class="rule-thin"></div>'
+        f'<p>Generated nightly (~9:13pm Phoenix) by <a href="{_REPO_URL}">'
+        "open-source code</a> from official public sources. Research notes,"
+        " not investment advice — nothing here places a trade, and a human"
+        " makes every decision.</p></footer>"
+    )
+
+
 def build_page(data_dir: str, now_iso: str) -> str:
     edition_lines = [f"Edition <b>{_edition_date(now_iso)}</b>"]
     snapshot_no = _snapshot_number(data_dir)
@@ -1273,12 +1317,15 @@ def build_page(data_dir: str, now_iso: str) -> str:
         f'<div class="edition">{"<br>".join(edition_lines)}</div>\n'
         "</header>\n"
         '<div class="rule-thin"></div>\n'
+        f"{_INTRO}\n"
+        f"{_jump_nav()}\n"
         '<section aria-labelledby="read-h">\n'
         '<h2 id="read-h" class="eyebrow">Tonight\'s read</h2>\n'
         f"{hero_body}\n"
         "</section>\n"
         f"{sections}\n"
         f"{gloss}\n"
+        f"{_footer()}\n"
         "</main>\n"
     )
 
