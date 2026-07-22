@@ -200,6 +200,46 @@ CREATE TABLE IF NOT EXISTS journal_runs (
     duplicates_skipped INTEGER NOT NULL DEFAULT 0,
     skipped            INTEGER NOT NULL DEFAULT 0
 );
+
+-- Research-verdict ledger: the research-ticker skill's own graded filter
+-- (skill analog of the decision journal; see the 2026-07-22 spec). One row
+-- per (symbol, verdict_date) — the idempotency key; INSERT OR IGNORE makes
+-- re-ingest a counted duplicate. verdict_date is a Phoenix calendar date
+-- (bare YYYY-MM-DD, clock invariant). doc names the research/<T>-<D>.md
+-- writeup as provenance TEXT only — nothing in sources/ reads research/.
+-- Never pruned: verdicts are the other half of the research experiment.
+CREATE TABLE IF NOT EXISTS research_verdicts (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol       TEXT NOT NULL,
+    verdict      TEXT NOT NULL CHECK (verdict IN ('buy', 'pass')),
+    verdict_date TEXT NOT NULL,
+    doc          TEXT,
+    note         TEXT,
+    recorded_at  TEXT NOT NULL,
+    UNIQUE (symbol, verdict_date)
+);
+
+-- Forward outcomes per verdict x horizon, anchored on the VERDICT date
+-- (not a composite snapshot). Column names deliberately mirror
+-- ticker_outcomes so the generic _MATURE_SYMBOL template grades this
+-- table with zero forked SQL; symbol is denormalized for its {sym} slot.
+-- Registration reuses entry_for (first close STRICTLY AFTER verdict_date,
+-- forward guard included): a symbol outside price coverage registers
+-- nothing and is retried nightly. Never pruned.
+CREATE TABLE IF NOT EXISTS verdict_outcomes (
+    verdict_id        INTEGER NOT NULL,
+    symbol            TEXT NOT NULL,
+    horizon           INTEGER NOT NULL,
+    entry_date        TEXT NOT NULL,
+    entry_close       REAL NOT NULL,
+    bench_entry_close REAL,
+    exit_date         TEXT,
+    exit_close        REAL,
+    fwd_return        REAL,
+    bench_fwd_return  REAL,
+    matured_at        TEXT,
+    PRIMARY KEY (verdict_id, horizon)
+);
 """
 
 _VIEWS = f"""
@@ -455,6 +495,11 @@ def ensure_schema(conn) -> None:
     cols = {r[1] for r in conn.execute("PRAGMA table_info(decisions)")}
     if "placed_agent" not in cols:
         conn.execute("ALTER TABLE decisions ADD COLUMN placed_agent TEXT")
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(journal_runs)")}
+    if "verdicts_recorded" not in cols:
+        conn.execute(
+            "ALTER TABLE journal_runs ADD COLUMN verdicts_recorded INTEGER NOT NULL DEFAULT 0"
+        )
     conn.executescript(_VIEWS)
     conn.commit()
 

@@ -93,3 +93,65 @@ def test_benchmark_column_migrates_old_db(tmp_path):
     # SQLite validates view column refs at QUERY time, not CREATE time —
     # actually querying proves the migrated column satisfies the views
     assert conn.execute("SELECT * FROM v_signal_efficacy").fetchall() == []
+
+
+def test_research_verdict_tables_exist(tmp_path):
+    conn = db.connect(str(tmp_path / "scorer.db"))
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(research_verdicts)")}
+    assert {"id", "symbol", "verdict", "verdict_date", "doc", "note", "recorded_at"} <= cols
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(verdict_outcomes)")}
+    assert {
+        "verdict_id",
+        "symbol",
+        "horizon",
+        "entry_date",
+        "entry_close",
+        "bench_entry_close",
+        "exit_date",
+        "exit_close",
+        "fwd_return",
+        "bench_fwd_return",
+        "matured_at",
+    } <= cols
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(journal_runs)")}
+    assert "verdicts_recorded" in cols
+    conn.close()
+
+
+def test_research_verdict_enum_and_unique_enforced(tmp_path):
+    import sqlite3
+
+    conn = db.connect(str(tmp_path / "scorer.db"))
+    db.ensure_schema(conn)
+    ins = (
+        "INSERT INTO research_verdicts (symbol, verdict, verdict_date,"
+        " recorded_at) VALUES (?, ?, ?, '2026-07-22T20:00:00+00:00')"
+    )
+    conn.execute(ins, ("BBAI", "pass", "2026-07-22"))
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(ins, ("BBAI", "hold", "2026-07-23"))  # bad enum
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(ins, ("BBAI", "buy", "2026-07-22"))  # dup (symbol, date)
+    conn.close()
+
+
+def test_verdicts_recorded_migrates_existing_db(tmp_path):
+    # A journal_runs table created WITHOUT the column (pre-migration DB)
+    # gains it on the next ensure_schema, like decisions.placed_agent.
+    path = str(tmp_path / "scorer.db")
+    conn = db.connect(path)
+    conn.execute(
+        "CREATE TABLE journal_runs (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " ran_at TEXT NOT NULL, fills_seen INTEGER NOT NULL DEFAULT 0,"
+        " matched INTEGER NOT NULL DEFAULT 0, freelance INTEGER NOT NULL DEFAULT 0,"
+        " exits_attached INTEGER NOT NULL DEFAULT 0,"
+        " passes_recorded INTEGER NOT NULL DEFAULT 0,"
+        " duplicates_skipped INTEGER NOT NULL DEFAULT 0,"
+        " skipped INTEGER NOT NULL DEFAULT 0)"
+    )
+    conn.commit()
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(journal_runs)")}
+    assert "verdicts_recorded" in cols
+    conn.close()
