@@ -24,6 +24,7 @@ KNOWN_DBS = {
     "edgar.db",
     "earnings.db",
     "portfolio.db",
+    "options.db",
 }
 ASSET_CLASSES = {"ags", "rates", "energy", "softs", "metals", "fx", "equity_index"}
 
@@ -82,6 +83,7 @@ DB_MODULES = {
     "edgar.db": "sources.screeners.edgar_screener.db",
     "earnings.db": "sources.monitors.earnings_calendar.db",
     "portfolio.db": "sources.screeners.portfolio_screener.db",
+    "options.db": "sources.screeners.cboe_options.db",
 }
 
 # stocks.db's metrics table only gets its data-point columns via
@@ -320,3 +322,84 @@ def test_earnings_imminent_emits_exactly_one_row_per_ticker(tmp_path):
     by = {r["entity"]: r["raw_value"] for r in rows}
     assert by == {"AAPL": 2, "MSFT": 3}, "must report days to the NEAREST print"
     assert all(r["score"] == 0 for r in rows), "gate must never vote"
+
+
+# --- options annotations: per-ticker options context (plan 001) -------------
+
+OPTIONS_SIGNAL_IDS = ("options_iv30", "options_pcr")
+
+
+def _options_signals():
+    by_id = {s["signal_id"]: s for s in catalog.SIGNALS}
+    return [by_id[sid] for sid in OPTIONS_SIGNAL_IDS]
+
+
+def test_options_signals_are_ticker_grain_annotations():
+    for s in _options_signals():
+        assert s["grain"] == "ticker"
+        assert s["db"] == "options.db"
+        # underlying_daily gains one row per trading day; 4 covers a long weekend.
+        assert s["staleness_budget_days"] == 4
+
+
+def test_options_signals_not_in_regime_fields():
+    """Ticker-grain context, not market regime — the market-wide options read
+    already exists as cboe_equity_pcr."""
+    for sid in OPTIONS_SIGNAL_IDS:
+        assert sid not in catalog.REGIME_FIELDS
+
+
+def test_options_signals_selectable_by_select_ids():
+    only = catalog.select_ids(list(OPTIONS_SIGNAL_IDS), None, None)
+    assert [s["signal_id"] for s in only] == list(OPTIONS_SIGNAL_IDS)
+    excl = catalog.select_ids(None, list(OPTIONS_SIGNAL_IDS), None)
+    assert not set(OPTIONS_SIGNAL_IDS) & {s["signal_id"] for s in excl}
+
+
+def _options_fixture(tmp_path):
+    """options.db with: AAPL on two dates (the latest must win), SPX and VIX
+    (index products — must be excluded), and BAC with a NULL iv30 (must appear
+    in the PCR annotation but not the IV one)."""
+    import importlib
+
+    mod = importlib.import_module("sources.screeners.cboe_options.db")
+    path = str(tmp_path / "options.db")
+    conn = mod.connect(path)
+    mod.ensure_schema(conn)
+    conn.executemany(
+        "INSERT INTO underlyings (symbol, is_index) VALUES (?, ?)",
+        [("AAPL", 0), ("SPX", 1), ("VIX", 1), ("BAC", 0)],
+    )
+    conn.executemany(
+        "INSERT INTO underlying_daily (snapshot_date, underlying,"
+        " underlying_price, iv30, total_call_volume, total_put_volume,"
+        " put_call_volume_ratio) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+            # stale AAPL row first so a missing latest-per-underlying pick shows
+            ("2026-07-17", "AAPL", 210.0, 35.0, 1000, 900, 0.9),
+            ("2026-07-20", "AAPL", 212.0, 29.6, 1200, 780, 0.65),
+            ("2026-07-20", "SPX", 6300.0, 13.5, 500, 615, 1.23),
+            ("2026-07-20", "VIX", 16.5, 83.1, 300, 153, 0.51),
+            ("2026-07-20", "BAC", 48.0, None, 400, 392, 0.98),
+        ],
+    )
+    conn.commit()
+    conn.close()
+    return path
+
+
+def test_options_annotations_emit_one_zero_score_row_per_tradeable_name(tmp_path):
+    path = _options_fixture(tmp_path)
+    c = sqlite3.connect(":memory:", uri=True)
+    try:
+        fetch.attach_ro(c, path)
+        iv, pcr = (fetch.extract(c, s, today="2026-07-21") for s in _options_signals())
+    finally:
+        c.close()
+
+    assert {r["entity"]: r["raw_value"] for r in iv} == {"AAPL": 29.6}
+    assert {r["entity"]: r["raw_value"] for r in pcr} == {"AAPL": 0.65, "BAC": 0.98}
+    for r in iv + pcr:
+        assert r["score"] == 0, "annotation must never vote"
+        assert r["obs_date"] == "2026-07-20"
+        assert r["staleness_days"] == 1

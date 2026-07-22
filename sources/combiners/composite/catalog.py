@@ -453,6 +453,40 @@ SIGNALS: list[dict[str, Any]] = [
         """,
     },
     {
+        # Options-market context: informational only (score 0, listed in
+        # db.INFORMATIONAL_SIGNALS). iv30 is 30-day constant-maturity implied
+        # vol — NOT comparable to a single expiry's ATM IV (tenor rule, see
+        # .claude/skills/shared/options-read.md). SPX/VIX are excluded: index
+        # products, not tradeable tickers, and their put/call flow is hedging-
+        # dominated. Scored versions are deferred until v_iv_rank n_days >= 60
+        # (~mid-Sept 2026) plus a measured calibration pass — see
+        # docs/superpowers/specs/2026-07-21-composite-options-annotation-design.md.
+        "signal_id": "options_iv30",
+        "db": "options.db",
+        "grain": "ticker",
+        "staleness_budget_days": 4,
+        "sql": """
+            SELECT underlying, iv30, 0, snapshot_date
+            FROM src.v_latest_sentiment
+            WHERE iv30 IS NOT NULL AND underlying NOT IN ('SPX', 'VIX')
+        """,
+    },
+    {
+        # Put/call VOLUME ratio (today's flow), not OI ratio (standing
+        # positioning) — matching cboe_equity_pcr's volume-based semantics.
+        # Same annotation-only + SPX/VIX exclusions as options_iv30 above.
+        "signal_id": "options_pcr",
+        "db": "options.db",
+        "grain": "ticker",
+        "staleness_budget_days": 4,
+        "sql": """
+            SELECT underlying, put_call_volume_ratio, 0, snapshot_date
+            FROM src.v_latest_sentiment
+            WHERE put_call_volume_ratio IS NOT NULL
+              AND underlying NOT IN ('SPX', 'VIX')
+        """,
+    },
+    {
         # Live holdings: informational only (never votes; sets in_portfolio).
         "signal_id": "portfolio_holding",
         "db": "portfolio.db",

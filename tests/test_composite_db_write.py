@@ -335,3 +335,62 @@ def test_earnings_imminent_does_not_dilute_coverage(tmp_path):
     )
     assert cov["BETA"] == 1.0, f"coverage of an earnings-free ticker diluted to {cov['BETA']}"
     assert cov["ACME"] == 1.0, f"coverage of the earnings ticker diluted to {cov['ACME']}"
+
+
+# --- options annotations must not widen the evidence base (plan 001) --------
+
+
+def test_options_annotations_are_informational(tmp_path):
+    """Same exclusion pin as earnings_imminent: `total` is evidence breadth and
+    v_flagged gates on `total >= 2`, so a score-0 context row that counted
+    would walk every covered mega-cap toward the flag gate merely for having
+    listed options."""
+    for name in ("options_iv30", "options_pcr"):
+        assert name in db.INFORMATIONAL_SIGNALS
+
+    conn = db.connect(str(tmp_path / "composite.db"))
+    db.ensure_schema(conn)
+    # 04:05 UTC = 21:05 Phoenix the previous evening (rollover-straddling
+    # fixture, per the repo's evening-job convention).
+    sid = db.write_snapshot(conn, "2026-07-22T04:05:00+00:00", 3)
+    db.write_signal_values(
+        conn,
+        sid,
+        [
+            dict(
+                signal_id="stocks_rsi",
+                grain="ticker",
+                entity="AAPL",
+                raw_value=22.0,
+                score=1,
+                obs_date="2026-07-21",
+                staleness_days=1.0,
+            ),
+            dict(
+                signal_id="options_iv30",
+                grain="ticker",
+                entity="AAPL",
+                raw_value=29.6,
+                score=0,
+                obs_date="2026-07-20",
+                staleness_days=2.0,
+            ),
+            dict(
+                signal_id="options_pcr",
+                grain="ticker",
+                entity="AAPL",
+                raw_value=0.65,
+                score=0,
+                obs_date="2026-07-20",
+                staleness_days=2.0,
+            ),
+        ],
+    )
+    db.write_ticker_scores(conn, sid)
+    conn.commit()
+
+    assert conn.execute(
+        "SELECT score_sum, total FROM ticker_scores WHERE snapshot_id=?", (sid,)
+    ).fetchone() == (1, 1), "options context must not widen `total`"
+    assert conn.execute("SELECT COUNT(*) FROM v_flagged").fetchone()[0] == 0
+    conn.close()

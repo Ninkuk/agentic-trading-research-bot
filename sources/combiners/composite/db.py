@@ -119,7 +119,14 @@ def ensure_schema(conn) -> None:
 # threshold *because* it reports soon — the exact inverse of that gate's intent.
 # (edgar_insider is deliberately NOT here: a Form 4 cluster is real, if
 # directionless, evidence about the ticker.)
-INFORMATIONAL_SIGNALS = frozenset({"portfolio_holding", "earnings_imminent"})
+#
+# options_iv30 / options_pcr are context about how the options market prices
+# a name, not evidence that anything is happening to it — counting them would
+# walk every covered mega-cap toward the flag gate merely for having listed
+# options.
+INFORMATIONAL_SIGNALS = frozenset(
+    {"portfolio_holding", "earnings_imminent", "options_iv30", "options_pcr"}
+)
 
 
 def write_snapshot(conn, now_iso: str, signals_expected: int) -> int:
