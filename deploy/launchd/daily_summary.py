@@ -34,6 +34,15 @@ _BAD = ("FAILED", "STALE", "Traceback", "Error:")
 # How long a job may run before the digest calls it hung. INTERIM two-tier
 # stopgap: replace with measured per-job values once env.sh's `end:` lines have
 # accumulated (~2 weeks). A stopgap with no recorded end date becomes permanent.
+#
+# A threshold only matters for a job still plausibly running at 21:15 (the
+# digest fires once, nightly) -- i.e. one that starts within roughly an hour
+# of it. Measured gaps: dashboard 2min, advisor 3min, scorer 5min, composite
+# 10min -- all safe under the default tier. `edgar` (20:30, 45min before the
+# digest) is the only slow-tier entry that is actually load-bearing today;
+# every other _SLOW_JOBS entry starts 2h-17h earlier; if still alive at
+# digest time it would be flagged under either tier, so those are defensive
+# against future schedule changes rather than currently load-bearing.
 _HUNG_DEFAULT_MIN = 15
 _HUNG_SLOW_MIN = 60
 _SLOW_JOBS = {
@@ -45,6 +54,7 @@ _SLOW_JOBS = {
     "ftd-full",  # re-ingests 24 months
     "short-interest-full",  # re-ingests ~12 months
     "fundamentals-bulk",  # downloads + ingests a DERA quarterly ZIP
+    "edgar",  # starts 45min before the digest AND has a designed sleep 900 retry pause
 }
 
 # Max acceptable age (days) of the newest snapshot, by DB filename. Defaults

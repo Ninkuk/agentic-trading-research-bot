@@ -111,6 +111,16 @@ def test_running_jobs_detects_running_via_pid_column_not_status_column(monkeypat
     assert daily_summary.running_jobs() == {"reddit-intraday"}
 
 
+def test_edgar_45min_into_its_designed_retry_sleep_is_not_flagged(tmp_path, monkeypatch):
+    """edgar starts at 20:30, 45min before the 21:15 digest, and
+    edgar_daily.sh's `sleep 900` retry pause is a DESIGNED wait, not a hang.
+    Under the 15min default tier this would false-alarm every time SEC
+    throttles edgar into its retry sleep."""
+    monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
+    _log(tmp_path, "edgar", 45)
+    assert daily_summary.hung_jobs({"edgar"}, NOW) == []
+
+
 def test_every_slow_job_name_is_a_real_job():
     """A typo here makes that tier silently never apply -- no error anywhere.
 
