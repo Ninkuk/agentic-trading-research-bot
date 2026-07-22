@@ -6,6 +6,10 @@ NY Fed, EIA, USDA, …) into a per-source SQLite database, then derive signals a
 Four **combiners** read those databases read-only and produce a market regime, a per-ticker
 scorecard, position-sizing guidance, and a point-in-time backtest of the whole thing.
 
+**Live dashboard:** https://ninkuk.github.io/agentic-trading-bot/ — regenerated nightly at
+9:13pm Phoenix and published at 9:20pm. Marked `noindex`, so it is reachable by link but not
+surfaced in search.
+
 **It does not trade.** There is no order-placement path anywhere in this repository — the
 only account interaction is *reading* positions and fills. Everything it produces is
 decision support for a human. The name describes where this is headed, not what it does
