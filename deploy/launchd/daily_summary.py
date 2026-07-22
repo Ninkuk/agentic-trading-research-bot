@@ -378,6 +378,7 @@ def build_summary(now_local, now_utc):
     for job, code in sorted(codes.items()):
         if code not in (None, 0):
             problems.append(f"{job}: last exit {code}")
+    problems.extend(hung_jobs(codes, now_local))
 
     since = now_local - dt.timedelta(hours=24)
     for log in sorted(LOGS.glob("*.log")):

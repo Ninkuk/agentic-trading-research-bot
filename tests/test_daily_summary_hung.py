@@ -100,3 +100,39 @@ def test_every_slow_job_name_is_a_real_job():
     from deploy.launchd.install import JOBS
 
     assert set(JOBS) >= daily_summary._SLOW_JOBS
+
+
+def _summary(tmp_path, monkeypatch, codes):
+    monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
+    monkeypatch.setattr(daily_summary, "DATA", tmp_path)  # no DBs -> no staleness noise
+    monkeypatch.setattr(daily_summary, "job_exit_codes", lambda: codes)
+    monkeypatch.setattr(daily_summary, "signals_digest", lambda: [])
+    monkeypatch.setattr(daily_summary, "advisor_digest", lambda: [])
+    return daily_summary.build_summary(NOW, daily_summary.dt.datetime.now(daily_summary.dt.UTC))
+
+
+def test_hung_job_reaches_the_digest_and_marks_it_unhealthy(tmp_path, monkeypatch):
+    _log(tmp_path, "fred", 45)
+    healthy, summary = _summary(tmp_path, monkeypatch, {"fred": None})
+    assert "fred" in summary
+    assert "possible hang" in summary
+    assert not healthy
+
+
+def test_healthy_running_job_leaves_the_digest_green(tmp_path, monkeypatch):
+    _log(tmp_path, "fred", 2)
+    healthy, summary = _summary(tmp_path, monkeypatch, {"fred": None})
+    assert "possible hang" not in summary
+    assert healthy
+
+
+def test_jobs_running_normally_at_digest_time_are_not_flagged(tmp_path, monkeypatch):
+    """composite (21:05), scorer (21:10), advisor (21:12) and dashboard (21:13)
+    can still be running when the digest fires at 21:15. All are far under the
+    15min default tier, so none may be reported."""
+    for job, started in (("composite", 10), ("scorer", 5), ("advisor", 3), ("dashboard", 2)):
+        _log(tmp_path, job, started)
+    codes = dict.fromkeys(["composite", "scorer", "advisor", "dashboard"])
+    healthy, summary = _summary(tmp_path, monkeypatch, codes)
+    assert "possible hang" not in summary
+    assert healthy
