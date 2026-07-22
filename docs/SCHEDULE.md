@@ -94,10 +94,27 @@ summer open (6:30am Phoenix).
   `--uninstall` removes every job; `--dry-run` writes plists without loading.
 - **Health check**: `deploy/launchd/status.sh` — launchd exit codes, last log
   line per job, per-DB snapshot freshness.
-- **Logs**: `logs/<job>.log` (gitignored), timestamped start/stored/FAILED lines.
+- **Logs**: `logs/<job>.log` (gitignored), timestamped lines from
+  `deploy/launchd/env.sh`: `start:` (whole-run begin, `job_start`), `step:`
+  (sub-step progress inside a multi-step wrapper, e.g. `cftc_weekly.sh`'s
+  three families or `preopen_batch.sh`'s four steps — `step_start`; deliberately
+  distinct from `start:` so it doesn't inflate the digest's run count), `end:`
+  (whole-run finish with duration + exit code, from the EXIT trap), plus
+  ad hoc `FAILED`/`STALE` lines from individual wrappers.
+- **Hang detection**: `daily_summary.py` cross-references `launchctl list`'s
+  PID column (not the exit-status column, which cannot distinguish "running"
+  from "exited cleanly" — see `status.sh`) against each running job's newest
+  `start:`/`step:` line. Past 15 minutes (default) or 60 minutes (`_SLOW_JOBS`
+  — jobs with a legitimately long single run, e.g. `fred-vintages`, or one
+  starting close enough to 9:15pm that a designed pause could still be live,
+  e.g. `edgar`'s post-throttle `sleep 900`) it's reported as a possible hang.
+  Detection only — it never kills or restarts a job. For a multi-step
+  wrapper, the age measured is the CURRENT STEP's, not the whole run's,
+  since `step:` resets the clock same as `start:` does.
 - **Nightly push**: `daily_summary.py` sends an ntfy digest at 9:15pm — run
   counts, FAILED/STALE lines, non-zero exit codes, stale DBs vs expected
-  cadence. Healthy = ✅ default priority; problems = ⚠️ high priority. No
+  cadence, possible hangs (see above). Healthy = ✅ default priority; problems
+  = ⚠️ high priority. No
   9:15pm ping at all ⇒ the machine (or login session) is down — the summary
   can't report its own absence. If `HEALTHCHECK_URL` is set (see
   `.env.example`), a successful run also pings an external dead-man's switch

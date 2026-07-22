@@ -18,12 +18,22 @@ job_start() {
     JOB_LABEL="$*"
     echo "[$(date '+%F %T')] start: $*"
     # A signal-terminated process sees $? == 0 in its EXIT trap (only `set -e`
-    # aborts and explicit `exit N` preserve the real status there), so a hung
-    # job killed by the hang-detector -- launchctl kill, or a human `kill` --
+    # aborts and explicit `exit N` preserve the real status there), so a job
+    # terminated by a signal -- e.g. a human `kill` after noticing a hang --
     # would otherwise log a false "exit 0" at exactly the moment that matters
-    # most. Re-raise the conventional 128+N status via a signal trap so it
-    # reaches job_end intact; install the EXIT trap last so it still fires
-    # exactly once, after these have set $? for it to read.
+    # most. (daily_summary.py's hang detection is detection-only: it reports
+    # a job running past its budget, it never kills or restarts one.)
+    # Re-raise the conventional 128+N status via a signal trap so it reaches
+    # job_end intact; install the EXIT trap last so it still fires exactly
+    # once, after these have set $? for it to read.
+    #
+    # Bash defers a trapped signal until the current foreground command
+    # finishes, so a manual `kill <bashpid>` sent while a long-running
+    # foreground command (e.g. `uv run python ...`) is executing can appear
+    # to do nothing -- the trap only runs once that command returns control
+    # to this shell. `launchctl kill`, which signals the whole process
+    # group, reaches the foreground command directly and fires the trap
+    # immediately.
     trap 'exit 130' INT
     trap 'exit 143' TERM
     trap 'exit 129' HUP
