@@ -17,6 +17,16 @@ job_start() {
     JOB_T0=$(date +%s)
     JOB_LABEL="$*"
     echo "[$(date '+%F %T')] start: $*"
+    # A signal-terminated process sees $? == 0 in its EXIT trap (only `set -e`
+    # aborts and explicit `exit N` preserve the real status there), so a hung
+    # job killed by the hang-detector -- launchctl kill, or a human `kill` --
+    # would otherwise log a false "exit 0" at exactly the moment that matters
+    # most. Re-raise the conventional 128+N status via a signal trap so it
+    # reaches job_end intact; install the EXIT trap last so it still fires
+    # exactly once, after these have set $? for it to read.
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    trap 'exit 129' HUP
     trap 'job_end "$?"' EXIT
 }
 
