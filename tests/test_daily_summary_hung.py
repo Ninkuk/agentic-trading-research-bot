@@ -94,6 +94,25 @@ def test_last_start_wins_over_earlier_ones(tmp_path, monkeypatch):
     assert daily_summary.hung_jobs({"fred"}, NOW) == []
 
 
+def test_directory_shaped_log_produces_a_visible_failure_not_a_crash(tmp_path, monkeypatch):
+    """A degenerate log -- here, a DIRECTORY named <job>.log -- raises
+    IsADirectoryError on read. That must surface as a visible problem line,
+    never propagate, and per this repo's secret-hygiene rule the message may
+    carry the exception TYPE NAME only (never str(e)/repr(e))."""
+    monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
+    (tmp_path / "ghostjob.log").mkdir()
+    out = daily_summary.hung_jobs({"ghostjob"}, NOW)
+    assert out == ["ghostjob: hang check failed (IsADirectoryError)"]
+
+
+def test_boundary_at_exactly_the_limit_is_not_flagged(tmp_path, monkeypatch):
+    """The chosen inequality is `>`, not `>=`: a job running exactly at its
+    limit has not yet exceeded it."""
+    monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
+    _log(tmp_path, "fred", daily_summary._HUNG_DEFAULT_MIN)
+    assert daily_summary.hung_jobs({"fred"}, NOW) == []
+
+
 def test_last_progress_returns_the_newest_step_marker(tmp_path):
     """A multi-step wrapper (cftc_weekly.sh, preopen_batch.sh) emits one
     `start:` line for the whole run, then a `step:` line per sub-step.
