@@ -31,8 +31,19 @@ from sources.common.clock import phx_date  # noqa: E402
 DASHBOARD_PATH = "reports/dashboard.html"
 BRANCH = "gh-pages"
 NOINDEX_META = '<meta name="robots" content="noindex,nofollow">'
-# Public and *discoverable* are separate decisions; only the first was made.
+# The noindex meta tag above is the control that actually works -- it is honored
+# by crawlers that fetch this page. robots.txt is a per-ORIGIN file: this is a
+# project page (ninkuk.github.io/agentic-trading-bot/), so robots.txt only ever
+# lands at .../agentic-trading-bot/robots.txt, a path no crawler consults (they
+# fetch https://ninkuk.github.io/robots.txt, served by a different repo). It is
+# published anyway because it's harmless and becomes correct if this site ever
+# moves to an apex/user-site origin -- but do not rely on it for anything.
 ROBOTS_TXT = "User-agent: *\nDisallow: /\n"
+
+# Local git operations are bounded generously; `push` gets extra headroom because
+# it is the one subcommand that touches the network.
+GIT_TIMEOUT_DEFAULT = 120
+GIT_TIMEOUT_PUSH = 300
 
 
 def is_fresh(mtime_epoch: float, now_iso: str) -> bool:
@@ -78,10 +89,22 @@ def _redact(text: str) -> str:
     return _CREDS.sub(r"\1<redacted>@", text)
 
 
+class GitTimeout(RuntimeError):
+    """A git invocation exceeded its timeout. Never carries argv (may hold the remote URL)."""
+
+
 def _git(
-    run: Callable[..., subprocess.CompletedProcess], cwd: Path, *args: str
+    run: Callable[..., subprocess.CompletedProcess],
+    cwd: Path,
+    *args: str,
+    timeout: float = GIT_TIMEOUT_DEFAULT,
 ) -> subprocess.CompletedProcess:
-    result = run(["git", *args], cwd=str(cwd), capture_output=True, text=True)
+    try:
+        result = run(["git", *args], cwd=str(cwd), capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        # subprocess.TimeoutExpired.cmd carries the full argv INCLUDING the remote
+        # URL -- never log the exception itself, only the subcommand name.
+        raise GitTimeout(f"git {args[0]} timed out after {timeout}s") from None
     if result.returncode != 0:
         raise GitError(
             _redact(f"git {args[0]} failed ({result.returncode}): {result.stderr.strip()}")
@@ -116,8 +139,17 @@ def publish(
             # --no-gpg-sign is mandatory: see the module docstring in the plan and
             # test_publish_commit_disables_gpg_signing. Without it this hangs forever.
             _git(run, dest, "commit", "-q", "--no-gpg-sign", "-m", f"dashboard {today}")
-            _git(run, dest, "push", "--force", "--quiet", remote, f"HEAD:{BRANCH}")
-    except GitError as e:
+            _git(
+                run,
+                dest,
+                "push",
+                "--force",
+                "--quiet",
+                remote,
+                f"HEAD:{BRANCH}",
+                timeout=GIT_TIMEOUT_PUSH,
+            )
+    except (GitError, GitTimeout) as e:
         log(f"FAILED: {e}")
         return 1
 
