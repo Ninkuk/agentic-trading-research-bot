@@ -149,6 +149,14 @@ management said over the years); do both, and do this one first. **Disclosure
 cadence is itself a signal** — a call resumed after years of silence, or a
 letter that stopped, is material. Read the change; don't just count the rows.
 
+**The call is not the print.** The quarterly shareholder letter / earnings
+press release (the 8-K exhibit) is a separate document from the call
+transcript, and it carries what the call omits: the metrics table — every
+user/engagement metric, not just the one management headlined — the stated
+multi-year targets, and the lead metric's history. Fetch it alongside the
+transcript; a run sourced only from the call inherits management's on-call
+emphasis.
+
 **Then reconcile it against what happened since.** That call is up to a quarter
 stale, and on a fast-moving competitive or regulatory thesis the facts that move
 the stock happen *between* calls — do not treat the latest transcript as current
