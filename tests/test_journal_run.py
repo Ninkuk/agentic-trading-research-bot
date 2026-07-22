@@ -260,3 +260,44 @@ def test_dedup_ref_is_deterministic_and_field_sensitive():
     # a real order_ref always wins, regardless of other fields
     with_ref = dict(fill, order_ref="ref-9")
     assert journal._dedup_ref(with_ref) == "ref-9"
+
+
+def test_verdicts_only_doc_ingests_without_composite(tmp_path):
+    dbp = str(tmp_path / "scorer.db")
+    doc = {
+        "as_of": "2026-07-22T20:00:00+00:00",
+        "verdicts": [
+            {
+                "symbol": "bbai",
+                "verdict": "pass",
+                "verdict_date": "2026-07-22",
+                "doc": "BBAI-2026-07-21.md",
+                "note": "unproven",
+            }
+        ],
+    }
+    # Evening-Phoenix now_iso (next-day UTC) — must not shift verdict_date.
+    c = journal.run(dbp, doc, composite_db=None, now_iso="2026-07-23T04:12:00+00:00")
+    assert c["verdicts_recorded"] == 1 and c["skipped"] == 0
+    conn = db.connect(dbp)
+    row = conn.execute(
+        "SELECT symbol, verdict, verdict_date, doc, note FROM research_verdicts"
+    ).fetchone()
+    assert row == ("BBAI", "pass", "2026-07-22", "BBAI-2026-07-21.md", "unproven")
+    # Header row records the count.
+    assert (
+        conn.execute(
+            "SELECT verdicts_recorded FROM journal_runs ORDER BY id DESC LIMIT 1"
+        ).fetchone()[0]
+        == 1
+    )
+    conn.close()
+
+
+def test_verdict_reingest_is_counted_duplicate(tmp_path):
+    dbp = str(tmp_path / "scorer.db")
+    doc = {"verdicts": [{"symbol": "EOSE", "verdict": "pass", "verdict_date": "2026-07-22"}]}
+    journal.run(dbp, doc, composite_db=None, now_iso="2026-07-23T04:12:00+00:00")
+    c = journal.run(dbp, doc, composite_db=None, now_iso="2026-07-23T04:13:00+00:00")
+    assert c["verdicts_recorded"] == 0
+    assert c["duplicates_skipped"] == 1

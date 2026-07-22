@@ -1,7 +1,7 @@
 """Decision journal: what the human did about composite opinions. Ingests
-one JSON doc of fills/passes (built by the journal-sync skill from Robinhood
-MCP order history, or dictated manually) and stores decisions permanently in
-scorer.db next to the outcomes they are graded against.
+one JSON doc of fills/passes/verdicts (built by the journal-sync skill from
+Robinhood MCP order history, or dictated manually) and stores decisions
+permanently in scorer.db next to the outcomes they are graded against.
 
 Matching is deterministic (headless scheduled runs cannot stop to confirm)
 and reads composite.db ATTACHed read-only rather than ticker_outcomes:
@@ -10,7 +10,9 @@ fill would otherwise misclassify as freelance. The opinion exists in
 composite.db the night it forms; once matched, the decision's
 (composite_snapshot_id, symbol) key joins the scorer's permanent outcome
 rows and never needs composite.db again. Decisions are never pruned — they
-are the other half of the experiment."""
+are the other half of the experiment. Verdicts are the research-ticker
+skill's buy/pass calls — its own graded actor, distinct from the human's
+decisions."""
 
 import argparse
 import hashlib
@@ -210,12 +212,12 @@ def _dedup_ref(f) -> str:
     return "manual:" + hashlib.sha1(canon.encode("utf-8")).hexdigest()[:16]
 
 
-def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
+def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
     """One transaction: every decision row plus the journal_runs header
     commit together or not at all. Requires composite.db attached as `src`
     when fills/passes are present. Fills must be chronological (parse_doc
     guarantees it) so FIFO exit attachment is deterministic."""
-    matched = freelance = exits = passes_n = dupes = 0
+    matched = freelance = exits = passes_n = verdicts_n = dupes = 0
     # Phoenix clock, like fill_date/composite_date: an evening-dictated pass
     # (after the 9:05pm snapshot = next day UTC) answers THAT evening's flag.
     as_of_date = _phx_date(datetime.fromisoformat(now_iso))
@@ -282,11 +284,21 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
                 (p["symbol"], m[0], m[1], m[2], m[3], p["note"], now_iso),
             )
             passes_n += cur.rowcount
+        for v in verdicts:
+            cur = conn.execute(
+                "INSERT OR IGNORE INTO research_verdicts"
+                " (symbol, verdict, verdict_date, doc, note, recorded_at)"
+                " VALUES (?, ?, ?, ?, ?, ?)",
+                (v["symbol"], v["verdict"], v["verdict_date"], v["doc"], v["note"], now_iso),
+            )
+            verdicts_n += cur.rowcount
+            dupes += 1 - cur.rowcount
         cur = conn.execute(
             "INSERT INTO journal_runs (ran_at, fills_seen, matched, freelance,"
-            " exits_attached, passes_recorded, duplicates_skipped, skipped)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (now_iso, len(fills), matched, freelance, exits, passes_n, dupes, skipped),
+            " exits_attached, passes_recorded, verdicts_recorded,"
+            " duplicates_skipped, skipped)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (now_iso, len(fills), matched, freelance, exits, passes_n, verdicts_n, dupes, skipped),
         )
         return dict(
             run_id=cur.lastrowid,
@@ -295,6 +307,7 @@ def ingest(conn, fills, passes, now_iso, skipped=0) -> dict:
             freelance=freelance,
             exits_attached=exits,
             passes_recorded=passes_n,
+            verdicts_recorded=verdicts_n,
             duplicates_skipped=dupes,
             skipped=skipped,
         )
@@ -307,7 +320,7 @@ def run(db_path, doc, composite_db=None, now_iso=None) -> dict:
     evidence. An empty doc still writes a run header (the "ran and found
     nothing" signal for the schedule's freshness check)."""
     now_iso = now_iso or datetime.now(UTC).isoformat()
-    fills, passes, _verdicts, skipped = parse_doc(doc)
+    fills, passes, verdicts, skipped = parse_doc(doc)
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)
@@ -317,7 +330,7 @@ def run(db_path, doc, composite_db=None, now_iso=None) -> dict:
                 raise FileNotFoundError("composite db path required for matching")
             fetch.attach_ro(conn, composite_db)
         try:
-            return ingest(conn, fills, passes, now_iso, skipped=skipped)
+            return ingest(conn, fills, passes, verdicts, now_iso, skipped=skipped)
         finally:
             if need_match:
                 fetch.detach(conn)
@@ -375,7 +388,8 @@ def main(argv=None) -> None:
     print(
         f"journal run {c['run_id']}: {c['matched']} matched,"
         f" {c['freelance']} freelance, {c['exits_attached']} exits,"
-        f" {c['passes_recorded']} passes, {c['duplicates_skipped']} duplicates,"
+        f" {c['passes_recorded']} passes, {c['verdicts_recorded']} verdicts,"
+        f" {c['duplicates_skipped']} duplicates,"
         f" {c['skipped']} skipped, into {a.db}"
     )
 

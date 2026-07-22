@@ -95,7 +95,7 @@ def test_flag_thresholds_pinned_to_composite_view():
 def test_ingest_buy_matched_and_freelance(tmp_path):
     conn, sids = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
     fills = [_fill(), _fill(symbol="NVDA", order_ref="ref-2")]
-    counts = journal.ingest(conn, fills, [], NOW)
+    counts = journal.ingest(conn, fills, [], [], NOW)
     assert counts["matched"] == 1 and counts["freelance"] == 1
     rows = conn.execute(
         "SELECT symbol, composite_snapshot_id, composite_date,"
@@ -119,7 +119,7 @@ def test_ingest_sell_attaches_fifo_exit(tmp_path):
             fill_date="2026-07-09",
         ),
     ]
-    counts = journal.ingest(conn, fills, [], NOW)
+    counts = journal.ingest(conn, fills, [], [], NOW)
     assert counts["exits_attached"] == 1
     exited = conn.execute(
         "SELECT order_ref, exit_fill_date, exit_fill_price, exit_order_ref"
@@ -131,7 +131,7 @@ def test_ingest_sell_attaches_fifo_exit(tmp_path):
 def test_ingest_sell_without_open_buy_is_own_decision(tmp_path):
     conn, sids = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (-4, 3)})])
     fills = [_fill(side="sell", order_ref="s9")]
-    counts = journal.ingest(conn, fills, [], NOW)
+    counts = journal.ingest(conn, fills, [], [], NOW)
     assert counts["matched"] == 1 and counts["exits_attached"] == 0
     row = conn.execute(
         "SELECT side, composite_snapshot_id, opinion_score_sum FROM decisions"
@@ -142,8 +142,8 @@ def test_ingest_sell_without_open_buy_is_own_decision(tmp_path):
 def test_ingest_duplicate_order_ref_idempotent(tmp_path):
     conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
     fills = [_fill()]
-    journal.ingest(conn, fills, [], NOW)
-    counts = journal.ingest(conn, fills, [], NOW)  # same doc replayed
+    journal.ingest(conn, fills, [], [], NOW)
+    counts = journal.ingest(conn, fills, [], [], NOW)  # same doc replayed
     assert counts["duplicates_skipped"] == 1
     assert conn.execute("SELECT COUNT(*) FROM decisions").fetchone()[0] == 1
 
@@ -157,8 +157,8 @@ def test_ingest_exit_ref_also_dedupes(tmp_path):
         filled_at="2026-07-08T15:00:00+00:00",
         fill_date="2026-07-08",
     )
-    journal.ingest(conn, [buy, sell], [], NOW)
-    counts = journal.ingest(conn, [sell], [], NOW)
+    journal.ingest(conn, [buy, sell], [], [], NOW)
+    counts = journal.ingest(conn, [sell], [], [], NOW)
     assert counts["duplicates_skipped"] == 1
     assert conn.execute("SELECT COUNT(*) FROM decisions").fetchone()[0] == 1
 
@@ -172,6 +172,7 @@ def test_ingest_pass_needs_flag(tmp_path):
         conn,
         [],
         [dict(symbol="GLD", note="crowded"), dict(symbol="TLT", note=None)],
+        [],
         "2026-07-06T21:40:00+00:00",
     )
     assert counts["passes_recorded"] == 1 and counts["skipped"] == 1
@@ -181,31 +182,32 @@ def test_ingest_pass_needs_flag(tmp_path):
     ).fetchone()
     assert row == ("GLD", "passed", sids[0], 4, 3, "crowded", "manual")
     # replaying the same pass is a no-op (partial unique index + OR IGNORE)
-    counts = journal.ingest(conn, [], [dict(symbol="GLD", note="crowded")], NOW)
+    counts = journal.ingest(conn, [], [dict(symbol="GLD", note="crowded")], [], NOW)
     assert counts["passes_recorded"] == 0
 
 
 def test_ingest_writes_run_header(tmp_path):
     conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
-    counts = journal.ingest(conn, [_fill()], [], NOW, skipped=2)
+    counts = journal.ingest(conn, [_fill()], [], [], NOW, skipped=2)
     row = conn.execute(
         "SELECT ran_at, fills_seen, matched, freelance, exits_attached,"
-        " passes_recorded, duplicates_skipped, skipped FROM journal_runs"
+        " passes_recorded, verdicts_recorded, duplicates_skipped, skipped"
+        " FROM journal_runs"
     ).fetchone()
-    assert row == (NOW, 1, 1, 0, 0, 0, 0, 2)
+    assert row == (NOW, 1, 1, 0, 0, 0, 0, 0, 2)
     assert counts["run_id"] == 1
 
 
 def test_manual_fill_source(tmp_path):
     conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
-    journal.ingest(conn, [_fill(order_ref=None)], [], NOW)
+    journal.ingest(conn, [_fill(order_ref=None)], [], [], NOW)
     assert conn.execute("SELECT source FROM decisions").fetchone()[0] == "manual"
 
 
 def test_automatic_fill_recorded_but_never_matched(tmp_path):
     conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
     # an XLE opinion is available in-window, but a DRIP fill must not claim it
-    counts = journal.ingest(conn, [_fill(placed_agent="drip")], [], NOW)
+    counts = journal.ingest(conn, [_fill(placed_agent="drip")], [], [], NOW)
     assert counts["matched"] == 0 and counts["freelance"] == 1
     row = conn.execute("SELECT composite_snapshot_id, placed_agent FROM decisions").fetchone()
     assert row == (None, "drip")
@@ -223,7 +225,7 @@ def test_sell_never_exits_automatic_buy(tmp_path):
             fill_date="2026-07-09",
         ),
     ]
-    counts = journal.ingest(conn, fills, [], NOW)
+    counts = journal.ingest(conn, fills, [], [], NOW)
     assert counts["exits_attached"] == 1
     exited = conn.execute(
         "SELECT order_ref FROM decisions WHERE exit_fill_date IS NOT NULL"
