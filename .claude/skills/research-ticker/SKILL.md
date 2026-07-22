@@ -316,6 +316,32 @@ Write `research/<TICKER>-<YYYY-MM-DD>.md` with these sections, then commit it:
    researched disclosure, admissible only where no already-integrated
    official source covers this ticker or field); low-confidence colour.
 
+## Log the verdict (mandatory final step)
+
+After writing research/<TICKER>-<DATE>.md and appending verdicts.log, record
+the buy/pass call in the graded ledger — this is what v_research_filter
+grades (the skill analog of v_human_filter). Build one JSON doc in the
+scratchpad:
+
+    {"as_of": "<UTC now isoformat>",
+     "fills": [],
+     "verdicts": [{"symbol": "<TICKER>",
+                   "verdict": "buy" | "pass",
+                   "verdict_date": "<Phoenix calendar date of the run, YYYY-MM-DD>",
+                   "doc": "<TICKER>-<DATE>.md",
+                   "note": "<one line: the load-bearing reason>"}]}
+
+then ingest:
+
+    uv run python main.py journal --db data/scorer.db --input <scratchpad>/verdict.json
+
+Rules: never SQL against scorer.db (dispatcher-only write path, same as
+journal-sync). verdict_date is a BARE Phoenix date, not a timestamp.
+Re-running the same ticker the same day is a counted duplicate — safe.
+Unlike passes, a verdict needs no composite flag to answer; unflagged
+research logs the same way. This step is the skill's own record, so it does
+not require user dictation.
+
 ## Guardrails
 
 - **Never place an order.** Never recommend a position size — that is

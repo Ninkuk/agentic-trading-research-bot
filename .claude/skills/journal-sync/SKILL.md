@@ -41,6 +41,13 @@ against scorer.db directly.
     "passes": [{"symbol": "GLD", "note": "too crowded"}]}
    ```
 
+   - The document may also carry a `verdicts` array
+     (`{"symbol", "verdict": "buy"|"pass", "verdict_date": "YYYY-MM-DD"
+     (bare Phoenix date), "doc", "note"}`) — research-ticker's own buy/pass
+     calls, normally appended by that skill's final step, not dictated by
+     the user. Idempotent on (symbol, verdict_date). Passes remain
+     user-dictated; verdicts are the skill's record. Graded in
+     `v_research_filter` (reading it is fine — reading is not writing).
    - `order_ref` = the order's id — the idempotency key; re-syncing an
      overlapping window is safe (duplicates are counted and skipped).
    - `price` = the order's **average** fill price (a multi-execution order
