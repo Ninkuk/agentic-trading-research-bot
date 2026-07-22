@@ -183,8 +183,8 @@ def is_set(value: str | None) -> bool:
 
 def validate(knob: Knob, raw: str) -> str | None:
     if knob.kind == "int":
-        if not raw.isdigit():
-            return "must be a whole number"
+        if not re.fullmatch(r"[0-9]+", raw):
+            return "must be a whole number (digits only)"
         if (knob.lo is not None and int(raw) < knob.lo) or (
             knob.hi is not None and int(raw) > knob.hi
         ):

@@ -51,6 +51,12 @@ def test_validate_int_bounds_and_enum():
     assert config_ui.validate(e, "gpt") is not None
 
 
+def test_validate_int_rejects_unicode_digits_without_crashing():
+    m = _knob("RESEARCH_NIGHTLY_MAX")
+    for bad in ("²", "٣", "-1", "1.5"):
+        assert config_ui.validate(m, bad) is not None
+
+
 def test_validate_rejects_env_breaking_characters():
     s = _knob("NTFY_SERVER")
     assert config_ui.validate(s, "https://ntfy.example.com") is None
