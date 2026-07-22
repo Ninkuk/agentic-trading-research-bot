@@ -52,6 +52,17 @@ Three kinds of programs, doing three jobs:
 That last part is the point of the whole project: **measure first, trust
 later, act last.**
 
+## Where the AI comes in
+
+The "agentic" part: an AI assistant (Anthropic's Claude) operates parts of the
+system by following small written playbooks — called _skills_ — that are
+version-controlled right here in the repository (`.claude/skills/`). Claude
+takes the daily read-only snapshot of the brokerage account, syncs the trade
+journal, researches individual stocks into the write-ups in `research/`, and
+then plays devil's advocate against its own write-ups before a human acts on
+them. The same house rule binds the AI as everything else here: it reads data
+and writes notes — it cannot place a trade, and a human makes every decision.
+
 ## Questions you might have
 
 **Does it trade?** No. There is no order-placing code in this repository. It
