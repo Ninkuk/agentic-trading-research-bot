@@ -18,6 +18,23 @@ position the user already holds. If the user gives you only a ticker and a
 direction ("I'm long X"), ask them to state the thesis in two sentences first
 — you cannot attack a claim nobody has made.
 
+**Before adding to a losing position**, pull the real cost basis before you
+attack anything else. The blended `average_buy_price` in `portfolio.db` hides
+which lots are actually underwater and by how much — averaging down changes
+the answer per lot, not per position.
+
+- Fetch `get_equity_tax_lots` via the Robinhood MCP (read-only) for the
+  position's per-lot cost basis and holding period.
+- **Account pin**: use the **"Agentic" account (number ending 1936)**; if
+  `get_accounts` returns more than one account, select it by name/last-4, and
+  if no account matches, stop and report — never fall back to a different
+  account.
+- **Never paste raw MCP payloads into the conversation** (they can carry
+  account identifiers) — summarize per-lot basis, quantity, and acquisition
+  date instead.
+- **Secret hygiene**: on any MCP error, report the exception type name only —
+  never message bodies, URLs, or payload fragments.
+
 ## Procedure
 
 1. **Enumerate the load-bearing conditions.** Restate the thesis as a numbered
@@ -41,7 +58,7 @@ direction ("I'm long X"), ask them to state the thesis in two sentences first
      *refuted*. → FLAWED.
    - **You could not attack it, because the evidence needed does not exist in
      any disclosure.** The condition is *unverifiable*. Mark it UNKNOWN and
-     go to step 6. → UNPROVEN.
+     go to step 7. → UNPROVEN.
 
    A condition you merely find *uncomfortable* is neither. Go and check it.
    (Known bias: refusing to credit an unproven condition pushes toward
@@ -78,11 +95,43 @@ direction ("I'm long X"), ask them to state the thesis in two sentences first
    - **Mechanism claims are not inference claims.** "The API returns column
      X" is verifiable. "X predicts returns" is an inference and needs a null.
 
-5. **Ask what would change the author's mind**, and whether it is observable.
+5. **Run the options-market timing check — but only when it applies.** This
+   step is conditional, unlike the standing checks above: run it only when the
+   thesis makes a **dated** claim (earnings, an FDA decision, a contract
+   award, index inclusion — a specific date, not "eventually") **and** the
+   ticker has a listed options chain. If either is missing, skip it outright
+   and record why — skipping is not a failure and must not be treated as one.
+
+   Use `.claude/skills/shared/options-read.md` for the options procedure.
+
+   **Options evidence has a one-way valve: it can only cut, never confirm.**
+   Refutation is measured against the 1-sigma move, never the straddle figure.
+   Refute the timing condition only when the thesis needs a move beyond
+   **2 sigma** — roughly a 5% outcome — and state the sigma multiple and the
+   implied probability in the finding (the CLI prints this threshold in its
+   verdict row — quote that row, don't restate the number; `REFUTE_SIGMAS` in
+   `tools/options/implied_move.py` owns it and this prose can drift from it).
+   Between 1 and 2 sigma the market is
+   merely less optimistic than the thesis; that is not a refutation and must
+   not be written as one. Mark the condition FLAWED only above the 2-sigma
+   line, and the refutation stops there — it may not spread to undated
+   conditions, because a thesis can be right about the destination and wrong
+   about the calendar. An implied move that matches or exceeds what the thesis
+   requires is NOT evidence for anything. If you catch yourself writing "the
+   options market agrees" without immediately following it with "which is not
+   evidence for the thesis," delete the sentence.
+
+   **Disclose coverage in the verdict.** When the check could not run — no
+   chain, illiquid, no aligned expiry, or the path-2 stopgap was used — say so
+   explicitly. The check only fires on liquid names with a clean expiry
+   match; silent omission makes a thesis look more thoroughly vetted than it
+   was.
+
+6. **Ask what would change the author's mind**, and whether it is observable.
    A thesis with no falsifier is not a thesis. If the author cannot name the
    evidence that would make them sell, they have a position, not an argument.
 
-6. **Missing information is a finding.** When a load-bearing number does not
+7. **Missing information is a finding.** When a load-bearing number does not
    exist in any disclosure, do not assume a value. State it as UNKNOWN and
    answer: *does its absence kill the thesis?* Sometimes the honest verdict is
    "I can't know this," and that is a complete and useful answer.
@@ -116,3 +165,16 @@ Then state, in one sentence, what evidence would flip your verdict.
   low-confidence and never launder into fact.
 - **Do not be agreeable.** If the thesis is good, the verdict is SOUND — but
   arrive there by failing to kill it, not by declining to swing.
+- **Options data informs the equity thesis only.** It answers "is the market
+  pricing in this catalyst," never "what should I buy." If asked directly —
+  "should I buy the calls?" — reply with one sentence: this skill does not
+  size or recommend options positions; that decision and its risk are the
+  user's alone. Then stop. Do not follow with a strike or expiry "as
+  information" — that is the same violation wearing a hedge.
+- **Broker/market microstructure is its own source tier**, below primary
+  filings and distinct from `stockanalysis.com` — see the data-source policy
+  in `CLAUDE.md` for what it covers. It is real-time account and market
+  state, not a researched disclosure — label it as this tier, not as primary
+  or as the `stockanalysis.com` exception. It is admissible only where no
+  already-integrated official source covers this ticker or field, and
+  refused wherever it duplicates one.

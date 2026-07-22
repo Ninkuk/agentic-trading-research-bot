@@ -119,8 +119,9 @@ source itself. Import a screener/monitor/combiner's internals as `sources.screen
 
 `tools/` holds code that is neither a source nor a dispatcher — pure helpers with no
 network, no DB, and no clock. Today: `tools/valuation/reverse_dcf.py`, the bisection
-solver behind the `research-ticker` skill. Not registered in `registry.py`; it is not
-a data pipeline.
+solver behind the `research-ticker` skill, and `tools/options/implied_move.py`, the
+options-implied-move arithmetic behind the research skills' options check (straddle/spot
+is a MEAN, never a ceiling). Not registered in `registry.py`; they are not data pipelines.
 
 ### Shared spine
 
@@ -197,7 +198,13 @@ after changing a screener's cadence assumptions, update both.
 **Data-source policy:** official primary sources only, with one approved exception —
 **stockanalysis.com** (already trusted; used by `stocks` and `earnings`). `reddit` (ApeWisdom)
 predates the policy and stays as-is. `portfolio` is account state (Robinhood via MCP),
-not a market data source, so the policy doesn't apply to it.
+not a market data source, so the policy doesn't apply to it. Since 2026-07, the research
+skills (`research-ticker`, `kill-thesis`) may also read a **broker/market-microstructure**
+tier — Robinhood MCP quotes, option chains, daily bars, and forward earnings estimates — as
+its own labelled tier below primary filings and distinct from stockanalysis.com. It is
+admissible **only where no already-integrated official source covers this ticker or field**
+(the "coverage, not existence" test) and refused wherever it duplicates one: `get_financials`
+is the worked refusal, because `data/sec_fundamentals.db` already covers it.
 
 Tests mirror the module layout: `tests/test_<name>_<layer>.py` where layer ∈
 {`catalog`, `fetch`, `db_schema`, `db_write`, `db_views`, `run`}. Register the new `main` in

@@ -8,4 +8,4 @@ Status: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 | # | Plan | Status | Notes |
 |---|------|--------|-------|
-| 001 | [robinhood-mcp-integration](001-robinhood-mcp-integration.md) | TODO | Options-market read for `research-ticker` / `kill-thesis`, plus tax lots, realized-P&L reconciliation and EPS surprise. Spec: `docs/superpowers/specs/2026-07-21-robinhood-mcp-integration-design.md` |
+| 001 | [robinhood-mcp-integration](001-robinhood-mcp-integration.md) | DONE | Options-market read for `research-ticker` / `kill-thesis`, plus tax lots, realized-P&L reconciliation and EPS surprise. Spec: `docs/superpowers/specs/2026-07-21-robinhood-mcp-integration-design.md` |
