@@ -57,7 +57,7 @@ _INTRO = (
     " evening they write this page: the market's overall mood, a scorecard of"
     " stocks whose numbers stand out, and a running record of how past"
     " opinions worked out. Nothing here places a trade; a human makes every"
-    " decision. The code and data pipeline are open source: read"
+    " decision. The code and data pipeline are developed in the open: read"
     f' <a href="{_REPO_URL}">how it works</a> or the plain-English'
     f' <a href="{_REPO_URL}/blob/main/docs/GLOSSARY.md">glossary</a>.</p>'
     "</details>"
@@ -1262,7 +1262,7 @@ def _footer() -> str:
     return (
         '<footer class="colophon"><div class="rule-thin"></div>'
         f'<p>Generated nightly (~9:13pm Phoenix) by <a href="{_REPO_URL}">'
-        "open-source code</a> from official public sources. Research notes,"
+        "code developed in the open</a> from official public sources. Research notes,"
         " not investment advice — nothing here places a trade, and a human"
         " makes every decision.</p></footer>"
     )
