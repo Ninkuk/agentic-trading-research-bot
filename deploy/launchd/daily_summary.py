@@ -101,7 +101,15 @@ EMPTY_OK = {
 
 
 def job_exit_codes():
-    """{job-name: last exit code} from launchctl (None while running)."""
+    """{job-name: launchctl's last-exit-status column}.
+
+    NOT a running-vs-not indicator, despite appearances. `launchctl list`
+    prints 0 in this column both for "exited cleanly" and for "has never
+    exited" (see status.sh), and -- the part that matters here -- a job that
+    is CURRENTLY RUNNING still shows its PREVIOUS exit status in this column,
+    not a sentinel. Verified live: all 35 jobs read 0 here, including one
+    caught mid-run. Use running_jobs() for a running/not signal instead.
+    """
     out = subprocess.run(["launchctl", "list"], capture_output=True, text=True).stdout
     codes = {}
     for line in out.splitlines():
@@ -113,6 +121,27 @@ def job_exit_codes():
                 continue
             codes[parts[2][len(PREFIX) :]] = code
     return codes
+
+
+def running_jobs():
+    """{job names} currently running, per launchctl's PID column.
+
+    `launchctl list`'s three columns are PID, last-exit-status, label. As
+    job_exit_codes documents, the exit-status column is ambiguous -- 0 means
+    both "exited cleanly" and "never exited", and it holds a RUNNING job's
+    PREVIOUS status, not a sentinel -- so it cannot answer "is this running
+    right now". The PID column can: a running job shows a real PID there, an
+    idle one shows "-". status.sh resolves the same ambiguity via
+    `launchctl print` instead; this resolves it via the PID column so the
+    digest can check all jobs with a single `launchctl list` call.
+    """
+    out = subprocess.run(["launchctl", "list"], capture_output=True, text=True).stdout
+    running = set()
+    for line in out.splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[2].startswith(PREFIX) and parts[0] != "-":
+            running.add(parts[2][len(PREFIX) :])
+    return running
 
 
 def scan_log(path, since):
@@ -158,19 +187,19 @@ def last_start(path):
     return newest
 
 
-def hung_jobs(codes, now_local):
-    """[problem lines] for jobs that have been running past their limit.
+def hung_jobs(running, now_local):
+    """[problem lines] for jobs in `running` that have been running past their limit.
 
-    launchctl reports a running job's exit code as None, which build_summary's
-    `code not in (None, 0)` check skips -- so without this a hung job is
-    invisible, and launchd will not re-spawn it while the instance is alive.
+    `running` is a set of job names currently running (see running_jobs()).
+    Membership in that set IS the running signal -- launchctl's exit-status
+    column cannot supply one (see job_exit_codes), so without a set built
+    from the PID column a hung job is invisible, and launchd will not
+    re-spawn it while the instance is alive.
 
     Detection only: never kills or restarts anything.
     """
     problems = []
-    for job, code in sorted(codes.items()):
-        if code is not None:  # not running
-            continue
+    for job in sorted(running):
         if f"{job}.log" == SELF_LOG:  # the digest is running as it builds this
             continue
         try:
@@ -378,7 +407,7 @@ def build_summary(now_local, now_utc):
     for job, code in sorted(codes.items()):
         if code not in (None, 0):
             problems.append(f"{job}: last exit {code}")
-    problems.extend(hung_jobs(codes, now_local))
+    problems.extend(hung_jobs(running_jobs(), now_local))
 
     since = now_local - dt.timedelta(hours=24)
     for log in sorted(LOGS.glob("*.log")):

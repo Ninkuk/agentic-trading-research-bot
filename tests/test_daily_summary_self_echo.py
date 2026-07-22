@@ -19,6 +19,7 @@ def _summary(tmp_path, monkeypatch):
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
     monkeypatch.setattr(daily_summary, "DATA", tmp_path)  # no DBs -> no staleness noise
     monkeypatch.setattr(daily_summary, "job_exit_codes", lambda: {})
+    monkeypatch.setattr(daily_summary, "running_jobs", lambda: set())
     monkeypatch.setattr(daily_summary, "signals_digest", lambda: [])
     monkeypatch.setattr(daily_summary, "advisor_digest", lambda: [])
     now = daily_summary.dt.datetime(2026, 7, 8, 21, 15, 0)

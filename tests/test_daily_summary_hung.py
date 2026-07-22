@@ -1,9 +1,12 @@
 """A hung job must not be invisible.
 
-launchctl reports a running job's exit code as None, and build_summary's check
-is `if code not in (None, 0)` -- so a job stuck forever is silently skipped.
-launchd will not re-spawn a StartCalendarInterval job while an instance is
-alive, so that job never runs again while every nightly ntfy says "All healthy."
+launchctl's exit-status column cannot tell a running job from an idle one --
+it holds a RUNNING job's PREVIOUS exit status, not a sentinel, and reads 0
+both for "exited cleanly" and "has never exited" (see status.sh). Without
+running_jobs() reading the PID column instead, a job stuck forever is
+silently skipped, and launchd will not re-spawn a StartCalendarInterval job
+while an instance is alive -- so that job never runs again while every
+nightly ntfy says "All healthy."
 """
 
 import sys
@@ -25,13 +28,13 @@ def _log(tmp_path, name, minutes_ago):
 def test_running_job_within_limit_is_not_reported(tmp_path, monkeypatch):
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
     _log(tmp_path, "fred", 5)
-    assert daily_summary.hung_jobs({"fred": None}, NOW) == []
+    assert daily_summary.hung_jobs({"fred"}, NOW) == []
 
 
 def test_running_job_past_limit_is_reported(tmp_path, monkeypatch):
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
     _log(tmp_path, "fred", 45)
-    out = daily_summary.hung_jobs({"fred": None}, NOW)
+    out = daily_summary.hung_jobs({"fred"}, NOW)
     assert len(out) == 1
     assert "fred" in out[0]
 
@@ -41,40 +44,41 @@ def test_slow_tier_job_is_given_the_longer_budget(tmp_path, monkeypatch):
     fails if _SLOW_JOBS is ignored or collapsed into the default."""
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
     _log(tmp_path, "fred-vintages", 30)
-    assert daily_summary.hung_jobs({"fred-vintages": None}, NOW) == []
+    assert daily_summary.hung_jobs({"fred-vintages"}, NOW) == []
 
 
 def test_slow_tier_job_past_its_own_limit_is_reported(tmp_path, monkeypatch):
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
     _log(tmp_path, "fred-vintages", 90)
-    assert len(daily_summary.hung_jobs({"fred-vintages": None}, NOW)) == 1
+    assert len(daily_summary.hung_jobs({"fred-vintages"}, NOW)) == 1
 
 
 def test_the_digest_never_reports_itself(tmp_path, monkeypatch):
     """daily-summary is running by definition while it builds the digest."""
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
     _log(tmp_path, "daily-summary", 600)
-    assert daily_summary.hung_jobs({"daily-summary": None}, NOW) == []
+    assert daily_summary.hung_jobs({"daily-summary"}, NOW) == []
 
 
-def test_finished_job_is_never_reported(tmp_path, monkeypatch):
-    """Only code None means running. A job that exited hours ago is not hung."""
+def test_job_absent_from_running_set_is_never_reported(tmp_path, monkeypatch):
+    """A set has no "finished" members -- only membership in `running` makes
+    a job eligible to be reported. An idle job's old start line (however
+    stale) is not evidence of a hang."""
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
     _log(tmp_path, "fred", 600)
-    assert daily_summary.hung_jobs({"fred": 0}, NOW) == []
-    assert daily_summary.hung_jobs({"fred": 1}, NOW) == []
+    assert daily_summary.hung_jobs(set(), NOW) == []
 
 
 def test_missing_log_does_not_crash(tmp_path, monkeypatch):
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
-    assert daily_summary.hung_jobs({"ghost": None}, NOW) == []
+    assert daily_summary.hung_jobs({"ghost"}, NOW) == []
 
 
 def test_empty_and_unparseable_logs_do_not_crash(tmp_path, monkeypatch):
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
     (tmp_path / "empty.log").write_text("")
     (tmp_path / "garbage.log").write_text("no timestamp here\n[not-a-date] start: x\n")
-    assert daily_summary.hung_jobs({"empty": None, "garbage": None}, NOW) == []
+    assert daily_summary.hung_jobs({"empty", "garbage"}, NOW) == []
 
 
 def test_last_start_wins_over_earlier_ones(tmp_path, monkeypatch):
@@ -87,7 +91,24 @@ def test_last_start_wins_over_earlier_ones(tmp_path, monkeypatch):
         f"[{old:%Y-%m-%d %H:%M:%S}] end: fred (2s, exit 0)\n"
         f"[{recent:%Y-%m-%d %H:%M:%S}] start: fred\n"
     )
-    assert daily_summary.hung_jobs({"fred": None}, NOW) == []
+    assert daily_summary.hung_jobs({"fred"}, NOW) == []
+
+
+def test_running_jobs_detects_running_via_pid_column_not_status_column(monkeypatch):
+    """The captured line that motivated this fix: a RUNNING job (reddit-intraday,
+    mid-run) reads a real PID in column 0 and 0 -- not a sentinel -- in the
+    exit-status column, identically to an idle job (fred). Only the PID
+    column distinguishes them."""
+    fake_stdout = "2703\t0\tcom.tradingbot.reddit-intraday\n-\t0\tcom.tradingbot.fred\n"
+
+    class FakeResult:
+        stdout = fake_stdout
+
+    def fake_run(*args, **kwargs):
+        return FakeResult()
+
+    monkeypatch.setattr(daily_summary.subprocess, "run", fake_run)
+    assert daily_summary.running_jobs() == {"reddit-intraday"}
 
 
 def test_every_slow_job_name_is_a_real_job():
@@ -102,10 +123,11 @@ def test_every_slow_job_name_is_a_real_job():
     assert set(JOBS) >= daily_summary._SLOW_JOBS
 
 
-def _summary(tmp_path, monkeypatch, codes):
+def _summary(tmp_path, monkeypatch, running, codes=None):
     monkeypatch.setattr(daily_summary, "LOGS", tmp_path)
     monkeypatch.setattr(daily_summary, "DATA", tmp_path)  # no DBs -> no staleness noise
-    monkeypatch.setattr(daily_summary, "job_exit_codes", lambda: codes)
+    monkeypatch.setattr(daily_summary, "job_exit_codes", lambda: codes or {})
+    monkeypatch.setattr(daily_summary, "running_jobs", lambda: running)
     monkeypatch.setattr(daily_summary, "signals_digest", lambda: [])
     monkeypatch.setattr(daily_summary, "advisor_digest", lambda: [])
     return daily_summary.build_summary(NOW, daily_summary.dt.datetime.now(daily_summary.dt.UTC))
@@ -113,7 +135,7 @@ def _summary(tmp_path, monkeypatch, codes):
 
 def test_hung_job_reaches_the_digest_and_marks_it_unhealthy(tmp_path, monkeypatch):
     _log(tmp_path, "fred", 45)
-    healthy, summary = _summary(tmp_path, monkeypatch, {"fred": None})
+    healthy, summary = _summary(tmp_path, monkeypatch, {"fred"})
     assert "fred" in summary
     assert "possible hang" in summary
     assert not healthy
@@ -121,7 +143,7 @@ def test_hung_job_reaches_the_digest_and_marks_it_unhealthy(tmp_path, monkeypatc
 
 def test_healthy_running_job_leaves_the_digest_green(tmp_path, monkeypatch):
     _log(tmp_path, "fred", 2)
-    healthy, summary = _summary(tmp_path, monkeypatch, {"fred": None})
+    healthy, summary = _summary(tmp_path, monkeypatch, {"fred"})
     assert "possible hang" not in summary
     assert healthy
 
@@ -132,7 +154,7 @@ def test_jobs_running_normally_at_digest_time_are_not_flagged(tmp_path, monkeypa
     15min default tier, so none may be reported."""
     for job, started in (("composite", 10), ("scorer", 5), ("advisor", 3), ("dashboard", 2)):
         _log(tmp_path, job, started)
-    codes = dict.fromkeys(["composite", "scorer", "advisor", "dashboard"])
-    healthy, summary = _summary(tmp_path, monkeypatch, codes)
+    running = {"composite", "scorer", "advisor", "dashboard"}
+    healthy, summary = _summary(tmp_path, monkeypatch, running)
     assert "possible hang" not in summary
     assert healthy
