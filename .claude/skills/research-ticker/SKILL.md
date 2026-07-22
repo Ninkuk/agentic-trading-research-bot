@@ -259,6 +259,13 @@ minimum-volume take-or-pay, cloud/chip reservations — is future capex the
 trailing capex doesn't show yet, and a headwind to the base FCF you feed
 `reverse_dcf`. A business is only as asset-light as its commitments let it be.
 
+**The terminal-growth input must survive the disclosed terminal risk.** Sweep
+the 10-K Item 1A risk factors once for the dominant structural risk — the one
+that bears on whether cash flows still grow in year 10 and beyond — name it in
+the write-up, and say why the chosen `--terminal-growth` survives it, or cut
+the rate. A terminal rate that never met the company's own disclosed endgame
+risk is arithmetic, not knowledge.
+
 Read the output honestly:
 
 - A **low** implied return on **optimistic** assumptions is a bad bet.
