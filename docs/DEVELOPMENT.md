@@ -59,8 +59,8 @@ date it was really published.
 
 ## Quickstart
 
-The short version is one command — it does everything below, shows a live
-demo from the keyless sources, and offers the nightly schedule (macOS):
+The short version is one command — it performs the setup steps below, runs a
+short demo from the keyless sources, and offers the nightly schedule (macOS):
 
 ```bash
 ./setup.sh

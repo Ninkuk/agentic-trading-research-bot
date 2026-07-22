@@ -10,7 +10,7 @@ say() { printf '\n== %s\n' "$*"; }
 # ---- 1. toolchain ----------------------------------------------------------
 if ! command -v uv >/dev/null 2>&1; then
   echo "This project is run with uv (https://docs.astral.sh/uv/), which is not installed."
-  read -r -p "Install uv now via its official installer? [y/N] " ans
+  read -r -p "Install uv now via its official installer? [y/N] " ans || ans=""
   if [[ "${ans:-}" =~ ^[Yy]$ ]]; then
     curl -LsSf https://astral.sh/uv/install.sh | sh
     export PATH="$HOME/.local/bin:$PATH"
@@ -75,7 +75,7 @@ PY
 # ---- 3. nightly schedule (macOS only, opt-in) ------------------------------
 if [[ "$(uname)" == "Darwin" ]]; then
   echo
-  read -r -p "Install the nightly launchd schedule so this runs itself? [y/N] " ans
+  read -r -p "Install the nightly launchd schedule so this runs itself? [y/N] " ans || ans=""
   if [[ "${ans:-}" =~ ^[Yy]$ ]]; then
     uv run python deploy/launchd/install.py
     echo "Installed. Undo anytime: uv run python deploy/launchd/install.py --uninstall"
