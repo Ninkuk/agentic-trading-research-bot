@@ -120,8 +120,6 @@ def test_research_verdict_tables_exist(tmp_path):
 
 
 def test_research_verdict_enum_and_unique_enforced(tmp_path):
-    import sqlite3
-
     conn = db.connect(str(tmp_path / "scorer.db"))
     db.ensure_schema(conn)
     ins = (

@@ -649,3 +649,29 @@ def test_late_coverage_beyond_guard_never_registers(tmp_path):
     _verdict(conn, "CSU", "2026-07-01")
     _ledger(conn, "CSU", ["2026-07-20"], start=100.0)  # first print 19 days later
     assert db.register_verdicts(conn, (2,), "SPY", 7) == 0
+
+
+def test_rebuild_prices_sweeps_unmatured_verdict_outcomes(tmp_path):
+    """verdict_outcomes is one of the _OUTCOME_TABLES rebuild_prices clears, but
+    research_verdicts (the skill's own ledger, not a derived outcome) is untouched
+    — and register_verdicts can re-register from scratch once the ledger refills."""
+    conn = _conn(tmp_path)
+    dates = ["2026-07-01", "2026-07-02"]
+    _ledger(conn, "AAA", dates, start=100.0, step=1.0)
+    _ledger(conn, "SPY", dates, start=500.0, step=1.0)
+    vid = _verdict(conn, "AAA", "2026-07-01")
+
+    assert db.register_verdicts(conn, (2,), "SPY", 7) == 1
+    assert conn.execute("SELECT COUNT(*) FROM verdict_outcomes").fetchone()[0] == 1
+
+    prices, outcomes, regs = db.rebuild_prices(conn)
+    assert (prices, outcomes, regs) == (4, 1, 0)  # 2 AAA + 2 SPY closes; no snapshot registrations
+
+    assert conn.execute("SELECT COUNT(*) FROM prices").fetchone()[0] == 0
+    assert conn.execute("SELECT COUNT(*) FROM verdict_outcomes").fetchone()[0] == 0
+    row = conn.execute("SELECT id FROM research_verdicts").fetchone()
+    assert row == (vid,)  # survives: it's the ledger of what the skill decided
+
+    _ledger(conn, "AAA", dates, start=100.0, step=1.0)
+    _ledger(conn, "SPY", dates, start=500.0, step=1.0)
+    assert db.register_verdicts(conn, (2,), "SPY", 7) == 1

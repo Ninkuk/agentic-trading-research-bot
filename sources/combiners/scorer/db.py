@@ -501,6 +501,12 @@ LEFT JOIN verdict_outcomes vo ON vo.verdict_id = rv.id;
 -- Plain averages + n day one; the Wilson helpers can grade this once
 -- samples justify it. Read with the multiple-comparisons caveat that
 -- applies to every efficacy view here. Never feeds back into weights.
+-- avg_excess/avg_fwd_return are RAW (fwd - bench), NOT direction-adjusted
+-- like v_signal_efficacy's dir_excess -- for 'pass' rows they read
+-- INVERSELY: a positive avg_excess among passes means the avoided names
+-- beat the benchmark, i.e. the passes were WRONG. hit_rate (via
+-- verdict_correct, which already flips polarity per verdict) is the
+-- polarity-safe headline; read avg_excess/avg_fwd_return as raw color only.
 DROP VIEW IF EXISTS v_research_filter;
 CREATE VIEW v_research_filter AS
 SELECT verdict, horizon, COUNT(*) AS n,
@@ -524,7 +530,9 @@ def ensure_schema(conn) -> None:
     """Tables, then the idempotent column migrations, then views. Views are
     DROP+CREATEd every run so edits deploy nightly; the ALTERs must precede
     them because views reference signal_outcomes.benchmark and
-    decisions.placed_agent."""
+    decisions.placed_agent. The third migration, journal_runs.verdicts_recorded,
+    has no view referencing it -- it sits in this block for consistency with
+    the other two migrations, not because ordering matters for it."""
     conn.executescript(_TABLES)
     cols = {r[1] for r in conn.execute("PRAGMA table_info(signal_outcomes)")}
     if "benchmark" not in cols:

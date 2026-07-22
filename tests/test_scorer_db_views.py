@@ -394,3 +394,16 @@ def test_research_filter_aggregates_matured_only(tmp_path):
     assert row[0] == 2
     assert abs(row[1] - 0.5) < 1e-12
     assert abs(row[2] - ((0.01 - 0.05) + (0.10 - 0.02)) / 2) < 1e-12
+
+
+def test_verdict_correct_tie_boundary(tmp_path):
+    """fwd_return == bench_fwd_return: pass uses <= (ties count as correct,
+    the tracked name didn't beat the benchmark), buy uses > (ties are not a
+    beat). Pins the operator pair against a future flip."""
+    conn = _conn(tmp_path)
+    _graded_verdict(conn, "AAA", "pass", fwd=0.03, bench=0.03)
+    _graded_verdict(conn, "BBB", "buy", fwd=0.03, bench=0.03)
+    rows = dict(
+        conn.execute("SELECT symbol, verdict_correct FROM v_research_verdict_outcomes").fetchall()
+    )
+    assert rows == {"AAA": 1, "BBB": 0}
