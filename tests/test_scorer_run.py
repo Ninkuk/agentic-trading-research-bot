@@ -179,3 +179,63 @@ def test_main_accepts_rebuild_prices_flag(tmp_path):
     run_mod.main(
         ["--db", str(tmp_path / "scorer.db"), "--db-dir", str(tmp_path), "--rebuild-prices"]
     )
+
+
+def test_verdict_registers_and_matures_via_run(tmp_path):
+    """A research verdict present before the nightly run registers its
+    forward-outcome rows alongside the composite's, and a later run matures
+    them through the same generic maturation SQL — no verdict-specific
+    grading path exists."""
+    from sources.combiners.scorer import catalog
+    from sources.combiners.scorer import db as scorer_db
+
+    _mini_prices(tmp_path / "stocks.db", {"AAPL": 100.0})
+    _mini_prices(tmp_path / "etfs.db", {"SPY": 500.0})
+    _mini_composite(tmp_path)
+    out = str(tmp_path / "scorer.db")
+
+    conn = scorer_db.connect(out)
+    scorer_db.ensure_schema(conn)
+    conn.execute(
+        "INSERT INTO research_verdicts (symbol, verdict, verdict_date, recorded_at)"
+        " VALUES ('AAPL', 'pass', '2026-07-01', '2026-07-02T04:12:00+00:00')"
+    )
+    conn.commit()
+    conn.close()
+
+    sid, harvested, registered, matured, skipped = run_mod.run(out, str(tmp_path), now_iso=NOW)
+    assert registered >= len(catalog.HORIZONS)
+
+    conn = sqlite3.connect(out)
+    verdict_rows = conn.execute("SELECT entry_date, matured_at FROM verdict_outcomes").fetchall()
+    assert len(verdict_rows) == len(catalog.HORIZONS)
+    assert all(m is None for _, m in verdict_rows)
+    assert {d for d, _ in verdict_rows} == {"2026-07-02"}  # first close after 07-01
+    conn.close()
+
+    # Extend the ledger far enough past entry to mature the 5-day horizon.
+    # Seeded straight onto scorer.db's own ledger (mirroring the
+    # rebuild_prices tests' style) rather than growing the stockanalysis
+    # harvest fixture out to 21+ trading days for the slowest horizon.
+    conn = scorer_db.connect(out)
+    extra_dates = [f"2026-07-{d:02d}" for d in range(9, 17)]
+    scorer_db.insert_prices(conn, [("AAPL", d, 110.0 + i) for i, d in enumerate(extra_dates)])
+    scorer_db.insert_prices(conn, [("SPY", d, 510.0 + i) for i, d in enumerate(extra_dates)])
+    conn.commit()
+    conn.close()
+
+    run_mod.run(out, str(tmp_path), now_iso=NOW)
+
+    conn = sqlite3.connect(out)
+    horizon5 = conn.execute(
+        "SELECT exit_date, matured_at FROM verdict_outcomes WHERE horizon = 5"
+    ).fetchone()
+    assert horizon5[0] is not None and horizon5[1] is not None
+    # the 10- and 21-day horizons still lack enough ledger dates to mature
+    assert (
+        conn.execute(
+            "SELECT COUNT(*) FROM verdict_outcomes WHERE horizon != 5 AND matured_at IS NOT NULL"
+        ).fetchone()[0]
+        == 0
+    )
+    conn.close()

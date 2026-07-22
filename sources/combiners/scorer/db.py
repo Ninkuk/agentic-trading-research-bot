@@ -717,6 +717,37 @@ def registered_ids(conn):
     return {r[0] for r in conn.execute("SELECT composite_snapshot_id FROM registered_snapshots")}
 
 
+def register_verdicts(conn, horizons, benchmark, max_age_days) -> int:
+    """Outcome rows for research verdicts that have none yet. Entries reuse
+    entry_for: first ledger close STRICTLY AFTER verdict_date (a verdict
+    formed intraday cannot claim that day's close — same no-look-ahead rule
+    as snapshots), within the forward guard. Uncovered symbols register
+    nothing and are retried nightly; coverage arriving beyond the guard
+    window never registers (historically exact entry or nothing). All
+    horizons for all pending verdicts commit atomically."""
+    registered = 0
+    pending = conn.execute(
+        "SELECT rv.id, rv.symbol, rv.verdict_date FROM research_verdicts rv"
+        " WHERE NOT EXISTS (SELECT 1 FROM verdict_outcomes vo"
+        "                   WHERE vo.verdict_id = rv.id)"
+    ).fetchall()
+    with conn:
+        for vid, symbol, vdate in pending:
+            entry = entry_for(conn, symbol, vdate, max_age_days)
+            if entry is None:
+                continue
+            bench = _bench_close(conn, benchmark, entry[0])
+            for h in horizons:
+                cur = conn.execute(
+                    "INSERT OR IGNORE INTO verdict_outcomes"
+                    " (verdict_id, symbol, horizon, entry_date, entry_close,"
+                    "  bench_entry_close) VALUES (?, ?, ?, ?, ?, ?)",
+                    (vid, symbol, h, entry[0], entry[1], bench),
+                )
+                registered += cur.rowcount
+    return registered
+
+
 # Maturation: the Nth distinct ledger date after entry, per symbol.
 # NOTE: SQLite rejects a correlated OFFSET ("LIMIT 1 OFFSET t.horizon - 1"
 # fails with "no such column"), so the Nth date is selected via a
@@ -823,6 +854,7 @@ def mature(conn, now_iso, benchmark="SPY") -> int:
     for table, sym, bench in (
         ("ticker_outcomes", "symbol", ":bench"),
         ("signal_outcomes", "entity", "signal_outcomes.benchmark"),
+        ("verdict_outcomes", "symbol", ":bench"),
     ):
         cur = conn.execute(_MATURE_SYMBOL.format(table=table, sym=sym, bench=bench), params)
         n += cur.rowcount
@@ -831,7 +863,7 @@ def mature(conn, now_iso, benchmark="SPY") -> int:
     return n
 
 
-_OUTCOME_TABLES = ("signal_outcomes", "ticker_outcomes", "regime_outcomes")
+_OUTCOME_TABLES = ("signal_outcomes", "ticker_outcomes", "regime_outcomes", "verdict_outcomes")
 
 
 def matured_counts(conn) -> dict:

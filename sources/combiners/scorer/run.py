@@ -69,6 +69,14 @@ def run(db_path, db_dir, now_iso=None, keep_days=None, rebuild_prices=False):
                 print(f"skip registration: {type(e).__name__}")
             finally:
                 fetch.detach(conn)
+        # 2b) register research-verdict outcomes (local tables only)
+        try:
+            registered += db.register_verdicts(
+                conn, catalog.HORIZONS, catalog.BENCHMARK, catalog.ENTRY_MAX_AGE_DAYS
+            )
+        except Exception as e:
+            conn.rollback()
+            print(f"skip verdict registration: {type(e).__name__}")
         # 3) mature (local only)
         matured = db.mature(conn, now_iso, catalog.BENCHMARK)
         db.finish_snapshot(conn, sid, harvested, registered, matured, skipped)

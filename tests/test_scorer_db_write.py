@@ -583,4 +583,69 @@ def test_matured_counts_reports_per_table(tmp_path):
         "signal_outcomes": 0,
         "ticker_outcomes": 0,
         "regime_outcomes": 1,
+        "verdict_outcomes": 0,
     }
+
+
+# --- research verdicts: registration + maturation ----------------------------
+
+
+def _verdict(conn, symbol="AAA", vdate="2026-07-01", verdict="pass"):
+    cur = conn.execute(
+        "INSERT INTO research_verdicts (symbol, verdict, verdict_date,"
+        " recorded_at) VALUES (?, ?, ?, '2026-07-02T04:12:00+00:00')",
+        (symbol, verdict, vdate),
+    )
+    conn.commit()
+    return cur.lastrowid
+
+
+def test_verdict_register_and_mature_roundtrip(tmp_path):
+    conn = _conn(tmp_path)
+    dates = ["2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06"]
+    _ledger(conn, "AAA", dates, start=100.0, step=1.0)  # 100,101,102,103
+    _ledger(conn, "SPY", dates, start=500.0, step=1.0)  # 500,501,502,503
+    _verdict(conn, "AAA", "2026-07-01")
+    n = db.register_verdicts(conn, (2,), "SPY", 7)
+    assert n == 1
+    row = conn.execute(
+        "SELECT entry_date, entry_close, bench_entry_close FROM verdict_outcomes"
+    ).fetchone()
+    # STRICTLY AFTER the verdict date — never the same-day close.
+    assert row == ("2026-07-02", 101.0, 501.0)
+    db.mature(conn, "2026-07-07T04:12:00+00:00", "SPY")
+    row = conn.execute(
+        "SELECT exit_date, exit_close, fwd_return, bench_fwd_return"
+        " FROM verdict_outcomes WHERE matured_at IS NOT NULL"
+    ).fetchone()
+    assert row is not None
+    assert row[0] == "2026-07-06" and row[1] == 103.0
+    assert abs(row[2] - (103.0 / 101.0 - 1)) < 1e-12
+    assert abs(row[3] - (503.0 / 501.0 - 1)) < 1e-12
+
+
+def test_verdict_register_is_idempotent(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "AAA", ["2026-07-02"], start=100.0)
+    _ledger(conn, "SPY", ["2026-07-02"], start=500.0)
+    _verdict(conn, "AAA", "2026-07-01")
+    assert db.register_verdicts(conn, (2, 5), "SPY", 7) == 2
+    assert db.register_verdicts(conn, (2, 5), "SPY", 7) == 0
+
+
+def test_uncovered_verdict_defers_then_heals(tmp_path):
+    conn = _conn(tmp_path)
+    _verdict(conn, "ZZZ", "2026-07-01")
+    assert db.register_verdicts(conn, (2,), "SPY", 7) == 0  # no ledger rows
+    _ledger(conn, "ZZZ", ["2026-07-03"], start=50.0)  # coverage arrives in-window
+    assert db.register_verdicts(conn, (2,), "SPY", 7) == 1
+    # Benchmark close missing on entry date -> NULL bench leg, still registers.
+    row = conn.execute("SELECT entry_date, bench_entry_close FROM verdict_outcomes").fetchone()
+    assert row == ("2026-07-03", None)
+
+
+def test_late_coverage_beyond_guard_never_registers(tmp_path):
+    conn = _conn(tmp_path)
+    _verdict(conn, "CSU", "2026-07-01")
+    _ledger(conn, "CSU", ["2026-07-20"], start=100.0)  # first print 19 days later
+    assert db.register_verdicts(conn, (2,), "SPY", 7) == 0
