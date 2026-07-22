@@ -138,11 +138,35 @@ non-US listings `holdings/` and `filings/` return `{info}` — present but unfed
 >
 > Clean income statements agree to the cent; only names carrying unusual charges
 > diverge — i.e. exactly the distressed names where the margin is load-bearing.
-> `revenue`, `netinc`, `fcf`, `capex` and `ncfo` agree everywhere tested, so this is
-> narrow, not a reason to distrust the route. `/financials/` is the one that
-> reconciles (BBAI: four quarterly columns sum to −217.0M; FY2025 `grossProfit` 28.5
-> − `totalOperatingExpenses` 242.4 = −213.9). Not the TTM-vs-fiscal-year `[0]`
-> indexing trap above — these are both genuinely TTM.
+> `revenue`, `fcf`, `capex` and `ncfo` agree everywhere tested. For `opinc`/`ebitda`,
+> `/financials/` is the one that reconciles (BBAI: four quarterly columns sum to
+> −217.0M; FY2025 `grossProfit` 28.5 − `totalOperatingExpenses` 242.4 = −213.9). Not
+> the TTM-vs-fiscal-year `[0]` indexing trap above — these are both genuinely TTM.
+>
+> ⚠️ **`netinc` is NOT safe, and here `/financials/` is the WRONG one.** An earlier
+> pass recorded `netinc` as agreeing everywhere tested; **EOSE 2026-07-22 falsifies
+> that.** `/statistics/` reported TTM net income −1,013,340,000 and `/financials/`
+> reported **+826,557,000** — a **$1.84B sign flip** on a company with $161M of
+> revenue. Cause: **`/financials/`'s annual `netIncome[0]` "TTM" cell was the single
+> most-recent QUARTER copied in, not a four-quarter sum** (it equalled Q1'26's
+> 826.6M exactly). Summing the four real quarterly columns gives TTM pretax −475.9M,
+> matching `/statistics/` `pretax` to the dollar.
+>
+> This bites hardest on issuers whose non-operating line swings violently — EOSE
+> marks warrants and embedded conversion derivatives to market at ±$600M/quarter, so
+> a single quarter is nowhere near a quarter of the year. **Never take TTM `netIncome`
+> from `/financials/` on faith: sum `?p=quarterly`'s four columns and cross-check
+> against `/statistics/` `pretax`.** `netincCompany` (pre-preferred) is the column
+> that reconciles quarter-by-quarter; `netIncome` and `netincCompany` diverge whenever
+> preferred/attribution adjustments exist.
+>
+> ⚠️ **`debt` on `/statistics/` is CARRYING value, not principal.** EOSE 2026-03-31:
+> `/statistics/` `debt` = 642.9M, but the 10-Q reports **principal 943.6M** (carrying
+> 619.5M) — $600M of convertible notes carried at $372M after an embedded conversion
+> derivative was bifurcated out under ASC 815. At maturity the issuer owes the face.
+> Any screen keying on `debt`, `debtEquity`, `netDebtEbitda`, or `netCash` for a name
+> with bifurcated converts is reading an accounting artifact ~$300M light. Confirm
+> against the filing's debt note before a leverage number becomes load-bearing.
 
 ### Per-ETF
 
