@@ -1,0 +1,6 @@
+# kill-thesis verdict ledger — one line per verdict, appended by the skill.
+# Format: <YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n>
+# Purpose: makes verdict drift measurable (see the design note in
+# .claude/skills/kill-thesis/SKILL.md — the one-way-check freeze is revisited
+# at ten verdicts). Nothing in sources/ reads this file.
+2026-07-10 CSU UNPROVEN conditions=6 refuted=0 unknown=3

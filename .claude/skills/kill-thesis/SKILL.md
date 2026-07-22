@@ -152,6 +152,35 @@ Close with exactly one, matching the vocabulary this repo's plan reviewers use:
 
 Then state, in one sentence, what evidence would flip your verdict.
 
+Finally, append one line to `research/verdicts.log` (create it if absent):
+`<YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n>`
+— the ledger that makes verdict drift measurable (see the design note below).
+
+## Design note: the one-way-check budget is frozen (2026-07-21)
+
+Several steps can only ever move a verdict *away* from SOUND — step 2's
+uncertainty-never-credits rule, the standing checks, the statistical checks,
+and step 5's explicit one-way valve. Each is defensible alone. Their **sum**
+is a ratchet: every added can-only-refute check adds false-positive surface,
+so the probability that any thesis — however good — reaches SOUND falls
+monotonically as checks accumulate, and nothing in the design pushes back.
+
+The resolution:
+
+- **The ratchet is accepted at its current size, and frozen.** SOUND is meant
+  to be rare, and the existing checks stay exactly as strong as written.
+- **The verdict hangs on the load-bearing conditions (step 1), never on a
+  count of checks survived.** Checks are attack instruments aimed at
+  conditions; do not reword the Verdict section into "passed all checks".
+- **Adding another one-way check requires a measured miss, not an argument.**
+  Admissible justification: a SOUND verdict that lost money in a way the
+  proposed check would have caught, or the verdicts ledger showing this
+  gauntlet under-kills. "A reviewer thought of another failure mode" is the
+  exact accumulation this note exists to stop.
+- **Revisit when `research/verdicts.log` holds ten verdicts** (one existed on
+  the decision date). If SOUND has never occurred by then, that is data the
+  freeze question gets reopened on — in either direction.
+
 ## Guardrails
 
 - **Never place an order** and never recommend a position size. Decision
