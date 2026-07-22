@@ -123,3 +123,22 @@ def publish(
 
     log(f"published {today} dashboard to {BRANCH}")
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Thin wrapper. Time enters here and only here; publish() takes it injected."""
+    try:
+        return publish(
+            now_iso=datetime.now(UTC).isoformat(),
+            repo_root=Path.cwd(),
+        )
+    except Exception as e:  # noqa: BLE001
+        # publish() handles GitError and the stale/missing cases itself; this
+        # catches the unexpected (disk full, tempfile failure) so the nightly
+        # job logs a line and exits non-zero instead of dumping a traceback.
+        print(f"FAILED: unexpected {type(e).__name__}")
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

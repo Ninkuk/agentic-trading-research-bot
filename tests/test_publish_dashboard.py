@@ -177,3 +177,25 @@ def test_publish_does_not_modify_source_html(tmp_path):
     before = (repo / "reports" / "dashboard.html").read_text(encoding="utf-8")
     publish(now_iso=FRESH_NOW, repo_root=repo, run=FakeGit(), log=lambda m: None)
     assert (repo / "reports" / "dashboard.html").read_text(encoding="utf-8") == before
+
+
+from deploy.launchd.publish_dashboard import main
+
+
+def test_main_returns_one_when_dashboard_missing(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert main([]) == 1
+
+
+def test_main_catches_unexpected_exception_and_returns_one(monkeypatch):
+    """publish() only handles GitError; main() must still not raise on anything else.
+
+    A disk-full OSError from stage() or a tempfile failure would otherwise escape
+    as a bare traceback, violating this repo's "loud failure, never silent" rule.
+    """
+
+    def _boom(**kwargs):
+        raise OSError("no space left on device")
+
+    monkeypatch.setattr("deploy.launchd.publish_dashboard.publish", _boom)
+    assert main([]) == 1
