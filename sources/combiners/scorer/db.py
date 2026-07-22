@@ -473,6 +473,43 @@ SELECT id AS decision_id, symbol, side, fill_date, fill_price, quantity,
             ELSE exit_fill_price / fill_price - 1 END AS realized_return,
        note, placed_agent, source, recorded_at
 FROM decisions WHERE action = 'acted' AND composite_snapshot_id IS NULL;
+
+-- Research-verdict grading (the research-ticker skill as its own actor,
+-- distinct from the human's decisions). ONE ROW PER HORIZON: filter or
+-- group by horizon before aggregating, or every verdict counts
+-- len(HORIZONS) times. excess = fwd - bench. verdict_correct: a buy is
+-- right when the ticker beat the benchmark; a pass is right when it did
+-- NOT (avoidance, never a short call — the theses say so explicitly).
+-- NULL until matured, and NULL when the bench leg is ungradeable. An
+-- uncovered ticker (no outcome rows) appears with NULL legs via the LEFT
+-- JOIN — visible, not lost.
+DROP VIEW IF EXISTS v_research_verdict_outcomes;
+CREATE VIEW v_research_verdict_outcomes AS
+SELECT rv.id AS verdict_id, rv.symbol, rv.verdict, rv.verdict_date,
+       rv.doc, rv.note,
+       vo.horizon, vo.entry_date, vo.entry_close,
+       vo.fwd_return, vo.bench_fwd_return, vo.matured_at,
+       vo.fwd_return - vo.bench_fwd_return AS excess,
+       CASE WHEN vo.matured_at IS NULL OR vo.bench_fwd_return IS NULL THEN NULL
+            WHEN rv.verdict = 'buy'
+                 THEN (vo.fwd_return > vo.bench_fwd_return)
+            ELSE (vo.fwd_return <= vo.bench_fwd_return) END AS verdict_correct
+FROM research_verdicts rv
+LEFT JOIN verdict_outcomes vo ON vo.verdict_id = rv.id;
+
+-- The headline, mirroring v_human_filter: is the skill's filter any good?
+-- Plain averages + n day one; the Wilson helpers can grade this once
+-- samples justify it. Read with the multiple-comparisons caveat that
+-- applies to every efficacy view here. Never feeds back into weights.
+DROP VIEW IF EXISTS v_research_filter;
+CREATE VIEW v_research_filter AS
+SELECT verdict, horizon, COUNT(*) AS n,
+       AVG(verdict_correct) AS hit_rate,
+       AVG(excess) AS avg_excess,
+       AVG(fwd_return) AS avg_fwd_return
+FROM v_research_verdict_outcomes
+WHERE matured_at IS NOT NULL
+GROUP BY verdict, horizon;
 """
 
 

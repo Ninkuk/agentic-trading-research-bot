@@ -334,3 +334,63 @@ def test_bucket_guardrail_columns(tmp_path):
     assert abs(row[3] - 0.094529) < 1e-4
     assert abs(row[4] - 0.905471) < 1e-4
     assert row[5] == 0
+
+
+def _conn(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    return conn
+
+
+def _graded_verdict(conn, symbol, verdict, fwd, bench, matured="2026-07-20T04:12:00+00:00"):
+    cur = conn.execute(
+        "INSERT INTO research_verdicts (symbol, verdict, verdict_date, recorded_at)"
+        " VALUES (?, ?, '2026-07-01', '2026-07-01T20:00:00+00:00')",
+        (symbol, verdict),
+    )
+    conn.execute(
+        "INSERT INTO verdict_outcomes (verdict_id, symbol, horizon, entry_date,"
+        " entry_close, fwd_return, bench_fwd_return, matured_at)"
+        " VALUES (?, ?, 5, '2026-07-02', 100.0, ?, ?, ?)",
+        (cur.lastrowid, symbol, fwd, bench, matured),
+    )
+    return cur.lastrowid
+
+
+def test_verdict_correct_both_directions(tmp_path):
+    conn = _conn(tmp_path)
+    _graded_verdict(conn, "AAA", "pass", fwd=0.01, bench=0.05)  # lagged: pass right
+    _graded_verdict(conn, "BBB", "pass", fwd=0.10, bench=0.02)  # beat: pass wrong
+    _graded_verdict(conn, "CCC", "buy", fwd=0.10, bench=0.02)  # beat: buy right
+    _graded_verdict(conn, "DDD", "buy", fwd=0.01, bench=0.05)  # lagged: buy wrong
+    rows = dict(
+        conn.execute("SELECT symbol, verdict_correct FROM v_research_verdict_outcomes").fetchall()
+    )
+    assert rows == {"AAA": 1, "BBB": 0, "CCC": 1, "DDD": 0}
+
+
+def test_unmatured_and_unregistered_verdicts_show_null(tmp_path):
+    conn = _conn(tmp_path)
+    conn.execute(
+        "INSERT INTO research_verdicts (symbol, verdict, verdict_date, recorded_at)"
+        " VALUES ('CSU', 'pass', '2026-07-10', '2026-07-10T20:00:00+00:00')"
+    )  # no outcome rows at all (uncovered ticker)
+    _graded_verdict(conn, "EEE", "pass", fwd=0.01, bench=0.05, matured=None)
+    rows = conn.execute(
+        "SELECT symbol, verdict_correct FROM v_research_verdict_outcomes ORDER BY symbol"
+    ).fetchall()
+    assert rows == [("CSU", None), ("EEE", None)]
+
+
+def test_research_filter_aggregates_matured_only(tmp_path):
+    conn = _conn(tmp_path)
+    _graded_verdict(conn, "AAA", "pass", fwd=0.01, bench=0.05)
+    _graded_verdict(conn, "BBB", "pass", fwd=0.10, bench=0.02)
+    _graded_verdict(conn, "EEE", "pass", fwd=0.99, bench=0.0, matured=None)
+    row = conn.execute(
+        "SELECT n, hit_rate, avg_excess FROM v_research_filter"
+        " WHERE verdict = 'pass' AND horizon = 5"
+    ).fetchone()
+    assert row[0] == 2
+    assert abs(row[1] - 0.5) < 1e-12
+    assert abs(row[2] - ((0.01 - 0.05) + (0.10 - 0.02)) / 2) < 1e-12
