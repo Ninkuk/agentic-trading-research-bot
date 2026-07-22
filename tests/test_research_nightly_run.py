@@ -134,3 +134,15 @@ def test_run_night_failure_prints_session_tail(tmp_path, capsys):
 
     research_nightly.run_night(["X"], invoke, tmp_path, TODAY, "opus")
     assert "declined to write" in capsys.readouterr().out
+
+
+def test_build_command_pins_permission_envelope():
+    # Global settings may set defaultMode=auto, which AUTO-APPROVES tools
+    # outside --allowedTools in headless runs — observed live: the session
+    # ran `git commit` on an unreviewed thesis. The job must pin its own
+    # envelope: mode default (unlisted -> denied) + git explicitly denied.
+    cmd = research_nightly.build_command("EOSE", "opus")
+    assert cmd[cmd.index("--permission-mode") + 1] == "default"
+    assert "Bash(git *)" in cmd[cmd.index("--disallowedTools") + 1]
+    prompt = cmd[cmd.index("-p") + 1]
+    assert "Never run git" in prompt  # overrides the skill's "commit it" step

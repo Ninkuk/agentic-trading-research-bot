@@ -98,6 +98,8 @@ def select_candidates(
 # data/scorer.db.
 ALLOWED_TOOLS = ",".join(
     [
+        "Skill",  # loads /research-ticker itself; must be explicit under mode=default
+        "TodoWrite",  # harmless bookkeeping; explicit to keep denial logs signal-only
         "Read",
         "Write",
         "Edit",
@@ -135,8 +137,16 @@ def build_command(ticker: str, model: str) -> list[str]:
         f"by writing research/{ticker}-<today's Phoenix date>.md, even when "
         "a recent thesis exists (supersede it) and even when Phase 0 ends in "
         "a fast kill (write the full kill rationale with the numbers that "
-        "killed it — a substantive note, not a stub)."
+        "killed it — a substantive note, not a stub). Never run git: the "
+        "thesis must stay uncommitted for human review — this overrides any "
+        "instruction in the skill to commit it."
     )
+    # --permission-mode default is load-bearing: the user's global settings
+    # set defaultMode=auto, which AUTO-APPROVES tools outside --allowedTools
+    # in headless runs (observed live: the session ran `git commit` on an
+    # unreviewed thesis). Pinning mode default makes the allowlist an actual
+    # envelope (unlisted -> denied); git is deny-listed on top because the
+    # research-ticker skill explicitly instructs a commit.
     return [
         "claude",
         "-p",
@@ -145,6 +155,10 @@ def build_command(ticker: str, model: str) -> list[str]:
         model,
         "--allowedTools",
         ALLOWED_TOOLS,
+        "--disallowedTools",
+        "Bash(git *)",
+        "--permission-mode",
+        "default",
         "--output-format",
         "json",
     ]
