@@ -80,9 +80,10 @@ premise here is to collect the data, write down every opinion the system
 forms, and grade those opinions against what actually happened — _before_
 trusting any of it with real decisions.
 
-**Can I run it myself?** Yes, if you're comfortable with a terminal — see the
-developer guide below. There's no app or website to sign up for; it's a
-research tool you host yourself.
+**Can I run it myself?** Yes, if you're comfortable with a terminal. Clone
+the repository and run `./setup.sh` — it installs what's needed, fetches a
+first round of data, and shows you a real result within a couple of minutes.
+Details in the developer guide below.
 
 ## For developers
 
