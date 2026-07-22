@@ -22,6 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sources.common import notify  # noqa: E402
+from sources.common.clock import phx_date  # noqa: E402
 
 LOGS = Path("logs")
 DATA = Path("data")
@@ -55,6 +56,7 @@ _SLOW_JOBS = {
     "short-interest-full",  # re-ingests ~12 months
     "fundamentals-bulk",  # downloads + ingests a DERA quarterly ZIP
     "edgar",  # starts 45min before the digest AND has a designed sleep 900 retry pause
+    "research-nightly",  # headless `claude -p` per ticker, ~20min each, up to 3
 }
 
 # Max acceptable age (days) of the newest snapshot, by DB filename. Defaults
@@ -445,6 +447,48 @@ def advisor_digest():
         return [f"advisor: unreadable ({type(e).__name__})"]
 
 
+_THESIS_RE = re.compile(r"^([A-Z0-9.\-]+)-(\d{4}-\d{2}-\d{2})\.md$")
+
+
+def format_research_lines(theses, verdicts):
+    """Pure: [(ticker, date)] + raw verdict lines -> digest lines."""
+    lines = [f"research/{t}-{d}.md" for t, d in sorted(theses)]
+    lines += [v.strip() for v in verdicts]
+    return lines
+
+
+def research_digest(now_utc, research_dir=None):
+    """Theses + kill-thesis verdicts from the last 24h. TOTAL: any failure
+    (missing dir, unreadable log) degrades to [] -- the digest must render
+    without research, never crash because of it (see plan 003 lesson)."""
+    try:
+        research_dir = research_dir or Path("research")
+        cutoff = phx_date((now_utc - dt.timedelta(hours=24)).isoformat())
+        theses = []
+        if research_dir.is_dir():
+            for p in research_dir.iterdir():
+                m = _THESIS_RE.match(p.name)
+                if m and m.group(2) >= cutoff:
+                    theses.append((m.group(1), m.group(2)))
+        verdicts = []
+        vlog = research_dir / "verdicts.log"
+        if vlog.is_file():
+            for line in vlog.read_text().splitlines():
+                line = line.strip()
+                # line[:10] slices a BARE PHOENIX DATE out of a verdicts.log
+                # line (the file stores dates, not timestamps) -- this is the
+                # safe case of the repo's no-slicing rule; the cutoff itself
+                # came through phx_date.
+                if line and not line.startswith("#") and line[:10] >= cutoff:
+                    verdicts.append(line)
+        if not theses and not verdicts:
+            return []
+        return format_research_lines(theses, verdicts)
+    except Exception as e:  # noqa: BLE001 -- total by design
+        print(f"research digest failed ({type(e).__name__})", file=sys.stderr)
+        return []
+
+
 def build_summary(now_local, now_utc):
     total_runs, problems = 0, []
 
@@ -478,6 +522,9 @@ def build_summary(now_local, now_utc):
     advisor = advisor_digest()
     if advisor:
         lines += ["", "— advisor —", *advisor]
+    research = research_digest(now_utc)
+    if research:
+        lines += ["", "— research —", *research]
     return healthy, "\n".join(lines)
 
 
