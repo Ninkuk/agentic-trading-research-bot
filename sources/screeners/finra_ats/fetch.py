@@ -13,7 +13,7 @@ import sources.common.http_client as http_client
 
 _DATASET = "weeklySummary"  # confirmed live (otcMarket/weeklySummary, anon POST)
 API_URL = f"https://api.finra.org/data/group/otcMarket/name/{_DATASET}"
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 503})
 _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0

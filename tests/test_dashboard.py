@@ -546,7 +546,9 @@ def test_main_writes_page_and_returns_zero(tmp_path, monkeypatch):
     monkeypatch.setattr(dashboard, "OUTPUT_PATH", str(out))
     rc = dashboard.main()
     assert rc == 0
-    assert out.exists() and "Trading Bot Dashboard" in out.read_text(encoding="utf-8")
+    assert out.exists() and "Agentic Trading Research Bot Dashboard" in out.read_text(
+        encoding="utf-8"
+    )
 
 
 # --- populated-DB fixture: real rows via each combiner's own db.py, for

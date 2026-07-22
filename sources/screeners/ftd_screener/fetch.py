@@ -85,7 +85,7 @@ def parse_file(text: str) -> tuple[list[dict], int | None]:
     return rows, trailer_count
 
 
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({403, 429, 503})  # SEC throttles with 403 (like EDGAR)
 _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0

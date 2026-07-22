@@ -6,7 +6,7 @@ import sources.common.http_client as http_client
 
 BASE = "https://cdn.cboe.com/api/global/delayed_quotes/options"
 
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 # Undocumented CDN behind Cloudflare. Retry only throttling/5xx; 404 means no
 # chain for this ticker (fetch_chain maps it to None). Deep-OTM contracts often
 # report iv/greeks as 0 — stored as-is; downstream views filter.

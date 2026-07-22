@@ -10,7 +10,7 @@ import urllib.parse
 import sources.common.http_client as http_client
 
 API_BASE = "https://api.eia.gov/v2"
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
 _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0

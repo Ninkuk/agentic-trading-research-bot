@@ -7,7 +7,7 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "agentic-trading-bot"
+name = "agentic-trading-research-bot"
 version = "0.1.0"
 source = { virtual = "." }
 

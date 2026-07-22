@@ -81,7 +81,7 @@ def index_url(index_date: str, base: str = ARCHIVES_BASE) -> str:
 
 
 TICKER_MAP_URL = "https://www.sec.gov/files/company_tickers.json"
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 
 _RETRY_STATUS = frozenset({403, 429, 503})  # SEC throttles with 403 (not 429)
 _MAX_ATTEMPTS = 5

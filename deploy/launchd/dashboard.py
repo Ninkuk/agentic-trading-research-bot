@@ -1286,7 +1286,7 @@ def build_page(data_dir: str, now_iso: str) -> str:
         "<!doctype html>\n"
         '<html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
-        "<title>Trading Bot Dashboard</title>"
+        "<title>Agentic Trading Research Bot Dashboard</title>"
         f"<style>{_STYLE}</style></head><body>"
         f"{body_html}"
         "</body></html>\n"
@@ -1310,8 +1310,8 @@ def main() -> int:
     except Exception as e:  # never leave a stale file with no error banner
         page = (
             "<!doctype html>\n<html><head><meta charset='utf-8'>"
-            "<title>Trading Bot Dashboard</title></head><body>"
-            f"<h1>Trading Bot Dashboard</h1><p>generation failed"
+            "<title>Agentic Trading Research Bot Dashboard</title></head><body>"
+            f"<h1>Agentic Trading Research Bot Dashboard</h1><p>generation failed"
             f" ({_esc(type(e).__name__)})</p></body></html>\n"
         )
     write_dashboard(page, OUTPUT_PATH)

@@ -33,8 +33,8 @@ BRANCH = "gh-pages"
 NOINDEX_META = '<meta name="robots" content="noindex,nofollow">'
 # The noindex meta tag above is the only crawler control that works here -- it is honored
 # by crawlers that fetch this page. robots.txt is a per-ORIGIN file: this is a
-# project page (ninkuk.github.io/agentic-trading-bot/), so robots.txt only ever
-# lands at .../agentic-trading-bot/robots.txt, a path no crawler consults (they
+# project page (ninkuk.github.io/agentic-trading-research-bot/), so robots.txt only ever
+# lands at .../agentic-trading-research-bot/robots.txt, a path no crawler consults (they
 # fetch https://ninkuk.github.io/robots.txt, served by a different repo). It is
 # published anyway because it's harmless and becomes correct if this site ever
 # moves to an apex/user-site origin -- but do not rely on it for anything.

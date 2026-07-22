@@ -30,7 +30,7 @@ REPORT_PAGE_URL = (
     "staff-offices/office-chief-economist/commodity-markets/"
     "wasde-report"
 )
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
 _MAX_ATTEMPTS = 4
 _BASE_DELAY = 1.0

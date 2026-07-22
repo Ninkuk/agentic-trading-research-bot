@@ -14,7 +14,7 @@ position-sizing guidance, and a point-in-time backtest of the whole thing.
 
 There is no order-placement path anywhere in this repository — the only account
 interaction is *reading* positions and fills. The live dashboard
-(https://ninkuk.github.io/agentic-trading-bot/) is regenerated nightly at
+(https://ninkuk.github.io/agentic-trading-research-bot/) is regenerated nightly at
 9:13pm Phoenix, published at 9:20pm, and marked `noindex`.
 
 ```bash
@@ -67,7 +67,7 @@ date it was really published.
 Requires Python 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-git clone <this repo> && cd agentic-trading-bot
+git clone <this repo> && cd agentic-trading-research-bot
 uv sync
 git config core.hooksPath .githooks     # lint/format/type/test gate, ~2s
 

@@ -8,7 +8,7 @@ import sources.common.http_client as http_client
 _HOST = "https://publicreporting.cftc.gov/resource/{}.json"
 _LEGACY_DATASET = "6dca-aqww"
 API_URL = _HOST.format(_LEGACY_DATASET)  # legacy default; back-compat
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 
 _RETRY_STATUS = frozenset({429, 500, 502, 503, 504})  # Socrata throttles with 429
 _MAX_ATTEMPTS = 5

@@ -7,7 +7,7 @@ import sources.common.http_client as http_client
 
 FILES_BASE = "https://cdn.finra.org/equity/otcmarket/biweekly"
 
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 # CDN sits behind Cloudflare; a descriptive UA avoids bot-rule blocks. Retry the
 # throttling/5xx family only. 403 is NOT retryable here: like the short-volume
 # CDN, it signals "no file for this settlement date".

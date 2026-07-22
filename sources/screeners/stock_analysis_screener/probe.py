@@ -16,7 +16,7 @@ import sys
 import urllib.request
 
 BASE = "https://stockanalysis.com"
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 """Descriptive, per the catalog's "real User-Agent" note and edgar_screener's precedent.
 
 Not a browser spoof: the research corpus loop issues ~77 requests per session, and a

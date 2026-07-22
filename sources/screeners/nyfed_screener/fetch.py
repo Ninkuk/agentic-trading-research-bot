@@ -12,7 +12,7 @@ API_BASE = "https://markets.newyorkfed.org/api"
 # (live-verified 2026-07), so every fetch sends one; this floor predates all
 # published series (rates/repo begin 2000-07, SOMA 2003-07) = full history.
 FULL_HISTORY_START = "2000-01-01"
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
 _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0

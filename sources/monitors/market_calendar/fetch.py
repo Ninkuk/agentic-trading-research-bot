@@ -20,7 +20,7 @@ import re
 
 from sources.common.http_client import http_get, make_opener
 
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 _RETRY = {403, 429, 503}
 
 _MONTHS = {

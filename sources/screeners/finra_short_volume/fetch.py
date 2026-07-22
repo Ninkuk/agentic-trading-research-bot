@@ -6,7 +6,7 @@ import sources.common.http_client as http_client
 
 FILES_BASE = "https://cdn.finra.org/equity/regsho/daily"
 
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 # CDN sits behind Cloudflare; a descriptive UA avoids bot-rule blocks. Retry the
 # throttling/5xx family (same shape the edgar/cftc fetchers already handle).
 # Note: 403 is not retryable for this CDN; it signals "no file for this date".

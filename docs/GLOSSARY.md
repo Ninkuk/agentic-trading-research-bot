@@ -1,7 +1,7 @@
 # Glossary
 
 Plain-English definitions of the terms you'll meet on the
-[dashboard](https://ninkuk.github.io/agentic-trading-bot/), in the `research/`
+[dashboard](https://ninkuk.github.io/agentic-trading-research-bot/), in the `research/`
 notes, and in the developer guide. Simplified on purpose — each entry is the
 gist, not the full story.
 

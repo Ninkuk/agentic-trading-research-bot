@@ -1,7 +1,6 @@
-# agentic-trading-bot
+# Agentic Trading Research Bot
 
-**A robot research assistant for the stock market — one that never touches the
-buy button.**
+**A research assistant for the stock market.**
 
 Every day, this project visits about twenty official public sources — mostly
 the U.S. government agencies and regulators that publish the country's economic
@@ -11,7 +10,7 @@ like, and which stocks currently stand out. A person reads those notes,
 applies their own judgment, and makes every actual decision.
 
 **It never buys or sells anything.** No code in this project can place a
-trade. The only thing it does with a brokerage account is *look at it* — read
+trade. The only thing it does with a brokerage account is _look at it_ — read
 which positions exist, so its notes can take them into account. The word "bot"
 in the name describes where the project may eventually head; the current,
 deliberate stage is proving the research is any good before anything is ever
@@ -21,7 +20,7 @@ allowed to act on it.
 
 The nightly summary is published as a small website:
 
-**https://ninkuk.github.io/agentic-trading-bot/**
+**<https://ninkuk.github.io/agentic-trading-research-bot/>**
 
 It regenerates every evening around 9pm Phoenix time. What you're looking at:
 a snapshot of the market's overall condition according to the collected data, a
@@ -67,7 +66,7 @@ Treasury, and more), plus one vetted commercial data site.
 
 **Why build this?** Most trading ideas sound convincing and quietly fail. The
 premise here is to collect the data, write down every opinion the system
-forms, and grade those opinions against what actually happened — *before*
+forms, and grade those opinions against what actually happened — _before_
 trusting any of it with real decisions.
 
 **Can I run it myself?** Yes, if you're comfortable with a terminal — see the

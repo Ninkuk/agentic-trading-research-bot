@@ -14,7 +14,7 @@ YIELD_CURVE_URL = (
     "https://home.treasury.gov/resource-center/data-chart-center/"
     "interest-rates/pages/xml?data=daily_treasury_yield_curve"
 )
-_UA = {"User-Agent": "agentic-trading-bot ninadk.dev@gmail.com"}
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 _RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
 _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
