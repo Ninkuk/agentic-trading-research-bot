@@ -71,7 +71,7 @@ Or, by hand:
 Requires Python 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-git clone <this repo> && cd agentic-trading-research-bot
+git clone https://github.com/Ninkuk/agentic-trading-research-bot.git && cd agentic-trading-research-bot
 uv sync
 git config core.hooksPath .githooks     # lint/format/type/test gate, ~2s
 
