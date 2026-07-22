@@ -47,6 +47,21 @@ def test_every_wrapper_except_env_and_status_calls_job_start():
     assert missing == [], f"wrapper(s) never call job_start: {missing}"
 
 
+def test_step_start_emits_step_not_start():
+    """step_start's line shape must stay `step:`, distinct from job_start's
+    `start:` -- daily_summary.py's scan_log counts only `start:` lines toward
+    the "N runs in 24h" headline, and last_progress needs to tell "the run
+    started" apart from "the run is still making progress". If step_start
+    reverts to emitting `start:`, a multi-step wrapper (cftc_weekly.sh: 3
+    families, preopen_batch.sh: 4 steps) silently inflates that headline by
+    the step count, with nothing failing. Extracted just this function's body
+    (not grepped across the whole file) because job_start legitimately
+    contains `start:` too."""
+    body = (LAUNCHD / "env.sh").read_text().split("step_start() {", 1)[1].split("}", 1)[0]
+    assert "step:" in body
+    assert "start:" not in body
+
+
 def test_env_sh_exit_trap_emits_exactly_one_end_line_with_the_real_exit_code(tmp_path):
     """env.sh's EXIT trap must fire exactly once and log the ACTUAL exit
     code, even when `set -e` aborts the script on a failing command -- this

@@ -125,6 +125,25 @@ def test_boundary_at_exactly_the_limit_is_not_flagged(tmp_path, monkeypatch):
     assert daily_summary.hung_jobs({"fred"}, NOW) == []
 
 
+def test_scan_log_counts_only_start_lines_as_runs(tmp_path):
+    """step: lines are per-step progress markers (cftc_weekly.sh: one per
+    family, preopen_batch.sh: one per screener), not separate runs -- scan_log
+    must count only start: lines toward the "N runs in 24h" headline, or a
+    single cftc run would inflate the count 3x (preopen: 4x)."""
+    since = NOW - daily_summary.dt.timedelta(hours=24)
+    ts = NOW - daily_summary.dt.timedelta(minutes=10)
+    path = tmp_path / "cftc.log"
+    path.write_text(
+        f"[{ts:%Y-%m-%d %H:%M:%S}] start: cftc\n"
+        f"[{ts:%Y-%m-%d %H:%M:%S}] step: cftc --family tff\n"
+        f"[{ts:%Y-%m-%d %H:%M:%S}] step: cftc --family disaggregated\n"
+        f"[{ts:%Y-%m-%d %H:%M:%S}] step: cftc --family financial\n"
+    )
+    runs, bad = daily_summary.scan_log(path, since)
+    assert runs == 1
+    assert bad == []
+
+
 def test_last_progress_returns_the_newest_step_marker(tmp_path):
     """A multi-step wrapper (cftc_weekly.sh, preopen_batch.sh) emits one
     `start:` line for the whole run, then a `step:` line per sub-step.
