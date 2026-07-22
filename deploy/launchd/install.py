@@ -144,6 +144,12 @@ JOBS = {
     "dashboard": (script("dashboard.sh"), weekly(range(7), 21, 13)),
     # -- observability (every day, after the 8:30pm edgar run + retry) --
     "daily-summary": (script("daily_summary.sh"), weekly(range(7), 21, 15)),
+    # Push reports/dashboard.html to the gh-pages branch behind GitHub Pages.
+    # AFTER daily-summary (9:15), not before: a hung push must not be able to
+    # delay or suppress the health ntfy. Refuses to publish a stale file, so a
+    # failed 9:13 dashboard run surfaces here rather than silently republishing
+    # yesterday's page under tonight's timestamp.
+    "publish-dashboard": (script("publish_dashboard.sh"), weekly(range(7), 21, 20)),
 }
 
 
