@@ -1,158 +1,89 @@
 # agentic-trading-bot
 
-A signal-collection layer for discretionary trading: ~20 independent **screeners** and
-**monitors** that each read one official data source (SEC, FRED, CFTC, FINRA, CBOE, Treasury,
-NY Fed, EIA, USDA, …) into a per-source SQLite database, then derive signals as SQL views.
-Four **combiners** read those databases read-only and produce a market regime, a per-ticker
-scorecard, position-sizing guidance, and a point-in-time backtest of the whole thing.
+**A robot research assistant for the stock market — one that never touches the
+buy button.**
 
-**Live dashboard:** https://ninkuk.github.io/agentic-trading-bot/ — regenerated nightly at
-9:13pm Phoenix and published at 9:20pm. Marked `noindex`, so it is reachable by link but not
-surfaced in search.
+Every day, this project visits about twenty official public sources — mostly
+the U.S. government agencies and regulators that publish the country's economic
+and market numbers — and files away what it finds. Every evening it re-reads
+those files and writes up an opinion: what the market's overall mood looks
+like, and which stocks currently stand out. A person reads those notes,
+applies their own judgment, and makes every actual decision.
 
-**It does not trade.** There is no order-placement path anywhere in this repository — the
-only account interaction is *reading* positions and fills. Everything it produces is
-decision support for a human. The name describes where this is headed, not what it does
-today; the signal layer is being built first, deliberately, and graded before anything is
+**It never buys or sells anything.** No code in this project can place a
+trade. The only thing it does with a brokerage account is *look at it* — read
+which positions exist, so its notes can take them into account. The word "bot"
+in the name describes where the project may eventually head; the current,
+deliberate stage is proving the research is any good before anything is ever
 allowed to act on it.
 
-```bash
-uv run python main.py fred --db data/fred.db              # collect
-uv run python main.py composite --db data/composite.db    # derive an opinion
-sqlite3 data/composite.db 'SELECT * FROM v_scorecard'     # read it
-```
+## See it working
 
-## Why it's built this way
+The nightly summary is published as a small website:
 
-**Zero runtime dependencies.** Every source is fetched with `urllib`, parsed into plain
-dicts, and written with `sqlite3` — all stdlib. A plain `git clone` on any Python 3.12 runs
-the whole system; the only dev dependencies are `pytest`, `ruff`, and `mypy`. This is a
-deliberate constraint: a pipeline meant to run unattended for years shouldn't have a
-dependency tree rotting underneath it.
+**https://ninkuk.github.io/agentic-trading-bot/**
 
-**ELT, not ETL.** Fetchers store the raw or lightly-parsed response. Signals — z-scores,
-YoY changes, regime flags, stocks-to-use ratios, blackout windows — are computed in SQL
-views (`v_latest`, `v_zscore`, `v_upcoming`, …). Recalibrating a threshold is a view change,
-not a re-fetch, and the stored data stays untouched by whatever the current opinion is.
+It regenerates every evening around 9pm Phoenix time. What you're looking at:
+a snapshot of the market's overall condition according to the collected data, a
+scorecard of stocks the system currently finds notable, and a running record of
+how its past opinions actually worked out. Any term you don't recognize is
+probably in the [glossary](docs/GLOSSARY.md).
 
-**Official primary sources.** Data comes from the issuing agency, not an aggregator, with
-one vetted exception (stockanalysis.com) and one clearly-labelled broker tier admitted only
-where no official source covers the field.
+## How it works, in plain words
 
-**Determinism.** No wall-clock in the hot path. Time enters as an injected `now_iso`
-parameter, and monitor views filter on a `calendar_now` singleton row rather than
-`date('now')`. Network sits behind injectable `get=`/`opener=` seams. The result:
+Three kinds of programs, doing three jobs:
 
-```
-1257 passed in 2.20s
-```
+- **Collectors.** About twenty small programs, each responsible for one
+  official source: the Federal Reserve's economic statistics, stock-market
+  regulators' filings, the weekly report on what professional futures traders
+  are betting, Treasury auction results, energy and agriculture statistics, and
+  so on. Each fetches its source's latest numbers on a schedule and files them
+  away. A few keep calendars instead: when the central bank next meets, when
+  companies report earnings, when the market is closed.
+- **Opinion-writers.** A second set of programs reads everything the collectors
+  filed and writes an opinion: a one-line summary of the market's mood, plus a
+  scorecard pointing out stocks whose numbers look unusual. They only read —
+  they never fetch anything themselves, and never act on anything.
+- **The report card.** The part that makes this more than a pile of opinions: a
+  grader goes back and checks how each past opinion actually turned out over
+  the following weeks. Signals with a poor track record get exposed by their
+  own numbers — and a human, reading that track record, decides whether to
+  keep, adjust, or retire them. Nothing tunes itself automatically.
 
-The entire suite is offline — no network, no API keys, no fixtures fetched at test time.
+That last part is the point of the whole project: **measure first, trust
+later, act last.**
 
-**Grading before acting.** The `scorer` combiner grades past opinions against forward
-returns and compares what the human actually did against what was flagged. It never feeds
-back automatically; re-weighting the catalog is a human decision made by reading the
-efficacy views. `backtest` replays signals against point-in-time data vintages so a macro
-report stays out of the replay until the date it was really published.
+## Questions you might have
 
-## Quickstart
+**Does it trade?** No. There is no order-placing code in this repository. It
+reads public data and one brokerage account's positions; it writes notes.
 
-Requires Python 3.12 and [uv](https://docs.astral.sh/uv/).
+**Is this financial advice?** No. It's one person's research tooling,
+published openly. See the disclaimer below.
 
-```bash
-git clone <this repo> && cd agentic-trading-bot
-uv sync
-git config core.hooksPath .githooks     # lint/format/type/test gate, ~2s
+**Where does the data come from?** Official public sources — the same
+government and regulator websites anyone can visit (the Federal Reserve, SEC,
+Treasury, and more), plus one vetted commercial data site.
 
-cp .env.example .env                    # then fill in the free API keys
-uv run python main.py --list            # every dispatcher name
-uv run python main.py fred --db data/fred.db --keep-days 90
-uv run pytest
-```
+**Why build this?** Most trading ideas sound convincing and quietly fail. The
+premise here is to collect the data, write down every opinion the system
+forms, and grade those opinions against what actually happened — *before*
+trusting any of it with real decisions.
 
-Most sources need **no API key** — SEC, FINRA, CBOE, Treasury, NY Fed, and the calendars all
-work out of the box. `FRED_API_KEY`, `EIA_API_KEY`, and `NASS_API_KEY` are free; see
-`.env.example`.
+**Can I run it myself?** Yes, if you're comfortable with a terminal — see the
+developer guide below. There's no app or website to sign up for; it's a
+research tool you host yourself.
 
-> Every `--db` default is a bare cwd-relative filename. Always pass `data/<name>.db`, or
-> you'll scatter databases across the repo root.
+## For developers
 
-## What it collects
-
-| | Sources |
-|---|---|
-| **Macro / rates** | `fred` (FRED + ALFRED vintages), `treasury` (auctions, yield curve), `nyfed` (RRP, SOFR), `econ_calendar`, `fomc` |
-| **Positioning / flow** | `cftc` (COT, three families), `short_interest`, `short_volume`, `ats` (FINRA dark-pool), `ftd` (fails-to-deliver) |
-| **Options / vol** | `options` (CBOE chains, hourly), `cboe_stats` (VIX term structure, put/call) |
-| **Equities** | `stocks`, `fundamentals` (SEC XBRL frames), `edgar` (filing activity), `earnings` |
-| **Commodities** | `eia` (petroleum, natural gas), `usda` (NASS, WASDE) |
-| **Sentiment** | `reddit` (ApeWisdom) |
-| **Calendars** | `market_calendar` (holidays, OPEX — network-free) |
-| **Account** | `portfolio`, `journal` — read-only position and fill state |
-
-The four combiners touch no network at all; they ATTACH the source databases read-only:
-
-- **`composite`** — a market regime plus a per-ticker scorecard.
-- **`scorer`** — grades composite's past opinions against forward returns, and owns the
-  decision journal comparing human action to what was flagged.
-- **`advisor`** — joins the scorecard against real holdings: book heat, disagreements, and
-  volatility-scaled size caps. Decision support, never order generation.
-- **`backtest`** — point-in-time replay. Read `excess`/`beats_baseline`, never `hit_rate`
-  alone: the benchmark drifts upward, so a bullish flag "wins" by doing nothing.
-
-Everything runs on a launchd schedule — see [`docs/SCHEDULE.md`](docs/SCHEDULE.md).
-
-## Architecture
-
-Every source is a package of the **same four files** — learn one, know all twenty:
-
-```
-sources/screeners/fred_screener/
-├── fetch.py      # network + pure parsing; network behind a get=/opener= seam
-├── db.py         # schema, idempotent upserts, the v_* signal views, prune
-├── run.py        # orchestration; testable run() + thin argparse main()
-└── catalog.py    # the curated list of what to pull
-```
-
-```
-sources/
-├── common/       # connect() (WAL), http_client (backoff + rate limiting), monitor framework
-├── screeners/    # 17 point-in-time readers
-├── monitors/     # 4 forward-looking event calendars
-└── combiners/    # 4 cross-source derivations
-tools/            # pure helpers: reverse-DCF solver, options implied-move math
-```
-
-`registry.py` maps name → `main`; a source ships only once it's registered there.
-
-Two details worth calling out, because both are load-bearing and neither is obvious:
-
-- **Shared rate limiting.** Every SEC fetcher acquires from one process-wide token bucket
-  keyed on `sec.gov`, so the 9 req/s per-IP cap is shared rather than silently doubled
-  across the `www.` and `data.` hostnames.
-- **Timestamps are UTC; calendar dates are Phoenix.** Slicing a date out of a UTC timestamp
-  (`now_iso[:10]`) is a bug here — UTC midnight is 5pm Phoenix and eight scheduled jobs run
-  after it, so the naive slice yields *tomorrow* for every one of them. Use `phx_date()`.
-
-## Development
-
-```bash
-uv run pytest                  # 1257 tests, offline, ~2s
-uv run ruff check              # lint
-uv run ruff format             # format
-uv run mypy                    # types
-```
-
-All four gates run in the pre-commit hook. Tests mirror the module layout:
-`tests/test_<name>_<layer>.py`, where layer is one of `catalog`, `fetch`, `db_schema`,
-`db_write`, `db_views`, `run`.
-
-Contributor guidance — the invariants to preserve, the spec → plan → build workflow, and the
-data-source policy — lives in [`CLAUDE.md`](CLAUDE.md).
+Setup, architecture, and contribution notes live in
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Disclaimer
 
-A personal research project. Not investment advice, not a product, not audited. The files in
-`research/` are one person's working notes on specific securities, published to show what the
-tooling emits — not as recommendations. Data comes from public sources under their respective
-terms; if you point this at them, respecting their rate limits and usage policies is on you.
+This is a personal research project — not investment advice, not a product,
+and not audited. The write-ups in `research/` are one person's working notes
+on specific stocks, published to show what the tooling produces, not as
+recommendations. All data comes from public sources under their respective
+terms; if you point this code at those sources, respecting their rate limits
+and usage policies is your responsibility.
