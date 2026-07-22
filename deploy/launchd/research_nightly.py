@@ -123,10 +123,24 @@ ALLOWED_TOOLS = ",".join(
 
 
 def build_command(ticker: str, model: str) -> list[str]:
+    # The preamble matters: a headless session that reaches a judgment point
+    # (a recent thesis exists; an ambiguous data route) will otherwise ASK —
+    # observed live: "My vote is (2). What's your call?" — and exit rc=0 with
+    # no thesis, since nobody can answer an unattended run.
+    prompt = (
+        f"/research-ticker {ticker}\n\n"
+        "This is an unattended scheduled run — nobody can answer questions, "
+        "so never ask for confirmation or offer options; make reasonable "
+        "judgment calls yourself and note them in the thesis. Always finish "
+        f"by writing research/{ticker}-<today's Phoenix date>.md, even when "
+        "a recent thesis exists (supersede it) and even when Phase 0 ends in "
+        "a fast kill (write the full kill rationale with the numbers that "
+        "killed it — a substantive note, not a stub)."
+    )
     return [
         "claude",
         "-p",
-        f"/research-ticker {ticker}",
+        prompt,
         "--model",
         model,
         "--allowedTools",

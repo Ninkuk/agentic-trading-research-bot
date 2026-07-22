@@ -41,9 +41,20 @@ def test_allowlist_bash_entries_are_enumerated_not_catchall():
 def test_build_command_shape():
     cmd = research_nightly.build_command("EOSE", "opus")
     assert cmd[0] == "claude"
-    assert "/research-ticker EOSE" in cmd
+    prompt = cmd[cmd.index("-p") + 1]
+    assert prompt.startswith("/research-ticker EOSE")
     assert "--model" in cmd and "opus" in cmd
     assert "--allowedTools" in cmd and "--output-format" in cmd
+
+
+def test_build_command_prompt_declares_unattended_run():
+    # A headless session that hits a judgment point and ASKS (e.g. "re-run or
+    # refresh?") exits rc=0 with no thesis — observed live. The prompt must
+    # rule out questions and mandate the dated output file, fast kills included.
+    prompt = research_nightly.build_command("EOSE", "opus")[2]
+    assert "unattended" in prompt
+    assert "research/EOSE-" in prompt
+    assert "fast kill" in prompt
 
 
 def test_parse_denials_extracts_tool_names():
@@ -70,7 +81,8 @@ def test_run_night_continue_on_failure(tmp_path):
     calls = []
 
     def invoke(cmd, timeout_s):
-        ticker = next(a for a in cmd if a.startswith("/research-ticker ")).split()[-1]
+        prompt = next(a for a in cmd if a.startswith("/research-ticker "))
+        ticker = prompt.splitlines()[0].split()[-1]
         calls.append(ticker)
         if ticker == "BAD":
             return 1, "{}"
