@@ -52,3 +52,15 @@ def test_help_and_signup_links_survive():
     html = _page()
     assert "https://fred.stlouisfed.org" in html
     assert "0 disables the run" in html
+
+
+def test_masked_tail_is_html_escaped():
+    html = _page(values={"FRED_API_KEY": "secretend<br>"})
+    assert "<br>" not in html.split("API keys")[1].split("</form>")[0].replace("<br />", "")
+    assert "&lt;br&gt;" in html
+
+
+def test_help_link_excludes_trailing_punctuation():
+    html = _page()
+    assert 'href="https://ntfy.sh"' in html
+    assert 'href="https://ntfy.sh."' not in html

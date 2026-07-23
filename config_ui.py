@@ -247,7 +247,11 @@ def _field(knob: Knob, values: dict[str, str], errors: dict[str, str]) -> str:
     cur = values.get(knob.key, "")
     err = errors.get(knob.key)
     err_html = f'<p class="err">{_html.escape(err)}</p>' if err else ""
-    help_html = re.sub(r"(https://\S+)", r'<a href="\1">\1</a>', _html.escape(knob.help))
+    help_html = re.sub(
+        r"(https://[^\s<>\"']+?)([.,)!?]*)(?=\s|$)",
+        r'<a href="\1">\1</a>\2',
+        _html.escape(knob.help),
+    )
     if knob.kind == "secret":
         if is_set(cur):
             state = f"currently {mask(cur)}"
@@ -260,14 +264,14 @@ def _field(knob: Knob, values: dict[str, str], errors: dict[str, str]) -> str:
         control = (
             f'<input type="text" name="secret_{knob.key}" value="" '
             f'placeholder="paste new value (blank = keep)" autocomplete="off"> '
-            f"<span>{state}</span> {clear}"
+            f"<span>{_html.escape(state)}</span> {clear}"
         )
     elif knob.kind == "enum":
         cur_or_default = cur if cur else ""
-        opts = [f'<option value="">(default: {knob.default})</option>']
+        opts = [f'<option value="">(default: {_html.escape(knob.default)})</option>']
         for c in knob.choices:
             sel = " selected" if c == cur_or_default else ""
-            opts.append(f'<option value="{c}"{sel}>{c}</option>')
+            opts.append(f'<option value="{_html.escape(c)}"{sel}>{_html.escape(c)}</option>')
         control = f'<select name="{knob.key}">{"".join(opts)}</select>'
     else:
         ph = f"default: {knob.default}" if knob.default else "not set"
