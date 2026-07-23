@@ -9,6 +9,7 @@ published, not a source (no registry.py entry).
 Run: uv run python config_ui.py  (opens your browser; Ctrl-C stops)
 """
 
+import html as _html
 import re
 from dataclasses import dataclass
 
@@ -236,3 +237,75 @@ def handle_save(env_text: str, form: dict[str, str]) -> tuple[str | None, dict[s
     if errors:
         return None, errors
     return apply_updates(env_text, updates), {}
+
+
+def mask(value: str) -> str:
+    return "••••" + value[-4:] if len(value) >= 8 else "••••"
+
+
+def _field(knob: Knob, values: dict[str, str], errors: dict[str, str]) -> str:
+    cur = values.get(knob.key, "")
+    err = errors.get(knob.key)
+    err_html = f'<p class="err">{_html.escape(err)}</p>' if err else ""
+    help_html = re.sub(r"(https://\S+)", r'<a href="\1">\1</a>', _html.escape(knob.help))
+    if knob.kind == "secret":
+        if is_set(cur):
+            state = f"currently {mask(cur)}"
+            clear = (
+                f'<label class="clear"><input type="checkbox" '
+                f'name="clear_{knob.key}"> clear</label>'
+            )
+        else:
+            state, clear = "not set", ""
+        control = (
+            f'<input type="text" name="secret_{knob.key}" value="" '
+            f'placeholder="paste new value (blank = keep)" autocomplete="off"> '
+            f"<span>{state}</span> {clear}"
+        )
+    elif knob.kind == "enum":
+        cur_or_default = cur if cur else ""
+        opts = [f'<option value="">(default: {knob.default})</option>']
+        for c in knob.choices:
+            sel = " selected" if c == cur_or_default else ""
+            opts.append(f'<option value="{c}"{sel}>{c}</option>')
+        control = f'<select name="{knob.key}">{"".join(opts)}</select>'
+    else:
+        ph = f"default: {knob.default}" if knob.default else "not set"
+        control = (
+            f'<input type="text" name="{knob.key}" value="{_html.escape(cur)}" placeholder="{ph}">'
+        )
+    return (
+        f'<div class="knob"><label><strong>{_html.escape(knob.label)}</strong>'
+        f'</label>{control}{err_html}<p class="help">{help_html}</p></div>'
+    )
+
+
+def render_page(
+    values: dict[str, str],
+    errors: dict[str, str],
+    csrf_token: str,
+    saved: bool = False,
+) -> str:
+    tunables = "".join(_field(k, values, errors) for k in KNOBS if k.kind != "secret")
+    secrets_html = "".join(_field(k, values, errors) for k in KNOBS if k.kind == "secret")
+    banner = '<p class="saved">Saved.</p>' if saved else ""
+    return f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Trading bot settings</title>
+<style>
+ body {{ font: 15px/1.5 -apple-system, sans-serif; max-width: 44rem;
+        margin: 2rem auto; padding: 0 1rem; }}
+ .knob {{ margin: 1.1rem 0; }} input[type=text], select {{ width: 60%; }}
+ .help {{ color: #555; font-size: 0.85em; margin: 0.15rem 0 0; }}
+ .err {{ color: #b00; margin: 0.15rem 0 0; }} .saved {{ color: #070; }}
+ .clear {{ font-size: 0.85em; }}
+</style></head><body>
+<h1>Settings</h1>
+<p>Changes are saved to <code>.env</code> and apply at each job's next
+scheduled run — nothing to restart. This page is local-only.</p>
+{banner}
+<form method="post" action="/">
+<input type="hidden" name="csrf" value="{_html.escape(csrf_token)}">
+<h2>Tunables</h2>{tunables}
+<h2>API keys &amp; tokens</h2>{secrets_html}
+<p><button type="submit">Save</button></p>
+</form></body></html>"""
