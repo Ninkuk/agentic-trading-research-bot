@@ -325,7 +325,7 @@ scheduled run — nothing to restart. This page is local-only.</p>
 
 
 def _atomic_write(path: Path, text: str) -> None:
-    fd, tmp = tempfile.mkstemp(dir=str(path.parent or Path(".")), prefix=".env.")
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=".env.")
     try:
         with os.fdopen(fd, "w") as f:
             f.write(text)
@@ -333,6 +333,9 @@ def _atomic_write(path: Path, text: str) -> None:
     except BaseException:
         Path(tmp).unlink(missing_ok=True)
         raise
+
+
+_NONSECRET_KEYS = {k.key for k in KNOBS if k.kind != "secret"}
 
 
 def _make_handler(env_path: Path, csrf_token: str) -> type[BaseHTTPRequestHandler]:
@@ -351,16 +354,22 @@ def _make_handler(env_path: Path, csrf_token: str) -> type[BaseHTTPRequestHandle
             self._respond(render_page(parse_env(text), {}, csrf_token, saved=saved))
 
         def do_POST(self) -> None:  # noqa: N802
-            length = int(self.headers.get("Content-Length", "0"))
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                self._respond("<h1>400</h1>bad Content-Length header", status=400)
+                return
             qs = parse_qs(self.rfile.read(length).decode(), keep_blank_values=True)
             form = {k: v[0] for k, v in qs.items()}
-            if form.pop("csrf", None) != csrf_token:
+            received = form.pop("csrf", None)
+            if received is None or not _secrets.compare_digest(received, csrf_token):
                 self._respond("<h1>403</h1>bad csrf token", status=403)
                 return
             text = env_path.read_text() if env_path.exists() else ""
             new_text, errors = handle_save(text, form)
             if errors:
-                self._respond(render_page(parse_env(text), errors, csrf_token))
+                shown = parse_env(text) | {k: v for k, v in form.items() if k in _NONSECRET_KEYS}
+                self._respond(render_page(shown, errors, csrf_token))
                 return
             _atomic_write(env_path, new_text or "")
             self.send_response(303)
@@ -381,7 +390,14 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     csrf_token = _secrets.token_hex(16)
-    server = HTTPServer(("127.0.0.1", args.port), _make_handler(Path(args.env), csrf_token))
+    try:
+        server = HTTPServer(("127.0.0.1", args.port), _make_handler(Path(args.env), csrf_token))
+    except OSError:
+        print(
+            f"port {args.port} already in use — pass --port <other>",
+            file=sys.stderr,
+        )
+        return 1
     url = f"http://127.0.0.1:{args.port}/"
     print(f"settings UI at {url}  (Ctrl-C to stop)")
     if not args.no_browser:
