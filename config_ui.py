@@ -174,7 +174,7 @@ KNOBS: tuple[Knob, ...] = (
     Knob(
         "NTFY_TOPIC",
         "ntfy topic",
-        "Notification topic name — treat like a password (anyone who knows it can read your alerts). https://ntfy.sh",
+        "Notification topic name; treat it like a password (anyone who knows it can read your alerts). https://ntfy.sh",
         "secret",
     ),
     Knob(
@@ -186,31 +186,31 @@ KNOBS: tuple[Knob, ...] = (
     Knob(
         "FRED_API_KEY",
         "FRED API key",
-        "St. Louis Fed (macro/regime reader) — https://fred.stlouisfed.org/docs/api/api_key.html",
+        "St. Louis Fed (macro/regime reader): https://fred.stlouisfed.org/docs/api/api_key.html",
         "secret",
     ),
     Knob(
         "CFTC_APP_TOKEN",
         "CFTC app token",
-        "Optional Socrata token (lifts rate limits) — https://publicreporting.cftc.gov/profile/edit/developer_settings",
+        "Optional Socrata token (lifts rate limits): https://publicreporting.cftc.gov/profile/edit/developer_settings",
         "secret",
     ),
     Knob(
         "EIA_API_KEY",
         "EIA API key",
-        "EIA Open Data — https://www.eia.gov/opendata/register.php",
+        "EIA Open Data: https://www.eia.gov/opendata/register.php",
         "secret",
     ),
     Knob(
         "NASS_API_KEY",
         "USDA NASS key",
-        "USDA NASS Quick Stats — https://quickstats.nass.usda.gov/api",
+        "USDA NASS Quick Stats: https://quickstats.nass.usda.gov/api",
         "secret",
     ),
     Knob(
         "HEALTHCHECK_URL",
         "Healthcheck URL",
-        "Dead-man's-switch URL pinged nightly (the URL itself is the secret) — https://healthchecks.io",
+        "Dead-man's-switch URL pinged nightly (the URL itself is the secret): https://healthchecks.io",
         "secret",
     ),
 )
@@ -299,10 +299,11 @@ def _field(knob: Knob, values: dict[str, str], errors: dict[str, str]) -> str:
             )
         else:
             state, clear = "not set", ""
+        state_cls = "state" if is_set(cur) else "state unset"
         control = (
             f'<input type="text" name="secret_{knob.key}" value="" '
             f'placeholder="paste new value (blank = keep)" autocomplete="off"> '
-            f"<span>{_html.escape(state)}</span> {clear}"
+            f'<span class="{state_cls}">{_html.escape(state)}</span> {clear}'
         )
     elif knob.kind == "enum":
         cur_or_default = cur if cur else ""
@@ -318,7 +319,8 @@ def _field(knob: Knob, values: dict[str, str], errors: dict[str, str]) -> str:
         )
     return (
         f'<div class="knob"><label><strong>{_html.escape(knob.label)}</strong>'
-        f'</label>{control}{err_html}<p class="help">{help_html}</p></div>'
+        f'</label><div class="ctl">{control}</div>{err_html}'
+        f'<p class="help">{help_html}</p></div>'
     )
 
 
@@ -331,26 +333,124 @@ def render_page(
     tunables = "".join(_field(k, values, errors) for k in KNOBS if k.kind != "secret")
     secrets_html = "".join(_field(k, values, errors) for k in KNOBS if k.kind == "secret")
     banner = '<p class="saved">Saved.</p>' if saved else ""
+    # Visual system mirrors deploy/launchd/dashboard.py's _STYLE (the house
+    # style: ink + brass, serif masthead, mono kickers, ledger margin-note
+    # grid). If tokens drift, the dashboard is the source of truth.
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Trading bot settings</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
 <style>
- body {{ font: 15px/1.5 -apple-system, sans-serif; max-width: 44rem;
-        margin: 2rem auto; padding: 0 1rem; }}
- .knob {{ margin: 1.1rem 0; }} input[type=text], select {{ width: 60%; }}
- .help {{ color: #555; font-size: 0.85em; margin: 0.15rem 0 0; }}
- .err {{ color: #b00; margin: 0.15rem 0 0; }} .saved {{ color: #070; }}
- .clear {{ font-size: 0.85em; }}
+:root{{
+  --ink:#0d1013; --paper:#151a1e; --gutter:#10161a; --edge:#232c33;
+  --fg:#e8e6df; --muted:#9aa1ab; --faint:#7b828c;
+  --brass:#e0bd76; --brass-dim:#b39758; --down:#e0736b; --up:#5bbf8a;
+  --serif:ui-serif,Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}}
+*{{box-sizing:border-box;}}
+body{{margin:0;background:
+    radial-gradient(1200px 500px at 80% -10%, rgba(224,189,118,.06), transparent 70%),
+    var(--ink);
+  color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.55;
+  padding:32px 20px 64px;}}
+.page{{max-width:820px;margin:0 auto;}}
+.mast{{display:flex;justify-content:space-between;align-items:flex-end;
+  border-bottom:2px solid var(--edge);padding-bottom:14px;margin-bottom:26px;}}
+.mast h1{{font-family:var(--serif);font-size:30px;font-weight:600;
+  letter-spacing:.01em;line-height:1;margin:0;}}
+.mast h1 em{{color:var(--brass);font-style:italic;}}
+.mast .tag{{color:var(--muted);font-size:12px;margin-top:6px;letter-spacing:.02em;}}
+.mast .edition{{text-align:right;font-family:var(--mono);font-size:11px;
+  color:var(--muted);letter-spacing:.06em;text-transform:uppercase;line-height:1.7;}}
+.mast .edition b{{color:var(--fg);font-weight:600;}}
+.saved{{background:rgba(224,189,118,.09);border:1px solid var(--brass-dim);
+  color:var(--brass);border-radius:8px;padding:7px 13px;font-size:12px;
+  margin:0 0 26px;font-family:var(--mono);}}
+.ledger{{display:grid;grid-template-columns:210px 1fr;gap:0;
+  border-top:1px solid var(--edge);}}
+.note{{padding:22px 22px 22px 0;border-right:1px solid var(--edge);}}
+.note .kicker{{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--brass-dim);margin:0 0 8px;}}
+.note h2{{font-family:var(--serif);font-size:18px;font-weight:600;
+  margin:0 0 10px;line-height:1.15;}}
+.note p{{color:var(--muted);font-size:12.5px;line-height:1.55;margin:0;font-style:italic;}}
+.data{{padding:22px 0 26px 26px;min-width:0;}}
+.knob{{padding:14px 0;}}
+.knob + .knob{{border-top:1px solid rgba(255,255,255,.06);}}
+.knob label strong{{font-weight:600;font-size:13.5px;letter-spacing:.01em;}}
+.ctl{{margin:7px 0 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}}
+input[type=text],select{{background:var(--paper);color:var(--fg);
+  border:1px solid var(--edge);border-radius:6px;padding:7px 10px;
+  font-family:var(--mono);font-size:13px;width:100%;max-width:26rem;
+  transition:border-color .12s ease, box-shadow .12s ease;}}
+select{{width:auto;min-width:14rem;}}
+input[type=text]::placeholder{{color:var(--faint);}}
+input[type=text]:hover,select:hover{{border-color:var(--faint);}}
+input[type=text]:focus,select:focus{{outline:none;border-color:var(--brass-dim);
+  box-shadow:0 0 0 3px rgba(224,189,118,.14);}}
+.state{{font-family:var(--mono);font-size:11.5px;color:var(--brass-dim);white-space:nowrap;}}
+.state.unset{{color:var(--faint);font-style:italic;}}
+.clear{{font-family:var(--mono);font-size:11px;color:var(--muted);
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}}
+.clear input{{accent-color:var(--brass);}}
+.help{{color:var(--muted);font-size:12px;line-height:1.5;margin:7px 0 0;max-width:60ch;}}
+.help a{{color:var(--brass-dim);text-decoration:none;border-bottom:1px solid rgba(179,151,88,.4);}}
+.help a:hover{{color:var(--brass);border-bottom-color:var(--brass);}}
+.err{{color:var(--down);font-family:var(--mono);font-size:12px;margin:6px 0 0;}}
+.actions{{border-top:1px solid var(--edge);padding:22px 0 0;margin-top:2px;}}
+button{{background:var(--brass);color:var(--ink);border:0;border-radius:6px;
+  padding:9px 22px;font-family:var(--mono);font-size:12px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  transition:background .12s ease;}}
+button:hover{{background:#eccd8b;}}
+button:focus-visible{{outline:2px solid var(--brass-dim);outline-offset:2px;}}
+.foot{{color:var(--faint);font-family:var(--mono);font-size:11px;
+  margin-top:34px;letter-spacing:.04em;}}
+@media (max-width:640px){{
+  .ledger{{grid-template-columns:1fr;}}
+  .note{{border-right:0;border-bottom:1px solid var(--edge);padding:18px 0 14px;}}
+  .data{{padding:18px 0 22px;}}
+}}
+@media (prefers-reduced-motion:reduce){{
+  *{{transition:none !important;}}
+}}
 </style></head><body>
-<h1>Settings</h1>
-<p>Changes are saved to <code>.env</code> and apply at each job's next
-scheduled run — nothing to restart. This page is local-only.</p>
+<div class="page">
+<header class="mast">
+  <div>
+    <h1>The <em>Settings</em> Page</h1>
+    <p class="tag">Changes are saved to .env and apply at each job's next
+scheduled run. Nothing to restart.</p>
+  </div>
+  <div class="edition">local only<br><b>nothing leaves this machine</b></div>
+</header>
 {banner}
 <form method="post" action="/">
 <input type="hidden" name="csrf" value="{_html.escape(csrf_token)}">
-<h2>Tunables</h2>{tunables}
-<h2>API keys &amp; tokens</h2>{secrets_html}
-<p><button type="submit">Save</button></p>
-</form></body></html>"""
+<section class="ledger">
+  <div class="note">
+    <p class="kicker">Tuning</p>
+    <h2>Tunables</h2>
+    <p>How the overnight research loop behaves. Plain values, applied at the
+next 10:00pm run.</p>
+  </div>
+  <div class="data">{tunables}</div>
+</section>
+<section class="ledger">
+  <div class="note">
+    <p class="kicker">Credentials</p>
+    <h2>API keys &amp; tokens</h2>
+    <p>Stored in .env, shown masked. Leave a field blank to keep the current
+value.</p>
+  </div>
+  <div class="data">{secrets_html}</div>
+</section>
+<div class="actions"><button type="submit">Save</button></div>
+</form>
+<p class="foot">edits .env in place · loopback only · no external assets</p>
+</div></body></html>"""
 
 
 def _atomic_write(path: Path, text: str) -> None:
