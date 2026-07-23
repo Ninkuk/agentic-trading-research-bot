@@ -9,9 +9,18 @@ published, not a source (no registry.py entry).
 Run: uv run python config_ui.py  (opens your browser; Ctrl-C stops)
 """
 
+import argparse
 import html as _html
+import os
 import re
+import secrets as _secrets
+import sys
+import tempfile
+import webbrowser
 from dataclasses import dataclass
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs
 
 _ASSIGN = re.compile(r"^(?P<key>[A-Za-z_][A-Za-z0-9_]*)=(?P<rest>.*)$")
 _COMMENTED = re.compile(r"^#\s?(?P<key>[A-Za-z_][A-Za-z0-9_]*)=.*$")
@@ -313,3 +322,76 @@ scheduled run — nothing to restart. This page is local-only.</p>
 <h2>API keys &amp; tokens</h2>{secrets_html}
 <p><button type="submit">Save</button></p>
 </form></body></html>"""
+
+
+def _atomic_write(path: Path, text: str) -> None:
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent or Path(".")), prefix=".env.")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def _make_handler(env_path: Path, csrf_token: str) -> type[BaseHTTPRequestHandler]:
+    class Handler(BaseHTTPRequestHandler):
+        def _respond(self, body: str, status: int = 200) -> None:
+            data = body.encode()
+            self.send_response(status)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def do_GET(self) -> None:  # noqa: N802 — http.server API
+            text = env_path.read_text() if env_path.exists() else ""
+            saved = self.path.startswith("/?saved")
+            self._respond(render_page(parse_env(text), {}, csrf_token, saved=saved))
+
+        def do_POST(self) -> None:  # noqa: N802
+            length = int(self.headers.get("Content-Length", "0"))
+            qs = parse_qs(self.rfile.read(length).decode(), keep_blank_values=True)
+            form = {k: v[0] for k, v in qs.items()}
+            if form.pop("csrf", None) != csrf_token:
+                self._respond("<h1>403</h1>bad csrf token", status=403)
+                return
+            text = env_path.read_text() if env_path.exists() else ""
+            new_text, errors = handle_save(text, form)
+            if errors:
+                self._respond(render_page(parse_env(text), errors, csrf_token))
+                return
+            _atomic_write(env_path, new_text or "")
+            self.send_response(303)
+            self.send_header("Location", "/?saved=1")
+            self.end_headers()
+
+        def log_message(self, fmt: str, *args: object) -> None:
+            pass  # request lines can carry nothing sensitive, but stay quiet
+
+    return Handler
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description="Local settings UI (edits .env)")
+    ap.add_argument("--port", type=int, default=8378)
+    ap.add_argument("--env", default=".env", help="path to the env file")
+    ap.add_argument("--no-browser", action="store_true")
+    args = ap.parse_args(argv)
+
+    csrf_token = _secrets.token_hex(16)
+    server = HTTPServer(("127.0.0.1", args.port), _make_handler(Path(args.env), csrf_token))
+    url = f"http://127.0.0.1:{args.port}/"
+    print(f"settings UI at {url}  (Ctrl-C to stop)")
+    if not args.no_browser:
+        webbrowser.open(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nstopped")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
