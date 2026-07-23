@@ -71,3 +71,66 @@ def test_set_prefers_active_line_over_earlier_commented_default():
 def test_clear_with_commented_default_and_active_line_removes_active():
     out = config_ui.apply_updates("#FOO=1\nFOO=2\n", {"FOO": None})
     assert out == "#FOO=1\n"
+
+
+def test_written_values_survive_bash_sourcing(tmp_path):
+    """The one subprocess test in this suite — .env's real consumer is
+    env.sh's `set -a; . ./.env`, and only bash itself proves source-safety
+    (offline, hermetic, <100ms)."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("bash"):
+        import pytest
+
+        pytest.skip("bash unavailable")
+    danger = "https://hc-ping.com/abc?ping=1&fail=2"
+    new_text, errors = config_ui.handle_save("", {"secret_HEALTHCHECK_URL": danger})
+    assert errors == {}
+    env_file = tmp_path / "env"
+    env_file.write_text(new_text)
+    marker = tmp_path / "pwned"
+    out = subprocess.run(
+        [
+            "bash",
+            "-c",
+            f'cd "{tmp_path}" && set -a && . ./env && set +a && printf %s "$HEALTHCHECK_URL"',
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=True,
+    )
+    assert out.stdout == danger
+    assert not marker.exists()
+
+
+def test_command_substitution_payload_does_not_execute(tmp_path):
+    """Sibling to the above: a `$(...)` payload must round-trip literally,
+    never execute, when the written .env is bash-sourced."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("bash"):
+        import pytest
+
+        pytest.skip("bash unavailable")
+    danger = "x$(>pwned)"
+    new_text, errors = config_ui.handle_save("", {"secret_HEALTHCHECK_URL": danger})
+    assert errors == {}
+    env_file = tmp_path / "env"
+    env_file.write_text(new_text)
+    marker = tmp_path / "pwned"
+    out = subprocess.run(
+        [
+            "bash",
+            "-c",
+            f'cd "{tmp_path}" && set -a && . ./env && set +a && printf %s "$HEALTHCHECK_URL"',
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=True,
+    )
+    assert out.stdout == danger
+    assert not marker.exists()

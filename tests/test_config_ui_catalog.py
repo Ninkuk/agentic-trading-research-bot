@@ -95,3 +95,19 @@ def test_clear_checkbox_beats_typed_value():
     new_text, errors = config_ui.handle_save(ENV, form)
     assert errors == {}
     assert "FRED_API_KEY" not in config_ui.parse_env(new_text)
+
+
+def test_metachar_values_are_single_quoted_and_roundtrip():
+    form = {"secret_HEALTHCHECK_URL": "https://hc-ping.com/abc?ping=1&fail=2"}
+    new_text, errors = config_ui.handle_save("", form)
+    assert errors == {}
+    assert "HEALTHCHECK_URL='https://hc-ping.com/abc?ping=1&fail=2'" in new_text
+    assert (
+        config_ui.parse_env(new_text)["HEALTHCHECK_URL"] == "https://hc-ping.com/abc?ping=1&fail=2"
+    )
+
+
+def test_simple_values_stay_bare():
+    form = {"RESEARCH_NIGHTLY_MAX": "2"}
+    new_text, errors = config_ui.handle_save("", form)
+    assert "RESEARCH_NIGHTLY_MAX=2\n" in new_text and "'" not in new_text

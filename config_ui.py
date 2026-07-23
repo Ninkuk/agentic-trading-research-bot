@@ -35,6 +35,18 @@ def _split_trailing_comment(rest: str) -> tuple[str, str]:
     return rest, ""
 
 
+def _unquote(value: str) -> str:
+    """Strip one layer of surrounding matching quotes (`'x'`/`"x"` -> `x`).
+
+    Mirrors what bash itself does when sourcing .env, so parse_env keeps
+    reading _quote_env's output back as the plain value (mask/no-op/current
+    -value comparisons all operate on the unquoted form).
+    """
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        return value[1:-1]
+    return value
+
+
 def parse_env(text: str) -> dict[str, str]:
     """Active KEY=value assignments; trailing comments stripped; last wins."""
     out: dict[str, str] = {}
@@ -42,7 +54,7 @@ def parse_env(text: str) -> dict[str, str]:
         m = _ASSIGN.match(line)
         if m:
             value, _ = _split_trailing_comment(m.group("rest"))
-            out[m.group("key")] = value.strip()
+            out[m.group("key")] = _unquote(value.strip())
     return out
 
 
@@ -95,6 +107,23 @@ def apply_updates(text: str, updates: dict[str, str | None]) -> str:
 
 SENTINEL = re.compile(r"^ZZ_.*_ZZ$")
 _FORBIDDEN = re.compile(r"[\s#\"'`\\]")
+_SAFE_BARE = re.compile(r"^[A-Za-z0-9_./:@+=-]*$")
+
+
+def _quote_env(value: str) -> str:
+    """Single-quote a value written to .env unless it's bash-bare-safe.
+
+    env.sh bash-sources .env with `set -a; . ./.env` — any of
+    `$ ; & | < > ( ) ~ * ! space` there is subject to expansion,
+    command-substitution, or re-tokenization by the shell, not treated as
+    literal text. Wrapping the value in single quotes suppresses ALL of
+    that (bash performs no expansion of any kind inside `'...'`), and no
+    escaping is required because validate() already rejects a literal `'`
+    in the input — so a quoted value can never be broken out of.
+    """
+    if _SAFE_BARE.fullmatch(value):
+        return value
+    return f"'{value}'"
 
 
 @dataclass(frozen=True)
@@ -227,7 +256,7 @@ def handle_save(env_text: str, form: dict[str, str]) -> tuple[str | None, dict[s
                 if err:
                     errors[knob.key] = err
                 else:
-                    updates[knob.key] = raw
+                    updates[knob.key] = _quote_env(raw)
             continue
         if knob.key not in form:
             continue
@@ -242,7 +271,7 @@ def handle_save(env_text: str, form: dict[str, str]) -> tuple[str | None, dict[s
         if err:
             errors[knob.key] = err
         else:
-            updates[knob.key] = raw
+            updates[knob.key] = _quote_env(raw)
     if errors:
         return None, errors
     return apply_updates(env_text, updates), {}
@@ -357,6 +386,9 @@ def _make_handler(env_path: Path, csrf_token: str) -> type[BaseHTTPRequestHandle
             try:
                 length = int(self.headers.get("Content-Length", "0"))
             except ValueError:
+                self._respond("<h1>400</h1>bad Content-Length header", status=400)
+                return
+            if length < 0:
                 self._respond("<h1>400</h1>bad Content-Length header", status=400)
                 return
             qs = parse_qs(self.rfile.read(length).decode(), keep_blank_values=True)
