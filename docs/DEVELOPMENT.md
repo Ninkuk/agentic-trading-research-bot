@@ -85,6 +85,11 @@ Most sources need **no API key** — SEC, FINRA, CBOE, Treasury, NY Fed, and the
 calendars all work out of the box. `FRED_API_KEY`, `EIA_API_KEY`, and
 `NASS_API_KEY` are free; see `.env.example`.
 
+Settings — tunables and API keys — can also be edited via
+`uv run python config_ui.py`, a local web UI (loopback-only) that reads and
+writes `.env` directly. Adding a new tunable? The `KNOBS` catalog in
+`config_ui.py` is the single extension point.
+
 > Every `--db` default is a bare cwd-relative filename. Always pass
 > `data/<name>.db`, or you'll scatter databases across the repo root.
 

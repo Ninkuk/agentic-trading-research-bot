@@ -100,6 +100,13 @@ it to _"set this up"_ — one of the playbooks that ships in this repository
 walks the AI through the same setup, explains anything that fails, and helps
 you sign up for the free keys. Details in the developer guide below.
 
+## Changing settings
+
+Run `uv run python config_ui.py` — a local settings page opens in your
+browser. Adjust how many tickers the overnight research covers, set API
+keys (shown masked), and save; changes apply at each job's next scheduled
+run. Nothing on this page ever leaves your machine.
+
 ## For developers
 
 Setup, architecture, and contribution notes live in

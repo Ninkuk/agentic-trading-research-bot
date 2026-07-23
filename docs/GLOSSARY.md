@@ -63,3 +63,7 @@ each historical day, so the replay can't cheat by peeking at the future.
 **Forward return / paper outcome** — how a stock actually performed in the
 weeks *after* the system flagged it. "Paper" means graded on the record only;
 no money moved.
+
+**Settings UI** — `uv run python config_ui.py`; a local browser page that
+edits `.env` (the file holding your keys and tuning knobs) safely, with API
+keys shown masked.

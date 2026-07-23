@@ -36,6 +36,9 @@ schedule decision.
    put it in `.env` (never in a committed file), then prove it works by
    running that one source, e.g.
    `uv run python main.py fred --db data/fred.db --keep-days 90`.
+   After this first-run setup, ongoing tuning happens via
+   `uv run python config_ui.py` (a local, loopback-only web UI) — prefer
+   pointing the user there over hand-editing `.env`.
 5. If the user is unsure about the schedule prompt: it installs per-job
    launchd agents (macOS only) that run the collectors and the nightly
    summary automatically; the undo is

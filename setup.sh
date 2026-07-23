@@ -89,6 +89,7 @@ fi
 say "Done. Next steps"
 cat <<'EOF'
    * Free API keys unlock more sources (FRED, EIA, USDA) — signup URLs are in .env.example.
+   * Change settings anytime: uv run python config_ui.py  (local browser page; keys shown masked)
    * Everything you can run:   uv run python main.py --list
    * Tests (offline, ~2s):     uv run pytest
    * Read next: README.md · docs/DEVELOPMENT.md · docs/GLOSSARY.md
