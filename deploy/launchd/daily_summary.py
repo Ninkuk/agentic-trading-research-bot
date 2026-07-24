@@ -63,6 +63,7 @@ _SLOW_JOBS = {
 # to 4 (daily jobs surviving a weekend + a holiday). Slower cadences:
 MAX_AGE_DAYS = {
     "ats.db": 9,
+    "backtest.db": 9,
     "cftc.db": 9,
     "eia.db": 9,
     "econ_calendar.db": 9,
