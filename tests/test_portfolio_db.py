@@ -64,3 +64,80 @@ def test_prune_cascades_both_children():
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
     assert {r[0] for r in conn.execute("SELECT snapshot_id FROM account")} == {keep}
     assert {r[0] for r in conn.execute("SELECT snapshot_id FROM positions")} == {keep}
+
+
+OPTIONS = [
+    {
+        "occ_symbol": "XLE260821C00095000",
+        "underlying": "XLE",
+        "type": "call",
+        "strike": 95.0,
+        "expiration": "2026-08-21",
+        "quantity": 1.0,
+        "avg_cost": 2.50,
+        "market_value": 310.0,
+        "multiplier": 100.0,
+    },
+    {  # second contract, SAME underlying — the (snapshot_id, symbol) PK on
+        # positions could never hold this pair; the option table must
+        "occ_symbol": "XLE260918P00090000",
+        "underlying": "XLE",
+        "type": "put",
+        "strike": 90.0,
+        "expiration": "2026-09-18",
+        "quantity": -2.0,
+        "avg_cost": None,
+        "market_value": None,
+        "multiplier": None,
+    },
+]
+
+
+def test_option_positions_roundtrip_two_contracts_one_underlying():
+    conn = _fresh()
+    sid = db.write_snapshot(conn, NOW, ACCOUNT, POSITIONS, option_positions=OPTIONS)
+    assert conn.execute("SELECT option_count FROM snapshots WHERE id=?", (sid,)).fetchone()[0] == 2
+    rows = conn.execute(
+        "SELECT occ_symbol, underlying, quantity FROM option_positions"
+        " WHERE snapshot_id=? ORDER BY occ_symbol",
+        (sid,),
+    ).fetchall()
+    assert rows == [
+        ("XLE260821C00095000", "XLE", 1.0),
+        ("XLE260918P00090000", "XLE", -2.0),
+    ]
+
+
+def test_latest_option_positions_scope_to_newest_snapshot():
+    conn = _fresh()
+    db.write_snapshot(conn, OLD, ACCOUNT, [], option_positions=OPTIONS)
+    db.write_snapshot(conn, NOW, ACCOUNT, [], option_positions=OPTIONS[:1])
+    rows = conn.execute("SELECT occ_symbol FROM v_latest_option_positions").fetchall()
+    assert rows == [("XLE260821C00095000",)]
+
+
+def test_prune_cascades_option_positions():
+    conn = _fresh()
+    db.write_snapshot(conn, OLD, ACCOUNT, POSITIONS, option_positions=OPTIONS)
+    keep = db.write_snapshot(conn, NOW, ACCOUNT, POSITIONS, option_positions=OPTIONS)
+    assert db.prune(conn, keep_days=7, now_iso=NOW) == 1
+    assert {r[0] for r in conn.execute("SELECT snapshot_id FROM option_positions")} == {keep}
+
+
+def test_option_count_migration():
+    """A portfolio.db created before option capture (no option_count column,
+    no option_positions table) gains both via ensure_schema."""
+    conn = db.connect(":memory:")
+    conn.execute(
+        """CREATE TABLE snapshots (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            captured_at    TEXT NOT NULL,
+            position_count INTEGER NOT NULL
+        )"""
+    )
+    conn.execute("INSERT INTO snapshots (captured_at, position_count) VALUES (?, 1)", (OLD,))
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(snapshots)")}
+    assert "option_count" in cols
+    assert conn.execute("SELECT option_count FROM snapshots").fetchone()[0] == 0
+    db.ensure_schema(conn)  # idempotent

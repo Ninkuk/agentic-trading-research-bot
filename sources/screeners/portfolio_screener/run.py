@@ -17,18 +17,18 @@ from sources.screeners.portfolio_screener import db, fetch
 
 def run(db_path: str, doc, now_iso=None, keep_days=None) -> tuple:
     """Parse + store one snapshot. Returns (snapshot_id, position_count,
-    skipped_count)."""
+    option_count, skipped_count)."""
     now_iso = now_iso or datetime.now(UTC).isoformat()
-    account, positions, skipped = fetch.parse_snapshot(doc)
+    account, positions, option_positions, skipped = fetch.parse_snapshot(doc)
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)
-        sid = db.write_snapshot(conn, now_iso, account, positions)
+        sid = db.write_snapshot(conn, now_iso, account, positions, option_positions)
         if keep_days is not None:
             db.prune(conn, keep_days, now_iso)
     finally:
         conn.close()
-    return sid, len(positions), skipped
+    return sid, len(positions), len(option_positions), skipped
 
 
 def main(argv=None) -> None:
@@ -53,12 +53,13 @@ def main(argv=None) -> None:
         raise SystemExit(1) from None
 
     try:
-        sid, n_pos, skipped = run(a.db, doc, keep_days=a.keep_days)
+        sid, n_pos, n_opt, skipped = run(a.db, doc, keep_days=a.keep_days)
     except ValueError as e:
         print(f"error: bad document: {type(e).__name__}", file=sys.stderr)
         raise SystemExit(1) from None
+    opts = f", {n_opt} options" if n_opt else ""
     suffix = f" ({skipped} skipped)" if skipped else ""
-    print(f"portfolio snapshot {sid}: {n_pos} positions{suffix} into {a.db}")
+    print(f"portfolio snapshot {sid}: {n_pos} positions{opts}{suffix} into {a.db}")
 
 
 if __name__ == "__main__":

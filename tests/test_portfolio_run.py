@@ -17,10 +17,10 @@ DOC = {
 
 def test_run_ingests_doc(tmp_path):
     path = str(tmp_path / "portfolio.db")
-    sid, n_pos, skipped = run.run(path, DOC, now_iso=NOW)
+    sid, n_pos, n_opt, skipped = run.run(path, DOC, now_iso=NOW)
     conn = db.connect(path)
     assert conn.execute("SELECT captured_at FROM snapshots WHERE id=?", (sid,)).fetchone()[0] == NOW
-    assert n_pos == 1 and skipped == 0
+    assert n_pos == 1 and n_opt == 0 and skipped == 0
     assert conn.execute("SELECT equity FROM v_latest_account").fetchone()[0] == 205.37
     conn.close()
 
@@ -61,3 +61,38 @@ def test_run_prunes_with_keep_days(tmp_path):
     conn = db.connect(path)
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 1
     conn.close()
+
+
+OPT_DOC = {
+    "account": {"equity": 205.37},
+    "positions": [],
+    "option_positions": [
+        {
+            "occ_symbol": "XLE260821C00095000",
+            "underlying": "XLE",
+            "type": "call",
+            "strike": 95.0,
+            "expiration": "2026-08-21",
+            "quantity": 1,
+        }
+    ],
+}
+
+
+def test_run_ingests_option_positions(tmp_path):
+    path = str(tmp_path / "portfolio.db")
+    sid, n_pos, n_opt, skipped = run.run(path, OPT_DOC, now_iso=NOW)
+    assert n_pos == 0 and n_opt == 1 and skipped == 0
+    conn = db.connect(path)
+    row = conn.execute(
+        "SELECT occ_symbol, underlying, quantity FROM v_latest_option_positions"
+    ).fetchone()
+    assert row == ("XLE260821C00095000", "XLE", 1.0)
+    conn.close()
+
+
+def test_main_prints_option_count(tmp_path, capsys):
+    doc_path = tmp_path / "doc.json"
+    doc_path.write_text(json.dumps(OPT_DOC))
+    run.main(["--db", str(tmp_path / "p.db"), "--input", str(doc_path)])
+    assert "1 options" in capsys.readouterr().out

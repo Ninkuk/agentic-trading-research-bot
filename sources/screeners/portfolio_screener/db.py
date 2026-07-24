@@ -13,7 +13,8 @@ _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     captured_at    TEXT NOT NULL,
-    position_count INTEGER NOT NULL
+    position_count INTEGER NOT NULL,
+    option_count   INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS account (
@@ -33,6 +34,27 @@ CREATE TABLE IF NOT EXISTS positions (
     PRIMARY KEY (snapshot_id, symbol)
 );
 
+-- Option legs, keyed by CONTRACT: two contracts on one underlying are two
+-- rows (the (snapshot_id, symbol) PK above could never hold them — the
+-- structural blocker the 2026-07-08 options spec named). Column names
+-- follow cboe_options. quantity is SIGNED (short = negative). Capture-only
+-- today: advisor's heat math does not read this table yet, so a held
+-- option is stored but still invisible to v_book_heat until the signed
+-- delta-dollar increment ships.
+CREATE TABLE IF NOT EXISTS option_positions (
+    snapshot_id  INTEGER NOT NULL REFERENCES snapshots(id),
+    occ_symbol   TEXT NOT NULL,
+    underlying   TEXT NOT NULL,
+    type         TEXT,
+    strike       REAL,
+    expiration   TEXT,
+    quantity     REAL NOT NULL,
+    avg_cost     REAL,
+    market_value REAL,
+    multiplier   REAL,
+    PRIMARY KEY (snapshot_id, occ_symbol)
+);
+
 CREATE VIEW IF NOT EXISTS v_latest_account AS
 SELECT a.* FROM account a
 WHERE a.snapshot_id = (
@@ -42,20 +64,31 @@ CREATE VIEW IF NOT EXISTS v_latest_positions AS
 SELECT p.* FROM positions p
 WHERE p.snapshot_id = (
     SELECT id FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1);
+
+CREATE VIEW IF NOT EXISTS v_latest_option_positions AS
+SELECT o.* FROM option_positions o
+WHERE o.snapshot_id = (
+    SELECT id FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1);
 """
 
 
 def ensure_schema(conn) -> None:
-    """Create tables + views. Idempotent."""
+    """Create tables + views, then the idempotent column migration (a db
+    created before option capture lacks snapshots.option_count)."""
     conn.executescript(_SCHEMA)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(snapshots)")}
+    if "option_count" not in cols:
+        conn.execute("ALTER TABLE snapshots ADD COLUMN option_count INTEGER NOT NULL DEFAULT 0")
     conn.commit()
 
 
-def write_snapshot(conn, captured_at: str, account: dict, positions: list) -> int:
-    """One snapshot header + its account row + position rows."""
+def write_snapshot(
+    conn, captured_at: str, account: dict, positions: list, option_positions: list | tuple = ()
+) -> int:
+    """One snapshot header + its account row + position/option-leg rows."""
     cur = conn.execute(
-        "INSERT INTO snapshots (captured_at, position_count) VALUES (?, ?)",
-        (captured_at, len(positions)),
+        "INSERT INTO snapshots (captured_at, position_count, option_count) VALUES (?, ?, ?)",
+        (captured_at, len(positions), len(option_positions)),
     )
     sid = cur.lastrowid
     conn.execute(
@@ -67,6 +100,13 @@ def write_snapshot(conn, captured_at: str, account: dict, positions: list) -> in
         "market_value) VALUES (:sid, :symbol, :quantity, :avg_cost, "
         ":market_value)",
         [{**p, "sid": sid} for p in positions],
+    )
+    conn.executemany(
+        "INSERT INTO option_positions (snapshot_id, occ_symbol, underlying, type,"
+        " strike, expiration, quantity, avg_cost, market_value, multiplier)"
+        " VALUES (:sid, :occ_symbol, :underlying, :type, :strike, :expiration,"
+        " :quantity, :avg_cost, :market_value, :multiplier)",
+        [{**o, "sid": sid} for o in option_positions],
     )
     conn.commit()
     return sid
@@ -85,7 +125,7 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     if not ids:
         return 0
     qmarks = ",".join("?" * len(ids))
-    for child in ("account", "positions"):
+    for child in ("account", "positions", "option_positions"):
         conn.execute(f"DELETE FROM {child} WHERE snapshot_id IN ({qmarks})", ids)
     conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
     conn.commit()

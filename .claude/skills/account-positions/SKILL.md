@@ -1,6 +1,6 @@
 ---
 name: account-positions
-description: Snapshot live Robinhood account state (positions, equity, cash, buying power) into data/portfolio.db via the portfolio screener. Use when the user asks to sync/refresh/resolve account positions, or before any sizing review that should see real holdings.
+description: Snapshot live Robinhood account state (equity and option positions, equity, cash, buying power) into data/portfolio.db via the portfolio screener. Use when the user asks to sync/refresh/resolve account positions, or before any sizing review that should see real holdings.
 ---
 
 # account-positions
@@ -18,6 +18,9 @@ directly.
    - `get_portfolio` → equity (market value)
    - `get_equity_positions` → per-position symbol, quantity, average buy
      price, market value
+   - `get_option_positions` → per-contract legs (see the
+     `option_positions` bullet below); zero open contracts is normal —
+     emit an empty array, don't omit the key
 
    **Account pin**: always use the **"Agentic" account (number ending
    1936)**. If `get_accounts` returns more than one account, select it by
@@ -36,6 +39,17 @@ directly.
    Field aliases accepted per position: `quantity`/`shares`,
    `average_buy_price`/`avg_cost`/`average_cost`, `market_value`/`equity`
    (see `sources/screeners/portfolio_screener/catalog.py`).
+
+   - `option_positions`: one entry per contract leg —
+     `{"occ_symbol", "underlying", "type": "call"|"put", "strike",
+     "expiration": "YYYY-MM-DD", "quantity", "position_type":
+     "long"|"short", "avg_cost", "market_value", "multiplier"}`.
+     `occ_symbol` + `underlying` + numeric `quantity` are required (rows
+     missing them are skipped and counted); a `"short"` position_type is
+     stored as a **negative** quantity. Capture-only for now: advisor's
+     book heat does not read these rows yet, so holding an option means
+     `v_book_heat` understates real exposure — say so in the report
+     whenever the array is non-empty.
 
    `account.equity` is the account's total value **including cash** (take
    `get_portfolio`'s equity as-is — with zero positions it equals cash, not
