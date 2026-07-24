@@ -47,6 +47,17 @@ def _phx_date(dt) -> str:
     return phx_date(dt)
 
 
+def _bare_date(s) -> bool:
+    """True only for a bare YYYY-MM-DD calendar-date string (no timestamp)."""
+    if not isinstance(s, str) or len(s) != 10:
+        return False
+    try:
+        date.fromisoformat(s)
+    except ValueError:
+        return False
+    return True
+
+
 def parse_doc(doc) -> tuple:
     """Validate one input document into (fills, passes, verdicts, skipped_count).
     Rows missing/failing required fields are skipped and counted, never
@@ -89,6 +100,34 @@ def parse_doc(doc) -> tuple:
         if isinstance(quantity, bool) or not isinstance(quantity, (int, float)):
             quantity = None
         agent = f.get("placed_agent")
+        # Option fills: contract_ref marks one. side is remapped to the
+        # DIRECTIONAL intent for opens (buy put = bearish = 'sell'); a close
+        # keeps the broker side and needs no right/expiration — it only ever
+        # attaches to its opening decision, never creates one. Multi-leg
+        # orders are refused (spec: grade the strategy or nothing — two
+        # independently-graded legs double-count one defined-risk bet).
+        contract = f.get("contract_ref")
+        position_effect = expiration = None
+        if contract is not None or f.get("position_effect") is not None:
+            position_effect = f.get("position_effect")
+            if (
+                not isinstance(contract, str)
+                or not contract
+                or f.get("multi_leg")
+                or position_effect not in ("open", "close")
+            ):
+                skipped += 1
+                continue
+            expiration = f.get("expiration")
+            if not _bare_date(expiration):
+                expiration = None
+            if position_effect == "open":
+                right = f.get("right")
+                if right not in ("call", "put") or expiration is None:
+                    skipped += 1
+                    continue
+                side = "buy" if (side == "buy") == (right == "call") else "sell"
+        sref = f.get("strategy_ref")
         fills.append(
             dict(
                 symbol=symbol,
@@ -100,6 +139,10 @@ def parse_doc(doc) -> tuple:
                 order_ref=f.get("order_ref"),
                 note=f.get("note"),
                 placed_agent=agent if isinstance(agent, str) else None,
+                contract_ref=contract if position_effect else None,
+                strategy_ref=sref if isinstance(sref, str) else None,
+                position_effect=position_effect,
+                expiration=expiration,
             )
         )
     for p in doc.get("passes") or []:
@@ -123,13 +166,7 @@ def parse_doc(doc) -> tuple:
         # A bare Phoenix calendar date, NOT a timestamp: research-ticker
         # stamps the run's Phoenix date directly, so unlike filled_at there
         # is no UTC instant to convert — a timestamp here is a bug upstream.
-        ok_date = isinstance(vdate, str) and len(vdate) == 10
-        if ok_date and isinstance(vdate, str):
-            try:
-                date.fromisoformat(vdate)
-            except ValueError:
-                ok_date = False
-        if not symbol or verdict not in ("buy", "pass") or not ok_date:
+        if not symbol or verdict not in ("buy", "pass") or not _bare_date(vdate):
             skipped += 1
             continue
         verdicts.append(
@@ -209,6 +246,9 @@ def _dedup_ref(f) -> str:
     if ref:
         return ref
     canon = "|".join(str(f.get(k)) for k in ("symbol", "filled_at", "side", "price", "quantity"))
+    # Appended only when present so every pre-options equity key is unchanged.
+    if f.get("contract_ref"):
+        canon += "|" + f["contract_ref"]
     return "manual:" + hashlib.sha1(canon.encode("utf-8")).hexdigest()[:16]
 
 
@@ -217,7 +257,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
     commit together or not at all. Requires composite.db attached as `src`
     when fills/passes are present. Fills must be chronological (parse_doc
     guarantees it) so FIFO exit attachment is deterministic."""
-    matched = freelance = exits = passes_n = verdicts_n = dupes = 0
+    matched = freelance = exits = passes_n = verdicts_n = dupes = expired = 0
     # Phoenix clock, like fill_date/composite_date: an evening-dictated pass
     # (after the 9:05pm snapshot = next day UTC) answers THAT evening's flag.
     as_of_date = _phx_date(datetime.fromisoformat(now_iso))
@@ -228,10 +268,34 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                 dupes += 1
                 continue
             automatic = f.get("placed_agent") in AUTOMATIC_AGENTS
-            if f["side"] == "sell" and not automatic:
+            contract = f.get("contract_ref")
+            if contract and f.get("position_effect") == "close":
+                # A close attaches to ITS contract's open decision — never
+                # another contract on the same underlying, and it never
+                # creates a decision (an open that predates the journal is
+                # a skip to fix by hand, not a bearish opinion).
+                open_row = conn.execute(
+                    "SELECT id FROM decisions WHERE contract_ref = ?"
+                    " AND action = 'acted' AND exit_fill_date IS NULL"
+                    " AND fill_date <= ? ORDER BY fill_date, id LIMIT 1",
+                    (contract, f["fill_date"]),
+                ).fetchone()
+                if open_row:
+                    conn.execute(
+                        "UPDATE decisions SET exit_fill_date = ?,"
+                        " exit_fill_price = ?, exit_order_ref = ? WHERE id = ?",
+                        (f["fill_date"], f["price"], ref, open_row[0]),
+                    )
+                    exits += 1
+                else:
+                    skipped += 1
+                    print(f"skip close {contract}: no open decision")
+                continue
+            if f["side"] == "sell" and not automatic and not contract:
                 open_buy = conn.execute(
                     "SELECT id FROM decisions WHERE symbol = ? AND action = 'acted'"
-                    " AND side = 'buy' AND exit_fill_date IS NULL"
+                    " AND side = 'buy' AND contract_ref IS NULL"
+                    " AND exit_fill_date IS NULL"
                     " AND (placed_agent IS NULL OR placed_agent NOT IN (?, ?))"
                     " AND fill_date <= ? ORDER BY fill_date, id LIMIT 1",
                     (f["symbol"], *AUTOMATIC_AGENTS, f["fill_date"]),
@@ -249,8 +313,9 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                 "INSERT INTO decisions (symbol, action, side,"
                 " composite_snapshot_id, composite_date, opinion_score_sum,"
                 " opinion_total, fill_date, fill_price, quantity, order_ref,"
-                " note, placed_agent, source, recorded_at)"
-                " VALUES (?, 'acted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " note, placed_agent, contract_ref, strategy_ref,"
+                " position_effect, expiration, source, recorded_at)"
+                " VALUES (?, 'acted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     f["symbol"],
                     f["side"],
@@ -264,12 +329,32 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                     ref,
                     f["note"],
                     f.get("placed_agent"),
+                    contract,
+                    f.get("strategy_ref"),
+                    f.get("position_effect"),
+                    f.get("expiration"),
                     "manual" if ref.startswith("manual:") else "mcp",
                     now_iso,
                 ),
             )
             matched += 1 if m else 0
             freelance += 0 if m else 1
+        # Terminal-event sweep: an option expiring un-closed produces no fill,
+        # so without this its decision looks open forever and blocks close
+        # attachment for a later round trip on the same contract. Premium
+        # 0.0 stands in for expired-worthless; an exercised/assigned contract
+        # (stock appears instead of a closing fill) must be corrected by
+        # hand. P&L is NULLed for option rows in the views either way.
+        cur = conn.execute(
+            "UPDATE decisions SET exit_fill_date = expiration,"
+            " exit_fill_price = 0.0,"
+            " exit_order_ref = 'expired:' || contract_ref || ':' || id"
+            " WHERE action = 'acted' AND contract_ref IS NOT NULL"
+            " AND exit_fill_date IS NULL AND expiration IS NOT NULL"
+            " AND expiration < ?",
+            (as_of_date,),
+        )
+        expired = cur.rowcount
         for p in passes:
             m = match_flagged(conn, p["symbol"], as_of_date)
             if m is None:
@@ -296,9 +381,20 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
         cur = conn.execute(
             "INSERT INTO journal_runs (ran_at, fills_seen, matched, freelance,"
             " exits_attached, passes_recorded, verdicts_recorded,"
-            " duplicates_skipped, skipped)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (now_iso, len(fills), matched, freelance, exits, passes_n, verdicts_n, dupes, skipped),
+            " duplicates_skipped, skipped, expired_closed)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                now_iso,
+                len(fills),
+                matched,
+                freelance,
+                exits,
+                passes_n,
+                verdicts_n,
+                dupes,
+                skipped,
+                expired,
+            ),
         )
         return dict(
             run_id=cur.lastrowid,
@@ -310,6 +406,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
             verdicts_recorded=verdicts_n,
             duplicates_skipped=dupes,
             skipped=skipped,
+            expired_closed=expired,
         )
 
 
@@ -390,7 +487,7 @@ def main(argv=None) -> None:
         f" {c['freelance']} freelance, {c['exits_attached']} exits,"
         f" {c['passes_recorded']} passes, {c['verdicts_recorded']} verdicts,"
         f" {c['duplicates_skipped']} duplicates,"
-        f" {c['skipped']} skipped, into {a.db}"
+        f" {c['skipped']} skipped, {c['expired_closed']} expired, into {a.db}"
     )
 
 

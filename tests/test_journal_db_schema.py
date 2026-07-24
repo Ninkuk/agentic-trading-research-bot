@@ -166,3 +166,70 @@ def test_placed_agent_migration(tmp_path):
     cols = {r[1] for r in conn.execute("PRAGMA table_info(decisions)")}
     assert "placed_agent" in cols
     db.ensure_schema(conn)  # and stay idempotent
+
+
+def test_option_columns_exist(tmp_path):
+    conn = _conn(tmp_path)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(decisions)")}
+    assert {"contract_ref", "strategy_ref", "position_effect", "expiration"} <= cols
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(journal_runs)")}
+    assert "expired_closed" in cols
+
+
+def test_position_effect_checked(tmp_path):
+    conn = _conn(tmp_path)
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(
+            "INSERT INTO decisions (symbol, action, side, position_effect, recorded_at)"
+            " VALUES ('AAPL', 'acted', 'buy', 'expire', ?)",
+            (NOW,),
+        )
+
+
+def test_option_columns_migrate(tmp_path):
+    """A db created before the option columns gains them via ensure_schema's
+    idempotent ALTERs, exactly like placed_agent did."""
+    conn = db.connect(str(tmp_path / "old.db"))
+    conn.execute(
+        """CREATE TABLE decisions (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol                TEXT NOT NULL,
+            action                TEXT NOT NULL CHECK (action IN ('acted', 'passed')),
+            side                  TEXT CHECK (side IN ('buy', 'sell')),
+            composite_snapshot_id INTEGER,
+            composite_date        TEXT,
+            opinion_score_sum     INTEGER,
+            opinion_total         INTEGER,
+            fill_date             TEXT,
+            fill_price            REAL,
+            quantity              REAL,
+            exit_fill_date        TEXT,
+            exit_fill_price       REAL,
+            order_ref             TEXT UNIQUE,
+            exit_order_ref        TEXT UNIQUE,
+            note                  TEXT,
+            placed_agent          TEXT,
+            source                TEXT NOT NULL DEFAULT 'mcp'
+                                  CHECK (source IN ('mcp', 'manual')),
+            recorded_at           TEXT NOT NULL
+        )"""
+    )
+    conn.execute(
+        """CREATE TABLE journal_runs (
+            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+            ran_at             TEXT NOT NULL,
+            fills_seen         INTEGER NOT NULL DEFAULT 0,
+            matched            INTEGER NOT NULL DEFAULT 0,
+            freelance          INTEGER NOT NULL DEFAULT 0,
+            exits_attached     INTEGER NOT NULL DEFAULT 0,
+            passes_recorded    INTEGER NOT NULL DEFAULT 0,
+            duplicates_skipped INTEGER NOT NULL DEFAULT 0,
+            skipped            INTEGER NOT NULL DEFAULT 0
+        )"""
+    )
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(decisions)")}
+    assert {"contract_ref", "strategy_ref", "position_effect", "expiration"} <= cols
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(journal_runs)")}
+    assert "expired_closed" in cols
+    db.ensure_schema(conn)  # and stay idempotent

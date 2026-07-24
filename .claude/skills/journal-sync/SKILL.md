@@ -1,6 +1,6 @@
 ---
 name: journal-sync
-description: Sync Robinhood equity fills into the decision journal (data/scorer.db) via the journal dispatcher, and record explicit passes on flagged tickers. Use when the user asks to sync/journal trades, log a pass, or backfill trade history. Also use to reconcile fills against broker realized P&L.
+description: Sync Robinhood equity and single-leg option fills into the decision journal (data/scorer.db) via the journal dispatcher, and record explicit passes on flagged tickers. Use when the user asks to sync/journal trades, log a pass, or backfill trade history. Also use to reconcile fills against broker realized P&L.
 ---
 
 # journal-sync
@@ -25,6 +25,8 @@ against scorer.db directly.
    - `get_equity_orders` scoped to it: **filled** orders updated since the
      bound. Never paste raw MCP payloads into the conversation (they can
      carry account identifiers).
+   - `get_option_orders`, same scope and bound: filled option orders. See
+     the option-fill bullet in step 3 for the field mapping.
    - **Label every fill**: pass the order's `placed_agent` through on each
      fill (`user`/`agentic`/`drip`/`recurring`). Automatic fills
      (drip/recurring) are journaled for the record but the dispatcher
@@ -54,6 +56,19 @@ against scorer.db directly.
      must not use the last execution's price); `filled_at` = the executed-at
      timestamp as full UTC ISO. Verify both field mappings on your first
      interactive run before trusting the scheduled slot.
+   - **Option fills**: same `fills[]` array, with `symbol` = the
+     **underlying**, `side` = the broker side, `price` = the **premium**,
+     plus `contract_ref` (OCC symbol), `position_effect` (`"open"`/`"close"`),
+     `strategy_ref` (the order id), and — required on opens — `right`
+     (`"call"`/`"put"`) and `expiration` (`"YYYY-MM-DD"`). The dispatcher
+     derives directional intent from (side, right) itself; never pre-map it.
+     On a **multi-leg** order set `"multi_leg": true` on every leg — the
+     parser refuses them by design (a spread is one bet; per-leg grading
+     would double-count it). An **exercise or assignment** produces stock
+     instead of a closing fill: report it for manual correction — the
+     dispatcher only auto-closes contracts that expire un-closed (at 0.0).
+     Option decisions grade **selection only** (`acted_option` in
+     `v_flag_response`); their P&L columns are NULL by design.
    - `passes` only when the user dictates them; a pass must answer a
      currently-flagged ticker or it is skipped with a message.
    - Zero fills is normal: ingest the empty doc anyway — the run header is
@@ -118,7 +133,8 @@ against scorer.db directly.
    - Never paste raw MCP payloads into the conversation; on any error report
      the exception type name only, same as elsewhere in this skill.
 6. Report the printed counts (matched / freelance / exits / passes /
-   duplicates / skipped), plus the reconciliation result from step 5.
+   duplicates / skipped / expired), plus the reconciliation result from
+   step 5.
 
 ## Manual path
 
@@ -126,8 +142,9 @@ The user dictates a trade ("bought 2 XLE at 94.30 Tuesday morning"): build
 the same document without `order_ref` (rows record as `source: manual`).
 `filled_at` must be a full timestamp — if the user only knows the day, use
 `<date>T16:00:00+00:00` (9am Phoenix, regular session); a bare date is
-rejected by the parser. Manual rows have no idempotency key — check
-`v_decision_outcomes` for an existing row before re-dictating.
+rejected by the parser. Manual rows get a synthetic idempotency key over
+their identifying fields (including `contract_ref`), so re-dictating the
+same fill is a counted duplicate, not a double-book.
 
 ## Rules
 

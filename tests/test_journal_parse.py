@@ -157,3 +157,72 @@ def test_parse_verdicts_validates_and_uppercases():
 
 def test_parse_empty_doc_returns_four_empty():
     assert journal.parse_doc({}) == ([], [], [], 0)
+
+
+def _option_fill(**kw):
+    base = _fill(
+        symbol="AAPL",
+        price=2.50,
+        quantity=1,
+        order_ref="opt-1",
+        contract_ref="AAPL260821C00250000",
+        position_effect="open",
+        right="call",
+        expiration="2026-08-21",
+    )
+    base.update(kw)
+    return base
+
+
+def test_option_open_derives_directional_side():
+    # (broker side, right) -> directional intent; sell here is sell-to-open.
+    cases = [
+        (("buy", "call"), "buy"),
+        (("buy", "put"), "sell"),
+        (("sell", "call"), "sell"),
+        (("sell", "put"), "buy"),
+    ]
+    for i, ((side, right), want) in enumerate(cases):
+        fills, _, _, skipped = journal.parse_doc(
+            {"fills": [_option_fill(side=side, right=right, order_ref=f"o{i}")]}
+        )
+        assert skipped == 0 and fills[0]["side"] == want, (side, right)
+        assert fills[0]["contract_ref"] == "AAPL260821C00250000"
+        assert fills[0]["position_effect"] == "open"
+        assert fills[0]["expiration"] == "2026-08-21"
+
+
+def test_option_close_needs_no_right_or_expiration():
+    fills, _, _, skipped = journal.parse_doc(
+        {"fills": [_option_fill(position_effect="close", right=None, expiration=None)]}
+    )
+    assert skipped == 0
+    assert fills[0]["position_effect"] == "close"
+    assert fills[0]["side"] == "buy"  # broker side passes through untouched
+
+
+def test_option_fill_validation_skips_and_counts():
+    doc = {
+        "fills": [
+            _option_fill(position_effect=None),  # option fills need an effect
+            _option_fill(position_effect="expire"),  # bad enum
+            _option_fill(right=None),  # open without a right: no direction
+            _option_fill(right="warrant"),  # bad right
+            _option_fill(expiration=None),  # open without expiration
+            _option_fill(expiration="2026-08-21T00:00:00"),  # timestamp, not date
+            _option_fill(expiration="2026-13-40"),  # not a real date
+            _option_fill(multi_leg=True),  # spec: refuse multi-leg at the parser
+            _option_fill(),  # valid control
+        ]
+    }
+    fills, _, _, skipped = journal.parse_doc(doc)
+    assert len(fills) == 1 and skipped == 8
+
+
+def test_strategy_ref_passthrough():
+    fills, _, _, skipped = journal.parse_doc(
+        {"fills": [_option_fill(strategy_ref="ord-77"), _fill(order_ref="eq-1")]}
+    )
+    assert skipped == 0
+    assert fills[0]["strategy_ref"] == "ord-77"
+    assert fills[1]["strategy_ref"] is None  # equity fill: absent -> None

@@ -183,3 +183,62 @@ def test_placed_agent_exposed_in_views(tmp_path):
     assert conn.execute(
         "SELECT placed_agent FROM v_decision_outcomes WHERE symbol = 'NVDA'"
     ).fetchone() == ("drip",)
+
+
+def test_option_decision_grades_selection_only(tmp_path):
+    # Q0 decision (i): a contract_ref row grades WHICH flag was acted on,
+    # never P&L — a premium divided by a stock close is not slippage, and a
+    # premium round-trip is not benchmarked. Both legs must be NULL even
+    # when the raw inputs are present. Alignment (selection) survives.
+    conn = _seeded(tmp_path)
+    _decide(
+        conn,
+        fill_price=2.50,
+        contract_ref="XLE260821C00095000",
+        position_effect="open",
+        expiration="2026-08-21",
+        exit_fill_date="2026-07-13",
+        exit_fill_price=3.10,
+    )
+    row = conn.execute(
+        "SELECT entry_slippage, realized_return, aligned, fwd_return, contract_ref"
+        " FROM v_decision_outcomes WHERE horizon = 5"
+    ).fetchone()
+    assert row[0] is None and row[1] is None
+    assert row[2] == 1  # directional buy on a bull opinion: selection graded
+    assert row[3] == 0.04  # the flag's own paper legs stay visible
+    assert row[4] == "XLE260821C00095000"
+
+
+def test_flag_response_acted_option_is_its_own_bucket(tmp_path):
+    conn = _seeded(tmp_path)
+    _decide(conn, contract_ref="XLE260821C00095000", position_effect="open")
+    row = conn.execute(
+        "SELECT response FROM v_flag_response WHERE symbol = 'XLE' AND horizon = 5"
+    ).fetchone()
+    assert row[0] == "acted_option"
+    # an aligned EQUITY action on the same flag takes precedence
+    _decide(conn, fill_price=100.5)
+    row = conn.execute(
+        "SELECT response FROM v_flag_response WHERE symbol = 'XLE' AND horizon = 5"
+    ).fetchone()
+    assert row[0] == "acted"
+
+
+def test_freelance_option_realized_return_null(tmp_path):
+    conn = _seeded(tmp_path)
+    _decide(
+        conn,
+        symbol="NVDA",
+        composite_snapshot_id=None,
+        composite_date=None,
+        opinion_score_sum=None,
+        opinion_total=None,
+        fill_price=2.50,
+        contract_ref="NVDA260821C00180000",
+        position_effect="open",
+        exit_fill_date="2026-07-13",
+        exit_fill_price=3.10,
+    )
+    row = conn.execute("SELECT realized_return, contract_ref FROM v_freelance").fetchone()
+    assert row[0] is None and row[1] == "NVDA260821C00180000"

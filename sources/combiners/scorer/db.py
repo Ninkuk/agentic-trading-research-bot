@@ -173,6 +173,18 @@ CREATE TABLE IF NOT EXISTS decisions (
     exit_order_ref        TEXT UNIQUE,
     note                  TEXT,
     placed_agent          TEXT,
+    -- Option identity (all NULL = equity row; 2026-07 options migration).
+    -- symbol stays the UNDERLYING (matching is per-ticker) and side is the
+    -- DIRECTIONAL intent derived from (broker side, right) at parse time.
+    -- Option rows grade SELECTION only — the views NULL their P&L legs
+    -- (a premium over a stock close is not slippage) until an option
+    -- premium ledger exists. contract_ref is the OCC symbol; strategy_ref
+    -- groups legs of one multi-leg order (refused at the parser today);
+    -- expiration feeds the journal's terminal-event sweep.
+    contract_ref          TEXT,
+    strategy_ref          TEXT,
+    position_effect       TEXT CHECK (position_effect IN ('open', 'close')),
+    expiration            TEXT,
     source                TEXT NOT NULL DEFAULT 'mcp'
                           CHECK (source IN ('mcp', 'manual')),
     recorded_at           TEXT NOT NULL
@@ -198,7 +210,8 @@ CREATE TABLE IF NOT EXISTS journal_runs (
     exits_attached     INTEGER NOT NULL DEFAULT 0,
     passes_recorded    INTEGER NOT NULL DEFAULT 0,
     duplicates_skipped INTEGER NOT NULL DEFAULT 0,
-    skipped            INTEGER NOT NULL DEFAULT 0
+    skipped            INTEGER NOT NULL DEFAULT 0,
+    expired_closed     INTEGER NOT NULL DEFAULT 0
 );
 
 -- Research-verdict ledger: the research-ticker skill's own graded filter
@@ -386,9 +399,16 @@ SELECT 'regime', composite_date, COALESCE(regime, '?'), horizon,
 -- entry_slippage is signed so positive is always cost (buys: paid above
 -- paper entry; sells: received below it); fill_lag_days tells true
 -- slippage from drift on late fills. realized_return is fills-only.
+-- Option rows (contract_ref NOT NULL) grade SELECTION only: their
+-- entry_slippage and realized_return are forced NULL — fill_price is a
+-- premium, entry_close a stock close, and no premium ledger exists to
+-- grade an option on its own terms. aligned survives (side is the
+-- directional intent derived at parse time), and the flag's own paper
+-- legs stay visible.
 DROP VIEW IF EXISTS v_decision_outcomes;
 CREATE VIEW v_decision_outcomes AS
 SELECT d.id AS decision_id, d.symbol, d.side, d.source, d.placed_agent,
+       d.contract_ref, d.strategy_ref, d.position_effect, d.expiration,
        d.composite_snapshot_id, d.composite_date,
        d.opinion_score_sum, d.opinion_total,
        d.fill_date, d.fill_price, d.quantity,
@@ -400,10 +420,12 @@ SELECT d.id AS decision_id, d.symbol, d.side, d.source, d.placed_agent,
        CASE WHEN d.opinion_score_sum IS NULL THEN NULL
             WHEN d.side = 'buy' THEN (d.opinion_score_sum > 0)
             ELSE (d.opinion_score_sum < 0) END AS aligned,
-       CASE WHEN t.entry_close IS NULL THEN NULL
+       CASE WHEN d.contract_ref IS NOT NULL THEN NULL
+            WHEN t.entry_close IS NULL THEN NULL
             WHEN d.side = 'sell' THEN 1 - d.fill_price / t.entry_close
             ELSE d.fill_price / t.entry_close - 1 END AS entry_slippage,
-       CASE WHEN d.exit_fill_price IS NULL THEN NULL
+       CASE WHEN d.contract_ref IS NOT NULL THEN NULL
+            WHEN d.exit_fill_price IS NULL THEN NULL
             WHEN d.side = 'sell' THEN 1 - d.exit_fill_price / d.fill_price
             ELSE d.exit_fill_price / d.fill_price - 1 END AS realized_return
 FROM decisions d
@@ -427,9 +449,12 @@ WHERE d.action = 'acted';
 -- otherwise flip a bull flag to 'acted', poisoning v_human_filter — the
 -- exact comparison this view exists for. Non-aligned trades stay visible
 -- in v_decision_outcomes (aligned = 0); they just don't answer the flag.
--- MIN(action) is the precedence trick: 'acted' < 'passed' alphabetically,
--- so acting ever beats passing. dir_excess is excess return in the flag's
--- direction.
+-- MIN over the label is the precedence trick: 'acted' < 'acted_option' <
+-- 'passed' < 'passed_inferred' alphabetically, so an equity act beats an
+-- option act beats a pass. acted_option is its own bucket: the flag's
+-- dir_excess still grades the SELECTION (did the flagged name move?), but
+-- must never be read as the option position's P&L. dir_excess is excess
+-- return in the flag's direction.
 DROP VIEW IF EXISTS v_flag_response;
 CREATE VIEW v_flag_response AS
 SELECT t.composite_snapshot_id, t.composite_date, t.symbol,
@@ -439,7 +464,10 @@ SELECT t.composite_snapshot_id, t.composite_date, t.symbol,
             WHEN t.score_sum > 0 THEN t.fwd_return - t.bench_fwd_return
             ELSE t.bench_fwd_return - t.fwd_return END AS dir_excess,
        COALESCE(
-           (SELECT MIN(d.action) FROM decisions d
+           (SELECT MIN(CASE WHEN d.action = 'passed' THEN 'passed'
+                            WHEN d.contract_ref IS NULL THEN 'acted'
+                            ELSE 'acted_option' END)
+            FROM decisions d
             JOIN registered_snapshots sib
               ON sib.composite_snapshot_id = d.composite_snapshot_id
             WHERE sib.entry_date = owner.entry_date AND d.symbol = t.symbol
@@ -466,9 +494,10 @@ GROUP BY response, horizon;
 -- filter on placed_agent to see only deliberate freelance trades.
 DROP VIEW IF EXISTS v_freelance;
 CREATE VIEW v_freelance AS
-SELECT id AS decision_id, symbol, side, fill_date, fill_price, quantity,
-       exit_fill_date, exit_fill_price,
-       CASE WHEN exit_fill_price IS NULL THEN NULL
+SELECT id AS decision_id, symbol, side, contract_ref, fill_date, fill_price,
+       quantity, exit_fill_date, exit_fill_price,
+       CASE WHEN contract_ref IS NOT NULL THEN NULL
+            WHEN exit_fill_price IS NULL THEN NULL
             WHEN side = 'sell' THEN 1 - exit_fill_price / fill_price
             ELSE exit_fill_price / fill_price - 1 END AS realized_return,
        note, placed_agent, source, recorded_at
@@ -540,10 +569,22 @@ def ensure_schema(conn) -> None:
     cols = {r[1] for r in conn.execute("PRAGMA table_info(decisions)")}
     if "placed_agent" not in cols:
         conn.execute("ALTER TABLE decisions ADD COLUMN placed_agent TEXT")
+    for ddl in (
+        "contract_ref TEXT",
+        "strategy_ref TEXT",
+        "position_effect TEXT CHECK (position_effect IN ('open', 'close'))",
+        "expiration TEXT",
+    ):
+        if ddl.split()[0] not in cols:
+            conn.execute(f"ALTER TABLE decisions ADD COLUMN {ddl}")
     cols = {r[1] for r in conn.execute("PRAGMA table_info(journal_runs)")}
     if "verdicts_recorded" not in cols:
         conn.execute(
             "ALTER TABLE journal_runs ADD COLUMN verdicts_recorded INTEGER NOT NULL DEFAULT 0"
+        )
+    if "expired_closed" not in cols:
+        conn.execute(
+            "ALTER TABLE journal_runs ADD COLUMN expired_closed INTEGER NOT NULL DEFAULT 0"
         )
     conn.executescript(_VIEWS)
     conn.commit()

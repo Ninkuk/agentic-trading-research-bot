@@ -231,3 +231,123 @@ def test_sell_never_exits_automatic_buy(tmp_path):
         "SELECT order_ref FROM decisions WHERE exit_fill_date IS NOT NULL"
     ).fetchall()
     assert exited == [("b1",)]  # FIFO skipped the older drip lot
+
+
+def _ofill(**kw):
+    """A parsed option fill as parse_doc emits it: side already directional
+    for opens, contract identity carried alongside."""
+    base = _fill(
+        symbol="XLE",
+        price=2.50,
+        quantity=1.0,
+        order_ref="opt-1",
+        contract_ref="XLE260821C00095000",
+        strategy_ref=None,
+        position_effect="open",
+        expiration="2026-08-21",
+    )
+    base.update(kw)
+    return base
+
+
+def test_ingest_option_open_matches_underlying(tmp_path):
+    conn, sids = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    counts = journal.ingest(conn, [_ofill()], [], [], NOW)
+    assert counts["matched"] == 1
+    row = conn.execute(
+        "SELECT symbol, side, contract_ref, position_effect, expiration,"
+        " composite_snapshot_id FROM decisions"
+    ).fetchone()
+    assert row == ("XLE", "buy", "XLE260821C00095000", "open", "2026-08-21", sids[0])
+
+
+def test_option_close_attaches_by_contract_not_symbol(tmp_path):
+    # Two live XLE contracts; closing one must not exit the other.
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(order_ref="o1", contract_ref="XLE260821C00095000"),
+        _ofill(
+            order_ref="o2",
+            contract_ref="XLE260918C00100000",
+            filled_at="2026-07-08T14:00:00+00:00",
+            fill_date="2026-07-08",
+        ),
+        _ofill(
+            order_ref="c1",
+            contract_ref="XLE260918C00100000",
+            position_effect="close",
+            side="sell",
+            price=3.10,
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+    ]
+    counts = journal.ingest(conn, fills, [], [], NOW)
+    assert counts["exits_attached"] == 1
+    rows = conn.execute(
+        "SELECT order_ref, exit_fill_price FROM decisions ORDER BY order_ref"
+    ).fetchall()
+    assert rows == [("o1", None), ("o2", 3.10)]
+
+
+def test_option_close_without_open_skips_never_creates(tmp_path):
+    # Spec: a close fill never creates a decision (pre-migration opens,
+    # sell-to-close ambiguity). It is skipped and counted, loudly.
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    counts = journal.ingest(conn, [_ofill(position_effect="close", side="sell")], [], [], NOW)
+    assert counts["skipped"] == 1 and counts["exits_attached"] == 0
+    assert conn.execute("SELECT COUNT(*) FROM decisions").fetchone()[0] == 0
+
+
+def test_equity_sell_never_exits_option_decision(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(order_ref="o1"),  # option open on XLE, directional buy
+        _fill(
+            order_ref="s1",
+            side="sell",
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+    ]
+    journal.ingest(conn, fills, [], [], NOW)
+    # the equity sell found no equity open buy: it must fall through as its
+    # own (sell) decision, leaving the option row un-exited
+    rows = conn.execute(
+        "SELECT order_ref, exit_fill_date FROM decisions ORDER BY order_ref"
+    ).fetchall()
+    assert rows == [("o1", None), ("s1", None)]
+
+
+def test_expiry_sweep_closes_stale_option(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    journal.ingest(conn, [_ofill(expiration="2026-07-18")], [], [], NOW)
+    # NOW maps to Phoenix 2026-07-08: not expired yet, still open
+    assert (
+        conn.execute("SELECT COUNT(*) FROM decisions WHERE exit_fill_date IS NULL").fetchone()[0]
+        == 1
+    )
+    # a later run (past expiry) synthesizes the terminal event
+    counts = journal.ingest(conn, [], [], [], "2026-07-20T21:40:00+00:00")
+    assert counts["expired_closed"] == 1
+    row = conn.execute(
+        "SELECT exit_fill_date, exit_fill_price, exit_order_ref FROM decisions"
+    ).fetchone()
+    assert row[0] == "2026-07-18" and row[1] == 0.0
+    assert row[2].startswith("expired:XLE260821C00095000")
+
+
+def test_manual_option_dedup_distinguishes_contracts(tmp_path):
+    # Same underlying, timestamp, side, price, quantity — different contracts.
+    # The synthetic manual key must not collapse them.
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(order_ref=None, contract_ref="XLE260821C00095000"),
+        _ofill(order_ref=None, contract_ref="XLE260918C00100000"),
+    ]
+    counts = journal.ingest(conn, fills, [], [], NOW)
+    assert counts["duplicates_skipped"] == 0
+    assert conn.execute("SELECT COUNT(*) FROM decisions").fetchone()[0] == 2
+    # re-ingesting the same doc is a no-op
+    counts = journal.ingest(conn, fills, [], [], NOW)
+    assert counts["duplicates_skipped"] == 2

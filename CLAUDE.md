@@ -91,7 +91,10 @@ other source: registered in `registry.py`, dispatched via `main.py composite ...
 re-weighting the catalog is a human decision made by reading `v_signal_efficacy`/
 `v_bucket_performance`. The scorer package also owns the decision journal (`main.py journal --input <file|->`, fed by the
 `.claude/skills/journal-sync` MCP skill like `portfolio`): human fills and passes land in scorer.db `decisions` (never pruned) and are compared to
-paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`.
+paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`. Single-leg option
+fills journal with contract identity (`contract_ref`/`position_effect`) but grade **selection
+only** — their P&L columns are NULL by design (no premium ledger exists), and they land in
+`v_flag_response` as their own `acted_option` bucket.
 The `advisor` combiner joins the latest scorecard against real holdings
 (portfolio.db read-only: `v_latest_*` views plus the `snapshots` header
 timestamp) plus stocks/etfs ATR and scorer
