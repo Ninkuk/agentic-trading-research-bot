@@ -75,7 +75,14 @@ def read_snapshots(conn) -> list:
 
 def read_ticker_scores(conn, csid) -> list:
     return [
-        dict(symbol=r[0], score_sum=r[1], total=r[2], bullish=r[3], bearish=r[4], in_portfolio=r[5])
+        dict(
+            symbol=r[0],
+            score_sum=r[1],
+            total=r[2],
+            bullish=r[3],
+            bearish=r[4],
+            in_portfolio=r[5],
+        )
         for r in conn.execute(
             "SELECT symbol, score_sum, total, bullish, bearish,"
             " in_portfolio FROM src.ticker_scores"
