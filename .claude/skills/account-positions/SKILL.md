@@ -36,6 +36,13 @@ directly.
    Field aliases accepted per position: `quantity`/`shares`,
    `average_buy_price`/`avg_cost`/`average_cost`, `market_value`/`equity`
    (see `sources/screeners/portfolio_screener/catalog.py`).
+
+   `account.equity` is the account's total value **including cash** (take
+   `get_portfolio`'s equity as-is — with zero positions it equals cash, not
+   0). To revise the file, re-`Write` the whole document: the headless slot
+   allowlists `Write` but not `Edit`, so an `Edit` call dies on a permission
+   prompt no one is there to approve (this exact failure produced the
+   2026-07-23 stale-snapshot alert).
 3. Ingest:
 
    ```bash
