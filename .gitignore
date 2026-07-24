@@ -8,30 +8,16 @@ screener.db
 *.db-wal
 *.db-shm
 .env
-
-# Playwright MCP session artifacts
 .playwright-mcp/
-
-# MCP payloads staged for `main.py portfolio|journal --input` (live account state)
 scratchpad/
 
 # Claude Code: the project skills ship (account-positions and journal-sync are the
 # only paths live account state enters the system), personal config does not.
 .claude/*
 !.claude/skills/
-
 data/
-
-# Finder metadata
 .DS_Store
-
-# launchd job logs
 logs/
-
-# generated nightly dashboard (source lives in deploy/launchd/dashboard.py)
 reports/
-
-# transient spec -> plan -> build artifacts (git history is the durable record)
-plans/
 docs/plans/
 docs/superpowers/

@@ -190,18 +190,6 @@ is a MEAN, never a ceiling). Not registered in `registry.py`; they are not data 
 
 ## Workflow for a new screener/monitor
 
-The repo follows **spec → plan → build**. Both artifacts are transient and **local-only** —
-design specs at `docs/superpowers/specs/<date>-<name>-design.md`, implementation plans at
-`plans/<NNN>-<name>.md` indexed by a status table in `plans/README.md` (TODO | IN PROGRESS |
-DONE | BLOCKED | REJECTED). Both paths are gitignored, so recreate `plans/README.md` with the
-first plan of a batch and let the files sit untracked; there is no `docs:` commit to clear
-them and no need to `git rm` anything.
-
-Because they are never committed, **the commit message is the only durable record of what
-adversarial review broke** — which is usually the most valuable thing a plan produces. Write
-it into the commit body when a plan ships: the failure a reviewer found, not just the feature
-that landed. (Plans committed before 2026-07-21 still live in history and can be read there.)
-
 **Everything runs on a launchd schedule** — see `docs/SCHEDULE.md` (durable reference:
 per-job slots, scheduling constraints, ops). Source of truth is `deploy/launchd/install.py`;
 after changing a screener's cadence assumptions, update both.

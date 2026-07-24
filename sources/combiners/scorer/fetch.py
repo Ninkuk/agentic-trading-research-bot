@@ -7,8 +7,6 @@ from sources.common.dbattach import attach_ro, detach  # noqa: F401  (re-exporte
 def harvest_prices(conn) -> list:
     """(symbol, price_date, close) across ALL retained source snapshots.
 
-    Two rules, both learned the hard way (see plans/000-*.md):
-
     1) Read "price", NOT "close". stockanalysis names these from a live-quote
        perspective: `price` is the last close for `priceDate`, while `close` is
        the PREVIOUS session's close. Harvesting "close" stamped every close with
