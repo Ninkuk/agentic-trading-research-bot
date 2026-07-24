@@ -74,6 +74,58 @@ def read_positions(conn) -> list:
     ]
 
 
+def read_option_positions(conn) -> list:
+    """Option legs from portfolio.db's latest snapshot. A portfolio.db
+    written before option capture has no v_latest_option_positions — that is
+    an empty book, not an error, and must not fail the whole portfolio read
+    (which would masquerade real equity as an empty book)."""
+    if (
+        conn.execute(
+            "SELECT name FROM src.sqlite_master WHERE name = 'v_latest_option_positions'"
+        ).fetchone()
+        is None
+    ):
+        return []
+    return [
+        {
+            "occ_symbol": r[0],
+            "underlying": r[1],
+            "type": r[2],
+            "expiration": r[3],
+            "quantity": r[4],
+            "avg_cost": r[5],
+            "market_value": r[6],
+            "multiplier": r[7],
+        }
+        for r in conn.execute(
+            "SELECT occ_symbol, underlying, type, expiration, quantity,"
+            " avg_cost, market_value, multiplier FROM src.v_latest_option_positions"
+        )
+    ]
+
+
+def read_option_deltas(conn, occ_symbols) -> dict:
+    """occ_symbol -> {delta, delta_date} from options.db (cboe_options),
+    latest snapshot per CONTRACT — contracts age out of the chain at
+    different times, so a shared MAX(snapshot_date) would drop laggards.
+    A contract outside the catalog's 24 underlyings is simply absent;
+    build_option_heat marks it uncovered."""
+    syms = sorted(occ_symbols)
+    if not syms:
+        return {}
+    qmarks = ",".join("?" * len(syms))
+    return {
+        r[0]: {"delta": r[1], "delta_date": r[2]}
+        for r in conn.execute(
+            f"SELECT occ_symbol, delta, snapshot_date FROM src.option_snapshots o"
+            f" WHERE occ_symbol IN ({qmarks}) AND source = 'cboe'"
+            f" AND snapshot_date = (SELECT MAX(snapshot_date) FROM src.option_snapshots o2"
+            f" WHERE o2.occ_symbol = o.occ_symbol AND o2.source = 'cboe')",
+            syms,
+        )
+    }
+
+
 def read_metrics(conn, symbols) -> dict:
     """symbol -> {atr, close, price_date} from a price DB's v_latest.
     Column names are stockanalysis.com camelCase — keep them quoted.

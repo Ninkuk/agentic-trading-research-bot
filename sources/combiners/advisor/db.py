@@ -15,6 +15,12 @@ from datetime import date, datetime, timedelta
 STRONG_MIN_ABS_SCORE = 3
 STRONG_MIN_TOTAL = 2
 
+# Standard US equity option deliverable when the broker reports none.
+# Split-adjusted contracts deviate (and options.db carries no multiplier
+# either); rare enough that refusing heat on every multiplier-less leg
+# would neuter coverage, common enough to note here.
+DEFAULT_CONTRACT_MULTIPLIER = 100.0
+
 _TABLES = """
 CREATE TABLE IF NOT EXISTS snapshots (
     id                    INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,6 +53,37 @@ CREATE TABLE IF NOT EXISTS position_heat (
     total        INTEGER,
     atr_stale    INTEGER,
     PRIMARY KEY (snapshot_id, symbol)
+);
+
+-- Option legs beside position_heat, keyed by CONTRACT (two contracts on one
+-- underlying are two rows). heat_dollars = delta x multiplier x quantity x
+-- ATR(underlying), SIGNED end to end: put deltas are negative, short
+-- quantities are negative (pinned at portfolio capture), so a protective
+-- put carries negative heat and NETS against the shares inside
+-- v_group_heat — abs() per leg manufactured a 3x overstatement in the
+-- spec's adversarial review. uncovered = short leg (tail loss unbounded;
+-- no one-ATR number expresses it) OR heat inputs missing/stale.
+CREATE TABLE IF NOT EXISTS option_heat (
+    snapshot_id  INTEGER NOT NULL REFERENCES snapshots(id),
+    occ_symbol   TEXT NOT NULL,
+    underlying   TEXT NOT NULL,
+    group_name   TEXT,
+    type         TEXT,
+    expiration   TEXT,
+    quantity     REAL NOT NULL,
+    multiplier   REAL,
+    market_value REAL,
+    delta        REAL,
+    delta_date   TEXT,
+    atr          REAL,
+    price        REAL,
+    price_date   TEXT,
+    share_equiv  REAL,
+    heat_dollars REAL,
+    heat_pct     REAL,
+    uncovered    INTEGER NOT NULL DEFAULT 0,
+    short_leg    INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (snapshot_id, occ_symbol)
 );
 
 CREATE TABLE IF NOT EXISTS size_caps (
@@ -100,36 +137,72 @@ CREATE VIEW v_latest_heat AS
 SELECT p.* FROM position_heat p
 JOIN v_latest_snapshot l ON p.snapshot_id = l.id;
 
--- One row of book totals. heat_coverage = share of book market value with
--- a usable ATR, so missing metrics can never silently understate heat.
--- LEFT JOIN so an empty book still yields a row (0 positions, NULL heat).
+DROP VIEW IF EXISTS v_latest_option_heat;
+CREATE VIEW v_latest_option_heat AS
+SELECT o.* FROM option_heat o
+JOIN v_latest_snapshot l ON o.snapshot_id = l.id;
+
+-- CROSSWALK groups collapsed to one bet; ungrouped symbols are their own
+-- single-member bet. Equity and option legs land in the same bet (a call
+-- on a held underlying is the same exposure), and the group NETS signed
+-- heat BEFORE taking magnitude: heat_dollars = |sum of signed legs| (a
+-- protective put reduces the bet), net_heat_dollars keeps the sign.
+DROP VIEW IF EXISTS v_group_heat;
+CREATE VIEW v_group_heat AS
+SELECT snapshot_id,
+       bet,
+       MAX(group_name) AS group_name,
+       COUNT(*) AS members,
+       GROUP_CONCAT(leg) AS symbols,
+       ABS(SUM(heat_dollars)) AS heat_dollars,
+       SUM(heat_dollars) AS net_heat_dollars,
+       ABS(SUM(heat_pct)) AS heat_pct
+FROM (
+    SELECT snapshot_id, COALESCE(group_name, symbol) AS bet, group_name,
+           symbol AS leg, heat_dollars, heat_pct
+    FROM v_latest_heat
+    UNION ALL
+    SELECT snapshot_id, COALESCE(group_name, underlying), group_name,
+           occ_symbol, heat_dollars, heat_pct
+    FROM v_latest_option_heat
+)
+GROUP BY snapshot_id, bet;
+
+-- One row of book totals. heat_dollars sums GROUP magnitudes (identical to
+-- the old per-position sum for an all-long equity book). heat_coverage =
+-- share of book |market value| whose heat inputs are usable — option legs
+-- weigh in by |market_value| and a short/inputless leg counts uncovered,
+-- so missing metrics can never silently understate heat; a leg with NULL
+-- market_value cannot be weighted, which is why uncovered_option_legs is a
+-- COUNT and must be read alongside coverage. Scalar subqueries so an empty
+-- book still yields a row (0 positions, NULL heat).
 -- sources_failed rides along: 0 positions is only believable when 0 failed.
 DROP VIEW IF EXISTS v_book_heat;
 CREATE VIEW v_book_heat AS
 SELECT s.id AS snapshot_id, s.captured_at, s.equity, s.sources_failed,
-       COUNT(p.symbol) AS positions,
-       SUM(p.heat_dollars) AS heat_dollars,
-       SUM(p.heat_pct) AS heat_pct,
-       CASE WHEN SUM(p.market_value) > 0 THEN
-            SUM(CASE WHEN p.atr IS NOT NULL THEN p.market_value ELSE 0 END)
-            * 1.0 / SUM(p.market_value) END AS heat_coverage
-FROM snapshots s LEFT JOIN position_heat p ON p.snapshot_id = s.id
-WHERE s.id IN (SELECT id FROM v_latest_snapshot)
-GROUP BY s.id, s.captured_at, s.equity, s.sources_failed;
-
--- CROSSWALK groups collapsed to one bet; ungrouped symbols are their own
--- single-member bet (exposure adds within a group).
-DROP VIEW IF EXISTS v_group_heat;
-CREATE VIEW v_group_heat AS
-SELECT snapshot_id,
-       COALESCE(group_name, symbol) AS bet,
-       group_name,
-       COUNT(*) AS members,
-       GROUP_CONCAT(symbol) AS symbols,
-       SUM(heat_dollars) AS heat_dollars,
-       SUM(heat_pct) AS heat_pct
-FROM v_latest_heat
-GROUP BY snapshot_id, COALESCE(group_name, symbol);
+       (SELECT COUNT(*) FROM position_heat p WHERE p.snapshot_id = s.id) AS positions,
+       (SELECT COUNT(*) FROM option_heat o WHERE o.snapshot_id = s.id) AS option_legs,
+       (SELECT SUM(g.heat_dollars) FROM v_group_heat g
+        WHERE g.snapshot_id = s.id) AS heat_dollars,
+       (SELECT SUM(g.heat_pct) FROM v_group_heat g
+        WHERE g.snapshot_id = s.id) AS heat_pct,
+       CASE WHEN COALESCE((SELECT SUM(p.market_value) FROM position_heat p
+                           WHERE p.snapshot_id = s.id), 0)
+               + COALESCE((SELECT SUM(ABS(o.market_value)) FROM option_heat o
+                           WHERE o.snapshot_id = s.id), 0) > 0 THEN
+            (COALESCE((SELECT SUM(CASE WHEN p.atr IS NOT NULL THEN p.market_value ELSE 0 END)
+                       FROM position_heat p WHERE p.snapshot_id = s.id), 0)
+           + COALESCE((SELECT SUM(CASE WHEN o.uncovered = 0 THEN ABS(o.market_value) ELSE 0 END)
+                       FROM option_heat o WHERE o.snapshot_id = s.id), 0)) * 1.0
+          / (COALESCE((SELECT SUM(p.market_value) FROM position_heat p
+                       WHERE p.snapshot_id = s.id), 0)
+           + COALESCE((SELECT SUM(ABS(o.market_value)) FROM option_heat o
+                       WHERE o.snapshot_id = s.id), 0))
+       END AS heat_coverage,
+       (SELECT COUNT(*) FROM option_heat o
+        WHERE o.snapshot_id = s.id AND o.uncovered = 1) AS uncovered_option_legs
+FROM snapshots s
+WHERE s.id IN (SELECT id FROM v_latest_snapshot);
 
 -- Holdings today's composite scores negative (long book: bearish evidence
 -- against something held). strong mirrors composite v_flagged thresholds.
@@ -182,7 +255,7 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     if not ids:
         return 0
     qmarks = ",".join("?" * len(ids))
-    for child in ("position_heat", "size_caps", "exit_advice"):
+    for child in ("position_heat", "option_heat", "size_caps", "exit_advice"):
         conn.execute(f"DELETE FROM {child} WHERE snapshot_id IN ({qmarks})", ids)
     conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
     conn.commit()
@@ -266,6 +339,63 @@ def build_position_heat(
                 "bearish": sc.get("bearish"),
                 "total": sc.get("total"),
                 "atr_stale": atr_stale,
+            }
+        )
+    return rows
+
+
+def build_option_heat(
+    option_positions, metrics, deltas, equity, today, ticker_group, atr_max_age_days
+) -> list:
+    """One row per held option leg. heat = delta x multiplier x quantity x
+    ATR(underlying), SIGNED (see the option_heat DDL comment). NULL
+    discipline mirrors exit_advice, not position_heat: a STALE delta refuses
+    to compute (a plausible-but-wrong share-equivalent is worse than an
+    absent one), where a stale ATR merely flags. uncovered = 1 for any leg
+    whose heat could not be computed AND for every short leg — the tail
+    loss of a short option is unbounded, which no one-ATR number
+    expresses, so v_book_heat must report the book as not fully covered."""
+    rows = []
+    for o in option_positions:
+        und = o["underlying"]
+        m = metrics.get(und, {})
+        atr, close, pdate = m.get("atr"), m.get("close"), m.get("price_date")
+        d = deltas.get(o["occ_symbol"], {})
+        delta, ddate = d.get("delta"), d.get("delta_date")
+        mult = o.get("multiplier")
+        mult = float(mult) if _finite(mult) and mult > 0 else DEFAULT_CONTRACT_MULTIPLIER
+        quantity = o["quantity"]
+        fresh_delta = (
+            _finite(delta)
+            and isinstance(ddate, str)
+            and _age_days(today, ddate) <= atr_max_age_days
+        )
+        share_equiv = delta * mult * quantity if fresh_delta and _finite(quantity) else None
+        heat_dollars = (
+            share_equiv * atr if share_equiv is not None and _finite(atr) and atr > 0 else None
+        )
+        heat_pct = heat_dollars / equity if heat_dollars is not None and equity else None
+        short_leg = _finite(quantity) and quantity < 0
+        rows.append(
+            {
+                "occ_symbol": o["occ_symbol"],
+                "underlying": und,
+                "group_name": ticker_group.get(und),
+                "type": o.get("type"),
+                "expiration": o.get("expiration"),
+                "quantity": quantity,
+                "multiplier": mult,
+                "market_value": o.get("market_value"),
+                "delta": delta if _finite(delta) else None,
+                "delta_date": ddate,
+                "atr": atr,
+                "price": close,
+                "price_date": pdate,
+                "share_equiv": share_equiv,
+                "heat_dollars": heat_dollars,
+                "heat_pct": heat_pct,
+                "uncovered": 1 if (short_leg or heat_dollars is None) else 0,
+                "short_leg": 1 if short_leg else 0,
             }
         )
     return rows
@@ -362,6 +492,7 @@ def build_size_caps(
     ticker_group,
     flag_signals,
     reliable_ids,
+    option_heat_rows=(),
 ) -> list:
     """One row per flagged ticker. The cap inverts the risk budget and
     shrinks by heat already carried through the same crosswalk group (a
@@ -376,6 +507,11 @@ def build_size_caps(
     scorer's n_bench >= 30 sample floor, not proof a signal works);
     flag_signals/reliable_ids intersect on (signal_id, via_crosswalk)
     pairs so crosswalk-only reliability never cites as direct evidence."""
+    # Signed accumulation, magnitude at consumption — mirroring v_group_heat:
+    # a group is one bet, its legs (equity shares AND option delta-dollars)
+    # net first, then |net| is the heat the cap budget sees. A hedge frees
+    # budget; a levered call consumes it. An option leg also marks its
+    # underlying held: a call on XLE is XLE exposure.
     group_heat: dict = {}
     held = set()
     for r in heat_rows:
@@ -383,12 +519,17 @@ def build_size_caps(
         if r["heat_dollars"] is not None:
             bet = r["group_name"] or r["symbol"]
             group_heat[bet] = group_heat.get(bet, 0.0) + r["heat_dollars"]
+    for r in option_heat_rows:
+        held.add(r["underlying"])
+        if r["heat_dollars"] is not None:
+            bet = r["group_name"] or r["underlying"]
+            group_heat[bet] = group_heat.get(bet, 0.0) + r["heat_dollars"]
     rows = []
     for sym in flagged:
         sc = scorecard.get(sym, {})
         m = metrics.get(sym, {})
         atr, close = m.get("atr"), m.get("close")
-        existing = group_heat.get(ticker_group.get(sym) or sym, 0.0)
+        existing = abs(group_heat.get(ticker_group.get(sym) or sym, 0.0))
         score_sum = sc.get("score_sum")
         direction = "bullish" if (score_sum or 0) > 0 else "bearish"
         cap_shares = cap_dollars = None
@@ -430,6 +571,20 @@ def write_position_heat(conn, sid, rows) -> int:
         " VALUES (:sid, :symbol, :group_name, :quantity, :market_value, :avg_cost,"
         " :atr, :price, :price_date, :heat_dollars, :heat_pct, :weight_pct,"
         " :score_sum, :bullish, :bearish, :total, :atr_stale)",
+        [{**r, "sid": sid} for r in rows],
+    )
+    return len(rows)
+
+
+def write_option_heat(conn, sid, rows) -> int:
+    conn.executemany(
+        "INSERT INTO option_heat (snapshot_id, occ_symbol, underlying, group_name,"
+        " type, expiration, quantity, multiplier, market_value, delta, delta_date,"
+        " atr, price, price_date, share_equiv, heat_dollars, heat_pct,"
+        " uncovered, short_leg)"
+        " VALUES (:sid, :occ_symbol, :underlying, :group_name, :type, :expiration,"
+        " :quantity, :multiplier, :market_value, :delta, :delta_date, :atr, :price,"
+        " :price_date, :share_equiv, :heat_dollars, :heat_pct, :uncovered, :short_leg)",
         [{**r, "sid": sid} for r in rows],
     )
     return len(rows)

@@ -99,7 +99,11 @@ The `advisor` combiner joins the latest scorecard against real holdings
 (portfolio.db read-only: `v_latest_*` views plus the `snapshots` header
 timestamp) plus stocks/etfs ATR and scorer
 efficacy: book heat, disagreements, and vol-scaled size caps — decision
-support only, never order generation.
+support only, never order generation. Option legs heat as **signed**
+delta-dollars (delta from options.db, attached only when legs are held);
+`v_group_heat` nets signed legs within a bet before taking magnitude (a
+protective put reduces the bet), and short or input-less legs count as
+uncovered in `v_book_heat`.
 The `backtest` combiner replays composite's FRED/market signals against ALFRED vintages
 (point-in-time — `publication_lag_days` keeps a report out of the replay until it was actually
 released) and grades them in `v_replay_efficacy`. Read `excess`/`beats_baseline` there, never

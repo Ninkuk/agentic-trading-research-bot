@@ -31,6 +31,10 @@ COMPOSITE_DB = "composite.db"
 PORTFOLIO_DB = "portfolio.db"
 SCORER_DB = "scorer.db"
 PRICE_DBS = ("stocks.db", "etfs.db")  # stocks first: it wins symbol collisions
+# cboe_options' DB, named for its registry key (greps for "cboe" miss it).
+# Attached ONLY when the book holds option legs — a plain equity book never
+# touches it, so its absence is not a source failure.
+OPTIONS_DB = "options.db"
 
 # symbol -> crosswalk group, derived from composite's CROSSWALK at import
 # time (a catalog test pins consistency). First group wins: DBA sits under

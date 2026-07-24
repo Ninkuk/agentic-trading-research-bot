@@ -4,6 +4,7 @@ from sources.combiners.advisor import db as advisor_db
 from sources.combiners.advisor import fetch
 from sources.combiners.composite import db as composite_db
 from sources.combiners.scorer import db as scorer_db
+from sources.screeners.cboe_options import db as options_db
 from sources.screeners.portfolio_screener import db as portfolio_db
 from sources.screeners.stock_analysis_screener import db as stocks_db
 
@@ -206,3 +207,73 @@ def test_read_metrics_raises_when_price_column_absent(tmp_path):
     with pytest.raises(ValueError, match="price"):
         fetch.read_metrics(c, {"AAPL"})
     fetch.detach(c)
+
+
+def _mini_options_db(tmp_path, rows):
+    """rows: (snapshot_date, occ_symbol, underlying, delta)."""
+    conn = options_db.connect(str(tmp_path / "options.db"))
+    options_db.ensure_schema(conn)
+    conn.executemany(
+        "INSERT INTO option_snapshots (snapshot_date, occ_symbol, underlying, delta)"
+        " VALUES (?, ?, ?, ?)",
+        rows,
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_read_option_positions(tmp_path):
+    conn0 = portfolio_db.connect(str(tmp_path / "portfolio.db"))
+    portfolio_db.ensure_schema(conn0)
+    portfolio_db.write_snapshot(
+        conn0,
+        "2026-07-07T21:30:00+00:00",
+        {"equity": 10000.0},
+        [],
+        option_positions=[
+            {
+                "occ_symbol": "XLE260821P00095000",
+                "underlying": "XLE",
+                "type": "put",
+                "strike": 95.0,
+                "expiration": "2026-08-21",
+                "quantity": -1.0,
+                "avg_cost": 2.5,
+                "market_value": -250.0,
+                "multiplier": 100.0,
+            }
+        ],
+    )
+    conn0.close()
+    conn = _advisor_conn(tmp_path)
+    fetch.attach_ro(conn, str(tmp_path / "portfolio.db"))
+    rows = fetch.read_option_positions(conn)
+    assert rows == [
+        {
+            "occ_symbol": "XLE260821P00095000",
+            "underlying": "XLE",
+            "type": "put",
+            "expiration": "2026-08-21",
+            "quantity": -1.0,
+            "avg_cost": 2.5,
+            "market_value": -250.0,
+            "multiplier": 100.0,
+        }
+    ]
+    fetch.detach(conn)
+
+
+def test_read_option_deltas_latest_per_contract(tmp_path):
+    _mini_options_db(
+        tmp_path,
+        [
+            ("2026-07-03", "XLE260821P00095000", "XLE", -0.40),
+            ("2026-07-07", "XLE260821P00095000", "XLE", -0.50),
+            ("2026-07-07", "OTHER260821C00100000", "OTH", 0.30),
+        ],
+    )
+    conn = _advisor_conn(tmp_path)
+    fetch.attach_ro(conn, str(tmp_path / "options.db"))
+    deltas = fetch.read_option_deltas(conn, ["XLE260821P00095000", "MISSING"])
+    assert deltas == {"XLE260821P00095000": {"delta": -0.50, "delta_date": "2026-07-07"}}
+    fetch.detach(conn)

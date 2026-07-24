@@ -149,3 +149,116 @@ def test_v_exit_advice_scopes_to_the_latest_snapshot(tmp_path):
         )
     conn.commit()
     assert [r[0] for r in conn.execute("SELECT symbol FROM v_exit_advice")] == ["NEW"]
+
+
+def _orow(**kw):
+    base = {
+        "occ_symbol": "XLE260821P00095000",
+        "underlying": "XLE",
+        "group_name": None,
+        "type": "put",
+        "expiration": "2026-08-21",
+        "quantity": 1.0,
+        "multiplier": 100.0,
+        "market_value": 250.0,
+        "delta": -0.5,
+        "delta_date": "2026-07-07",
+        "atr": 3.0,
+        "price": 95.0,
+        "price_date": "2026-07-07",
+        "share_equiv": -50.0,
+        "heat_dollars": -150.0,
+        "heat_pct": -0.015,
+        "uncovered": 0,
+        "short_leg": 0,
+    }
+    base.update(kw)
+    return base
+
+
+def test_group_heat_nets_option_hedge_before_magnitude(tmp_path):
+    # The spec's worked failure: shares 300 + protective put -150 must read
+    # as a 150 bet, not 450 — a hedge REDUCES heat.
+    conn = _fresh(tmp_path)
+    sid = _seed(
+        conn,
+        "2026-07-07T21:12:00+00:00",
+        [_row(symbol="XLE", heat_dollars=300.0, heat_pct=0.03)],
+    )
+    db.write_option_heat(conn, sid, [_orow()])
+    conn.commit()
+    row = conn.execute(
+        "SELECT members, symbols, heat_dollars, net_heat_dollars FROM v_group_heat"
+        " WHERE bet = 'XLE'"
+    ).fetchone()
+    assert row[0] == 2 and "XLE260821P00095000" in row[1]
+    assert row[2] == 150.0 and row[3] == 150.0
+
+
+def test_group_heat_net_short_group_reports_magnitude(tmp_path):
+    conn = _fresh(tmp_path)
+    sid = _seed(conn, "2026-07-07T21:12:00+00:00", [])
+    db.write_option_heat(conn, sid, [_orow()])
+    conn.commit()
+    row = conn.execute(
+        "SELECT heat_dollars, net_heat_dollars FROM v_group_heat WHERE bet = 'XLE'"
+    ).fetchone()
+    assert row == (150.0, -150.0)  # magnitude positive, net keeps the sign
+
+
+def test_book_heat_option_legs_and_uncovered_count(tmp_path):
+    conn = _fresh(tmp_path)
+    sid = _seed(
+        conn,
+        "2026-07-07T21:12:00+00:00",
+        [_row(symbol="AAPL", market_value=1000.0, atr=2.0, heat_dollars=20.0, heat_pct=0.002)],
+    )
+    db.write_option_heat(
+        conn,
+        sid,
+        [
+            _orow(),  # covered long put, MV 250
+            _orow(
+                occ_symbol="XLE260918C00100000",
+                type="call",
+                quantity=-1.0,
+                market_value=-250.0,
+                short_leg=1,
+                uncovered=1,
+                heat_dollars=150.0,
+                heat_pct=0.015,
+            ),
+        ],
+    )
+    conn.commit()
+    row = conn.execute(
+        "SELECT positions, option_legs, uncovered_option_legs, heat_coverage FROM v_book_heat"
+    ).fetchone()
+    assert row[0] == 1 and row[1] == 2 and row[2] == 1
+    # coverage weights option legs by |market_value|: covered 1000+250 of 1500
+    assert abs(row[3] - 1250.0 / 1500.0) < 1e-9
+
+
+def test_book_heat_unchanged_for_equity_only_book(tmp_path):
+    # Increment (c) must not move the equity-only numbers (the (a) gate).
+    conn = _fresh(tmp_path)
+    _seed(
+        conn,
+        "2026-07-07T21:12:00+00:00",
+        [
+            _row(symbol="AAPL", market_value=1000.0, atr=2.0, heat_dollars=20.0, heat_pct=0.002),
+            _row(
+                symbol="NOATR",
+                market_value=1000.0,
+                atr=None,
+                heat_dollars=None,
+                heat_pct=None,
+                atr_stale=None,
+            ),
+        ],
+    )
+    row = conn.execute(
+        "SELECT positions, option_legs, heat_dollars, heat_pct, heat_coverage,"
+        " uncovered_option_legs FROM v_book_heat"
+    ).fetchone()
+    assert row == (2, 0, 20.0, 0.002, 0.5, 0)

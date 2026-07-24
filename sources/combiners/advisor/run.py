@@ -26,6 +26,8 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
         flag_signals: dict = {}
         flagged: list = []
         positions: list = []
+        option_positions: list = []
+        deltas: dict = {}
         metrics: dict = {}
         reliable: set = set()
 
@@ -64,10 +66,11 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
             composite, scorecard, flagged, flag_signals = header, cards, flags, sigs
 
         def read_portfolio():
-            nonlocal account, positions
+            nonlocal account, positions, option_positions
             acct = fetch.read_account(conn)
             pos = fetch.read_positions(conn)
-            account, positions = acct, pos
+            opos = fetch.read_option_positions(conn)
+            account, positions, option_positions = acct, pos, opos
 
         def read_prices():
             for sym, m in fetch.read_metrics(conn, symbols).items():
@@ -77,13 +80,26 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
             nonlocal reliable
             reliable = fetch.read_reliable_signals(conn)
 
+        def read_deltas():
+            nonlocal deltas
+            deltas = fetch.read_option_deltas(conn, [o["occ_symbol"] for o in option_positions])
+
         read_source(catalog.COMPOSITE_DB, read_composite)
         read_source(catalog.PORTFOLIO_DB, read_portfolio)
-        symbols = {p["symbol"] for p in positions} | set(flagged)
+        # Underlyings ride along: an option's heat needs the UNDERLYING's ATR.
+        symbols = (
+            {p["symbol"] for p in positions}
+            | {o["underlying"] for o in option_positions}
+            | set(flagged)
+        )
         if symbols:
             for price_db in catalog.PRICE_DBS:
                 read_source(price_db, read_prices)
         read_source(catalog.SCORER_DB, read_scorer)
+        # options.db only when legs are held: an equity-only book must not
+        # count its absence as a source failure.
+        if option_positions:
+            read_source(catalog.OPTIONS_DB, read_deltas)
 
         equity = account["equity"] if account else None
         buying_power = account["buying_power"] if account else None
@@ -91,6 +107,15 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
             positions,
             scorecard,
             metrics,
+            equity,
+            today,
+            catalog.TICKER_GROUP,
+            catalog.ATR_MAX_AGE_DAYS,
+        )
+        option_rows = db.build_option_heat(
+            option_positions,
+            metrics,
+            deltas,
             equity,
             today,
             catalog.TICKER_GROUP,
@@ -107,6 +132,7 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
             catalog.TICKER_GROUP,
             flag_signals,
             reliable,
+            option_heat_rows=option_rows,
         )
         exit_rows = db.build_exit_advice(
             heat_rows,
@@ -114,6 +140,7 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
             catalog.TRIM_FRACTION_STRONG,
         )
         db.write_position_heat(conn, sid, heat_rows)
+        db.write_option_heat(conn, sid, option_rows)
         db.write_size_caps(conn, sid, cap_rows)
         db.write_exit_advice(conn, sid, exit_rows)
         db.finish_snapshot(conn, sid, account, composite, failures)
@@ -122,7 +149,7 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
             db.prune(conn, keep_days, now_iso)
     finally:
         conn.close()
-    return sid, len(heat_rows), len(cap_rows), len(exit_rows)
+    return sid, len(heat_rows), len(cap_rows), len(exit_rows), len(option_rows)
 
 
 def main(argv=None):
@@ -135,9 +162,10 @@ def main(argv=None):
     p.add_argument("--db-dir", default="data")
     p.add_argument("--keep-days", type=int, default=None)
     a = p.parse_args(argv)
-    sid, n_heat, n_caps, n_exit = run(a.db, a.db_dir, keep_days=a.keep_days)
+    sid, n_heat, n_caps, n_exit, n_opt = run(a.db, a.db_dir, keep_days=a.keep_days)
+    opts = f", {n_opt} option legs" if n_opt else ""
     print(
-        f"advisor snapshot {sid}: {n_heat} positions, {n_caps} caps,"
+        f"advisor snapshot {sid}: {n_heat} positions{opts}, {n_caps} caps,"
         f" {n_exit} exit rows, into {a.db}"
     )
 

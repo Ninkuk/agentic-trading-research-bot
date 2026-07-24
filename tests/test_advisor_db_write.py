@@ -393,3 +393,141 @@ def test_negative_avg_cost_yields_null_unrealized():
 def test_nan_price_yields_null_everywhere():
     r = _one(price=float("nan"))
     assert r["stop_price"] is None and r["unrealized_pct"] is None
+
+
+# --- option heat (increment (c) of the options spec) ---
+
+TODAY = "2026-07-07"
+
+
+def _opos(**kw):
+    base = {
+        "occ_symbol": "XLE260821P00095000",
+        "underlying": "XLE",
+        "type": "put",
+        "strike": 95.0,
+        "expiration": "2026-08-21",
+        "quantity": 1.0,
+        "avg_cost": 2.50,
+        "market_value": 250.0,
+        "multiplier": 100.0,
+    }
+    base.update(kw)
+    return base
+
+
+METRICS = {"XLE": {"atr": 3.0, "close": 95.0, "price_date": "2026-07-07"}}
+DELTAS = {"XLE260821P00095000": {"delta": -0.5, "delta_date": "2026-07-07"}}
+
+
+def test_option_heat_is_signed_delta_dollars():
+    # The spec's protective-put case: a long put must REDUCE group heat, so
+    # its heat is NEGATIVE — abs() here manufactured a 3x overstatement.
+    rows = db.build_option_heat([_opos()], METRICS, DELTAS, 10000.0, TODAY, {}, 5)
+    r = rows[0]
+    assert r["share_equiv"] == -50.0  # -0.5 delta x 100 x 1 contract
+    assert r["heat_dollars"] == -150.0  # x 3.0 ATR, signed
+    assert r["heat_pct"] == -0.015
+    assert r["uncovered"] == 0 and r["short_leg"] == 0
+    assert r["atr"] == 3.0 and r["price"] == 95.0
+
+
+def test_option_heat_short_leg_is_uncovered_but_still_nets():
+    # A short put (quantity -1, delta -0.5) is share-equivalent LONG 50 —
+    # heat positive — but its tail loss is unbounded, which no one-ATR
+    # number expresses: the leg must count uncovered, loudly.
+    rows = db.build_option_heat([_opos(quantity=-1.0)], METRICS, DELTAS, 10000.0, TODAY, {}, 5)
+    r = rows[0]
+    assert r["heat_dollars"] == 150.0
+    assert r["short_leg"] == 1 and r["uncovered"] == 1
+
+
+def test_option_heat_missing_delta_is_null_and_uncovered():
+    rows = db.build_option_heat([_opos()], METRICS, {}, 10000.0, TODAY, {}, 5)
+    r = rows[0]
+    assert r["delta"] is None and r["heat_dollars"] is None
+    assert r["uncovered"] == 1
+
+
+def test_option_heat_stale_delta_is_null_not_plausible():
+    # Same NULL discipline as exit_advice's stale-ATR stop: a stale delta
+    # produces a plausible-but-wrong number, so refuse rather than compute.
+    stale = {"XLE260821P00095000": {"delta": -0.5, "delta_date": "2026-07-01"}}
+    rows = db.build_option_heat([_opos()], METRICS, stale, 10000.0, TODAY, {}, 5)
+    assert rows[0]["heat_dollars"] is None and rows[0]["uncovered"] == 1
+
+
+def test_option_heat_missing_underlying_atr_is_null_and_uncovered():
+    rows = db.build_option_heat([_opos()], {}, DELTAS, 10000.0, TODAY, {}, 5)
+    assert rows[0]["heat_dollars"] is None and rows[0]["uncovered"] == 1
+
+
+def test_option_heat_multiplier_defaults_to_100():
+    rows = db.build_option_heat([_opos(multiplier=None)], METRICS, DELTAS, 10000.0, TODAY, {}, 5)
+    assert rows[0]["multiplier"] == 100.0 and rows[0]["heat_dollars"] == -150.0
+
+
+def test_option_heat_group_name_comes_from_underlying():
+    rows = db.build_option_heat([_opos()], METRICS, DELTAS, 10000.0, TODAY, {"XLE": "energy"}, 5)
+    assert rows[0]["group_name"] == "energy"
+
+
+def test_size_cap_group_heat_nets_option_hedge():
+    """100 shares (heat 300) hedged by a long put (heat -150): the group
+    carries |300 - 150| = 150, so the cap must see 150 consumed, not 450."""
+    heat_rows = db.build_position_heat(
+        [{"symbol": "XLE", "quantity": 100.0, "market_value": 9500.0, "avg_cost": None}],
+        {},
+        METRICS,
+        10000.0,
+        TODAY,
+        {},
+        5,
+    )
+    option_rows = db.build_option_heat([_opos()], METRICS, DELTAS, 10000.0, TODAY, {}, 5)
+    caps = db.build_size_caps(
+        ["XLE"],
+        {"XLE": {"score_sum": 4, "bullish": 4, "bearish": 0, "total": 4}},
+        METRICS,
+        heat_rows,
+        10000.0,
+        None,
+        0.05,
+        {},
+        {},
+        set(),
+        option_heat_rows=option_rows,
+    )
+    cap = caps[0]
+    # allowed = 0.05*10000 - |300 + (-150)| = 350 -> 350/3 ATR shares
+    assert cap["group_heat_pct"] == 0.015
+    assert abs(cap["cap_shares"] - 350.0 / 3.0) < 1e-9
+    assert cap["already_held"] == 1
+
+
+def test_size_cap_option_only_underlying_counts_held_and_hot():
+    option_rows = db.build_option_heat(
+        [_opos(type="call", occ_symbol="XLE260821C00095000")],
+        METRICS,
+        {"XLE260821C00095000": {"delta": 0.5, "delta_date": "2026-07-07"}},
+        10000.0,
+        TODAY,
+        {},
+        5,
+    )
+    caps = db.build_size_caps(
+        ["XLE"],
+        {"XLE": {"score_sum": 4, "bullish": 4, "bearish": 0, "total": 4}},
+        METRICS,
+        [],
+        10000.0,
+        None,
+        0.05,
+        {},
+        {},
+        set(),
+        option_heat_rows=option_rows,
+    )
+    # long call, delta-dollars 150: consumes budget AND marks XLE held
+    assert abs(caps[0]["cap_shares"] - 350.0 / 3.0) < 1e-9
+    assert caps[0]["already_held"] == 1

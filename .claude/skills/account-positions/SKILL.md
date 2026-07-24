@@ -46,10 +46,11 @@ directly.
      "long"|"short", "avg_cost", "market_value", "multiplier"}`.
      `occ_symbol` + `underlying` + numeric `quantity` are required (rows
      missing them are skipped and counted); a `"short"` position_type is
-     stored as a **negative** quantity. Capture-only for now: advisor's
-     book heat does not read these rows yet, so holding an option means
-     `v_book_heat` understates real exposure — say so in the report
-     whenever the array is non-empty.
+     stored as a **negative** quantity — the sign is load-bearing (advisor
+     nets signed delta-dollar heat per group). Legs whose heat inputs are
+     missing (contract outside options.db's catalog, stale delta) and ALL
+     short legs surface in `v_book_heat.uncovered_option_legs` — mention
+     that count in the report when it is non-zero.
 
    `account.equity` is the account's total value **including cash** (take
    `get_portfolio`'s equity as-is — with zero positions it equals cash, not

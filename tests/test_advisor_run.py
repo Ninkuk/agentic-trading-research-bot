@@ -126,7 +126,7 @@ def _full_fixture(tmp_path):
 def test_full_cycle(tmp_path):
     _full_fixture(tmp_path)
     out = str(tmp_path / "advisor.db")
-    sid, n_heat, n_caps, n_exit = run_mod.run(out, str(tmp_path), now_iso=NOW)
+    sid, n_heat, n_caps, n_exit, n_opt = run_mod.run(out, str(tmp_path), now_iso=NOW)
     assert (n_heat, n_caps) == (2, 1)  # AAPL + XOM held; NVDA flagged
     conn = sqlite3.connect(out)
     # header provenance frozen in
@@ -156,7 +156,7 @@ def test_full_cycle(tmp_path):
 
 def test_missing_sources_skip_and_continue(tmp_path, capsys):
     out = str(tmp_path / "advisor.db")
-    sid, n_heat, n_caps, n_exit = run_mod.run(out, str(tmp_path), now_iso=NOW)
+    sid, n_heat, n_caps, n_exit, n_opt = run_mod.run(out, str(tmp_path), now_iso=NOW)
     assert (n_heat, n_caps) == (0, 0)
     err = capsys.readouterr().out
     # composite, portfolio, scorer missing -> 3 skips; price DBs are never
@@ -230,7 +230,7 @@ def test_run_writes_one_exit_advice_row_per_held_position(tmp_path):
     _mini_scorer(tmp_path)
 
     out = str(tmp_path / "advisor.db")
-    sid, n_heat, n_caps, n_exit = run_mod.run(out, str(tmp_path), now_iso=NOW)
+    sid, n_heat, n_caps, n_exit, n_opt = run_mod.run(out, str(tmp_path), now_iso=NOW)
     assert n_exit == n_heat, "one exit row per held position"
 
     conn = sqlite3.connect(out)
@@ -244,3 +244,75 @@ def test_run_writes_one_exit_advice_row_per_held_position(tmp_path):
             assert stop == pytest.approx(price - 2.0 * atr), sym
             assert stop < price, sym
         assert (trim is not None) == bool(strong), sym
+
+
+def _mini_options_db(dirpath, rows):
+    from sources.screeners.cboe_options import db as options_db
+
+    conn = options_db.connect(str(dirpath / "options.db"))
+    options_db.ensure_schema(conn)
+    conn.executemany(
+        "INSERT INTO option_snapshots (snapshot_date, occ_symbol, underlying, delta)"
+        " VALUES (?, ?, ?, ?)",
+        rows,
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_full_cycle_with_option_leg(tmp_path):
+    _full_fixture(tmp_path)
+    # add a long AAPL call to the portfolio and its delta to options.db
+    conn = portfolio_db.connect(str(tmp_path / "portfolio.db"))
+    portfolio_db.write_snapshot(
+        conn,
+        "2026-07-07T21:31:00+00:00",
+        {"equity": 10000.0, "cash": 2000.0, "buying_power": 1000.0},
+        [{"symbol": "AAPL", "quantity": 10.0, "avg_cost": 90.0, "market_value": 1000.0}],
+        option_positions=[
+            {
+                "occ_symbol": "AAPL260821C00100000",
+                "underlying": "AAPL",
+                "type": "call",
+                "strike": 100.0,
+                "expiration": "2026-08-21",
+                "quantity": 1.0,
+                "avg_cost": 5.0,
+                "market_value": 500.0,
+                "multiplier": 100.0,
+            }
+        ],
+    )
+    conn.close()
+    _mini_options_db(tmp_path, [("2026-07-07", "AAPL260821C00100000", "AAPL", 0.5)])
+    out = str(tmp_path / "advisor.db")
+    sid, n_heat, n_caps, n_exit, n_opt = run_mod.run(out, str(tmp_path), now_iso=NOW)
+    assert n_opt == 1
+    conn = sqlite3.connect(out)
+    # 0.5 delta x 100 x 1 x 2.0 ATR = 100 signed heat on the AAPL bet
+    row = conn.execute(
+        "SELECT heat_dollars, uncovered FROM option_heat WHERE snapshot_id = ?", (sid,)
+    ).fetchone()
+    assert row == (100.0, 0)
+    # the call MERGES into AAPL's group bet: 10x2 shares + 100 = 120
+    grp = conn.execute(
+        "SELECT members, heat_dollars FROM v_group_heat WHERE bet = 'AAPL'"
+    ).fetchone()
+    assert grp == (2, 120.0)
+    assert (
+        conn.execute("SELECT sources_failed FROM snapshots WHERE id=?", (sid,)).fetchone()[0] == 0
+    )
+
+
+def test_no_options_held_never_touches_options_db(tmp_path):
+    # options.db is absent in the base fixture; a book with zero option legs
+    # must not count that as a source failure (the (a) gate: equity-only
+    # behavior is bit-identical).
+    _full_fixture(tmp_path)
+    out = str(tmp_path / "advisor.db")
+    sid, n_heat, n_caps, n_exit, n_opt = run_mod.run(out, str(tmp_path), now_iso=NOW)
+    assert n_opt == 0
+    conn = sqlite3.connect(out)
+    assert (
+        conn.execute("SELECT sources_failed FROM snapshots WHERE id=?", (sid,)).fetchone()[0] == 0
+    )

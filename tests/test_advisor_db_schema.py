@@ -110,3 +110,21 @@ def test_prune_cascades_exit_advice(tmp_path):
     db.prune(conn, keep_days=30, now_iso="2026-07-08T04:12:00+00:00")
     assert conn.execute("SELECT COUNT(*) FROM exit_advice").fetchone()[0] == 0, "orphaned rows"
     assert conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 0
+
+
+def test_option_heat_table_and_prune(tmp_path):
+    conn = db.connect(str(tmp_path / "advisor.db"))
+    db.ensure_schema(conn)
+    names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    assert "option_heat" in names
+    old = db.write_snapshot(conn, "2026-06-01T04:12:00+00:00")
+    keep = db.write_snapshot(conn, "2026-07-08T04:12:00+00:00")
+    for sid in (old, keep):
+        conn.execute(
+            "INSERT INTO option_heat (snapshot_id, occ_symbol, underlying, quantity)"
+            " VALUES (?, 'XLE260821P00095000', 'XLE', 1.0)",
+            (sid,),
+        )
+    conn.commit()
+    db.prune(conn, keep_days=7, now_iso="2026-07-08T04:12:00+00:00")
+    assert {r[0] for r in conn.execute("SELECT snapshot_id FROM option_heat")} == {keep}
