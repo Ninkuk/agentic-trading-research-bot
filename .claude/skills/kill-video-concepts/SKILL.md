@@ -96,6 +96,12 @@ whoever owns the number states it, and the skill quotes rather than restates.)
    concept whose whole content is something this repo already models is a
    duplicate, not a discovery.*
 
+   **Search only shipped capability** — `sources/`, `tools/`, `registry.py`,
+   `main.py --list` output, and `data/*.db` schemas. Never skill files,
+   `.claude/`, or design docs/plans/specs/notes: a document describing a
+   capability is not the capability, and finding your own words in one is an
+   echo, not a duplicate.
+
 3. **Source admissibility** — name the exact feed this concept would read, then
    ask whether *that feed* is admissible here. Admissibility is a policy
    question, not an availability question: that data exists and is downloadable

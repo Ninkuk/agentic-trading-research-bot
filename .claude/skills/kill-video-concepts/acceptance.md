@@ -93,3 +93,14 @@ matched the table with no corrections needed.
   above): `v_signal_efficacy` in `sources/combiners/scorer/db.py` uses a
   Wilson score interval (`WILSON_Z = 1.96`, `_wilson()` helper), confirming
   the `random-portfolio-null` basis in Case A.
+
+## 2026-07-26 — acceptance run 1 contamination note
+
+Run 1 (4 of 4 cases) had gate 2 grep the whole repo, which reached this
+file plus the gitignored design docs/plans for this skill — all three
+hold the same pre-registered expectations, so gate 2 was reading the
+answer key. Every agent disclosed it, but the exposure is structural,
+not incidental. Remedy: gate 2's scope in SKILL.md is now `sources/`,
+`tools/`, `registry.py`, `main.py --list`, and `data/*.db` — capability,
+not prose about capability. Any run's results predating this fix are not
+admissible evidence of the skill's gate-2 behavior.
