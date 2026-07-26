@@ -71,10 +71,27 @@ Cap at ten. Show the full list before attacking anything. Methodology concepts
 are usually the high-yield ones; extract them even when the video treats them as
 an aside.
 
+## Reopen check — the ledger is read every run, not only written
+
+Immediately **after** the concept list is shown and before gate 2 opens the repo,
+read `research/ideas/ledger.log` and pull every `DEFERRED` line. Evaluate each
+one's `reopen=` condition with the command or query it names. Any that now passes
+is **surfaced alongside this video's concepts** and re-enters the gauntlet at
+gate 1 on its own merits; any that still fails is left where it is, silently.
+
+Do this after extraction, never before: the ledger holds slugs and verdicts from
+prior runs, and reading it first would seed the extraction with what the repo has
+already thought about — the same contamination the extract-before-you-open-the-
+repo rule exists to prevent. Extraction stays transcript-only.
+
+A ledger nobody re-reads is a graveyard, and a `DEFERRED` line nobody re-evaluates
+is a `DEAD` line with extra ceremony.
+
 ## The gauntlet — seven gates, cheapest kill first
 
 Run every concept through the gates in order. **A concept killed at gate N is
-never re-argued at N+1** — it is dead, it gets its ledger line, you move on.
+never re-argued at N+1** — it gets its ledger line and you move on. Whether that
+line reads `DEAD` or `DEFERRED` is decided by the maturity test below.
 
 Every gate below states a **question** and names the **artifact that owns the
 answer**. Read the artifact at run time. Do not answer any gate from memory or
@@ -141,6 +158,39 @@ whoever owns the number states it, and the skill quotes rather than restates.)
    *Owner: `docs/SCHEDULE.md` and `deploy/launchd/install.py` for what already
    occupies the schedule and what a new job would cost.*
 
+## DEAD or DEFERRED — the maturity test
+
+Every kill, at **any** of the seven gates, gets one more question before it is
+written down:
+
+> **Would this objection still hold if the repo's data were mature?**
+
+- **No** — the objection is about how much history, how many matured rows, or how
+  deep a universe the repo happens to hold today. The verdict is **`DEFERRED`**.
+- **Yes** — the objection is about the concept. The verdict is **`DEAD`**.
+
+**A concept is `DEAD` when it is wrong. It is `DEFERRED` when it is early.** A
+kill that rests on row counts is a fact with an expiry date; filing it as `DEAD`
+buries it permanently by the very mechanism meant to prevent waste.
+
+**A `DEFERRED` line MUST carry a `reopen=` condition that a command or query can
+decide.** Not prose, not a season, not a judgement call — something the reopen
+check can run and get a boolean from. "when we have more data" is inadmissible;
+it is a graveyard with extra steps. `reopen=ticker_outcomes.matured@21d>=200` is
+admissible. If you cannot write a decidable condition, you did not actually
+identify a maturity objection, and the verdict is `DEAD`.
+
+Two traps this token introduces, both worth naming:
+
+- **`DEFERRED` is not a soft `SURVIVED`.** It writes no proposal file, it is not
+  a landing zone, and it is not a "closest call." Reaching for it to make a run
+  feel productive reintroduces the exact pressure the nothing-survived rule
+  removes.
+- **`DEFERRED` is not a soft `DEAD` either.** A concept that is wrong on the
+  merits does not become deferrable because the data is *also* thin. Apply the
+  test to the objection you actually made, not to the most flattering one
+  available.
+
 ## The salvage rule
 
 Weakening a concept until it passes is this skill's main fabrication risk.
@@ -152,6 +202,11 @@ Therefore:
   included.
 - **A gate is never lowered to produce a survivor.** If the weakened variant is
   feasible but worthless, gate 7 kills it, and that is the correct result.
+- The weakened variant takes the maturity test like anything else, so a salvage
+  can itself end `DEFERRED` — with its own `reopen=`, on its own `-salvaged`
+  line. Note what that costs: the salvage budget for that concept is already
+  spent, so when the condition passes, the variant reopens and the concept as
+  stated stays dead.
 
 An unlabelled salvage — quietly narrowing a concept mid-gauntlet and carrying the
 narrowed version forward — is a failed run even if the verdict happens to be
@@ -185,17 +240,32 @@ right.
 `research/ideas/ledger.log`:
 
 ```
-<YYYY-MM-DD> <video_id> <concept-slug> DEAD|SALVAGED|SURVIVED gate=<n:name>
+<YYYY-MM-DD> <video_id> <concept-slug> DEAD|DEFERRED|SALVAGED|SURVIVED gate=<n:name> [reopen=<condition>]
 ```
 
 Gate names: `1:provenance` `2:duplication` `3:source` `4:point-in-time`
 `5:architecture` `6:statistics` `7:priority`. `gate=` is the gate that killed it
-and is **omitted on a `SURVIVED` line**.
+and is **omitted on a `SURVIVED` line**. `reopen=` appears on `DEFERRED` lines
+and nowhere else — it is mandatory there and forbidden everywhere else.
 
-One line per concept **as the video stated it**. A salvage writes a *second* line
-with a `-salvaged` slug suffix carrying its own verdict, so the original's death
-stays on the record — a weakened variant that survives must never erase the fact
-that the concept as stated did not.
+**The corpse rule splits by token.** `DEAD` is never re-proposed; that is what
+makes the gauntlet cheap to run twice. `DEFERRED` **is** re-proposed, exactly
+once its `reopen=` condition passes, via the reopen check at the top of the next
+run. Nothing else re-enters.
+
+One line per concept **as the video stated it**. When a concept is salvaged, the
+parent line's verdict token is `SALVAGED` — never `DEAD`, never `DEFERRED` — and
+its `gate=` names the gate that killed the concept as stated. A salvage writes a
+*second* line with a `-salvaged` slug suffix carrying its own verdict and its own
+`gate=`, so the original's death stays on the record — a weakened variant that
+survives must never erase the fact that the concept as stated did not. Worked
+examples, one of each shape:
+
+```
+<YYYY-MM-DD> <video_id> example-concept SALVAGED gate=3:source
+<YYYY-MM-DD> <video_id> example-concept-salvaged DEAD gate=5:architecture
+<YYYY-MM-DD> <video_id> other-concept DEFERRED gate=7:priority reopen=ticker_outcomes.matured@21d>=200
+```
 
 **Each survivor** additionally gets `research/ideas/<YYYY-MM-DD>-<slug>.md`
 stating:
@@ -205,6 +275,11 @@ stating:
 - **shape** — the table or view it would take;
 - **measurement plan** — the null, the horizon, the effective n, and the
   threshold sweep. Thresholds are chosen after data, never before.
+
+**A `DEFERRED` concept gets a ledger line and nothing else.** No proposal file,
+no landing zone, no measurement plan — its `reopen=` condition *is* its entire
+forward artifact. Writing it up now is how it stops being deferred and starts
+being a survivor that never earned it.
 
 Then **stop and ask**. The human decides whether any of it gets implemented.
 Nothing here is an implementation mandate.
@@ -220,9 +295,22 @@ individually defensible. Mirrors the same freeze in `kill-thesis`.
 - **Adding a gate requires a measured miss** — a concept this gauntlet passed
   that proved junk, or a ledger showing it under-kills. "A reviewer thought of
   another failure mode" is the exact accumulation this note exists to stop.
-- **Revisit when `research/ideas/ledger.log` holds twenty concepts.** If nothing
-  has ever survived by then, that is data the freeze question reopens on — in
-  either direction.
+
+**The twenty-concept revisit trigger fired on 2026-07-26 and the budget stays at
+seven.** A ten-video validation run produced 116 ledger lines in one day, far
+past the trigger. The measured distribution: gate 1 ×36, gate 2 ×24, gate 3 ×16,
+gate 4 ×3, gate 5 ×12, gate 6 ×14, gate 7 ×9, survivors 2. **Every gate has now
+demonstrably killed something**, so no gate is inert and none is a candidate for
+removal. Gate 4 in particular fired three times — a look-ahead training label, a
+monthly series looked up daily, and a derived spectral feature — which retracts
+an earlier four-video reading that concluded it never fires. Four videos was too
+small a sample to see a gate whose base rate is ~3%. Two survivors out of ~100
+concepts is a live gauntlet, not a wall, so nothing argues for loosening either.
+
+- **Revisit at 300 ledger lines**, roughly twenty more videos. That is the next
+  point at which a genuinely rare gate could be shown inert, and it is far enough
+  out that the freeze does real work in between. The measured-miss rule for
+  *adding* a gate is unchanged and is not relaxed by this ruling.
 
 The skill can improve itself: research-skill hardening is a landing zone, so a
 concept whose real value is a check this gauntlet lacks lands as a proposal
