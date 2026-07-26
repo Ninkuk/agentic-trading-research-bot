@@ -124,8 +124,23 @@ def ensure_schema(conn) -> None:
 # a name, not evidence that anything is happening to it — counting them would
 # walk every covered mega-cap toward the flag gate merely for having listed
 # options.
+#
+# sa_fscore / sa_fcf_yield are the business-quality reads composite otherwise
+# lacks. They are annotations for the same reason the options pair is: there is
+# no forward-return evidence for a fundamental signal yet (every ticker-grain
+# number in scorer.db currently comes from ONE overlapping market episode), and
+# letting them vote would walk several hundred large caps toward the flag gate
+# on quality LEVELS alone, with no corroborating evidence that anything is
+# happening to the name. Promote only after a measured calibration pass.
 INFORMATIONAL_SIGNALS = frozenset(
-    {"portfolio_holding", "earnings_imminent", "options_iv30", "options_pcr"}
+    {
+        "portfolio_holding",
+        "earnings_imminent",
+        "options_iv30",
+        "options_pcr",
+        "sa_fscore",
+        "sa_fcf_yield",
+    }
 )
 
 

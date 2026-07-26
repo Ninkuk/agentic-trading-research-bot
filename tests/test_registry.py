@@ -186,3 +186,7 @@ def test_scorecard_registered():
 
 def test_dispatch_lists_pricehistory():
     assert "pricehistory" in registry.REGISTRY
+
+
+def test_candidates_registered():
+    assert "candidates" in registry.REGISTRY

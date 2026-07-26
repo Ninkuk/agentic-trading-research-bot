@@ -88,7 +88,18 @@ DB_MODULES = {
 
 # stocks.db's metrics table only gets its data-point columns via
 # ensure_schema(conn, columns) — supply the ones stocks_rsi's SQL references.
-_STOCKS_COLUMNS = {"rsi": "REAL", "dollarVolume": "REAL", "priceDate": "TEXT"}
+_STOCKS_COLUMNS = {
+    "rsi": "REAL",
+    "dollarVolume": "REAL",
+    "priceDate": "TEXT",
+    # stocks_rsi collapses share classes of one company to a single opinion.
+    "isin": "TEXT",
+    "isPrimaryListing": "TEXT",
+    # sa_fscore / sa_fcf_yield annotations.
+    "fScore": "REAL",
+    "fcfYield": "REAL",
+    "marketCap": "REAL",
+}
 
 
 def _build_source_db(db_file: str, path: str) -> None:
@@ -403,3 +414,243 @@ def test_options_annotations_emit_one_zero_score_row_per_tradeable_name(tmp_path
         assert r["score"] == 0, "annotation must never vote"
         assert r["obs_date"] == "2026-07-20"
         assert r["staleness_days"] == 1
+
+
+def _stocks_fixture(tmp_path, rows):
+    """A stocks.db holding one snapshot of `rows`, each a dict of column ->
+    value. Built through the screener's own db module so a schema rename
+    breaks this test rather than silently changing what composite reads."""
+    import importlib
+
+    mod = importlib.import_module(DB_MODULES["stocks.db"])
+    path = str(tmp_path / "stocks.db")
+    conn = mod.connect(path)
+    mod.ensure_schema(conn, _STOCKS_COLUMNS)
+    conn.execute(
+        "INSERT INTO snapshots (id, captured_at, universe_count, source)"
+        " VALUES (1, '2026-07-20T11:00:00+00:00', ?, 'test')",
+        (len(rows),),
+    )
+    for r in rows:
+        cols = ", ".join(f'"{k}"' for k in r)
+        marks = ", ".join("?" * len(r))
+        conn.execute(
+            f"INSERT INTO metrics (snapshot_id, {cols}) VALUES (1, {marks})",
+            tuple(r.values()),
+        )
+    conn.commit()
+    conn.close()
+    return path
+
+
+def _extract_stocks_rsi(path):
+    by_id = {s["signal_id"]: s for s in catalog.SIGNALS}
+    c = sqlite3.connect(":memory:", uri=True)
+    try:
+        fetch.attach_ro(c, path)
+        return fetch.extract(c, by_id["stocks_rsi"], today="2026-07-20")
+    finally:
+        c.close()
+
+
+def test_stocks_rsi_emits_one_row_per_company_not_per_share_class(tmp_path):
+    """UHAL/UHAL.B are one company with two listed classes, and BOTH cleared
+    the liquidity floor on 2026-07-26 — so composite formed two independent
+    opinions about one business. The CUSIP issuer number collapses them."""
+    path = _stocks_fixture(
+        tmp_path,
+        [
+            dict(
+                symbol="UHAL",
+                isin="US0235861004",
+                isPrimaryListing="1",
+                rsi=28.0,
+                dollarVolume=40e6,
+                priceDate="2026-07-20",
+            ),
+            dict(
+                symbol="UHAL.B",
+                isin="US0235862003",
+                isPrimaryListing="0",
+                rsi=27.5,
+                dollarVolume=20e6,
+                priceDate="2026-07-20",
+            ),
+        ],
+    )
+    assert [r["entity"] for r in _extract_stocks_rsi(path)] == ["UHAL"]
+
+
+def test_stocks_rsi_keeps_a_liquid_adr_with_no_us_sibling(tmp_path):
+    """isPrimaryListing='1' would have dropped 11 rows on 2026-07-26, ten of
+    which were single-listing names with no duplicate to collapse."""
+    path = _stocks_fixture(
+        tmp_path,
+        [
+            dict(
+                symbol="SAP",
+                isin="US8030542042",
+                isPrimaryListing="0",
+                rsi=29.0,
+                dollarVolume=645e6,
+                priceDate="2026-07-20",
+            ),
+        ],
+    )
+    assert [r["entity"] for r in _extract_stocks_rsi(path)] == ["SAP"]
+
+
+def test_stocks_rsi_does_not_merge_foreign_isin_neighbours(tmp_path):
+    """Non-US agencies assign ISIN blocks sequentially across issuers: IL|001082
+    covers 11 unrelated Israeli firms. Keying on a foreign prefix would delete
+    real names, so foreign rows key on their own symbol."""
+    path = _stocks_fixture(
+        tmp_path,
+        [
+            dict(
+                symbol="CHKP",
+                isin="IL0010824113",
+                isPrimaryListing="0",
+                rsi=29.0,
+                dollarVolume=50e6,
+                priceDate="2026-07-20",
+            ),
+            dict(
+                symbol="TSEM",
+                isin="IL0010823724",
+                isPrimaryListing="0",
+                rsi=28.0,
+                dollarVolume=40e6,
+                priceDate="2026-07-20",
+            ),
+        ],
+    )
+    assert sorted(r["entity"] for r in _extract_stocks_rsi(path)) == ["CHKP", "TSEM"]
+
+
+def _fundamental_signals():
+    by_id = {s["signal_id"]: s for s in catalog.SIGNALS}
+    return by_id["sa_fscore"], by_id["sa_fcf_yield"]
+
+
+def test_fundamental_annotations_are_informational_and_never_vote(tmp_path):
+    """composite has no business-quality read at all: every ticker signal is
+    microstructure, so its universe is a microcap dislocation scanner. These two
+    add the missing dimension as ANNOTATIONS ONLY — deferred from voting exactly
+    like options_iv30/options_pcr, pending a measured calibration pass. Five
+    correlated quality votes would be one fact counted five times (measured
+    2026-07-26: roic x fcfYield rho=0.585, roic x sharesYoY rho=-0.513)."""
+    from sources.combiners.composite import db as cdb
+
+    path = _stocks_fixture(
+        tmp_path,
+        [
+            dict(
+                symbol="ADBE",
+                isin="US00724F1012",
+                isPrimaryListing="1",
+                fScore=7.0,
+                fcfYield=12.2,
+                marketCap=84e9,
+                dollarVolume=500e6,
+                priceDate="2026-07-20",
+            ),
+        ],
+    )
+    c = sqlite3.connect(":memory:", uri=True)
+    try:
+        fetch.attach_ro(c, path)
+        rows = [r for s in _fundamental_signals() for r in fetch.extract(c, s, today="2026-07-20")]
+    finally:
+        c.close()
+
+    assert {r["entity"] for r in rows} == {"ADBE"}
+    assert {r["raw_value"] for r in rows} == {7.0, 12.2}
+    for r in rows:
+        assert r["score"] == 0, "annotation must never vote"
+        assert r["signal_id"] in cdb.INFORMATIONAL_SIGNALS
+
+
+def test_fundamental_annotations_skip_illiquid_and_duplicate_classes(tmp_path):
+    """Same universe discipline as stocks_rsi: one row per company, liquid only.
+    Otherwise the calibration history accumulates junk it can never learn from."""
+    path = _stocks_fixture(
+        tmp_path,
+        [
+            dict(
+                symbol="UHAL",
+                isin="US0235861004",
+                isPrimaryListing="1",
+                fScore=6.0,
+                fcfYield=5.0,
+                marketCap=20e9,
+                dollarVolume=40e6,
+                priceDate="2026-07-20",
+            ),
+            dict(
+                symbol="UHAL.B",
+                isin="US0235862003",
+                isPrimaryListing="0",
+                fScore=6.0,
+                fcfYield=5.0,
+                marketCap=20e9,
+                dollarVolume=20e6,
+                priceDate="2026-07-20",
+            ),
+            dict(
+                symbol="THIN",
+                isin="US9999999999",
+                isPrimaryListing="1",
+                fScore=8.0,
+                fcfYield=9.0,
+                marketCap=20e9,
+                dollarVolume=20e3,
+                priceDate="2026-07-20",
+            ),
+        ],
+    )
+    c = sqlite3.connect(":memory:", uri=True)
+    try:
+        fetch.attach_ro(c, path)
+        fscore, _ = _fundamental_signals()
+        rows = fetch.extract(c, fscore, today="2026-07-20")
+    finally:
+        c.close()
+
+    assert [r["entity"] for r in rows] == ["UHAL"]
+
+
+def test_stocks_rsi_dedup_keeps_the_liquid_line_not_the_extreme_one(tmp_path):
+    """Pins the tie-break the previous dedup test could not see: its two rows
+    shared a score bucket, so it proved only that ONE row survived, not WHICH.
+
+    When both classes clear the extreme bar, the better-price-discovery line
+    wins even though the other reads more extreme — a thin class's extreme is
+    more likely noise. Bounded by the data: on 2026-07-26 exactly one company
+    had both classes extreme (same sign, same bucket) and the largest spread
+    between any company's classes was 2.0 RSI points, so this can cost one
+    score notch and can never flip the sign."""
+    path = _stocks_fixture(
+        tmp_path,
+        [
+            dict(
+                symbol="AAA",
+                isin="US0235861004",
+                isPrimaryListing="0",
+                rsi=15.0,
+                dollarVolume=15e6,
+                priceDate="2026-07-20",
+            ),
+            dict(
+                symbol="AAB",
+                isin="US0235862003",
+                isPrimaryListing="0",
+                rsi=29.0,
+                dollarVolume=100e6,
+                priceDate="2026-07-20",
+            ),
+        ],
+    )
+    rows = _extract_stocks_rsi(path)
+    assert [r["entity"] for r in rows] == ["AAB"]
+    assert rows[0]["score"] == 1, "the surviving line's own reading is scored, not the dropped one"

@@ -61,6 +61,84 @@ EIA_NATGAS_CHANGE_SCORE = (
     "CASE WHEN change_pct <= -2.0 THEN 1 WHEN change_pct >= 2.0 THEN -1 ELSE 0 END"
 )
 
+# Collapsing stocks.db share classes to ONE company. Hoisted (like the score
+# constants above) because two consumers must not drift apart: this catalog's
+# stocks_rsi signal and the `candidates` reporter in this same package.
+#
+# Three candidate keys were measured against data/stocks.db on 2026-07-26 and
+# only the third survives:
+#   isPrimaryListing='1'  -- would drop 11 of stocks_rsi's 117 rows, but TEN of
+#                            those are single-listing names with no duplicate to
+#                            collapse (liquid foreign ADRs: SAP $645M/day, AZN
+#                            $403M/day, GFI, NICE). Fixes one dupe, breaks ten.
+#   cik                   -- too coarse: Liberty Media's Braves, Formula One and
+#                            Live tracking stocks share ONE cik (0001560385) but
+#                            are three separate businesses.
+#   substr(isin,3,6)      -- the CUSIP issuer number. Correct for US ISINs
+#                            (BRK.A/BRK.B both 084670, GOOG/GOOGL both 02079K)
+#                            but CATASTROPHIC applied to foreign ones, where
+#                            national agencies assign blocks sequentially across
+#                            issuers: IL|001082 spans 11 unrelated Israeli firms
+#                            INCLUDING CHKP, NL|001500 spans 14 including
+#                            Ferrari, Stellantis and QIAGEN.
+# So: key on the CUSIP issuer number for US ISINs only; every other row keys on
+# its own symbol and can never be merged into another company's group.
+STOCKS_COMPANY_KEY = """
+    CASE WHEN isin IS NOT NULL AND substr(isin, 1, 2) = 'US'
+         THEN 'US|' || substr(isin, 3, 6)
+         ELSE 'SYM|' || symbol END
+"""
+
+# Tie-break within one company: prefer the line the vendor already flags as the
+# primary listing, then the more liquid one, then the symbol for determinism.
+#
+# DELIBERATELY NOT BY SIGNAL SEVERITY. When two classes both clear a signal's
+# bar, this keeps the better-price-discovery line, not the more extreme reading
+# — a thin class's extreme is more likely noise than information. The cost is
+# bounded by the data: of 11 companies with two liquid classes on 2026-07-26,
+# ONE had both at an RSI extreme (UHAL 72.2 / UHAL.B 70.7 — same sign, same
+# score bucket), none had opposite-signed extremes, and the largest RSI spread
+# between any company's classes was 2.0 points, since both track one business.
+# So the worst realistic outcome is a one-notch magnitude difference, never a
+# sign flip. A test pins the both-extreme case.
+#
+# isPrimaryListing is compared as BOTH text and number for defence in depth: it
+# is TEXT '0'/'1' today and now pinned in the screener's STRING_IDS, but
+# ensure_schema never ALTERs an existing column's affinity, so a DB created
+# before that pin keeps whatever it first inferred.
+STOCKS_PRIMARY_FIRST = "CASE WHEN isPrimaryListing IN ('1', 1) THEN 0 ELSE 1 END"
+
+# Universe floor for the stocks.db fundamental ANNOTATIONS below. Same
+# discipline as stocks_rsi — liquid names, one row per company — because a
+# history polluted with illiquid share-class duplicates is one no calibration
+# pass can later learn anything from.
+ANNOTATION_MARKET_CAP_MIN = 2e9
+ANNOTATION_DOLLAR_VOLUME_MIN = 10e6
+
+
+def _stocks_annotation_sql(column: str) -> str:
+    """One score-0 row per company carrying `column` as raw_value. `column` is
+    a fixed catalog literal, never user input."""
+    return f"""
+            WITH eligible AS (
+                SELECT symbol, {column} AS v, priceDate, isin, isPrimaryListing,
+                       dollarVolume
+                FROM src.v_latest
+                WHERE {column} IS NOT NULL
+                  AND marketCap >= {ANNOTATION_MARKET_CAP_MIN}
+                  AND dollarVolume >= {ANNOTATION_DOLLAR_VOLUME_MIN}
+            ),
+            ranked AS (
+                SELECT *, ROW_NUMBER() OVER (
+                    PARTITION BY {STOCKS_COMPANY_KEY}
+                    ORDER BY {STOCKS_PRIMARY_FIRST}, dollarVolume DESC, symbol
+                ) AS rn
+                FROM eligible
+            )
+            SELECT symbol, v, 0, priceDate FROM ranked WHERE rn = 1
+    """
+
+
 SIGNALS: list[dict[str, Any]] = [
     # ------------------------------------------------ market grain ----
     {
@@ -386,20 +464,76 @@ SIGNALS: list[dict[str, Any]] = [
         """,
     },
     {
-        # Mean-reversion read on RSI extremes, liquid names only.
+        # Mean-reversion read on RSI extremes, liquid names only, ONE row per
+        # company: UHAL and UHAL.B are one business and both cleared the
+        # liquidity floor on 2026-07-26, so composite was forming two
+        # independent opinions about it. See STOCKS_COMPANY_KEY for why the key
+        # is the US CUSIP issuer number and not isPrimaryListing or cik.
         "signal_id": "stocks_rsi",
         "db": "stocks.db",
         "grain": "ticker",
         "staleness_budget_days": 4,
-        "sql": """
+        "sql": f"""
+            WITH eligible AS (
+                SELECT symbol, rsi, priceDate, isin, isPrimaryListing,
+                       dollarVolume
+                FROM src.v_latest
+                WHERE rsi IS NOT NULL AND rsi > 0
+                  AND (rsi <= 30 OR rsi >= 70)
+                  AND dollarVolume >= 10000000
+            ),
+            ranked AS (
+                SELECT *, ROW_NUMBER() OVER (
+                    PARTITION BY {STOCKS_COMPANY_KEY}
+                    ORDER BY {STOCKS_PRIMARY_FIRST}, dollarVolume DESC, symbol
+                ) AS rn
+                FROM eligible
+            )
             SELECT symbol, rsi,
                    CASE WHEN rsi <= 20 THEN 2 WHEN rsi <= 30 THEN 1
                         WHEN rsi >= 80 THEN -2 ELSE -1 END,
                    priceDate
-            FROM src.v_latest
-            WHERE rsi IS NOT NULL AND rsi > 0
-              AND (rsi <= 30 OR rsi >= 70)
-              AND dollarVolume >= 10000000
+            FROM ranked WHERE rn = 1
+        """,
+    },
+    {
+        # Piotroski F-Score (0-9): the business-quality TREND read composite
+        # otherwise lacks entirely. Every other ticker signal here is
+        # microstructure, which is why the universe is empirically a microcap
+        # dislocation scanner (measured 2026-07-26: si_spike fired on 527
+        # tickers, 10 of them above $2B) and why the research gate correctly
+        # rejects nearly everything it flags.
+        #
+        # ANNOTATION ONLY (score 0, listed in db.INFORMATIONAL_SIGNALS),
+        # deferred from voting exactly as options_iv30/options_pcr were. Two
+        # reasons it must not vote yet: (1) no forward-return evidence for a
+        # fundamental signal exists in scorer.db, and every ticker-grain number
+        # there currently comes from ONE overlapping market episode (all matured
+        # 10-day rows originate 2026-07-06..08); (2) modelling quality as
+        # several separate votes double-counts one factor. Spearman over THIS
+        # signal's own universe (cap >= $2B, $10M+ volume, all three fields
+        # present; n=1587, 2026-07-26): roic x fcfYield +0.414, roic x sharesYoY
+        # -0.392, fcfYield x sharesYoY -0.461. Promote to a scored signal only
+        # after a measured calibration pass over non-overlapping windows.
+        "signal_id": "sa_fscore",
+        "db": "stocks.db",
+        "grain": "ticker",
+        "staleness_budget_days": 4,
+        "sql": f"""
+            {_stocks_annotation_sql("fScore")}
+        """,
+    },
+    {
+        # Free-cash-flow yield: the valuation read paired with sa_fscore's
+        # quality-trend read. Two roughly orthogonal dimensions, deliberately
+        # NOT the five correlated quality fields — see the note on sa_fscore.
+        # Annotation only, on the same terms.
+        "signal_id": "sa_fcf_yield",
+        "db": "stocks.db",
+        "grain": "ticker",
+        "staleness_budget_days": 4,
+        "sql": f"""
+            {_stocks_annotation_sql("fcfYield")}
         """,
     },
     {

@@ -109,10 +109,31 @@ The `backtest` combiner replays composite's FRED/market signals against ALFRED v
 released) and grades them in `v_replay_efficacy`. Read `excess`/`beats_baseline` there, never
 `hit_rate` alone — the benchmarks drift upward, so a bullish flag "wins" by doing nothing;
 `v_benchmark_baseline` is the null to compare against, and the flags are nominal and
-uncorrected across ~48 comparisons. Weekly (Sat, after `fred-vintages`). Two read-only
+uncorrected across ~48 comparisons. Weekly (Sat, after `fred-vintages`). Three read-only
 reporters ship alongside:
-`main.py scorecard` (grades the human's decisions from the journal views; SELECT-only) and
-`main.py pricehistory` (manual one-shot ledger backfill — never scheduled).
+`main.py scorecard` (grades the human's decisions from the journal views; SELECT-only),
+`main.py pricehistory` (manual one-shot ledger backfill — never scheduled), and
+`main.py candidates` (quality-first stock screen over `stocks.db`; SELECT-only, on demand).
+
+**Composite's ticker layer is a microcap dislocation scanner** — every ticker-grain signal is
+microstructure (short interest, FTDs, RSI, short volume, reddit), so `research-ticker`
+correctly rejects nearly everything it flags. Measured 2026-07-26: `si_spike` fired on 527
+tickers, 10 above $2B; of 36 quality-and-oversold names, 2 were in composite's universe and 0
+flagged. `candidates` enters the funnel from the other end (quality first, dislocation as
+timing) and is UNGRADED — nothing scores it, so it is a reading list, never an opinion.
+`sa_fscore`/`sa_fcf_yield` add the missing business-quality dimension to composite as
+**annotations only** (score 0, in `INFORMATIONAL_SIGNALS`), deferred from voting like the
+options pair: no fundamental signal has forward-return evidence yet, and quality modelled as
+several votes double-counts one factor (roic×fcfYield rho=0.585). Promote only after a
+measured calibration pass over non-overlapping windows.
+
+**One row per company, not per share class.** `stocks.db` share classes inherit the
+whole-company `marketCap` (BRK.A $1,059.5B vs BRK.B $1,058.9B), so both `stocks_rsi` and
+`candidates` partition on `catalog.STOCKS_COMPANY_KEY`. That key is the **US CUSIP issuer
+number only** — `isPrimaryListing='1'` would drop ten liquid single-listing ADRs (SAP, AZN,
+GFI, NICE) to fix one duplicate; `cik` is too coarse (Liberty Media's three tracking-stock
+families share one); and a *foreign* ISIN prefix is not issuer-stable (IL|001082 spans 11
+unrelated Israeli firms including CHKP). Every non-US row keys on its own symbol.
 
 ### File tree
 
