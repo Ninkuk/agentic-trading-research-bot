@@ -56,9 +56,13 @@ The score must be a **percentile rank of `grahamUpside` within the day's eligibl
 cross-section**, not a threshold on the raw number. Two guards on top:
 
 - the same `dollarVolume >= 10000000` liquidity filter `stocks_rsi` already uses,
-  which leaves **1,783** eligible names in the latest cross-section;
-- `grahamUpside IS NOT NULL` — the field is populated for 2,724 of the universe's
-  symbols, so a `LEFT JOIN` yielding NULL is the normal case for the rest.
+  which on its own leaves **2,496** of the latest cross-section's 5,597 names;
+- `grahamUpside IS NOT NULL` — the field is populated for **2,705** of those
+  5,597, so a `LEFT JOIN` yielding NULL is the normal case for the rest.
+
+The two together leave **1,783** eligible names. Each count is that filter alone
+against `stocks.db` `v_latest`; the 1,783 belongs to the conjunction and to
+neither bullet.
 
 `raw_value` stays the raw `grahamUpside` so the un-ranked number remains readable in
 `signal_scores`.
