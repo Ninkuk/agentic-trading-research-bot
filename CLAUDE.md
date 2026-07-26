@@ -133,9 +133,14 @@ source itself. Import a screener/monitor/combiner's internals as `sources.screen
 
 `tools/` holds code that is neither a source nor a dispatcher — pure helpers with no
 network, no DB, and no clock. Today: `tools/valuation/reverse_dcf.py`, the bisection
-solver behind the `research-ticker` skill, and `tools/options/implied_move.py`, the
+solver behind the `research-ticker` skill; `tools/options/implied_move.py`, the
 options-implied-move arithmetic behind the research skills' options check (straddle/spot
-is a MEAN, never a ceiling). Not registered in `registry.py`; they are not data pipelines.
+is a MEAN, never a ceiling); `tools/research/transcripts.py`, earnings-call attribution
+(keyed on `company`, never `role`); and `tools/research/youtube_captions.py`, the
+`json3`→timestamped-transcript decoder behind `eval-research-ticker`'s YouTube benchmarks
+(`json3` never `vtt` — vtt doubles every line of a rolling caption window). Each pairs
+with a fetch that lives outside it — skill prose or `yt-dlp`. Not registered in
+`registry.py`; they are not data pipelines.
 
 ### Shared spine
 

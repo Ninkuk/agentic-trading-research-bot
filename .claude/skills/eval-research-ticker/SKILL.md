@@ -1,6 +1,6 @@
 ---
 name: eval-research-ticker
-description: Use when measuring a research-ticker run against external professional research on the same name, benchmarking research quality, or feeding a gap a professional writeup exposed back into the research skills. Not for producing research (that is research-ticker) — only for grading it and improving the system.
+description: Use when measuring a research-ticker run against external professional research on the same name, benchmarking research quality, or feeding a gap a professional writeup exposed back into the research skills. The benchmark may be pasted text, a file path, or a YouTube link — captions are fetched and rendered into a timestamped transcript. Not for producing research (that is research-ticker) — only for grading it and improving the system.
 ---
 
 # eval-research-ticker
@@ -26,8 +26,9 @@ Re-invoke to iterate; the skill never auto-loops.
    explicitly **not** to write or commit `research/<TICKER>.md` — a test run must
    not collide with the repo. Use a fresh agent, **not a fork**: a fork inherits
    your conclusions and measures nothing.
-2. **Benchmark in.** Ask the user for the professional research (paste or path).
-   Required — there is no scoring without a benchmark.
+2. **Benchmark in.** Ask the user for the professional research — pasted text, a
+   file path, or a **YouTube link** (see below). Required — there is no scoring
+   without a benchmark.
 3. **Score** the run on the rubric below.
 4. **Classify every divergence** (anti-oracle guard below).
 5. **Propose fixes, then stop and ask.** Present only the fixable gaps and the
@@ -39,6 +40,48 @@ Re-invoke to iterate; the skill never auto-loops.
    **plan-only and without repo write access** so they cannot pollute the tree.
 7. **Verify by fresh re-run.** Dispatch a *new* fresh-context `research-ticker`
    run, re-score, report the score delta per dimension. Stop.
+
+## A YouTube link as the benchmark
+
+Interviews, conference talks, and fund-manager walkthroughs are benchmarks too.
+Fetch captions and metadata into the **scratchpad, never the repo**:
+
+```bash
+uvx yt-dlp --skip-download --write-subs --write-auto-subs \
+  --sub-langs 'en-orig,en' --sub-format json3 --write-info-json \
+  -o '<scratch>/bench.%(ext)s' '<URL>'
+uv run python -m tools.research.youtube_captions <scratch>/bench.en.json3
+```
+
+`uvx`, not a bare `yt-dlp` — `uv` is already a setup prerequisite, so this needs
+no install on a fresh clone and fetches a current build each time. That matters:
+YouTube breaks old yt-dlp releases routinely, and a pinned one fails months
+later on a machine nobody is maintaining.
+
+`json3`, never `vtt` — vtt serializes the rolling caption window, so every line
+lands twice. Prefer `bench.en.json3` (human-authored) over `bench.en-orig.json3`
+(machine) when both exist; the tool prints which one it read. Exit 2 means no
+cues: there is no benchmark, so stop rather than score against silence.
+
+**If the fetch fails at all** (offline, age-gated, captions disabled), do not
+ask for a paste blind — walk the user to **"Show transcript"** under the video's
+description on youtube.com and have them copy from there. Never fetch the watch
+page hoping for captions; it does not carry them.
+
+**Read `upload_date` from `bench.info.json` before scoring Recency.** A URL
+carries no date. Grading a run against a six-month-old talk books every event
+since as a MISS the professional never had.
+
+**Discount the transcript, not the professional.** Their authority is whatever
+it was; the *words* are lossy. ASR fails fluently rather than loudly — on a
+control video it rendered "Never gonna let you down" as "I'm going to let you
+down", the negation dropped and the claim inverted. So:
+
+- A figure, ticker, or date read off a caption earns a `MISS` only once
+  confirmed at a primary source (filing, call transcript, press release).
+- Auto-captions carry no speaker labels. In an interview the host's speculation
+  reads exactly like the guest's claim, and a point you cannot attribute cannot
+  be a `MISS` — tag it `JUDGMENT` or drop it.
 
 ## Rubric — fixed core (7 dimensions)
 
@@ -82,6 +125,8 @@ Only `MISS` (and the occasional hardening case) reaches step 5.
 - Running the fresh run as a fork of yourself. **It inherits your answers.**
 - Dispatching write-capable test agents. **Plan-only, no repo writes** — or they
   edit the very skills you are measuring.
+- Booking a `MISS` on a number heard in a caption. **ASR mishears figures and
+  drops negations — confirm at the source or it is not a MISS.**
 
 ## Guardrails
 
