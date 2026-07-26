@@ -12,7 +12,11 @@ job_start "portfolio snapshot"
 # Bash heredoc where the allowlist grants Write) and then reports the MCP
 # connector as unauthenticated rather than retrying. Verified 2026-07-08 --
 # haiku failed this slot 3/3 while sonnet ran it clean. The allowlist is the
-# write-scope guarantee, so fix the model, never widen the list.
+# write-scope guarantee: never widen `Write`/`Bash`/`Edit` to work around a
+# model improvising — fix the model. Read-only Robinhood getters are a
+# different axis and DO get added as the skill grows to call them; a skill
+# calling a getter the wrapper omits is a silent weekday outage, which is why
+# test_launchd_wrappers.py asserts the two sets agree.
 # --permission-mode default is load-bearing: a global defaultMode=auto in
 # ~/.claude/settings.json AUTO-APPROVES tools outside --allowedTools in
 # headless runs (proven 2026-07-22 by a research-nightly session committing
@@ -20,7 +24,7 @@ job_start "portfolio snapshot"
 # Skill (loads /account-positions) and TodoWrite become explicit for that reason.
 claude -p "/account-positions" \
     --model sonnet \
-    --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_portfolio,mcp__claude_ai_Robinhood_MCP__get_equity_positions,Write,Bash(uv run python main.py portfolio *)" \
+    --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_portfolio,mcp__claude_ai_Robinhood_MCP__get_equity_positions,mcp__claude_ai_Robinhood_MCP__get_option_positions,Write,Bash(uv run python main.py portfolio *)" \
     --permission-mode default \
     --output-format json
 

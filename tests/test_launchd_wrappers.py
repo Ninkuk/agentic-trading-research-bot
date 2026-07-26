@@ -25,6 +25,46 @@ def _code_only(line):
     return line.split("#", 1)[0]
 
 
+# The two headless slots that drive a skill through `claude -p`, each paired
+# with the skill it loads. `--permission-mode default` makes each wrapper's
+# --allowedTools a real envelope, so a Robinhood getter the skill instructs
+# but the wrapper omits is denied outright -- and headless there is nobody to
+# approve it, so the job produces no snapshot and exits 1.
+_MCP_SLOTS = {
+    "portfolio_snapshot.sh": ".claude/skills/account-positions/SKILL.md",
+    "journal_sync.sh": ".claude/skills/journal-sync/SKILL.md",
+}
+
+# Getters a skill names but deliberately does NOT call in this slot. Each
+# entry is a decision, not an oversight -- keep the reason with it.
+_NOT_GRANTED = {
+    # Tax lots are read at decision time by `kill-thesis`; the snapshot
+    # deliberately does not persist them (account-positions SKILL.md).
+    "get_equity_tax_lots",
+}
+
+_GETTER = re.compile(r"`(get_[a-z_]+)`")
+
+
+def test_headless_slots_allowlist_every_getter_their_skill_calls():
+    """A skill gaining a Robinhood getter without its wrapper gaining the
+    matching --allowedTools entry is a silent, deterministic outage: the
+    2026-07-23 option-capture work added get_option_positions/get_option_orders
+    to the skills and the portfolio/journal slots failed every weekday after.
+    Anything the skill names must be granted or explicitly not-granted."""
+    for wrapper, skill in _MCP_SLOTS.items():
+        allowlist = (LAUNCHD / wrapper).read_text()
+        named = set(_GETTER.findall((REPO_ROOT / skill).read_text()))
+        assert named, f"no getters found in {skill} -- extraction broke"
+        ungranted = sorted(
+            g for g in named - _NOT_GRANTED if f"Robinhood_MCP__{g}" not in allowlist
+        )
+        assert ungranted == [], (
+            f"{wrapper} omits getter(s) {ungranted} that {skill} instructs; "
+            f"add to --allowedTools or to _NOT_GRANTED with a reason"
+        )
+
+
 def test_run_job_sh_never_execs():
     """`exec` replaces the shell running run_job.sh, leaving no process to
     run env.sh's EXIT trap -- the run would log `start:` and never `end:`.

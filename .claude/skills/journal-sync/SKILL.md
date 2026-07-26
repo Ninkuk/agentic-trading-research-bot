@@ -33,7 +33,10 @@ against scorer.db directly.
      never matches them to an opinion and never attaches them as exits —
      they land in `v_freelance` labeled as such. (Policy revised
      2026-07-07: label, don't exclude.)
-3. Build ONE JSON document in the scratchpad:
+3. Build ONE JSON document in the scratchpad. To revise it, re-`Write` the
+   whole document: the headless slot allowlists `Write` but not `Edit`, so an
+   `Edit` call dies on a permission prompt no one is there to approve (this
+   exact failure produced the 2026-07-23 stale-journal alert).
 
    ```json
    {"as_of": "<UTC now isoformat>",
