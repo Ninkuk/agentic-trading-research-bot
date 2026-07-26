@@ -107,7 +107,7 @@ whoever owns the number states it, and the skill quotes rather than restates.)
 
 2. **Duplication** — does the repo already do this, or already do it better?
    *Owner: `uv run python main.py --list` for what ships; the `sources/` tree for
-   how; the SIGNALS structure in `composite/catalog.py` for what is already
+   how; the SIGNALS structure in `sources/combiners/composite/catalog.py` for what is already
    scored. Grep before you conclude — an absence you did not search for is not
    an absence. This gate covers methodology and constraints, not only signals: a
    concept whose whole content is something this repo already models is a
@@ -138,7 +138,7 @@ whoever owns the number states it, and the skill quotes rather than restates.)
 5. **Architecture fit** — can it be expressed as SQL over one attached source DB,
    or does it need a runtime dependency, a trained model, or a parser for a
    format the repo cannot read?
-   *Owner: the `composite/catalog.py` module docstring — it owns the row
+   *Owner: the `sources/combiners/composite/catalog.py` module docstring — it owns the row
    contract; and `CLAUDE.md` for what may be imported at runtime. Verify the
    shape of the real feed before assuming a field exists — fetch it and inspect
    what it actually contains, rather than trusting the video's account of its
@@ -239,8 +239,8 @@ right.
   be measured against the store's own latest observation, not `date('now')` — the
   same determinism invariant `CLAUDE.md` already states for the sources, applied
   to this skill's own grepping and querying of the repo.
-  *Dated example, 2026-07-26: a `SURVIVED` verdict on a censored-denominator
-  concept evaporated when re-measured against `MAX(price_date)` — 33
+  *Dated example, 2026-07-26: an apparent gap in a maturation ledger vanished
+  when re-measured against the store's own latest observation — 33
   apparently-overdue rows became 0.* A check that agrees with the finding it is
   checking has not verified it if it ran the same query; an independent check
   must vary the method, not just the operator.
@@ -309,19 +309,32 @@ individually defensible. Mirrors the same freeze in `kill-thesis`.
 
 **The twenty-concept revisit trigger fired on 2026-07-26 and the budget stays at
 seven.** A ten-video validation run produced 116 ledger lines in one day, far
-past the trigger. The measured distribution: gate 1 ×36, gate 2 ×24, gate 3 ×16,
-gate 4 ×3, gate 5 ×12, gate 6 ×14, gate 7 ×9, survivors 2. **Every gate has now
-demonstrably killed something**, so no gate is inert and none is a candidate for
-removal. Gate 4 in particular fired three times — a look-ahead training label, a
-monthly series looked up daily, and a derived spectral feature — which retracts
-an earlier four-video reading that concluded it never fires. Four videos was too
-small a sample to see a gate whose base rate is ~3%. Two survivors out of ~100
-concepts is a live gauntlet, not a wall, so nothing argues for loosening either.
+past the trigger. Its distribution, re-sliced from the shipped
+`research/ideas/ledger.log` *after* that run's two survivors were adjudicated
+away at gate 6: gate 1 ×36, gate 2 ×24, gate 3 ×16, gate 4 ×3, gate 5 ×12,
+**gate 6 ×16**, gate 7 ×9, **survivors 0**. An earlier reading of that run as
+`gate 6 ×14, survivors 2` predates the adjudications and is retracted. Re-slice
+it yourself before quoting it; this file does not own the ledger.
+**Every gate has now demonstrably killed
+something**, so no gate is inert and none is a candidate for removal. Gate 4 in
+particular fired three times — a look-ahead training label, a monthly series
+looked up daily, and a derived spectral feature — which retracts an earlier
+four-video reading that concluded it never fires. Four videos was too small a
+sample to see a gate whose base rate is ~3%.
 
-- **Revisit at 300 ledger lines**, roughly twenty more videos. That is the next
-  point at which a genuinely rare gate could be shown inert, and it is far enough
-  out that the freeze does real work in between. The measured-miss rule for
-  *adding* a gate is unchanged and is not relaxed by this ruling.
+**The live-gauntlet evidence is the 18-video ledger, not that run.** 210 lines
+from 179 concepts as stated plus 31 `-salvaged` variants: **2 `SURVIVED`, 6
+`DEFERRED`**, and every one of the seven gates has killed something. Two
+survivors in 210 lines is a live gauntlet, not a wall, so nothing argues for
+loosening either.
+
+- **Revisit at 450 lines in `research/ideas/ledger.log`.** Derived, not asserted:
+  the file holds 211 lines today (210 concepts over 18 videos ≈ 11.7 lines per
+  video), so 450 is **≈20 more videos** out. A 300-line trigger would fire in
+  ≈8 videos — too soon for the freeze to do any work. 450 is far enough out to be
+  the next point at which a genuinely rare gate could be shown inert. The
+  measured-miss rule for *adding* a gate is unchanged and is not relaxed by this
+  ruling.
 
 The skill can improve itself: research-skill hardening is a landing zone, so a
 concept whose real value is a check this gauntlet lacks lands as a proposal

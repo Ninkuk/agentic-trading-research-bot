@@ -8,8 +8,9 @@ time and run through its seven-gate kill gauntlet.
   corpses; that is the design. It exists so a sibling video cannot re-propose an
   idea this repo already killed, and so the kill distribution across gates is
   measurable. The gate-budget freeze in
-  `.claude/skills/kill-video-concepts/SKILL.md` is revisited when it holds
-  twenty concepts.
+  `.claude/skills/kill-video-concepts/SKILL.md` has a revisit trigger keyed to
+  this file's line count; that file owns the number, so read it there rather
+  than restating it here.
 - `<YYYY-MM-DD>-<slug>.md` — one file per surviving concept: landing zone, the
   table or view shape it would take, and a measurement plan.
 
