@@ -234,6 +234,17 @@ right.
   a caption is confirmed at a primary source or it is not used. A concept whose
   only support is an unconfirmed caption number dies at gate 1.
 
+- **Data-sufficiency judgments run on the data's own clock, never wall-clock.**
+  A gate-6/7 question about rows matured, history depth, or horizons covered must
+  be measured against the store's own latest observation, not `date('now')` — the
+  same determinism invariant `CLAUDE.md` already states for the sources, applied
+  to this skill's own grepping and querying of the repo.
+  *Dated example, 2026-07-26: a `SURVIVED` verdict on a censored-denominator
+  concept evaporated when re-measured against `MAX(price_date)` — 33
+  apparently-overdue rows became 0.* A check that agrees with the finding it is
+  checking has not verified it if it ran the same query; an independent check
+  must vary the method, not just the operator.
+
 ## Outputs
 
 **Every concept**, survivor or corpse, gets one line appended to
