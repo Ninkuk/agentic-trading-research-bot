@@ -92,11 +92,16 @@ whoever owns the number states it, and the skill quotes rather than restates.)
    *Owner: `uv run python main.py --list` for what ships; the `sources/` tree for
    how; the SIGNALS structure in `composite/catalog.py` for what is already
    scored. Grep before you conclude — an absence you did not search for is not
-   an absence.*
+   an absence. This gate covers methodology and constraints, not only signals: a
+   concept whose whole content is something this repo already models is a
+   duplicate, not a discovery.*
 
-3. **Source admissibility** — where would the data come from, and is that source
-   allowed here? A third-party scrape, a Kaggle dump, or anything whose
-   acquisition the video itself describes as against a site's terms dies here.
+3. **Source admissibility** — name the exact feed this concept would read, then
+   ask whether *that feed* is admissible here. Admissibility is a policy
+   question, not an availability question: that data exists and is downloadable
+   says nothing about whether this repo may read it. If the video describes how
+   it obtained its own data, that description is evidence about the feed's tier
+   — weigh it against the policy rather than against convenience.
    *Owner: the data-source policy section of `CLAUDE.md`. It owns the tier list
    and the exceptions; read it rather than recalling which sources are blessed.*
 
@@ -104,17 +109,17 @@ whoever owns the number states it, and the skill quotes rather than restates.)
    made? Filing lag, restatement, index reconstitution, survivorship,
    look-ahead in the label.
    *Owner: `publication_lag_days` in `sources/combiners/backtest/` — it owns how
-   this repo already models release lag, and a concept whose insight is "there is
-   a lag" is a duplicate, not a discovery.*
+   this repo models the delay between an observation and its availability. Read
+   it rather than assuming.*
 
 5. **Architecture fit** — can it be expressed as SQL over one attached source DB,
    or does it need a runtime dependency, a trained model, or a parser for a
    format the repo cannot read?
    *Owner: the `composite/catalog.py` module docstring — it owns the row
    contract; and `CLAUDE.md` for what may be imported at runtime. Verify the
-   shape of the real feed before assuming a field exists — fetch the official
-   file and read its header, rather than trusting the video's account of its own
-   dataset.*
+   shape of the real feed before assuming a field exists — fetch it and inspect
+   what it actually contains, rather than trusting the video's account of its
+   own dataset.*
 
 6. **Statistical viability** — what is the null, and does the design survive it?
    Wrong null, overlapping forward windows, thin effective n, a threshold picked
@@ -158,10 +163,10 @@ right.
   not the rule — re-read the SQL, do not assume this still describes it.*
 
 - **A negative result in the video is evidence about the video's
-  implementation**, not about the concept. "MACD lost money" is a fact about one
-  parameterisation on one universe over one window. Kill the concept on a gate,
-  not on the video's disappointment — and equally, do not resurrect it because
-  the author's code looked sloppy.
+  implementation**, not about the concept. What actually got tested was one
+  parameterisation, on one universe, over one window, coded by one person. Kill
+  the concept on a gate, not on the video's disappointment — and equally, do not
+  resurrect it because the author's code looked sloppy.
 
 - **ASR discipline.** Auto-captions fail fluently rather than loudly: negations
   drop, tickers mutate, figures shift a digit. A figure, ticker, or date read off
