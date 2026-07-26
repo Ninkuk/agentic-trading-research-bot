@@ -201,7 +201,7 @@
 2026-07-26 oJQqiogr6S0 graham-value-discount-signal-salvaged SURVIVED
 2026-07-26 oJQqiogr6S0 graham-underperforms-benchmark DEAD gate=1:provenance
 2026-07-26 oJQqiogr6S0 computable-universe-benchmark SALVAGED gate=2:duplication
-2026-07-26 oJQqiogr6S0 computable-universe-benchmark-salvaged DEFERRED gate=6:statistics reopen=backtest.db:ABS(cond_p_up-p_up)>1.96*SQRT(cond_p_up*(1-cond_p_up)/n_cond) for any graded row
+2026-07-26 oJQqiogr6S0 computable-universe-benchmark-salvaged DEFERRED gate=6:statistics reopen=backtest.db:ANY_GRADED_ROW(ABS(cond_p_up-p_up)>1.96*SQRT(cond_p_up*(1-cond_p_up)/n_cond))
 2026-07-26 oJQqiogr6S0 buy-everything-null-check DEAD gate=2:duplication
 2026-07-26 oJQqiogr6S0 manual-recalculation-validation DEAD gate=2:duplication
 2026-07-26 oJQqiogr6S0 aaa-bond-yield-asof-lookup DEAD gate=7:priority
