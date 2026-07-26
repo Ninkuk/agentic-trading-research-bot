@@ -280,3 +280,122 @@ those are buried permanently by the mechanism meant to prevent waste, and they
 become viable on their own in a few months. `DEFERRED` requires a `reopen=`
 condition a query can decide, and the reopen check makes the ledger something the
 skill reads, not only appends to.
+
+---
+
+# Run 4 — eight further videos, 2026-07-26, CLEAN
+
+Videos 11–18, exercising the **corrected** skill (gate-2 scoping + the `DEFERRED`
+verdict + the reopen check + the tightened salvage-parent token). No
+pre-registration; this grades the ledger's shape and the new verdict's first
+exercise, not the skill against a key. Nothing above the previous `---` is edited.
+
+| video | concepts | salvages | lines | verdicts |
+|---|---|---|---|---|
+| `kRa3PUxNBTM` | 10 | 1 | 11 | 9 DEAD · 1 SALVAGED · **1 SURVIVED** |
+| `Lh1vrIcpJN4` | 10 | 2 | 12 | 10 DEAD · 2 SALVAGED |
+| `mjVmd4MJ_tc` | 10 | 1 | 11 | 10 DEAD · 1 SALVAGED |
+| `SgQ-RwC97us` | 10 | 2 | 12 | 9 DEAD · 2 SALVAGED · 1 DEFERRED |
+| `ZEkArL1Oh8c` | 10 | 0 | 10 | 9 DEAD · 1 DEFERRED |
+| `DVVVvlK2O_k` | 10 | 3 | 13 | 9 DEAD · 3 SALVAGED · 1 DEFERRED |
+| `RNScyMTq-wE` | 10 | 3 | 13 | 9 DEAD · 3 SALVAGED · 1 DEFERRED |
+| `oJQqiogr6S0` | 10 | 2 | 12 | 8 DEAD · 2 SALVAGED · 1 DEFERRED · **1 SURVIVED** |
+
+94 lines from 80 concepts plus 14 `-salvaged` variants. Run-4 gates: 1 ×26, 2 ×30,
+3 ×9, 4 ×0, 5 ×5, 6 ×14, 7 ×8.
+
+## `DEFERRED`'s first exercise — 5 lines across 5 videos
+
+Every one at gate 6, every one carrying a query-decidable `reopen=`; none produced a
+proposal file, which is the rule working.
+
+- `SgQ-RwC97us random-ticker-group-null` — `ticker_outcomes.distinct_composite_date@21d_matured>=120`
+- `ZEkArL1Oh8c same-universe-equal-weight-baseline` — `ticker_outcomes.flagged_dates@10d>=120`
+- `DVVVvlK2O_k share-of-conversation-normalization-salvaged` — `scorer.signal_outcomes[reddit_trending@5d].matured>=120`
+- `RNScyMTq-wE high-confidence-binary-filter-salvaged` — `scorer.signal_outcomes.distinct_composite_date@5d>=150`
+- `oJQqiogr6S0 computable-universe-benchmark-salvaged` — a bias-beats-noise test on `v_benchmark_baseline`
+
+**Count correction:** the ledger-writing brief said four across four videos. The
+measured count is five; the brief's enumeration of the random-null family excluded
+`oJQqiogr6S0`'s line, which is a date-space rather than universe-space variant. Five
+is what the ledger holds.
+
+## Inter-rater check — two deliberate near-duplicate pairs
+
+Two Reddit/sentiment videos (`DVVVvlK2O_k`, `RNScyMTq-wE`) and two intrinsic-value
+videos (`SgQ-RwC97us`, `ZEkArL1Oh8c`) were run by independent agents that never saw
+each other's output.
+
+- **Both pairs agreed on outcome shape.** Reddit pair: 13 lines each, 3 salvages
+  each, nothing survived, one `DEFERRED`. Intrinsic-value pair: nothing survived, one
+  `DEFERRED` each.
+- **Both pairs deferred the same concept family.** The Reddit pair both deferred a
+  Reddit-derived filter on scorer maturity at the 5-day horizon; the intrinsic-value
+  pair both deferred a universe-relative null on matured flagged-date counts, and
+  the two conditions they independently derived land on the same threshold (120).
+
+## Retraction — `fund-survivorship-bias` is recorded DEAD, not SURVIVED
+
+`vQ0_90Ko6LE`'s run returned `SURVIVED` on a censored-denominator concept, citing 71
+rows past their maturation deadline (33 `ticker_outcomes`, 38 `signal_outcomes`).
+Re-measured against the **ledger's own clock** rather than wall-clock:
+
+```sql
+-- data/scorer.db, mode=ro
+SELECT MAX(price_date) FROM prices;                                  -- 2026-07-23
+WITH m AS (SELECT MAX(price_date) mx FROM prices)
+SELECT COUNT(*) FROM ticker_outcomes, m
+ WHERE matured_at IS NULL
+   AND julianday(m.mx) - julianday(entry_date) > horizon*2+7;        -- 0
+-- same query over signal_outcomes                                   -- 0
+```
+
+**Zero** rows have crossed their deadline. The 33 "censored" ticker rows were simply
+not due yet. The concept has no measured instance in this store, so it is recorded
+`DEAD gate=6:statistics`. This is the dated trap in SKILL.md — data-sufficiency
+judgments run on the data's own clock — firing on a survivor that the run itself
+produced, and it is the second time this same concept failed re-measurement (see the
+run-3 reconciliation above, where three definitions gave 0 / 71 / 136).
+
+**Second adjudication:** the random-null / universe-relative-benchmark family is
+recorded `DEFERRED`, not `SURVIVED`. Four independent agents examined variants and
+returned `SURVIVED` once (`t2f0vyfABdM`), `DEAD gate=2` once (`Lh1vrIcpJN4`), and
+`DEFERRED gate=6` twice (`SgQ-RwC97us`, `ZEkArL1Oh8c`). A verdict that cannot be
+reproduced across independent runs is not a proposal. `t2f0vyfABdM`'s line takes the
+deferring agents' own reopen condition and no proposal file was written for it.
+
+**One format defect corrected on the way into the ledger.** Run 2's
+`Y-YRgim2D3g rolling-window-scaled-to-review-volume` was written `DEAD gate=3:source`
+while also carrying a `-salvaged` child. SKILL.md requires `SALVAGED` on a salvaged
+parent; the ledger line reads `SALVAGED gate=3:source`. The gate is unchanged, so the
+kill distribution is unaffected; the run-3 tally above (98 DEAD + 16 SALVAGED) becomes
+98 DEAD + 17 SALVAGED + 1 DEFERRED once the adjudications are applied.
+
+## 18-video totals — `research/ideas/ledger.log`, 210 lines
+
+| gate | kills | share |
+|---|---|---|
+| 1 provenance | 62 | 30% |
+| 2 duplication | 54 | 26% |
+| 3 source | 25 | 12% |
+| 4 point-in-time | 3 | 1% |
+| 5 architecture | 17 | 8% |
+| 6 statistics | 30 | 14% |
+| 7 priority | 17 | 8% |
+| — survived | 2 | 1% |
+
+210 lines = 171 `DEAD` + 31 `SALVAGED` + 6 `DEFERRED` + 2 `SURVIVED`, from ~179
+concepts as stated plus 31 `-salvaged` variants, 10–13 lines per video.
+
+Three readings:
+
+- **Two survivors in 210 lines (1%).** The gauntlet is live, not a wall, and not a
+  rubber stamp. Both survivors are methodology/measurement, neither is a headline
+  claim from any video.
+- **Gate 4 fired 3 times in 18 videos and 0 times in run 4.** Its ~1% base rate is
+  now measured over twice the sample that produced the freeze ruling. Still not
+  inert; still the rarest.
+- **Gate 1 and gate 2 together kill 56% of everything.** The two cheapest gates do
+  the majority of the work, which is what cheapest-kill-first is supposed to produce.
+
+The gate-budget revisit threshold in SKILL.md is 300 lines. At 210 it has not fired.
