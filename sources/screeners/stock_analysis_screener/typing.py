@@ -30,6 +30,7 @@ STRING_IDS: frozenset[str] = frozenset(
         "lastSplitType",
         "isSpac",
         "optionable",
+        "isPrimaryListing",
         "ma50vs200",
         "priceCurrency",
         "financialCurrency",

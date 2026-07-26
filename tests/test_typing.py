@@ -29,3 +29,14 @@ def test_column_type_infers_numeric():
 
 def test_column_type_date_is_text():
     assert column_type("nextEarningsDate", ["2026-10-16"]) == "TEXT"
+
+
+def test_yes_no_flags_are_pinned_to_text():
+    """STRING_IDS exists so a flag column cannot silently change affinity when
+    the feed switches encoding. isPrimaryListing was missing from it while its
+    siblings isSpac/optionable were pinned — and composite's stocks_rsi signal
+    plus the candidates screen both compare it, so an inferred REAL affinity
+    would change what those predicates match without erroring."""
+    for flag in ("isSpac", "optionable", "isPrimaryListing"):
+        assert flag in STRING_IDS, flag
+        assert column_type(flag, [1, 0]) == "TEXT", flag
