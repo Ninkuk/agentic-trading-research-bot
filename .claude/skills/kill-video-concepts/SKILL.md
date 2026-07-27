@@ -313,8 +313,10 @@ past the trigger. Its distribution, re-sliced from the shipped
 `research/ideas/ledger.log` *after* that run's two survivors were adjudicated
 away at gate 6: gate 1 ×36, gate 2 ×24, gate 3 ×16, gate 4 ×3, gate 5 ×12,
 **gate 6 ×16**, gate 7 ×9, **survivors 0**. An earlier reading of that run as
-`gate 6 ×14, survivors 2` predates the adjudications and is retracted. Re-slice
-it yourself before quoting it; this file does not own the ledger.
+`gate 6 ×14, survivors 2` predates the adjudications and is retracted. The
+ledger was cleared on 2026-07-26 after that run, so it can no longer be
+re-sliced — `acceptance.md` in this directory owns the validation record now.
+Quote it from there, not from here.
 **Every gate has now demonstrably killed
 something**, so no gate is inert and none is a candidate for removal. Gate 4 in
 particular fired three times — a look-ahead training label, a monthly series
@@ -328,11 +330,14 @@ from 179 concepts as stated plus 31 `-salvaged` variants: **2 `SURVIVED`, 6
 survivors in 210 lines is a live gauntlet, not a wall, so nothing argues for
 loosening either.
 
-- **Revisit at 450 lines in `research/ideas/ledger.log`.** Derived, not asserted:
-  the file holds 211 lines today (210 concepts over 18 videos ≈ 11.7 lines per
-  video), so 450 is **≈20 more videos** out. A 300-line trigger would fire in
-  ≈8 videos — too soon for the freeze to do any work. 450 is far enough out to be
-  the next point at which a genuinely rare gate could be shown inert. The
+- **Revisit after ≈20 further videos of real use.** Stated in videos, not
+  ledger lines: the ledger was reset to its header on 2026-07-26, so a
+  line-count trigger no longer tracks the run it was derived from. At the
+  measured ≈11.7 lines per video that is ≈230 lines from empty — check
+  `wc -l research/ideas/ledger.log` rather than trusting this arithmetic.
+  Twenty videos is far enough out to be the next point at which a genuinely
+  rare gate could be shown inert, and near enough that the freeze still does
+  work. The
   measured-miss rule for *adding* a gate is unchanged and is not relaxed by this
   ruling.
 
