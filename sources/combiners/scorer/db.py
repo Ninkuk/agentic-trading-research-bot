@@ -320,20 +320,55 @@ FROM m GROUP BY bucket, horizon;
 -- benchmark) still covers. reliable gates on n_bench, not n_matured.
 DROP VIEW IF EXISTS v_signal_efficacy;
 CREATE VIEW v_signal_efficacy AS
-WITH m AS (
-    SELECT signal_id, via_crosswalk, horizon, benchmark,
-           (fwd_return - bench_fwd_return)
-               * (CASE WHEN score > 0 THEN 1 ELSE -1 END) AS dir_excess,
-           fwd_return * (CASE WHEN score > 0 THEN 1 ELSE -1 END) AS dir_return,
-           CASE WHEN bench_fwd_return IS NULL THEN NULL
-                WHEN score > 0 THEN (fwd_return > bench_fwd_return)
-                ELSE (fwd_return < bench_fwd_return) END AS hit
-    FROM signal_outcomes WHERE matured_at IS NOT NULL
+WITH universe AS (
+    -- THE NULL. Equities do not coin-flip against a benchmark, and this
+    -- universe least of all: every composite name is a microcap and the index
+    -- rallied through the whole graded window, so a randomly chosen scored
+    -- ticker beat SPY only 40.3% of the time at 10 days (measured 2026-07-27).
+    -- Read against 0.5, hit_rate was wrong in BOTH directions at once --
+    -- si_spike 61.1% looked like `keep` on a 59.6% null (+1.5pp), while
+    -- si_days_to_cover 45.7% was condemned `anti-signal` on a 44.6% null that
+    -- it actually BEAT. This is the same trap backtest.db already guards with
+    -- v_benchmark_baseline (see CLAUDE.md: read excess, never hit_rate alone).
+    --
+    -- Population is ticker_outcomes -- one row per snapshot x symbol -- and
+    -- NOT signal_outcomes, which carries one row per SIGNAL: a signal firing
+    -- on 2,599 of 7,351 rows would otherwise supply a third of its own null.
+    -- p_over is measured rather than derived as 1 - p_under because exact ties
+    -- exist (8 at 5d, 3 at 10d) and belong in neither numerator.
+    SELECT horizon,
+           1.0 * SUM(fwd_return > bench_fwd_return) / COUNT(*) AS p_over,
+           1.0 * SUM(fwd_return < bench_fwd_return) / COUNT(*) AS p_under
+    FROM ticker_outcomes
+    WHERE matured_at IS NOT NULL AND fwd_return IS NOT NULL
+      AND bench_fwd_return IS NOT NULL
+    GROUP BY horizon
+),
+m AS (
+    SELECT s.signal_id, s.via_crosswalk, s.horizon, s.benchmark,
+           (s.fwd_return - s.bench_fwd_return)
+               * (CASE WHEN s.score > 0 THEN 1 ELSE -1 END) AS dir_excess,
+           s.fwd_return * (CASE WHEN s.score > 0 THEN 1 ELSE -1 END) AS dir_return,
+           CASE WHEN s.bench_fwd_return IS NULL THEN NULL
+                WHEN s.score > 0 THEN (s.fwd_return > s.bench_fwd_return)
+                ELSE (s.fwd_return < s.bench_fwd_return) END AS hit,
+           -- Resolved per ROW from that row's own direction, so a
+           -- bidirectional signal (stocks_rsi votes both ways) gets a blended
+           -- baseline instead of one wrong number. NULL exactly when `hit` is
+           -- NULL, so both averages span the same rows; NULL when the universe
+           -- is empty rather than silently reinstating 0.5.
+           CASE WHEN s.bench_fwd_return IS NULL THEN NULL
+                WHEN s.score > 0 THEN u.p_over ELSE u.p_under END AS null_hit
+    FROM signal_outcomes s
+    LEFT JOIN universe u ON u.horizon = s.horizon
+    WHERE s.matured_at IS NOT NULL
 )
 SELECT signal_id, via_crosswalk, horizon,
        COUNT(*) AS n_matured,
        AVG(dir_excess) AS avg_directional_excess,
        AVG(hit) AS hit_rate,
+       AVG(null_hit) AS null_rate,
+       AVG(hit) - AVG(null_hit) AS edge,
        AVG(dir_return) AS avg_directional_return,
        COUNT(hit) AS n_bench,
        {_wilson("-")} AS hit_ci_lo,
@@ -349,9 +384,15 @@ GROUP BY signal_id, via_crosswalk, horizon;
 -- into composite scoring (re-weighting stays a human decision, CLAUDE.md
 -- invariant). The four states are mutually exclusive and checked in order:
 --   reliable = 0 (n_bench < RELIABLE_MIN_N)  -> 'insufficient evidence'
---   else hit_ci_hi < 0.5 (whole 95% CI below a coin flip) -> 'anti-signal'
---   else hit_ci_lo > 0.5 (whole 95% CI above a coin flip) -> 'keep'
---   else (CI straddles 0.5, directionally unproven)       -> 'watch'
+--   else hit_ci_hi < null_rate (whole 95% CI below the BASE RATE) -> 'anti-signal'
+--   else hit_ci_lo > null_rate (whole 95% CI above the BASE RATE)  -> 'keep'
+--   else (CI straddles the base rate, directionally unproven)      -> 'watch'
+-- The comparison is against v_signal_efficacy.null_rate, NOT 0.5. Graded
+-- against a coin flip this view was wrong in both directions at once: it
+-- labelled si_spike `keep` on a +1.5pp edge and si_days_to_cover
+-- `anti-signal` on a +1.1pp one (measured 2026-07-27). A NULL null_rate
+-- (empty ticker_outcomes) makes both comparisons NULL, so the row falls
+-- through to 'watch' rather than being judged against a guess.
 -- reliable is re-derived from n_bench here rather than trusting the flag, so
 -- a future loosening of the efficacy view's gate can't silently promote a
 -- thin signal to a verdict. via_crosswalk stays split (never merged): direct
@@ -360,11 +401,11 @@ DROP VIEW IF EXISTS v_signal_recommendation;
 CREATE VIEW v_signal_recommendation AS
 SELECT signal_id, via_crosswalk, horizon,
        n_matured, n_bench, avg_directional_excess,
-       hit_rate, hit_ci_lo, hit_ci_hi, reliable,
+       hit_rate, null_rate, edge, hit_ci_lo, hit_ci_hi, reliable,
        CASE
            WHEN n_bench < {RELIABLE_MIN_N} THEN 'insufficient evidence'
-           WHEN hit_ci_hi < 0.5 THEN 'anti-signal'
-           WHEN hit_ci_lo > 0.5 THEN 'keep'
+           WHEN hit_ci_hi < null_rate THEN 'anti-signal'
+           WHEN hit_ci_lo > null_rate THEN 'keep'
            ELSE 'watch'
        END AS recommendation
 FROM v_signal_efficacy;

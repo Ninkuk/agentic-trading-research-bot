@@ -229,6 +229,26 @@ def test_zero_bench_rows_null_ci(tmp_path):
     assert benchmarks is None
 
 
+def _coin_flip_universe(conn, horizon=5, n=100):
+    """A ticker_outcomes population that is exactly 50/50 against the
+    benchmark, so v_signal_efficacy.null_rate resolves to 0.5 and these tests
+    keep asserting what they always meant: CI above/below a COIN FLIP.
+
+    Needed since the recommendation view stopped hardcoding 0.5 and started
+    grading against the measured base rate — with no universe rows the null is
+    NULL and every signal correctly falls through to 'watch'."""
+    for i in range(n):
+        conn.execute(
+            "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date,"
+            " symbol, score_sum, total, bullish, bearish, horizon, entry_date,"
+            " entry_close, bench_entry_close, exit_date, exit_close, fwd_return,"
+            " bench_fwd_return, matured_at) VALUES (1, '2026-07-01', ?, 0, 0, 0, 0,"
+            " ?, '2026-07-02', 100.0, 500.0, '2026-07-10', 100.0, ?, 0.0,"
+            " '2026-07-10T00:00:00+00:00')",
+            (f"U{i}", horizon, 0.01 if i < n // 2 else -0.01),
+        )
+
+
 def _recommendation(conn, sig):
     return conn.execute(
         "SELECT via_crosswalk, horizon, n_bench, avg_directional_excess,"
@@ -252,6 +272,7 @@ def test_recommendation_insufficient_evidence_below_min_n(tmp_path):
 def test_recommendation_keep_ci_above_half(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
+    _coin_flip_universe(conn)
     # 30 all-hit rows -> reliable, hit_ci_lo > 0.5 -> keep
     for i in range(db.RELIABLE_MIN_N):
         _signal_row(conn, "sig_keep", f"T{i}", 1, 0.02, 0.01)
@@ -263,6 +284,7 @@ def test_recommendation_keep_ci_above_half(tmp_path):
 def test_recommendation_anti_signal_ci_below_half(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
+    _coin_flip_universe(conn)
     # 30 all-miss bullish rows (fwd < bench) -> reliable, hit_ci_hi < 0.5
     for i in range(db.RELIABLE_MIN_N):
         _signal_row(conn, "sig_anti", f"T{i}", 1, 0.00, 0.01)
