@@ -295,7 +295,7 @@ being a survivor that never earned it.
 Then **stop and ask**. The human decides whether any of it gets implemented.
 Nothing here is an implementation mandate.
 
-## Design note: the gate budget is frozen (2026-07-26)
+## Design note: the gate budget is frozen
 
 Seven one-way gates are a ratchet: every gate can only lower a concept's
 survival probability, nothing in the design pushes back, and each addition is
@@ -306,40 +306,13 @@ individually defensible. Mirrors the same freeze in `kill-thesis`.
 - **Adding a gate requires a measured miss** — a concept this gauntlet passed
   that proved junk, or a ledger showing it under-kills. "A reviewer thought of
   another failure mode" is the exact accumulation this note exists to stop.
-
-**The twenty-concept revisit trigger fired on 2026-07-26 and the budget stays at
-seven.** A ten-video validation run produced 116 ledger lines in one day, far
-past the trigger. Its distribution, re-sliced from the shipped
-`research/ideas/ledger.log` *after* that run's two survivors were adjudicated
-away at gate 6: gate 1 ×36, gate 2 ×24, gate 3 ×16, gate 4 ×3, gate 5 ×12,
-**gate 6 ×16**, gate 7 ×9, **survivors 0**. An earlier reading of that run as
-`gate 6 ×14, survivors 2` predates the adjudications and is retracted. The
-ledger was cleared on 2026-07-26 after that run, so it can no longer be
-re-sliced — `acceptance.md` in this directory owns the validation record now.
-Quote it from there, not from here.
-**Every gate has now demonstrably killed
-something**, so no gate is inert and none is a candidate for removal. Gate 4 in
-particular fired three times — a look-ahead training label, a monthly series
-looked up daily, and a derived spectral feature — which retracts an earlier
-four-video reading that concluded it never fires. Four videos was too small a
-sample to see a gate whose base rate is ~3%.
-
-**The live-gauntlet evidence is the 18-video ledger, not that run.** 210 lines
-from 179 concepts as stated plus 31 `-salvaged` variants: **2 `SURVIVED`, 6
-`DEFERRED`**, and every one of the seven gates has killed something. Two
-survivors in 210 lines is a live gauntlet, not a wall, so nothing argues for
-loosening either.
-
-- **Revisit after ≈20 further videos of real use.** Stated in videos, not
-  ledger lines: the ledger was reset to its header on 2026-07-26, so a
-  line-count trigger no longer tracks the run it was derived from. At the
-  measured ≈11.7 lines per video that is ≈230 lines from empty — check
-  `wc -l research/ideas/ledger.log` rather than trusting this arithmetic.
-  Twenty videos is far enough out to be the next point at which a genuinely
-  rare gate could be shown inert, and near enough that the freeze still does
-  work. The
-  measured-miss rule for *adding* a gate is unchanged and is not relaxed by this
-  ruling.
+- **Revisit after ≈20 videos of real use**, counted from an empty ledger — check
+  `wc -l research/ideas/ledger.log`. The prior validation runs and their
+  distribution were deleted on 2026-07-26 at the author's request, so **no
+  historical evidence backs this budget any more**; the next revisit derives its
+  own from the live ledger rather than quoting a number from here. The
+  measured-miss rule for *adding* a gate is unchanged and is not relaxed by that
+  deletion.
 
 The skill can improve itself: research-skill hardening is a landing zone, so a
 concept whose real value is a check this gauntlet lacks lands as a proposal
