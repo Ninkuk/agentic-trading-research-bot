@@ -30,6 +30,7 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
         deltas: dict = {}
         metrics: dict = {}
         reliable: set = set()
+        research_verdicts: dict = {}
 
         failures = 0
 
@@ -77,8 +78,9 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
                 metrics.setdefault(sym, m)  # first DB (stocks) wins
 
         def read_scorer():
-            nonlocal reliable
+            nonlocal reliable, research_verdicts
             reliable = fetch.read_reliable_signals(conn)
+            research_verdicts = fetch.read_research_verdicts(conn)
 
         def read_deltas():
             nonlocal deltas
@@ -133,6 +135,7 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
             flag_signals,
             reliable,
             option_heat_rows=option_rows,
+            research_verdicts=research_verdicts,
         )
         exit_rows = db.build_exit_advice(
             heat_rows,

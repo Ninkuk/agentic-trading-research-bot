@@ -219,3 +219,42 @@ def test_reader_unreadable_returns_note(monkeypatch):
 
     monkeypatch.setattr(daily_summary.sqlite3, "connect", boom)
     assert daily_summary.advisor_digest() == ["advisor: unreadable (OperationalError)"]
+
+
+def test_caps_line_marks_a_name_research_already_rejected():
+    """The push's last line sized BBAI/CRML/EOSE — all three carrying `pass`
+    writeups. The cap stays (a pass is an opinion, not a prohibition) but the
+    conflict must be visible, or the digest ends by sizing what the research
+    layer killed."""
+    lines = daily_summary._caps_lines(
+        [
+            {"symbol": "BBAI", "cap_shares": 9.99, "research_verdict": "pass"},
+            {"symbol": "XYZ", "cap_shares": 2.5, "research_verdict": None},
+        ]
+    )
+    body = "\n".join(lines)
+    assert "BBAI" in body and "9.99sh" in body, "the cap itself is not suppressed"
+    assert "research: pass" in body
+    assert "XYZ ≤ 2.50sh" in body
+    assert "research" not in body.split("XYZ")[1], "unresearched names carry no label"
+
+
+def test_caps_line_tolerates_a_row_without_the_column():
+    """advisor.db written before the annotation existed."""
+    lines = daily_summary._caps_lines([{"symbol": "OLD", "cap_shares": 1.0}])
+    assert lines == ["cap: OLD ≤ 1.00sh"]
+
+
+def test_caps_annotation_survives_a_real_sqlite_row():
+    """The digest reads sqlite3.Row, not dicts. `"k" in row` is FALSE for a
+    real column on a Row (it tests values), so a membership check would have
+    silently disabled this label in production while dict-based tests passed."""
+    import sqlite3
+
+    c = sqlite3.connect(":memory:")
+    c.row_factory = sqlite3.Row
+    row = c.execute(
+        "SELECT 'BBAI' AS symbol, 9.99 AS cap_shares, 'pass' AS research_verdict"
+    ).fetchone()
+    assert "research_verdict" not in row, "guards the trap this test exists for"
+    assert "research: pass" in "\n".join(daily_summary._caps_lines([row]))

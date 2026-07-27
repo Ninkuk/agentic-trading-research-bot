@@ -433,6 +433,16 @@ def _disagree_lines(rows):
     return out
 
 
+def _row_get(row, key, default=None):
+    """dict.get for a sqlite3.Row, which has no .get() — and whose `in`
+    operator checks VALUES, not keys, so `"k" in row` is False for a real
+    column and True for any matching cell. A test pins both behaviours."""
+    try:
+        return row[key]
+    except (KeyError, IndexError):
+        return default
+
+
 def _caps_lines(rows):
     if not rows:
         return ["caps: none tonight"]
@@ -440,7 +450,13 @@ def _caps_lines(rows):
     for r in sorted(rows, key=lambda r: r["symbol"]):
         cs = r["cap_shares"]
         sh = f"{cs:.2f}sh" if cs is not None else "n/a"
-        out.append(f"cap: {r['symbol']} ≤ {sh}")
+        # A cap for a name research already rejected is the most misleading
+        # line in the push -- a size reads much closer to an instruction than
+        # the scorecard tally does. Labelled, never suppressed: a pass is the
+        # skill's opinion, not a prohibition.
+        verdict = _row_get(r, "research_verdict")
+        tag = f"  (research: {verdict})" if verdict else ""
+        out.append(f"cap: {r['symbol']} ≤ {sh}{tag}")
     return out
 
 
@@ -496,7 +512,8 @@ def advisor_digest():
                 "SELECT symbol, score_sum, group_name, strong FROM v_disagreements"
             ).fetchall()
             caps = conn.execute(
-                "SELECT symbol, cap_shares FROM v_latest_caps WHERE cap_shares IS NOT NULL"
+                "SELECT symbol, cap_shares, research_verdict FROM v_latest_caps"
+                " WHERE cap_shares IS NOT NULL"
             ).fetchall()
         return format_advisor_lines(book, disagreements, caps, header)
     except Exception as e:

@@ -101,6 +101,13 @@ CREATE TABLE IF NOT EXISTS size_caps (
     total_signals        INTEGER,
     exceeds_buying_power INTEGER NOT NULL DEFAULT 0,
     already_held         INTEGER NOT NULL DEFAULT 0,
+    -- The research-ticker skill's most recent buy/pass call on this name, or
+    -- NULL if never researched. A cap for a name research REJECTED is the
+    -- most misleading line in the nightly push (measured 2026-07-26: all
+    -- three capped names -- BBAI, CRML, EOSE -- had `pass` writeups). The row
+    -- is annotated rather than suppressed: a pass is an opinion, not a
+    -- prohibition, and the human may disagree.
+    research_verdict     TEXT CHECK (research_verdict IN ('buy', 'pass')),
     PRIMARY KEY (snapshot_id, symbol)
 );
 
@@ -493,6 +500,7 @@ def build_size_caps(
     flag_signals,
     reliable_ids,
     option_heat_rows=(),
+    research_verdicts=None,
 ) -> list:
     """One row per flagged ticker. The cap inverts the risk budget and
     shrinks by heat already carried through the same crosswalk group (a
@@ -558,6 +566,9 @@ def build_size_caps(
                 and cap_dollars > buying_power
                 else 0,
                 "already_held": 1 if sym in held else 0,
+                # Annotation only — never gates the cap. See the column
+                # comment on size_caps.research_verdict.
+                "research_verdict": (research_verdicts or {}).get(sym),
             }
         )
     return rows
@@ -607,11 +618,15 @@ def write_size_caps(conn, sid, rows) -> int:
     conn.executemany(
         "INSERT INTO size_caps (snapshot_id, symbol, direction, score_sum,"
         " atr, price, cap_shares, cap_dollars, group_name, group_heat_pct,"
-        " reliable_signals, total_signals, exceeds_buying_power, already_held)"
+        " reliable_signals, total_signals, exceeds_buying_power, already_held,"
+        " research_verdict)"
         " VALUES (:sid, :symbol, :direction, :score_sum, :atr, :price,"
         " :cap_shares, :cap_dollars, :group_name, :group_heat_pct,"
         " :reliable_signals, :total_signals, :exceeds_buying_power,"
-        " :already_held)",
-        [{**r, "sid": sid} for r in rows],
+        " :already_held, :research_verdict)",
+        # research_verdict defaults FIRST so an explicit value in the row wins:
+        # it is a late annotation, and a caller that never heard of it (or a
+        # scorer.db with no verdicts yet) must still be able to write a cap.
+        [{"research_verdict": None, **r, "sid": sid} for r in rows],
     )
     return len(rows)

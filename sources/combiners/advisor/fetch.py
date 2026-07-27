@@ -2,6 +2,8 @@
 stocks/etfs (ATR + close), and scorer (efficacy). No network anywhere in
 this package. Every reader expects its source attached as `src`."""
 
+import sqlite3
+
 from sources.common.dbattach import attach_ro, detach  # noqa: F401  (re-exported)
 
 
@@ -155,6 +157,28 @@ def read_metrics(conn, symbols) -> dict:
             syms,
         )
     }
+
+
+def read_research_verdicts(conn) -> dict:
+    """symbol -> the research-ticker skill's most recent buy/pass call.
+
+    The nightly digest ends with size caps, and a cap reads far closer to an
+    instruction than the scorecard tally does — so a cap for a name research
+    already rejected is the most misleading line in the push. It is annotated,
+    never suppressed: a pass is the skill's opinion, not a prohibition, and
+    hiding the row would remove information the human may disagree with.
+
+    Total: a scorer.db predating the verdicts table degrades to {} rather than
+    stopping advisor from sizing at all."""
+    try:
+        rows = conn.execute(
+            "SELECT symbol, verdict FROM src.research_verdicts ORDER BY verdict_date ASC, id ASC"
+        ).fetchall()
+    except sqlite3.Error:
+        return {}
+    # Ascending, so a later verdict for the same symbol overwrites an earlier
+    # one — a ticker can be researched more than once (BBAI was, twice).
+    return {r[0]: r[1] for r in rows}
 
 
 def read_reliable_signals(conn) -> set:
