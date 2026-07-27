@@ -793,7 +793,7 @@ SECTIONS = [
         "Signals",
         "Businesses worth reading about, screened quality-first: durable returns"
         " on capital, real free cash flow, a rising Piotroski score, and a share"
-        " price currently well off its highs. The scorecard above finds stocks"
+        " price currently well off its highs. The scorecard below finds stocks"
         " doing something odd right now; this finds good companies that happen"
         " to be marked down. Nothing scores this list — it is a reading queue,"
         " not an opinion.",
