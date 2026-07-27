@@ -1344,3 +1344,26 @@ def test_efficacy_table_shows_the_null_and_the_edge(populated_data_dir):
     header = next(ln for ln in html.split("<tr>") if "signal" in ln and "hit rate" in ln)
     assert "null" in header, "the baseline must be a column, not folk knowledge"
     assert "edge" in header
+
+
+def test_candidates_caption_is_quiet_metadata_not_prose(populated_data_dir):
+    """The caption is metadata about the table, not reading matter. `.read` is
+    the page's 22px serif prose style — using it made a row count and a
+    disclaimer out-shout the section heading and the data itself. `.cap` is the
+    house convention for exactly this (see _pending's "Showing 100 of N").
+
+    The disclaimer also does not need to shout here: the section's margin note
+    already says "Nothing scores this list — it is a reading queue, not an
+    opinion."
+    """
+    conn = dashboard._ro(populated_data_dir, "stocks.db")
+    try:
+        html = dashboard._candidates(conn, NOW)
+    finally:
+        conn.close()
+    assert 'class="cap"' in html
+    assert 'class="read"' not in html, "prose style must not be used for a caption"
+    assert "<b>" not in html, "nothing in a caption needs bolding"
+    # still says the load-bearing things, quietly
+    assert "ungraded" in html.lower()
+    assert "2026-07-08" in html

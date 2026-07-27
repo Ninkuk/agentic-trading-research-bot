@@ -779,11 +779,17 @@ def _candidates(conn, now_iso) -> str:
     # showing Friday's RSI), and that nothing grades this list.
     stamp = f"stocks.db snapshot {candidates.data_age_label(data_date, now_iso)}"
     shown = min(len(rows), _CANDIDATES_MAX)
+    # `.cap`, not `.read`: this is metadata ABOUT the table, not reading
+    # matter. `.read` is the page's 22px serif prose style and made a row count
+    # out-shout both the section heading and the data. Same convention _pending
+    # uses for "Showing 100 of N". The disclaimer stays factual rather than
+    # bold — the margin note beside this section already carries "Nothing
+    # scores this list — it is a reading queue, not an opinion."
     caption = (
-        f'<p class="read">{len(rows)} name(s) pass'
-        f"{f', top {shown} shown' if len(rows) > shown else ''}"
-        f" · {_esc(stamp)} · <b>ungraded screen, not a recommendation</b>"
-        " — row order is free-cash-flow yield, not conviction.</p>"
+        f'<p class="cap">{len(rows)} name(s) pass'
+        f"{f' · top {shown} shown' if len(rows) > shown else ''}"
+        f" · {_esc(stamp)} · ungraded — row order is free-cash-flow yield,"
+        " not conviction</p>"
     )
     return caption + table
 
