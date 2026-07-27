@@ -1,3 +1,4 @@
+import datetime as dt
 import sqlite3
 
 import pytest
@@ -83,6 +84,8 @@ def _mini_prices(path, rows):
 def _mini_scorer(dirpath):
     conn = scorer_db.connect(str(dirpath / "scorer.db"))
     scorer_db.ensure_schema(conn)
+    # 30 rows across 30 distinct composite dates: reliable requires the date
+    # floor too, so a same-day pile would leave sig_a unreliable.
     conn.executemany(
         "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date,"
         " signal_id, entity, score, via_crosswalk, horizon, entry_date,"
@@ -92,7 +95,7 @@ def _mini_scorer(dirpath):
         [
             (
                 i,
-                "2026-06-01",
+                (dt.date(2026, 5, 1) + dt.timedelta(days=i)).isoformat(),
                 "sig_a",
                 f"T{i}",
                 1,

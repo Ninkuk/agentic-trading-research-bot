@@ -1,3 +1,5 @@
+import datetime as dt
+
 from sources.combiners.scorer import db
 
 NOW = "2026-07-06T21:10:00+00:00"
@@ -130,16 +132,23 @@ def test_v_basis_breaks_flags_split_only(tmp_path):
     assert abs(ratio - 49.6 / 99.0) < 1e-9
 
 
-def _signal_row(conn, sig, entity, score, fwd, bench_fwd, benchmark="SPY", xw=0):
+def _date(i):
+    """Sequential ISO dates so a fixture can spread rows across composite
+    dates (reliable requires distinct dates, not just row count)."""
+    return (dt.date(2026, 1, 1) + dt.timedelta(days=i)).isoformat()
+
+
+def _signal_row(conn, sig, entity, score, fwd, bench_fwd, benchmark="SPY", xw=0, date="2026-07-01"):
     """Insert one matured signal outcome directly (views read the table)."""
     conn.execute(
         "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date,"
         " signal_id, entity, score, via_crosswalk, horizon, entry_date,"
         " entry_close, benchmark, bench_entry_close, exit_date, exit_close,"
         " fwd_return, bench_fwd_return, matured_at)"
-        " VALUES (1, '2026-07-01', ?, ?, ?, ?, 5, '2026-07-02', 100.0, ?, ?,"
+        " VALUES (1, ?, ?, ?, ?, ?, 5, '2026-07-02', 100.0, ?, ?,"
         " '2026-07-10', 100.0, ?, ?, ?)",
         (
+            date,
             sig,
             entity,
             score,
@@ -196,11 +205,52 @@ def test_reliable_flag_boundary(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
     for i in range(db.RELIABLE_MIN_N):
-        _signal_row(conn, "sig_30", f"T{i}", 1, 0.02, 0.01)
+        _signal_row(conn, "sig_30", f"T{i}", 1, 0.02, 0.01, date=_date(i))
     for i in range(db.RELIABLE_MIN_N - 1):
-        _signal_row(conn, "sig_29", f"T{i}", 1, 0.02, 0.01)
+        _signal_row(conn, "sig_29", f"T{i}", 1, 0.02, 0.01, date=_date(i))
     assert _efficacy(conn, "sig_30")[5] == 1
     assert _efficacy(conn, "sig_29")[5] == 0
+
+
+def test_efficacy_n_dates_counts_distinct_benchmarked_dates(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # 3 benchmarked rows on 2 distinct dates + 1 unbenchmarked row on a 3rd
+    # date: n_dates counts only dates with a gradable benchmark, matching
+    # the population reliable is judged on.
+    _signal_row(conn, "sig_d", "A", 1, 0.02, 0.01, date=_date(0))
+    _signal_row(conn, "sig_d", "B", 1, 0.02, 0.01, date=_date(0))
+    _signal_row(conn, "sig_d", "C", 1, 0.02, 0.01, date=_date(1))
+    _signal_row(conn, "sig_d", "D", 1, 0.02, None, benchmark=None, date=_date(2))
+    row = conn.execute(
+        "SELECT n_matured, n_bench, n_dates FROM v_signal_efficacy WHERE signal_id = 'sig_d'"
+    ).fetchone()
+    assert row == (4, 3, 2)
+
+
+def test_reliable_requires_distinct_dates(tmp_path):
+    """The si_spike trap: 2,599 matured rows collapsed to 8 distinct
+    composite dates (measured 2026-07-27) yet wore the reliable badge.
+    Row count alone must not clear the bar — the same rows on one date
+    are one episode, not RELIABLE_MIN_N observations."""
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for i in range(db.RELIABLE_MIN_N * 2):
+        _signal_row(conn, "sig_one_day", f"T{i}", 1, 0.02, 0.01)
+    assert _efficacy(conn, "sig_one_day")[5] == 0  # 60 rows, 1 date
+
+
+def test_bucket_reliable_requires_distinct_dates(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for i in range(db.RELIABLE_MIN_N * 2):
+        _ticker_row(conn, f"T{i}", 4, 0.02, 0.01)  # all one date
+    n_bench, n_dates, reliable = conn.execute(
+        "SELECT n_bench, n_dates, reliable FROM v_bucket_performance WHERE bucket = 'strong_bull'"
+    ).fetchone()
+    assert n_bench == db.RELIABLE_MIN_N * 2
+    assert n_dates == 1
+    assert reliable == 0
 
 
 def test_unbenchmarked_rows_labeled_not_hidden(tmp_path):
@@ -273,9 +323,9 @@ def test_recommendation_keep_ci_above_half(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
     _coin_flip_universe(conn)
-    # 30 all-hit rows -> reliable, hit_ci_lo > 0.5 -> keep
+    # 30 all-hit rows across 30 dates -> reliable, hit_ci_lo > 0.5 -> keep
     for i in range(db.RELIABLE_MIN_N):
-        _signal_row(conn, "sig_keep", f"T{i}", 1, 0.02, 0.01)
+        _signal_row(conn, "sig_keep", f"T{i}", 1, 0.02, 0.01, date=_date(i))
     row = _recommendation(conn, "sig_keep")
     assert row[7] == 1 and row[5] > 0.5  # reliable, ci_lo above coin flip
     assert row[8] == "keep"
@@ -285,9 +335,10 @@ def test_recommendation_anti_signal_ci_below_half(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
     _coin_flip_universe(conn)
-    # 30 all-miss bullish rows (fwd < bench) -> reliable, hit_ci_hi < 0.5
+    # 30 all-miss bullish rows (fwd < bench) across 30 dates -> reliable,
+    # hit_ci_hi < 0.5
     for i in range(db.RELIABLE_MIN_N):
-        _signal_row(conn, "sig_anti", f"T{i}", 1, 0.00, 0.01)
+        _signal_row(conn, "sig_anti", f"T{i}", 1, 0.00, 0.01, date=_date(i))
     row = _recommendation(conn, "sig_anti")
     assert row[7] == 1 and row[6] < 0.5  # reliable, ci_hi below coin flip
     assert row[8] == "anti-signal"
@@ -296,14 +347,29 @@ def test_recommendation_anti_signal_ci_below_half(tmp_path):
 def test_recommendation_watch_ci_straddles_half(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
-    # 15 hits + 15 misses of 30 -> reliable, CI straddles 0.5 -> watch
+    # 15 hits + 15 misses of 30, across 30 dates -> reliable, CI straddles
+    # 0.5 -> watch
     for i in range(db.RELIABLE_MIN_N // 2):
-        _signal_row(conn, "sig_watch", f"H{i}", 1, 0.02, 0.01)  # hit
+        _signal_row(conn, "sig_watch", f"H{i}", 1, 0.02, 0.01, date=_date(i))  # hit
     for i in range(db.RELIABLE_MIN_N // 2):
-        _signal_row(conn, "sig_watch", f"M{i}", 1, 0.00, 0.01)  # miss
+        _signal_row(conn, "sig_watch", f"M{i}", 1, 0.00, 0.01, date=_date(15 + i))
     row = _recommendation(conn, "sig_watch")
     assert row[7] == 1 and row[5] < 0.5 < row[6]  # reliable, CI straddles
     assert row[8] == "watch"
+
+
+def test_recommendation_insufficient_evidence_when_dates_thin(tmp_path):
+    """Enough rows but one composite date must read 'insufficient evidence',
+    not 'keep' — the recommendation view re-derives its gate rather than
+    trusting the reliable flag, so it needs the date floor independently."""
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    _coin_flip_universe(conn)
+    for i in range(db.RELIABLE_MIN_N * 2):
+        _signal_row(conn, "sig_episode", f"T{i}", 1, 0.02, 0.01)  # all one date
+    row = _recommendation(conn, "sig_episode")
+    assert row[7] == 0  # not reliable despite n_bench = 60
+    assert row[8] == "insufficient evidence"
 
 
 def test_recommendation_crosswalk_split_kept_separate(tmp_path):
@@ -319,15 +385,16 @@ def test_recommendation_crosswalk_split_kept_separate(tmp_path):
     assert [r[0] for r in rows] == [0, 1]
 
 
-def _ticker_row(conn, symbol, score_sum, fwd, bench_fwd, total=3):
+def _ticker_row(conn, symbol, score_sum, fwd, bench_fwd, total=3, date="2026-07-01"):
     conn.execute(
         "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date,"
         " symbol, score_sum, total, bullish, bearish, in_portfolio, horizon,"
         " entry_date, entry_close, bench_entry_close, exit_date, exit_close,"
         " fwd_return, bench_fwd_return, matured_at)"
-        " VALUES (1, '2026-07-01', ?, ?, ?, 0, 0, 0, 5, '2026-07-02', 100.0,"
+        " VALUES (1, ?, ?, ?, ?, 0, 0, 0, 5, '2026-07-02', 100.0,"
         " ?, '2026-07-10', 100.0, ?, ?, ?)",
         (
+            date,
             symbol,
             score_sum,
             total,

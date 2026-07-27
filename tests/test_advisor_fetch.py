@@ -1,3 +1,5 @@
+import datetime as dt
+
 import pytest
 
 from sources.combiners.advisor import db as advisor_db
@@ -80,8 +82,9 @@ def _mini_prices(path, rows):
 def _mini_scorer(dirpath, reliable_signal="sig_a"):
     conn = scorer_db.connect(str(dirpath / "scorer.db"))
     scorer_db.ensure_schema(conn)
-    # 30 matured, benchmarked rows for one (signal_id, horizon) group ->
-    # n_bench = 30 -> reliable = 1 in v_signal_efficacy.
+    # 30 matured, benchmarked rows across 30 distinct composite dates for one
+    # (signal_id, horizon) group -> n_bench = 30 AND n_dates = 30 -> reliable
+    # = 1 in v_signal_efficacy (row count alone no longer clears the bar).
     conn.executemany(
         "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date,"
         " signal_id, entity, score, via_crosswalk, horizon, entry_date,"
@@ -91,7 +94,7 @@ def _mini_scorer(dirpath, reliable_signal="sig_a"):
         [
             (
                 i,
-                "2026-06-01",
+                (dt.date(2026, 5, 1) + dt.timedelta(days=i)).isoformat(),
                 reliable_signal,
                 f"T{i}",
                 1,

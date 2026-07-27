@@ -32,6 +32,11 @@ BASIS_BREAK_HI = 1.8  # reverse splits >= 1:2 land above this
 # the human reads the CI with that in mind. sqrt() needs SQLite math
 # functions (present in CPython 3.12's bundled SQLite 3.45+).
 WILSON_Z = 1.96  # 95% score interval on hit_rate
+# The floor applies TWICE: benchmarked rows AND distinct composite dates.
+# Same-day rows are one cross-sectional episode, not independent draws —
+# si_spike carried n_bench=2,599 over 8 distinct dates and wore the badge
+# (measured 2026-07-27). The binomial CI assumes independence; the nearest
+# unit to an independent observation here is the composite date.
 RELIABLE_MIN_N = 30  # benchmarked-sample floor for the reliable flag
 
 # Flag thresholds, mirroring composite v_flagged (|score_sum| >= 3 AND
@@ -308,7 +313,8 @@ WITH m AS (
            -- `hit` is NULL so both averages span the same rows.
            CASE WHEN t.bench_fwd_return IS NULL THEN NULL
                 WHEN t.score_sum > 0 THEN u.p_over
-                WHEN t.score_sum < 0 THEN u.p_under END AS null_hit
+                WHEN t.score_sum < 0 THEN u.p_under END AS null_hit,
+           t.composite_date AS composite_date
     FROM ticker_outcomes t
     LEFT JOIN v_universe_baseline u ON u.horizon = t.horizon
     WHERE t.matured_at IS NOT NULL
@@ -320,9 +326,12 @@ SELECT bucket, horizon, COUNT(*) AS n_matured,
        AVG(null_hit) AS null_rate,
        AVG(hit) - AVG(null_hit) AS edge,
        COUNT(hit) AS n_bench,
+       COUNT(DISTINCT CASE WHEN hit IS NOT NULL THEN composite_date END) AS n_dates,
        {_wilson("-")} AS hit_ci_lo,
        {_wilson("+")} AS hit_ci_hi,
-       (COUNT(hit) >= {RELIABLE_MIN_N}) AS reliable
+       (COUNT(hit) >= {RELIABLE_MIN_N}
+        AND COUNT(DISTINCT CASE WHEN hit IS NOT NULL THEN composite_date END)
+            >= {RELIABLE_MIN_N}) AS reliable
 FROM m GROUP BY bucket, horizon;
 
 -- Per-signal grade, direction-adjusted: excess * sign(score). Crosswalked
@@ -330,7 +339,9 @@ FROM m GROUP BY bucket, horizon;
 -- n_bench is the binomial n (rows with a gradable benchmark; hit_rate,
 -- avg_directional_excess and the CI only see those); n_matured - n_bench
 -- is the unbenchmarked count, which avg_directional_return (raw, no
--- benchmark) still covers. reliable gates on n_bench, not n_matured.
+-- benchmark) still covers. reliable gates on n_bench AND n_dates (distinct
+-- benchmarked composite dates), never n_matured — see the RELIABLE_MIN_N
+-- note for why row count alone is one episode wearing a badge.
 -- THE NULL both graded views are read against. Equities do not coin-flip
 -- against a benchmark, and this universe least of all: every composite name is
 -- a microcap and the index rallied through the whole graded window, so a
@@ -372,7 +383,8 @@ WITH m AS (
            -- NULL, so both averages span the same rows; NULL when the universe
            -- is empty rather than silently reinstating 0.5.
            CASE WHEN s.bench_fwd_return IS NULL THEN NULL
-                WHEN s.score > 0 THEN u.p_over ELSE u.p_under END AS null_hit
+                WHEN s.score > 0 THEN u.p_over ELSE u.p_under END AS null_hit,
+           s.composite_date AS composite_date
     FROM signal_outcomes s
     LEFT JOIN v_universe_baseline u ON u.horizon = s.horizon
     WHERE s.matured_at IS NOT NULL
@@ -385,9 +397,12 @@ SELECT signal_id, via_crosswalk, horizon,
        AVG(hit) - AVG(null_hit) AS edge,
        AVG(dir_return) AS avg_directional_return,
        COUNT(hit) AS n_bench,
+       COUNT(DISTINCT CASE WHEN hit IS NOT NULL THEN composite_date END) AS n_dates,
        {_wilson("-")} AS hit_ci_lo,
        {_wilson("+")} AS hit_ci_hi,
-       (COUNT(hit) >= {RELIABLE_MIN_N}) AS reliable,
+       (COUNT(hit) >= {RELIABLE_MIN_N}
+        AND COUNT(DISTINCT CASE WHEN hit IS NOT NULL THEN composite_date END)
+            >= {RELIABLE_MIN_N}) AS reliable,
        GROUP_CONCAT(DISTINCT benchmark) AS benchmarks
 FROM m
 GROUP BY signal_id, via_crosswalk, horizon;
@@ -397,7 +412,7 @@ GROUP BY signal_id, via_crosswalk, horizon;
 -- human reads before hand-editing composite/catalog.py — it NEVER feeds back
 -- into composite scoring (re-weighting stays a human decision, CLAUDE.md
 -- invariant). The four states are mutually exclusive and checked in order:
---   reliable = 0 (n_bench < RELIABLE_MIN_N)  -> 'insufficient evidence'
+--   reliable = 0 (n_bench OR n_dates < RELIABLE_MIN_N) -> 'insufficient evidence'
 --   else hit_ci_hi < null_rate (whole 95% CI below the BASE RATE) -> 'anti-signal'
 --   else hit_ci_lo > null_rate (whole 95% CI above the BASE RATE)  -> 'keep'
 --   else (CI straddles the base rate, directionally unproven)      -> 'watch'
@@ -407,17 +422,19 @@ GROUP BY signal_id, via_crosswalk, horizon;
 -- `anti-signal` on a +1.1pp one (measured 2026-07-27). A NULL null_rate
 -- (empty ticker_outcomes) makes both comparisons NULL, so the row falls
 -- through to 'watch' rather than being judged against a guess.
--- reliable is re-derived from n_bench here rather than trusting the flag, so
--- a future loosening of the efficacy view's gate can't silently promote a
--- thin signal to a verdict. via_crosswalk stays split (never merged): direct
--- and crosswalk evidence are distinct rows, same as v_signal_efficacy.
+-- reliable is re-derived from n_bench and n_dates here rather than trusting
+-- the flag, so a future loosening of the efficacy view's gate can't silently
+-- promote a thin signal to a verdict. via_crosswalk stays split (never
+-- merged): direct and crosswalk evidence are distinct rows, same as
+-- v_signal_efficacy.
 DROP VIEW IF EXISTS v_signal_recommendation;
 CREATE VIEW v_signal_recommendation AS
 SELECT signal_id, via_crosswalk, horizon,
-       n_matured, n_bench, avg_directional_excess,
+       n_matured, n_bench, n_dates, avg_directional_excess,
        hit_rate, null_rate, edge, hit_ci_lo, hit_ci_hi, reliable,
        CASE
-           WHEN n_bench < {RELIABLE_MIN_N} THEN 'insufficient evidence'
+           WHEN n_bench < {RELIABLE_MIN_N}
+             OR n_dates < {RELIABLE_MIN_N} THEN 'insufficient evidence'
            WHEN hit_ci_hi < null_rate THEN 'anti-signal'
            WHEN hit_ci_lo > null_rate THEN 'keep'
            ELSE 'watch'

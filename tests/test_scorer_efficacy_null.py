@@ -15,6 +15,8 @@ signal_outcomes: the latter carries one row per signal, so a signal firing on
 2,599 of 7,351 rows would supply a third of its own baseline.
 """
 
+import datetime as dt
+
 from sources.combiners.scorer import db
 
 NOW = "2026-07-27T04:10:00+00:00"
@@ -41,18 +43,21 @@ def _universe(conn, horizon, n_over, n_under):
 
 
 def _signal(conn, signal_id, horizon, score, n_hit, n_miss, tag=""):
-    """n_hit rows where the signal's DIRECTION was right, n_miss where wrong."""
+    """n_hit rows where the signal's DIRECTION was right, n_miss where wrong.
+    One composite_date per row: reliable needs distinct dates, not just
+    row count, so a same-day pile must not clear the bar."""
     for i in range(n_hit + n_miss):
         right = i < n_hit
         # bullish hit = outperformed; bearish hit = underperformed
         fwd = (0.05 if right else -0.05) if score > 0 else (-0.05 if right else 0.05)
+        date = (dt.date(2026, 1, 1) + dt.timedelta(days=i)).isoformat()
         conn.execute(
             "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date, signal_id,"
             " entity, score, via_crosswalk, horizon, entry_date, entry_close,"
             " bench_entry_close, exit_date, exit_close, fwd_return, bench_fwd_return,"
-            " matured_at, benchmark) VALUES (?, '2026-07-06', ?, ?, ?, 0, ?, '2026-07-07',"
+            " matured_at, benchmark) VALUES (?, ?, ?, ?, ?, 0, ?, '2026-07-07',"
             " 100.0, 500.0, '2026-07-14', 100.0, ?, 0.0, ?, 'SPY')",
-            (i + 1, signal_id, f"S{tag}{i}", score, horizon, fwd, NOW),
+            (i + 1, date, signal_id, f"S{tag}{i}", score, horizon, fwd, NOW),
         )
 
 
