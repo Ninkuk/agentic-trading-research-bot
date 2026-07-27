@@ -160,7 +160,8 @@ emphasis.
 **Then reconcile it against what happened since.** That call is up to a quarter
 stale, and on a fast-moving competitive or regulatory thesis the facts that move
 the stock happen *between* calls — do not treat the latest transcript as current
-state. Sweep for events dated after it: the ticker's `news` feed, 8-Ks, and
+state. Sweep for events dated after it: the ticker's `news` feed, 8-Ks,
+**ownership filings (Forms 3/4/144 — insider and director transactions)**, and
 (when the thesis turns on an external race) a dated web search for the *rival*,
 not the company. A post-call event that contradicts management's framing is the
 thread; silence since the call is itself a reading.
