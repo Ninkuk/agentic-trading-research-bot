@@ -425,10 +425,32 @@ def _scorecard(conn, now_iso) -> str:
     return headline + expander
 
 
-_EFFICACY_HEADERS = ["signal", "via", "horizon", "n", "dir excess", "hit rate", ""]
+# `hit rate` alone is what made si_spike read as the strongest signal in the
+# system: 61.1% looks decisive until you see that a randomly chosen scored
+# ticker beat SPY only 40.3% of the time over the same window. `null` is that
+# base rate, resolved per row from the signal's own direction; `edge` is the
+# difference, and it is the only column here worth acting on.
+_EFFICACY_HEADERS = [
+    "signal",
+    "via",
+    "horizon",
+    "n",
+    "dir excess",
+    "hit rate",
+    "null",
+    "edge",
+    "",
+]
 _EFFICACY_COLS = (
-    "signal_id, via_crosswalk, horizon, n_matured, avg_directional_excess, hit_rate, reliable"
+    "signal_id, via_crosswalk, horizon, n_matured, avg_directional_excess,"
+    " hit_rate, null_rate, edge, reliable"
 )
+
+
+def _signed_pct(x, dp: int = 1) -> str:
+    """Percentage carrying an explicit sign — an edge of -7.9% must never be
+    mistaken for a magnitude."""
+    return "—" if x is None else f"{x * 100:+.{dp}f}%"
 
 
 def _efficacy_row(r) -> str:
@@ -439,6 +461,8 @@ def _efficacy_row(r) -> str:
         str(r["n_matured"]),
         _pct(r["avg_directional_excess"]),
         _pct(r["hit_rate"]),
+        _pct(r["null_rate"]),
+        _signed_pct(r["edge"]),
         _reliable_badge(r["reliable"]),
         numeric_from=2,
     )
@@ -819,6 +843,19 @@ SECTIONS = [
         " and by how much it beat simply holding SPY. This is the unfiltered"
         " table — the verdict on whether each one is trustworthy yet lives"
         " in Signal recommendations below.",
+    ),
+    (
+        "signal-recommendation",
+        "Signal recommendations",
+        "scorer.db",
+        _signal_recommendation,
+        "Track record",
+        "The verdict on each signal, graded against the BASE RATE rather than a"
+        " coin flip: a random scored ticker beat SPY only 40% of the time over"
+        " these windows, so a 61% hit rate can still be worth nothing. `keep`"
+        " means the whole confidence range sits above that baseline,"
+        " `anti-signal` entirely below it, `watch` straddling. Re-weighting the"
+        " catalog is always a human decision — nothing here feeds back.",
     ),
     (
         "bucket-performance",

@@ -1146,6 +1146,10 @@ _SECTIONS_WITH_POSITIVE_TEST = {
     "plan-004-scorecard",
     # test_candidates_renders_names_and_its_data_date
     "candidates",
+    # test_signal_recommendation_renders_rows — the renderer and its test both
+    # existed from the start; only the SECTIONS entry was missing, so the page
+    # pointed readers to a section that was never on it.
+    "signal-recommendation",
 }
 
 
@@ -1326,3 +1330,17 @@ def test_candidates_discloses_how_stale_its_data_is(populated_data_dir):
         conn.close()
     assert "2026-07-08" in html
     assert "7d old" in html
+
+
+def test_efficacy_table_shows_the_null_and_the_edge(populated_data_dir):
+    """A hit rate with no baseline is what made si_spike read as the system's
+    strongest signal: 61.1% looks decisive until you learn a random scored
+    ticker beat SPY only 40.3% of the time. The table must carry the null."""
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._signal_efficacy(conn, NOW)
+    finally:
+        conn.close()
+    header = next(ln for ln in html.split("<tr>") if "signal" in ln and "hit rate" in ln)
+    assert "null" in header, "the baseline must be a column, not folk knowledge"
+    assert "edge" in header
