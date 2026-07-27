@@ -113,7 +113,7 @@ def ensure_schema(conn) -> None:
 # signal is excluded from bullish/bearish/total and coverage).
 #
 # `total` is COUNT(*), i.e. evidence BREADTH, not a vote count — and v_flagged
-# gates on `total >= 3`. So a non-informational score-0 row still widens the
+# gates on `total >= 2` (recalibrated from 3 on 2026-07-20). So a non-informational score-0 row still widens the
 # evidence base. earnings_imminent must be listed here: an earnings date says
 # nothing about direction, and counting it would let a ticker cross the flag
 # threshold *because* it reports soon — the exact inverse of that gate's intent.
@@ -140,6 +140,10 @@ INFORMATIONAL_SIGNALS = frozenset(
         "options_pcr",
         "sa_fscore",
         "sa_fcf_yield",
+        # Demoted 2026-07-27 on measured evidence, not deferred pending it:
+        # -9.7pp against the universe base rate at 10 days. See the catalog
+        # note. Kept as an annotation so it can be re-graded in another regime.
+        "ftd_persistent",
     }
 )
 

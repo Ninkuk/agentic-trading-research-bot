@@ -434,16 +434,35 @@ SIGNALS: list[dict[str, Any]] = [
         """,
     },
     {
-        # Persistent fails-to-deliver = delivery stress / squeeze fuel.
-        # FAMILY OVERLAP with si_days_to_cover — see the note there.
+        # DEMOTED TO ANNOTATION 2026-07-27 (score 0, listed in
+        # db.INFORMATIONAL_SIGNALS). The contrarian thesis — persistent
+        # fails-to-deliver = delivery stress = squeeze fuel = bullish — is not
+        # weak, it is BACKWARDS. Graded against the universe base rate rather
+        # than a coin flip (v_universe_baseline), it read -7.9pp at 5 days
+        # (n_bench 1149) and -9.7pp at 10 (n 415): the worst signal in the
+        # catalog, and worse than picking a scored ticker at random. Names
+        # bleeding fails kept bleeding.
+        #
+        # It also supplied 2 of the 3 points on EVERY flag composite produced
+        # (BBAI/CRML/EOSE were all ftd +2 plus stocks_rsi +1), so demoting it
+        # takes the flag count to zero — which is the honest outcome while the
+        # only evidence for the flag layer is -19.6pp on the bull bucket.
+        #
+        # NOT deleted: the streak is still recorded so the claim can be
+        # re-graded once horizon=10 spans a non-risk_on regime. Every composite
+        # snapshot since 2026-07-06 has classified risk_on, so all of this rests
+        # on ~1.6 independent windows of ONE market state — enough to stop it
+        # voting, not enough to call it settled. Promotion back requires a
+        # measured pass over non-overlapping windows, same bar as any new signal.
+        #
+        # FAMILY OVERLAP with si_days_to_cover — see the note there; that
+        # sibling squeeze-fuel signal is also negative at both horizons.
         "signal_id": "ftd_persistent",
         "db": "ftd.db",
         "grain": "ticker",
         "staleness_budget_days": 25,
         "sql": """
-            SELECT symbol, streak_days,
-                   CASE WHEN streak_days >= 10 THEN 2 ELSE 1 END,
-                   streak_end
+            SELECT symbol, streak_days, 0, streak_end
             FROM src.v_persistent
             WHERE active = 1 AND symbol IS NOT NULL
         """,

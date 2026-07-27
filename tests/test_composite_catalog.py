@@ -654,3 +654,45 @@ def test_stocks_rsi_dedup_keeps_the_liquid_line_not_the_extreme_one(tmp_path):
     rows = _extract_stocks_rsi(path)
     assert [r["entity"] for r in rows] == ["AAB"]
     assert rows[0]["score"] == 1, "the surviving line's own reading is scored, not the dropped one"
+
+
+def test_ftd_persistent_is_demoted_to_annotation(tmp_path):
+    """Measured 2026-07-27 against the universe base rate: -7.9pp at 5 days
+    (n_bench 1149) and -9.7pp at 10 (n=415) — the worst signal in the catalog,
+    and the one supplying 2 of the 3 points on every flag composite produced.
+    Its contrarian thesis ("persistent fails-to-deliver = squeeze fuel =
+    bullish") is not weak but BACKWARDS: names bleeding fails kept bleeding.
+
+    Demoted, not deleted. The rows keep accruing as annotations so the claim
+    can be re-tested once horizon=10 spans a non-risk_on regime — every
+    composite snapshot since 2026-07-06 has classified risk_on, so ~1.6
+    independent windows of one market state is all the evidence there is."""
+    from sources.combiners.composite import db as cdb
+
+    path = _stocks_fixture(tmp_path, [])  # unused; ftd reads its own DB
+    del path
+    by_id = {s["signal_id"]: s for s in catalog.SIGNALS}
+    sql = by_id["ftd_persistent"]["sql"]
+    assert "ftd_persistent" in cdb.INFORMATIONAL_SIGNALS
+    assert "THEN 2" not in sql and "ELSE 1" not in sql, "must no longer vote"
+
+
+def test_ftd_persistent_still_emits_its_raw_value(tmp_path):
+    """The streak length is still recorded — demotion must not throw away the
+    evidence needed to re-grade it later."""
+    import importlib
+
+    mod = importlib.import_module("sources.screeners.ftd_screener.db")
+    p = str(tmp_path / "ftd.db")
+    conn = mod.connect(p)
+    mod.ensure_schema(conn)
+    conn.close()
+    by_id = {s["signal_id"]: s for s in catalog.SIGNALS}
+    c = sqlite3.connect(":memory:", uri=True)
+    try:
+        fetch.attach_ro(c, p)
+        rows = fetch.extract(c, by_id["ftd_persistent"], today="2026-07-27")
+    finally:
+        c.close()
+    assert isinstance(rows, list)
+    assert "streak_days" in by_id["ftd_persistent"]["sql"]

@@ -224,7 +224,12 @@ def _acme(conn, sid, with_earnings):
             staleness_days=0.0,
         ),
         dict(
-            signal_id="ftd_persistent",
+            # stocks_rsi, not ftd_persistent: the latter was demoted to an
+            # annotation 2026-07-27 and no longer votes, so it cannot stand in
+            # for "a second voting signal". It must also differ from the row
+            # above — signal_values is keyed (snapshot_id, signal_id, entity),
+            # so two rows sharing a signal_id collapse into one.
+            signal_id="stocks_rsi",
             grain="ticker",
             entity="ACME",
             raw_value=11.0,
@@ -305,7 +310,12 @@ def test_earnings_imminent_does_not_dilute_coverage(tmp_path):
                 staleness_days=0.0,
             ),
             dict(
-                signal_id="ftd_persistent",
+                # Must differ from the row above: signal_values is keyed
+                # (snapshot_id, signal_id, entity), so a repeated signal_id
+                # collapses two intended votes into one and the fixture would
+                # silently prove less than it claims. (Was ftd_persistent until
+                # its 2026-07-27 demotion to an annotation.)
+                signal_id="stocks_rsi",
                 grain="ticker",
                 entity=sym,
                 raw_value=11.0,
