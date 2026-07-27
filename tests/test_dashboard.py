@@ -1414,3 +1414,35 @@ def test_benchmark_prose_does_not_promise_spy_for_crosswalked_rows():
     TLT), never SPY — 72 such rows exist in the live ledger."""
     page = dashboard.build_page("data", NOW)
     assert "excess vs SPY" not in page, "header must not promise SPY for every row"
+
+
+def test_efficacy_n_column_is_the_sample_the_rate_was_computed_over(populated_data_dir):
+    """hit_rate/null_rate/edge/reliable are all averaged over n_bench
+    (COUNT(hit)), not n_matured — scorer/db.py's own comment says "reliable
+    gates on n_bench". Showing n_matured beside them labels the row with a
+    sample size that is not the one behind its numbers."""
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        assert "n_bench" in dashboard._EFFICACY_COLS
+    finally:
+        conn.close()
+
+
+def test_bucket_table_shows_the_null(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._bucket_performance(conn, NOW)
+    finally:
+        conn.close()
+    header = next(ln for ln in html.split("<tr>") if "hit rate" in ln)
+    assert "null" in header and "edge" in header
+
+
+def test_degraded_and_empty_states_are_actually_styled():
+    """Every 'no rows yet' message and every unreadable-DB banner carries
+    class="empty"/"unavailable". Neither had a CSS rule, so the module's own
+    stated goal — an honest error banner rather than a silently stale page —
+    rendered as ordinary prose. Mirrors test_pill_class_for_every_recommendation,
+    which already enforces exactly this for pills."""
+    for cls in (".empty", ".unavailable"):
+        assert cls + "{" in dashboard._STYLE, f"{cls} referenced in HTML but never styled"

@@ -447,7 +447,7 @@ _EFFICACY_HEADERS = [
     "",
 ]
 _EFFICACY_COLS = (
-    "signal_id, via_crosswalk, horizon, n_matured, avg_directional_excess,"
+    "signal_id, via_crosswalk, horizon, n_bench, avg_directional_excess,"
     " hit_rate, null_rate, edge, reliable"
 )
 
@@ -463,7 +463,7 @@ def _efficacy_row(r) -> str:
         r["signal_id"],
         "xw" if r["via_crosswalk"] else "direct",
         str(r["horizon"]),
-        str(r["n_matured"]),
+        str(r["n_bench"]),
         _pct(r["avg_directional_excess"]),
         _pct(r["hit_rate"]),
         _pct(r["null_rate"]),
@@ -485,7 +485,7 @@ def _signal_efficacy(conn, now_iso) -> str:
         numeric_from=2,
     )
     all_rows = conn.execute(
-        f"SELECT {_EFFICACY_COLS} FROM v_signal_efficacy ORDER BY reliable DESC, n_matured DESC"
+        f"SELECT {_EFFICACY_COLS} FROM v_signal_efficacy ORDER BY reliable DESC, n_bench DESC"
     ).fetchall()
     expander = (
         f"<details><summary>Show all {len(all_rows)} signals</summary>"
@@ -497,24 +497,27 @@ def _signal_efficacy(conn, now_iso) -> str:
 
 def _bucket_performance(conn, now_iso) -> str:
     rows = conn.execute(
-        "SELECT bucket, horizon, n_matured, avg_fwd_return, avg_excess,"
-        " hit_rate, reliable FROM v_bucket_performance ORDER BY horizon, bucket"
+        "SELECT bucket, horizon, n_bench, avg_fwd_return, avg_excess,"
+        " hit_rate, null_rate, edge, reliable FROM v_bucket_performance"
+        " ORDER BY horizon, bucket"
     ).fetchall()
     body = [
         _cells(
             r["bucket"],
             str(r["horizon"]),
-            str(r["n_matured"]),
+            str(r["n_bench"]),
             _pct(r["avg_fwd_return"]),
             _pct(r["avg_excess"]),
             _pct(r["hit_rate"]),
+            _pct(r["null_rate"]),
+            _signed_pct(r["edge"]),
             _reliable_badge(r["reliable"]),
             numeric_from=1,
         )
         for r in rows
     ]
     return _table(
-        ["bucket", "horizon", "n", "fwd return", "excess", "hit rate", ""],
+        ["bucket", "horizon", "n", "fwd return", "excess", "hit rate", "null", "edge", ""],
         body,
         empty="no matured buckets yet",
         numeric_from=1,
@@ -1100,6 +1103,11 @@ tr.flag .sym::after{content:"★";color:var(--brass);margin-left:6px;font-size:1
 
 /* sparkline */
 .spark{display:block;width:100%;height:64px;}
+.empty{color:var(--muted);font-family:var(--mono);font-size:12px;font-style:italic;
+  padding:10px 0;margin:0;}
+.unavailable{color:var(--down);font-family:var(--mono);font-size:12px;margin:0;
+  padding:10px 12px;border-left:2px solid var(--down);background:rgba(255,107,107,.06);
+  border-radius:0 4px 4px 0;}
 .cap{color:var(--muted);font-size:11px;font-family:var(--mono);margin:6px 0 0;}
 
 /* disclosure */

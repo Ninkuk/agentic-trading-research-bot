@@ -148,3 +148,69 @@ def test_no_universe_rows_leaves_the_null_null_rather_than_guessing(tmp_path):
     hit, null, edge = _row(conn, "orphan", 10)
     assert hit is not None
     assert null is None and edge is None
+
+
+# --- the same null, shared by both graded views --------------------------
+
+
+def test_baseline_is_one_shared_view_not_two_copies(tmp_path):
+    """v_signal_efficacy and v_bucket_performance must not each carry their own
+    copy of the base-rate SQL, or they drift the way prose and code did."""
+    conn = _fresh(tmp_path)
+    names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='view'")}
+    assert "v_universe_baseline" in names
+    src = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE name IN ('v_signal_efficacy','v_bucket_performance')"
+    ).fetchall()
+    for (text,) in src:
+        assert "v_universe_baseline" in text, "view must join the shared baseline"
+
+
+def test_bucket_performance_carries_the_null_and_edge(tmp_path):
+    """Same defect the efficacy table had: hit_rate with a green `reliable`
+    badge and nothing to compare it against. The `thin` bucket reads 50.7%
+    'reliable' on the live page while its excess is -1.8%."""
+    conn = _fresh(tmp_path)
+    # Directional score_sum: a row scoring 0 has no direction, so hit and
+    # null_rate are both correctly NULL for it — the view is right to decline.
+    for i in range(100):
+        conn.execute(
+            "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date, symbol,"
+            " score_sum, total, bullish, bearish, horizon, entry_date, entry_close,"
+            " bench_entry_close, exit_date, exit_close, fwd_return, bench_fwd_return,"
+            " matured_at) VALUES (?, '2026-07-06', ?, 4, 3, 0, 0, 10, '2026-07-07',"
+            " 100.0, 500.0, '2026-07-14', 100.0, ?, 0.0, ?)",
+            (i + 1, f"T{i}", 0.05 if i < 40 else -0.05, NOW),
+        )
+    row = conn.execute(
+        "SELECT hit_rate, null_rate, edge FROM v_bucket_performance"
+        " WHERE horizon=10 AND bucket='strong_bull'"
+    ).fetchone()
+    assert row is not None
+    assert row[1] is not None, "null_rate must be populated"
+    assert abs(row[2] - (row[0] - row[1])) < 1e-9, "edge = hit - null"
+
+
+def test_bucket_null_follows_the_bucket_direction(tmp_path):
+    """A bull bucket is graded on outperformance, a bear bucket on
+    underperformance — so they cannot share one baseline number."""
+    conn = _fresh(tmp_path)
+    # 40 beat / 60 lost, and give each row a directional score_sum.
+    for i in range(100):
+        beat = i < 40
+        conn.execute(
+            "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date, symbol,"
+            " score_sum, total, bullish, bearish, horizon, entry_date, entry_close,"
+            " bench_entry_close, exit_date, exit_close, fwd_return, bench_fwd_return,"
+            " matured_at) VALUES (?, '2026-07-06', ?, ?, 3, 0, 0, 10, '2026-07-07',"
+            " 100.0, 500.0, '2026-07-14', 100.0, ?, 0.0, ?)",
+            (i + 1, f"T{i}", 4 if i % 2 else -4, 0.05 if beat else -0.05, NOW),
+        )
+    got = dict(
+        (b, n)
+        for b, n in conn.execute(
+            "SELECT bucket, null_rate FROM v_bucket_performance WHERE horizon=10"
+        )
+    )
+    assert abs(got["strong_bull"] - 0.40) < 1e-9, "bullish bucket -> outperform base rate"
+    assert abs(got["strong_bear"] - 0.60) < 1e-9, "bearish bucket -> underperform base rate"

@@ -289,23 +289,36 @@ _VIEWS = f"""
 DROP VIEW IF EXISTS v_bucket_performance;
 CREATE VIEW v_bucket_performance AS
 WITH m AS (
-    SELECT CASE WHEN total < 2 THEN 'thin'
-                WHEN score_sum >= 4 THEN 'strong_bull'
-                WHEN score_sum >= 2 THEN 'bull'
-                WHEN score_sum <= -4 THEN 'strong_bear'
-                WHEN score_sum <= -2 THEN 'bear'
+    SELECT CASE WHEN t.total < 2 THEN 'thin'
+                WHEN t.score_sum >= 4 THEN 'strong_bull'
+                WHEN t.score_sum >= 2 THEN 'bull'
+                WHEN t.score_sum <= -4 THEN 'strong_bear'
+                WHEN t.score_sum <= -2 THEN 'bear'
                 ELSE 'neutral' END AS bucket,
-           horizon, fwd_return,
-           fwd_return - bench_fwd_return AS excess,
-           CASE WHEN bench_fwd_return IS NULL THEN NULL
-                WHEN score_sum > 0 THEN (fwd_return > bench_fwd_return)
-                WHEN score_sum < 0 THEN (fwd_return < bench_fwd_return) END AS hit
-    FROM ticker_outcomes WHERE matured_at IS NOT NULL
+           t.horizon AS horizon, t.fwd_return AS fwd_return,
+           t.fwd_return - t.bench_fwd_return AS excess,
+           CASE WHEN t.bench_fwd_return IS NULL THEN NULL
+                WHEN t.score_sum > 0 THEN (t.fwd_return > t.bench_fwd_return)
+                WHEN t.score_sum < 0 THEN (t.fwd_return < t.bench_fwd_return) END AS hit,
+           -- Same defect this view had as v_signal_efficacy: a hit_rate with a
+           -- `reliable` badge and nothing to compare it against. A bull bucket
+           -- is graded on outperformance and a bear bucket on
+           -- underperformance, so they cannot share one baseline number --
+           -- resolved per row from that row's own sign, NULL exactly when
+           -- `hit` is NULL so both averages span the same rows.
+           CASE WHEN t.bench_fwd_return IS NULL THEN NULL
+                WHEN t.score_sum > 0 THEN u.p_over
+                WHEN t.score_sum < 0 THEN u.p_under END AS null_hit
+    FROM ticker_outcomes t
+    LEFT JOIN v_universe_baseline u ON u.horizon = t.horizon
+    WHERE t.matured_at IS NOT NULL
 )
 SELECT bucket, horizon, COUNT(*) AS n_matured,
        AVG(fwd_return) AS avg_fwd_return,
        AVG(excess) AS avg_excess,
        AVG(hit) AS hit_rate,
+       AVG(null_hit) AS null_rate,
+       AVG(hit) - AVG(null_hit) AS edge,
        COUNT(hit) AS n_bench,
        {_wilson("-")} AS hit_ci_lo,
        {_wilson("+")} AS hit_ci_hi,
@@ -318,33 +331,34 @@ FROM m GROUP BY bucket, horizon;
 -- avg_directional_excess and the CI only see those); n_matured - n_bench
 -- is the unbenchmarked count, which avg_directional_return (raw, no
 -- benchmark) still covers. reliable gates on n_bench, not n_matured.
+-- THE NULL both graded views are read against. Equities do not coin-flip
+-- against a benchmark, and this universe least of all: every composite name is
+-- a microcap and the index rallied through the whole graded window, so a
+-- randomly chosen scored ticker beat SPY only 40.3% of the time at 10 days
+-- (measured 2026-07-27). A hit_rate read against 0.5 was wrong in BOTH
+-- directions at once -- see the note on v_signal_recommendation.
+--
+-- Population is ticker_outcomes (one row per snapshot x symbol), NOT
+-- signal_outcomes, which carries one row per SIGNAL: a signal firing on 2,599
+-- of 7,351 rows would otherwise supply a third of its own null. p_over is
+-- measured rather than derived as 1 - p_under because exact ties exist (8 at
+-- 5d, 3 at 10d) and belong in neither numerator.
+--
+-- One view, joined by both consumers, so the baseline cannot drift between
+-- them the way two copies of the same SQL would.
+DROP VIEW IF EXISTS v_universe_baseline;
+CREATE VIEW v_universe_baseline AS
+SELECT horizon,
+       1.0 * SUM(fwd_return > bench_fwd_return) / COUNT(*) AS p_over,
+       1.0 * SUM(fwd_return < bench_fwd_return) / COUNT(*) AS p_under
+FROM ticker_outcomes
+WHERE matured_at IS NOT NULL AND fwd_return IS NOT NULL
+  AND bench_fwd_return IS NOT NULL
+GROUP BY horizon;
+
 DROP VIEW IF EXISTS v_signal_efficacy;
 CREATE VIEW v_signal_efficacy AS
-WITH universe AS (
-    -- THE NULL. Equities do not coin-flip against a benchmark, and this
-    -- universe least of all: every composite name is a microcap and the index
-    -- rallied through the whole graded window, so a randomly chosen scored
-    -- ticker beat SPY only 40.3% of the time at 10 days (measured 2026-07-27).
-    -- Read against 0.5, hit_rate was wrong in BOTH directions at once --
-    -- si_spike 61.1% looked like `keep` on a 59.6% null (+1.5pp), while
-    -- si_days_to_cover 45.7% was condemned `anti-signal` on a 44.6% null that
-    -- it actually BEAT. This is the same trap backtest.db already guards with
-    -- v_benchmark_baseline (see CLAUDE.md: read excess, never hit_rate alone).
-    --
-    -- Population is ticker_outcomes -- one row per snapshot x symbol -- and
-    -- NOT signal_outcomes, which carries one row per SIGNAL: a signal firing
-    -- on 2,599 of 7,351 rows would otherwise supply a third of its own null.
-    -- p_over is measured rather than derived as 1 - p_under because exact ties
-    -- exist (8 at 5d, 3 at 10d) and belong in neither numerator.
-    SELECT horizon,
-           1.0 * SUM(fwd_return > bench_fwd_return) / COUNT(*) AS p_over,
-           1.0 * SUM(fwd_return < bench_fwd_return) / COUNT(*) AS p_under
-    FROM ticker_outcomes
-    WHERE matured_at IS NOT NULL AND fwd_return IS NOT NULL
-      AND bench_fwd_return IS NOT NULL
-    GROUP BY horizon
-),
-m AS (
+WITH m AS (
     SELECT s.signal_id, s.via_crosswalk, s.horizon, s.benchmark,
            (s.fwd_return - s.bench_fwd_return)
                * (CASE WHEN s.score > 0 THEN 1 ELSE -1 END) AS dir_excess,
@@ -360,7 +374,7 @@ m AS (
            CASE WHEN s.bench_fwd_return IS NULL THEN NULL
                 WHEN s.score > 0 THEN u.p_over ELSE u.p_under END AS null_hit
     FROM signal_outcomes s
-    LEFT JOIN universe u ON u.horizon = s.horizon
+    LEFT JOIN v_universe_baseline u ON u.horizon = s.horizon
     WHERE s.matured_at IS NOT NULL
 )
 SELECT signal_id, via_crosswalk, horizon,
