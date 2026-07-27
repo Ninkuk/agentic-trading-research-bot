@@ -117,7 +117,9 @@ read-only:
   generation.
 - **`backtest`** — point-in-time replay. Read `excess`/`beats_baseline`, never
   `hit_rate` alone: the benchmark drifts upward, so a bullish flag "wins" by
-  doing nothing.
+  doing nothing. `beats_baseline` means the whole CI sits above the drift;
+  its mirror `anti_signal` (CI entirely below) is significantly wrong, not a
+  win.
 
 Everything runs on a launchd schedule — see [SCHEDULE.md](SCHEDULE.md).
 

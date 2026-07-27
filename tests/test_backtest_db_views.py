@@ -419,6 +419,48 @@ def test_beats_baseline_bearish_arm_compares_against_p_down(tmp_path):
     assert beats == 0, "a bearish flag matching pure downward drift has no edge"
 
 
+def test_anti_predictive_cell_is_not_reported_as_beating_baseline(tmp_path):
+    """A flag whose whole CI sits BELOW the baseline is significant in the
+    WRONG direction. The old beats_baseline ('baseline outside the CI')
+    fired on it, so cboe_vix bearish 21d wore beats_baseline=1 on -8.9pp
+    excess (live data, 2026-07-27). Direction must be split out:
+    beats_baseline only when the CI is entirely above, anti_signal when
+    entirely below."""
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    # V-shaped spine: 20 days falling by 5, then 20 rising by 5. Bullish
+    # flags (VIX 10) stamped only on the falling regime; neutral (20)
+    # after, so bullish is graded on mostly-falling windows (4/20 hits,
+    # Wilson CI ~[0.081, 0.416]) while p_up over ALL windows is 18/34
+    # ~ 0.529 — the CI lies entirely below the baseline.
+    _spine(conn, "SP500", [200.0 - 5 * i for i in range(20)] + [110.0 + 5 * i for i in range(20)])
+    dates = [d for (d,) in conn.execute("SELECT date FROM benchmark_closes ORDER BY date")]
+    conn.executemany(
+        "INSERT OR REPLACE INTO market_obs (signal_id, obs_date, val1, val2) VALUES (?,?,?,NULL)",
+        [("cboe_vix", d, 10.0 if i < 20 else 20.0) for i, d in enumerate(dates)],
+    )
+    conn.commit()
+    hit, base, lo, hi, beats, anti = conn.execute(
+        "SELECT hit_rate, baseline, hit_ci_lo, hit_ci_hi, beats_baseline, anti_signal"
+        " FROM v_replay_efficacy WHERE signal_id='cboe_vix' AND direction='bullish'"
+        " AND horizon=5"
+    ).fetchone()
+    assert hit < base and hi < base, "fixture must put the whole CI below baseline"
+    assert beats == 0, "wrong-direction significance must not read as a win"
+    assert anti == 1, "it must read as an anti-signal instead"
+
+
+def test_anti_signal_is_null_for_neutral_rows(tmp_path):
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    db.ensure_schema(conn)
+    _spine(conn, "SP500", [100.0 + i for i in range(40)])
+    _vix_flags(conn, 20.0)  # neutral: 15 <= 20 < 25
+    anti = conn.execute(
+        "SELECT anti_signal FROM v_replay_efficacy WHERE signal_id='cboe_vix' AND horizon=5"
+    ).fetchone()[0]
+    assert anti is None, "neutral rows must not claim a verdict"
+
+
 def test_beats_baseline_is_null_for_neutral_and_ungraded_rows(tmp_path):
     """score 0 carries no direction, so there is nothing to beat. A NULL here is
     the honest answer; 0 would read as 'tested and failed'."""

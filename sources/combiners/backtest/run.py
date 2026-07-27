@@ -119,10 +119,12 @@ def run(
         # Print `excess` beside `hit`: a bare hit rate is unreadable against a
         # benchmark that drifts up 61-68% of the time. `reliable` is a
         # sample-size floor, NOT evidence the signal works — `beats baseline`
-        # is the honest (still weak) claim.
+        # is the honest (still weak) claim, and `anti_signal` its
+        # significantly-wrong mirror; both count toward the noise budget.
         graded, flagged = conn.execute(
-            "SELECT COUNT(*), COALESCE(SUM(beats_baseline), 0) FROM v_replay_efficacy"
-            " WHERE direction != 'neutral' AND n_bench > 0"
+            "SELECT COUNT(*),"
+            " COALESCE(SUM(beats_baseline), 0) + COALESCE(SUM(anti_signal), 0)"
+            " FROM v_replay_efficacy WHERE direction != 'neutral' AND n_bench > 0"
         ).fetchone()
         expected_noise = graded * 0.05
         print(
@@ -134,7 +136,8 @@ def run(
         )
         for row in conn.execute(
             "SELECT signal_id, direction, horizon, n_obs, n_days, n_bench, hit_rate,"
-            " hit_ci_lo, hit_ci_hi, reliable, baseline, excess, beats_baseline"
+            " hit_ci_lo, hit_ci_hi, reliable, baseline, excess, beats_baseline,"
+            " anti_signal"
             " FROM v_replay_efficacy ORDER BY signal_id, direction, horizon"
         ):
             (
@@ -151,6 +154,7 @@ def run(
                 base,
                 exc,
                 beats,
+                anti,
             ) = row
             if hr is None:
                 stats = f"ungraded (n_obs incl. neutral; n_obs={n_obs})"
@@ -162,7 +166,9 @@ def run(
                 )
             tag = " reliable" if rel else ""
             if beats:
-                tag += " ANTI-SIGNAL" if exc < 0 else " beats baseline"
+                tag += " beats baseline"
+            if anti:
+                tag += " ANTI-SIGNAL"
             print(f"{sig} {direction} {horizon}d: {stats}{tag}")
         if keep_days is not None:
             db.prune(conn, keep_days, now_iso)

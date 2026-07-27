@@ -256,11 +256,15 @@ GROUP BY d.benchmark, h.horizon;
 --
 -- READ `excess`, NOT `hit_rate`. `reliable` is a SAMPLE-SIZE floor only
 -- (n_bench >= RELIABLE_MIN_N), matching the scorer's meaning that the advisor
--- depends on — it never meant "this signal works". `beats_baseline` is the
--- weaker, honest claim: the benchmark's own drift lies outside the flag's
--- Wilson interval, so the result is distinguishable from doing nothing.
+-- depends on — it never meant "this signal works". Significance splits by
+-- DIRECTION: `beats_baseline` fires only when the whole Wilson interval sits
+-- ABOVE the benchmark's own drift; `anti_signal` when it sits entirely BELOW
+-- (significantly wrong — the flag predicts the opposite of what follows).
+-- One two-sided "baseline outside the CI" bit conflated the two, and
+-- cboe_vix bearish 21d wore beats_baseline=1 on -8.9pp excess (live data,
+-- 2026-07-27) — a significantly anti-predictive cell read as a win.
 --
--- `beats_baseline` is NOMINAL and UNCORRECTED. This view emits ~48 graded rows
+-- Both flags are NOMINAL and UNCORRECTED. This view emits ~48 graded rows
 -- (signals x directions x horizons), so at a per-row 95% interval roughly 2
 -- flags are expected by chance alone. Treat a lone flag as a lead, not a
 -- result; trust a signal whose flag holds across horizons AND directions on a
@@ -284,9 +288,13 @@ SELECT g.signal_id, g.direction, g.horizon,
        g.hit_rate - CASE g.direction WHEN 'bullish' THEN b.p_up
                                      WHEN 'bearish' THEN b.p_down END AS excess,
        CASE WHEN g.direction = 'neutral' OR g.n_bench = 0 THEN NULL
-            WHEN (CASE g.direction WHEN 'bullish' THEN b.p_up ELSE b.p_down END)
-                 NOT BETWEEN g.hit_ci_lo AND g.hit_ci_hi
-            THEN 1 ELSE 0 END AS beats_baseline
+            WHEN g.hit_ci_lo >
+                 (CASE g.direction WHEN 'bullish' THEN b.p_up ELSE b.p_down END)
+            THEN 1 ELSE 0 END AS beats_baseline,
+       CASE WHEN g.direction = 'neutral' OR g.n_bench = 0 THEN NULL
+            WHEN g.hit_ci_hi <
+                 (CASE g.direction WHEN 'bullish' THEN b.p_up ELSE b.p_down END)
+            THEN 1 ELSE 0 END AS anti_signal
 FROM (
     -- One row per OBSERVATION, not per forward-filled trading day. A weekly EIA
     -- report is served on ~5 consecutive as-of dates; those are ONE measurement.

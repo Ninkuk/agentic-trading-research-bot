@@ -109,7 +109,8 @@ The `backtest` combiner replays composite's FRED/market signals against ALFRED v
 released) and grades them in `v_replay_efficacy`. Read `excess`/`beats_baseline` there, never
 `hit_rate` alone — the benchmarks drift upward, so a bullish flag "wins" by doing nothing;
 `v_benchmark_baseline` is the null to compare against, and the flags are nominal and
-uncorrected across ~48 comparisons. Weekly (Sat, after `fred-vintages`). Three read-only
+uncorrected across ~48 comparisons. `beats_baseline` fires only when the whole CI sits above
+the drift; `anti_signal` (CI entirely below) is its significantly-wrong mirror, never a win. Weekly (Sat, after `fred-vintages`). Three read-only
 reporters ship alongside:
 `main.py scorecard` (grades the human's decisions from the journal views; SELECT-only),
 `main.py pricehistory` (manual one-shot ledger backfill — never scheduled), and
