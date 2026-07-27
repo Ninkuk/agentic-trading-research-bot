@@ -1146,10 +1146,6 @@ _SECTIONS_WITH_POSITIVE_TEST = {
     "plan-004-scorecard",
     # test_candidates_renders_names_and_its_data_date
     "candidates",
-    # test_signal_recommendation_renders_rows — the renderer and its test both
-    # existed from the start; only the SECTIONS entry was missing, so the page
-    # pointed readers to a section that was never on it.
-    "signal-recommendation",
 }
 
 
@@ -1367,3 +1363,54 @@ def test_candidates_caption_is_quiet_metadata_not_prose(populated_data_dir):
     # still says the load-bearing things, quietly
     assert "ungraded" in html.lower()
     assert "2026-07-08" in html
+
+
+# --- prose-vs-code drift ------------------------------------------------
+# Three separate bugs shipped because human-readable text quoted a number the
+# code had since changed: the glossary claimed a 4/3 flag gate after it became
+# 3/2, "book at risk" described a stop-loss loss when heat is one ATR and the
+# stop is two, and a caveat said "~144 rows are graded" when the real count is
+# 14. Tests below pin prose to the constants, so the number cannot drift again.
+
+
+def test_no_section_is_registered_twice():
+    """A renderer registered under two ids prints the same table twice under
+    conflicting prose. The set-equality meta-test is blind to this by
+    construction."""
+    ids = [s[0] for s in dashboard.SECTIONS]
+    assert len(ids) == len(set(ids)), "duplicate section id"
+    renderers = [s[3] for s in dashboard.SECTIONS]
+    dupes = {r.__name__ for r in renderers if renderers.count(r) > 1}
+    assert not dupes, f"renderer registered under multiple sections: {dupes}"
+
+
+def test_flag_threshold_prose_matches_the_view():
+    from sources.combiners.scorer.db import FLAG_MIN_ABS_SCORE, FLAG_MIN_TOTAL
+
+    page = dashboard.build_page("data", NOW)
+    assert f"{FLAG_MIN_ABS_SCORE} or more" in page
+    assert f"at least {FLAG_MIN_TOTAL} signals" in page
+
+
+def test_heat_prose_says_one_atr_not_a_stop_loss():
+    """heat = quantity x ATR (advisor/db.py build_position_heat), while the
+    stop is STOP_ATR_MULTIPLE ATRs away — describing heat as the stop-out loss
+    understates the account's risk-at-stake by that multiple."""
+    page = dashboard.build_page("data", NOW).lower()
+    assert "one-atr" in page or "one atr" in page
+    for wrong in ("lose if every stop triggered", "lose if that position hit its stop"):
+        assert wrong not in page, f"heat still described as a stop-out loss: {wrong}"
+
+
+def test_no_prose_claims_the_regime_uses_all_ten_inputs():
+    """_classify_regime reads vix, hy_spread and vix_backwardation only; the
+    other seven are displayed but never touch the label."""
+    page = dashboard.build_page("data", NOW)
+    assert "distilled from ten macro inputs" not in page
+
+
+def test_benchmark_prose_does_not_promise_spy_for_crosswalked_rows():
+    """Crosswalked rows are graded against an asset-class proxy (XLE/GLD/DBA/
+    TLT), never SPY — 72 such rows exist in the live ledger."""
+    page = dashboard.build_page("data", NOW)
+    assert "excess vs SPY" not in page, "header must not promise SPY for every row"

@@ -28,9 +28,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from sources.combiners.advisor.catalog import STOP_ATR_MULTIPLE  # noqa: E402
 from sources.combiners.composite import candidates  # noqa: E402
 from sources.combiners.scorer import scorecard  # noqa: E402
-from sources.combiners.scorer.db import RELIABLE_MIN_N  # noqa: E402
+from sources.combiners.scorer.db import (  # noqa: E402
+    FLAG_MIN_ABS_SCORE,
+    FLAG_MIN_TOTAL,
+    RELIABLE_MIN_N,
+)
 from sources.common.clock import phx_date  # noqa: E402
 
 DATA_DIR = "data"
@@ -601,12 +606,12 @@ def _signal_recommendation(conn, now_iso) -> str:
         for r in rows
     ]
     caveat = (
-        '<p class="cap">Lead with n and the CI, not the excess. ~144 rows'
+        '<p class="cap">Lead with n and the CI, not the excess. Several rows'
         " are graded at once — a few cross a 95% threshold by chance alone;"
         " hold every verdict loosely. Re-weighting stays a human decision.</p>"
     )
     return caveat + _table(
-        ["signal", "via", "horizon", "evidence", "excess vs SPY", "hit-rate (0–100%)", "verdict"],
+        ["signal", "via", "horizon", "evidence", "excess vs bench", "hit-rate (0–100%)", "verdict"],
         body,
         empty="insufficient evidence for every signal (young scorer) — expected",
         numeric_from=2,
@@ -801,7 +806,7 @@ SECTIONS = [
         "composite.db",
         _regime,
         "Macro",
-        "The market's mood, distilled from ten macro inputs. “Risk-on” means"
+        "The market's mood. The label is decided by three inputs — the VIX, its term structure, and high-yield spreads; the other seven are tracked and shown but do not move it. “Risk-on” means"
         " money is flowing toward risk; the VIX is a fear gauge — lower is"
         " calmer. Open the drivers to see which inputs argued which way.",
     ),
@@ -849,19 +854,6 @@ SECTIONS = [
         " and by how much it beat simply holding SPY. This is the unfiltered"
         " table — the verdict on whether each one is trustworthy yet lives"
         " in Signal recommendations below.",
-    ),
-    (
-        "signal-recommendation",
-        "Signal recommendations",
-        "scorer.db",
-        _signal_recommendation,
-        "Track record",
-        "The verdict on each signal, graded against the BASE RATE rather than a"
-        " coin flip: a random scored ticker beat SPY only 40% of the time over"
-        " these windows, so a 61% hit rate can still be worth nothing. `keep`"
-        " means the whole confidence range sits above that baseline,"
-        " `anti-signal` entirely below it, `watch` straddling. Re-weighting the"
-        " catalog is always a human decision — nothing here feeds back.",
     ),
     (
         "bucket-performance",
@@ -920,8 +912,10 @@ SECTIONS = [
         _book_heat,
         "Your book",
         "How much of your account is genuinely at risk right now, adding up"
-        " what you would lose if every open position hit its stop. Coverage"
-        " says how much of the book that number actually accounts for.",
+        " the dollars at risk on a one-ATR adverse day across every open"
+        " position. That is NOT the stop-out loss — the stop sits further"
+        " out, so being stopped costs more. Coverage says how much of the"
+        " book that number actually accounts for.",
     ),
     (
         "group-heat",
@@ -939,8 +933,9 @@ SECTIONS = [
         _position_heat,
         "Your book",
         "Risk contribution of each individual holding — the detail behind"
-        " the book and group heat totals above. “Heat” is what you would"
-        " lose if that position hit its stop.",
+        " the book and group heat totals above. “Heat” is quantity ×"
+        " ATR: the dollars at risk on a one-ATR adverse day, not the loss"
+        " if the stop triggers.",
     ),
     (
         "disagreements",
@@ -968,12 +963,14 @@ SECTIONS = [
         "scorer.db",
         _signal_recommendation,
         "Track record",
-        "The verdict on each signal, based on where its 95% confidence range"
-        " for hit-rate sits relative to a coin flip. ‘Keep’ means the"
-        " whole range beats 50%; ‘anti-signal’ means the whole range"
-        " loses; ‘watch’ means we cannot yet tell. Roughly 144 signals"
-        " are graded at once, so a few clear the bar by luck — hold every"
-        " verdict loosely.",
+        "The verdict on each signal, graded against the BASE RATE rather than"
+        " a coin flip: a randomly chosen scored ticker beat its benchmark only"
+        " ~40% of the time over these windows, so a 61% hit-rate can still be"
+        " worth nothing. ‘Keep’ means the whole confidence range sits above"
+        " that baseline, ‘anti-signal’ entirely below it, ‘watch’"
+        " straddling. Several signals are graded at once, so a few clear the"
+        " bar by luck — hold every verdict loosely. Re-weighting the catalog"
+        " is always a human decision; nothing here feeds back.",
     ),
     (
         "plan-004-scorecard",
@@ -1386,7 +1383,7 @@ def build_page(data_dir: str, now_iso: str) -> str:
         for sid, title, db_name, fn, kicker, note in SECTIONS
     )
 
-    gloss = """<details style="margin-top:26px">
+    gloss = f"""<details style="margin-top:26px">
     <summary>The whole vocabulary, in one place</summary>
     <dl class="gloss">
       <dt>regime</dt><dd>The market's risk mood — risk-on, risk-off, or mixed — read from ten macro inputs.</dd>
@@ -1396,17 +1393,17 @@ def build_page(data_dir: str, now_iso: str) -> str:
       <dt>coverage</dt><dd>Share of all applicable signals that actually had an opinion on this stock.</dd>
       <dt>data age</dt><dd>How old the freshest-to-stalest input behind this row is, in days.</dd>
       <dt>held</dt><dd>A check mark means you currently own this stock.</dd>
-      <dt>flagged &#9733;</dt><dd>Strong agreement: absolute score of 4 or more, with at least 3 signals voting.</dd>
-      <dt>excess vs SPY</dt><dd>Average return above the S&amp;P 500 benchmark, in the direction the signal pointed.</dd>
+      <dt>flagged &#9733;</dt><dd>Strong agreement: absolute score of {FLAG_MIN_ABS_SCORE} or more, with at least {FLAG_MIN_TOTAL} signals voting.</dd>
+      <dt>excess vs bench</dt><dd>Average return above the row’s benchmark — SPY for direct signals, an asset-class proxy (XLE, GLD, DBA, TLT) for crosswalked ones — in the direction the signal pointed.</dd>
       <dt>hit-rate &amp; 95% range</dt><dd>How often it beat the benchmark, and where the true rate likely sits. Wide range = still noisy.</dd>
-      <dt>book at risk</dt><dd>Share of account equity you'd lose if every stop triggered at once.</dd>
+      <dt>book at risk</dt><dd>Share of account equity at risk on a one-ATR adverse day across every open position. Not the stop-out loss — the stop sits {STOP_ATR_MULTIPLE:.0f} ATRs away, so that would be larger.</dd>
       <dt>10y&ndash;2y spread</dt><dd>The 10-year Treasury yield minus the 2-year yield. A negative number means the curve is inverted &mdash; a classic recession-risk signal.</dd>
       <dt>RRP</dt><dd>The Federal Reserve's overnight reverse repo facility, where cash is parked overnight. A falling balance means money is flowing back into the financial system.</dd>
       <dt>TGA</dt><dd>The U.S. Treasury's general account &mdash; its checking account at the Fed. A rising balance pulls cash out of the banking system; a falling one adds it back.</dd>
       <dt>put / call percentile</dt><dd>Where today's ratio of put options traded to call options traded ranks against its own recent history. A high percentile means unusually heavy hedging or bearish betting.</dd>
       <dt>pending / in-flight opinion</dt><dd>An opinion already recorded whose forward-return outcome has not been measured yet, because not enough time has passed.</dd>
       <dt>basis break</dt><dd>A price move so large between two consecutive trading days that it looks like an unadjusted stock split rather than a real move &mdash; flagged so it cannot silently distort a return calculation.</dd>
-      <dt>heat</dt><dd>What you would lose in dollars if a position hit its stop-loss price &mdash; a measure of real risk, not simply how much money is invested.</dd>
+      <dt>heat</dt><dd>Dollars at risk on a one-ATR adverse day (quantity &times; ATR) &mdash; a measure of real risk, not simply how much money is invested. The stop sits {STOP_ATR_MULTIPLE:.0f} ATRs out, so a stop-out loses more than this.</dd>
       <dt>ATR</dt><dd>Average True Range &mdash; a stock's typical daily price swing in dollars, used to size a stop distance and, from it, this page's heat number.</dd>
     </dl>
   </details>"""
