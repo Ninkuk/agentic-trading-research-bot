@@ -129,13 +129,34 @@ def test_digest_leaks_only_the_exception_type_on_failure(tmp_path):
         assert "Error" in body or "unreadable" in body.lower()
 
 
-def test_digest_uses_the_shared_screen_not_its_own_sql(tmp_path):
+def test_digest_actually_calls_the_shared_screen(tmp_path, monkeypatch):
     """The digest must not fork the screen's gates — one definition of a
-    candidate, in candidates.py, or the push and the CLI drift apart."""
-    import inspect
+    candidate, in candidates.py, or the push and the CLI drift apart.
 
-    src = inspect.getsource(daily_summary.candidates_digest)
-    assert "SELECT" not in src.upper(), "digest should call candidates.screen(), not query"
+    Asserted by observing the CALL, not by grepping the source for "SELECT":
+    that proxy is trivially bypassed by reading `candidates._SCREEN_SQL`
+    directly, which is the exact anti-pattern it claimed to forbid."""
+    from sources.combiners.composite import candidates
+
+    seen = {}
+
+    def fake_screen(conn):
+        seen["called"] = True
+        return []
+
+    monkeypatch.setattr(candidates, "screen", fake_screen)
+    daily_summary.candidates_digest(NOW_UTC, db_path=_stocks_db(tmp_path, [{}]))
+    assert seen.get("called"), "digest must go through candidates.screen()"
+
+
+def test_digest_flags_data_dated_ahead_of_the_clock(tmp_path):
+    """A snapshot dated in the FUTURE means clock skew or a restored backup.
+    Showing the bare date lets it read as fresh; the reader must see something
+    is wrong."""
+    db = _stocks_db(tmp_path, [{}], captured_at="2026-07-30T11:00:00+00:00")
+    body = "\n".join(daily_summary.candidates_digest(NOW_UTC, db_path=db))
+    assert "2026-07-30" in body
+    assert "ahead" in body.lower()
 
 
 def test_build_summary_renders_the_section(tmp_path, monkeypatch):

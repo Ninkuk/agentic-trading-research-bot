@@ -169,9 +169,36 @@ def snapshot_date(conn) -> str | None:
         row = conn.execute(
             "SELECT captured_at FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1"
         ).fetchone()
-    except sqlite3.Error:
+        # phx_date raises ValueError on a malformed timestamp, which
+        # `except sqlite3.Error` alone would not catch — and this function is a
+        # dependency of the nightly health alert.
+        return phx_date(row[0]) if row and row[0] else None
+    except (sqlite3.Error, ValueError, TypeError):
         return None
-    return phx_date(row[0]) if row and row[0] else None
+
+
+def data_age_label(data_date: str | None, now_iso: str) -> str:
+    """`data_date` decorated with how stale it is: '2026-07-24 (2d old)'.
+
+    Shared by all three consumers — the CLI report, the nightly push and the
+    dashboard — so they cannot disagree about how old the same snapshot is.
+    Never raises: it sits inside the health-alert path, and a bare date still
+    informs when the clock cannot be parsed."""
+    if not data_date:
+        return "date unknown"
+    try:
+        age = (
+            datetime.fromisoformat(phx_date(now_iso)).date()
+            - datetime.fromisoformat(data_date).date()
+        ).days
+    except (ValueError, TypeError):
+        return data_date
+    if age > 0:
+        return f"{data_date} ({age}d old)"
+    if age < 0:
+        # Clock skew or a restored backup. A bare future date reads as fresh.
+        return f"{data_date} (dated ahead)"
+    return data_date
 
 
 def _num(x, places=1) -> str:
@@ -212,10 +239,9 @@ def _candidates_section(rows: list[dict]) -> str:
 
 def build_report(conn, now_iso: str) -> str:
     rows = screen(conn)
-    data_date = snapshot_date(conn)
     # The run date and the DATA date are different facts and diverge every
     # weekend, when stocks.db has not refreshed since Friday.
-    source = f"stocks.db snapshot {data_date}" if data_date else "stocks.db snapshot date unknown"
+    source = f"stocks.db snapshot {data_age_label(snapshot_date(conn), now_iso)}"
     return "\n".join(
         [
             f"=== Research Candidates — {phx_date(now_iso)} ===",

@@ -324,3 +324,69 @@ def test_company_key_is_the_hoisted_catalog_constant():
     assert catalog.STOCKS_COMPANY_KEY in by_id["stocks_rsi"]["sql"]
     assert catalog.STOCKS_PRIMARY_FIRST in by_id["stocks_rsi"]["sql"]
     assert candidates.STOCKS_COMPANY_KEY in candidates._SCREEN_SQL
+
+
+# ---------------------------------------------- data-age disclosure ----
+# stocks.db does not run at weekends, so every consumer (CLI report, nightly
+# push, dashboard) must date its data identically. One helper, one semantics.
+
+
+def _db_with_snapshot(tmp_path, captured_at, name="s.db"):
+    path = tmp_path / name
+    conn = sqlite3.connect(str(path))
+    conn.execute("CREATE TABLE snapshots (id INTEGER PRIMARY KEY, captured_at TEXT)")
+    if captured_at is not None:
+        conn.execute("INSERT INTO snapshots VALUES (1, ?)", (captured_at,))
+    conn.commit()
+    return conn
+
+
+def test_snapshot_date_is_the_phoenix_date_of_the_newest_snapshot(tmp_path):
+    """11:00 UTC is 04:00 Phoenix the SAME day; a naive slice would agree here,
+    so the fixture below straddles the rollover to make the difference bite."""
+    conn = _db_with_snapshot(tmp_path, "2026-07-24T11:00:00+00:00")
+    assert candidates.snapshot_date(conn) == "2026-07-24"
+
+
+def test_snapshot_date_respects_the_phoenix_rollover(tmp_path):
+    """04:12 UTC is 21:12 the PREVIOUS day in Phoenix."""
+    conn = _db_with_snapshot(tmp_path, "2026-07-25T04:12:00+00:00", name="r.db")
+    assert candidates.snapshot_date(conn) == "2026-07-24"
+
+
+def test_snapshot_date_is_none_without_a_snapshots_table(tmp_path):
+    conn = sqlite3.connect(str(tmp_path / "bare.db"))
+    conn.execute("CREATE TABLE v_latest (symbol TEXT)")
+    assert candidates.snapshot_date(conn) is None
+
+
+def test_snapshot_date_is_none_on_an_unparseable_timestamp(tmp_path):
+    """phx_date raises ValueError on junk, which `except sqlite3.Error` alone
+    would not catch — and this function is a dependency of the nightly health
+    alert."""
+    conn = _db_with_snapshot(tmp_path, "not-a-timestamp", name="junk.db")
+    assert candidates.snapshot_date(conn) is None
+
+
+def test_data_age_label_marks_stale_data(tmp_path):
+    assert "2d old" in candidates.data_age_label("2026-07-24", "2026-07-27T04:15:00+00:00")
+
+
+def test_data_age_label_is_bare_when_current(tmp_path):
+    # 04:15 UTC on the 27th is 21:15 Phoenix on the 26th -> same day, no age.
+    assert candidates.data_age_label("2026-07-26", "2026-07-27T04:15:00+00:00") == "2026-07-26"
+
+
+def test_data_age_label_flags_data_dated_ahead_of_the_clock(tmp_path):
+    """Clock skew or a restored backup. A bare future date reads as fresh."""
+    label = candidates.data_age_label("2026-07-30", "2026-07-27T04:15:00+00:00")
+    assert "2026-07-30" in label and "ahead" in label.lower()
+
+
+def test_data_age_label_handles_a_missing_date(tmp_path):
+    assert "unknown" in candidates.data_age_label(None, "2026-07-27T04:15:00+00:00").lower()
+
+
+def test_data_age_label_degrades_on_an_unparseable_clock(tmp_path):
+    """The bare date still informs; never raise inside the health-alert path."""
+    assert "2026-07-24" in candidates.data_age_label("2026-07-24", "junk")

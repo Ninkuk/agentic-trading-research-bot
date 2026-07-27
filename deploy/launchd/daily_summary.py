@@ -391,17 +391,8 @@ def candidates_digest(now_utc, db_path=None):
             data_date = candidates.snapshot_date(conn)
         finally:
             conn.close()
-        label = data_date or "date unknown"
-        if data_date:
-            now_iso = now_utc.isoformat() if hasattr(now_utc, "isoformat") else str(now_utc)
-            try:
-                age = (
-                    dt.date.fromisoformat(phx_date(now_iso)) - dt.date.fromisoformat(data_date)
-                ).days
-                if age > 0:
-                    label = f"{data_date} ({age}d old)"
-            except ValueError:  # unparseable clock — the bare date still informs
-                pass
+        now_iso = now_utc.isoformat() if hasattr(now_utc, "isoformat") else str(now_utc)
+        label = candidates.data_age_label(data_date, now_iso)
         # Formatting stays INSIDE the try: it is only safe today because every
         # column it prints is gated non-NULL by the screen's WHERE clause, a
         # coupling across two files. Relax one gate in candidates.py and a

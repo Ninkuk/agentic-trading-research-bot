@@ -753,18 +753,7 @@ def _candidates(conn, now_iso) -> str:
     # Two facts a reader needs before the table means anything: how old the
     # data is (stocks.db does not refresh at weekends, so a Sunday edition is
     # showing Friday's RSI), and that nothing grades this list.
-    stamp = "stocks.db snapshot date unknown"
-    if data_date:
-        stamp = f"stocks.db snapshot {data_date}"
-        try:
-            age = (
-                datetime.fromisoformat(phx_date(now_iso)).date()
-                - datetime.fromisoformat(data_date).date()
-            ).days
-            if age > 0:
-                stamp += f", {age}d old"
-        except ValueError:  # unparseable clock — the date alone still informs
-            pass
+    stamp = f"stocks.db snapshot {candidates.data_age_label(data_date, now_iso)}"
     shown = min(len(rows), _CANDIDATES_MAX)
     caption = (
         f'<p class="read">{len(rows)} name(s) pass'
