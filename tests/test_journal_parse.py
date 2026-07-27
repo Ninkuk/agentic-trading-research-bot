@@ -151,6 +151,9 @@ def test_parse_verdicts_validates_and_uppercases():
             "verdict_date": "2026-07-22",
             "doc": "BBAI-2026-07-21.md",
             "note": "unproven",
+            # Absent unless the doc supplies a correction reason; only its
+            # presence licenses overwriting an already-recorded verdict.
+            "corrects": None,
         }
     ]
 

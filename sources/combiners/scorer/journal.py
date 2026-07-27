@@ -169,6 +169,11 @@ def parse_doc(doc) -> tuple:
         if not symbol or verdict not in ("buy", "pass") or not _bare_date(vdate):
             skipped += 1
             continue
+        # `corrects` is a free-text REASON, and its presence is what licenses
+        # overwriting an already-recorded call (see db.verdict_corrections).
+        # A non-string is dropped rather than skipping the row: the verdict is
+        # still valid, it just does not authorise a correction.
+        corrects = v.get("corrects")
         verdicts.append(
             dict(
                 symbol=symbol,
@@ -176,6 +181,7 @@ def parse_doc(doc) -> tuple:
                 verdict_date=vdate,
                 doc=v.get("doc"),
                 note=v.get("note"),
+                corrects=corrects if isinstance(corrects, str) and corrects.strip() else None,
             )
         )
     fills.sort(key=lambda f: (f["filled_at"], 0 if f["side"] == "buy" else 1))
@@ -257,7 +263,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
     commit together or not at all. Requires composite.db attached as `src`
     when fills/passes are present. Fills must be chronological (parse_doc
     guarantees it) so FIFO exit attachment is deterministic."""
-    matched = freelance = exits = passes_n = verdicts_n = dupes = expired = 0
+    matched = freelance = exits = passes_n = verdicts_n = dupes = expired = corrected = 0
     # Phoenix clock, like fill_date/composite_date: an evening-dictated pass
     # (after the 9:05pm snapshot = next day UTC) answers THAT evening's flag.
     as_of_date = _phx_date(datetime.fromisoformat(now_iso))
@@ -377,7 +383,30 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                 (v["symbol"], v["verdict"], v["verdict_date"], v["doc"], v["note"], now_iso),
             )
             verdicts_n += cur.rowcount
-            dupes += 1 - cur.rowcount
+            if cur.rowcount:
+                continue
+            # The row already exists. Default stays INSERT OR IGNORE (a counted
+            # duplicate); only an explicit `corrects` reason may overwrite a
+            # recorded call, and it books the prior value for audit first.
+            reason = v.get("corrects")
+            prior = conn.execute(
+                "SELECT verdict FROM research_verdicts WHERE symbol=? AND verdict_date=?",
+                (v["symbol"], v["verdict_date"]),
+            ).fetchone()
+            if not reason or not prior or prior[0] == v["verdict"]:
+                dupes += 1  # no reason given, or nothing actually changed
+                continue
+            conn.execute(
+                "INSERT INTO verdict_corrections (symbol, verdict_date, old_verdict,"
+                " new_verdict, reason, corrected_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (v["symbol"], v["verdict_date"], prior[0], v["verdict"], reason, now_iso),
+            )
+            conn.execute(
+                "UPDATE research_verdicts SET verdict=?, doc=?, note=?, recorded_at=?"
+                " WHERE symbol=? AND verdict_date=?",
+                (v["verdict"], v["doc"], v["note"], now_iso, v["symbol"], v["verdict_date"]),
+            )
+            corrected += 1
         cur = conn.execute(
             "INSERT INTO journal_runs (ran_at, fills_seen, matched, freelance,"
             " exits_attached, passes_recorded, verdicts_recorded,"
@@ -405,6 +434,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
             passes_recorded=passes_n,
             verdicts_recorded=verdicts_n,
             duplicates_skipped=dupes,
+            corrected=corrected,
             skipped=skipped,
             expired_closed=expired,
         )
@@ -486,7 +516,7 @@ def main(argv=None) -> None:
         f"journal run {c['run_id']}: {c['matched']} matched,"
         f" {c['freelance']} freelance, {c['exits_attached']} exits,"
         f" {c['passes_recorded']} passes, {c['verdicts_recorded']} verdicts,"
-        f" {c['duplicates_skipped']} duplicates,"
+        f" {c['duplicates_skipped']} duplicates, {c.get('corrected', 0)} corrected,"
         f" {c['skipped']} skipped, {c['expired_closed']} expired, into {a.db}"
     )
 

@@ -232,6 +232,28 @@ CREATE TABLE IF NOT EXISTS research_verdicts (
     UNIQUE (symbol, verdict_date)
 );
 
+-- Withdrawing a verdict recorded on a defective analysis. INSERT OR IGNORE
+-- above makes re-ingest a counted duplicate, which is the right default -- but
+-- it also meant a wrong call could never be withdrawn and graded forever.
+-- Found 2026-07-26 on PEGA: logged `buy`, then the analysis was found to have
+-- missed a $2.04B trade-secret retrial (46% of market cap, dated 2027-01-11,
+-- disclosed in a 10-Q filed five days before the run).
+--
+-- A verdict carrying `corrects: "<reason>"` UPDATEs the row and books the
+-- prior value here. The original is preserved deliberately: v_research_filter
+-- exists to measure the research skill honestly, and silently erasing that a
+-- buy was once issued would flatter it. Never pruned, same as the verdicts
+-- and decisions themselves.
+CREATE TABLE IF NOT EXISTS verdict_corrections (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol       TEXT NOT NULL,
+    verdict_date TEXT NOT NULL,
+    old_verdict  TEXT NOT NULL,
+    new_verdict  TEXT NOT NULL,
+    reason       TEXT NOT NULL,
+    corrected_at TEXT NOT NULL
+);
+
 -- Forward outcomes per verdict x horizon, anchored on the VERDICT date
 -- (not a composite snapshot). Column names deliberately mirror
 -- ticker_outcomes so the generic _MATURE_SYMBOL template grades this
