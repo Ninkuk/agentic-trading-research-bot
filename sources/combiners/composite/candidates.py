@@ -158,6 +158,22 @@ def screen(conn) -> list[dict]:
     return [dict(zip(_FIELDS, r, strict=True)) for r in conn.execute(_SCREEN_SQL)]
 
 
+def snapshot_date(conn) -> str | None:
+    """Phoenix calendar date of the stocks.db snapshot behind v_latest, or
+    None when the header is unavailable.
+
+    Every consumer needs this, because the screener does not run at weekends:
+    a Sunday-night reader is quoting Friday's RSI, and a screen that cannot
+    say how old its data is invites the reader to assume it is tonight's."""
+    try:
+        row = conn.execute(
+            "SELECT captured_at FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1"
+        ).fetchone()
+    except sqlite3.Error:
+        return None
+    return phx_date(row[0]) if row and row[0] else None
+
+
 def _num(x, places=1) -> str:
     return "n/a" if x is None else f"{x:.{places}f}"
 
@@ -196,11 +212,15 @@ def _candidates_section(rows: list[dict]) -> str:
 
 def build_report(conn, now_iso: str) -> str:
     rows = screen(conn)
+    data_date = snapshot_date(conn)
+    # The run date and the DATA date are different facts and diverge every
+    # weekend, when stocks.db has not refreshed since Friday.
+    source = f"stocks.db snapshot {data_date}" if data_date else "stocks.db snapshot date unknown"
     return "\n".join(
         [
             f"=== Research Candidates — {phx_date(now_iso)} ===",
             "",
-            f"Quality first, dislocation as timing. {len(rows)} name(s) pass.",
+            f"Quality first, dislocation as timing. {len(rows)} name(s) pass.  [{source}]",
             "",
             _candidates_section(rows),
             "",

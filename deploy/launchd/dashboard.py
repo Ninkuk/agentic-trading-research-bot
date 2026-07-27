@@ -28,6 +28,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from sources.combiners.composite import candidates  # noqa: E402
 from sources.combiners.scorer import scorecard  # noqa: E402
 from sources.combiners.scorer.db import RELIABLE_MIN_N  # noqa: E402
 from sources.common.clock import phx_date  # noqa: E402
@@ -716,6 +717,64 @@ def _size_caps(conn, now_iso) -> str:
     )
 
 
+_CANDIDATES_HEADERS = ["symbol", "sector", "cap $B", "roic %", "fcf yld %", "F", "rsi", "6m %"]
+# The page is a report, not a push, but the whole screen is still long enough
+# to bury everything under it; the CLI (`main.py candidates`) prints all of it.
+_CANDIDATES_MAX = 15
+
+
+def _candidates(conn, now_iso) -> str:
+    """Quality-first research candidates from stocks.db.
+
+    Reads the screen through `candidates.screen()` rather than restating its
+    gates, so this page and the CLI can never disagree about what qualifies."""
+    rows = candidates.screen(conn)
+    data_date = candidates.snapshot_date(conn)
+    body = [
+        _cells(
+            r["symbol"],
+            (r["sector"] or "—"),
+            _num(r["marketCap"] / 1e9, 1),
+            _num(r["roic"], 1),
+            _num(r["fcfYield"], 1),
+            _num(r["fScore"], 0),
+            _num(r["rsi"], 1),
+            _num(r["ch6m"], 1),
+            numeric_from=2,
+        )
+        for r in rows[:_CANDIDATES_MAX]
+    ]
+    table = _table(
+        _CANDIDATES_HEADERS,
+        body,
+        empty="no names pass the screen tonight",
+        numeric_from=2,
+    )
+    # Two facts a reader needs before the table means anything: how old the
+    # data is (stocks.db does not refresh at weekends, so a Sunday edition is
+    # showing Friday's RSI), and that nothing grades this list.
+    stamp = "stocks.db snapshot date unknown"
+    if data_date:
+        stamp = f"stocks.db snapshot {data_date}"
+        try:
+            age = (
+                datetime.fromisoformat(phx_date(now_iso)).date()
+                - datetime.fromisoformat(data_date).date()
+            ).days
+            if age > 0:
+                stamp += f", {age}d old"
+        except ValueError:  # unparseable clock — the date alone still informs
+            pass
+    shown = min(len(rows), _CANDIDATES_MAX)
+    caption = (
+        f'<p class="read">{len(rows)} name(s) pass'
+        f"{f', top {shown} shown' if len(rows) > shown else ''}"
+        f" · {_esc(stamp)} · <b>ungraded screen, not a recommendation</b>"
+        " — row order is free-cash-flow yield, not conviction.</p>"
+    )
+    return caption + table
+
+
 SECTIONS = [
     (
         "regime",
@@ -736,6 +795,19 @@ SECTIONS = [
         "How the market mood and the VIX fear gauge have moved across recent"
         " nightly snapshots. Each dot is one snapshot; higher = more fear;"
         " color = that night's regime.",
+    ),
+    (
+        "candidates",
+        "Research candidates",
+        "stocks.db",
+        _candidates,
+        "Signals",
+        "Businesses worth reading about, screened quality-first: durable returns"
+        " on capital, real free cash flow, a rising Piotroski score, and a share"
+        " price currently well off its highs. The scorecard above finds stocks"
+        " doing something odd right now; this finds good companies that happen"
+        " to be marked down. Nothing scores this list — it is a reading queue,"
+        " not an opinion.",
     ),
     (
         "scorecard",

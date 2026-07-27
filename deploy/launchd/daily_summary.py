@@ -349,6 +349,70 @@ def signals_digest():
     return lines
 
 
+# The push is a notification, not a report — `main.py candidates` prints the
+# whole list. Only the head of it travels.
+CANDIDATES_MAX = 5
+
+
+def format_candidates_lines(rows, data_date, limit=CANDIDATES_MAX):
+    """Pure: screened rows + a display string for the data's date -> lines.
+
+    `data_date` is a display string (the reader decorates it with an age), so
+    this stays clock-free."""
+    lines = [f"{len(rows)} name(s) pass the quality screen · stocks.db {data_date}"]
+    for r in rows[:limit]:
+        lines.append(
+            f"{r['symbol']:<6} fcfy {r['fcfYield']:.1f}"
+            f" roic {r['roic']:.1f} fS {r['fScore']:.0f} rsi {r['rsi']:.1f}"
+        )
+    # This section sits directly under "N flagged" in the same push. Without
+    # this line a reader would reasonably take a ranked list of tickers for an
+    # opinion; nothing downstream grades it and row order is fcf yield.
+    lines.append("ungraded screen, not a recommendation")
+    return lines
+
+
+def candidates_digest(now_utc, db_path=None):
+    """Quality-first candidate screen from stocks.db.
+
+    TOTAL by design, like research_digest: this section informs, the health
+    layers above alert, and no read failure here may take the alert down with
+    it. Failures report the exception TYPE only — never a message or path.
+
+    Calls candidates.screen() rather than restating its SQL, so the nightly
+    push and `main.py candidates` can never disagree about what qualifies."""
+    try:
+        from sources.combiners.composite import candidates
+
+        path = str(db_path) if db_path else str(DATA / "stocks.db")
+        conn = candidates.connect_ro(path)
+        try:
+            rows = candidates.screen(conn)
+            data_date = candidates.snapshot_date(conn)
+        finally:
+            conn.close()
+        label = data_date or "date unknown"
+        if data_date:
+            now_iso = now_utc.isoformat() if hasattr(now_utc, "isoformat") else str(now_utc)
+            try:
+                age = (
+                    dt.date.fromisoformat(phx_date(now_iso)) - dt.date.fromisoformat(data_date)
+                ).days
+                if age > 0:
+                    label = f"{data_date} ({age}d old)"
+            except ValueError:  # unparseable clock — the bare date still informs
+                pass
+        # Formatting stays INSIDE the try: it is only safe today because every
+        # column it prints is gated non-NULL by the screen's WHERE clause, a
+        # coupling across two files. Relax one gate in candidates.py and a
+        # `:.1f` against None raises TypeError — outside the try that would
+        # take the whole nightly HEALTH ALERT down with this informational
+        # section. A test pins this.
+        return format_candidates_lines(rows, label)
+    except Exception as e:  # noqa: BLE001 -- total by design
+        return [f"candidates: unreadable ({type(e).__name__})"]
+
+
 def _book_line(book):
     hp = book["heat_pct"]
     heat = f"{hp:.2%}" if hp is not None else "n/a"
@@ -520,6 +584,11 @@ def build_summary(now_local, now_utc):
     digest = signals_digest()
     if digest:
         lines += ["", "— signals —", *digest]
+    # Directly under signals: this is the only section that surfaces
+    # investable names, and composite's flags are structurally microcap.
+    cands = candidates_digest(now_utc)
+    if cands:
+        lines += ["", "— candidates —", *cands]
     advisor = advisor_digest()
     if advisor:
         lines += ["", "— advisor —", *advisor]

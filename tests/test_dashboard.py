@@ -886,15 +886,63 @@ def _build_advisor_db(path):
     conn.close()
 
 
+_STOCKS_COLS = {
+    "sector": "TEXT",
+    "marketCap": "REAL",
+    "dollarVolume": "REAL",
+    "roic": "REAL",
+    "roic5y": "REAL",
+    "fcfYield": "REAL",
+    "revenueGrowth3Y": "REAL",
+    "netDebtEbitda": "REAL",
+    "sharesYoY": "REAL",
+    "fScore": "REAL",
+    "rsi": "REAL",
+    "ch6m": "REAL",
+    "priceDate": "TEXT",
+    "isin": "TEXT",
+    "isPrimaryListing": "TEXT",
+}
+
+
+def _build_stocks_db(path):
+    """Built through the stock_analysis_screener's own ensure_schema, same
+    no-hand-rolled-DDL rule as the combiner fixtures above — the candidates
+    section reads this source directly."""
+    from sources.screeners.stock_analysis_screener import db as stocks_db
+
+    conn = stocks_db.connect(str(path))
+    stocks_db.ensure_schema(conn, _STOCKS_COLS)
+    conn.execute(
+        "INSERT INTO snapshots (id, captured_at, universe_count, source)"
+        " VALUES (1, '2026-07-08T11:00:00+00:00', 2, 'test')"
+    )
+    for sym, isin, fcfy, roic in (
+        ("ADBE", "US00724F1012", 12.2, 60.7),
+        ("PEGA", "US69546K1097", 11.5, 68.4),
+    ):
+        conn.execute(
+            'INSERT INTO metrics (snapshot_id, symbol, sector, "marketCap", "dollarVolume",'
+            ' roic, roic5y, "fcfYield", "revenueGrowth3Y", "netDebtEbitda", "sharesYoY",'
+            ' "fScore", rsi, ch6m, "priceDate", isin, "isPrimaryListing")'
+            " VALUES (1, ?, 'Technology', 8.4e10, 5e8, ?, 20.0, ?, 11.0, 0.2, -5.0,"
+            " 7.0, 42.3, -29.2, '2026-07-08', ?, '1')",
+            (sym, roic, fcfy, isin),
+        )
+    conn.commit()
+    conn.close()
+
+
 @pytest.fixture
 def populated_data_dir(tmp_path):
-    """A tmp_path with composite.db, scorer.db, and advisor.db populated via
-    each combiner's own db.py — real schemas/views throughout, no hand-rolled
-    DDL — so every one of dashboard.SECTIONS' 16 renderers has at least one
-    real row to show."""
+    """A tmp_path with composite.db, scorer.db, advisor.db and stocks.db
+    populated via each source's own db.py — real schemas/views throughout, no
+    hand-rolled DDL — so every one of dashboard.SECTIONS' renderers has at
+    least one real row to show."""
     _build_composite_db(tmp_path / "composite.db")
     _build_scorer_db(tmp_path / "scorer.db")
     _build_advisor_db(tmp_path / "advisor.db")
+    _build_stocks_db(tmp_path / "stocks.db")
     return str(tmp_path)
 
 
@@ -1096,6 +1144,8 @@ _SECTIONS_WITH_POSITIVE_TEST = {
     "size-caps",
     "plan-001-report",
     "plan-004-scorecard",
+    # test_candidates_renders_names_and_its_data_date
+    "candidates",
 }
 
 
@@ -1224,3 +1274,55 @@ def test_anchor_allowance_still_rejects_assets():
         _assert_no_external_asset(
             '<a href="#x" style="background:url(https://evil.example/t.png)">x</a>'
         )
+
+
+def test_candidates_renders_names_and_its_data_date(populated_data_dir):
+    conn = dashboard._ro(populated_data_dir, "stocks.db")
+    try:
+        html = dashboard._candidates(conn, NOW)
+    finally:
+        conn.close()
+    assert "ADBE" in html and "PEGA" in html
+    assert "12.2" in html  # fcf yield, the ranking column
+    # stocks.db does not refresh at weekends; the section must date its data.
+    assert "2026-07-08" in html
+
+
+def test_candidates_section_disclaims_that_it_is_ungraded(populated_data_dir):
+    """It renders beside the flagged scorecard. Nothing grades this screen,
+    so the page must not let a ranked list read as an opinion."""
+    conn = dashboard._ro(populated_data_dir, "stocks.db")
+    try:
+        html = dashboard._candidates(conn, NOW).lower()
+    finally:
+        conn.close()
+    assert "ungraded" in html or "not a recommendation" in html
+
+
+def test_candidates_section_is_registered_on_the_page(populated_data_dir):
+    html = dashboard.build_page(populated_data_dir, NOW)
+    assert 'id="candidates"' in html
+    assert "ADBE" in html
+
+
+def test_candidates_degrades_without_stocks_db(tmp_path):
+    """A missing stocks.db must blank one section, never the page."""
+    _build_composite_db(tmp_path / "composite.db")
+    _build_scorer_db(tmp_path / "scorer.db")
+    _build_advisor_db(tmp_path / "advisor.db")
+    html = dashboard.build_page(str(tmp_path), NOW)
+    assert 'id="candidates"' in html
+    assert "unavailable" in html
+
+
+def test_candidates_discloses_how_stale_its_data_is(populated_data_dir):
+    """The fixture snapshot is 2026-07-08; rendered a week later the section
+    must say the data is a week old, not just print its date. stocks.db does
+    not refresh at weekends and this page renders every night."""
+    conn = dashboard._ro(populated_data_dir, "stocks.db")
+    try:
+        html = dashboard._candidates(conn, "2026-07-15T21:13:00+00:00")
+    finally:
+        conn.close()
+    assert "2026-07-08" in html
+    assert "7d old" in html
