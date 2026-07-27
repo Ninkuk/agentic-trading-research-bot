@@ -8,6 +8,9 @@
 2026-07-22 EOSE FLAWED conditions=5 refuted=2 unknown=3
 2026-07-22 CRML FLAWED conditions=7 refuted=1 unknown=6
 2026-07-26 ADBE UNPROVEN conditions=6 refuted=0 unknown=3
-2026-07-26 PEGA FLAWED conditions=6 refuted=1 unknown=3
+# 2026-07-26 PEGA: the line below SUPERSEDES a first same-day run that logged
+# buy on conditions=6 refuted=1 unknown=3. That run missed both Appian damages
+# claims; the withdrawal and its reason are in scorer.db verdict_corrections.
+2026-07-26 PEGA FLAWED conditions=8 refuted=2 unknown=5
 2026-07-26 CHKP FLAWED conditions=6 refuted=3 unknown=3
 2026-07-26 CPRT FLAWED conditions=6 refuted=2 unknown=4
