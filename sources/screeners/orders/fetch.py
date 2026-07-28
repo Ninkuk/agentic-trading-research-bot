@@ -24,6 +24,7 @@ class Quote:
     symbol: str
     ask: float | None
     quote_ts: str | None
+    state: str | None = None  # broker instrument state; anything non-'active' is vetoed
 
 
 @dataclass(frozen=True)
@@ -58,6 +59,15 @@ def _require(doc: dict, key: str, ctx: str):
 
 
 def _number(value, ctx: str) -> float:
+    """Accept a number OR a numeric string: the Robinhood MCP returns every
+    price as a decimal string ('737.250000', '200.4000') — verified live
+    2026-07-27 — and the transcribing session must copy values verbatim, so
+    the deterministic layer owns the conversion."""
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            raise ValueError(f"{ctx} is not numeric") from None
     if not isinstance(value, (int, float)) or isinstance(value, bool):
         raise ValueError(f"{ctx} is not a number")
     return float(value)
@@ -79,10 +89,14 @@ def parse_plan_input(doc: dict) -> PlanInput:
         quote_ts = q.get("quote_ts")
         if quote_ts is not None and not isinstance(quote_ts, str):
             raise ValueError(f"quotes[{i}].quote_ts must be a string or null")
+        state = q.get("state")
+        if state is not None and not isinstance(state, str):
+            raise ValueError(f"quotes[{i}].state must be a string or null")
         quotes[symbol] = Quote(
             symbol=symbol,
             ask=None if ask is None else _number(ask, f"quotes[{i}].ask"),
             quote_ts=quote_ts,
+            state=state,
         )
     portfolio = _require(doc, "portfolio", "document")
     settled_cash = _number(

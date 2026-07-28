@@ -89,6 +89,8 @@ def _compute_decision(
         return "expired", f"expired {row['expires_on']}"
     if quote is None or quote.ask is None or quote.ask <= 0:
         return "vetoed", "no usable ask (halted/missing quote)"
+    if quote.state is not None and quote.state != "active":
+        return "vetoed", f"instrument state {quote.state}"
     if quote.quote_ts is None or _age_sec(quote.quote_ts, now_iso) > STALE_QUOTE_SEC:
         return "vetoed", "stale quote"
     ceiling = Decimal(str(row["ref_price"])) * (

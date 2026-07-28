@@ -22,19 +22,26 @@ reorder, split, skip, or add an order, and you never mint a `ref_id`.
    `get_portfolio` for account cash. Buying power comes from `get_portfolio`
    only — `get_accounts` is deliberately NOT granted in this slot (its
    buying-power figure is unreliable per its own tool contract). `Write` one
-   JSON document to the scratchpad directory:
+   JSON document to the scratchpad directory with EXACTLY this field
+   mapping (source paths verified against live responses 2026-07-27; the
+   broker returns every number as a decimal string — copy those strings
+   verbatim, the parser owns conversion):
 
    ```json
    {
-     "as_of": "<UTC ISO timestamp from the quotes response>",
-     "quotes": [{"symbol": "TSLA", "ask": 312.4, "quote_ts": "<UTC ISO>"}],
-     "portfolio": {"settled_cash": 4200.5}
+     "as_of": "<UTC now, ISO>",
+     "quotes": [{"symbol": "TSLA",
+                 "ask": "<results[].quote.ask_price>",
+                 "quote_ts": "<results[].quote.venue_ask_time>",
+                 "state": "<results[].quote.state>"}],
+     "portfolio": {"settled_cash": "<data.buying_power.buying_power>"}
    }
    ```
 
-   Copy numbers exactly as the MCP returned them. Never estimate, never fill
-   a gap: a missing or unavailable ask stays `null` (the planner vetoes that
-   row — that is correct behavior, not a problem to fix).
+   Copy values exactly as the MCP returned them. Never estimate, never fill
+   a gap: a missing or unavailable ask_price stays `null`, a non-"active"
+   state gets copied as-is (the planner vetoes those rows — that is correct
+   behavior, not a problem to fix).
 
 3. **Plan.** Run:
    `uv run python main.py orders plan --db data/orders.db --calendar-db data/market_calendar.db --input <that file>`

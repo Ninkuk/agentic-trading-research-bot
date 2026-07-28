@@ -591,3 +591,37 @@ def test_reconcile_manual_trade_is_likely_manual(dbs):
     )
     (orphan,) = report["orphan_orders"]
     assert orphan["likely_manual"] is True
+
+
+def test_plan_accepts_broker_string_numbers_and_z_timestamps(dbs):
+    # Live-verified shapes (2026-07-27): every number is a decimal string
+    # ('737.250000'), timestamps are nanosecond-precision RFC3339 with 'Z'.
+    orders_path, cal_path = dbs
+    _queue(orders_path, cal_path)
+    doc = {
+        "as_of": SUMMER_OPEN,
+        "quotes": [
+            {
+                "symbol": "TSLA",
+                "ask": "312.000000",
+                "quote_ts": "2026-07-27T13:34:30.835068734Z",
+                "state": "active",
+            }
+        ],
+        "portfolio": {"settled_cash": "9000.4000"},
+    }
+    plan = run.run_plan(orders_path, cal_path, doc, SUMMER_OPEN, ENV)
+    assert [o["limit_price"] for o in plan["orders"]] == ["312.62"]
+
+
+def test_plan_vetoes_non_active_instrument_state(dbs):
+    orders_path, cal_path = dbs
+    _queue(orders_path, cal_path)
+    doc = _plan_doc()
+    doc["quotes"][0]["state"] = "halted"
+    plan = run.run_plan(orders_path, cal_path, doc, SUMMER_OPEN, ENV)
+    assert plan["orders"] == []
+    conn = orders_db.connect(orders_path)
+    reason = conn.execute("SELECT resolution_reason FROM queue").fetchone()[0]
+    conn.close()
+    assert "instrument state halted" in reason
