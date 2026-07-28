@@ -73,12 +73,31 @@ Every screener is a package of the **same four files** (learn one, know all):
 
 Exceptions to the four-file rule: `sources/monitors/market_calendar/compute.py` (pure
 OPEX/holiday math), `sources/screeners/stock_analysis_screener/probe.py` + `typing.py`
-(SvelteKit `__data.json` "devalue" decoder), `sources/screeners/usda_screener/wasde.py`.
+(SvelteKit `__data.json` "devalue" decoder), `sources/screeners/usda_screener/wasde.py`,
+`sources/screeners/orders/market_clock.py` (pure NYSE-open/DST math; its tests follow
+the module name, `test_orders_market_clock.py`).
 
-One inverted slice: `portfolio` has no network in `fetch.py` at all — live Robinhood
-state is fetched by Claude via MCP (see `.claude/skills/account-positions`) and piped in
-as JSON via `main.py portfolio --input <file|->`. Live account state enters the system
-only through that dispatcher; never write SQL against `portfolio.db` directly.
+Two inverted slices have no network in `fetch.py` at all — Claude fetches live Robinhood
+state via MCP and pipes it in as JSON: `portfolio` (`.claude/skills/account-positions` →
+`main.py portfolio --input <file|->`) and `orders` (below). Live account state enters the
+system only through those dispatchers; never write SQL against `portfolio.db` or
+`orders.db` directly.
+
+**`orders` is the repo's ONLY broker write path** (market-open buys queued by the human,
+executed by `deploy/launchd/order_execution.sh` → `.claude/skills/execute-queue`). The
+human-only property of `orders queue` rests on allowlist ENUMERATION plus the pinned
+permission mode — the headless slot is granted exactly `orders preflight/plan/record`,
+never the wildcard, never `queue`/`resolve`; `ORDERS_ALLOW_NONINTERACTIVE` is a
+belt-and-suspenders speed bump and the wrapper's `.env` pass-through must never gain it.
+Money safety is structural, not prose: the atomic `BEGIN IMMEDIATE` claim
+(queued→planned flips once, even under duplicate wake-coalesced sessions — macOS has no
+flock(1)), the per-order `ref_id` the broker deduplicates on, the limit ceiling
+`ref_price×(1+max_gap_pct)` from human-supplied numbers, and `.env` dollar caps bounded
+by `catalog.py`'s committed hard ceilings (caps stay out of the public repo — they
+disclose account scale). The launchd job is opt-in: `install.py` schedules it only when
+`ORDERS_GO_LIVE=1` at install time, after the first-run verification in
+`.claude/skills/queue-order`. Signals never create orders — the advisor/composite layer
+remains decision-support only.
 
 **Combiners are the third source kind.** Unlike screeners/monitors, a combiner's `fetch.py`
 never touches the network — it reads the other `data/*.db` files ATTACHed read-only and
