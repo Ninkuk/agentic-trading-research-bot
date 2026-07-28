@@ -13,13 +13,21 @@ reorder, split, skip, or add an order, and you never mint a `ref_id`.
 
 ## Steps
 
+Run every command below EXACTLY as written — never append `; echo $?`, pipe,
+or combine commands: the Bash allowlist matches the literal command prefix,
+so any decoration is denied and there is nobody to approve it (the
+2026-07-28 first flight burned two denials this way). You never need the
+exit code — the output says what happened.
+
 1. **Preflight.** Run:
    `uv run python main.py orders preflight --db data/orders.db --calendar-db data/market_calendar.db`
-   Exit code 0 prints the symbols to fetch (one per line). Any other exit
-   code: stop immediately and end the session — do not improvise.
+   On go it prints `account: <number>` followed by the symbols to fetch
+   (one per line). If it prints `stand-down` or an error instead: stop
+   immediately and end the session — do not improvise.
 
 2. **Fetch inputs.** Call `get_equity_quotes` for exactly those symbols, and
-   `get_portfolio` for account cash. Buying power comes from `get_portfolio`
+   `get_portfolio` for account cash, passing the `account_number` preflight
+   printed — do not derive it any other way. Buying power comes from `get_portfolio`
    only — `get_accounts` is deliberately NOT granted in this slot (its
    buying-power figure is unreliable per its own tool contract). `Write` one
    JSON document to the scratchpad directory with EXACTLY this field

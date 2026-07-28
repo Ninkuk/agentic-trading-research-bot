@@ -625,3 +625,29 @@ def test_plan_vetoes_non_active_instrument_state(dbs):
     reason = conn.execute("SELECT resolution_reason FROM queue").fetchone()[0]
     conn.close()
     assert "instrument state halted" in reason
+
+
+def test_preflight_cli_hands_account_to_the_session(dbs, monkeypatch, capsys):
+    # The headless session cannot hunt for the account number (get_accounts
+    # and general Bash are not granted), so preflight prints it on go — and
+    # an incomplete .env fails loudly BEFORE any quotes are fetched.
+    orders_path, cal_path = dbs
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.setattr(run, "run_preflight", lambda *a: (0, ["DECK"]))
+    with pytest.raises(SystemExit) as e:
+        run.main(["preflight", "--db", orders_path, "--calendar-db", cal_path])
+    assert e.value.code == 0
+    assert capsys.readouterr().out.splitlines() == ["account: TESTACCT0", "DECK"]
+
+
+def test_preflight_cli_fails_loud_on_incomplete_env(dbs, monkeypatch, capsys):
+    orders_path, cal_path = dbs
+    for k in ENV:
+        monkeypatch.delenv(k, raising=False)
+    with pytest.raises(SystemExit) as e:
+        run.main(["preflight", "--db", orders_path, "--calendar-db", cal_path])
+    assert e.value.code == 1
+    captured = capsys.readouterr()
+    assert "env incomplete" in captured.err
+    assert "account:" not in captured.out

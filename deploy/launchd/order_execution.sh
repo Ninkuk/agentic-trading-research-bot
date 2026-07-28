@@ -63,6 +63,6 @@ fi
 # Vetoes and retries are designed outcomes, not failures — but the log line
 # is the alert, so say what happened to every row the run touched.
 sqlite3 data/orders.db \
-    "SELECT '[$(date '+%F %T')] veto ' || symbol || ' (' || status || '): ' || resolution_reason FROM queue WHERE resolution_reason IS NOT NULL AND resolution_reason != 'planned' AND (resolved_at >= strftime('%Y-%m-%dT%H:%M:%S','now','-15 minutes') OR (status='queued' AND resolution_reason LIKE 'retry:%'));" \
+    "SELECT '[$(date '+%F %T')] veto ' || symbol || ' (' || status || '): ' || resolution_reason FROM queue WHERE resolution_reason IS NOT NULL AND status NOT IN ('planned','placed') AND (resolved_at >= strftime('%Y-%m-%dT%H:%M:%S','now','-15 minutes') OR (status='queued' AND resolution_reason LIKE 'retry:%'));" \
     2>/dev/null
 echo "[$(date '+%F %T')] order execution complete"

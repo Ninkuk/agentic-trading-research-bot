@@ -522,8 +522,20 @@ def main(argv=None) -> None:
             )
             print(f"queued #{qid}: {a.symbol.upper()} x{a.qty} into {a.db}")
         elif a.cmd == "preflight":
+            # Config check FIRST, loudly: the headless session cannot hunt
+            # for the account number (get_portfolio requires it; get_accounts
+            # and general Bash are not granted — the 2026-07-28 first flight
+            # burned several denied probes discovering this), so preflight
+            # hands it over, and an incomplete .env fails here instead of at
+            # plan time with quotes already fetched.
+            try:
+                lim = catalog.load_limits(dict(os.environ))
+            except ValueError as e:
+                print(f"error: env incomplete: {e}", file=sys.stderr)
+                raise SystemExit(1) from None
             code, symbols = run_preflight(a.db, a.calendar_db, now_iso)
             if code == 0:
+                print(f"account: {lim.account_number}")
                 for s_ in symbols:
                     print(s_)
             elif code == 3:
