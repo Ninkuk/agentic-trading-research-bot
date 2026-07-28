@@ -8,7 +8,7 @@ import argparse
 import os
 from datetime import UTC, datetime
 
-from sources.combiners.backtest import catalog, db, fetch
+from sources.combiners.backtest import catalog, db, fetch, mcpt
 
 
 def run(
@@ -20,6 +20,8 @@ def run(
     harvest_benchmark=fetch.harvest_benchmark,
     harvest_market_obs=fetch.harvest_market_obs,
     harvest_price_ledger=fetch.harvest_price_ledger,
+    n_perms=1000,
+    seed=0,
 ):
     now_iso = now_iso or datetime.now(UTC).isoformat()
     conn = db.connect(db_path)
@@ -117,6 +119,25 @@ def run(
 
         db.finish_snapshot(conn, sid, n_vint, n_bench, failures, n_market)
         conn.commit()
+        # Permutation null (mcpt.py): flags fixed, spine shuffled, seeded —
+        # the p that prices the overlap the Wilson interval cannot, plus the
+        # one family row that prices multiplicity. n_perms=0 skips (leaves
+        # any prior pass in place).
+        if n_perms:
+            null_rows = mcpt.permutation_null(conn, n_perms, seed)
+            db.write_replay_null(conn, null_rows)
+            conn.commit()
+            family = next((r for r in null_rows if (r[0], r[1], r[2]) == mcpt.FAMILY_KEY), None)
+            if family:
+                print(
+                    f"-- permutation null: {len(null_rows) - 1} cells @ {n_perms} perms"
+                    f" (seed {seed}); family max-statistic p = {family[4]:.3f} —"
+                    " the ONE multiplicity-corrected number for the whole scoreboard."
+                    " Per-cell perm_p is one-sided (favorable tail): near 0 = hard to"
+                    " match by shuffling, near 1 = significantly wrong. Vol-keyed"
+                    " cells (cboe_vix*) read an optimistic null (shuffling destroys"
+                    " vol clustering)."
+                )
         # Print `excess` beside `hit`: a bare hit rate is unreadable against a
         # benchmark that drifts up 61-68% of the time. `reliable` is a
         # sample-size floor, NOT evidence the signal works — `beats baseline`
@@ -138,7 +159,7 @@ def run(
         for row in conn.execute(
             "SELECT signal_id, direction, horizon, n_obs, n_days, n_bench, hit_rate,"
             " hit_ci_lo, hit_ci_hi, reliable, baseline, excess, beats_baseline,"
-            " anti_signal"
+            " anti_signal, perm_p"
             " FROM v_replay_efficacy ORDER BY signal_id, direction, horizon"
         ):
             (
@@ -156,6 +177,7 @@ def run(
                 exc,
                 beats,
                 anti,
+                perm_p,
             ) = row
             if hr is None:
                 stats = f"ungraded (n_obs incl. neutral; n_obs={n_obs})"
@@ -165,6 +187,8 @@ def run(
                     f"hit {hr:.2f} vs base {base:.2f} -> excess {exc:+.3f}"
                     f" (CI {lo:.2f}-{hi:.2f}, n={row_n_bench} obs / {row_n_days} days)"
                 )
+            if perm_p is not None:
+                stats += f" perm_p={perm_p:.3f}"
             tag = " reliable" if rel else ""
             if beats:
                 tag += " beats baseline"
@@ -187,8 +211,20 @@ def main(argv=None):
     p.add_argument("--db", default="backtest.db")
     p.add_argument("--db-dir", default="data")
     p.add_argument("--keep-days", type=int, default=None)
+    p.add_argument(
+        "--perms",
+        type=int,
+        default=1000,
+        help="permutation-null resamples (0 skips the pass, keeping the prior one)",
+    )
+    p.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="RNG seed for the permutation pass (fixed default: determinism invariant)",
+    )
     a = p.parse_args(argv)
-    sid, n_vint, n_bench = run(a.db, a.db_dir, keep_days=a.keep_days)
+    sid, n_vint, n_bench = run(a.db, a.db_dir, keep_days=a.keep_days, n_perms=a.perms, seed=a.seed)
     print(f"backtest snapshot {sid}: {n_vint} vintages, {n_bench} closes, into {a.db}")
 
 

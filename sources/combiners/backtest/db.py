@@ -55,6 +55,21 @@ CREATE TABLE IF NOT EXISTS benchmark_closes (
     close     REAL NOT NULL,
     PRIMARY KEY (benchmark, date)
 );
+
+-- Permutation null (see mcpt.py): one row per graded efficacy cell with
+-- its one-sided p against the shuffled-spine distribution (favorable
+-- tail; p near 1 = significantly wrong), plus ONE family row keyed
+-- ('*','*',0) — the max-statistic multiplicity answer for the whole
+-- scoreboard. Rewritten whole by each pass; v_replay_efficacy LEFT JOINs
+-- the cell rows as perm_p/perm_n.
+CREATE TABLE IF NOT EXISTS replay_null (
+    signal_id TEXT NOT NULL,
+    direction TEXT NOT NULL,
+    horizon   INTEGER NOT NULL,
+    n_perms   INTEGER NOT NULL,
+    p_value   REAL NOT NULL,
+    PRIMARY KEY (signal_id, direction, horizon)
+);
 """
 
 
@@ -321,14 +336,18 @@ GROUP BY d.benchmark, h.horizon;
 -- cboe_vix bearish 21d wore beats_baseline=1 on -8.9pp excess (live data,
 -- 2026-07-27) — a significantly anti-predictive cell read as a win.
 --
--- Both flags are NOMINAL and UNCORRECTED. This view emits ~48 graded rows
--- (signals x directions x horizons), so at a per-row 95% interval roughly 2
--- flags are expected by chance alone. Treat a lone flag as a lead, not a
--- result; trust a signal whose flag holds across horizons AND directions on a
--- large n. Measured 2026-07-09: 11 rows flagged, of which only ~7 survive a
--- Bonferroni-corrected two-proportion test — `fred_hy_spread bearish` (n=53)
--- does not. The scorer's own v_signal_efficacy carries the same caveat in its
--- docstring; this is the replay's version of it.
+-- Both flags are NOMINAL and UNCORRECTED — and the Wilson interval behind
+-- them counts overlapping forward windows as independent, so it is too
+-- narrow on top. perm_p (LEFT JOIN from replay_null, NULL until the pass
+-- has run) is the honest read: a one-sided p against the shuffled-spine
+-- null, which carries the same overlap structure and the same n as the
+-- real data (p near 1 = significantly wrong, the anti_signal mirror), and
+-- the family row in replay_null ('*','*',0) is the one
+-- corrected-for-multiplicity number for the whole scoreboard. Measured
+-- 2026-07-09 (pre-perm): 11 rows flagged, of which only ~7 survived a
+-- Bonferroni-corrected two-proportion test. The scorer's own
+-- v_signal_efficacy carries the same caveat in its docstring; this is the
+-- replay's version of it.
 DROP VIEW IF EXISTS v_replay_efficacy;
 CREATE VIEW v_replay_efficacy AS
 SELECT g.signal_id, g.direction, g.horizon,
@@ -351,7 +370,9 @@ SELECT g.signal_id, g.direction, g.horizon,
        CASE WHEN g.direction = 'neutral' OR g.n_bench = 0 THEN NULL
             WHEN g.hit_ci_hi <
                  (CASE g.direction WHEN 'bullish' THEN b.p_up ELSE b.p_down END)
-            THEN 1 ELSE 0 END AS anti_signal
+            THEN 1 ELSE 0 END AS anti_signal,
+       p.p_value AS perm_p,
+       p.n_perms AS perm_n
 FROM (
     -- One row per OBSERVATION, not per forward-filled trading day. A weekly EIA
     -- report is served on ~5 consecutive as-of dates; those are ONE measurement.
@@ -388,7 +409,10 @@ FROM (
     GROUP BY signal_id, benchmark, direction, horizon
 ) g
 LEFT JOIN v_benchmark_baseline b
-       ON b.benchmark = g.benchmark AND b.horizon = g.horizon;
+       ON b.benchmark = g.benchmark AND b.horizon = g.horizon
+LEFT JOIN replay_null p
+       ON p.signal_id = g.signal_id AND p.direction = g.direction
+      AND p.horizon = g.horizon;
 """
 
 
@@ -493,6 +517,19 @@ def insert_market_obs(conn, signal_id: str, rows, publication_lag_days: int = 0)
         tagged,
     )
     return len(tagged)
+
+
+def write_replay_null(conn, rows) -> int:
+    """Replace the permutation-null table whole: the pass recomputes every
+    cell from the current flags and spine, so stale cells (a signal renamed
+    or retired) must not survive a rewrite."""
+    conn.execute("DELETE FROM replay_null")
+    conn.executemany(
+        "INSERT INTO replay_null (signal_id, direction, horizon, n_perms, p_value)"
+        " VALUES (?, ?, ?, ?, ?)",
+        rows,
+    )
+    return len(rows)
 
 
 def prune(conn, keep_days: int, now_iso: str) -> int:

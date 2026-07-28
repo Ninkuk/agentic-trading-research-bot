@@ -75,7 +75,9 @@ Exceptions to the four-file rule: `sources/monitors/market_calendar/compute.py` 
 OPEX/holiday math), `sources/screeners/stock_analysis_screener/probe.py` + `typing.py`
 (SvelteKit `__data.json` "devalue" decoder), `sources/screeners/usda_screener/wasde.py`,
 `sources/screeners/orders/market_clock.py` (pure NYSE-open/DST math; its tests follow
-the module name, `test_orders_market_clock.py`).
+the module name, `test_orders_market_clock.py`), and
+`sources/combiners/backtest/mcpt.py` (seeded permutation null for the replay's flags;
+`test_backtest_mcpt.py`).
 
 Two inverted slices have no network in `fetch.py` at all — Claude fetches live Robinhood
 state via MCP and pipes it in as JSON: `portfolio` (`.claude/skills/account-positions` →

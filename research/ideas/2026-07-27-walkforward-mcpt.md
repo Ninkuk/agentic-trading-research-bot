@@ -1,5 +1,15 @@
 # Permutation null for the replay's significance flags
 
+> **Implemented 2026-07-28** (`sources/combiners/backtest/mcpt.py`,
+> `replay_null`, `v_replay_efficacy.perm_p`, 1,000 seeded perms in the
+> weekly run, ~20s). One deviation from the sketch above: the per-cell
+> statistic is EXCESS over each permutation's own baseline, not raw
+> hit_rate — raw hit rates lit broad-coverage cells up at p=0.001 on
+> +0.3pp excess (real ordering vs shuffled ordering, not selection).
+> Measured on the live ledger: 6 of 8 `beats_baseline` and all 3
+> `anti_signal` flags fail the permutation null; family max-statistic
+> p = 0.36. Block-shuffle robustness variant remains the follow-up.
+
 Source: `NLBXgSmRBgU` [00:17:02]–[00:19:01] — permute the data after the first
 training fold, re-run the walk-forward, and read the real statistic against the
 permuted distribution. Applied here with flags held fixed and the outcome series

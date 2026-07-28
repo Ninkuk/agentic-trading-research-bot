@@ -102,6 +102,23 @@ def test_run_copies_and_reports(data_dir, tmp_path, capsys):
     assert row == (1, 40, 84, 0)
 
 
+def test_run_writes_permutation_null(data_dir, tmp_path, capsys):
+    run.run(
+        str(tmp_path / "backtest.db"),
+        db_dir=data_dir,
+        now_iso="2025-02-01T00:00:00+00:00",
+        n_perms=13,
+        seed=2,
+    )
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    n_rows, n_perms = conn.execute("SELECT COUNT(*), MAX(n_perms) FROM replay_null").fetchone()
+    fam = conn.execute("SELECT p_value FROM replay_null WHERE signal_id = '*'").fetchone()
+    conn.close()
+    assert n_rows > 1 and n_perms == 13
+    assert fam is not None and 0 < fam[0] <= 1.0
+    assert "family" in capsys.readouterr().out  # corrected p reported to the human
+
+
 def test_run_missing_source_dbs_skip_and_count_failures(tmp_path, capsys):
     sid, n_vint, n_bench = run.run(
         str(tmp_path / "backtest.db"),
