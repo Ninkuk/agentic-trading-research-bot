@@ -38,6 +38,25 @@ from sources.combiners.scorer import db as scorer_db  # noqa: E402
 NOW = "2026-07-08T21:13:00+00:00"
 
 
+def _make_fred_db(path):
+    """Built through the fred screener's own ensure_schema/write_observations
+    (not hand-rolled DDL), same rule as the combiner fixtures above — three
+    regime-driver series with 24 daily observations each, enough for the
+    macro-drivers section's 90-day sparklines and one-day delta."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from sources.screeners.fred_screener import db as fred_db
+
+    conn = fred_db.connect(str(path))
+    fred_db.ensure_schema(conn)
+    for sid in ("T10Y2Y", "BAMLH0A0HYM2", "VIXCLS"):
+        conn.execute("INSERT OR IGNORE INTO series (series_id) VALUES (?)", (sid,))
+        fred_db.write_observations(
+            conn, sid, [{"date": f"2026-07-{d:02d}", "value": 1.0 + d / 10} for d in range(1, 25)]
+        )
+    conn.commit()
+    conn.close()
+
+
 def _make_scorer_pending_db(path, n_pending):
     conn = scorer_db.connect(str(path))
     scorer_db.ensure_schema(conn)
@@ -943,6 +962,7 @@ def populated_data_dir(tmp_path):
     _build_scorer_db(tmp_path / "scorer.db")
     _build_advisor_db(tmp_path / "advisor.db")
     _build_stocks_db(tmp_path / "stocks.db")
+    _make_fred_db(tmp_path / "fred.db")
     return str(tmp_path)
 
 
@@ -983,6 +1003,19 @@ def test_regime_timeline_has_strip_and_sparkline(populated_data_dir):
     assert 'class="spark"' in html_text  # VIX line still present
     # brass is no longer a chart mark (it may remain as CSS accent ink)
     assert 'stroke="#e0bd76"' not in html_text and 'stop-color="#e0bd76"' not in html_text
+
+
+def test_macro_drivers_renders_three_tiles_with_sparklines(tmp_path):
+    _make_fred_db(tmp_path / "fred.db")
+    html_text = dashboard.build_page(str(tmp_path), NOW)
+    assert "Macro drivers" in html_text
+    assert html_text.count('class="tspark"') == 3
+    assert "10y–2y" in html_text
+
+
+def test_macro_drivers_absent_fred_db_degrades(tmp_path):
+    html_text = dashboard.build_page(str(tmp_path), NOW)
+    assert "Macro drivers" in html_text  # section header renders with 'unavailable' note
 
 
 def test_scorecard_shows_flagged_and_split(populated_data_dir):
@@ -1138,6 +1171,7 @@ def test_hero_read_positive_path(populated_data_dir):
 _SECTIONS_WITH_POSITIVE_TEST = {
     "regime",
     "regime-timeline",
+    "macro-drivers",
     "scorecard",
     "signal-efficacy",
     "bucket-performance",

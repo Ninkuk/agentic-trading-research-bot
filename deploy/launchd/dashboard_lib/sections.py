@@ -27,7 +27,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from dashboard_lib.style import _STYLE
-from dashboard_lib.svg import _esc, _num, _pct, _signed_num, _sparkline_svg, _yn, regime_strip
+from dashboard_lib.svg import (
+    _esc,
+    _num,
+    _pct,
+    _signed_num,
+    _sparkline_svg,
+    _yn,
+    regime_strip,
+    tile_spark,
+)
 from sources.combiners.advisor.catalog import STOP_ATR_MULTIPLE  # noqa: E402
 from sources.combiners.composite import candidates  # noqa: E402
 from sources.combiners.scorer import scorecard  # noqa: E402
@@ -305,6 +314,37 @@ def _regime_timeline(conn, now_iso) -> str:
     strip = regime_strip(days)
     spark = _sparkline_svg([(r["regime"], r["vix"]) for r in rows[:30]])
     return f'<div class="stripwrap">{strip}</div>{spark}'
+
+
+_FRED_DRIVER_SERIES = [
+    ("T10Y2Y", "10y–2y spread", 2),
+    ("BAMLH0A0HYM2", "high-yield spread", 2),
+    ("VIXCLS", "VIX", 1),
+]
+
+
+def _macro_drivers(conn, now_iso) -> str:
+    tiles = []
+    for sid, label, dp in _FRED_DRIVER_SERIES:
+        rows = conn.execute(
+            "SELECT date, value FROM observations WHERE series_id = ?"
+            " AND value IS NOT NULL ORDER BY date DESC LIMIT 90",
+            (sid,),
+        ).fetchall()
+        values = [r["value"] for r in reversed(rows)]
+        if not values:
+            tiles.append(
+                f'<div class="tile"><div class="v">—</div><div class="k">{_esc(label)}</div></div>'
+            )
+            continue
+        latest = values[-1]
+        delta = latest - values[-2] if len(values) > 1 else None
+        delta_txt = "" if delta is None else f' <span class="d">{_signed_num(delta, dp)}</span>'
+        tiles.append(
+            f'<div class="tile"><div class="v">{_num(latest, dp)}{delta_txt}</div>'
+            f'{tile_spark(values)}<div class="k">{_esc(label)}</div></div>'
+        )
+    return f'<div class="tiles">{"".join(tiles)}</div>'
 
 
 _SCORECARD_HEADERS = ["symbol", "score", "split (bull/bear)", "coverage", "data age", "held"]
@@ -756,6 +796,16 @@ SECTIONS = [
         "How the market mood and the VIX fear gauge have moved across recent"
         " nightly snapshots. Each dot is one snapshot; higher = more fear;"
         " color = that night's regime.",
+    ),
+    (
+        "macro-drivers",
+        "Macro drivers",
+        "fred.db",
+        _macro_drivers,
+        "Macro",
+        "The regime's three deciding inputs with their recent history: the"
+        " 10y–2y Treasury spread, the high-yield credit spread, and the VIX."
+        " Each tile is today's value, the one-day change, and a 90-day trend.",
     ),
     (
         "candidates",

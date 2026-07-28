@@ -157,6 +157,8 @@ summary:focus-visible{outline:2px solid var(--brass);outline-offset:3px;border-r
 .colophon a{color:var(--muted);}
 
 .stripwrap{margin:0 0 10px;} .strip rect:hover{opacity:.8;}
+
+.tile .tspark{display:block;margin:6px auto 2px;} .tile .d{font-size:12px;color:var(--muted);}
 """.strip()
 
 _STYLE = (
