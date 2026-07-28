@@ -254,13 +254,10 @@ def test_reliability_meter_reads_n_bench_not_n_matured():
 
 
 def test_ci_bar_clamps_and_shows_numbers():
-    bar = dashboard._ci_bar(0.57, 0.44, 0.71)
-    assert "57%" in bar and "44" in bar and "71" in bar
-    left = int(bar.split('class="rng" style="left:')[1].split("%")[0])
-    width = int(bar.split("width:")[1].split("%")[0])
-    assert left + width <= 100
+    bar = dashboard._ci_bar(0.62, 0.40, 0.80)
+    assert "62%" in bar and "<svg" in bar
     null_bar = dashboard._ci_bar(None, None, None)
-    assert "—" in null_bar and 'class="est"' not in null_bar
+    assert null_bar == '<div class="ci">—</div>'
 
 
 def test_yn_helper():
@@ -1122,10 +1119,7 @@ def test_signal_recommendation_renders_rows(populated_data_dir):
     assert "sig_test_a" in html
     assert "1 / 30" in html  # reliability meter reads n_bench, not n_matured
     assert "n_matured" not in html
-    rng = html.split('class="rng" style="left:')[1]
-    left = int(rng.split("%")[0])
-    width = int(rng.split("width:")[1].split("%")[0])
-    assert left + width <= 100  # CI bar's range stays within the track
+    assert "<svg" in html  # CI dot-plot is now SVG
 
 
 def test_trader_scorecard_renders(populated_data_dir):

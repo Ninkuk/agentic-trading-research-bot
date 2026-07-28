@@ -34,6 +34,7 @@ from dashboard_lib.svg import (
     _signed_num,
     _sparkline_svg,
     _yn,
+    dot_ci_svg,
     regime_strip,
     score_spark,
     tile_spark,
@@ -199,24 +200,9 @@ def _reliability_meter(n_bench: int | None, threshold: int, unit: str = "benchma
 
 
 def _ci_bar(hit_rate, ci_lo, ci_hi) -> str:
-    """The hit-rate confidence-interval bar: visible numbers, a range bar
-    clamped to the 0-100 track, and an estimate marker. NULLs (no bench
-    sample yet) degrade to a plain dash — no crash, no marker at 0."""
-    if hit_rate is None or ci_lo is None or ci_hi is None:
-        return '<div class="ci">—</div>'
-    hr = round(hit_rate * 100)
-    lo = max(0, min(round(ci_lo * 100), 100))
-    hi = max(0, min(round(ci_hi * 100), 100))
-    width = max(0, hi - lo)
-    est = max(0, min(hr, 100))
-    title = f"best estimate {hr}%, 95% range {lo}–{hi}%"
-    return (
-        f'<div class="ci" title="{_esc(title)}">'
-        f'<div class="num"><b>{hr}%</b> <span>· {lo}–{hi}%</span></div>'
-        f'<div class="trk"><div class="rng" style="left:{lo}%;width:{width}%"></div>'
-        f'<div class="est" style="left:{est}%"></div></div>'
-        '<div class="sc"><span>0</span><span>50</span><span>100</span></div></div>'
-    )
+    """The hit-rate confidence-interval bar: a dot-and-whisker SVG plot.
+    NULLs (no bench sample yet) degrade to a plain dash — no crash."""
+    return dot_ci_svg(hit_rate, ci_lo, ci_hi)
 
 
 def _view_table(
