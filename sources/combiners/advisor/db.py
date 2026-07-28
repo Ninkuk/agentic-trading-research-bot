@@ -250,6 +250,12 @@ def ensure_schema(conn) -> None:
     cols = {r[1] for r in conn.execute("PRAGMA table_info(position_heat)")}
     if "avg_cost" not in cols:
         conn.execute("ALTER TABLE position_heat ADD COLUMN avg_cost REAL")
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(size_caps)")}
+    if "research_verdict" not in cols:
+        conn.execute(
+            "ALTER TABLE size_caps ADD COLUMN research_verdict TEXT"
+            " CHECK (research_verdict IN ('buy', 'pass'))"
+        )
     conn.executescript(_VIEWS)
     conn.commit()
 
