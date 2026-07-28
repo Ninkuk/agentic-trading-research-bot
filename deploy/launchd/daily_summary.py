@@ -565,13 +565,23 @@ def research_digest(now_utc, research_dir=None):
 def build_summary(now_local, now_utc):
     total_runs, problems = 0, []
 
+    since = now_local - dt.timedelta(hours=24)
+
     codes = job_exit_codes()
     for job, code in sorted(codes.items()):
-        if code not in (None, 0):
-            problems.append(f"{job}: last exit {code}")
+        if code in (None, 0):
+            continue
+        # launchctl holds the code until the job's NEXT run, so a weekday-only
+        # job that failed Friday re-reds the weekend summaries with no new
+        # information (2026-07-25/26). Report the failure only while the run
+        # that produced it is in-window; a job whose log has gone quiet
+        # entirely is stale_dbs' catch. No log to date it by -> stay loud.
+        log = LOGS / f"{job}.log"
+        progress = last_progress(log) if log.exists() else None
+        if log.exists() and progress is not None and progress < since:
+            continue
+        problems.append(f"{job}: last exit {code}")
     problems.extend(hung_jobs(running_jobs(), now_local))
-
-    since = now_local - dt.timedelta(hours=24)
     for log in sorted(LOGS.glob("*.log")):
         # Skip our own launchd StandardOutPath: this function prints every
         # problem it finds, so re-reading that file would re-report yesterday's
