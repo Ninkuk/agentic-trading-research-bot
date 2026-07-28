@@ -23,8 +23,13 @@ against scorer.db directly.
    - `get_accounts` → pin the **"Agentic" account (number ending 1936)**;
      if no account matches, stop and report — never fall back.
    - `get_equity_orders` scoped to it: **filled** orders updated since the
-     bound. Never paste raw MCP payloads into the conversation (they can
-     carry account identifiers).
+     bound, PLUS `partially_filled` orders and `cancelled` orders with
+     nonzero executions — a partially-filled GFD limit ends its life
+     `cancelled` *with executions* (the most likely outcome of a capped
+     morning limit on a gapping name), and skipping it silently drifts
+     positions away from the journal. For those, quantity = the **sum of
+     executions**, never the order's requested quantity. Never paste raw MCP
+     payloads into the conversation (they can carry account identifiers).
    - `get_option_orders`, same scope and bound: filled option orders. See
      the option-fill bullet in step 3 for the field mapping.
    - **Label every fill**: pass the order's `placed_agent` through on each
@@ -55,6 +60,17 @@ against scorer.db directly.
      `v_research_filter` (reading it is fine — reading is not writing).
    - `order_ref` = the order's id — the idempotency key; re-syncing an
      overlapping window is safe (duplicates are counted and skipped).
+   - **Queue attribution**: if the fill's order id appears in
+     `data/orders.db` `placements` (a morning queue execution), copy that
+     queue row's `note` into the fill's `note` — the rationale is what
+     scorer grades and must not die in orders.db. Read via the read-only
+     URI ONLY (the wrapper grants exactly this form — a writable sqlite3
+     against orders.db is deliberately not grantable):
+     `sqlite3 "file:data/orders.db?mode=ro" "SELECT q.note FROM placements p
+     JOIN queue q ON q.id=p.queue_id WHERE p.order_id='<id>'"`.
+     These are human decisions with machine hands: they keep `placed_agent`
+     as the broker reports it and join the normal human buckets, no new
+     actor.
    - `price` = the order's **average** fill price (a multi-execution order
      must not use the last execution's price); `filled_at` = the executed-at
      timestamp as full UTC ISO. Verify both field mappings on your first
@@ -135,9 +151,26 @@ against scorer.db directly.
      and report; do not paper over it.
    - Never paste raw MCP payloads into the conversation; on any error report
      the exception type name only, same as elsewhere in this skill.
-6. Report the printed counts (matched / freelance / exits / passes /
-   duplicates / skipped / expired), plus the reconciliation result from
-   step 5.
+6. Order-queue reconciliation (only if `data/orders.db` exists): the
+   morning execution slot records what it *says* it placed; cross-check
+   that against the broker's own order list fetched in step 2. `Write` the
+   fetched orders as `{"orders": [{"order_id", "ref_id", "symbol",
+   "state"}]}` (include `ref_id` when the broker echoes a client order id;
+   else null) and run:
+
+   ```bash
+   uv run python main.py orders reconcile --db data/orders.db --input <file>
+   ```
+
+   Report the JSON it prints: `orphan_placements` (we recorded a placement
+   the broker has no order for — fabricated or lost, ALWAYS serious) and
+   `orphan_orders`, split by the `likely_manual` flag: one carrying our
+   `ref_id` is serious (session placed off-plan); one without is likely the
+   human's own app trade — report as "likely manual — confirm", not as an
+   alarm, so real alarms stay audible.
+7. Report the printed counts (matched / freelance / exits / passes /
+   duplicates / skipped / expired), plus the reconciliation results from
+   steps 5 and 6.
 
 ## Manual path
 
@@ -153,7 +186,9 @@ same fill is a counted duplicate, not a double-book.
 
 - **Secret hygiene**: on any MCP or CLI error report the exception type
   name only — never message bodies, URLs, or payload fragments.
-- **Write scope**: this command writes ONLY `data/scorer.db`, only via the
-  dispatcher. Everything else it touches is read-only.
+- **Write scope**: this command writes `data/scorer.db` via the journal
+  dispatcher, plus confirmation timestamps in `data/orders.db` via
+  `orders reconcile` (step 6 — an audit write, never an order write).
+  Everything else it touches is read-only.
 - Reading views (`v_decision_outcomes`, `v_flag_response`, `v_human_filter`,
   `v_freelance`) to answer questions is fine — reading is not writing.
