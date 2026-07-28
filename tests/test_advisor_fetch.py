@@ -82,9 +82,10 @@ def _mini_prices(path, rows):
 def _mini_scorer(dirpath, reliable_signal="sig_a"):
     conn = scorer_db.connect(str(dirpath / "scorer.db"))
     scorer_db.ensure_schema(conn)
-    # 30 matured, benchmarked rows across 30 distinct composite dates for one
-    # (signal_id, horizon) group -> n_bench = 30 AND n_dates = 30 -> reliable
-    # = 1 in v_signal_efficacy (row count alone no longer clears the bar).
+    # 30 matured, benchmarked rows on 30 NON-OVERLAPPING forward windows
+    # (7-day windows spaced 10 days apart) for one (signal_id, horizon)
+    # group -> n_bench = n_dates = n_blocks = 30 -> reliable = 1 in
+    # v_signal_efficacy (row and date counts alone no longer clear the bar).
     conn.executemany(
         "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date,"
         " signal_id, entity, score, via_crosswalk, horizon, entry_date,"
@@ -94,17 +95,17 @@ def _mini_scorer(dirpath, reliable_signal="sig_a"):
         [
             (
                 i,
-                (dt.date(2026, 5, 1) + dt.timedelta(days=i)).isoformat(),
+                (dt.date(2026, 1, 1) + dt.timedelta(days=10 * i)).isoformat(),
                 reliable_signal,
                 f"T{i}",
                 1,
                 0,
                 5,
-                "2026-06-02",
+                (dt.date(2026, 1, 1) + dt.timedelta(days=10 * i + 1)).isoformat(),
                 100.0,
                 "SPY",
                 500.0,
-                "2026-06-09",
+                (dt.date(2026, 1, 1) + dt.timedelta(days=10 * i + 8)).isoformat(),
                 110.0,
                 0.10,
                 0.01,

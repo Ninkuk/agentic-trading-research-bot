@@ -44,20 +44,24 @@ def _universe(conn, horizon, n_over, n_under):
 
 def _signal(conn, signal_id, horizon, score, n_hit, n_miss, tag=""):
     """n_hit rows where the signal's DIRECTION was right, n_miss where wrong.
-    One composite_date per row: reliable needs distinct dates, not just
-    row count, so a same-day pile must not clear the bar."""
+    One composite_date AND one non-overlapping forward window per row
+    (7-day windows spaced 10 days apart): reliable now counts independent
+    blocks, so a same-day or rolling-window pile must not clear the bar."""
     for i in range(n_hit + n_miss):
         right = i < n_hit
         # bullish hit = outperformed; bearish hit = underperformed
         fwd = (0.05 if right else -0.05) if score > 0 else (-0.05 if right else 0.05)
-        date = (dt.date(2026, 1, 1) + dt.timedelta(days=i)).isoformat()
+        base = dt.date(2026, 1, 1) + dt.timedelta(days=10 * i)
+        date = base.isoformat()
+        entry = (base + dt.timedelta(days=1)).isoformat()
+        exit_ = (base + dt.timedelta(days=8)).isoformat()
         conn.execute(
             "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date, signal_id,"
             " entity, score, via_crosswalk, horizon, entry_date, entry_close,"
             " bench_entry_close, exit_date, exit_close, fwd_return, bench_fwd_return,"
-            " matured_at, benchmark) VALUES (?, ?, ?, ?, ?, 0, ?, '2026-07-07',"
-            " 100.0, 500.0, '2026-07-14', 100.0, ?, 0.0, ?, 'SPY')",
-            (i + 1, date, signal_id, f"S{tag}{i}", score, horizon, fwd, NOW),
+            " matured_at, benchmark) VALUES (?, ?, ?, ?, ?, 0, ?, ?,"
+            " 100.0, 500.0, ?, 100.0, ?, 0.0, ?, 'SPY')",
+            (i + 1, date, signal_id, f"S{tag}{i}", score, horizon, entry, exit_, fwd, NOW),
         )
 
 
@@ -121,13 +125,14 @@ def test_recommendation_grades_against_the_null_not_a_coin_flip(tmp_path):
     """The bug in one test: 50% looks like a coin flip and is BAD against a
     60% base rate.
 
-    n=1000, not 100: at n=100 the Wilson interval spans ~19pp, so a 10pp
-    shortfall is genuinely indistinguishable from the null and `watch` is the
-    right answer. The view being conservative there is a feature — this test
-    supplies enough evidence for the CI to actually clear the baseline."""
+    200 independent blocks, not 30: at 30 blocks the Wilson interval spans
+    ~19pp, so a 10pp shortfall is genuinely indistinguishable from the null
+    and `watch` is the right answer. The view being conservative there is a
+    feature — this test supplies enough INDEPENDENT evidence (the CI's n is
+    the block count now, never the row count) to clear the baseline."""
     conn = _fresh(tmp_path)
     _universe(conn, 10, n_over=40, n_under=60)
-    _signal(conn, "looks_good", 10, score=-1, n_hit=500, n_miss=500)
+    _signal(conn, "looks_good", 10, score=-1, n_hit=100, n_miss=100)
     rec = conn.execute(
         "SELECT recommendation FROM v_signal_recommendation WHERE signal_id='looks_good'"
     ).fetchone()[0]
@@ -139,7 +144,7 @@ def test_recommendation_does_not_condemn_a_signal_that_beats_its_null(tmp_path):
     bullish null is 44.6% — it was being labelled anti-signal for winning."""
     conn = _fresh(tmp_path)
     _universe(conn, 10, n_over=30, n_under=70)
-    _signal(conn, "beats_null", 10, score=1, n_hit=450, n_miss=550)
+    _signal(conn, "beats_null", 10, score=1, n_hit=90, n_miss=110)
     rec = conn.execute(
         "SELECT recommendation FROM v_signal_recommendation WHERE signal_id='beats_null'"
     ).fetchone()[0]

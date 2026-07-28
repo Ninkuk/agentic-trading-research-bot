@@ -34,7 +34,7 @@ from sources.combiners.scorer import scorecard  # noqa: E402
 from sources.combiners.scorer.db import (  # noqa: E402
     FLAG_MIN_ABS_SCORE,
     FLAG_MIN_TOTAL,
-    RELIABLE_MIN_N,
+    RELIABLE_MIN_BLOCKS,
 )
 from sources.common.clock import phx_date  # noqa: E402
 
@@ -240,15 +240,17 @@ def _score_cell(score_sum: int, bullish: int, bearish: int, flagged: bool) -> st
     )
 
 
-def _reliability_meter(n_bench: int | None, threshold: int) -> str:
-    """The evidence meter: how far n_bench (benchmarked calls — NOT
+def _reliability_meter(n_bench: int | None, threshold: int, unit: str = "benchmarked calls") -> str:
+    """The evidence meter: how far the sample (default n_bench — NOT
     n_matured, see scorer/db.py's reliable-gates-on-n_bench note) has
-    filled toward the reliability floor."""
+    filled toward the reliability floor. The recommendation table passes
+    n_blocks/"independent windows": blocks are the binding gate, and a
+    meter on rows would read 100% off one rolling episode."""
     n = n_bench or 0
     pct = min(n / threshold, 1) * 100 if threshold else 0.0
     low_cls = " low" if n < threshold else ""
     status = "not enough yet" if n < threshold else "enough to grade"
-    title = f"{n} benchmarked calls, threshold {threshold} — {status}"
+    title = f"{n} {unit}, threshold {threshold} — {status}"
     return (
         f'<div class="meter" title="{_esc(title)}"><div class="trk">'
         f'<div class="fil{low_cls}" style="width:{pct:.0f}%"></div></div>'
@@ -440,6 +442,7 @@ _EFFICACY_HEADERS = [
     "via",
     "horizon",
     "n",
+    "blocks",
     "dir excess",
     "hit rate",
     "null",
@@ -447,8 +450,8 @@ _EFFICACY_HEADERS = [
     "",
 ]
 _EFFICACY_COLS = (
-    "signal_id, via_crosswalk, horizon, n_bench, avg_directional_excess,"
-    " hit_rate, null_rate, edge, reliable"
+    "signal_id, via_crosswalk, horizon, n_bench, n_blocks,"
+    " avg_directional_excess, hit_rate, null_rate, edge, reliable"
 )
 
 
@@ -464,6 +467,7 @@ def _efficacy_row(r) -> str:
         "xw" if r["via_crosswalk"] else "direct",
         str(r["horizon"]),
         str(r["n_bench"]),
+        str(r["n_blocks"]),
         _pct(r["avg_directional_excess"]),
         _pct(r["hit_rate"]),
         _pct(r["null_rate"]),
@@ -590,7 +594,7 @@ def _basis_breaks(conn, now_iso) -> str:
 
 def _signal_recommendation(conn, now_iso) -> str:
     rows = conn.execute(
-        "SELECT signal_id, via_crosswalk, horizon, n_bench,"
+        "SELECT signal_id, via_crosswalk, horizon, n_blocks,"
         " avg_directional_excess, hit_rate, hit_ci_lo, hit_ci_hi, recommendation"
         " FROM v_signal_recommendation"
         " ORDER BY horizon, via_crosswalk, signal_id"
@@ -600,7 +604,7 @@ def _signal_recommendation(conn, now_iso) -> str:
             r["signal_id"],
             "xw" if r["via_crosswalk"] else "direct",
             str(r["horizon"]),
-            _reliability_meter(r["n_bench"], RELIABLE_MIN_N),
+            _reliability_meter(r["n_blocks"], RELIABLE_MIN_BLOCKS, "independent windows"),
             _pct(r["avg_directional_excess"]),
             _ci_bar(r["hit_rate"], r["hit_ci_lo"], r["hit_ci_hi"]),
             _rec_badge(r["recommendation"]),

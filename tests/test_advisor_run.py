@@ -84,8 +84,9 @@ def _mini_prices(path, rows):
 def _mini_scorer(dirpath):
     conn = scorer_db.connect(str(dirpath / "scorer.db"))
     scorer_db.ensure_schema(conn)
-    # 30 rows across 30 distinct composite dates: reliable requires the date
-    # floor too, so a same-day pile would leave sig_a unreliable.
+    # 30 rows on 30 non-overlapping forward windows (7-day windows spaced
+    # 10 days apart): reliable requires the independent-block floor too, so
+    # a same-day or rolling-window pile would leave sig_a unreliable.
     conn.executemany(
         "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date,"
         " signal_id, entity, score, via_crosswalk, horizon, entry_date,"
@@ -95,17 +96,17 @@ def _mini_scorer(dirpath):
         [
             (
                 i,
-                (dt.date(2026, 5, 1) + dt.timedelta(days=i)).isoformat(),
+                (dt.date(2026, 1, 1) + dt.timedelta(days=10 * i)).isoformat(),
                 "sig_a",
                 f"T{i}",
                 1,
                 0,
                 5,
-                "2026-06-02",
+                (dt.date(2026, 1, 1) + dt.timedelta(days=10 * i + 1)).isoformat(),
                 100.0,
                 "SPY",
                 500.0,
-                "2026-06-09",
+                (dt.date(2026, 1, 1) + dt.timedelta(days=10 * i + 8)).isoformat(),
                 110.0,
                 0.10,
                 0.01,

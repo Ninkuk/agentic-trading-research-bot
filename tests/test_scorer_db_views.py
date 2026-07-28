@@ -138,27 +138,57 @@ def _date(i):
     return (dt.date(2026, 1, 1) + dt.timedelta(days=i)).isoformat()
 
 
-def _signal_row(conn, sig, entity, score, fwd, bench_fwd, benchmark="SPY", xw=0, date="2026-07-01"):
+def _signal_row(
+    conn,
+    sig,
+    entity,
+    score,
+    fwd,
+    bench_fwd,
+    benchmark="SPY",
+    xw=0,
+    date="2026-07-01",
+    entry_date="2026-07-02",
+    exit_date="2026-07-10",
+):
     """Insert one matured signal outcome directly (views read the table)."""
     conn.execute(
         "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date,"
         " signal_id, entity, score, via_crosswalk, horizon, entry_date,"
         " entry_close, benchmark, bench_entry_close, exit_date, exit_close,"
         " fwd_return, bench_fwd_return, matured_at)"
-        " VALUES (1, ?, ?, ?, ?, ?, 5, '2026-07-02', 100.0, ?, ?,"
-        " '2026-07-10', 100.0, ?, ?, ?)",
+        " VALUES (1, ?, ?, ?, ?, ?, 5, ?, 100.0, ?, ?, ?, 100.0, ?, ?, ?)",
         (
             date,
             sig,
             entity,
             score,
             xw,
+            entry_date,
             benchmark,
             None if benchmark is None else 500.0,
+            exit_date,
             fwd,
             bench_fwd,
             NOW,
         ),
+    )
+
+
+def _spread_signal_row(conn, sig, i, fwd=0.02, bench_fwd=0.01, score=1, entity=None):
+    """One matured row whose forward window overlaps no other index's:
+    7-day windows spaced 10 days apart, so row i and row i+1 are
+    independent blocks (entry_{i+1} two days after exit_i)."""
+    _signal_row(
+        conn,
+        sig,
+        entity or f"T{i}",
+        score,
+        fwd,
+        bench_fwd,
+        date=_date(10 * i),
+        entry_date=_date(10 * i + 1),
+        exit_date=_date(10 * i + 8),
     )
 
 
@@ -174,9 +204,9 @@ def _efficacy(conn, sig):
 def test_wilson_interval_hand_computed(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
-    # 3 hits out of 4 (bullish rows, hit = fwd > bench_fwd)
+    # 3 hits out of 4 independent windows (bullish rows, hit = fwd > bench)
     for i, fwd in enumerate((0.02, 0.02, 0.02, 0.00)):
-        _signal_row(conn, "sig_a", f"T{i}", 1, fwd, 0.01)
+        _spread_signal_row(conn, "sig_a", i, fwd=fwd)
     n, nb, hr, lo, hi, rel, _, _ = _efficacy(conn, "sig_a")
     assert (n, nb) == (4, 4)
     assert abs(hr - 0.75) < 1e-9
@@ -192,7 +222,7 @@ def test_wilson_all_hits_not_degenerate(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
     for i in range(5):
-        _signal_row(conn, "sig_a", f"T{i}", 1, 0.02, 0.01)  # 5/5 hits
+        _spread_signal_row(conn, "sig_a", i)  # 5/5 hits, independent windows
     _, nb, hr, lo, hi, _, _, _ = _efficacy(conn, "sig_a")
     assert (nb, hr) == (5, 1.0)
     # Wald would say 100% +/- 0; Wilson: lo = 1/(1+3.8416/5) ~ 0.565509
@@ -204,10 +234,10 @@ def test_wilson_all_hits_not_degenerate(tmp_path):
 def test_reliable_flag_boundary(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
-    for i in range(db.RELIABLE_MIN_N):
-        _signal_row(conn, "sig_30", f"T{i}", 1, 0.02, 0.01, date=_date(i))
-    for i in range(db.RELIABLE_MIN_N - 1):
-        _signal_row(conn, "sig_29", f"T{i}", 1, 0.02, 0.01, date=_date(i))
+    for i in range(db.RELIABLE_MIN_BLOCKS):
+        _spread_signal_row(conn, "sig_30", i)
+    for i in range(db.RELIABLE_MIN_BLOCKS - 1):
+        _spread_signal_row(conn, "sig_29", i)
     assert _efficacy(conn, "sig_30")[5] == 1
     assert _efficacy(conn, "sig_29")[5] == 0
 
@@ -251,6 +281,189 @@ def test_bucket_reliable_requires_distinct_dates(tmp_path):
     assert n_bench == db.RELIABLE_MIN_N * 2
     assert n_dates == 1
     assert reliable == 0
+
+
+def test_by_date_view_collapses_rows_per_date(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    # date 0: two benchmarked rows (1 hit, 1 miss); date 1: one unbenchmarked
+    _signal_row(conn, "sig_bd", "A", 1, 0.02, 0.01, date=_date(0))
+    _signal_row(conn, "sig_bd", "B", 1, 0.00, 0.01, date=_date(0))
+    _signal_row(conn, "sig_bd", "C", 1, 0.02, None, benchmark=None, date=_date(1))
+    rows = conn.execute(
+        "SELECT composite_date, n_rows, n_bench, date_hit_rate"
+        " FROM v_signal_efficacy_by_date WHERE signal_id = 'sig_bd'"
+        " ORDER BY composite_date"
+    ).fetchall()
+    assert rows[0] == (_date(0), 2, 2, 0.5)
+    assert rows[1][1:3] == (1, 0) and rows[1][3] is None
+
+
+def test_blocks_overlapping_windows_are_one_block(tmp_path):
+    """Three consecutive composite dates whose forward windows share days
+    are ONE independent observation, not three."""
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for i in range(3):
+        _signal_row(
+            conn,
+            "sig_ov",
+            f"T{i}",
+            1,
+            0.02,
+            0.01,
+            date=_date(i),
+            entry_date=_date(i + 1),
+            exit_date=_date(i + 8),
+        )
+    n_blocks = conn.execute(
+        "SELECT n_blocks FROM v_signal_efficacy WHERE signal_id = 'sig_ov'"
+    ).fetchone()[0]
+    assert n_blocks == 1
+
+
+def test_blocks_touching_windows_are_independent(tmp_path):
+    """A window whose entry_date equals the prior window's exit_date shares
+    a close but no return interval — it starts a new block."""
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    _signal_row(
+        conn, "sig_tb", "A", 1, 0.02, 0.01, date=_date(0), entry_date=_date(1), exit_date=_date(8)
+    )
+    _signal_row(
+        conn, "sig_tb", "B", 1, 0.02, 0.01, date=_date(7), entry_date=_date(8), exit_date=_date(15)
+    )
+    # one day earlier and it overlaps: same block
+    _signal_row(
+        conn, "sig_tb2", "A", 1, 0.02, 0.01, date=_date(0), entry_date=_date(1), exit_date=_date(8)
+    )
+    _signal_row(
+        conn, "sig_tb2", "B", 1, 0.02, 0.01, date=_date(6), entry_date=_date(7), exit_date=_date(14)
+    )
+    blocks = {
+        r[0]: r[1]
+        for r in conn.execute(
+            "SELECT signal_id, n_blocks FROM v_signal_efficacy"
+            " WHERE signal_id IN ('sig_tb', 'sig_tb2')"
+        )
+    }
+    assert blocks == {"sig_tb": 2, "sig_tb2": 1}
+
+
+def test_signal_blocks_view_exposes_the_chain(tmp_path):
+    """v_signal_blocks is the audit trail: one row per block anchor date."""
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for i in range(3):
+        _spread_signal_row(conn, "sig_chain", i)
+    anchors = [
+        r[0]
+        for r in conn.execute(
+            "SELECT composite_date FROM v_signal_blocks"
+            " WHERE signal_id = 'sig_chain' ORDER BY composite_date"
+        )
+    ]
+    assert anchors == [_date(0), _date(10), _date(20)]
+
+
+def test_wilson_n_is_blocks_not_rows(tmp_path):
+    """8 rows on 4 non-overlapping dates: the CI must be Wilson(p=0.75,
+    n=4 blocks) — the hand-computed 3-of-4 interval — never Wilson(n=8)."""
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for i in range(4):
+        fwd = 0.02 if i < 3 else 0.00  # dates 0-2 hit twice, date 3 misses twice
+        for sym in ("A", "B"):
+            _signal_row(
+                conn,
+                "sig_blk",
+                f"{sym}{i}",
+                1,
+                fwd,
+                0.01,
+                date=_date(10 * i),
+                entry_date=_date(10 * i + 1),
+                exit_date=_date(10 * i + 8),
+            )
+    row = conn.execute(
+        "SELECT n_bench, n_blocks, hit_rate, hit_ci_lo, hit_ci_hi"
+        " FROM v_signal_efficacy WHERE signal_id = 'sig_blk'"
+    ).fetchone()
+    n_bench, n_blocks, hr, lo, hi = row
+    assert (n_bench, n_blocks) == (8, 4)
+    assert abs(hr - 0.75) < 1e-9
+    assert abs(lo - 0.300636) < 1e-4  # Wilson 3/4, NOT 6/8
+    assert abs(hi - 0.954414) < 1e-4
+
+
+def test_reliable_requires_nonoverlapping_blocks(tmp_path):
+    """The consecutive-sessions trap the n_dates gate cannot catch: 30
+    rolling one-day-apart dates with 7-day windows are ~5 independent
+    windows, not 30 — six weeks of nightly runs must NOT re-arm verdicts."""
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for i in range(30):
+        _signal_row(
+            conn,
+            "sig_roll",
+            f"T{i}",
+            1,
+            0.02,
+            0.01,
+            date=_date(i),
+            entry_date=_date(i + 1),
+            exit_date=_date(i + 8),
+        )
+    row = conn.execute(
+        "SELECT n_bench, n_dates, n_blocks, reliable FROM v_signal_efficacy"
+        " WHERE signal_id = 'sig_roll'"
+    ).fetchone()
+    assert row[0] == 30 and row[1] == 30  # both old gates would pass
+    assert row[2] == 5  # anchors at i = 0, 7, 14, 21, 28
+    assert row[3] == 0
+
+
+def test_recommendation_consecutive_sessions_stay_insufficient(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    _coin_flip_universe(conn)
+    for i in range(30):
+        _signal_row(
+            conn,
+            "sig_roll",
+            f"T{i}",
+            1,
+            0.02,
+            0.01,
+            date=_date(i),
+            entry_date=_date(i + 1),
+            exit_date=_date(i + 8),
+        )
+    row = conn.execute(
+        "SELECT n_blocks, recommendation FROM v_signal_recommendation WHERE signal_id = 'sig_roll'"
+    ).fetchone()
+    assert row == (5, "insufficient evidence")
+
+
+def test_bucket_blocks_and_reliable(tmp_path):
+    """v_bucket_performance carries the same defect and the same fix."""
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for i in range(3):  # overlapping windows -> one block
+        _ticker_row(
+            conn,
+            f"T{i}",
+            4,
+            0.02,
+            0.01,
+            date=_date(i),
+            entry_date=_date(i + 1),
+            exit_date=_date(i + 8),
+        )
+    row = conn.execute(
+        "SELECT n_bench, n_blocks, reliable FROM v_bucket_performance WHERE bucket = 'strong_bull'"
+    ).fetchone()
+    assert row == (3, 1, 0)
 
 
 def test_unbenchmarked_rows_labeled_not_hidden(tmp_path):
@@ -323,9 +536,9 @@ def test_recommendation_keep_ci_above_half(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
     _coin_flip_universe(conn)
-    # 30 all-hit rows across 30 dates -> reliable, hit_ci_lo > 0.5 -> keep
-    for i in range(db.RELIABLE_MIN_N):
-        _signal_row(conn, "sig_keep", f"T{i}", 1, 0.02, 0.01, date=_date(i))
+    # 30 all-hit independent windows -> reliable, hit_ci_lo > 0.5 -> keep
+    for i in range(db.RELIABLE_MIN_BLOCKS):
+        _spread_signal_row(conn, "sig_keep", i)
     row = _recommendation(conn, "sig_keep")
     assert row[7] == 1 and row[5] > 0.5  # reliable, ci_lo above coin flip
     assert row[8] == "keep"
@@ -335,10 +548,10 @@ def test_recommendation_anti_signal_ci_below_half(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
     _coin_flip_universe(conn)
-    # 30 all-miss bullish rows (fwd < bench) across 30 dates -> reliable,
+    # 30 all-miss bullish independent windows (fwd < bench) -> reliable,
     # hit_ci_hi < 0.5
-    for i in range(db.RELIABLE_MIN_N):
-        _signal_row(conn, "sig_anti", f"T{i}", 1, 0.00, 0.01, date=_date(i))
+    for i in range(db.RELIABLE_MIN_BLOCKS):
+        _spread_signal_row(conn, "sig_anti", i, fwd=0.00)
     row = _recommendation(conn, "sig_anti")
     assert row[7] == 1 and row[6] < 0.5  # reliable, ci_hi below coin flip
     assert row[8] == "anti-signal"
@@ -347,12 +560,12 @@ def test_recommendation_anti_signal_ci_below_half(tmp_path):
 def test_recommendation_watch_ci_straddles_half(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
-    # 15 hits + 15 misses of 30, across 30 dates -> reliable, CI straddles
-    # 0.5 -> watch
-    for i in range(db.RELIABLE_MIN_N // 2):
-        _signal_row(conn, "sig_watch", f"H{i}", 1, 0.02, 0.01, date=_date(i))  # hit
-    for i in range(db.RELIABLE_MIN_N // 2):
-        _signal_row(conn, "sig_watch", f"M{i}", 1, 0.00, 0.01, date=_date(15 + i))
+    # 15 hits + 15 misses across 30 independent windows -> reliable, CI
+    # straddles 0.5 -> watch
+    for i in range(db.RELIABLE_MIN_BLOCKS // 2):
+        _spread_signal_row(conn, "sig_watch", i, entity=f"H{i}")  # hit
+    for i in range(db.RELIABLE_MIN_BLOCKS // 2):
+        _spread_signal_row(conn, "sig_watch", 15 + i, fwd=0.00, entity=f"M{i}")
     row = _recommendation(conn, "sig_watch")
     assert row[7] == 1 and row[5] < 0.5 < row[6]  # reliable, CI straddles
     assert row[8] == "watch"
@@ -385,20 +598,31 @@ def test_recommendation_crosswalk_split_kept_separate(tmp_path):
     assert [r[0] for r in rows] == [0, 1]
 
 
-def _ticker_row(conn, symbol, score_sum, fwd, bench_fwd, total=3, date="2026-07-01"):
+def _ticker_row(
+    conn,
+    symbol,
+    score_sum,
+    fwd,
+    bench_fwd,
+    total=3,
+    date="2026-07-01",
+    entry_date="2026-07-02",
+    exit_date="2026-07-10",
+):
     conn.execute(
         "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date,"
         " symbol, score_sum, total, bullish, bearish, in_portfolio, horizon,"
         " entry_date, entry_close, bench_entry_close, exit_date, exit_close,"
         " fwd_return, bench_fwd_return, matured_at)"
-        " VALUES (1, ?, ?, ?, ?, 0, 0, 0, 5, '2026-07-02', 100.0,"
-        " ?, '2026-07-10', 100.0, ?, ?, ?)",
+        " VALUES (1, ?, ?, ?, ?, 0, 0, 0, 5, ?, 100.0, ?, ?, 100.0, ?, ?, ?)",
         (
             date,
             symbol,
             score_sum,
             total,
+            entry_date,
             None if bench_fwd is None else 500.0,
+            exit_date,
             fwd,
             bench_fwd,
             NOW,
@@ -409,10 +633,15 @@ def _ticker_row(conn, symbol, score_sum, fwd, bench_fwd, total=3, date="2026-07-
 def test_bucket_guardrail_columns(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)
-    # strong_bull bucket: one hit, one miss, one benchmark-less row
-    _ticker_row(conn, "A", 4, 0.02, 0.01)  # hit
-    _ticker_row(conn, "B", 4, 0.00, 0.01)  # miss
-    _ticker_row(conn, "C", 4, 0.02, None)  # unbenchmarked
+    # strong_bull bucket: one hit + one miss on independent windows, plus
+    # one benchmark-less row
+    _ticker_row(
+        conn, "A", 4, 0.02, 0.01, date=_date(0), entry_date=_date(1), exit_date=_date(8)
+    )  # hit
+    _ticker_row(
+        conn, "B", 4, 0.00, 0.01, date=_date(10), entry_date=_date(11), exit_date=_date(18)
+    )  # miss
+    _ticker_row(conn, "C", 4, 0.02, None, date=_date(20), entry_date=_date(21), exit_date=_date(28))
     row = conn.execute(
         "SELECT n_matured, n_bench, hit_rate, hit_ci_lo, hit_ci_hi, reliable"
         " FROM v_bucket_performance WHERE bucket = 'strong_bull'"

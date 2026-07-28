@@ -1,5 +1,12 @@
 # `reliable` counts overlapping windows as independent samples
 
+> **Implemented 2026-07-28** (scorer side): `v_signal_efficacy_by_date` +
+> `v_signal_blocks` chain non-overlapping windows; Wilson n and `reliable`
+> gate on the block count (`RELIABLE_MIN_BLOCKS`). Measured on the live
+> ledger: 9 five-day dates → 2 blocks, 4 ten-day dates → 1 block; every
+> verdict correctly `insufficient evidence`. `v_replay_efficacy` is NOT
+> fixed here — its designated remedy is `2026-07-27-walkforward-mcpt.md`.
+
 Source: `kRa3PUxNBTM` [00:03:01] — sliding a window by one step makes
 consecutive samples near-duplicates, so the sample size is a fiction and the
 validation set is not a validation set. The video applies it to LSTM training

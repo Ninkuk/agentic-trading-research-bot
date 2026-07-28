@@ -1428,6 +1428,31 @@ def test_efficacy_n_column_is_the_sample_the_rate_was_computed_over(populated_da
         conn.close()
 
 
+def test_efficacy_table_shows_independent_blocks_beside_rows(populated_data_dir):
+    """n_bench is provenance, n_blocks is the sample size the CI and the
+    reliable flag are computed over — the table must show both."""
+    assert "n_blocks" in dashboard._EFFICACY_COLS
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._signal_efficacy(conn, NOW)
+    finally:
+        conn.close()
+    header = next(ln for ln in html.split("<tr>") if "hit rate" in ln)
+    assert "blocks" in header
+
+
+def test_recommendation_meter_reads_independent_blocks(populated_data_dir):
+    """The binding reliability gate is RELIABLE_MIN_BLOCKS on n_blocks, so
+    the evidence meter must fill on blocks, labelled as such — a meter on
+    n_bench would show a signal 100% 'ready' off one rolling episode."""
+    conn = dashboard._ro(populated_data_dir, "scorer.db")
+    try:
+        html = dashboard._signal_recommendation(conn, NOW)
+    finally:
+        conn.close()
+    assert "independent windows" in html
+
+
 def test_bucket_table_shows_the_null(populated_data_dir):
     conn = dashboard._ro(populated_data_dir, "scorer.db")
     try:
