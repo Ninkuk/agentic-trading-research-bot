@@ -190,3 +190,9 @@ def test_dispatch_lists_pricehistory():
 
 def test_candidates_registered():
     assert "candidates" in registry.REGISTRY
+
+
+def test_dispatch_lists_orders():
+    import registry
+
+    assert "orders" in registry.REGISTRY

@@ -23,6 +23,7 @@ from sources.screeners.finra_short_volume.run import main as short_volume_main
 from sources.screeners.fred_screener.run import main as fred_main
 from sources.screeners.ftd_screener.run import main as ftd_main
 from sources.screeners.nyfed_screener.run import main as nyfed_main
+from sources.screeners.orders.run import main as orders_main
 from sources.screeners.portfolio_screener.run import main as portfolio_main
 from sources.screeners.reddit_screener.run import main as reddit_main
 from sources.screeners.sec_fundamentals.run import main as fundamentals_main
@@ -52,6 +53,7 @@ REGISTRY = {
     "eia": eia_main,
     "usda": usda_main,
     "portfolio": portfolio_main,
+    "orders": orders_main,
     "composite": composite_main,
     "scorer": scorer_main,
     "journal": journal_main,
