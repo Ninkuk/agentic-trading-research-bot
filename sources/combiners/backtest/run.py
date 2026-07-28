@@ -35,7 +35,8 @@ def run(
             print(f"skip {catalog.FRED_DB}: {type(e).__name__}")
         else:
             try:
-                series = [s["series_id"] for s in catalog.REPLAY_SIGNALS]
+                # dict.fromkeys: the two DFF signals share one series
+                series = list(dict.fromkeys(s["series_id"] for s in catalog.REPLAY_SIGNALS))
                 n_vint = db.insert_vintages(conn, harvest_vintages(conn, series))
                 n_bench = db.insert_benchmark(
                     conn,

@@ -87,6 +87,61 @@ def test_flags_exclude_dates_with_no_published_value(conn):
     assert rows == []
 
 
+# ---- v_pit_signal_change (vintage-exact lagged changes) --------------
+
+
+def test_pit_change_is_vintage_exact_for_both_legs(conn):
+    """The lag leg must read the value as KNOWN on the as-of date — a
+    revision to the lagged observation published later must not leak."""
+    spine(conn, [("2025-01-21", 100.0)])
+    vintage(conn, "DFF", "2025-01-20", "2025-01-21", 4.50)  # source obs
+    vintage(conn, "DFF", "2024-12-31", "2025-01-01", 4.75)  # obs 20d before source
+    vintage(conn, "DFF", "2024-12-31", "2025-02-01", 4.00)  # future revision
+    row = conn.execute(
+        "SELECT chg20 FROM v_pit_signal_change WHERE asof_date = '2025-01-21' AND series_id = 'DFF'"
+    ).fetchone()
+    assert abs(row[0] - (4.50 - 4.75)) < 1e-9
+
+
+def test_pit_change_null_when_lag_leg_unpublished(conn):
+    """Series start (or a gap): no lagged observation known -> chg NULL and
+    the flag row is excluded, never scored off a half-read."""
+    spine(conn, [("2025-01-21", 100.0)])
+    vintage(conn, "DFF", "2025-01-20", "2025-01-21", 4.50)
+    row = conn.execute(
+        "SELECT chg20 FROM v_pit_signal_change WHERE asof_date = '2025-01-21' AND series_id = 'DFF'"
+    ).fetchone()
+    assert row == (None,)
+    flags = conn.execute("SELECT * FROM v_replay_flags WHERE signal_id LIKE 'fred_dff%'").fetchall()
+    assert flags == []
+
+
+def test_dff_flags_score_a_cut_bullish_on_both_windows(conn):
+    spine(conn, [("2025-01-21", 100.0)])
+    vintage(conn, "DFF", "2025-01-20", "2025-01-21", 4.25)
+    vintage(conn, "DFF", "2024-12-31", "2025-01-01", 4.50)  # -25bp over 20d
+    vintage(conn, "DFF", "2024-01-21", "2024-01-22", 5.50)  # -125bp over 1y
+    rows = dict(
+        conn.execute(
+            "SELECT signal_id, score FROM v_replay_flags"
+            " WHERE asof_date = '2025-01-21' AND signal_id LIKE 'fred_dff%'"
+        )
+    )
+    assert rows == {"fred_dff_chg20": 1, "fred_dff_regime": 1}
+
+
+def test_dff_subquantum_jitter_scores_neutral(conn):
+    # +3bp over 20 days is month-end window dressing, not policy
+    spine(conn, [("2025-01-21", 100.0)])
+    vintage(conn, "DFF", "2025-01-20", "2025-01-21", 4.53)
+    vintage(conn, "DFF", "2024-12-31", "2025-01-01", 4.50)
+    score = conn.execute(
+        "SELECT score FROM v_replay_flags"
+        " WHERE asof_date = '2025-01-21' AND signal_id = 'fred_dff_chg20'"
+    ).fetchone()
+    assert score == (0,)
+
+
 # ---- market_obs (non-vintage market-grain signals) -------------------
 
 

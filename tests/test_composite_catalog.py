@@ -144,6 +144,97 @@ def test_fred_score_cases_are_hoisted_constants():
     assert FRED_HY_SPREAD_SCORE in by_id["fred_hy_spread"]["sql"]
 
 
+def test_dff_score_cases_are_hoisted_constants():
+    from sources.combiners.composite.catalog import (
+        FRED_DFF_20D_CHANGE_SCORE,
+        FRED_DFF_REGIME_SCORE,
+        SIGNALS,
+    )
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    assert FRED_DFF_20D_CHANGE_SCORE in by_id["fred_dff_chg20"]["sql"]
+    assert FRED_DFF_REGIME_SCORE in by_id["fred_dff_regime"]["sql"]
+    # separate constants: different windows, independently retunable
+    assert FRED_DFF_20D_CHANGE_SCORE != FRED_DFF_REGIME_SCORE
+
+
+def test_dff_signals_are_market_grain_and_not_regime_inputs():
+    """Informational by construction: market grain never votes on tickers,
+    and the DFF ids stay out of REGIME_FIELDS until a measured calibration
+    pass promotes them."""
+    by_id = {s["signal_id"]: s for s in catalog.SIGNALS}
+    for sid in ("fred_dff_chg20", "fred_dff_regime"):
+        assert by_id[sid]["grain"] == "market"
+        assert sid not in catalog.REGIME_FIELDS
+        assert by_id[sid]["db"] == "fred.db"
+
+
+def test_dff_dead_zones_are_policy_quantum_fractions():
+    """The cutoffs are structural (policy moves are quantized at 25bp):
+    half an increment for the 20d view — any real move clears it, the
+    measured 1-3bp month-end jitter never does — and one full increment
+    for the year view. NOT return-calibrated thresholds."""
+    from sources.combiners.composite.catalog import (
+        FRED_DFF_20D_CHANGE_SCORE,
+        FRED_DFF_REGIME_SCORE,
+    )
+
+    assert "0.125" in FRED_DFF_20D_CHANGE_SCORE and "chg20" in FRED_DFF_20D_CHANGE_SCORE
+    assert "0.25" in FRED_DFF_REGIME_SCORE and "chg1y" in FRED_DFF_REGIME_SCORE
+
+
+def _dff_extract(tmp_path, rows):
+    path = str(tmp_path / "fred.db")
+    _build_source_db("fred.db", path)
+    src = sqlite3.connect(path)
+    src.executemany(
+        "INSERT INTO observations (series_id, date, value) VALUES ('DFF', ?, ?)",
+        rows,
+    )
+    src.commit()
+    src.close()
+    conn = sqlite3.connect(":memory:", uri=True)
+    try:
+        fetch.attach_ro(conn, path)
+        by_id = {s["signal_id"]: s for s in catalog.SIGNALS}
+        out = {}
+        for sid in ("fred_dff_chg20", "fred_dff_regime"):
+            out[sid] = fetch.extract(conn, by_id[sid], today="2026-07-06")
+    finally:
+        conn.close()
+    return out
+
+
+def test_dff_scores_a_cut_as_bullish_both_windows(tmp_path):
+    # 25bp cut visible in both the 20d and the 1y window
+    out = _dff_extract(
+        tmp_path,
+        [("2025-07-06", 5.00), ("2026-06-16", 5.00), ("2026-07-06", 4.75)],
+    )
+    (row,) = out["fred_dff_chg20"]
+    assert (row["entity"], row["score"], row["obs_date"]) == ("*", 1, "2026-07-06")
+    assert abs(row["raw_value"] - (-0.25)) < 1e-9
+    (row_y,) = out["fred_dff_regime"]
+    assert row_y["score"] == 1 and abs(row_y["raw_value"] - (-0.25)) < 1e-9
+
+
+def test_dff_scores_a_hold_as_neutral_and_a_hike_as_bearish(tmp_path):
+    # flat rate -> both 0; sub-quantum jitter (+3bp over 20d) -> still 0
+    out = _dff_extract(
+        tmp_path,
+        [("2025-07-06", 4.50), ("2026-06-16", 4.47), ("2026-07-06", 4.50)],
+    )
+    assert out["fred_dff_chg20"][0]["score"] == 0
+    assert out["fred_dff_regime"][0]["score"] == 0
+    # hiking: +50bp over the year, +25bp in the window -> -1 / -1
+    out = _dff_extract(
+        tmp_path,
+        [("2025-07-07", 4.00), ("2026-06-17", 4.25), ("2026-07-07", 4.50)],
+    )
+    assert out["fred_dff_chg20"][0]["score"] == -1
+    assert out["fred_dff_regime"][0]["score"] == -1
+
+
 def test_cboe_score_cases_are_hoisted_constants():
     # Hoisted so the backtest combiner replays the IDENTICAL flag expression;
     # rendered composite SQL must be unchanged (constant interpolated back in).

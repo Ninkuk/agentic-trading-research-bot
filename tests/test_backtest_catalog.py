@@ -1,6 +1,8 @@
 from sources.combiners.backtest import catalog
 from sources.combiners.composite.catalog import (
     FRED_CURVE_SCORE,
+    FRED_DFF_20D_CHANGE_SCORE,
+    FRED_DFF_REGIME_SCORE,
     FRED_HY_SPREAD_SCORE,
     SIGNALS,
 )
@@ -11,6 +13,19 @@ def test_replay_signals_reference_composite_case_constants():
     by_id = {s["signal_id"]: s for s in catalog.REPLAY_SIGNALS}
     assert by_id["fred_curve"]["score_case"] is FRED_CURVE_SCORE
     assert by_id["fred_hy_spread"]["score_case"] is FRED_HY_SPREAD_SCORE
+
+
+def test_dff_replay_entries_are_lagged_reads_of_the_same_constants():
+    """Both DFF signals replay through the vintage path with a lagged leg:
+    lag_columns names the derived column the imported CASE reads and the
+    calendar-day lag the change spans (DFF is calendar-daily)."""
+    by_id = {s["signal_id"]: s for s in catalog.REPLAY_SIGNALS}
+    assert by_id["fred_dff_chg20"]["score_case"] is FRED_DFF_20D_CHANGE_SCORE
+    assert by_id["fred_dff_regime"]["score_case"] is FRED_DFF_REGIME_SCORE
+    assert by_id["fred_dff_chg20"]["series_id"] == "DFF"
+    assert by_id["fred_dff_regime"]["series_id"] == "DFF"
+    assert by_id["fred_dff_chg20"]["lag_columns"] == {"chg20": 20}
+    assert by_id["fred_dff_regime"]["lag_columns"] == {"chg1y": 365}
 
 
 def test_replay_signal_ids_exist_in_composite():

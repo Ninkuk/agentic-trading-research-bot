@@ -11,6 +11,8 @@ from sources.combiners.composite.catalog import (
     EIA_CRUDE_CHANGE_SCORE,
     EIA_NATGAS_CHANGE_SCORE,
     FRED_CURVE_SCORE,
+    FRED_DFF_20D_CHANGE_SCORE,
+    FRED_DFF_REGIME_SCORE,
     FRED_HY_SPREAD_SCORE,
     NYFED_RRP_SCORE,
     TSY_TGA_SCORE,
@@ -42,13 +44,31 @@ CLASS_BENCHMARKS: list[dict[str, Any]] = [
 ]
 
 # FRED regime signals: ALFRED-vintage replay (revision-aware; realtime_start
-# gives the exact as-of read).
+# gives the exact as-of read). Entries with `lag_columns` score a DERIVED
+# change rather than the level: {column_name: calendar_day_lag} — the
+# v_pit_signal_change view computes `value - value(source_date - lag)` with
+# BOTH legs vintage-exact (a lag-leg revision published after the as-of
+# date never leaks), and the imported CASE reads the named column. Calendar
+# days because DFF is a calendar-daily series (7 rows/week; weekend obs
+# publish Monday per its ALFRED realtime_start trail).
 REPLAY_SIGNALS: list[dict[str, Any]] = [
     {"signal_id": "fred_curve", "series_id": "T10Y2Y", "score_case": FRED_CURVE_SCORE},
     {
         "signal_id": "fred_hy_spread",
         "series_id": "BAMLH0A0HYM2",
         "score_case": FRED_HY_SPREAD_SCORE,
+    },
+    {
+        "signal_id": "fred_dff_chg20",
+        "series_id": "DFF",
+        "score_case": FRED_DFF_20D_CHANGE_SCORE,
+        "lag_columns": {"chg20": 20},
+    },
+    {
+        "signal_id": "fred_dff_regime",
+        "series_id": "DFF",
+        "score_case": FRED_DFF_REGIME_SCORE,
+        "lag_columns": {"chg1y": 365},
     },
 ]
 

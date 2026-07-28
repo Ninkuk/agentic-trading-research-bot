@@ -23,6 +23,22 @@ FRED_CURVE_SCORE = "CASE WHEN value < 0 THEN -1 ELSE 0 END"
 FRED_HY_SPREAD_SCORE = (
     "CASE WHEN value >= 5.0 THEN -2 WHEN value >= 4.0 THEN -1 WHEN value < 3.5 THEN 1 ELSE 0 END"
 )
+# Policy-rate DIRECTION, not level (the level is priced; what the Fed is
+# doing is the claim under test). Two windows over DFF's calendar-daily
+# series: chg20 reads the last 20 days (a move in flight), chg1y reads the
+# cycle (a rate unmoved for a year is neutral policy). Dead zones are
+# STRUCTURAL, not return-fitted: policy moves are quantized at 25bp, so
+# half an increment (0.125) clears every real move while the measured
+# 1-3bp month-end window-dressing jitter — the noise that killed the
+# 1-day view in the salvage — never fires it; the cycle read demands a
+# full increment (0.25). Easing scores bullish (+1) as the hypothesis the
+# replay grades; anti_signal is the mirror if cuts-mean-recession
+# dominates. Separate constants: different windows, independently
+# retunable (same discipline as the EIA pair).
+FRED_DFF_20D_CHANGE_SCORE = (
+    "CASE WHEN chg20 <= -0.125 THEN 1 WHEN chg20 >= 0.125 THEN -1 ELSE 0 END"
+)
+FRED_DFF_REGIME_SCORE = "CASE WHEN chg1y <= -0.25 THEN 1 WHEN chg1y >= 0.25 THEN -1 ELSE 0 END"
 # Two more market-grain regime signals the backtest combiner replays; hoisted
 # for the same reason as the FRED pair (flags cannot drift between composite
 # and the replay). Both operate on cboe_stats vix_daily columns by name, so
@@ -167,6 +183,50 @@ SIGNALS: list[dict[str, Any]] = [
             FROM src.observations
             WHERE series_id = 'BAMLH0A0HYM2' AND value IS NOT NULL
             ORDER BY date DESC LIMIT 1
+        """,
+    },
+    {
+        # Direction of travel, 20-day window. Exact-date lag join: DFF is
+        # calendar-daily (7 rows/week), so date(-20 days) always exists once
+        # the series is 20 days deep. Market grain never votes on tickers
+        # and the id is NOT in REGIME_FIELDS — informational until a
+        # measured calibration pass promotes it. Graded only by the
+        # backtest replay (ALFRED vintage path).
+        "signal_id": "fred_dff_chg20",
+        "db": "fred.db",
+        "grain": "market",
+        "staleness_budget_days": 7,
+        "sql": f"""
+            SELECT '*', chg20, {FRED_DFF_20D_CHANGE_SCORE}, date FROM (
+                SELECT o.date AS date, o.value - p.value AS chg20
+                FROM src.observations o
+                JOIN src.observations p
+                  ON p.series_id = o.series_id
+                 AND p.date = date(o.date, '-20 days')
+                 AND p.value IS NOT NULL
+                WHERE o.series_id = 'DFF' AND o.value IS NOT NULL
+                ORDER BY o.date DESC LIMIT 1
+            )
+        """,
+    },
+    {
+        # Cycle read, one-year window: hiking / cutting / neutral. Same
+        # informational posture as fred_dff_chg20 (see its note).
+        "signal_id": "fred_dff_regime",
+        "db": "fred.db",
+        "grain": "market",
+        "staleness_budget_days": 7,
+        "sql": f"""
+            SELECT '*', chg1y, {FRED_DFF_REGIME_SCORE}, date FROM (
+                SELECT o.date AS date, o.value - p.value AS chg1y
+                FROM src.observations o
+                JOIN src.observations p
+                  ON p.series_id = o.series_id
+                 AND p.date = date(o.date, '-365 days')
+                 AND p.value IS NOT NULL
+                WHERE o.series_id = 'DFF' AND o.value IS NOT NULL
+                ORDER BY o.date DESC LIMIT 1
+            )
         """,
     },
     {

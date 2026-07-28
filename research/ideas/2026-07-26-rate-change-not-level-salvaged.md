@@ -1,5 +1,13 @@
 # Score the policy rate's direction of travel, not its level
 
+> **Implemented 2026-07-28**: `fred_dff_chg20` (20-day change, ±12.5bp
+> structural dead zone) and `fred_dff_regime` (365-day change, ±25bp) —
+> windows differ so the pair is not two reads of one number; both
+> informational (market grain, not in REGIME_FIELDS) and replayed through
+> a new vintage-exact lagged-change path (`v_pit_signal_change`).
+> Verified against Fed history 2016–2026. Replay is now 90 cells; the
+> overlap/multiplicity correction remains `2026-07-27-walkforward-mcpt.md`.
+
 Source: `t2f0vyfABdM` [00:06:31] — "the level of the interest rates matters way
 less than what they're actually doing." The video proposes three views: 1-day
 change, 20-day change, and a binary hiking flag.

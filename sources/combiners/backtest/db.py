@@ -77,6 +77,14 @@ def _benchmark_of(signal: dict) -> str:
     return signal.get("benchmark", catalog.BENCHMARK_SERIES)
 
 
+def _plain_replay_signals() -> list:
+    return [s for s in catalog.REPLAY_SIGNALS if "lag_columns" not in s]
+
+
+def _lag_replay_signals() -> list:
+    return [s for s in catalog.REPLAY_SIGNALS if "lag_columns" in s]
+
+
 def _flags_select(signal: dict) -> str:
     # FRED regime signals grade vs SP500 (v_pit_signal iterates SP500 dates).
     return (
@@ -86,6 +94,54 @@ def _flags_select(signal: dict) -> str:
         f"FROM v_pit_signal\n"
         f"WHERE series_id = '{signal['series_id']}' AND value IS NOT NULL"
     )
+
+
+def _lag_flags_select(signal: dict) -> str:
+    """Flag select for a lagged-change replay signal: the imported CASE
+    reads its named derived column from v_pit_signal_change; the change IS
+    the raw value shown. A NULL change (lag leg unpublished as-of that
+    date) excludes the row rather than scoring a half-read."""
+    (col,) = signal["lag_columns"]
+    return (
+        f"SELECT asof_date, '{catalog.BENCHMARK_SERIES}' AS benchmark,\n"
+        f"       '{signal['signal_id']}' AS signal_id, {col} AS value, source_date,\n"
+        f"       {signal['score_case']} AS score\n"
+        f"FROM v_pit_signal_change\n"
+        f"WHERE series_id = '{signal['series_id']}' AND {col} IS NOT NULL"
+    )
+
+
+def _change_view() -> str:
+    """v_pit_signal_change: v_pit_signal plus one column per catalog lag
+    spec — `value - value(obs date source_date − N calendar days, as KNOWN
+    on the as-of date)`. Both legs come from signal_vintages with
+    realtime_start <= asof_date, so a lag-leg revision published later
+    never leaks (same no-look-ahead contract as v_pit_signal itself).
+    Empty string when no lagged signal exists."""
+    cols: dict[str, int] = {}
+    for s in _lag_replay_signals():
+        for name, days in s["lag_columns"].items():
+            if cols.setdefault(name, days) != days:
+                raise ValueError(f"lag column {name} declared with two different lags")
+    if not cols:
+        return ""
+    col_sql = ",\n".join(
+        f"""       t.value - (SELECT v.value FROM signal_vintages v
+         WHERE v.series_id = t.series_id
+           AND v.date = date(t.source_date, '-{days} days')
+           AND v.realtime_start <= t.asof_date
+           AND v.value IS NOT NULL
+         ORDER BY v.realtime_start DESC
+         LIMIT 1) AS {name}"""
+        for name, days in cols.items()
+    )
+    return f"""
+DROP VIEW IF EXISTS v_pit_signal_change;
+CREATE VIEW v_pit_signal_change AS
+SELECT t.asof_date, t.series_id, t.value, t.source_date,
+{col_sql}
+FROM v_pit_signal t;
+"""
 
 
 def _market_flags_select(signal: dict) -> str:
@@ -145,7 +201,8 @@ JOIN benchmark_closes d ON d.benchmark = o.benchmark;
 
 def _views() -> str:
     flags = "\nUNION ALL\n".join(
-        [_flags_select(s) for s in catalog.REPLAY_SIGNALS]
+        [_flags_select(s) for s in _plain_replay_signals()]
+        + [_lag_flags_select(s) for s in _lag_replay_signals()]
         + [_market_flags_select(s) for s in _scalar_market_signals()]
         + [_pctile_flags_select(s) for s in _pctile_market_signals()]
     )
@@ -179,7 +236,7 @@ SELECT d.date AS asof_date, s.series_id,
 FROM benchmark_closes d
 CROSS JOIN (SELECT DISTINCT series_id FROM signal_vintages) s
 WHERE d.benchmark = '{catalog.BENCHMARK_SERIES}';
-
+{_change_view()}
 -- As-of read for non-vintage market signals: for every date D on the signal's
 -- OWN benchmark spine, the val1/val2 of its latest observation on or before D
 -- (both pick the SAME latest row, so they stay consistent). NULL when nothing
