@@ -102,16 +102,10 @@ tr.flag .sym::after{content:"★";color:var(--brass);margin-left:6px;font-size:1
 .meter .fil.low{background:var(--hold);}
 .meter .lab{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;text-align:right;}
 
-/* CI: visible numbers + scaled range bar with 0/50/100 axis */
+/* CI: dot-and-whisker plot */
 .ci{width:168px;margin-left:auto;}
 .ci .num{font-family:var(--mono);font-size:11px;margin-bottom:3px;text-align:right;}
-.ci .num b{color:var(--fg);}.ci .num span{color:var(--muted);}
-.ci .trk{position:relative;height:9px;background:var(--gutter);border-radius:5px;}
-.ci .trk::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--faint);}
-.ci .rng{position:absolute;top:1px;height:7px;background:var(--brass);opacity:.55;border-radius:4px;}
-.ci .est{position:absolute;top:-2px;width:3px;height:13px;background:var(--fg);border-radius:1px;}
-.ci .sc{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;
-  color:var(--faint);margin-top:2px;}
+.ci .num b{color:var(--fg);}
 
 /* verdict pills */
 .pill{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;
