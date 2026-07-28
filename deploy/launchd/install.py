@@ -15,6 +15,7 @@ Slot rationale lives with the cadence plan; the invariants encoded here:
 """
 
 import argparse
+import os
 import plistlib
 import subprocess
 import sys
@@ -157,6 +158,18 @@ JOBS = {
     #    headless `claude -p /research-ticker` runs, ~20min each) --
     "research-nightly": (script("research_nightly.sh"), weekly(range(7), 22, 0)),
 }
+
+# Order execution is opt-in: the job places real orders, so it joins the
+# schedule only when the operator has completed the manual first-run
+# verification (see .claude/skills/queue-order) and set ORDERS_GO_LIVE=1 for
+# this install invocation. Dual slots because Phoenix has no DST: 9:32 ET is
+# 6:32 Phx under EDT and 7:32 under EST; preflight's open-window check makes
+# the off-season slot a quiet no-op.
+if os.environ.get("ORDERS_GO_LIVE") == "1":
+    JOBS["order-execution"] = (
+        script("order_execution.sh"),
+        weekly(MON_FRI, 6, 32) + weekly(MON_FRI, 7, 32),
+    )
 
 
 def label(name):

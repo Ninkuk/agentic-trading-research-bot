@@ -43,7 +43,10 @@ _NOT_GRANTED = {
     "get_equity_tax_lots",
 }
 
-_GETTER = re.compile(r"`(get_[a-z_]+)`")
+# Widened beyond getters when the order-execution slot landed: its skill
+# names `place_equity_order`/`review_equity_order`, which the wrapper must
+# grant just as deterministically as any getter.
+_TOOL = re.compile(r"`((?:get|place|review)_[a-z_]+)`")
 
 
 def test_headless_slots_allowlist_every_getter_their_skill_calls():
@@ -54,7 +57,7 @@ def test_headless_slots_allowlist_every_getter_their_skill_calls():
     Anything the skill names must be granted or explicitly not-granted."""
     for wrapper, skill in _MCP_SLOTS.items():
         allowlist = (LAUNCHD / wrapper).read_text()
-        named = set(_GETTER.findall((REPO_ROOT / skill).read_text()))
+        named = set(_TOOL.findall((REPO_ROOT / skill).read_text()))
         assert named, f"no getters found in {skill} -- extraction broke"
         ungranted = sorted(
             g for g in named - _NOT_GRANTED if f"Robinhood_MCP__{g}" not in allowlist
@@ -63,6 +66,52 @@ def test_headless_slots_allowlist_every_getter_their_skill_calls():
             f"{wrapper} omits getter(s) {ungranted} that {skill} instructs; "
             f"add to --allowedTools or to _NOT_GRANTED with a reason"
         )
+
+
+def test_order_execution_wrapper_never_grants_orders_wildcard():
+    """`Bash(uv run python main.py orders *)` would include `orders queue`,
+    letting the headless session author its own orders — the human-only
+    invariant would be prose, not structure. Grants must stay enumerated per
+    subcommand, and queue/resolve/reconcile must never appear."""
+    text = (LAUNCHD / "order_execution.sh").read_text()
+    assert "main.py orders *" not in text
+    for sub in ("preflight", "plan", "record"):
+        assert f"Bash(uv run python main.py orders {sub} *)" in text
+    for sub in ("queue", "resolve", "reconcile"):
+        assert f"orders {sub} *" not in text
+
+
+def test_order_execution_wrapper_conventions():
+    text = (LAUNCHD / "order_execution.sh").read_text()
+    assert text.count("data/orders.db") >= 3  # preflight --db + two sqlite3 freshness reads
+    assert "strftime('%Y-%m-%dT%H:%M:%S'" in text  # not datetime()
+    assert "cancel_equity_order" not in text
+    assert "get_accounts" not in text  # buying power must come from get_portfolio
+    assert "status IN ('queued','planned')" in text  # STUCK covers the slow-session drift
+    assert "--permission-mode default" in text
+
+
+def test_order_execution_job_is_gated_behind_go_live(monkeypatch):
+    """install.py must NOT schedule the order-execution job on a routine full
+    install — go-live is an explicit human step after the first-run
+    verification. (Even --dry-run writes plists launchd loads at login, so
+    the gate has to be at JOBS-construction time.)"""
+    import importlib
+
+    from deploy.launchd import install
+
+    monkeypatch.delenv("ORDERS_GO_LIVE", raising=False)
+    importlib.reload(install)
+    assert "order-execution" not in install.JOBS
+
+    monkeypatch.setenv("ORDERS_GO_LIVE", "1")
+    importlib.reload(install)
+    assert "order-execution" in install.JOBS
+    intervals = install.JOBS["order-execution"][1]
+    assert {(i["Hour"], i["Minute"]) for i in intervals} == {(6, 32), (7, 32)}
+
+    monkeypatch.delenv("ORDERS_GO_LIVE", raising=False)
+    importlib.reload(install)
 
 
 def test_run_job_sh_never_execs():
