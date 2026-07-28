@@ -1,4 +1,14 @@
-_STYLE = """
+# Chart-mark palette — validated 2026-07-28 against the page surface #151a1e
+# with the dataviz skill's validate_palette.js (dark mode). The old green/red
+# (#5bbf8a/#e0736b) collapse to dE 5.2 under deuteranopia; these steps pass.
+# Marks only: text keeps the ink tokens (--up/--down/--hold) below.
+MARK_UP = "#199e70"
+MARK_DOWN = "#e66767"
+MARK_MID = "#3a434b"  # diverging midpoint / "mixed": neutral gray, never a hue
+MARK_LINE = "#3987e5"  # single-series lines (categorical slot 1)
+SURFACE = "#151a1e"
+
+_BASE_STYLE = """
 :root{
   --ink:#0d1013; --paper:#151a1e; --gutter:#10161a; --edge:#232c33;
   --fg:#e8e6df; --muted:#9aa1ab; --faint:#7b828c;
@@ -146,3 +156,10 @@ summary:focus-visible{outline:2px solid var(--brass);outline-offset:3px;border-r
 .colophon{margin-top:34px;color:var(--faint);font-size:13px;}
 .colophon a{color:var(--muted);}
 """.strip()
+
+_STYLE = (
+    _BASE_STYLE
+    + f"""
+:root{{ --mark-up:{MARK_UP}; --mark-down:{MARK_DOWN}; --mark-mid:{MARK_MID}; --mark-line:{MARK_LINE}; }}
+"""
+)
