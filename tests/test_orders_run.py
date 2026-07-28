@@ -437,3 +437,157 @@ def test_reconcile_flags_unconfirmed_placement(dbs):
     )
     report = run.run_reconcile(orders_path, {"orders": []}, "t2")
     assert [p["order_id"] for p in report["orphan_placements"]] == ["ord-9"]
+
+
+def test_gap_veto_retries_when_expiry_allows(dbs):
+    # Monday gap-veto on a row expiring later in the week: the row stays
+    # queued (with the retry reason recorded) and plans normally the next
+    # morning once the gap closes.
+    orders_path, cal_path = dbs
+    qid = _queue(orders_path, cal_path, ref=300.0, gap=3.0, expires="2026-07-31")
+    plan = run.run_plan(orders_path, cal_path, _plan_doc(ask=312.0), SUMMER_OPEN, ENV)
+    assert plan["orders"] == []
+    conn = orders_db.connect(orders_path)
+    status, reason = conn.execute(
+        "SELECT status, resolution_reason FROM queue WHERE id=?", (qid,)
+    ).fetchone()
+    conn.close()
+    assert status == "queued" and reason.startswith("retry: gapped")
+    tuesday = "2026-07-28T13:35:00+00:00"
+    doc = {
+        "as_of": tuesday,
+        "quotes": [{"symbol": "TSLA", "ask": 305.0, "quote_ts": "2026-07-28T13:34:30+00:00"}],
+        "portfolio": {"settled_cash": 9000.0},
+    }
+    plan2 = run.run_plan(orders_path, cal_path, doc, tuesday, ENV)
+    assert [o["symbol"] for o in plan2["orders"]] == ["TSLA"]
+
+
+def test_gap_down_veto_blocks_corrupt_low_ask(dbs):
+    # ask far BELOW ref is a corrupt quote or news, never an auto-buy: the
+    # old behavior planned a $0.01 limit and consumed the intent.
+    orders_path, cal_path = dbs
+    _queue(orders_path, cal_path, ref=310.0, gap=3.0)  # floor 300.70
+    plan = run.run_plan(orders_path, cal_path, _plan_doc(ask=0.01), SUMMER_OPEN, ENV)
+    assert plan["orders"] == []
+    conn = orders_db.connect(orders_path)
+    status, reason = conn.execute("SELECT status, resolution_reason FROM queue").fetchone()
+    conn.close()
+    assert status == "vetoed" and "gapped down" in reason
+
+
+def test_queue_rejects_non_iso_expiry(dbs):
+    orders_path, cal_path = dbs
+    for bad in ("07/28/2026", "2026-7-4", "tomorrow"):
+        with pytest.raises(ValueError, match="expires"):
+            run.run_queue(
+                orders_path,
+                cal_path,
+                "TSLA",
+                1,
+                300.0,
+                3.0,
+                bad,
+                None,
+                "2026-07-27T02:00:00+00:00",
+                True,
+                ENV,
+            )
+
+
+def test_plan_exception_rolls_back_cleanly(dbs, monkeypatch):
+    # An exception after some rows were already claimed must erase the whole
+    # transaction — claims AND the runs header — so the wrapper's freshness
+    # check fires loudly instead of half the queue being silently consumed.
+    import uuid as uuid_mod
+
+    orders_path, cal_path = dbs
+    _queue(orders_path, cal_path, symbol="AAA")
+    _queue(orders_path, cal_path, symbol="BBB", ref=310.0)
+    real = uuid_mod.uuid4
+    calls = {"n": 0}
+
+    def boom():
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise RuntimeError("boom")
+        return real()
+
+    monkeypatch.setattr(run.uuid, "uuid4", boom)
+    doc = {
+        "as_of": SUMMER_OPEN,
+        "quotes": [
+            {"symbol": s, "ask": 312.0, "quote_ts": "2026-07-27T13:34:30+00:00"}
+            for s in ("AAA", "BBB")
+        ],
+        "portfolio": {"settled_cash": 20000.0},
+    }
+    with pytest.raises(RuntimeError):
+        run.run_plan(orders_path, cal_path, doc, SUMMER_OPEN, ENV)
+    conn = orders_db.connect(orders_path)
+    rows = conn.execute("SELECT status, ref_id FROM queue ORDER BY id").fetchall()
+    n_runs = conn.execute("SELECT COUNT(*) FROM runs WHERE phase='plan'").fetchone()[0]
+    conn.close()
+    assert rows == [("queued", None), ("queued", None)]
+    assert n_runs == 0
+
+
+def test_reconcile_offplan_order_with_our_ref_is_serious(dbs):
+    # Session crashed between place and record: the broker order carries a
+    # ref_id we minted (it's on the queue row) but no placement exists. That
+    # is 'session placed off-plan' — likely_manual must be False.
+    orders_path, cal_path = dbs
+    _queue(orders_path, cal_path)
+    plan = run.run_plan(orders_path, cal_path, _plan_doc(), SUMMER_OPEN, ENV)
+    ref_id = plan["orders"][0]["ref_id"]
+    report = run.run_reconcile(
+        orders_path,
+        {"orders": [{"order_id": "ord-X", "ref_id": ref_id, "symbol": "TSLA", "state": "filled"}]},
+        "t2",
+    )
+    (orphan,) = report["orphan_orders"]
+    assert orphan["order_id"] == "ord-X" and orphan["likely_manual"] is False
+
+
+def test_reconcile_error_recorded_but_broker_placed_is_surfaced(dbs):
+    # A timeout recorded as state='error' while the broker actually placed:
+    # the live order must surface as a SERIOUS orphan, not be suppressed.
+    orders_path, cal_path = dbs
+    qid = _queue(orders_path, cal_path)
+    plan = run.run_plan(orders_path, cal_path, _plan_doc(), SUMMER_OPEN, ENV)
+    ref_id = plan["orders"][0]["ref_id"]
+    run.run_record(
+        orders_path,
+        {
+            "results": [
+                {
+                    "queue_id": qid,
+                    "ref_id": ref_id,
+                    "account_number": "TESTACCT0",
+                    "order_id": None,
+                    "state": "error",
+                    "raw": {"detail": "timeout"},
+                }
+            ]
+        },
+        "t",
+        ENV,
+    )
+    report = run.run_reconcile(
+        orders_path,
+        {"orders": [{"order_id": "ord-Y", "ref_id": ref_id, "symbol": "TSLA", "state": "filled"}]},
+        "t2",
+    )
+    (orphan,) = report["orphan_orders"]
+    assert orphan["order_id"] == "ord-Y" and orphan["likely_manual"] is False
+
+
+def test_reconcile_manual_trade_is_likely_manual(dbs):
+    orders_path, cal_path = dbs
+    report = run.run_reconcile(
+        orders_path,
+        {"orders": [{"order_id": "app-1", "ref_id": None, "symbol": "GME", "state": "filled"}]},
+        "t",
+    )
+    (orphan,) = report["orphan_orders"]
+    assert orphan["likely_manual"] is True

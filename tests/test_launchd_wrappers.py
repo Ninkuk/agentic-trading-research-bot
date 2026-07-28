@@ -77,46 +77,53 @@ def test_order_execution_wrapper_never_grants_orders_wildcard():
     """`Bash(uv run python main.py orders *)` would include `orders queue`,
     letting the headless session author its own orders — the human-only
     invariant would be prose, not structure. Grants must stay enumerated per
-    subcommand, and queue/resolve/reconcile must never appear."""
+    subcommand, and queue/resolve/reconcile must never appear in the
+    ALLOWLIST LINE (comments may mention them; scoping to the line also
+    catches a grant written without a trailing star)."""
     text = (LAUNCHD / "order_execution.sh").read_text()
-    assert "main.py orders *" not in text
+    allow_lines = [ln for ln in text.splitlines() if "--allowedTools" in _code_only(ln)]
+    assert len(allow_lines) == 1, "expected exactly one --allowedTools line"
+    allow = allow_lines[0]
+    assert "main.py orders *" not in allow
     for sub in ("preflight", "plan", "record"):
-        assert f"Bash(uv run python main.py orders {sub} *)" in text
+        assert f"Bash(uv run python main.py orders {sub} *)" in allow
     for sub in ("queue", "resolve", "reconcile"):
-        assert f"orders {sub} *" not in text
+        assert f"orders {sub}" not in allow
 
 
 def test_order_execution_wrapper_conventions():
     text = (LAUNCHD / "order_execution.sh").read_text()
-    assert text.count("data/orders.db") >= 3  # preflight --db + two sqlite3 freshness reads
+    assert text.count("data/orders.db") >= 3  # preflight --db + sqlite3 freshness reads
     assert "strftime('%Y-%m-%dT%H:%M:%S'" in text  # not datetime()
     assert "cancel_equity_order" not in text
     assert "get_accounts" not in text  # buying power must come from get_portfolio
-    assert "status IN ('queued','planned')" in text  # STUCK covers the slow-session drift
+    # STUCK must cover unevaluated queued rows (slow-session drift past the
+    # window) while excluding deliberate retry vetoes.
+    assert "status='planned' OR (status='queued' AND resolution_reason IS NULL)" in text
     assert "--permission-mode default" in text
+    # Numeric guards must be inverted tests so a non-numeric sqlite3 result
+    # fires the alarm instead of silently skipping it.
+    assert '! [ "${FRESH:-0}" -ge 1 ]' in text
+    assert '! [ "${STUCK:-0}" -eq 0 ]' in text
 
 
 def test_order_execution_job_is_gated_behind_go_live(monkeypatch):
-    """install.py must NOT schedule the order-execution job on a routine full
-    install — go-live is an explicit human step after the first-run
-    verification. (Even --dry-run writes plists launchd loads at login, so
-    the gate has to be at JOBS-construction time.)"""
-    import importlib
-
+    """A routine full install must NOT schedule the order-execution job
+    (go-live is an explicit human step, and even --dry-run writes plists
+    launchd loads at login) — but the job must ALWAYS be in JOBS so
+    --uninstall can disarm it regardless of env."""
     from deploy.launchd import install
 
-    monkeypatch.delenv("ORDERS_GO_LIVE", raising=False)
-    importlib.reload(install)
-    assert "order-execution" not in install.JOBS
-
-    monkeypatch.setenv("ORDERS_GO_LIVE", "1")
-    importlib.reload(install)
     assert "order-execution" in install.JOBS
     intervals = install.JOBS["order-execution"][1]
     assert {(i["Hour"], i["Minute"]) for i in intervals} == {(6, 32), (7, 32)}
 
     monkeypatch.delenv("ORDERS_GO_LIVE", raising=False)
-    importlib.reload(install)
+    assert "order-execution" not in install.job_names(uninstall=False)
+    assert "order-execution" in install.job_names(uninstall=True)
+
+    monkeypatch.setenv("ORDERS_GO_LIVE", "1")
+    assert "order-execution" in install.job_names(uninstall=False)
 
 
 def test_run_job_sh_never_execs():

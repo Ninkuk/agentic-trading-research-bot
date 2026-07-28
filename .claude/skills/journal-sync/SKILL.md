@@ -64,9 +64,12 @@ against scorer.db directly.
      `data/orders.db` `placements` (a morning queue execution), copy that
      queue row's `note` into the fill's `note` — the rationale is what
      scorer grades and must not die in orders.db. Read via the read-only
-     URI ONLY (the wrapper grants exactly this form — a writable sqlite3
-     against orders.db is deliberately not grantable):
-     `sqlite3 "file:data/orders.db?mode=ro" "SELECT q.note FROM placements p
+     URI ONLY, written EXACTLY as below — unquoted URI, so the command
+     matches the wrapper's allowlist pattern
+     `Bash(sqlite3 file:data/orders.db?mode=ro *)` (a quoted `"file:..."`
+     would NOT match and dies headless on a permission prompt; a writable
+     sqlite3 against orders.db is deliberately not grantable):
+     `sqlite3 file:data/orders.db?mode=ro "SELECT q.note FROM placements p
      JOIN queue q ON q.id=p.queue_id WHERE p.order_id='<id>'"`.
      These are human decisions with machine hands: they keep `placed_agent`
      as the broker reports it and join the normal human buckets, no new

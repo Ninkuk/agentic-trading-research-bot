@@ -159,17 +159,26 @@ JOBS = {
     "research-nightly": (script("research_nightly.sh"), weekly(range(7), 22, 0)),
 }
 
-# Order execution is opt-in: the job places real orders, so it joins the
-# schedule only when the operator has completed the manual first-run
-# verification (see .claude/skills/queue-order) and set ORDERS_GO_LIVE=1 for
-# this install invocation. Dual slots because Phoenix has no DST: 9:32 ET is
-# 6:32 Phx under EDT and 7:32 under EST; preflight's open-window check makes
-# the off-season slot a quiet no-op.
-if os.environ.get("ORDERS_GO_LIVE") == "1":
-    JOBS["order-execution"] = (
-        script("order_execution.sh"),
-        weekly(MON_FRI, 6, 32) + weekly(MON_FRI, 7, 32),
-    )
+# Order execution is opt-in: the job places real orders, so INSTALLING it
+# requires ORDERS_GO_LIVE=1 (set one-shot at install time, after the manual
+# first-run verification in .claude/skills/queue-order). It stays in JOBS
+# unconditionally so --uninstall can always disarm it — gating removal too
+# would leave the armed plist loaded forever. Dual slots because Phoenix has
+# no DST: 9:32 ET is 6:32 Phx under EDT and 7:32 under EST; preflight's
+# open-window check makes the off-season slot a quiet no-op.
+JOBS["order-execution"] = (
+    script("order_execution.sh"),
+    weekly(MON_FRI, 6, 32) + weekly(MON_FRI, 7, 32),
+)
+
+
+def job_names(uninstall: bool) -> list[str]:
+    """Jobs the current invocation should touch: everything for uninstall;
+    order-execution joins the install set only under ORDERS_GO_LIVE=1."""
+    names = list(JOBS)
+    if not uninstall and os.environ.get("ORDERS_GO_LIVE") != "1":
+        names.remove("order-execution")
+    return names
 
 
 def label(name):
@@ -206,7 +215,7 @@ def main(argv=None):
     domain = f"gui/{uid}"
 
     if a.uninstall:
-        for name in JOBS:
+        for name in job_names(uninstall=True):
             launchctl("bootout", f"{domain}/{label(name)}")
             plist_path(name).unlink(missing_ok=True)
             print(f"removed {label(name)}")
@@ -214,7 +223,8 @@ def main(argv=None):
 
     AGENTS.mkdir(parents=True, exist_ok=True)
     LOGS.mkdir(exist_ok=True)
-    for name, (program_args, intervals) in JOBS.items():
+    for name in job_names(uninstall=False):
+        program_args, intervals = JOBS[name]
         path = plist_path(name)
         with open(path, "wb") as f:
             plistlib.dump(build(name, program_args, intervals), f)

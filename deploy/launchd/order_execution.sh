@@ -39,21 +39,30 @@ claude -p "/execute-queue" \
 # renders a space and 'T' > ' ' lexicographically (journal_sync.sh trap).
 # preflight's own header must NOT satisfy the check that guards the session
 # it precedes, hence phase IN ('plan','record').
+# Inverted numeric tests (! [ ... ] 2>/dev/null): a non-numeric value makes
+# `[` itself fail, and the alarm must fire on that, not silently skip.
 FRESH=$(sqlite3 data/orders.db \
     "SELECT COUNT(*) FROM runs WHERE phase IN ('plan','record') AND captured_at >= strftime('%Y-%m-%dT%H:%M:%S','now','-15 minutes');" \
     2>/dev/null || echo 0)
-if [ "${FRESH:-0}" -lt 1 ]; then
+if ! [ "${FRESH:-0}" -ge 1 ] 2>/dev/null; then
     echo "[$(date '+%F %T')] STALE: no plan/record run in 15m — read permission_denials in the JSON above before suspecting MCP auth" >&2
     exit 1
 fi
-# 'queued' too, not just 'planned': a slow session can drift past the
-# window's upper bound, at which point plan writes a FRESH header but claims
-# nothing — without this clause that morning reads as success and the rows
-# silently expire tomorrow.
+# Unevaluated 'queued' rows too, not just 'planned': a slow session can
+# drift past the window's upper bound, at which point plan writes a FRESH
+# header but claims nothing — without this clause that morning reads as
+# success and the rows silently expire tomorrow. Deliberate retry vetoes
+# stay queued WITH a resolution_reason and are not stuck.
 STUCK=$(sqlite3 data/orders.db \
-    "SELECT COUNT(*) FROM queue WHERE status IN ('queued','planned');" 2>/dev/null || echo 0)
-if [ "${STUCK:-0}" -gt 0 ]; then
-    echo "[$(date '+%F %T')] STUCK: $STUCK row(s) still queued/planned after the session — see v_unreconciled; clear with 'orders resolve'" >&2
+    "SELECT COUNT(*) FROM queue WHERE status='planned' OR (status='queued' AND resolution_reason IS NULL);" \
+    2>/dev/null || echo 0)
+if ! [ "${STUCK:-0}" -eq 0 ] 2>/dev/null; then
+    echo "[$(date '+%F %T')] STUCK: $STUCK row(s) still planned/unevaluated after the session — see v_unreconciled; clear with 'orders resolve'" >&2
     exit 1
 fi
+# Vetoes and retries are designed outcomes, not failures — but the log line
+# is the alert, so say what happened to every row the run touched.
+sqlite3 data/orders.db \
+    "SELECT '[$(date '+%F %T')] veto ' || symbol || ' (' || status || '): ' || resolution_reason FROM queue WHERE resolution_reason IS NOT NULL AND resolution_reason != 'planned' AND (resolved_at >= strftime('%Y-%m-%dT%H:%M:%S','now','-15 minutes') OR (status='queued' AND resolution_reason LIKE 'retry:%'));" \
+    2>/dev/null
 echo "[$(date '+%F %T')] order execution complete"

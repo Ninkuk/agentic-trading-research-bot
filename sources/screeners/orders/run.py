@@ -19,7 +19,7 @@ import os
 import sqlite3
 import sys
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import ROUND_DOWN, Decimal
 
 from sources.common.clock import phx_date
@@ -83,7 +83,8 @@ def _compute_decision(
     settled_cash: float,
 ) -> tuple[str, str]:
     """Pure per-row decision. Returns ('planned', limit_price_str) or
-    (terminal_status, reason)."""
+    (status, reason). A 'vetoed' result is terminal only on the row's last
+    eligible day — run_plan requeues earlier vetoes for the next open."""
     if row["expires_on"] < phx_date(now_iso):
         return "expired", f"expired {row['expires_on']}"
     if quote is None or quote.ask is None or quote.ask <= 0:
@@ -93,8 +94,16 @@ def _compute_decision(
     ceiling = Decimal(str(row["ref_price"])) * (
         Decimal("1") + Decimal(str(row["max_gap_pct"])) / Decimal("100")
     )
+    floor = Decimal(str(row["ref_price"])) * (
+        Decimal("1") - Decimal(str(row["max_gap_pct"])) / Decimal("100")
+    )
     if Decimal(str(quote.ask)) > ceiling:
         return "vetoed", f"gapped: ask {quote.ask} > ceiling {ceiling:.2f}"
+    if Decimal(str(quote.ask)) < floor:
+        # Symmetric sanity bound: an ask far BELOW ref is a corrupt quote or
+        # news, not a bargain to auto-buy — without this, ask=0.01 plans a
+        # penny limit and permanently consumes the human's intent.
+        return "vetoed", f"gapped down: ask {quote.ask} < floor {floor:.2f}"
     limit = min(Decimal(str(quote.ask)) * SLIPPAGE, ceiling).quantize(
         Decimal("0.01"), rounding=ROUND_DOWN
     )
@@ -121,8 +130,10 @@ def run_queue(
     stdin_isatty: bool,
     env: dict,
 ) -> int:
-    """Insert one human buy decision. Semantics: buy at the NEXT market open,
-    then every open until expires_on (Phoenix date, inclusive)."""
+    """Insert one human buy decision. Semantics: attempt at the NEXT market
+    open; a veto (gap, stale quote, caps) or a stand-down morning retries at
+    each later open until expires_on (Phoenix date, inclusive) — a veto on
+    the last eligible day is terminal."""
     if not stdin_isatty and env.get("ORDERS_ALLOW_NONINTERACTIVE") != "1":
         raise ValueError(
             "refusing non-interactive queue (set ORDERS_ALLOW_NONINTERACTIVE=1 from"
@@ -147,9 +158,17 @@ def run_queue(
             expires_on = str(cal_db.next_trading_day(cal_conn, phx_date(now_iso)))
         finally:
             cal_conn.close()
+    else:
+        # Expiry is compared lexicographically everywhere; a non-ISO string
+        # ("07/28/2026", unpadded months) silently expires instantly or never.
+        try:
+            date.fromisoformat(expires_on)
+        except ValueError:
+            raise ValueError("expires_on must be an ISO date (YYYY-MM-DD)") from None
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)
+        conn.execute("BEGIN IMMEDIATE")
         (dup,) = conn.execute(
             "SELECT COUNT(*) FROM queue WHERE symbol = ? AND status = 'queued'", (symbol,)
         ).fetchone()
@@ -162,6 +181,9 @@ def run_queue(
         )
         conn.commit()
         return int(cur.lastrowid or 0)
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
@@ -244,6 +266,16 @@ def run_plan(db_path: str, cal_db_path: str, doc: dict, now_iso: str, env: dict)
                         "limit_price": detail,
                         "ref_id": ref_id,
                     }
+                )
+            elif status == "vetoed" and row["expires_on"] > phx_date(now_iso):
+                # Not the last eligible day: the veto retries at the next
+                # open. Status stays 'queued' (resolved_at stays NULL) so
+                # tomorrow's preflight/plan pick it up; the reason is
+                # recorded so the wrapper's STUCK check can tell a
+                # deliberate retry from a row the session never evaluated.
+                conn.execute(
+                    "UPDATE queue SET resolution_reason=? WHERE id=? AND status='queued'",
+                    (f"retry: {detail}", row["id"]),
                 )
             else:
                 conn.execute(
@@ -335,20 +367,31 @@ def run_reconcile(db_path: str, doc: dict, now_iso: str) -> dict:
         _write_run(conn, now_iso, "reconcile", f"{len(broker_orders)} broker orders")
         confirmed = 0
         orphan_placements = []
-        known_order_ids: set[str] = set()
+        covered: set[str] = set()
         for pid, order_id, ref_id, already in conn.execute(
             "SELECT id, order_id, ref_id, confirmed_at FROM placements WHERE outcome='placed'"
         ).fetchall():
-            if order_id:
-                known_order_ids.add(order_id)
-            match = by_order_id.get(order_id) or by_ref_id.get(ref_id)
+            match = by_order_id.get(order_id) if order_id else None
+            if match is None and ref_id:
+                match = by_ref_id.get(ref_id)
             if match is not None:
+                covered.add(match.order_id)
                 if already is None:
                     conn.execute("UPDATE placements SET confirmed_at=? WHERE id=?", (now_iso, pid))
                     confirmed += 1
             elif already is None:
                 orphan_placements.append({"order_id": order_id, "ref_id": ref_id})
-        our_refs = {r[0] for r in conn.execute("SELECT ref_id FROM placements").fetchall() if r[0]}
+        # Every ref_id this system has EVER minted: claimed queue rows AND
+        # all placements (including outcome='error'). A broker order carrying
+        # one of these is OURS even when the placement record is missing
+        # (session crashed before record) or recorded as an error (timeout
+        # that actually placed) — those are the serious off-plan cases, the
+        # exact opposite of likely_manual.
+        our_refs = {
+            r[0]
+            for r in conn.execute("SELECT ref_id FROM queue WHERE ref_id IS NOT NULL").fetchall()
+        }
+        our_refs |= {r[0] for r in conn.execute("SELECT ref_id FROM placements").fetchall() if r[0]}
         orphan_orders = [
             {
                 "order_id": o.order_id,
@@ -357,7 +400,7 @@ def run_reconcile(db_path: str, doc: dict, now_iso: str) -> dict:
                 "likely_manual": o.ref_id is None or o.ref_id not in our_refs,
             }
             for o in broker_orders
-            if o.order_id not in known_order_ids and (o.ref_id or "") not in our_refs
+            if o.order_id not in covered
         ]
         conn.commit()
         return {

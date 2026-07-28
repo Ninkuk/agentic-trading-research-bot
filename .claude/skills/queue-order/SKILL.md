@@ -6,10 +6,12 @@ description: Queue an equity buy for the next market open (human decision -> dat
 # queue-order
 
 Record the human's decision to buy at the next market open. Queue semantics:
-**buy at the NEXT open, and every open after that until `expires_on`
-(Phoenix date, inclusive)** — there is no "queue for Thursday" while
-Wednesday's open is still ahead. The 6:32/7:32 launchd slot plans against a
-fresh quote, applies the gap/cap/cash rails, and places a GFD limit order.
+**attempt at the NEXT open** — there is no "queue for Thursday" while
+Wednesday's open is still ahead. A veto (gap, stale quote, caps) or a
+stand-down morning (holiday, window miss) **retries at each later open until
+`expires_on` (Phoenix date, inclusive); a veto on the last eligible day is
+terminal**. The 6:32/7:32 launchd slot plans against a fresh quote, applies
+the gap/cap/cash rails, and places a GFD limit order.
 
 ## Queueing
 
@@ -29,8 +31,9 @@ fresh quote, applies the gap/cap/cash rails, and places a GFD limit order.
      --note "<the user's rationale — this reaches the decision journal>"
    ```
 
-3. Read back `v_open_queue` (`sqlite3 data/orders.db "SELECT * FROM
-   v_open_queue"`) and confirm to the user exactly what the next open will
+3. Read back `v_open_queue` (`sqlite3 file:data/orders.db?mode=ro "SELECT *
+   FROM v_open_queue"` — always the read-only URI; writes go through the
+   dispatcher only) and confirm to the user exactly what the next open will
    consider, including the implied price ceiling per order.
 
 Constraints the dispatcher enforces (don't fight them): whole shares, no
@@ -56,4 +59,9 @@ the live `get_equity_quotes` / `get_portfolio` response fields (ask price,
 quote timestamp, settled cash) against what
 `sources/screeners/orders/fetch.py` expects — external feeds routinely
 disagree with their docs (CLAUDE.md: live-verify source schemas). Adjust
-`fetch.py` before go-live if the live shapes differ.
+`fetch.py` before go-live if the live shapes differ. Also verify in that
+run: (a) `place_equity_order` echoes/accepts the `ref_id` as the client
+idempotency key, and (b) the journal slot's read-only sqlite grant actually
+matches the command form its skill instructs (run the attribution SELECT
+once under the wrapper's allowlist semantics) — a pattern/command mismatch
+there is a silent loss of every fill rationale.

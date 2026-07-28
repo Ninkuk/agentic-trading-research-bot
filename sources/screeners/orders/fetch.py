@@ -76,10 +76,13 @@ def parse_plan_input(doc: dict) -> PlanInput:
         if not isinstance(symbol, str) or not symbol:
             raise ValueError(f"quotes[{i}] symbol is not a string")
         ask = q.get("ask")
+        quote_ts = q.get("quote_ts")
+        if quote_ts is not None and not isinstance(quote_ts, str):
+            raise ValueError(f"quotes[{i}].quote_ts must be a string or null")
         quotes[symbol] = Quote(
             symbol=symbol,
             ask=None if ask is None else _number(ask, f"quotes[{i}].ask"),
-            quote_ts=q.get("quote_ts"),
+            quote_ts=quote_ts,
         )
     portfolio = _require(doc, "portfolio", "document")
     settled_cash = _number(
