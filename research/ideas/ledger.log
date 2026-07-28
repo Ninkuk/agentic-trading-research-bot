@@ -96,3 +96,13 @@
 2026-07-26 TP-DfIHLb50 price-equals-iv-implies-discount-rate-return DEAD gate=2:duplication
 2026-07-26 TP-DfIHLb50 two-stage-growth-decay DEAD gate=2:duplication
 2026-07-26 TP-DfIHLb50 verify-vendor-data-against-annual-report DEAD gate=2:duplication
+2026-07-27 NLBXgSmRBgU bar-level-returns-objective DEAD gate=2:duplication
+2026-07-27 NLBXgSmRBgU oos-reuse-selection-bias DEAD gate=2:duplication
+2026-07-27 NLBXgSmRBgU p-value-threshold-discipline DEAD gate=2:duplication
+2026-07-27 NLBXgSmRBgU bar-permutation-algorithm DEAD gate=5:architecture
+2026-07-27 NLBXgSmRBgU permutation-destroys-vol-clustering DEAD gate=7:priority
+2026-07-27 NLBXgSmRBgU donchian-lookback-fails-wf DEAD gate=7:priority
+2026-07-27 NLBXgSmRBgU permutation-tests-for-assumptions DEAD gate=7:priority
+2026-07-27 NLBXgSmRBgU insample-mcpt DEFERRED gate=7:priority reopen=signal_outcomes.distinct_composite_date@matured>=100
+2026-07-27 NLBXgSmRBgU walkforward-mcpt SURVIVED
+2026-07-27 NLBXgSmRBgU stable-lookback-plateau SURVIVED
