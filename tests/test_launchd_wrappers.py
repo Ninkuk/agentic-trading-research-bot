@@ -33,6 +33,7 @@ def _code_only(line):
 _MCP_SLOTS = {
     "portfolio_snapshot.sh": ".claude/skills/account-positions/SKILL.md",
     "journal_sync.sh": ".claude/skills/journal-sync/SKILL.md",
+    "order_execution.sh": ".claude/skills/execute-queue/SKILL.md",
 }
 
 # Getters a skill names but deliberately does NOT call in this slot. Each
@@ -41,6 +42,10 @@ _NOT_GRANTED = {
     # Tax lots are read at decision time by `kill-thesis`; the snapshot
     # deliberately does not persist them (account-positions SKILL.md).
     "get_equity_tax_lots",
+    # execute-queue names get_accounts precisely to say it is NOT granted:
+    # its buying-power figure is unreliable per its own tool contract, and
+    # get_portfolio is the granted source in that slot.
+    "get_accounts",
 }
 
 # Widened beyond getters when the order-execution slot landed: its skill
