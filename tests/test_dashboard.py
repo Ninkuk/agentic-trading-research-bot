@@ -642,6 +642,27 @@ def _build_composite_db(path):
     older = composite_db.write_snapshot(conn, "2026-07-07T21:13:00+00:00", 10)
     _write_market_signals(conn, older, vix=18.4)
     composite_db.write_market_regime(conn, older, composite_catalog.REGIME_FIELDS)
+    # One ticker-grain signal per symbol on the older snapshot too, so both
+    # FLAG1 and PLAIN1 have >=2 v_score_history points — the scorecard's new
+    # trend sparkline needs at least 2 points per symbol to render
+    # (score_spark degrades to "no data" below that).
+    composite_db.write_signal_values(
+        conn,
+        older,
+        [
+            dict(
+                signal_id="sig_a",
+                grain="ticker",
+                entity=symbol,
+                raw_value=1.0,
+                score=1,
+                obs_date="2026-07-06",
+                staleness_days=1.5,
+            )
+            for symbol in ("FLAG1", "PLAIN1")
+        ],
+    )
+    composite_db.write_ticker_scores(conn, older)
 
     latest = composite_db.write_snapshot(conn, NOW, 10)
     _write_market_signals(conn, latest, vix=16.1)
@@ -1028,6 +1049,12 @@ def test_scorecard_shows_flagged_and_split(populated_data_dir):
     assert '<tr class="flag"><td>FLAG1</td>' in headline_html
     assert "4 / 0" in headline_html  # FLAG1's bullish/bearish split
     assert "<tr><td>PLAIN1</td>" in headline_html  # non-flagged: plain <tr>
+
+
+def test_scorecard_rows_have_score_history_sparklines(populated_data_dir):
+    html_text = dashboard.build_page(str(populated_data_dir), NOW)
+    assert 'class="sspark"' in html_text
+    assert "trend" in html_text  # new column header
 
 
 def test_signal_efficacy_renders_rows(populated_data_dir):

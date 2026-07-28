@@ -91,9 +91,9 @@ tr.flag .sym::after{content:"★";color:var(--brass);margin-left:6px;font-size:1
 .sval.up{color:var(--up);}.sval.down{color:var(--down);}
 .sbar{position:relative;width:88px;height:9px;background:var(--gutter);border-radius:5px;overflow:hidden;flex:none;}
 .sbar::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--edge);}
-.sbar i{position:absolute;top:0;height:100%;}
-.sbar i.p{left:50%;background:var(--up);}
-.sbar i.n{right:50%;background:var(--down);}
+.sbar i{position:absolute;top:0;height:100%;border-radius:0 4px 4px 0;}
+.sbar i.p{left:50%;background:var(--mark-up);}
+.sbar i.n{right:50%;background:var(--mark-down);border-radius:4px 0 0 4px;}
 
 /* reliability meter */
 .meter{width:104px;margin-left:auto;}

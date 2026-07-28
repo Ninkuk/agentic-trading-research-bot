@@ -35,6 +35,7 @@ from dashboard_lib.svg import (
     _sparkline_svg,
     _yn,
     regime_strip,
+    score_spark,
     tile_spark,
 )
 from sources.combiners.advisor.catalog import STOP_ATR_MULTIPLE  # noqa: E402
@@ -347,16 +348,26 @@ def _macro_drivers(conn, now_iso) -> str:
     return f'<div class="tiles">{"".join(tiles)}</div>'
 
 
-_SCORECARD_HEADERS = ["symbol", "score", "split (bull/bear)", "coverage", "data age", "held"]
+_SCORECARD_HEADERS = [
+    "symbol",
+    "score",
+    "trend",
+    "split (bull/bear)",
+    "coverage",
+    "data age",
+    "held",
+]
 _SCORECARD_COLS = (
     "symbol, score_sum, total, coverage, in_portfolio, bullish, bearish, worst_staleness_days"
 )
 
 
-def _scorecard_row(r, flagged: set) -> str:
+def _scorecard_row(r, flagged: set, history: dict[str, list[int]] | None) -> str:
+    trend = score_spark(history.get(r["symbol"], [])) if history is not None else "—"
     cell = _cells(
         r["symbol"],
         _score_cell(r["score_sum"], r["bullish"], r["bearish"], r["symbol"] in flagged),
+        trend,
         f"{r['bullish']} / {r['bearish']}",
         _pct(r["coverage"]),
         "—" if r["worst_staleness_days"] is None else f"{r['worst_staleness_days']:.1f}d",
@@ -388,13 +399,31 @@ def _scorecard(conn, now_iso) -> str:
             tuple(missing_flagged),
         ).fetchall()
 
-    body = [_scorecard_row(r, flagged) for r in (*headline_rows, *appended_rows)]
+    # Trend sparklines are headline + appended-flagged only (never the
+    # potentially-hundreds-of-rows expander below — one SVG per expander row
+    # would add ~1MB to a page published nightly). One grouped query covers
+    # every sparklined row, never one query per row. Every shown symbol
+    # defaults to [] so a symbol with no/thin history still gets a row —
+    # score_spark itself degrades <2 points to "no data".
+    shown = [r["symbol"] for r in (*headline_rows, *appended_rows)]
+    history: dict[str, list[int]] = {s: [] for s in shown}
+    if shown:
+        marks = ",".join("?" * len(shown))
+        for r in conn.execute(
+            f"SELECT symbol, score_sum FROM v_score_history"
+            f" WHERE symbol IN ({marks}) ORDER BY captured_at ASC",
+            shown,
+        ):
+            history[r["symbol"]].append(r["score_sum"])
+    history = {s: v[-30:] for s, v in history.items()}  # score_spark degrades past ~56 points
+
+    body = [_scorecard_row(r, flagged, history) for r in (*headline_rows, *appended_rows)]
     headline = _table(_SCORECARD_HEADERS, body, numeric_from=1)
 
     all_rows = conn.execute(
         f"SELECT {_SCORECARD_COLS} FROM v_latest_scorecard ORDER BY ABS(score_sum) DESC"
     ).fetchall()
-    all_body = [_scorecard_row(r, flagged) for r in all_rows]
+    all_body = [_scorecard_row(r, flagged, history=None) for r in all_rows]
     expander = (
         f"<details><summary>Show all {len(all_rows)} scored tickers</summary>"
         f"{_table(_SCORECARD_HEADERS, all_body, numeric_from=1)}</details>"
