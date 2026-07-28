@@ -184,7 +184,8 @@ def read_research_verdicts(conn) -> dict:
 def read_reliable_signals(conn) -> set:
     """(signal_id, via_crosswalk) pairs with a reliable efficacy row at any
     horizon — annotation input for size_caps. reliable is the scorer's
-    sample-size floor (n_bench >= 30), not proof the signal works."""
+    sample-size floor (rows, dates AND non-overlapping forward windows —
+    RELIABLE_MIN_BLOCKS is the binding gate), not proof the signal works."""
     return {
         (r[0], r[1])
         for r in conn.execute(

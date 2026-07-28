@@ -1,7 +1,8 @@
 """Monte-Carlo permutation test (MCPT) for the replay's significance flags.
 
 v_replay_efficacy's Wilson interval treats overlapping forward windows as
-independent, and its ~90 cells carry nominal, uncorrected 95% flags. This
+independent, and its ~60 graded cells carry nominal, uncorrected 95%
+flags (the neutral rows are reported but never flagged). This
 pass prices both defects in one null: the FLAGS are held fixed and each
 benchmark spine's daily log returns are shuffled whole-series — the return
 multiset (hence total drift, the v_benchmark_baseline null) is preserved —
@@ -25,14 +26,24 @@ p = (1 + #{permutations with perm excess >= real excess}) / (1 + n_perms)
 — the inclusive convention: the real sample counts as its own permutation
 and p can never be 0. `hit` is direction-adjusted in the view (a bearish
 hit is the benchmark FALLING), so >= is the favorable tail for every cell
-— no per-direction inequality flip is needed, and a cell whose p sits
-near 1 is significantly WRONG (the anti_signal mirror).
+— no per-direction inequality flip is needed. Read p near 1 as "no better
+than any shuffle, ties included" — NOT by itself as evidence of
+anti-prediction: the statistic is discrete and the inclusive >= puts
+exact ties in the favorable tail, so a zero-skill broad-coverage cell
+reads p = 1.0 without being anti-predictive (1 − p is not a left-tail p).
 
 One family row (FAMILY_KEY) prices multiplicity by the max-statistic: per
 permutation T = max over graded cells of (perm hit rate - that
 permutation's own drift baseline), compared against the real max excess.
 It answers "is the best cell better than the best cell of a skill-free
-scoreboard" with one corrected p.
+scoreboard" with one corrected p. The statistic is UN-studentized: cell n
+spans ~53-1,357 live, so the null max is dominated by the small-n cells'
+high-variance excess and the family p has real power only against
+small-n-sized effects — exact under the global null (cannot
+false-positive), but a modest large-n effect can essentially never beat
+it. Read a large family p as "the max is unremarkable", never as "no
+cell survives correction". Westfall-Young studentization is the recorded
+follow-up alongside the block-shuffle variant below.
 
 Caveat that survives (from the proposal): a whole-series shuffle destroys
 autocorrelation and volatility clustering, so cells whose flags key on
@@ -103,6 +114,12 @@ def permutation_null(conn, n_perms: int, seed: int) -> list[tuple]:
     disagrees with the view's n_bench — a p for a different statistic must
     never be published silently."""
     from sources.combiners.backtest import catalog
+
+    if n_perms < 1:
+        # 0 would "compute" p = 1.0 everywhere without permuting anything;
+        # negatives divided by zero or wrote p = -1.0 rows. run.py skips
+        # the pass on 0; anything else non-positive is a caller error.
+        raise ValueError(f"n_perms must be >= 1, got {n_perms}")
 
     spines, groups, real = harvest(conn)
     logret = {b: [math.log(c[i] / c[i - 1]) for i in range(1, len(c))] for b, c in spines.items()}

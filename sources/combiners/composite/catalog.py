@@ -30,8 +30,12 @@ FRED_HY_SPREAD_SCORE = (
 # STRUCTURAL, not return-fitted: policy moves are quantized at 25bp, so
 # half an increment (0.125) clears every real move while the measured
 # 1-3bp month-end window-dressing jitter — the noise that killed the
-# 1-day view in the salvage — never fires it; the cycle read demands a
-# full increment (0.25). Easing scores bullish (+1) as the hypothesis the
+# 1-day view in the salvage — never fires it. Known residual: FUNDING
+# STRESS can clear the dead zone without a policy move — the Sept 2019
+# repo squeeze pushed chg20 to +13/+18bp, a bearish "hiking" read the day
+# before an actual cut (~9 of ~2,525 replay days; bounded, and the
+# threshold sweep before any promotion must account for it). The cycle
+# read demands a full increment (0.25). Easing scores bullish (+1) as the hypothesis the
 # replay grades; anti_signal is the mirror if cuts-mean-recession
 # dominates. Separate constants: different windows, independently
 # retunable (same discipline as the EIA pair).

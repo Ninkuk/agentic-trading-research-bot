@@ -49,8 +49,11 @@ CLASS_BENCHMARKS: list[dict[str, Any]] = [
 # v_pit_signal_change view computes `value - value(source_date - lag)` with
 # BOTH legs vintage-exact (a lag-leg revision published after the as-of
 # date never leaks), and the imported CASE reads the named column. Calendar
-# days because DFF is a calendar-daily series (7 rows/week; weekend obs
-# publish Monday per its ALFRED realtime_start trail).
+# days because DFF is a calendar-daily series (7 rows/week). Publication,
+# per the measured ALFRED realtime_start trail: weekday obs publish the
+# next business day, but Sat/Sun obs publish TUESDAY (Fri publishes
+# Monday) — which is why the replay reads realtime_start itself and never
+# a publication_lag_days constant.
 REPLAY_SIGNALS: list[dict[str, Any]] = [
     {"signal_id": "fred_curve", "series_id": "T10Y2Y", "score_case": FRED_CURVE_SCORE},
     {

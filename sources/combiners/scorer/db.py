@@ -323,9 +323,10 @@ _VIEWS = f"""
 -- the running block's exit_date; equal is independent — touching windows
 -- share a close, not a return interval). Consecutive nightly sessions
 -- overlap ~(h-1)/h of their windows, so rows and dates both overstate the
--- sample; the Wilson CI is therefore computed on n_blocks (pooled hit
--- rate, within-block correlation treated as 1 — crude and conservative,
--- in the same spirit as the rest of this header).
+-- sample; the Wilson CI is therefore computed on n_blocks with a
+-- DATE-MEAN center (one date, one weight — see the dg CTEs), within-block
+-- correlation treated as 1 — crude and conservative, in the same spirit
+-- as the rest of this header.
 DROP VIEW IF EXISTS v_bucket_performance;
 CREATE VIEW v_bucket_performance AS
 WITH RECURSIVE m AS (
@@ -368,34 +369,49 @@ chain AS (
     WHERE d.composite_date = (SELECT MIN(d2.composite_date) FROM d d2
                               WHERE d2.bucket = d.bucket AND d2.horizon = d.horizon)
     UNION ALL
+    -- composite_date > c.composite_date: cycle guard, see v_signal_blocks
     SELECT nx.bucket, nx.horizon, nx.composite_date, nx.exit_date
     FROM chain c JOIN d nx
       ON nx.bucket = c.bucket AND nx.horizon = c.horizon
      AND nx.entry_date >= c.exit_date
+     AND nx.composite_date > c.composite_date
     WHERE nx.composite_date = (SELECT MIN(d2.composite_date) FROM d d2
                                WHERE d2.bucket = c.bucket AND d2.horizon = c.horizon
-                                 AND d2.entry_date >= c.exit_date)
+                                 AND d2.entry_date >= c.exit_date
+                                 AND d2.composite_date > c.composite_date)
 ),
 b AS (SELECT bucket, horizon, COUNT(*) AS n_blocks FROM chain GROUP BY bucket, horizon),
 g AS (
     SELECT bucket, horizon, COUNT(*) AS n_matured,
            AVG(fwd_return) AS avg_fwd_return,
            AVG(excess) AS avg_excess,
-           AVG(hit) AS hit_rate,
-           AVG(null_hit) AS null_rate,
-           AVG(hit) - AVG(null_hit) AS edge,
            COUNT(hit) AS n_bench,
            COUNT(DISTINCT CASE WHEN hit IS NOT NULL THEN composite_date END) AS n_dates
     FROM m GROUP BY bucket, horizon
+),
+-- Date-grain graded statistics — see v_signal_efficacy's dg note (same
+-- cluster-mean rationale: one date, one weight).
+dg AS (
+    SELECT bucket, horizon,
+           AVG(d_hit) AS hit_rate,
+           AVG(d_null) AS null_rate
+    FROM (SELECT bucket, horizon, composite_date,
+                 AVG(hit) AS d_hit, AVG(null_hit) AS d_null
+          FROM m WHERE hit IS NOT NULL
+          GROUP BY bucket, horizon, composite_date)
+    GROUP BY bucket, horizon
 )
 SELECT g.bucket, g.horizon, g.n_matured, g.avg_fwd_return, g.avg_excess,
-       g.hit_rate, g.null_rate, g.edge, g.n_bench, g.n_dates,
+       dg.hit_rate, dg.null_rate,
+       dg.hit_rate - dg.null_rate AS edge, g.n_bench, g.n_dates,
        COALESCE(b.n_blocks, 0) AS n_blocks,
-       {_wilson("-", n="COALESCE(b.n_blocks, 0)", p="g.hit_rate")} AS hit_ci_lo,
-       {_wilson("+", n="COALESCE(b.n_blocks, 0)", p="g.hit_rate")} AS hit_ci_hi,
+       {_wilson("-", n="COALESCE(b.n_blocks, 0)", p="dg.hit_rate")} AS hit_ci_lo,
+       {_wilson("+", n="COALESCE(b.n_blocks, 0)", p="dg.hit_rate")} AS hit_ci_hi,
        (g.n_bench >= {RELIABLE_MIN_N} AND g.n_dates >= {RELIABLE_MIN_N}
         AND COALESCE(b.n_blocks, 0) >= {RELIABLE_MIN_BLOCKS}) AS reliable
-FROM g LEFT JOIN b ON b.bucket = g.bucket AND b.horizon = g.horizon;
+FROM g
+LEFT JOIN dg ON dg.bucket = g.bucket AND dg.horizon = g.horizon
+LEFT JOIN b ON b.bucket = g.bucket AND b.horizon = g.horizon;
 
 -- Per-signal grade, direction-adjusted: excess * sign(score). Crosswalked
 -- evidence is split out so mapped scores are graded separately. Guardrails:
@@ -466,16 +482,23 @@ WITH RECURSIVE chain AS (
           WHERE d2.signal_id = d.signal_id AND d2.via_crosswalk = d.via_crosswalk
             AND d2.horizon = d.horizon AND d2.n_bench > 0)
     UNION ALL
+    -- composite_date > c.composite_date is redundant for well-formed data
+    -- (mature() guarantees exit > entry) but is the cycle guard: a
+    -- degenerate row with entry >= exit would otherwise re-select itself
+    -- forever — UNION ALL has no cycle detection (verified: infinite
+    -- recursion without this predicate, 2026-07-28).
     SELECT nx.signal_id, nx.via_crosswalk, nx.horizon, nx.composite_date, nx.exit_date
     FROM chain c JOIN v_signal_efficacy_by_date nx
       ON nx.signal_id = c.signal_id AND nx.via_crosswalk = c.via_crosswalk
      AND nx.horizon = c.horizon AND nx.n_bench > 0
      AND nx.entry_date >= c.exit_date
+     AND nx.composite_date > c.composite_date
     WHERE nx.composite_date = (
         SELECT MIN(d2.composite_date) FROM v_signal_efficacy_by_date d2
         WHERE d2.signal_id = c.signal_id AND d2.via_crosswalk = c.via_crosswalk
           AND d2.horizon = c.horizon AND d2.n_bench > 0
-          AND d2.entry_date >= c.exit_date)
+          AND d2.entry_date >= c.exit_date
+          AND d2.composite_date > c.composite_date)
 )
 SELECT signal_id, via_crosswalk, horizon, composite_date, exit_date FROM chain;
 
@@ -503,9 +526,6 @@ g AS (
     SELECT signal_id, via_crosswalk, horizon,
            COUNT(*) AS n_matured,
            AVG(dir_excess) AS avg_directional_excess,
-           AVG(hit) AS hit_rate,
-           AVG(null_hit) AS null_rate,
-           AVG(hit) - AVG(null_hit) AS edge,
            AVG(dir_return) AS avg_directional_return,
            COUNT(hit) AS n_bench,
            COUNT(DISTINCT CASE WHEN hit IS NOT NULL THEN composite_date END) AS n_dates,
@@ -513,20 +533,40 @@ g AS (
     FROM m
     GROUP BY signal_id, via_crosswalk, horizon
 ),
+-- Date-grain (cluster-mean) graded statistics: each DATE weighs equally,
+-- matching the block count the CI's n uses. Row-pooling let one heavy
+-- cross-section drag the center (measured live 2026-07-28: si_spike 5d
+-- pooled 0.556 vs 0.537 by date — one date carried 26% of the rows), a
+-- bias that never shrinks as blocks accumulate. null_rate gets the same
+-- weighting so edge and the recommendation comparison stay coherent.
+dg AS (
+    SELECT signal_id, via_crosswalk, horizon,
+           AVG(d_hit) AS hit_rate,
+           AVG(d_null) AS null_rate
+    FROM (SELECT signal_id, via_crosswalk, horizon, composite_date,
+                 AVG(hit) AS d_hit, AVG(null_hit) AS d_null
+          FROM m WHERE hit IS NOT NULL
+          GROUP BY signal_id, via_crosswalk, horizon, composite_date)
+    GROUP BY signal_id, via_crosswalk, horizon
+),
 b AS (
     SELECT signal_id, via_crosswalk, horizon, COUNT(*) AS n_blocks
     FROM v_signal_blocks GROUP BY signal_id, via_crosswalk, horizon
 )
 SELECT g.signal_id, g.via_crosswalk, g.horizon, g.n_matured,
-       g.avg_directional_excess, g.hit_rate, g.null_rate, g.edge,
+       g.avg_directional_excess, dg.hit_rate, dg.null_rate,
+       dg.hit_rate - dg.null_rate AS edge,
        g.avg_directional_return, g.n_bench, g.n_dates,
        COALESCE(b.n_blocks, 0) AS n_blocks,
-       {_wilson("-", n="COALESCE(b.n_blocks, 0)", p="g.hit_rate")} AS hit_ci_lo,
-       {_wilson("+", n="COALESCE(b.n_blocks, 0)", p="g.hit_rate")} AS hit_ci_hi,
+       {_wilson("-", n="COALESCE(b.n_blocks, 0)", p="dg.hit_rate")} AS hit_ci_lo,
+       {_wilson("+", n="COALESCE(b.n_blocks, 0)", p="dg.hit_rate")} AS hit_ci_hi,
        (g.n_bench >= {RELIABLE_MIN_N} AND g.n_dates >= {RELIABLE_MIN_N}
         AND COALESCE(b.n_blocks, 0) >= {RELIABLE_MIN_BLOCKS}) AS reliable,
        g.benchmarks
-FROM g LEFT JOIN b ON b.signal_id = g.signal_id
+FROM g
+LEFT JOIN dg ON dg.signal_id = g.signal_id
+   AND dg.via_crosswalk = g.via_crosswalk AND dg.horizon = g.horizon
+LEFT JOIN b ON b.signal_id = g.signal_id
    AND b.via_crosswalk = g.via_crosswalk AND b.horizon = g.horizon;
 
 -- Decision-support verdict per signal (roadmap: signal-efficacy reweighting

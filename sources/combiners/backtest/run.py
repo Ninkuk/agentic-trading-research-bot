@@ -122,22 +122,36 @@ def run(
         # Permutation null (mcpt.py): flags fixed, spine shuffled, seeded —
         # the p that prices the overlap the Wilson interval cannot, plus the
         # one family row that prices multiplicity. n_perms=0 skips (leaves
-        # any prior pass in place).
+        # any prior pass in place, distinguishable via captured_at).
+        # Skip-and-continue on failure like every other per-item block, and
+        # CLEAR the table: a raise must never leave last week's p-values
+        # silently joined to this week's fresh flags — that staleness is the
+        # exact failure the population guard exists to prevent.
         if n_perms:
-            null_rows = mcpt.permutation_null(conn, n_perms, seed)
-            db.write_replay_null(conn, null_rows)
-            conn.commit()
-            family = next((r for r in null_rows if (r[0], r[1], r[2]) == mcpt.FAMILY_KEY), None)
-            if family:
-                print(
-                    f"-- permutation null: {len(null_rows) - 1} cells @ {n_perms} perms"
-                    f" (seed {seed}); family max-statistic p = {family[4]:.3f} —"
-                    " the ONE multiplicity-corrected number for the whole scoreboard."
-                    " Per-cell perm_p is one-sided (favorable tail): near 0 = hard to"
-                    " match by shuffling, near 1 = significantly wrong. Vol-keyed"
-                    " cells (cboe_vix*) read an optimistic null (shuffling destroys"
-                    " vol clustering)."
-                )
+            try:
+                null_rows = mcpt.permutation_null(conn, n_perms, seed)
+                db.write_replay_null(conn, null_rows, now_iso)
+                conn.commit()
+            except Exception as e:
+                # snapshot header is already final here; the print is the record
+                conn.rollback()
+                db.write_replay_null(conn, [], now_iso)
+                conn.commit()
+                print(f"skip permutation pass: {type(e).__name__}")
+            else:
+                family = next((r for r in null_rows if (r[0], r[1], r[2]) == mcpt.FAMILY_KEY), None)
+                if family:
+                    print(
+                        f"-- permutation null: {len(null_rows) - 1} cells @ {n_perms} perms"
+                        f" (seed {seed}); family max-statistic p = {family[4]:.3f} —"
+                        " the multiplicity answer for the whole scoreboard, but"
+                        " un-studentized: a large value means the MAX is unremarkable,"
+                        " never 'no cell survives'. Per-cell perm_p is one-sided"
+                        " (favorable tail): near 0 = hard to match by shuffling, near"
+                        " 1 = no better than any shuffle (ties included — not itself"
+                        " evidence of anti-prediction). Vol-keyed cells (cboe_vix*)"
+                        " read an optimistic null (shuffling destroys vol clustering)."
+                    )
         # Print `excess` beside `hit`: a bare hit rate is unreadable against a
         # benchmark that drifts up 61-68% of the time. `reliable` is a
         # sample-size floor, NOT evidence the signal works — `beats baseline`

@@ -119,6 +119,35 @@ def test_run_writes_permutation_null(data_dir, tmp_path, capsys):
     assert "family" in capsys.readouterr().out  # corrected p reported to the human
 
 
+def test_run_survives_a_permutation_pass_failure_and_clears_stale_nulls(
+    data_dir, tmp_path, capsys, monkeypatch
+):
+    """A guard raise inside the pass must not kill the weekly run — and
+    must not leave LAST week's p-values silently joined to THIS week's
+    fresh efficacy rows (the exact staleness the guard exists to prevent).
+    Skip-and-continue like every other per-item failure, and clear the
+    table so perm_p honestly reads NULL."""
+    path = str(tmp_path / "backtest.db")
+    conn = db.connect(path)
+    db.ensure_schema(conn)
+    db.write_replay_null(conn, [("stale_sig", "bullish", 5, 9, 0.5)], "2026-07-01T00:00:00+00:00")
+    conn.commit()
+    conn.close()
+
+    def boom(conn, n_perms, seed):
+        raise RuntimeError("population drifted")
+
+    monkeypatch.setattr(run.mcpt, "permutation_null", boom)
+    sid, _, _ = run.run(path, db_dir=data_dir, now_iso="2025-02-01T00:00:00+00:00")
+    assert sid is not None  # the run completed
+    out = capsys.readouterr().out
+    assert "skip permutation pass" in out
+    assert "graded rows" in out  # the efficacy report still printed
+    conn = db.connect(path)
+    assert conn.execute("SELECT COUNT(*) FROM replay_null").fetchone() == (0,)
+    conn.close()
+
+
 def test_run_missing_source_dbs_skip_and_count_failures(tmp_path, capsys):
     sid, n_vint, n_bench = run.run(
         str(tmp_path / "backtest.db"),

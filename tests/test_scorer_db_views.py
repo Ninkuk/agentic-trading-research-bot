@@ -283,6 +283,115 @@ def test_bucket_reliable_requires_distinct_dates(tmp_path):
     assert reliable == 0
 
 
+def test_ci_center_is_date_mean_not_row_pooled(tmp_path):
+    """One heavy cross-section must not drag the CI's center: the graded
+    hit_rate weights each DATE equally (cluster mean), matching the block
+    count the interval's n uses. 3 hits on date 0 + 1 miss on date 10 is
+    50% by date-mean (2 blocks), not 75% by row-pool — measured live,
+    si_spike's heaviest date carried 26% of the rows and biased the pooled
+    center +2pp."""
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for sym in ("A", "B", "C"):  # one date, three hit rows
+        _signal_row(
+            conn,
+            "sig_c",
+            sym,
+            1,
+            0.02,
+            0.01,
+            date=_date(0),
+            entry_date=_date(1),
+            exit_date=_date(8),
+        )
+    _signal_row(  # second date, one miss row
+        conn,
+        "sig_c",
+        "D",
+        1,
+        0.00,
+        0.01,
+        date=_date(10),
+        entry_date=_date(11),
+        exit_date=_date(18),
+    )
+    row = conn.execute(
+        "SELECT n_bench, n_blocks, hit_rate, hit_ci_lo, hit_ci_hi"
+        " FROM v_signal_efficacy WHERE signal_id = 'sig_c'"
+    ).fetchone()
+    assert (row[0], row[1]) == (4, 2)
+    assert abs(row[2] - 0.5) < 1e-9  # (1.0 + 0.0) / 2, not 3/4
+    # Wilson 95% for p=0.5, n=2 blocks — same hand-computed pair as the
+    # bucket guardrail test
+    assert abs(row[3] - 0.094529) < 1e-4
+    assert abs(row[4] - 0.905471) < 1e-4
+
+
+def test_bucket_ci_center_is_date_mean_not_row_pooled(tmp_path):
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    for sym in ("A", "B", "C"):
+        _ticker_row(
+            conn,
+            sym,
+            4,
+            0.02,
+            0.01,
+            date=_date(0),
+            entry_date=_date(1),
+            exit_date=_date(8),
+        )
+    _ticker_row(
+        conn,
+        "D",
+        4,
+        0.00,
+        0.01,
+        date=_date(10),
+        entry_date=_date(11),
+        exit_date=_date(18),
+    )
+    row = conn.execute(
+        "SELECT n_bench, n_blocks, hit_rate FROM v_bucket_performance WHERE bucket = 'strong_bull'"
+    ).fetchone()
+    assert row[0] == 4 and row[1] == 2
+    assert abs(row[2] - 0.5) < 1e-9
+
+
+def test_degenerate_window_row_terminates_the_chain(tmp_path):
+    """Corrupted data (exit before entry — mature() can never write it, but
+    the chain must not trust that) terminates instead of recursing forever:
+    a block anchor can never re-select its own date."""
+    conn = db.connect(str(tmp_path / "s.db"))
+    db.ensure_schema(conn)
+    _signal_row(  # exit BEFORE entry: satisfies its own chain condition
+        conn,
+        "sig_bad",
+        "A",
+        1,
+        0.02,
+        0.01,
+        date=_date(0),
+        entry_date=_date(8),
+        exit_date=_date(1),
+    )
+    _signal_row(
+        conn,
+        "sig_bad",
+        "B",
+        1,
+        0.02,
+        0.01,
+        date=_date(10),
+        entry_date=_date(11),
+        exit_date=_date(18),
+    )
+    n_blocks = conn.execute(
+        "SELECT n_blocks FROM v_signal_efficacy WHERE signal_id = 'sig_bad'"
+    ).fetchone()[0]
+    assert n_blocks == 2  # terminated, both dates chained
+
+
 def test_by_date_view_collapses_rows_per_date(tmp_path):
     conn = db.connect(str(tmp_path / "s.db"))
     db.ensure_schema(conn)

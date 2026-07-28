@@ -58,16 +58,21 @@ CREATE TABLE IF NOT EXISTS benchmark_closes (
 
 -- Permutation null (see mcpt.py): one row per graded efficacy cell with
 -- its one-sided p against the shuffled-spine distribution (favorable
--- tail; p near 1 = significantly wrong), plus ONE family row keyed
+-- tail; p near 1 = no better than any shuffle, ties included — not by
+-- itself evidence of anti-prediction), plus ONE family row keyed
 -- ('*','*',0) — the max-statistic multiplicity answer for the whole
--- scoreboard. Rewritten whole by each pass; v_replay_efficacy LEFT JOINs
--- the cell rows as perm_p/perm_n.
+-- scoreboard (un-studentized: dominated by small-n cells, so a large
+-- family p means "the max is unremarkable", never "no cell survives" —
+-- see mcpt.py). Rewritten whole by each pass, stamped captured_at so a
+-- deliberately kept pass (--perms 0) is distinguishable from a fresh
+-- one; v_replay_efficacy LEFT JOINs the cell rows as perm_p/perm_n.
 CREATE TABLE IF NOT EXISTS replay_null (
-    signal_id TEXT NOT NULL,
-    direction TEXT NOT NULL,
-    horizon   INTEGER NOT NULL,
-    n_perms   INTEGER NOT NULL,
-    p_value   REAL NOT NULL,
+    signal_id   TEXT NOT NULL,
+    direction   TEXT NOT NULL,
+    horizon     INTEGER NOT NULL,
+    n_perms     INTEGER NOT NULL,
+    p_value     REAL NOT NULL,
+    captured_at TEXT,
     PRIMARY KEY (signal_id, direction, horizon)
 );
 """
@@ -115,7 +120,14 @@ def _lag_flags_select(signal: dict) -> str:
     """Flag select for a lagged-change replay signal: the imported CASE
     reads its named derived column from v_pit_signal_change; the change IS
     the raw value shown. A NULL change (lag leg unpublished as-of that
-    date) excludes the row rather than scoring a half-read."""
+    date) excludes the row rather than scoring a half-read.
+
+    ONE lag column per signal entry: `value` here must be a single number.
+    _change_view can materialize several lag columns (across entries), but
+    an entry declaring two has no defined raw value — the unpack below
+    fails ensure_schema loudly by design. Lag column names must also avoid
+    v_pit_signal's own columns (value/asof_date/series_id/source_date) or
+    CREATE VIEW rejects the duplicate."""
     (col,) = signal["lag_columns"]
     return (
         f"SELECT asof_date, '{catalog.BENCHMARK_SERIES}' AS benchmark,\n"
@@ -327,8 +339,10 @@ GROUP BY d.benchmark, h.horizon;
 -- reported as base rate, excluded from grading.
 --
 -- READ `excess`, NOT `hit_rate`. `reliable` is a SAMPLE-SIZE floor only
--- (n_bench >= RELIABLE_MIN_N), matching the scorer's meaning that the advisor
--- depends on — it never meant "this signal works". Significance splits by
+-- (n_bench >= RELIABLE_MIN_N; note the scorer's reliable now ALSO gates on
+-- non-overlapping blocks — this view's row floor is looser, its overlap
+-- correction being perm_p instead) — it never meant "this signal works".
+-- Significance splits by
 -- DIRECTION: `beats_baseline` fires only when the whole Wilson interval sits
 -- ABOVE the benchmark's own drift; `anti_signal` when it sits entirely BELOW
 -- (significantly wrong — the flag predicts the opposite of what follows).
@@ -439,6 +453,10 @@ def ensure_schema(conn) -> None:
     cols = {r[1] for r in conn.execute("PRAGMA table_info(snapshots)")}
     if "market_rows" not in cols:
         conn.execute("ALTER TABLE snapshots ADD COLUMN market_rows INTEGER NOT NULL DEFAULT 0")
+    # replay_null briefly shipped without captured_at (962058b..review fix)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(replay_null)")}
+    if "captured_at" not in cols:
+        conn.execute("ALTER TABLE replay_null ADD COLUMN captured_at TEXT")
     conn.executescript(_views())
     conn.commit()
 
@@ -519,15 +537,15 @@ def insert_market_obs(conn, signal_id: str, rows, publication_lag_days: int = 0)
     return len(tagged)
 
 
-def write_replay_null(conn, rows) -> int:
+def write_replay_null(conn, rows, now_iso: str) -> int:
     """Replace the permutation-null table whole: the pass recomputes every
     cell from the current flags and spine, so stale cells (a signal renamed
     or retired) must not survive a rewrite."""
     conn.execute("DELETE FROM replay_null")
     conn.executemany(
-        "INSERT INTO replay_null (signal_id, direction, horizon, n_perms, p_value)"
-        " VALUES (?, ?, ?, ?, ?)",
-        rows,
+        "INSERT INTO replay_null (signal_id, direction, horizon, n_perms, p_value,"
+        " captured_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [(*r, now_iso) for r in rows],
     )
     return len(rows)
 

@@ -174,13 +174,25 @@ def test_perm_n_matches_view_n_bench(conn):
     assert set(rows) == set(view) | {mcpt.FAMILY_KEY}
 
 
+def test_nonpositive_n_perms_rejected(conn):
+    """-1 divided by zero and -2 wrote p = -1.0 rows before the guard; 0
+    would write p = 1.0 everywhere without permuting anything."""
+    spine(conn, [100.0 * (1.01**i) for i in range(40)])
+    vix(conn, 2, 10.0)
+    for bad in (0, -1, -2):
+        with pytest.raises(ValueError):
+            mcpt.permutation_null(conn, bad, 1)
+
+
 # ---- storage + view join ---------------------------------------------
+
+NOW = "2026-07-28T20:00:00+00:00"
 
 
 def test_write_replay_null_replaces_and_view_joins_perm_p(conn):
     spine(conn, [100.0 * (1.01**i) for i in range(40)])
     vix(conn, 2, 10.0)
-    db.write_replay_null(conn, mcpt.permutation_null(conn, 10, 1))
+    db.write_replay_null(conn, mcpt.permutation_null(conn, 10, 1), NOW)
     conn.commit()
     row = conn.execute(
         "SELECT perm_p, perm_n FROM v_replay_efficacy"
@@ -194,9 +206,19 @@ def test_write_replay_null_replaces_and_view_joins_perm_p(conn):
         == 0
     )
     # a second pass REPLACES the table, never appends
-    db.write_replay_null(conn, mcpt.permutation_null(conn, 20, 2))
+    db.write_replay_null(conn, mcpt.permutation_null(conn, 20, 2), NOW)
     conn.commit()
     assert conn.execute("SELECT DISTINCT n_perms FROM replay_null").fetchall() == [(20,)]
+
+
+def test_replay_null_records_when_it_was_computed(conn):
+    """--perms 0 deliberately keeps a prior pass; captured_at is what makes
+    a kept pass distinguishable from a fresh one."""
+    spine(conn, [100.0 * (1.01**i) for i in range(40)])
+    vix(conn, 2, 10.0)
+    db.write_replay_null(conn, mcpt.permutation_null(conn, 10, 1), NOW)
+    conn.commit()
+    assert conn.execute("SELECT DISTINCT captured_at FROM replay_null").fetchall() == [(NOW,)]
 
 
 def test_view_perm_p_null_before_any_pass(conn):
