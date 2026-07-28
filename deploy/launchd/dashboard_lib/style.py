@@ -155,6 +155,8 @@ summary:focus-visible{outline:2px solid var(--brass);outline-offset:3px;border-r
 .jump a:hover{color:var(--fg);}
 .colophon{margin-top:34px;color:var(--faint);font-size:13px;}
 .colophon a{color:var(--muted);}
+
+.stripwrap{margin:0 0 10px;} .strip rect:hover{opacity:.8;}
 """.strip()
 
 _STYLE = (

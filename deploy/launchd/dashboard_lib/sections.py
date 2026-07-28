@@ -27,7 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from dashboard_lib.style import _STYLE
-from dashboard_lib.svg import _esc, _num, _pct, _signed_num, _sparkline_svg, _yn
+from dashboard_lib.svg import _esc, _num, _pct, _signed_num, _sparkline_svg, _yn, regime_strip
 from sources.combiners.advisor.catalog import STOP_ATR_MULTIPLE  # noqa: E402
 from sources.combiners.composite import candidates  # noqa: E402
 from sources.combiners.scorer import scorecard  # noqa: E402
@@ -299,9 +299,12 @@ def _regime_timeline(conn, now_iso) -> str:
     rows = conn.execute(
         "SELECT s.captured_at, m.regime, m.vix FROM market_regime m"
         " JOIN snapshots s ON s.id = m.snapshot_id"
-        " ORDER BY s.captured_at DESC LIMIT 30"
+        " ORDER BY s.captured_at DESC LIMIT 60"
     ).fetchall()
-    return _sparkline_svg([(r["regime"], r["vix"]) for r in rows])
+    days = [(phx_date(r["captured_at"]), r["regime"]) for r in reversed(rows)]
+    strip = regime_strip(days)
+    spark = _sparkline_svg([(r["regime"], r["vix"]) for r in rows[:30]])
+    return f'<div class="stripwrap">{strip}</div>{spark}'
 
 
 _SCORECARD_HEADERS = ["symbol", "score", "split (bull/bear)", "coverage", "data age", "held"]

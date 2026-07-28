@@ -2,6 +2,8 @@
 
 import html as _html
 
+from dashboard_lib.style import MARK_LINE
+
 
 def _esc(x) -> str:
     return _html.escape("" if x is None else str(x))
@@ -35,7 +37,9 @@ def _sparkline_svg(series: list[tuple], w: int = 640, h: int = 64) -> str:
         y = round(h - 4 - (v - lo) / span * (h - 8), 1)
         coords.append((x, y))
         is_last = i == n - 1
-        fill = {"risk_on": "var(--up)", "risk_off": "var(--down)"}.get(regime, "var(--hold)")
+        fill = {"risk_on": "var(--mark-up)", "risk_off": "var(--mark-down)"}.get(
+            regime, "var(--mark-mid)"
+        )
         radius = 4 if is_last else 3
         stroke = ' stroke="var(--ink)" stroke-width="2"' if is_last else ""
         label = f"point {i + 1} of {n} · VIX {_num(v, 1)} · {regime or 'regime unknown'}"
@@ -54,10 +58,10 @@ def _sparkline_svg(series: list[tuple], w: int = 640, h: int = 64) -> str:
         f'<svg class="spark" role="img" viewBox="0 0 {w} {h}" preserveAspectRatio="none"'
         f' aria-label="{_esc(aria)}">'
         '<defs><linearGradient id="dashfade" x1="0" y1="0" x2="0" y2="1">'
-        '<stop offset="0" stop-color="#e0bd76" stop-opacity=".26"/>'
-        '<stop offset="1" stop-color="#e0bd76" stop-opacity="0"/></linearGradient></defs>'
+        f'<stop offset="0" stop-color="{MARK_LINE}" stop-opacity=".26"/>'
+        f'<stop offset="1" stop-color="{MARK_LINE}" stop-opacity="0"/></linearGradient></defs>'
         f'<path d="{area}" fill="url(#dashfade)"/>'
-        f'<polyline points="{poly}" fill="none" stroke="#e0bd76" stroke-width="2"/>'
+        f'<polyline points="{poly}" fill="none" stroke="var(--mark-line)" stroke-width="2"/>'
         f"{''.join(circles)}</svg>"
         '<p class="cap">VIX · trailing'
         f" {n} snapshots · higher = more fear · dot color = that night's regime</p>"

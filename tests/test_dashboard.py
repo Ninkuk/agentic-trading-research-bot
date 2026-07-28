@@ -977,6 +977,14 @@ def test_regime_timeline_renders_positive(populated_data_dir):
     assert "no data" not in html
 
 
+def test_regime_timeline_has_strip_and_sparkline(populated_data_dir):
+    html_text = dashboard.build_page(str(populated_data_dir), NOW)
+    assert 'class="strip"' in html_text  # the new regime strip
+    assert 'class="spark"' in html_text  # VIX line still present
+    # brass is no longer a chart mark (it may remain as CSS accent ink)
+    assert 'stroke="#e0bd76"' not in html_text and 'stop-color="#e0bd76"' not in html_text
+
+
 def test_scorecard_shows_flagged_and_split(populated_data_dir):
     conn = dashboard._ro(populated_data_dir, "composite.db")
     try:
