@@ -47,14 +47,10 @@ span needed to cover a full seasonal cycle of the name's own vol). If the
 table is absent or `n_days < 60`, path 1 does not apply this run — proceed
 with path 2 alone and **say which paths were used** in the write-up.
 
-**As of 2026-07-21, `n_days` was 13 against the 60-day gate.** The screener
-has run hourly since 2026-07-02 and gains one day per trading day, so path 1
-is unreachable for every ticker in the catalog — every read, on every symbol,
-takes path 2 — until roughly mid-September 2026, and the 252-day confidence
-bar not until mid-2027. This is not a bug to route around; it is the correct
-behavior of a depth gate on a young table. Check `n_days` yourself before
-trusting any path-1 percentile — do not assume the gate has cleared just
-because time has passed since this was written.
+**A failing gate is the gate working, not a bug to route around** — the table
+gains at most one day per trading day, so on a young table path 1 is
+unreachable for every symbol. Check `n_days` each run; never assume depth has
+accrued.
 
 ## 2. The tenor warning
 

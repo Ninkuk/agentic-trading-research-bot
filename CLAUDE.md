@@ -253,7 +253,7 @@ after changing a screener's cadence assumptions, update both.
 **Data-source policy:** official primary sources only, with one approved exception —
 **stockanalysis.com** (already trusted; used by `stocks` and `earnings`). `reddit` (ApeWisdom)
 predates the policy and stays as-is. `portfolio` is account state (Robinhood via MCP),
-not a market data source, so the policy doesn't apply to it. Since 2026-07, the research
+not a market data source, so the policy doesn't apply to it. The research
 skills (`research-ticker`, `kill-thesis`) may also read a **broker/market-microstructure**
 tier — Robinhood MCP quotes, option chains, daily bars, and forward earnings estimates — as
 its own labelled tier below primary filings and distinct from stockanalysis.com. It is

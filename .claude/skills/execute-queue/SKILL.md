@@ -31,9 +31,8 @@ exit code — the output says what happened.
    only — `get_accounts` is deliberately NOT granted in this slot (its
    buying-power figure is unreliable per its own tool contract). `Write` one
    JSON document to the scratchpad directory with EXACTLY this field
-   mapping (source paths verified against live responses 2026-07-27; the
-   broker returns every number as a decimal string — copy those strings
-   verbatim, the parser owns conversion):
+   mapping (the broker returns every number as a decimal string — copy those
+   strings verbatim, the parser owns conversion):
 
    ```json
    {
