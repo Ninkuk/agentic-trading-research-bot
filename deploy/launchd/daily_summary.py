@@ -562,6 +562,54 @@ def research_digest(now_utc, research_dir=None):
         return []
 
 
+_REOPEN_DATED_RE = re.compile(r"\breopen=(\d{4}-\d{2}-\d{2}):(\S+)")
+
+# How long a due reopen stays in the digest before going quiet. Mirrors the
+# 24h-window rule for job failures: an unanswered reminder must not keep the
+# summary red forever -- after this the ledger line is still grep-able.
+_REOPEN_WINDOW_DAYS = 7
+
+
+def format_reopen_lines(due):
+    """Pure: [(ticker, reopen_date, slug, thesis_date)] -> digest lines."""
+    return [
+        f"{ticker} due {date}: {slug} (thesis {thesis})"
+        for date, ticker, slug, thesis in sorted((d, t, s, td) for t, d, s, td in due)
+    ]
+
+
+def reopen_digest(now_utc, research_dir=None):
+    """Dated reopen= triggers from verdicts.log that are due -- reopen date
+    within the last _REOPEN_WINDOW_DAYS Phoenix days. Only each ticker's
+    NEWEST verdict line counts: re-researching a name retires the older
+    thesis's trigger whether the new verdict sets its own or not (the
+    dashboard's research-reopens section applies the same rule). event:
+    reopens never surface here (grep-only by design). TOTAL like
+    research_digest: any failure degrades to []."""
+    try:
+        vlog = (research_dir or Path("research")) / "verdicts.log"
+        if not vlog.is_file():
+            return []
+        today = phx_date(now_utc.isoformat())
+        floor = phx_date((now_utc - dt.timedelta(days=_REOPEN_WINDOW_DAYS)).isoformat())
+        newest: dict[str, tuple[str, str]] = {}
+        for line in vlog.read_text().splitlines():
+            parts = line.split()
+            if len(parts) < 2 or line.lstrip().startswith("#"):
+                continue
+            if parts[1] not in newest or parts[0] >= newest[parts[1]][0]:
+                newest[parts[1]] = (parts[0], line)
+        due = []
+        for ticker, (thesis_date, line) in newest.items():
+            m = _REOPEN_DATED_RE.search(line)
+            if m and floor <= m.group(1) <= today:
+                due.append((ticker, m.group(1), m.group(2), thesis_date))
+        return format_reopen_lines(due)
+    except Exception as e:  # noqa: BLE001 -- total by design
+        print(f"reopen digest failed ({type(e).__name__})", file=sys.stderr)
+        return []
+
+
 def build_summary(now_local, now_utc):
     total_runs, problems = 0, []
 
@@ -613,6 +661,9 @@ def build_summary(now_local, now_utc):
     research = research_digest(now_utc)
     if research:
         lines += ["", "— research —", *research]
+    reopens = reopen_digest(now_utc)
+    if reopens:
+        lines += ["", "— reopen due —", *reopens]
     return healthy, "\n".join(lines)
 
 
