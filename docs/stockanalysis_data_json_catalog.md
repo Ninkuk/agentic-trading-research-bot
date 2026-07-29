@@ -33,7 +33,9 @@ same data the page hydrates from.
 ### Don't guess routes — read the app's own route table
 
 The client bundle ships the complete SvelteKit route dictionary — the
-authoritative list (167 routes as of 2026-07-09). Enumerate from it:
+authoritative list (172 routes as of 2026-07-29). Enumerate from it — but note
+`financials/` is a catch-all (`…/financials/[...routes]`), so statement slugs
+like `income-statement` resolve server-side and never appear in this table:
 
 ```bash
 ENTRY=$(curl -sL --compressed https://stockanalysis.com/stocks/aapl/ \
@@ -101,10 +103,11 @@ non-US listings `holdings/` and `filings/` return `{info}` — present but unfed
 | Route (+ `/__data.json`) | Key payload |
 |---|---|
 | `/stocks/{T}/` | Overview: revenue, netIncome, eps(+growth), peRatio/forwardPE, marketCap, beta, sharesOut, dividend, earningsDate, analyst target, infoTable, news. Every numeric field here is a **suffixed string** (`marketCap` → `"4.64T"`); no full-precision variant on this route |
-| `/stocks/{T}/financials/` | Income statement (`financialData`, `map`, `period`, `availableSources`). `?p=quarterly` for quarterly. `financialData` arrays are **raw integers**, but **index 0 is `"TTM"`, not a fiscal year** — check `datekey` before indexing (AAPL `fcf[0]`=129.17B TTM vs `fcf[1]`=98.77B FY2025) |
-| `…/financials/balance-sheet/` | Balance sheet (same shape). `debt` is gross; `netCash` is net **cash** (AAPL +61.88B), so a net-*debt* input takes its negative |
-| `…/financials/cash-flow-statement/` | Cash-flow statement. Also `leveredFCF` (equity, post-interest) and `unleveredFCF` (firm) beside plain `fcf`. **`capex` is stored negative**, so `fcf` = `ncfo` **+** `capex` (AAPL TTM: 140.222B + −11.048B = 129.174B). All three differ — AAPL TTM `fcf` 129.17B, `leveredFCF` 97.69B, `unleveredFCF` 119.20B — so **`fcf != leveredFCF`**. Plain `fcf` is post-interest, i.e. levered: pair it with **market cap**. Pair `unleveredFCF` with enterprise value |
-| `…/financials/ratios/` | Ratios |
+| `/stocks/{T}/financials/` | ⚠️ **Shape changed between 2026-07-09 and 2026-07-29** — was the income statement; now an **overview**: `financialData` is `null`, `map` is `[]`, and the data lives in `sections[]` (7 themed sections: `revenue-income`, `revenue-segments`, `cash-debt`, `cash-flow-capex`, `margins`, `dividends`, `valuation`). Each section is `{id, title, data, ttm, rows, prior, ttmPrior, …}` where `data` is column arrays (raw numbers) keyed like the old `financialData` — but **fiscal years only: `datekey[0]` is the latest FY, no TTM row**; TTM sits in the section's `ttm` dict. `?p=quarterly` for quarterly. Same change on `/quote/…/financials/`. The old payload moved to `income-statement/` below |
+| `…/financials/income-statement/` | **New route — carries the old `/financials/` payload verbatim**: income statement (`financialData`, `map`, `period`, `availableSources`). `?p=quarterly` for quarterly. `financialData` arrays are **raw integers**, but **index 0 is `"TTM"`, not a fiscal year** — check `datekey` before indexing (AAPL `fcf[0]`=129.17B TTM vs `fcf[1]`=98.77B FY2025) |
+| `…/financials/balance-sheet/` | Balance sheet (same shape as `income-statement/`; unchanged 2026-07-29). `debt` is gross; `netCash` is net **cash** (AAPL +61.88B), so a net-*debt* input takes its negative |
+| `…/financials/cash-flow-statement/` | Cash-flow statement (unchanged 2026-07-29). Also `leveredFCF` (equity, post-interest) and `unleveredFCF` (firm) beside plain `fcf`. **`capex` is stored negative**, so `fcf` = `ncfo` **+** `capex` (AAPL TTM: 140.222B + −11.048B = 129.174B). All three differ — AAPL TTM `fcf` 129.17B, `leveredFCF` 97.69B, `unleveredFCF` 119.20B — so **`fcf != leveredFCF`**. Plain `fcf` is post-interest, i.e. levered: pair it with **market cap**. Pair `unleveredFCF` with enterprise value |
+| `…/financials/ratios/` | Ratios (unchanged 2026-07-29) |
 | `…/financials/segments/` | **Pro-gated** — `info` placeholder only |
 | `…/financials/full/` | **Pro-gated** — `info` placeholder only |
 | `/stocks/{T}/metrics/` | **Operating metrics & breakdowns.** `annualMetrics`/`quarterlyMetrics`/`trailingMetrics`, each `{name, type, count, values:[{x: date, y: number}]}` — **raw numbers**. Groups: Revenue by Segment, Revenue by Geography, Gross Profit/Margin by Type, Operating Expense Breakdown, plus company-specific operating metrics (AAPL: Global Active Devices). **Not** Pro-gated, unlike `financials/segments/` — this is the free path to segment and geography splits. Carries `sourceLastUpdated`, `groups`, `navigationItems` |
@@ -115,7 +118,7 @@ non-US listings `holdings/` and `filings/` return `{info}` — present but unfed
 | `/stocks/{T}/transcripts/` | Index under key `transcripts` (AAPL **74**, back ~18 years; VZ **76**, only back to 2019 — depth varies sharply by ticker). Each `{id, quartrEventId, fiscalYear, quarterLabel, detailSlug, eventDate, eventTitle, files}`. ⚠️ **Not only earnings calls** — conference presentations are interleaved (`eventTitle` "J.P. Morgan 54th Annual…", `quarterLabel` "FY 2026"). Filter on `eventTitle`/`quarterLabel` if you want the quarterly calls alone |
 | `/stocks/{T}/transcripts/{detailSlug}/` | **Full transcript** (~35k chars ≈ 8.6k tokens each; a 76-call corpus is ~2.6M chars ≈ 650k tokens, but fetches in ~25s at 0.33s/call). `transcriptQuarter.transcriptTurns` = list of `{speakerName, role, company, paragraphs}`. ⚠️ **`paragraphs` is `list[list[dict]]`** — a list of paragraphs, each a list of *sentences* `{text, startSec, endSec}` (audio-aligned). Two levels, not one: `[s['text'] for p in turn['paragraphs'] for s in p]`. Plus `summaryShort`, `summaryLongHtml` (AI-generated — tier low-confidence), `audioUrl`, `files`. Source: Quartr |
 | `/stocks/{T}/ratings/` | Per-analyst rating actions: `{action_rt, firm, analyst, slug, pt_now, pt_old, date}` |
-| `/stocks/{T}/statistics/` | 20 grouped blocks: valuation, margins, ratios, scores (Altman Z), fairValue (some `proOnly`), shortSelling, shares, dividends, taxes, analystForecasts. Each block's `data` rows are `{id, title, value, hover}` — **`hover` is the exact figure** (`'4,644,435,714,320'`), `value` the rounded display string. Cheapest exact source of market cap, `enterpriseValue`, `fcf`, `capex`, `debt` in one request. ⚠️ The market-cap row's id is **`marketcap`**, lowercased — everywhere else in this catalog it is `marketCap`. Keying on `marketCap` here silently finds nothing. ⚠️ **The `incomeStatement` block's TTM flow rows can disagree with `/financials/`** — which route wins depends on the field; see the notes below the table |
+| `/stocks/{T}/statistics/` | 20 grouped blocks: valuation, margins, ratios, scores (Altman Z), fairValue (some `proOnly`), shortSelling, shares, dividends, taxes, analystForecasts. Each block's `data` rows are `{id, title, value, hover}` — **`hover` is the exact figure** (`'4,644,435,714,320'`), `value` the rounded display string. Cheapest exact source of market cap, `enterpriseValue`, `fcf`, `capex`, `debt` in one request. ⚠️ The market-cap row's id is **`marketcap`**, lowercased — everywhere else in this catalog it is `marketCap`. Keying on `marketCap` here silently finds nothing. ⚠️ **The `incomeStatement` block's TTM flow rows can disagree with `/financials/income-statement/`** — which route wins depends on the field; see the notes below the table |
 | `/stocks/{T}/dividend/` | Full dividend history, yield, payout, chart |
 | `/stocks/{T}/company/` | Profile: description, executives, contact, filings, logoURL |
 | `/stocks/{T}/forecast/` | priceTargets (avg/median/low/high/count), per-analyst `ratings` (firm/analyst/PT/rating + track record), monthly consensus `recommendations`, EPS/revenue `estimates` |
@@ -123,26 +126,29 @@ non-US listings `holdings/` and `filings/` return `{info}` — present but unfed
 | `/stocks/{T}/employees/` | Headcount history (annual/quarterly) + peers |
 | `/stocks/{T}/market-cap/` | Market-cap history, performance, peers |
 
-> ⚠️ **Take `operatingIncome`, `ebitda` and their margins from `/financials/`, not
-> `/statistics/`.** `/statistics/`'s `incomeStatement` block excludes impairment- and
-> restructuring-type charges from operating expense; `/financials/` includes them.
+> ⚠️ **Take `operatingIncome`, `ebitda` and their margins from
+> `/financials/income-statement/`, not `/statistics/`.** `/statistics/`'s
+> `incomeStatement` block excludes impairment- and restructuring-type charges from
+> operating expense; `/financials/income-statement/` includes them.
 > Both are labelled TTM and nothing marks the difference. TTM `opinc`, 2026-07-21:
 >
-> | | `/statistics/` | `/financials/` |
+> | | `/statistics/` | `…/income-statement/` |
 > |---|---|---|
 > | AAPL / MSFT | 147,366.0M / 148,957.0M | identical ✅ |
 > | INTC | **+2,006.0M** | **−2,214.0M** — sign flips |
 > | BBAI | **−77.8M** | **−216.9M** — −61% vs −170% margin |
 >
 > Only names carrying unusual charges diverge — i.e. the distressed ones where the
-> margin is load-bearing. `/financials/` reconciles (BBAI's four quarterly columns
-> sum to −217.0M); `revenue`, `fcf`, `capex` and `ncfo` agree on both routes. Not
-> the `[0]` TTM-vs-fiscal-year trap above — both figures here are genuinely TTM.
+> margin is load-bearing. `/financials/income-statement/` reconciles (BBAI's four
+> quarterly columns sum to −217.0M); `revenue`, `fcf`, `capex` and `ncfo` agree on
+> both routes. Not the `[0]` TTM-vs-fiscal-year trap above — both figures here are
+> genuinely TTM.
 >
-> ⚠️ **`netIncome[0]` on `/financials/` can be one QUARTER, not four.** EOSE
-> 2026-07-22: `/statistics/` −1,013,340,000 vs `/financials/` +826,557,000 — a sign
-> flip, because `[0]` held Q1'26 alone. Sum `?p=quarterly`'s four columns and check
-> them against `/statistics/` `pretax`. Worst on names with large derivative marks.
+> ⚠️ **`netIncome[0]` on `/financials/income-statement/` can be one QUARTER, not
+> four.** EOSE 2026-07-22: `/statistics/` −1,013,340,000 vs the statement route
+> +826,557,000 — a sign flip, because `[0]` held Q1'26 alone. Sum `?p=quarterly`'s
+> four columns and check them against `/statistics/` `pretax`. Worst on names with
+> large derivative marks.
 >
 > ⚠️ **`debt` is carrying value, not principal.** EOSE 2026-03-31: `debt` 642.9M vs
 > 10-Q principal 943.6M — converts carried net of a bifurcated derivative.
@@ -282,7 +288,8 @@ Values are full-precision and cross-check against the other routes: `se=AAPL`
 with `c=s,n,marketCap,fcf` yields `marketCap=4644435714320` (= the `hover` on
 `/statistics/`) and `fcf=129174000000` (= `financialData.fcf[0]`, the **TTM**
 figure, not FY2025's 98.77B). Flow metrics on this endpoint are trailing-twelve,
-so don't mix them with a fiscal-year row pulled from `/financials/`.
+so don't mix them with a fiscal-year row pulled from a `/financials/` statement
+sub-route (or from the overview's `sections[].data`, which is fiscal-years-only).
 
 ### The rest
 

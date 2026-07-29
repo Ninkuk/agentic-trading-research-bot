@@ -216,7 +216,9 @@ it actually carries, and mind that route's own traps.
 
 **Minority interests break the FCF↔market-cap pairing too.** If the company
 consolidates subsidiaries it does not wholly own — a `minorityInterest` line on
-`/financials/`, or a known holdco (CSU consolidates Topicus/Lumine; Brookfield,
+`/financials/income-statement/` (the bare `/financials/` route is now a
+sections-based overview without statement line items; see the endpoint catalog),
+or a known holdco (CSU consolidates Topicus/Lumine; Brookfield,
 many Japanese/Korean holdcos) — consolidated `fcf` includes cash belonging to
 the minority holders while market cap prices only the parent's share. Paired,
 the yield reads too high. Haircut FCF to the owner share before you solve. Mind
