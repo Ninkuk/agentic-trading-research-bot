@@ -92,8 +92,11 @@ def _make_composite_db(path, regime="risk_on", vix=16.1, symbol=None, score_sum=
         (NOW,),
     )
     conn.execute(
+        # equity_pcr_pctile (7th value) is 0-100 in production (catalog.py's
+        # cboe_equity_pcr raw_value is a percentile) — keep this fixture on
+        # the same unit so a re-introduced x100 render bug shows as 4200%.
         "INSERT INTO market_regime VALUES"
-        " (1, -0.1, 0, 3.05, ?, 0, 0.42, 0, 0, 8, -12.3, 4.1, ?, 10, 10)",
+        " (1, -0.1, 0, 3.05, ?, 0, 42.0, 0, 0, 8, -12.3, 4.1, ?, 10, 10)",
         (vix, regime),
     )
     if symbol:
