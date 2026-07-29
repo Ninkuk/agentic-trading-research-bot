@@ -20,6 +20,7 @@ process, a bug here can never delay or suppress that health alert.
 """
 
 import os
+import re
 import sqlite3
 import sys
 from collections.abc import Callable
@@ -145,7 +146,10 @@ def _table(
 # Cell values built by our own helpers (never user/DB-controlled markup) may
 # pass through _cells unescaped; anything else is treated as plain text and
 # _esc'd. Explicit allowlist rather than "any string starting with '<'".
-_SAFE_HTML_PREFIXES = ("<span", "<div", "<svg", "<circle", "<polyline", "<p")
+# "<a" is only ever produced by _thesis_link, whose href parts are
+# regex-validated and whose form the self-containment tests pin to
+# href-only https anchors.
+_SAFE_HTML_PREFIXES = ("<span", "<div", "<svg", "<circle", "<polyline", "<p", "<a")
 
 
 def _cells(*values, numeric_from: int = 0) -> str:
@@ -827,6 +831,79 @@ def _candidates(conn, now_iso) -> str:
     return caption + table
 
 
+# Mirrors daily_summary._REOPEN_DATED_RE, widened to the event: form. Both
+# read the same verdicts.log lines; the ntfy side alerts on due dates, this
+# side reports everything still open.
+_REOPEN_FIELD_RE = re.compile(r"\breopen=(\d{4}-\d{2}-\d{2}|event):(\S+)")
+# Ticker charset of daily_summary._THESIS_RE — anything else stays plain text.
+_REOPEN_TICKER_RE = re.compile(r"^[A-Z0-9.\-]+$")
+_REOPEN_HEADERS = ["ticker", "due", "trigger", "thesis", "status"]
+
+
+def _thesis_link(ticker: str, thesis_date: str) -> str:
+    """Href-only https anchor (the one legal link form under the
+    self-containment tests) to the committed thesis document. research/ is
+    tracked, so the blob URL works from the published page and locally."""
+    if not _REOPEN_TICKER_RE.match(ticker) or not re.match(r"^\d{4}-\d{2}-\d{2}$", thesis_date):
+        return ticker
+    return f'<a href="{_REPO_URL}/blob/main/research/{ticker}-{thesis_date}.md">{_esc(ticker)}</a>'
+
+
+def _research_reopens(data_dir, now_iso) -> str:
+    """Open revisit triggers from research/verdicts.log (a sibling of the
+    data dir, i.e. repo-root research/). The ntfy digest nags for a week
+    when a dated trigger comes due; this section is the full ledger view —
+    dated triggers upcoming or due, event-shaped ones with no date — each
+    row shown until a newer verdict line for its ticker supersedes it.
+    Only that newest line counts: re-researching a name retires the old
+    thesis's trigger whether or not the new verdict sets its own."""
+    vlog = Path(data_dir).parent / "research" / "verdicts.log"
+    today = phx_date(now_iso)
+    newest: dict[str, tuple[str, str]] = {}
+    for raw in vlog.read_text().splitlines():
+        parts = raw.split()
+        if len(parts) < 2 or raw.lstrip().startswith("#"):
+            continue
+        if parts[1] not in newest or parts[0] >= newest[parts[1]][0]:
+            newest[parts[1]] = (parts[0], raw)
+    dated, events = [], []
+    for ticker, (thesis_date, line) in sorted(newest.items()):
+        m = _REOPEN_FIELD_RE.search(line)
+        if m is None:
+            continue
+        if m.group(1) == "event":
+            events.append((ticker, m.group(2), thesis_date))
+        else:
+            dated.append((m.group(1), ticker, m.group(2), thesis_date))
+    n = len(_REOPEN_HEADERS)  # no numeric columns: dates sort fine as text
+    body = [
+        _cells(
+            _thesis_link(ticker, thesis_date),
+            when,
+            slug,
+            thesis_date,
+            _badge("due", "watch") if when <= today else _badge("upcoming", "ins"),
+            numeric_from=n,
+        )
+        for when, ticker, slug, thesis_date in sorted(dated)
+    ] + [
+        _cells(
+            _thesis_link(ticker, thesis_date),
+            "—",
+            slug,
+            thesis_date,
+            _badge("event", "weak"),
+            numeric_from=n,
+        )
+        for ticker, slug, thesis_date in events
+    ]
+    caption = (
+        f'<p class="cap">{len(dated)} dated · {len(events)} waiting on an event'
+        " · a newer verdict for a ticker retires its trigger</p>"
+    )
+    return caption + _table(_REOPEN_HEADERS, body, empty="no open reopen triggers", numeric_from=n)
+
+
 SECTIONS = [
     (
         "regime",
@@ -873,6 +950,19 @@ SECTIONS = [
         " doing something odd right now; this finds good companies that happen"
         " to be marked down. Nothing scores this list — it is a reading queue,"
         " not an opinion.",
+    ),
+    (
+        "research-reopens",
+        "Research reopens",
+        "research/verdicts.log",
+        _research_reopens,
+        "Research",
+        "Names already researched in depth and set aside, each with the stated"
+        " evidence that would reopen the question. A dated trigger is usually"
+        " an earnings report — “due” means that evidence now exists and the"
+        " name deserves a fresh look. An event trigger waits on a filing or a"
+        " price, with no date attached. A row retires when the name is"
+        " re-researched; the ticker links to the full thesis.",
     ),
     (
         "scorecard",
@@ -1035,11 +1125,16 @@ def _ro(data_dir: str, db_name: str) -> sqlite3.Connection:
 
 def _render_section(sid, title, db_name, fn, kicker, note, data_dir, now_iso) -> str:
     try:
-        conn = _ro(data_dir, db_name)
-        try:
-            body = fn(conn, now_iso)
-        finally:
-            conn.close()
+        if db_name.endswith(".db"):
+            conn = _ro(data_dir, db_name)
+            try:
+                body = fn(conn, now_iso)
+            finally:
+                conn.close()
+        else:
+            # File-backed section (research/verdicts.log): fn resolves its own
+            # path from data_dir, under the same degrade contract as a DB.
+            body = fn(data_dir, now_iso)
     except Exception as e:  # missing DB, dropped view — degrade, never crash
         print(f"{db_name}: unreadable ({type(e).__name__})", file=sys.stderr)
         body = f'<p class="unavailable">{_esc(db_name)}: unreadable ({type(e).__name__})</p>'

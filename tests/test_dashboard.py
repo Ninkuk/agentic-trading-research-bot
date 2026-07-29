@@ -1039,16 +1039,33 @@ def _build_stocks_db(path):
 
 @pytest.fixture
 def populated_data_dir(tmp_path):
-    """A tmp_path with composite.db, scorer.db, advisor.db and stocks.db
+    """A data dir with composite.db, scorer.db, advisor.db and stocks.db
     populated via each source's own db.py — real schemas/views throughout, no
     hand-rolled DDL — so every one of dashboard.SECTIONS' renderers has at
-    least one real row to show."""
-    _build_composite_db(tmp_path / "composite.db")
-    _build_scorer_db(tmp_path / "scorer.db")
-    _build_advisor_db(tmp_path / "advisor.db")
-    _build_stocks_db(tmp_path / "stocks.db")
-    _make_fred_db(tmp_path / "fred.db")
-    return str(tmp_path)
+    least one real row to show. Laid out as tmp_path/data + tmp_path/research
+    because the research-reopens section resolves research/ as the data dir's
+    sibling (mirroring repo-root data/ and research/)."""
+    data = tmp_path / "data"
+    data.mkdir()
+    _build_composite_db(data / "composite.db")
+    _build_scorer_db(data / "scorer.db")
+    _build_advisor_db(data / "advisor.db")
+    _build_stocks_db(data / "stocks.db")
+    _make_fred_db(data / "fred.db")
+    research = tmp_path / "research"
+    research.mkdir()
+    # NOW's Phoenix date is 2026-07-08: STNE's trigger has passed (due),
+    # GNTX's is ahead (upcoming), GFI's is undated (event), and OLD was
+    # re-researched after its trigger (superseded — must not render).
+    (research / "verdicts.log").write_text(
+        "# Format: <YYYY-MM-DD> <TICKER> <VERDICT> ... [reopen=<YYYY-MM-DD|event>:<slug>]\n"
+        "2026-07-01 STNE UNPROVEN conditions=6 refuted=0 unknown=3 reopen=2026-07-07:q2-print\n"
+        "2026-07-01 GNTX UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-08-20:q3-print\n"
+        "2026-07-01 GFI UNPROVEN conditions=4 refuted=0 unknown=2 reopen=event:tarkwa-renewal\n"
+        "2026-06-20 OLD UNPROVEN conditions=1 refuted=0 unknown=1 reopen=2026-07-01:print\n"
+        "2026-07-05 OLD SOUND conditions=3 refuted=0 unknown=0\n"
+    )
+    return str(data)
 
 
 def test_populated_fixture_has_no_unavailable_sections(populated_data_dir):
@@ -1293,6 +1310,8 @@ _SECTIONS_WITH_POSITIVE_TEST = {
     "plan-004-scorecard",
     # test_candidates_renders_names_and_its_data_date
     "candidates",
+    # test_research_reopens_renders_due_upcoming_and_event
+    "research-reopens",
 }
 
 
@@ -1618,3 +1637,47 @@ def test_degraded_and_empty_states_are_actually_styled():
     which already enforces exactly this for pills."""
     for cls in (".empty", ".unavailable"):
         assert cls + "{" in dashboard._STYLE, f"{cls} referenced in HTML but never styled"
+
+
+# --- research reopens -------------------------------------------------------
+
+
+def test_research_reopens_renders_due_upcoming_and_event(populated_data_dir):
+    html = dashboard._research_reopens(populated_data_dir, NOW)
+    assert "STNE" in html and ">due<" in html
+    assert "GNTX" in html and ">upcoming<" in html
+    assert "GFI" in html and ">event<" in html
+    # the ticker links to the committed thesis document, href-only anchor
+    assert f'<a href="{dashboard._REPO_URL}/blob/main/research/STNE-2026-07-01.md">STNE</a>' in html
+
+
+def test_research_reopens_newest_verdict_supersedes(populated_data_dir):
+    # OLD was re-researched after its trigger date; only the newest verdict
+    # line per ticker counts, and that line carries no reopen field.
+    html = dashboard._research_reopens(populated_data_dir, NOW)
+    assert "OLD" not in html
+
+
+def test_research_reopens_due_is_phoenix_not_utc(tmp_path):
+    (tmp_path / "research").mkdir()
+    (tmp_path / "research" / "verdicts.log").write_text(
+        "2026-07-27 CHKP FLAWED conditions=6 refuted=3 unknown=3 reopen=2026-07-30:q2-print\n"
+    )
+    (tmp_path / "data").mkdir()
+    # 04:13 UTC on the 30th is 9:13pm on the 29th in Phoenix -> not yet due.
+    # (Match the pill, not a bare ">due<" — the table header row also says "due".)
+    html = dashboard._research_reopens(str(tmp_path / "data"), "2026-07-30T04:13:00+00:00")
+    assert 'pill ins">upcoming<' in html and 'pill watch">due<' not in html
+
+
+def test_research_reopens_registered():
+    assert "research-reopens" in dashboard.SECTION_IDS
+
+
+def test_populated_page_with_reopen_links_stays_self_contained(populated_data_dir):
+    # The reopen table introduces the page's only in-table anchors; they must
+    # hold to the same href-only, https-only bar as the intro links.
+    html = dashboard.build_page(populated_data_dir, NOW)
+    page_without_script, script_body = _split_inline_script(html)
+    _assert_no_external_asset(page_without_script)
+    _assert_script_body_is_safe(script_body)

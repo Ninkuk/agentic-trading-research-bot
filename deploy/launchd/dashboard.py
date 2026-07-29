@@ -62,6 +62,7 @@ from dashboard_lib.sections import (  # noqa: E402,F401
     _regime_timeline,
     _reliability_meter,
     _render_section,
+    _research_reopens,
     _ro,
     _score_cell,
     _scorecard,
