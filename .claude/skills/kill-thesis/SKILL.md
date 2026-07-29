@@ -153,8 +153,13 @@ Close with exactly one, matching the vocabulary this repo's plan reviewers use:
 Then state, in one sentence, what evidence would flip your verdict.
 
 Finally, append one line to `research/verdicts.log` (create it if absent):
-`<YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n>`
+`<YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n> [reopen=<YYYY-MM-DD|event>:<slug>]`
 — the ledger that makes verdict drift measurable (see the design note below).
+`reopen=` encodes the flip-evidence sentence above: a date when the deciding
+evidence lands (earnings print, ruling, PDUFA — surfaced by the nightly
+daily-summary when due), or `event:` for undated triggers (a filing, a price
+level — grep-only). The slug is a pointer; the thesis holds the condition.
+Omit the field only when the thesis genuinely states no reopen condition.
 
 ## Design note: the one-way-check budget is frozen (2026-07-21)
 

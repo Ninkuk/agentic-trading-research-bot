@@ -1,42 +1,50 @@
 # kill-thesis verdict ledger — one line per verdict, appended by the skill.
-# Format: <YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n>
+# Format: <YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n> [reopen=<YYYY-MM-DD|event>:<slug>]
 # Purpose: makes verdict drift measurable (see the design note in
 # .claude/skills/kill-thesis/SKILL.md — the one-way-check freeze is revisited
 # at ten verdicts). Nothing in sources/ reads this file.
+# reopen= is the thesis's stated revisit trigger; the slug is a pointer, the
+# thesis file is the source of truth. Dated reopens are surfaced by the
+# nightly ntfy (deploy/launchd/daily_summary.py) when due; the dashboard's
+# research-reopens section lists every open trigger, event: ones included.
+# Only a ticker's newest line counts -- a re-research retires the old trigger.
+# Absent reopen= means the thesis states no reopen condition. Backfilled
+# 2026-07-29 from each thesis's falsifier/verdict prose.
 2026-07-10 CSU UNPROVEN conditions=6 refuted=0 unknown=3
-2026-07-21 BBAI UNPROVEN conditions=4 refuted=0 unknown=1
+2026-07-21 BBAI UNPROVEN conditions=4 refuted=0 unknown=1 reopen=event:organic-growth-2q-or-price-near-net-cash
 2026-07-22 EOSE FLAWED conditions=5 refuted=2 unknown=3
-2026-07-22 CRML FLAWED conditions=7 refuted=1 unknown=6
+2026-07-22 CRML FLAWED conditions=7 refuted=1 unknown=6 reopen=event:tanbreez-feasibility-study
 2026-07-26 ADBE UNPROVEN conditions=6 refuted=0 unknown=3
 # 2026-07-26 PEGA: the line below SUPERSEDES a first same-day run that logged
 # buy on conditions=6 refuted=1 unknown=3. That run missed both Appian damages
 # claims; the withdrawal and its reason are in scorer.db verdict_corrections.
-2026-07-26 PEGA FLAWED conditions=8 refuted=2 unknown=5
-2026-07-26 CHKP FLAWED conditions=6 refuted=3 unknown=3
-2026-07-26 CPRT FLAWED conditions=6 refuted=2 unknown=4
-2026-07-27 STNE UNPROVEN conditions=6 refuted=0 unknown=3
-2026-07-27 TIMB UNPROVEN conditions=7 refuted=0 unknown=4
+2026-07-26 PEGA FLAWED conditions=8 refuted=2 unknown=5 reopen=2027-01-11:appian-retrial
+2026-07-26 CHKP FLAWED conditions=6 refuted=3 unknown=3 reopen=2026-07-30:q2-print-guidance
+2026-07-26 CPRT FLAWED conditions=6 refuted=2 unknown=4 reopen=2026-09-03:q4-print-insurance-volumes
+2026-07-27 STNE UNPROVEN conditions=6 refuted=0 unknown=3 reopen=2026-08-13:q2-print-cost-of-risk
+2026-07-27 TIMB UNPROVEN conditions=7 refuted=0 unknown=4 reopen=2026-07-29:q2-print
 2026-07-27 OGC UNPROVEN conditions=5 refuted=0 unknown=1
-2026-07-27 NICE UNPROVEN conditions=4 refuted=0 unknown=2
+2026-07-27 NICE UNPROVEN conditions=4 refuted=0 unknown=2 reopen=2026-08-05:q2-print-cloud-ge-13pct
 2026-07-27 TPTS FLAWED conditions=7 refuted=6 unknown=1
-2026-07-27 SANM UNPROVEN conditions=5 refuted=0 unknown=1
-2026-07-27 GNTX UNPROVEN conditions=5 refuted=0 unknown=2
-2026-07-27 PTC UNPROVEN conditions=5 refuted=0 unknown=2
-2026-07-27 DECK UNPROVEN conditions=5 refuted=0 unknown=2
-2026-07-27 SRAD UNPROVEN conditions=5 refuted=0 unknown=2
-2026-07-27 TSLA FLAWED conditions=7 refuted=2 unknown=2
-2026-07-27 TTD UNPROVEN conditions=7 refuted=0 unknown=3
-2026-07-27 GFI UNPROVEN conditions=4 refuted=0 unknown=2
-2026-07-27 DOCS UNPROVEN conditions=6 refuted=0 unknown=3
+2026-07-27 SANM UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-11-02:q4-call-fy27-caps
+2026-07-27 GNTX UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-23:q3-print-ems-award
+2026-07-27 PTC UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-07-29:q3-print-bookings
+2026-07-27 DECK UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-22:print-falsifier-checkpoint
+2026-07-27 SRAD UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-08-03:q2-print-guidance
+2026-07-27 TSLA FLAWED conditions=7 refuted=2 unknown=2 reopen=event:robotaxi-miles-or-capex-rollover
+2026-07-27 TTD UNPROVEN conditions=7 refuted=0 unknown=3 reopen=2026-08-06:q2-print-rerun
+2026-07-27 GFI UNPROVEN conditions=4 refuted=0 unknown=2 reopen=event:tarkwa-renewal-gold-ge-3800
+2026-07-27 DOCS UNPROVEN conditions=6 refuted=0 unknown=3 reopen=2026-08-06:q2-print
 2026-07-27 FSLR SOUND conditions=4 refuted=0 unknown=0
-2026-07-27 LOPE UNPROVEN conditions=5 refuted=0 unknown=3
-2026-07-27 SFM UNPROVEN conditions=5 refuted=0 unknown=3
+2026-07-27 LOPE UNPROVEN conditions=5 refuted=0 unknown=3 reopen=2026-07-30:amendment-8k-q2-print
+2026-07-27 SFM UNPROVEN conditions=5 refuted=0 unknown=3 reopen=2026-07-29:q2-print-margin-durability
 2026-07-27 AEM UNPROVEN conditions=5 refuted=0 unknown=2
 2026-07-27 DSGX UNPROVEN conditions=5 refuted=0 unknown=3
-2026-07-27 TREX UNPROVEN conditions=7 refuted=0 unknown=3
-2026-07-27 NYT UNPROVEN conditions=6 refuted=0 unknown=2
-2026-07-27 SII UNPROVEN conditions=5 refuted=0 unknown=2
-2026-07-27 FFIV UNPROVEN conditions=6 refuted=0 unknown=3
-2026-07-27 UTHR FLAWED conditions=6 refuted=2 unknown=2
-2026-07-27 BMI UNPROVEN conditions=6 refuted=0 unknown=3
-2026-07-27 AZN FLAWED conditions=5 refuted=2 unknown=3
+2026-07-27 TREX UNPROVEN conditions=7 refuted=0 unknown=3 reopen=2026-08-04:q2-print-sell-through
+2026-07-27 NYT UNPROVEN conditions=6 refuted=0 unknown=2 reopen=event:second-ai-deal-or-price-le-52
+2026-07-27 SII UNPROVEN conditions=5 refuted=0 unknown=2 reopen=event:critical-materials-aum-2q-flat-tape
+2026-07-27 FFIV UNPROVEN conditions=6 refuted=0 unknown=3 reopen=event:price-le-290-or-systems-past-eos
+2026-07-27 UTHR FLAWED conditions=6 refuted=2 unknown=2 reopen=2026-08-05:q2-print-tyvaso-sequential
+2026-07-27 BMI UNPROVEN conditions=6 refuted=0 unknown=3 reopen=event:organic-growth-2q-margin-held
+2026-07-27 AZN FLAWED conditions=5 refuted=2 unknown=3 reopen=event:price-le-120-or-replacement-slate
+2026-07-29 MYRG SOUND conditions=3 refuted=0 unknown=0 reopen=event:price-low-200s-or-fcf-durable
