@@ -119,15 +119,25 @@ def _table(
     body_rows: list[str],
     empty: str = "no rows yet",
     numeric_from: int = 0,
+    sortable: set[int] | None = None,
 ) -> str:
+    """`sortable` restricts which numeric_from-and-later columns get the JS
+    sort hook (`data-num`) — pass the set of column indices that actually
+    sort as numbers. None (default) keeps every numeric_from column
+    sortable, the prior behavior. A column excluded from `sortable` still
+    gets `class="num"` (right-aligned to match its `.num` cells) — it just
+    isn't wired for the header-click sort, because its values aren't scalar
+    (e.g. the scorecard's trend sparkline, split count, held checkmark)."""
     if not body_rows:
         return f'<p class="empty">{_esc(empty)}</p>'
-    head = "".join(
-        f'<th class="num" data-num="1">{_esc(h)}</th>'
-        if i >= numeric_from
-        else f"<th>{_esc(h)}</th>"
-        for i, h in enumerate(headers)
-    )
+
+    def _head_cell(i: int, h: str) -> str:
+        if i < numeric_from:
+            return f"<th>{_esc(h)}</th>"
+        attr = ' data-num="1"' if sortable is None or i in sortable else ""
+        return f'<th class="num"{attr}>{_esc(h)}</th>'
+
+    head = "".join(_head_cell(i, h) for i, h in enumerate(headers))
     table = f"<table><thead><tr>{head}</tr></thead><tbody>{''.join(body_rows)}</tbody></table>"
     return f'<div class="twrap">{table}</div>'
 
@@ -242,7 +252,7 @@ def _view_table(
             bool(vals) and all(isinstance(v, int | float) and not isinstance(v, bool) for v in vals)
         )
     head = "".join(
-        f'<th class="num">{_esc(h)}</th>' if numeric[j] else f"<th>{_esc(h)}</th>"
+        f'<th class="num" data-num="1">{_esc(h)}</th>' if numeric[j] else f"<th>{_esc(h)}</th>"
         for j, h in enumerate(headers)
     )
     body_rows = []
@@ -280,7 +290,14 @@ def _regime(conn, now_iso) -> str:
             ("yield curve inverted", _yn(r["curve_inverted"])),
             ("high-yield spread", _num(r["hy_spread"], 2)),
             ("VIX backwardation", _yn(r["vix_backwardation"])),
-            ("put / call percentile", _pct(r["equity_pcr_pctile"])),
+            (
+                "put / call percentile",
+                # equity_pcr_pctile is already stored 0-100 (composite/catalog.py's
+                # cboe_equity_pcr is `100.0 * COUNT/COUNT`) — _pct expects a 0-1
+                # fraction and would multiply by 100 a second time, so format
+                # in-line rather than reuse it.
+                "—" if r["equity_pcr_pctile"] is None else f"{r['equity_pcr_pctile']:.1f}%",
+            ),
             ("FOMC blackout", _yn(r["in_fomc_blackout"])),
             ("imminent high-impact event", _yn(r["imminent_high_impact"])),
             (
@@ -351,10 +368,19 @@ _SCORECARD_COLS = (
 )
 
 
+# _scorecard's numeric_from=1 columns are score(1), trend(2), split(3),
+# coverage(4), data age(5), held(6). Only score/coverage/data age are
+# actual scalars fit for the JS header-click sort; trend is an SVG
+# sparkline, split is a "b / b" string, and held is a checkmark-or-blank —
+# all three sort as nonsense text if wired up, so they keep the `.num`
+# right-alignment (via numeric_from) without the `data-num` sort hook.
+_SCORECARD_SORTABLE = {1, 4, 5}
+
+
 def _scorecard_row(r, flagged: set, history: dict[str, list[int]] | None) -> str:
     trend = score_spark(history.get(r["symbol"], [])) if history is not None else "—"
     cell = _cells(
-        r["symbol"],
+        f'<span class="sym">{_esc(r["symbol"])}</span>',
         _score_cell(r["score_sum"], r["bullish"], r["bearish"], r["symbol"] in flagged),
         trend,
         f"{r['bullish']} / {r['bearish']}",
@@ -411,7 +437,9 @@ def _scorecard(conn, now_iso) -> str:
         '<input id="tickfilter" type="search" placeholder="filter tickers"'
         ' aria-label="filter tickers">'
     )
-    headline = filter_box + _table(_SCORECARD_HEADERS, body, numeric_from=1)
+    headline = filter_box + _table(
+        _SCORECARD_HEADERS, body, numeric_from=1, sortable=_SCORECARD_SORTABLE
+    )
 
     all_rows = conn.execute(
         f"SELECT {_SCORECARD_COLS} FROM v_latest_scorecard ORDER BY ABS(score_sum) DESC"
@@ -419,7 +447,8 @@ def _scorecard(conn, now_iso) -> str:
     all_body = [_scorecard_row(r, flagged, history=None) for r in all_rows]
     expander = (
         f"<details><summary>Show all {len(all_rows)} scored tickers</summary>"
-        f"{_table(_SCORECARD_HEADERS, all_body, numeric_from=1)}</details>"
+        f"{_table(_SCORECARD_HEADERS, all_body, numeric_from=1, sortable=_SCORECARD_SORTABLE)}"
+        "</details>"
     )
     return headline + expander
 
@@ -815,9 +844,11 @@ SECTIONS = [
         "composite.db",
         _regime_timeline,
         "Macro",
-        "How the market mood and the VIX fear gauge have moved across recent"
-        " nightly snapshots. Each dot is one snapshot; higher = more fear;"
-        " color = that night's regime.",
+        "The colored strip is the regime verdict itself, one cell per day —"
+        " green risk-on, red risk-off, gray mixed. How the market mood and"
+        " the VIX fear gauge have moved across recent nightly snapshots."
+        " Each dot is one snapshot; higher = more fear; color = that"
+        " night's regime.",
     ),
     (
         "macro-drivers",
@@ -827,7 +858,8 @@ SECTIONS = [
         "Macro",
         "The regime's three deciding inputs with their recent history: the"
         " 10y–2y Treasury spread, the high-yield credit spread, and the VIX."
-        " Each tile is today's value, the one-day change, and a 90-day trend.",
+        " Each tile is today's value, the one-day change, and the last 90"
+        " observations' trend.",
     ),
     (
         "candidates",

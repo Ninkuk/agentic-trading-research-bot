@@ -171,7 +171,7 @@ def test_build_page_degrades_when_all_dbs_missing(tmp_path):
     html = dashboard.build_page(str(tmp_path), NOW)
     assert html.startswith("<!doctype html>") or "<html" in html
     assert html.count('class="unavailable"') >= 8  # most sections degrade
-    # all 12 catalogued sections are present by id even when empty
+    # all catalogued sections are present by id even when empty
     for sid in dashboard.SECTION_IDS:
         assert f'id="{sid}"' in html
 
@@ -227,6 +227,8 @@ _SCRIPT_BANNED = (
     "src=",
     "http://",
     "https://",
+    "ws://",
+    "wss://",
     "document.write",
 )
 
@@ -259,13 +261,6 @@ def test_self_containment_holds_for_real_world_tickers(tmp_path):
     page_without_script, script_body = _split_inline_script(html)
     _assert_no_external_asset(page_without_script)
     _assert_script_body_is_safe(script_body)
-
-
-def test_page_embeds_inline_script_and_stays_self_contained(tmp_path):
-    html_text = dashboard.build_page(str(tmp_path), NOW)
-    assert "<script>" in html_text and "</script>" in html_text
-    for banned in ("fetch(", "XMLHttpRequest", "import(", "src=", 'href="http'):
-        assert banned not in html_text.split("<script>")[1].split("</script>")[0]
 
 
 def test_tables_carry_sort_metadata(populated_data_dir):
@@ -324,6 +319,25 @@ def test_regime_expander_shows_raw_curve_spread(tmp_path):
     assert "-0.10" in html or "-0.1" in html
     assert "<summary>All regime inputs</summary>" in html
     assert "All 10 regime inputs" not in html
+
+
+def test_regime_pcr_percentile_not_double_scaled(populated_data_dir):
+    # equity_pcr_pctile is stored 0-100 (composite/catalog.py's cboe_equity_pcr
+    # signal is already `100.0 * COUNT/COUNT`) — populated_data_dir's real
+    # write_market_regime copies _REGIME_SIGNAL_VALUES' cboe_equity_pcr (96.4)
+    # straight into market_regime.equity_pcr_pctile, exactly like a live run.
+    # (`_make_composite_db`, used by most other tests here, instead pokes
+    # equity_pcr_pctile directly via a hand-rolled INSERT and does not
+    # exercise this path.) Rendering it through _pct (which expects a 0-1
+    # fraction) would multiply by 100 a second time and print "9640.0%"
+    # instead of "96.4%".
+    conn = dashboard._ro(populated_data_dir, "composite.db")
+    try:
+        html = dashboard._regime(conn, NOW)
+    finally:
+        conn.close()
+    assert "96.4%" in html
+    assert "9640.0%" not in html and "9642.9%" not in html
 
 
 def test_flagged_ticker_never_truncated(tmp_path):
@@ -418,9 +432,12 @@ def test_view_table_aligns_only_numeric_columns():
     # digits-as-text in a TEXT column is still non-numeric
     assert "<th>code</th>" in html
     assert "<td>007</td>" in html
-    # numeric columns: header and cell are right-aligned
-    assert '<th class="num">n</th>' in html
-    assert '<th class="num">x</th>' in html
+    # numeric columns: header and cell are right-aligned, and carry the JS
+    # sort hook — every _view_table-detected numeric column is a real scalar
+    # (unlike _table's headers, which may cover a non-scalar cell like a
+    # sparkline), so data-num is unconditional here.
+    assert '<th class="num" data-num="1">n</th>' in html
+    assert '<th class="num" data-num="1">x</th>' in html
     assert '<td class="num">5</td>' in html
     assert '<td class="num">0.5</td>' in html
 
@@ -643,7 +660,7 @@ _REGIME_SIGNAL_VALUES = {
     "fred_curve": -0.42,
     "fred_hy_spread": 3.05,
     "cboe_vix_backwardation": 0,
-    "cboe_equity_pcr": 0.42,
+    "cboe_equity_pcr": 96.4,  # already a 0-100 percentile, like production's raw_value
     "fomc_blackout": 0,
     "econ_imminent": 0,
     "mcal_days_to_opex": 8,
@@ -1090,9 +1107,26 @@ def test_scorecard_shows_flagged_and_split(populated_data_dir):
     finally:
         conn.close()
     headline_html = html.split("<details>")[0]
-    assert '<tr class="flag"><td>FLAG1</td>' in headline_html
+    assert '<tr class="flag"><td><span class="sym">FLAG1</span></td>' in headline_html
     assert "4 / 0" in headline_html  # FLAG1's bullish/bearish split
-    assert "<tr><td>PLAIN1</td>" in headline_html  # non-flagged: plain <tr>
+    # non-flagged: plain <tr>, but the symbol cell still carries class="sym"
+    # (the CSS only styles the ★ via `tr.flag .sym::after`, so an unflagged
+    # row's .sym is inert — same markup either way is the simplest correct fix)
+    assert '<tr><td><span class="sym">PLAIN1</span></td>' in headline_html
+
+
+def test_scorecard_split_column_header_has_no_sort_hook(populated_data_dir):
+    # trend/split/held are not scalars — sorting on them is nonsense, so their
+    # headers must carry `.num` (alignment) without `data-num` (the JS sort hook).
+    conn = dashboard._ro(populated_data_dir, "composite.db")
+    try:
+        html = dashboard._scorecard(conn, NOW)
+    finally:
+        conn.close()
+    assert '<th class="num">split (bull/bear)</th>' in html
+    assert '<th class="num" data-num="1">split (bull/bear)</th>' not in html
+    # score/coverage/data age ARE scalars and stay sortable
+    assert '<th class="num" data-num="1">score</th>' in html
 
 
 def test_scorecard_rows_have_score_history_sparklines(populated_data_dir):
