@@ -206,9 +206,41 @@ def _assert_no_external_asset(html: str) -> None:
     assert re.findall(r"url\((?!#)", lower) == [], "url() pointing outside the document"
 
 
+def _split_inline_script(page: str) -> tuple[str, str]:
+    """Return (page_without_the_one_script_block, script_body). Asserts
+    exactly one <script>...</script> exists and it has no attributes."""
+    assert page.count("<script>") == 1 and page.count("</script>") == 1
+    assert "<script " not in page  # no src=, type=, or any attribute form
+    pre, rest = page.split("<script>", 1)
+    body, post = rest.split("</script>", 1)
+    return pre + post, body
+
+
+# The script body's own ban-list — narrower than _EXTERNAL_ASSET_CARRIERS
+# (which still applies, unchanged, to everything outside the one carved-out
+# <script> block) because inline JS legitimately contains e.g. `class=` or
+# other substrings that would false-positive against the markup carrier list.
+_SCRIPT_BANNED = (
+    "fetch(",
+    "XMLHttpRequest",
+    "import(",
+    "src=",
+    "http://",
+    "https://",
+    "document.write",
+)
+
+
+def _assert_script_body_is_safe(script_body: str) -> None:
+    for banned in _SCRIPT_BANNED:
+        assert banned not in script_body, f"unsafe token {banned!r} in inline script"
+
+
 def test_build_page_is_self_contained(tmp_path):
     html = dashboard.build_page(str(tmp_path), NOW)
-    _assert_no_external_asset(html)
+    page_without_script, script_body = _split_inline_script(html)
+    _assert_no_external_asset(page_without_script)
+    _assert_script_body_is_safe(script_body)
     assert "<style>" in html  # CSS is inlined in-head
 
 
@@ -224,7 +256,22 @@ def test_self_containment_holds_for_real_world_tickers(tmp_path):
     html = dashboard.build_page(str(tmp_path), NOW)
     assert "CDNA" in html  # the row really rendered; we are not asserting on an empty page
     assert "cdn" in html.lower()  # ...and it really does contain the old forbidden substring
-    _assert_no_external_asset(html)
+    page_without_script, script_body = _split_inline_script(html)
+    _assert_no_external_asset(page_without_script)
+    _assert_script_body_is_safe(script_body)
+
+
+def test_page_embeds_inline_script_and_stays_self_contained(tmp_path):
+    html_text = dashboard.build_page(str(tmp_path), NOW)
+    assert "<script>" in html_text and "</script>" in html_text
+    for banned in ("fetch(", "XMLHttpRequest", "import(", "src=", 'href="http'):
+        assert banned not in html_text.split("<script>")[1].split("</script>")[0]
+
+
+def test_tables_carry_sort_metadata(populated_data_dir):
+    html_text = dashboard.build_page(str(populated_data_dir), NOW)
+    assert 'data-num="1"' in html_text  # numeric column header
+    assert 'id="tickfilter"' in html_text  # scorecard filter box
 
 
 def test_score_cell_clamps_and_signs():

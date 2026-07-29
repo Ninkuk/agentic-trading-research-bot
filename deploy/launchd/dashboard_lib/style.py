@@ -153,6 +153,13 @@ summary:focus-visible{outline:2px solid var(--brass);outline-offset:3px;border-r
 .stripwrap{margin:0 0 10px;} .strip rect:hover{opacity:.8;}
 
 .tile .tspark{display:block;margin:6px auto 2px;} .tile .d{font-size:12px;color:var(--muted);}
+
+/* JS progressive enhancement: tooltip, sortable headers, ticker filter */
+.jstip{position:absolute;display:none;background:var(--paper);border:1px solid var(--edge);border-radius:6px;padding:4px 8px;font:11px var(--mono);pointer-events:none;z-index:10;}
+th{cursor:pointer;}
+th[data-dir="asc"]::after{content:" ↑";}
+th[data-dir="desc"]::after{content:" ↓";}
+#tickfilter{background:var(--gutter);border:1px solid var(--edge);color:var(--fg);border-radius:6px;padding:5px 9px;margin:0 0 8px;font:12px var(--mono);}
 """.strip()
 
 _STYLE = (

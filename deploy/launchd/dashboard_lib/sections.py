@@ -26,6 +26,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from dashboard_lib.js import SCRIPT
 from dashboard_lib.style import _STYLE
 from dashboard_lib.svg import (
     _esc,
@@ -122,7 +123,9 @@ def _table(
     if not body_rows:
         return f'<p class="empty">{_esc(empty)}</p>'
     head = "".join(
-        f'<th class="num">{_esc(h)}</th>' if i >= numeric_from else f"<th>{_esc(h)}</th>"
+        f'<th class="num" data-num="1">{_esc(h)}</th>'
+        if i >= numeric_from
+        else f"<th>{_esc(h)}</th>"
         for i, h in enumerate(headers)
     )
     table = f"<table><thead><tr>{head}</tr></thead><tbody>{''.join(body_rows)}</tbody></table>"
@@ -404,7 +407,11 @@ def _scorecard(conn, now_iso) -> str:
     history = {s: v[-30:] for s, v in history.items()}  # score_spark degrades past ~56 points
 
     body = [_scorecard_row(r, flagged, history) for r in (*headline_rows, *appended_rows)]
-    headline = _table(_SCORECARD_HEADERS, body, numeric_from=1)
+    filter_box = (
+        '<input id="tickfilter" type="search" placeholder="filter tickers"'
+        ' aria-label="filter tickers">'
+    )
+    headline = filter_box + _table(_SCORECARD_HEADERS, body, numeric_from=1)
 
     all_rows = conn.execute(
         f"SELECT {_SCORECARD_COLS} FROM v_latest_scorecard ORDER BY ABS(score_sum) DESC"
@@ -1295,6 +1302,7 @@ def build_page(data_dir: str, now_iso: str) -> str:
         "<title>Agentic Trading Research Bot Dashboard</title>"
         f"<style>{_STYLE}</style></head><body>"
         f"{body_html}"
+        f"<script>{SCRIPT}</script>"
         "</body></html>\n"
     )
 
