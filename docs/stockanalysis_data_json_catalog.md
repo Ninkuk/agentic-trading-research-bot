@@ -33,9 +33,9 @@ same data the page hydrates from.
 ### Don't guess routes — read the app's own route table
 
 The client bundle ships the complete SvelteKit route dictionary — the
-authoritative list (172 routes as of 2026-07-29). Enumerate from it — but note
-`financials/` is a catch-all (`…/financials/[...routes]`), so statement slugs
-like `income-statement` resolve server-side and never appear in this table:
+authoritative list (172 routes as of 2026-07-29). `financials/` is a catch-all
+(`…/financials/[...routes]`), so its statement slugs (`income-statement`, …)
+resolve server-side and never appear in this table. Enumerate from it:
 
 ```bash
 ENTRY=$(curl -sL --compressed https://stockanalysis.com/stocks/aapl/ \
@@ -103,11 +103,11 @@ non-US listings `holdings/` and `filings/` return `{info}` — present but unfed
 | Route (+ `/__data.json`) | Key payload |
 |---|---|
 | `/stocks/{T}/` | Overview: revenue, netIncome, eps(+growth), peRatio/forwardPE, marketCap, beta, sharesOut, dividend, earningsDate, analyst target, infoTable, news. Every numeric field here is a **suffixed string** (`marketCap` → `"4.64T"`); no full-precision variant on this route |
-| `/stocks/{T}/financials/` | ⚠️ **Shape changed between 2026-07-09 and 2026-07-29** — was the income statement; now an **overview**: `financialData` is `null`, `map` is `[]`, and the data lives in `sections[]` (7 themed sections: `revenue-income`, `revenue-segments`, `cash-debt`, `cash-flow-capex`, `margins`, `dividends`, `valuation`). Each section is `{id, title, data, ttm, rows, prior, ttmPrior, …}` where `data` is column arrays (raw numbers) keyed like the old `financialData` — but **fiscal years only: `datekey[0]` is the latest FY, no TTM row**; TTM sits in the section's `ttm` dict. `?p=quarterly` for quarterly. Same change on `/quote/…/financials/`. The old payload moved to `income-statement/` below |
-| `…/financials/income-statement/` | **New route — carries the old `/financials/` payload verbatim**: income statement (`financialData`, `map`, `period`, `availableSources`). `?p=quarterly` for quarterly. `financialData` arrays are **raw integers**, but **index 0 is `"TTM"`, not a fiscal year** — check `datekey` before indexing (AAPL `fcf[0]`=129.17B TTM vs `fcf[1]`=98.77B FY2025) |
-| `…/financials/balance-sheet/` | Balance sheet (same shape as `income-statement/`; unchanged 2026-07-29). `debt` is gross; `netCash` is net **cash** (AAPL +61.88B), so a net-*debt* input takes its negative |
-| `…/financials/cash-flow-statement/` | Cash-flow statement (unchanged 2026-07-29). Also `leveredFCF` (equity, post-interest) and `unleveredFCF` (firm) beside plain `fcf`. **`capex` is stored negative**, so `fcf` = `ncfo` **+** `capex` (AAPL TTM: 140.222B + −11.048B = 129.174B). All three differ — AAPL TTM `fcf` 129.17B, `leveredFCF` 97.69B, `unleveredFCF` 119.20B — so **`fcf != leveredFCF`**. Plain `fcf` is post-interest, i.e. levered: pair it with **market cap**. Pair `unleveredFCF` with enterprise value |
-| `…/financials/ratios/` | Ratios (unchanged 2026-07-29) |
+| `/stocks/{T}/financials/` | **Overview** (`financialData` is `null` here): data lives in `sections[]` — 7 themed sections (`revenue-income`, `revenue-segments`, `cash-debt`, `cash-flow-capex`, `margins`, `dividends`, `valuation`), each `{id, title, data, ttm, rows, prior, ttmPrior, …}`. `data` is column arrays (raw numbers), **fiscal years only: `datekey[0]` is the latest FY, no TTM row** — TTM sits in the section's `ttm` dict. `?p=quarterly` for quarterly |
+| `…/financials/income-statement/` | Income statement (`financialData`, `map`, `period`, `availableSources`). `?p=quarterly` for quarterly. `financialData` arrays are **raw integers**, but **index 0 is `"TTM"`, not a fiscal year** — check `datekey` before indexing (AAPL `fcf[0]`=129.17B TTM vs `fcf[1]`=98.77B FY2025) |
+| `…/financials/balance-sheet/` | Balance sheet (same shape as `income-statement/`). `debt` is gross; `netCash` is net **cash** (AAPL +61.88B), so a net-*debt* input takes its negative |
+| `…/financials/cash-flow-statement/` | Cash-flow statement. Also `leveredFCF` (equity, post-interest) and `unleveredFCF` (firm) beside plain `fcf`. **`capex` is stored negative**, so `fcf` = `ncfo` **+** `capex` (AAPL TTM: 140.222B + −11.048B = 129.174B). All three differ — AAPL TTM `fcf` 129.17B, `leveredFCF` 97.69B, `unleveredFCF` 119.20B — so **`fcf != leveredFCF`**. Plain `fcf` is post-interest, i.e. levered: pair it with **market cap**. Pair `unleveredFCF` with enterprise value |
+| `…/financials/ratios/` | Ratios |
 | `…/financials/segments/` | **Pro-gated** — `info` placeholder only |
 | `…/financials/full/` | **Pro-gated** — `info` placeholder only |
 | `/stocks/{T}/metrics/` | **Operating metrics & breakdowns.** `annualMetrics`/`quarterlyMetrics`/`trailingMetrics`, each `{name, type, count, values:[{x: date, y: number}]}` — **raw numbers**. Groups: Revenue by Segment, Revenue by Geography, Gross Profit/Margin by Type, Operating Expense Breakdown, plus company-specific operating metrics (AAPL: Global Active Devices). **Not** Pro-gated, unlike `financials/segments/` — this is the free path to segment and geography splits. Carries `sourceLastUpdated`, `groups`, `navigationItems` |
