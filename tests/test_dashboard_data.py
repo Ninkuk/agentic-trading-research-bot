@@ -426,6 +426,13 @@ def test_ticker_detail_shapes(populated_data_dir):
     assert t["signals"], "FLAG1 has 4 ticker-grain signals on the latest snapshot"
     assert {"signal", "score", "raw_value"} == set(t["signals"][0])
     assert t["fills"], "FLAG1 has one decision row"
+    assert t["verdicts"], "FLAG1 has one research_verdicts row"
+    assert {"date", "verdict", "thesis_path"} == set(t["verdicts"][0])
+    assert t["verdicts"][0] == {
+        "date": "2026-07-01",
+        "verdict": "buy",
+        "thesis_path": "research/FLAG1-2026-07-01.md",
+    }
 
     xom = doc["tickers"]["XOM"]
     assert xom["position"] == {

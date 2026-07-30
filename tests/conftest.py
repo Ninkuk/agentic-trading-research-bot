@@ -323,6 +323,20 @@ def _build_scorer_db(path):
         (NOW,),
     )
 
+    # Task 8 privacy-parity guard: a research_verdicts row (schema at
+    # sources/combiners/scorer/db.py:253-276) with a non-NULL `note`, for
+    # FLAG1 (already in the composite/decisions fixtures, so it reaches
+    # doc["tickers"] via headline_symbols). `note` here — like decisions'
+    # note above — must never leak into doc["tickers"]; only `doc` (a bare
+    # "<TICKER>-<DATE>.md" filename per the research-ticker skill's journal
+    # ingest) becomes `thesis_path`.
+    conn.execute(
+        "INSERT INTO research_verdicts (symbol, verdict, verdict_date, doc, note, recorded_at)"
+        " VALUES ('FLAG1', 'buy', '2026-07-01', 'FLAG1-2026-07-01.md',"
+        " 'private analyst note', ?)",
+        (NOW,),
+    )
+
     # v_candidate_efficacy: one matured candidates-screen list-entry episode
     # via the rsi dislocation door (direct-but-schema-true insert, mirroring
     # tests/test_scorer_candidates.py's own fixture shape).
