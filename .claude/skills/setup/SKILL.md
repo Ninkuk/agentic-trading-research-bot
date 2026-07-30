@@ -46,4 +46,5 @@ schedule decision.
    what would be installed without touching launchctl.
 6. Finish by pointing at the dashboard the nightly jobs produce
    (https://ninkuk.github.io/agentic-trading-research-bot/ is the author's;
-   theirs is `reports/dashboard.html`) and `uv run python main.py --list`.
+   theirs is the `dashboard/` React app reading `reports/data.json`) and
+   `uv run python main.py --list`.

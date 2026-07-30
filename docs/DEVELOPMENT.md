@@ -172,5 +172,33 @@ All four gates run in the pre-commit hook. Tests mirror the module layout:
 `tests/test_<name>_<layer>.py`, where layer is one of `catalog`, `fetch`,
 `db_schema`, `db_write`, `db_views`, `run`.
 
+## Dashboard frontend
+
+`dashboard/` is a React app (Vite + TypeScript + Recharts) that renders
+`reports/data.json` — the plain-data snapshot `deploy/launchd/dashboard.py`
+writes nightly. It is the **only** Node-touched directory in the repo, and is
+dev-time only: nothing under `sources/`, `deploy/launchd/`, or the launchd
+schedule ever invokes Node.
+
+```bash
+cd dashboard
+npm ci                # install once
+npm test               # vitest
+npm run dev            # local dev server; `predev` copies the committed
+                        # src/fixtures/data.json into public/ so it renders
+                        # without a real data/ checkout
+```
+
+Before any change that affects what gets published, rebuild and confirm the
+production bundle:
+
+```bash
+npm run build           # tsc -b && vite build -> dashboard/dist
+```
+
+`publish_dashboard.py` copies `dashboard/dist` plus a fresh
+`reports/data.json` to the `gh-pages` branch — see
+[SCHEDULE.md](SCHEDULE.md) for the nightly export/publish timing.
+
 Contributor guidance — the invariants to preserve, the spec → plan → build
 workflow, and the data-source policy — lives in [CLAUDE.md](../CLAUDE.md).

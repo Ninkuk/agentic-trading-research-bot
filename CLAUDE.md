@@ -11,6 +11,8 @@ SQLite database, then derive signals in SQL views.
 
 **Zero runtime third-party dependencies** — everything is stdlib (`urllib`, `sqlite3`, `json`,
 `argparse`). Python 3.12, managed with `uv`. Dev dependencies are only `pytest`, `ruff`, `mypy`.
+`dashboard/` (the React app rendering `reports/data.json`) is the one Node-touched directory
+in the repo, and it's dev-time only — launchd never invokes Node.
 
 **This repo is public.** Nothing sensitive has ever been committed and it stays that way:
 `data/`, `logs/`, `reports/`, `scratchpad/`, `.env`, and personal `.claude/` config are all

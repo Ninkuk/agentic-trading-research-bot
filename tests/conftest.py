@@ -1,12 +1,13 @@
 """Shared fixtures for the dashboard test suite.
 
-The populated-fixture web below is copied VERBATIM from `tests/test_dashboard.py`
-(the legacy HTML generator's own module-local copy, kept untouched until Task 17
-deletes that file) so `tests/test_dashboard_data.py` (Task 3) and later dashboard
-test modules (Tasks 5, 9, ...) can `from conftest import ...` one source of truth
-instead of re-diverging copies. Fixtures build real per-combiner/screener schemas
-via each source's own `ensure_schema` (never hand-rolled DDL) — a combiner view's
-shape change breaks loudly here instead of silently blanking a section.
+The populated-fixture web below originated as a VERBATIM copy of the legacy
+HTML generator's own module-local fixtures (`tests/test_dashboard.py`,
+deleted in Task 17) so `tests/test_dashboard_data.py` (Task 3) and later
+dashboard test modules (Tasks 5, 9, ...) can `from conftest import ...` one
+source of truth instead of re-diverging copies. Fixtures build real
+per-combiner/screener schemas via each source's own `ensure_schema` (never
+hand-rolled DDL) — a combiner view's shape change breaks loudly here instead
+of silently blanking a section.
 
 `NOW` stays `"2026-07-08T21:13:00+00:00"` (Phoenix July 8) — the fixture's
 embedded dates (verdicts.log due/upcoming split, stocks `priceDate`, snapshot
@@ -506,7 +507,7 @@ def _build_stocks_db(path):
 def populated_data_dir(tmp_path):
     """A data dir with composite.db, scorer.db, advisor.db and stocks.db
     populated via each source's own db.py — real schemas/views throughout, no
-    hand-rolled DDL — so every one of dashboard.SECTIONS' renderers has at
+    hand-rolled DDL — so every section of dashboard_lib.data's export has at
     least one real row to show. Laid out as tmp_path/data + tmp_path/research
     because the research-reopens section resolves research/ as the data dir's
     sibling (mirroring repo-root data/ and research/)."""
