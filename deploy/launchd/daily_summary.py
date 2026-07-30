@@ -367,8 +367,9 @@ def format_candidates_lines(rows, data_date, limit=CANDIDATES_MAX):
         )
     # This section sits directly under "N flagged" in the same push. Without
     # this line a reader would reasonably take a ranked list of tickers for an
-    # opinion; nothing downstream grades it and row order is fcf yield.
-    lines.append("ungraded screen, not a recommendation")
+    # opinion; the scorer grades list entries for calibration only and row
+    # order is fcf yield.
+    lines.append("calibration screen, not a recommendation")
     return lines
 
 

@@ -1,7 +1,39 @@
 """Read-only extraction from stocks/etfs (prices) and composite (scores).
 No network anywhere in this package."""
 
+from sources.combiners.composite import candidates
+from sources.common.clock import phx_date
 from sources.common.dbattach import attach_ro, detach  # noqa: F401  (re-exported)
+
+
+def read_candidate_rows(conn):
+    """(screen_date, screen_version, rows) from the ATTACHed stocks.db, via
+    the candidates screen itself — one source of truth for what qualifies
+    (its unqualified `v_latest` resolves to src because scorer.db has none;
+    a test pins that). screen_date is the Phoenix date of src.snapshots'
+    newest header, NEVER candidates.snapshot_date(conn): the scorer's own
+    run headers share the `snapshots` table name and main wins resolution.
+    Returns (None, version, []) when the header is unavailable."""
+    row = conn.execute(
+        "SELECT captured_at FROM src.snapshots ORDER BY captured_at DESC, id DESC LIMIT 1"
+    ).fetchone()
+    if not row or not row[0]:
+        return None, candidates.SCREEN_VERSION, []
+    rows = [
+        {
+            "symbol": r["symbol"],
+            "fcf_yield": r["fcfYield"],
+            "rsi": r["rsi"],
+            "high52ch": r["high52ch"],
+            "fscore": r["fScore"],
+            "via_rsi": int(r["rsi"] is not None and 0 < r["rsi"] < candidates.RSI_MAX),
+            "via_drawdown": int(
+                r["high52ch"] is not None and r["high52ch"] <= candidates.HIGH52_DISLOCATION_MAX
+            ),
+        }
+        for r in candidates.screen(conn)
+    ]
+    return phx_date(row[0]), candidates.SCREEN_VERSION, rows
 
 
 def harvest_prices(conn) -> list:

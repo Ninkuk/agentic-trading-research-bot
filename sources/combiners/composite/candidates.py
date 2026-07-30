@@ -13,9 +13,12 @@ enters the funnel from the other end: quality first, dislocation as timing.
 Of the names it surfaced on the day it was written, 2 were in composite's
 universe and 0 were flagged — the two funnels barely intersect.
 
-WHAT THIS IS NOT. There is no forward-return evidence for this screen and
-nothing downstream grades it. It is a reading list, not an opinion, and
-deliberately produces no signal_values rows and no flags.
+WHAT THIS IS NOT. It is a reading list, not an opinion, and deliberately
+produces no signal_values rows and no flags. The scorer grades list-ENTRY
+episodes for calibration only (scorer.db v_candidate_efficacy: excess vs
+SPY at 21/63 trading days, split by dislocation branch) — that measures the
+TIMING gates, never the multi-year quality thesis, and nothing feeds back
+into the gates below; re-tuning them stays a human decision.
 
 Every gate below encodes a defect measured in stocks.db (audits dated
 2026-07-26 and 2026-07-29); none of them are stylistic:
@@ -51,7 +54,8 @@ Every gate below encodes a defect measured in stocks.db (audits dated
     same way.
   * zScore / interestCoverage are ANNOTATIONS, never gates — they surface
     the leverage dimension netDebtEbitda can miss (TIMB: interest coverage
-    0.49 beside nde 0.24) without shrinking an ungraded funnel.
+    0.49 beside nde 0.24) without shrinking the funnel; no forward-return
+    evidence justifies gating them.
 """
 
 import argparse
@@ -62,8 +66,13 @@ from datetime import UTC, datetime
 from sources.combiners.composite.catalog import STOCKS_COMPANY_KEY, STOCKS_PRIMARY_FIRST
 from sources.common.clock import phx_date
 
-# Hand-set, documented judgment — not fitted, and deliberately not tuned
-# against outcomes (no outcome data for this screen exists). Tune here.
+# Stamped onto graded appearance rows (scorer.db candidate_appearances) so
+# efficacy samples never mix gate regimes. Bump on any threshold change.
+SCREEN_VERSION = "2026-07-29"
+
+# Hand-set, documented judgment — not fitted against outcomes. The scorer
+# grades list-entry episodes (v_candidate_efficacy) for calibration only;
+# re-tuning these numbers stays a human decision. Tune here.
 MARKET_CAP_MIN = 2e9
 DOLLAR_VOLUME_MIN = 10e6
 ROIC_MIN = 12.0
@@ -295,10 +304,10 @@ def build_report(conn, now_iso: str) -> str:
             f" or >= {-HIGH52_DISLOCATION_MAX:.0f}% off the 52w high."
             " z and intCov are annotations, not gates.",
             "",
-            "This is an UNGRADED screen and NOT A RECOMMENDATION. No forward-return",
-            "evidence exists for it and nothing downstream scores it. Row order is",
-            "fcf yield, not conviction. It is input to research-ticker, which decides",
-            "whether any of these is worth owning.",
+            "NOT A RECOMMENDATION. List entries are graded for calibration only",
+            "(scorer.db v_candidate_efficacy); nothing feeds back into the gates.",
+            "Row order is fcf yield, not conviction. It is input to research-ticker,",
+            "which decides whether any of these is worth owning.",
         ]
     )
 

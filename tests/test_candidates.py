@@ -342,17 +342,20 @@ def test_report_renders_empty_without_crash(tmp_path):
 
 def test_report_disclaims_recommendation(tmp_path):
     """This is a screen feeding research-ticker, not a buy list. The report must
-    say so on its face — nothing downstream grades it and nobody should trade it."""
+    say so on its face — grading is calibration-only and nobody should trade it."""
     conn = _stocks_db(tmp_path, {})
     report = candidates.build_report(conn, NOW)
     assert "not a recommendation" in report.lower()
     assert "GOOD" in report
 
 
-def test_report_states_the_screen_is_ungraded(tmp_path):
-    """No forward-return evidence exists for this screen. Saying so is the
-    difference between a candidate list and an invented edge."""
-    assert "ungraded" in candidates.build_report(_stocks_db(tmp_path, {}), NOW).lower()
+def test_report_states_grading_is_calibration_only(tmp_path):
+    """The scorer grades list entries, but only to calibrate the screen —
+    saying so on the report's face is the difference between a candidate
+    list and an invented edge."""
+    report = candidates.build_report(_stocks_db(tmp_path, {}), NOW).lower()
+    assert "calibration" in report
+    assert "nothing feeds back" in report
 
 
 def test_report_columns_do_not_overflow_on_wide_negatives(tmp_path):

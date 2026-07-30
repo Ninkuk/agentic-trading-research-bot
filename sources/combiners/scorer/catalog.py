@@ -10,6 +10,18 @@ COMPOSITE_DB = "composite.db"
 # (halted/thin-symbol guard; 7 covers any holiday weekend).
 ENTRY_MAX_AGE_DAYS = 7
 
+# Candidate-screen grading (candidates.py's list, read from stocks.db).
+# Only list-ENTRY episodes grade: a name sits on the list for weeks, and
+# grading every nightly sighting counts one call N times — the
+# overlapping-sample trap v_signal_efficacy documents. A new episode
+# begins only after the symbol has been absent this many calendar days.
+STOCKS_DB = "stocks.db"
+CANDIDATE_ENTRY_GAP_DAYS = 7
+# 21/63 trading days grade the screen's dislocation-timing claim; 5/10d
+# grade noise for a thesis measured in quarters. The multi-year quality
+# claim is ungradeable here and stays research-ticker's job.
+CANDIDATE_HORIZONS = (21, 63)
+
 # Matched benchmark per crosswalk ticker (composite's CROSSWALK fans asset
 # classes out to these). Grading a commodity proxy as excess-vs-SPY flatters
 # it whenever equities fall, so each crosswalked row is graded against its

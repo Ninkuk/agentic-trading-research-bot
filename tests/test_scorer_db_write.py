@@ -584,6 +584,7 @@ def test_matured_counts_reports_per_table(tmp_path):
         "ticker_outcomes": 0,
         "regime_outcomes": 1,
         "verdict_outcomes": 0,
+        "candidate_outcomes": 0,
     }
 
 

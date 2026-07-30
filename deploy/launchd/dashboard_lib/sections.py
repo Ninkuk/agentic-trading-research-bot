@@ -825,8 +825,8 @@ def _candidates(conn, now_iso) -> str:
     caption = (
         f'<p class="cap">{len(rows)} name(s) pass'
         f"{f' · top {shown} shown' if len(rows) > shown else ''}"
-        f" · {_esc(stamp)} · ungraded — row order is free-cash-flow yield,"
-        " not conviction</p>"
+        f" · {_esc(stamp)} · calibration only, not an opinion — row order is"
+        " free-cash-flow yield, not conviction</p>"
     )
     return caption + table
 
@@ -948,8 +948,9 @@ SECTIONS = [
         " on capital, real free cash flow, a rising Piotroski score, and a share"
         " price currently well off its highs. The scorecard below finds stocks"
         " doing something odd right now; this finds good companies that happen"
-        " to be marked down. Nothing scores this list — it is a reading queue,"
-        " not an opinion.",
+        " to be marked down. List entries are graded for calibration only"
+        " (scorer.db v_candidate_efficacy) — it is a reading queue, not an"
+        " opinion.",
     ),
     (
         "research-reopens",

@@ -252,15 +252,15 @@ def test_build_page_is_self_contained(tmp_path):
 def test_self_containment_holds_for_real_world_tickers(tmp_path):
     """Page *data* must never be able to trip the self-containment check.
 
-    The old assertion forbade the substring "cdn" anywhere in the output. It
-    passed only because it rendered an empty data dir: `composite.db` holds the
-    real ticker CDNA, so the moment the page has rows the blacklist fires on a
-    document that is perfectly self-contained. Carriers, not words.
+    A substring blacklist (forbidding "cdn" anywhere in the output) passes
+    only on an empty data dir: `composite.db` holds the real ticker CDNA, so
+    the moment the page has rows the blacklist fires on a document that is
+    perfectly self-contained. Carriers, not words.
     """
     _make_composite_db(tmp_path / "composite.db", symbol="CDNA", score_sum=5)
     html = dashboard.build_page(str(tmp_path), NOW)
     assert "CDNA" in html  # the row really rendered; we are not asserting on an empty page
-    assert "cdn" in html.lower()  # ...and it really does contain the old forbidden substring
+    assert "cdn" in html.lower()  # ...and it really does contain the blacklisted substring
     page_without_script, script_body = _split_inline_script(html)
     _assert_no_external_asset(page_without_script)
     _assert_script_body_is_safe(script_body)
@@ -1104,9 +1104,9 @@ def test_regime_timeline_renders_positive(populated_data_dir):
 
 def test_regime_timeline_has_strip_and_sparkline(populated_data_dir):
     html_text = dashboard.build_page(str(populated_data_dir), NOW)
-    assert 'class="strip"' in html_text  # the new regime strip
-    assert 'class="spark"' in html_text  # VIX line still present
-    # brass is no longer a chart mark (it may remain as CSS accent ink)
+    assert 'class="strip"' in html_text  # the regime strip
+    assert 'class="spark"' in html_text  # the VIX line
+    # brass is never a chart mark (CSS accent ink only)
     assert 'stroke="#e0bd76"' not in html_text and 'stop-color="#e0bd76"' not in html_text
 
 
@@ -1457,15 +1457,16 @@ def test_candidates_renders_names_and_its_data_date(populated_data_dir):
     assert "2026-07-08" in html
 
 
-def test_candidates_section_disclaims_that_it_is_ungraded(populated_data_dir):
-    """It renders beside the flagged scorecard. Nothing grades this screen,
-    so the page must not let a ranked list read as an opinion."""
+def test_candidates_section_disclaims_that_it_is_not_an_opinion(populated_data_dir):
+    """It renders beside the flagged scorecard. The screen is graded for
+    calibration only, so the page must not let a ranked list read as an
+    opinion."""
     conn = dashboard._ro(populated_data_dir, "stocks.db")
     try:
         html = dashboard._candidates(conn, NOW).lower()
     finally:
         conn.close()
-    assert "ungraded" in html or "not a recommendation" in html
+    assert "calibration" in html and "not an opinion" in html
 
 
 def test_candidates_section_is_registered_on_the_page(populated_data_dir):
@@ -1518,8 +1519,7 @@ def test_candidates_caption_is_quiet_metadata_not_prose(populated_data_dir):
     house convention for exactly this (see _pending's "Showing 100 of N").
 
     The disclaimer also does not need to shout here: the section's margin note
-    already says "Nothing scores this list — it is a reading queue, not an
-    opinion."
+    already carries "it is a reading queue, not an opinion."
     """
     conn = dashboard._ro(populated_data_dir, "stocks.db")
     try:
@@ -1530,7 +1530,7 @@ def test_candidates_caption_is_quiet_metadata_not_prose(populated_data_dir):
     assert 'class="read"' not in html, "prose style must not be used for a caption"
     assert "<b>" not in html, "nothing in a caption needs bolding"
     # still says the load-bearing things, quietly
-    assert "ungraded" in html.lower()
+    assert "calibration" in html.lower()
     assert "2026-07-08" in html
 
 

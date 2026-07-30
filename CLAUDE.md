@@ -115,7 +115,12 @@ re-weighting the catalog is a human decision made by reading `v_signal_efficacy`
 paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`. Single-leg option
 fills journal with contract identity (`contract_ref`/`position_effect`) but grade **selection
 only** — their P&L columns are NULL by design (no premium ledger exists), and they land in
-`v_flag_response` as their own `acted_option` bucket.
+`v_flag_response` as their own `acted_option` bucket. The scorer also grades the `candidates`
+screen: it records each night's list from stocks.db (`candidate_appearances` — the screen's
+only point-in-time record; no vendor serves screener vintages) and grades list-**entry**
+episodes only (a name sits on the list for weeks; grading every sighting re-counts one call)
+at 21/63 trading days vs SPY in `v_candidate_efficacy`, split by dislocation branch and
+`SCREEN_VERSION` — calibration only, never feeding back into the gates.
 The `advisor` combiner joins the latest scorecard against real holdings
 (portfolio.db read-only: `v_latest_*` views plus the `snapshots` header
 timestamp) plus stocks/etfs ATR and scorer
@@ -142,7 +147,8 @@ microstructure (short interest, FTDs, RSI, short volume, reddit), so `research-t
 correctly rejects nearly everything it flags. Measured 2026-07-26: `si_spike` fired on 527
 tickers, 10 above $2B; of 36 quality-and-oversold names, 2 were in composite's universe and 0
 flagged. `candidates` enters the funnel from the other end (quality first, dislocation as
-timing) and is UNGRADED — nothing scores it, so it is a reading list, never an opinion.
+timing); the scorer grades its list entries for calibration only (see the scorer paragraph
+above), and it stays a reading list, never an opinion.
 `sa_fscore`/`sa_fcf_yield` add the missing business-quality dimension to composite as
 **annotations only** (score 0, in `INFORMATIONAL_SIGNALS`), deferred from voting like the
 options pair: no fundamental signal has forward-return evidence yet, and quality modelled as

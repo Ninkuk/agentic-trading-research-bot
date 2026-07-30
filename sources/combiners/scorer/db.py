@@ -19,8 +19,7 @@ from datetime import datetime, timedelta
 # as a consecutive-date ratio near 1/2, 1/3, 2, 5, ... — outside these
 # bounds. Multiplication (not division) so a zero prev-close flags
 # conservatively. Sub-threshold splits (3:2, ratio 0.667) pass undetected —
-# accepted residual, see docs/superpowers/specs/2026-07-06-scorer-basis-
-# guard-design.md.
+# accepted residual.
 BASIS_BREAK_LO = 0.55  # forward splits >= 2:1 land below this
 BASIS_BREAK_HI = 1.8  # reverse splits >= 1:2 land above this
 
@@ -304,6 +303,49 @@ CREATE TABLE IF NOT EXISTS verdict_outcomes (
     bench_fwd_return  REAL,
     matured_at        TEXT,
     PRIMARY KEY (verdict_id, horizon)
+);
+
+-- Candidate-screen appearance ledger: one row per (symbol, screen_date) the
+-- quality screen surfaced, recorded nightly from stocks.db read-only.
+-- screen_date is the Phoenix date of the stocks.db snapshot behind v_latest
+-- (weekend runs re-see Friday's snapshot; OR IGNORE makes that free).
+-- Metrics are stored as-seen for later re-analysis; via_rsi/via_drawdown
+-- name the dislocation branch(es) that admitted the name; screen_version
+-- stamps the gate set so efficacy never mixes gate regimes. Never pruned:
+-- this ledger is the screen's only point-in-time record (stocks.db keeps
+-- ~3 weeks of snapshots, and no vendor serves screener vintages).
+CREATE TABLE IF NOT EXISTS candidate_appearances (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol         TEXT NOT NULL,
+    screen_date    TEXT NOT NULL,
+    screen_version TEXT NOT NULL,
+    fcf_yield      REAL,
+    rsi            REAL,
+    high52ch       REAL,
+    fscore         REAL,
+    via_rsi        INTEGER NOT NULL DEFAULT 0,
+    via_drawdown   INTEGER NOT NULL DEFAULT 0,
+    recorded_at    TEXT NOT NULL,
+    UNIQUE (symbol, screen_date)
+);
+
+-- Forward outcomes per list-ENTRY episode x horizon. Columns mirror
+-- verdict_outcomes so the generic _MATURE_SYMBOL template grades this
+-- table with zero forked SQL. Only entries grade (see register_candidates);
+-- continuation sightings never get rows here. Never pruned.
+CREATE TABLE IF NOT EXISTS candidate_outcomes (
+    appearance_id     INTEGER NOT NULL,
+    symbol            TEXT NOT NULL,
+    horizon           INTEGER NOT NULL,
+    entry_date        TEXT NOT NULL,
+    entry_close       REAL NOT NULL,
+    bench_entry_close REAL,
+    exit_date         TEXT,
+    exit_close        REAL,
+    fwd_return        REAL,
+    bench_fwd_return  REAL,
+    matured_at        TEXT,
+    PRIMARY KEY (appearance_id, horizon)
 );
 """
 
@@ -803,6 +845,39 @@ SELECT verdict, horizon, COUNT(*) AS n,
 FROM v_research_verdict_outcomes
 WHERE matured_at IS NOT NULL
 GROUP BY verdict, horizon;
+
+-- Candidate list-entry episodes with their forward legs. Every candidate is
+-- an implicit "attractive", so beat_benchmark has one polarity (fwd > bench)
+-- — no verdict flip. Unmatured and uncovered rows appear with NULL legs via
+-- the LEFT JOIN: visible, not lost.
+DROP VIEW IF EXISTS v_candidate_outcomes;
+CREATE VIEW v_candidate_outcomes AS
+SELECT ca.id AS appearance_id, ca.symbol, ca.screen_date, ca.screen_version,
+       CASE WHEN ca.via_rsi AND ca.via_drawdown THEN 'both'
+            WHEN ca.via_drawdown THEN 'drawdown' ELSE 'rsi' END AS branch,
+       co.horizon, co.entry_date, co.entry_close,
+       co.fwd_return, co.bench_fwd_return, co.matured_at,
+       co.fwd_return - co.bench_fwd_return AS excess,
+       CASE WHEN co.matured_at IS NULL OR co.bench_fwd_return IS NULL THEN NULL
+            ELSE (co.fwd_return > co.bench_fwd_return) END AS beat_benchmark
+FROM candidate_appearances ca
+LEFT JOIN candidate_outcomes co ON co.appearance_id = ca.id;
+
+-- The screen's report card: does entering the candidates list carry timing
+-- edge over SPY, and through WHICH dislocation door (rsi / drawdown / both)?
+-- Grades TIMING at the configured horizons, never the multi-year quality
+-- thesis. Plain averages + n; every n here is entry-episodes (already
+-- deduplicated), read with the usual multiple-comparisons caveat. Human
+-- reading only — nothing feeds back into the screen's gates.
+DROP VIEW IF EXISTS v_candidate_efficacy;
+CREATE VIEW v_candidate_efficacy AS
+SELECT screen_version, branch, horizon, COUNT(*) AS n,
+       AVG(beat_benchmark) AS hit_rate,
+       AVG(excess) AS avg_excess,
+       AVG(fwd_return) AS avg_fwd_return
+FROM v_candidate_outcomes
+WHERE matured_at IS NOT NULL
+GROUP BY screen_version, branch, horizon;
 """
 
 
@@ -1092,6 +1167,74 @@ def register_verdicts(conn, horizons, benchmark, max_age_days) -> int:
     return registered
 
 
+def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
+    """One appearance row per (symbol, screen_date) the candidate screen
+    surfaced. OR IGNORE makes a weekend run re-seeing Friday's stocks.db
+    snapshot free. Caller commits (run.py's skip-and-continue owns the
+    transaction boundary)."""
+    n = 0
+    for r in rows:
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO candidate_appearances"
+            " (symbol, screen_date, screen_version, fcf_yield, rsi, high52ch,"
+            "  fscore, via_rsi, via_drawdown, recorded_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                r["symbol"],
+                screen_date,
+                screen_version,
+                r.get("fcf_yield"),
+                r.get("rsi"),
+                r.get("high52ch"),
+                r.get("fscore"),
+                r.get("via_rsi", 0),
+                r.get("via_drawdown", 0),
+                now_iso,
+            ),
+        )
+        n += cur.rowcount
+    return n
+
+
+def register_candidates(conn, horizons, benchmark, max_age_days, gap_days) -> int:
+    """Outcome rows for list-ENTRY appearances that have none yet. An entry
+    is an appearance with no prior appearance for the same symbol within
+    gap_days calendar days — continuation sightings of the same episode
+    never grade, or one call would be counted N times (the
+    overlapping-sample trap v_signal_efficacy documents). The entry/
+    continuation split is recomputed from the appearance ledger every night,
+    so an uncovered entry retries until the forward guard closes, exactly
+    like verdicts. Entries reuse entry_for: first ledger close STRICTLY
+    AFTER screen_date (the screen reads that day's settled close — claiming
+    it would pocket the overnight gap)."""
+    registered = 0
+    pending = conn.execute(
+        "SELECT ca.id, ca.symbol, ca.screen_date FROM candidate_appearances ca"
+        " WHERE NOT EXISTS (SELECT 1 FROM candidate_outcomes co"
+        "                   WHERE co.appearance_id = ca.id)"
+        "   AND NOT EXISTS (SELECT 1 FROM candidate_appearances prior"
+        "                   WHERE prior.symbol = ca.symbol"
+        "                     AND prior.screen_date < ca.screen_date"
+        "                     AND prior.screen_date >= date(ca.screen_date, ?))",
+        (f"-{int(gap_days)} days",),
+    ).fetchall()
+    with conn:
+        for aid, symbol, sdate in pending:
+            entry = entry_for(conn, symbol, sdate, max_age_days)
+            if entry is None:
+                continue
+            bench = _bench_close(conn, benchmark, entry[0])
+            for h in horizons:
+                cur = conn.execute(
+                    "INSERT OR IGNORE INTO candidate_outcomes"
+                    " (appearance_id, symbol, horizon, entry_date, entry_close,"
+                    "  bench_entry_close) VALUES (?, ?, ?, ?, ?, ?)",
+                    (aid, symbol, h, entry[0], entry[1], bench),
+                )
+                registered += cur.rowcount
+    return registered
+
+
 # Maturation: the Nth distinct ledger date after entry, per symbol.
 # NOTE: SQLite rejects a correlated OFFSET ("LIMIT 1 OFFSET t.horizon - 1"
 # fails with "no such column"), so the Nth date is selected via a
@@ -1199,6 +1342,7 @@ def mature(conn, now_iso, benchmark="SPY") -> int:
         ("ticker_outcomes", "symbol", ":bench"),
         ("signal_outcomes", "entity", "signal_outcomes.benchmark"),
         ("verdict_outcomes", "symbol", ":bench"),
+        ("candidate_outcomes", "symbol", ":bench"),
     ):
         cur = conn.execute(_MATURE_SYMBOL.format(table=table, sym=sym, bench=bench), params)
         n += cur.rowcount
@@ -1207,7 +1351,13 @@ def mature(conn, now_iso, benchmark="SPY") -> int:
     return n
 
 
-_OUTCOME_TABLES = ("signal_outcomes", "ticker_outcomes", "regime_outcomes", "verdict_outcomes")
+_OUTCOME_TABLES = (
+    "signal_outcomes",
+    "ticker_outcomes",
+    "regime_outcomes",
+    "verdict_outcomes",
+    "candidate_outcomes",
+)
 
 
 def matured_counts(conn) -> dict:

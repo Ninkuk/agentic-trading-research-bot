@@ -77,6 +77,35 @@ def run(db_path, db_dir, now_iso=None, keep_days=None, rebuild_prices=False):
         except Exception as e:
             conn.rollback()
             print(f"skip verdict registration: {type(e).__name__}")
+        # 2c) record tonight's candidate list (stocks.db read-only), then
+        # create outcome rows for list-ENTRY episodes (local tables only)
+        path = os.path.join(db_dir, catalog.STOCKS_DB)
+        try:
+            fetch.attach_ro(conn, path)
+        except Exception as e:
+            print(f"skip {catalog.STOCKS_DB} candidates: {type(e).__name__}")
+        else:
+            try:
+                screen_date, version, rows = fetch.read_candidate_rows(conn)
+                if screen_date is not None:
+                    db.record_appearances(conn, rows, screen_date, version, now_iso)
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                print(f"skip candidate appearances: {type(e).__name__}")
+            finally:
+                fetch.detach(conn)
+        try:
+            registered += db.register_candidates(
+                conn,
+                catalog.CANDIDATE_HORIZONS,
+                catalog.BENCHMARK,
+                catalog.ENTRY_MAX_AGE_DAYS,
+                catalog.CANDIDATE_ENTRY_GAP_DAYS,
+            )
+        except Exception as e:
+            conn.rollback()
+            print(f"skip candidate registration: {type(e).__name__}")
         # 3) mature (local only)
         matured = db.mature(conn, now_iso, catalog.BENCHMARK)
         db.finish_snapshot(conn, sid, harvested, registered, matured, skipped)

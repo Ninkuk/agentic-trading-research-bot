@@ -72,9 +72,9 @@ def test_format_lines_leads_with_the_count_and_names():
 
 def test_format_lines_carry_the_not_a_recommendation_label():
     """A screen appearing next to `N flagged` in the same push must not read
-    as a flag. Nothing downstream grades it."""
+    as a flag: list entries are graded for calibration only."""
     body = "\n".join(daily_summary.format_candidates_lines([_ROW], "2026-07-24", 5)).lower()
-    assert "ungraded" in body
+    assert "calibration" in body
     assert "not a recommendation" in body
 
 
