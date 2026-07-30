@@ -51,3 +51,9 @@
 2026-07-29 MYRG SOUND conditions=3 refuted=0 unknown=0 reopen=event:price-low-200s-or-fcf-durable
 2026-07-29 META UNPROVEN conditions=5 refuted=0 unknown=3 reopen=2026-10-28:q3-print-2027-capex-first-guide
 2026-07-29 DASH SOUND conditions=5 refuted=0 unknown=0 reopen=event:price-le-140-or-h2-2026-ebitda-gov-ge-3.5pct
+2026-07-29 AMZN FLAWED conditions=6 refuted=4 unknown=2 reopen=2026-07-30:q2-print-capex-aws-margin
+2026-07-29 PTC UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-11-04:q4-print-fy27-guide
+2026-07-29 TIMB UNPROVEN conditions=7 refuted=0 unknown=3 reopen=2026-09-12:poste-tender-closed
+2026-07-29 SFM UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-28:q3-print-lap-expiry
+2026-07-29 CAPR FLAWED conditions=5 refuted=2 unknown=2 reopen=event:halt-lift-then-pdufa-2026-08-22
+2026-07-29 BLBD UNPROVEN conditions=6 refuted=0 unknown=1 reopen=event:epa-csb-2026-nofo-or-price-55
