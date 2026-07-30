@@ -23,8 +23,13 @@ than an honest one.
 
 Wired as its own launchd slot at 9:13pm (after advisor 9:12, before the
 daily-summary ntfy at 9:15) so it reflects tonight's rows; being a separate
-process, a bug here can never delay or suppress that health alert — hence
-`main()` always returns 0, success or failure alike.
+process, a bug here can never delay or suppress that health alert. `main()`
+returns 0 on both a clean run and a GENERATION failure (any exception from
+`data.export_json` — a missing DB, a dropped view, a bad row — is caught and
+degrades to the minimal error document above). A failure in the WRITE itself
+(reports/ unwritable, disk full) is not caught and propagates as a process
+crash with a non-zero exit — same as any other process crash, it still
+cannot delay the 9:15 alert, since that is a separate process either way.
 """
 
 import json
