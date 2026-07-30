@@ -183,6 +183,108 @@ def test_research_reopens_dated_upcoming_event_and_superseded(populated_data_dir
     assert by_ticker["STNE"]["thesis_path"] == "research/STNE-2026-07-01.md"
 
 
+def test_efficacy_rows_have_ci_for_dotplot(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["signal-efficacy"]
+    r = sec["rows"][0]
+    assert {
+        "hit_rate",
+        "hit_ci_lo",
+        "hit_ci_hi",
+        "null_rate",
+        "via_crosswalk",
+        "recommendation",
+    } <= set(r)
+    assert sec["caveat"]  # every track-record section explains its own trust level
+
+
+def test_signal_efficacy_carries_signal_id(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["signal-efficacy"]
+    assert any(r["signal_id"] == "sig_test_a" for r in sec["rows"])
+
+
+def test_bucket_performance_exports_matured_buckets(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["bucket-performance"]
+    buckets = {r["bucket"] for r in sec["rows"]}
+    assert "strong_bull" in buckets
+    assert "thin" in buckets
+    assert sec["caveat"]
+
+
+def test_human_filter_exports_response_rows(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["human-filter"]
+    assert any(r["response"] == "acted" for r in sec["rows"])
+    assert sec["caveat"]
+
+
+def test_regime_performance_exports_raw_fraction(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["regime-performance"]
+    row = next(r for r in sec["rows"] if r["regime"] == "risk_on")
+    assert row["avg_bench_return"] == 0.04  # raw fraction, no _pct formatting
+    assert sec["caveat"]
+
+
+def test_pending_rows_and_total(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["pending"]
+    assert sec["total"] >= len(sec["rows"])  # LIMIT 100 port keeps the full count
+    assert {"symbol", "horizon"} <= set(sec["rows"][0])
+    assert any(r["symbol"] == "PEND1" for r in sec["rows"])
+    assert sec["caveat"]
+
+
+def test_pending_cap_preserves_total_count(tmp_path):
+    """150 unmatured ticker_outcomes: rows are capped at 100 (the LIMIT 100
+    port) but `total` still reports the real count — "never remove a
+    number" (mirrors the legacy test_pending_cap_is_disclosed)."""
+    from sources.combiners.scorer import db as scorer_db
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    conn = scorer_db.connect(str(data_dir / "scorer.db"))
+    scorer_db.ensure_schema(conn)
+    for i in range(150):
+        conn.execute(
+            "INSERT INTO ticker_outcomes (composite_snapshot_id, composite_date,"
+            " symbol, score_sum, total, bullish, bearish, horizon, entry_date,"
+            " entry_close, matured_at) VALUES (1, ?, ?, 0, 0, 0, 0, 5, ?, 100.0, NULL)",
+            (NOW, f"T{i}", NOW),
+        )
+    conn.commit()
+    conn.close()
+
+    sec = data.export_data(str(data_dir), NOW)["sections"]["pending"]
+    assert sec["total"] == 150
+    assert len(sec["rows"]) == 100
+
+
+def test_basis_breaks_exports_rows_and_no_caveat(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["basis-breaks"]
+    assert any(r["symbol"] == "ACME" for r in sec["rows"])
+    assert sec["caveat"] is None  # integrity check, not a grade — deliberate
+
+
+def test_recommendation_section_verdict_counts(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["plan-001-report"]
+    assert sec["verdict"] is None or sec["verdict"]["tone"] in ("on", "off", "mid")
+    assert any(r["signal_id"] == "sig_test_a" for r in sec["rows"])
+    assert sec["caveat"]
+
+
+def test_trader_scorecard_is_text(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["plan-004-scorecard"]
+    assert "text_lines" in sec and isinstance(sec["text_lines"], list)
+    assert any("Trader Decision-Quality Scorecard" in line for line in sec["text_lines"])
+    assert any("acted" in line for line in sec["text_lines"])
+    assert sec["caveat"]
+
+
+def test_candidate_efficacy_exports_branch_rows(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["candidate-efficacy"]
+    assert sec["rows"], "fixture's matured candidate episode should grade"
+    for r in sec["rows"]:
+        assert r["branch"] in {"rsi", "drawdown", "both"}
+    assert sec["caveat"]
+
+
 def test_research_reopens_exports_relative_thesis_paths(tmp_path):
     (tmp_path / "research").mkdir()
     (tmp_path / "research" / "verdicts.log").write_text(

@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from dashboard_lib import narrative  # noqa: E402
 from dashboard_lib.glossary import load_glossary  # noqa: E402
 from sources.combiners.composite import candidates as candidates_mod  # noqa: E402
+from sources.combiners.scorer import scorecard as scorer_scorecard  # noqa: E402
 from sources.common.clock import phx_date  # noqa: E402
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -491,9 +492,298 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
     }
 
 
+# --- Track-record strand (Task 6) ------------------------------------------
+# Column-arrow convention, brief-specified and literal: only these exact
+# view column names get an arrow. Everything else (ids, dates, CI bounds,
+# `reliable`/`edge`/`n_blocks`/`n_matured`, via_crosswalk, recommendation)
+# stays undirected rather than guessed.
+_UP_GOOD = {
+    "hit_rate",
+    "avg_directional_excess",
+    "n_bench",
+    "n_dates",
+    "avg_excess",
+    "avg_fwd_return",
+    "n",
+}
+_DOWN_GOOD = {"null_rate"}
+
+
+def _direction(key: str) -> str | None:
+    if key in _UP_GOOD:
+        return "up-good"
+    if key in _DOWN_GOOD:
+        return "down-good"
+    return None
+
+
+def _track_col(
+    key: str, label: str, numeric: bool = True, term: str | None = None
+) -> dict[str, Any]:
+    return {
+        "key": key,
+        "label": label,
+        "numeric": numeric,
+        "direction": _direction(key),
+        "term": term,
+    }
+
+
+_SIGNAL_EFFICACY_COLUMNS: list[dict[str, Any]] = [
+    _track_col("signal_id", "Signal", numeric=False),
+    _track_col("via_crosswalk", "Via crosswalk"),
+    _track_col("horizon", "Horizon"),
+    _track_col("n_bench", "N benchmarked"),
+    _track_col("n_dates", "N dates"),
+    _track_col("hit_rate", "Hit rate"),
+    _track_col("hit_ci_lo", "Hit-rate CI low"),
+    _track_col("hit_ci_hi", "Hit-rate CI high"),
+    _track_col("null_rate", "Base rate"),
+    _track_col("avg_directional_excess", "Directional excess"),
+    _track_col("recommendation", "Recommendation", numeric=False),
+]
+
+
+def _signal_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Every signal's raw report card. Rows come from **v_signal_recommendation**
+    (scorer/db.py), NOT v_signal_efficacy / the legacy `_EFFICACY_COLS` — the
+    recommendation view carries the CI bounds this section's dot-plot needs
+    and the `recommendation` label the unfiltered efficacy view lacks.
+    `via_crosswalk` stays in every row because the view is keyed on
+    `(signal_id, via_crosswalk, horizon)`; dropping it would collapse
+    distinct rows into indistinguishable duplicates."""
+    rows = conn.execute(
+        "SELECT signal_id, via_crosswalk, horizon, n_bench, n_dates, hit_rate,"
+        " hit_ci_lo, hit_ci_hi, null_rate, avg_directional_excess, recommendation"
+        " FROM v_signal_recommendation ORDER BY horizon, via_crosswalk, signal_id"
+    ).fetchall()
+    return {
+        "columns": _SIGNAL_EFFICACY_COLUMNS,
+        "rows": [dict(r) for r in rows],
+        "caveat": narrative.CAVEATS.get("signal-efficacy"),
+        "empty": "no matured signal outcomes yet — appears once a signal's"
+        " flagged calls reach their grading horizon",
+    }
+
+
+_BUCKET_PERFORMANCE_COLUMNS: list[dict[str, Any]] = [
+    _track_col("bucket", "Bucket", numeric=False),
+    _track_col("horizon", "Horizon"),
+    _track_col("n_bench", "N"),
+    _track_col("avg_fwd_return", "Fwd return"),
+    _track_col("avg_excess", "Excess"),
+    _track_col("hit_rate", "Hit rate"),
+    _track_col("null_rate", "Base rate"),
+    _track_col("edge", "Edge"),
+    _track_col("reliable", "Reliable"),
+]
+
+
+def _bucket_performance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    rows = conn.execute(
+        "SELECT bucket, horizon, n_bench, avg_fwd_return, avg_excess,"
+        " hit_rate, null_rate, edge, reliable FROM v_bucket_performance"
+        " ORDER BY horizon, bucket"
+    ).fetchall()
+    return {
+        "columns": _BUCKET_PERFORMANCE_COLUMNS,
+        "rows": [dict(r) for r in rows],
+        "caveat": narrative.CAVEATS.get("bucket-performance"),
+        "empty": "no matured buckets yet — appears once conviction-bucketed"
+        " opinions reach their grading horizon",
+    }
+
+
+_HUMAN_FILTER_COLUMNS: list[dict[str, Any]] = [
+    _track_col("response", "Response", numeric=False),
+    _track_col("horizon", "Horizon"),
+    _track_col("n", "N"),
+    _track_col("avg_dir_excess", "Directional excess"),
+    _track_col("avg_fwd_return", "Fwd return"),
+]
+
+
+def _human_filter(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    rows = conn.execute(
+        "SELECT response, horizon, n, avg_dir_excess, avg_fwd_return"
+        " FROM v_human_filter ORDER BY horizon, response"
+    ).fetchall()
+    return {
+        "columns": _HUMAN_FILTER_COLUMNS,
+        "rows": [dict(r) for r in rows],
+        "caveat": narrative.CAVEATS.get("human-filter"),
+        "empty": "no matured flagged opinions yet — appears once an acted-on"
+        " or passed-on flag reaches its grading horizon",
+    }
+
+
+_REGIME_PERFORMANCE_COLUMNS: list[dict[str, Any]] = [
+    _track_col("regime", "Regime", numeric=False),
+    _track_col("horizon", "Horizon"),
+    _track_col("n_matured", "N"),
+    _track_col("avg_bench_return", "Avg return"),
+    _track_col("min_bench_return", "Min return"),
+    _track_col("max_bench_return", "Max return"),
+]
+
+
+def _regime_performance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    rows = conn.execute(
+        "SELECT regime, horizon, n_matured, avg_bench_return, min_bench_return,"
+        " max_bench_return FROM v_regime_performance ORDER BY horizon, regime"
+    ).fetchall()
+    return {
+        "columns": _REGIME_PERFORMANCE_COLUMNS,
+        "rows": [dict(r) for r in rows],
+        "caveat": narrative.CAVEATS.get("regime-performance"),
+        "empty": "no matured regime outcomes yet — appears once a market-mood"
+        " window reaches its grading horizon",
+    }
+
+
+_PENDING_COLUMNS: list[dict[str, Any]] = [
+    _track_col("kind", "Kind", numeric=False),
+    _track_col("composite_date", "Composite date", numeric=False),
+    _track_col("symbol", "Entity", numeric=False),
+    _track_col("horizon", "Horizon"),
+    _track_col("entry_date", "Entry date", numeric=False),
+]
+
+
+def _pending(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """`total` is COUNT(*) over the full view — `rows` is the LIMIT 100 port
+    (live v_pending is ~47K rows). Never drop `total`: it is the "showing
+    100 of N" disclosure the legacy `.cap` note made. `entity` (the view's
+    column) is exported as `symbol` for row-shape consistency with every
+    other section here — it is a ticker for `kind='ticker'` rows and a
+    compound/label for `signal`/`regime` rows."""
+    total = conn.execute("SELECT COUNT(*) FROM v_pending").fetchone()[0]
+    rows = conn.execute(
+        "SELECT kind, composite_date, entity AS symbol, horizon, entry_date"
+        " FROM v_pending ORDER BY composite_date DESC LIMIT 100"
+    ).fetchall()
+    return {
+        "columns": _PENDING_COLUMNS,
+        "rows": [dict(r) for r in rows],
+        "total": total,
+        "caveat": narrative.CAVEATS.get("pending"),
+        "empty": "nothing pending — everything registered so far has matured"
+        " — fills once tonight's opinions are registered",
+    }
+
+
+_BASIS_BREAKS_COLUMNS: list[dict[str, Any]] = [
+    _track_col("symbol", "Symbol", numeric=False),
+    _track_col("prev_date", "Prev date", numeric=False),
+    _track_col("prev_close", "Prev close"),
+    _track_col("price_date", "Price date", numeric=False),
+    _track_col("close", "Close"),
+    _track_col("ratio", "Ratio"),
+]
+
+
+def _basis_breaks(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    rows = conn.execute(
+        "SELECT symbol, prev_date, prev_close, price_date, close, ratio"
+        " FROM v_basis_breaks ORDER BY price_date DESC"
+    ).fetchall()
+    return {
+        "columns": _BASIS_BREAKS_COLUMNS,
+        "rows": [dict(r) for r in rows],
+        # No caveat: an integrity check, not a grade — a trust caveat here
+        # would be noise (deliberate; narrative.CAVEATS has no entry for
+        # "basis-breaks", see Task 2's deviations note).
+        "caveat": narrative.CAVEATS.get("basis-breaks"),
+        "empty": "no basis breaks detected — an empty table is the good"
+        " outcome; fills only when a price move looks like a split or a bad tick",
+    }
+
+
+_SIGNAL_RECOMMENDATION_COLUMNS: list[dict[str, Any]] = [
+    _track_col("signal_id", "Signal", numeric=False),
+    _track_col("via_crosswalk", "Via crosswalk"),
+    _track_col("horizon", "Horizon"),
+    _track_col("n_blocks", "Independent windows"),
+    _track_col("avg_directional_excess", "Directional excess"),
+    _track_col("hit_rate", "Hit rate"),
+    _track_col("hit_ci_lo", "Hit-rate CI low"),
+    _track_col("hit_ci_hi", "Hit-rate CI high"),
+    _track_col("recommendation", "Recommendation", numeric=False),
+]
+
+
+def _signal_recommendation(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """The verdict on each signal, graded against its own base rate. `verdict`
+    wires narrative.efficacy_verdict (Task 2) against a tally of this
+    section's own `recommendation` values — the helper would otherwise be
+    dead code. Rows with recommendation == "insufficient evidence" count
+    toward none of keep/watch/anti."""
+    rows = conn.execute(
+        "SELECT signal_id, via_crosswalk, horizon, n_blocks,"
+        " avg_directional_excess, hit_rate, hit_ci_lo, hit_ci_hi, recommendation"
+        " FROM v_signal_recommendation ORDER BY horizon, via_crosswalk, signal_id"
+    ).fetchall()
+    keep = sum(1 for r in rows if r["recommendation"] == "keep")
+    watch = sum(1 for r in rows if r["recommendation"] == "watch")
+    anti = sum(1 for r in rows if r["recommendation"] == "anti-signal")
+    return {
+        "verdict": narrative.efficacy_verdict(keep, watch, anti),
+        "columns": _SIGNAL_RECOMMENDATION_COLUMNS,
+        "rows": [dict(r) for r in rows],
+        "caveat": narrative.CAVEATS.get("plan-001-report"),
+        "empty": "insufficient evidence for every signal (young scorer) —"
+        " expected; fills in once a signal's evidence crosses the reliability floor",
+    }
+
+
+def _trader_scorecard(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Reuses the plan-004 report verbatim (single source of truth,
+    scorer/scorecard.py's own `build_report`) — a plain-text report, not a
+    table, so the export is `text_lines` only: no `columns`/`rows`, no
+    `empty` (the report always renders a full structure, even a thin one,
+    so there is no legacy empty-state prose to port)."""
+    report = scorer_scorecard.build_report(conn, now_iso)
+    return {
+        "text_lines": report.split("\n"),
+        "caveat": narrative.CAVEATS.get("plan-004-scorecard"),
+    }
+
+
+_CANDIDATE_EFFICACY_COLUMNS: list[dict[str, Any]] = [
+    _track_col("screen_version", "Screen version", numeric=False),
+    _track_col("branch", "Dislocation door", numeric=False),
+    _track_col("horizon", "Horizon"),
+    _track_col("n", "N"),
+    _track_col("hit_rate", "Hit rate"),
+    _track_col("avg_excess", "Excess"),
+    _track_col("avg_fwd_return", "Fwd return"),
+]
+
+
+def _candidate_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """NEW section — no sections.py counterpart to port (added 2026-07-29
+    when the scorer began grading the candidates screen's list-entry timing,
+    commit 3e4741b). Reads scorer.db's v_candidate_efficacy: a matured entry
+    episode's 21/63-trading-day return vs SPY, split by which dislocation
+    door admitted the name (oversold RSI / drawdown / both)."""
+    rows = conn.execute(
+        "SELECT screen_version, branch, horizon, n, hit_rate, avg_excess,"
+        " avg_fwd_return FROM v_candidate_efficacy"
+        " ORDER BY screen_version, horizon, branch"
+    ).fetchall()
+    return {
+        "columns": _CANDIDATE_EFFICACY_COLUMNS,
+        "rows": [dict(r) for r in rows],
+        "caveat": narrative.CAVEATS.get("candidate-efficacy"),
+        "empty": "no matured episodes yet — first grades appear ~21 trading"
+        " days after the first screen night",
+    }
+
+
 # (sid, title, db_name, fn, kicker, note) — same ids/titles/kickers/notes as
-# sections.py's SECTIONS; prose copied verbatim from sections.py:907-977.
-# Grows through Tasks 6-8 as the remaining sections register.
+# sections.py's SECTIONS; prose copied verbatim from sections.py:907-1116.
+# candidate-efficacy has no sections.py counterpart (new 2026-07-29).
+# Grows through Task 7-8 as the remaining (advisor/hero) sections register.
 SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str, str]] = [
     (
         "regime",
@@ -565,6 +855,105 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         " bearish; the number is the summed score (the bar shows it, left of"
         " center for bearish). Split is the raw bullish/bearish count. A"
         " ★ marks strong agreement. A tally — not a buy or sell list.",
+    ),
+    (
+        "signal-efficacy",
+        "Signal efficacy",
+        "scorer.db",
+        _signal_efficacy,
+        "Track record",
+        "Every signal's raw report card: how often it has been right so far,"
+        " and by how much it beat simply holding SPY. This is the unfiltered"
+        " table — the verdict on whether each one is trustworthy yet lives"
+        " in Signal recommendations below.",
+    ),
+    (
+        "bucket-performance",
+        "Bucket performance",
+        "scorer.db",
+        _bucket_performance,
+        "Track record",
+        "Grouping every past opinion by conviction bucket (strong-bull down"
+        " to strong-bear): did stronger scores actually produce better"
+        " forward returns than SPY?",
+    ),
+    (
+        "human-filter",
+        "Human-filter tally",
+        "scorer.db",
+        _human_filter,
+        "Track record",
+        "Of the opinions this page flagged, you either acted or passed. This"
+        " compares how the acted-on ones did versus the passed ones — did"
+        " your judgment add edge?",
+    ),
+    (
+        "regime-performance",
+        "Regime edge",
+        "scorer.db",
+        _regime_performance,
+        "Track record",
+        "Does the market-mood call itself have forward edge — do risk-on"
+        " nights actually precede better returns than risk-off nights? Each"
+        " row is one mood at one horizon.",
+    ),
+    (
+        "pending",
+        "In-flight opinions",
+        "scorer.db",
+        _pending,
+        "Track record",
+        "Opinions already recorded whose outcome has not matured yet — what"
+        " is still being measured, and therefore not yet in any grade above.",
+    ),
+    (
+        "basis-breaks",
+        "Data-integrity checks",
+        "scorer.db",
+        _basis_breaks,
+        "Track record",
+        "Days where a price moved so far that it looks like a split or a bad"
+        " tick rather than a real move. Surfaced so a silent data problem"
+        " cannot quietly skew every grade above. An empty table is the good"
+        " outcome.",
+    ),
+    (
+        "plan-001-report",
+        "Signal recommendations",
+        "scorer.db",
+        _signal_recommendation,
+        "Track record",
+        "The verdict on each signal, graded against the BASE RATE rather than"
+        " a coin flip: a randomly chosen scored ticker beat its benchmark only"
+        " ~40% of the time over these windows, so a 61% hit-rate can still be"
+        " worth nothing. ‘Keep’ means the whole confidence range sits above"
+        " that baseline, ‘anti-signal’ entirely below it, ‘watch’"
+        " straddling. Several signals are graded at once, so a few clear the"
+        " bar by luck — hold every verdict loosely. Re-weighting the catalog"
+        " is always a human decision; nothing here feeds back.",
+    ),
+    (
+        "plan-004-scorecard",
+        "Trader scorecard",
+        "scorer.db",
+        _trader_scorecard,
+        "Track record",
+        "A plain-text report grading past decision quality: did filtering"
+        " help, what did execution cost, how did unrecommended (freelance)"
+        " trades do.",
+    ),
+    (
+        "candidate-efficacy",
+        "Candidates screen edge",
+        "scorer.db",
+        _candidate_efficacy,
+        "Track record",
+        "A name's first ENTRY onto the candidates reading list starts a"
+        " stopwatch: its 21- and 63-trading-day return is measured against"
+        " SPY, split by which dislocation door let it in — oversold RSI, a"
+        " price drawdown, or both at once. This grades TIMING only, never"
+        " the multi-year quality thesis behind the pick, and none of it"
+        " feeds back into the screen's own gates.",
     ),
 ]
 

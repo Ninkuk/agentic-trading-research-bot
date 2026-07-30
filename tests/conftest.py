@@ -247,8 +247,9 @@ def _matured_ticker_row(
 def _build_scorer_db(path):
     """scorer.db with real rows behind every one of v_signal_efficacy,
     v_bucket_performance, v_human_filter, v_signal_recommendation,
-    v_regime_performance, v_pending, and v_basis_breaks — modeled on
-    tests/test_scorer_db_views.py and tests/test_journal_db_views.py."""
+    v_regime_performance, v_pending, v_basis_breaks, and (additive)
+    v_candidate_efficacy — modeled on tests/test_scorer_db_views.py,
+    tests/test_journal_db_views.py, and tests/test_scorer_candidates.py."""
     conn = scorer_db.connect(str(path))
     scorer_db.ensure_schema(conn)
 
@@ -305,6 +306,24 @@ def _build_scorer_db(path):
         " exit_fill_date, exit_fill_price, quantity, recorded_at)"
         " VALUES ('NVDA', 'acted', 'buy', '2026-07-01', 100.0, '2026-07-09',"
         " 110.0, 5, ?)",
+        (NOW,),
+    )
+
+    # v_candidate_efficacy: one matured candidates-screen list-entry episode
+    # via the rsi dislocation door (direct-but-schema-true insert, mirroring
+    # tests/test_scorer_candidates.py's own fixture shape).
+    conn.execute(
+        "INSERT INTO candidate_appearances (id, symbol, screen_date,"
+        " screen_version, fcf_yield, rsi, high52ch, fscore, via_rsi,"
+        " via_drawdown, recorded_at) VALUES (1, 'CAND1', '2026-07-01', 'v1',"
+        " 10.0, 28.0, -30.0, 7.0, 1, 0, ?)",
+        (NOW,),
+    )
+    conn.execute(
+        "INSERT INTO candidate_outcomes (appearance_id, symbol, horizon,"
+        " entry_date, entry_close, bench_entry_close, exit_date, exit_close,"
+        " fwd_return, bench_fwd_return, matured_at) VALUES (1, 'CAND1', 21,"
+        " '2026-07-02', 100.0, 500.0, '2026-07-09', 105.0, 0.05, 0.01, ?)",
         (NOW,),
     )
 
