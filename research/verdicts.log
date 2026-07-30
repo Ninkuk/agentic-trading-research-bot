@@ -73,3 +73,5 @@
 2026-07-30 WT UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-07-31:wt-q2-print-flows-margins
 2026-07-30 SEZL FLAWED conditions=7 refuted=1 unknown=5 reopen=2026-08-06:q2-print-provision-and-growth
 2026-07-30 FFIV SOUND conditions=5 refuted=0 unknown=0 reopen=2026-10-26:ffiv-fy27-guide
+2026-07-30 BSY UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-08-06:bsy-q2-print-nrr-and-api-monetization
+2026-07-30 FIX SOUND conditions=5 refuted=0 unknown=1 reopen=event:price-le-1100-or-margin-holds-at-low-growth
