@@ -50,5 +50,8 @@ Lab preview verified in-browser before finalize; lab artifacts deleted on comple
 
 - All vitest suites updated with the structure (tabs mount via forceMount so
   section queries still see the whole document); tsc, oxlint clean.
-- `npm run build` is deliberately NOT part of this change — `dist/` is the
-  committed published artifact; rebuild it in the publish commit.
+- `dist/` is gitignored — publishing is deploy/launchd/publish_dashboard.py,
+  which force-pushes dist + the real reports/data.json to a single-commit
+  gh-pages orphan branch nightly and verifies the noindex guard in
+  dist/index.html. Keep `npm run build` fresh after UI changes so the next
+  publish run ships them.

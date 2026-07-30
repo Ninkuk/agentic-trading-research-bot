@@ -31,4 +31,6 @@
 ## Repo conventions
 - `src/components/ui/` = shadcn primitives; `src/ui/` = app components.
 - `text_lines` reports parse via TextReport with `<pre>` fallback.
-- `dist/` is committed: never rebuild as a side effect of UI work.
+- `dist/` is gitignored; publish_dashboard.py force-pushes it to the
+  gh-pages orphan branch nightly and requires the noindex meta in
+  dist/index.html — keep that tag verbatim.
