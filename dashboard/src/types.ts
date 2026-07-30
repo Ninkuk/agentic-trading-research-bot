@@ -29,8 +29,11 @@ export interface Column {
 }
 
 // A row's field values (columns), or a tile's own catch-all fields — plain
-// JSON leaves plus nested history/band shapes narrower sections attach.
-export type CellValue = string | number | boolean | null;
+// JSON leaves, plus a bare number array for the scorecard's per-row
+// `history` sparkline (data.py:339's `list[int] | None`, see
+// `_SCORECARD_HISTORY_LIMIT` in dashboard_lib/data.py — headline symbols
+// only, `None` for every other row).
+export type CellValue = string | number | boolean | number[] | null;
 
 // A table row: the shape varies per section (scorecard vs. regime drivers
 // vs. track-record views), so it stays a loose keyed bag rather than a
