@@ -610,9 +610,11 @@ def _edition_date(now_iso: str) -> str:
 
 def export_data(data_dir: str, now_iso: str, repo_root: str | None = None) -> dict[str, Any]:
     """The full data.json document. `repo_root` (default: this repo's real
-    root) is where docs/GLOSSARY.md and research/ are resolved from — kept
-    as an explicit parameter, not a hardcoded relative path, so tests can
-    point it at a tmp_path sandbox instead of the live repo."""
+    root) is where docs/GLOSSARY.md is resolved from — kept as an explicit
+    parameter, not a hardcoded relative path, so tests can point it at a
+    tmp_path sandbox instead of the live repo. File-backed sections (e.g.
+    research/verdicts.log) resolve their own path from `data_dir`'s sibling
+    directly, not from `repo_root` — see the branch below."""
     root = Path(repo_root) if repo_root is not None else _REPO_ROOT
 
     sections: dict[str, Any] = {}

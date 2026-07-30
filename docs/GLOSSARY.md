@@ -76,9 +76,13 @@ positions—bigger ATR, smaller bet.
 holdings, adjusted for market swings. High heat means concentrated risk; useful
 for knowing whether the portfolio is humming quietly or wearing thin.
 
-**Coverage** — the fraction of the stock's market cap you own (directly in shares,
-or indirectly in funds). Low coverage means tiny moves; high coverage means you
-move the needle yourself on any trade.
+**Coverage** — how much of the full picture actually has data behind it. On
+the ticker scorecard it's the share of the signals that could have had an
+opinion on a stock tonight that actually did — low coverage means the score
+rests on just a few inputs, not the whole roster. On the book-heat panel
+it's the share of your holdings' value where a real risk read (an ATR) was
+available to size it — low coverage means the heat number is missing
+pieces of the book.
 
 **Hit rate** — in the backtester's report, the percentage of time the system's
 opinion was right (price went the way it was flagged). Always read alongside the
