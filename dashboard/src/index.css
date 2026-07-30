@@ -612,6 +612,27 @@ th .dir-hint {
   font-weight: 400;
   font-size: 10px;
 }
+th .col-label {
+  color: inherit;
+}
+.sort-trigger {
+  background: none;
+  border: none;
+  padding: 0 0 0 4px;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  vertical-align: baseline;
+}
+.sort-trigger:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.sort-indicator--idle {
+  color: var(--edge);
+}
 #tickfilter {
   background: var(--gutter);
   border: 1px solid var(--edge);

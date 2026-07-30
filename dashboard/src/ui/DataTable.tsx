@@ -160,18 +160,30 @@ export function DataTable({
                     aria-sort={sorted ? (state.sortDir === "asc" ? "ascending" : "descending") : "none"}
                     onClick={() => handleSort(col)}
                   >
+                    {/* Term already renders its own <button> (see Term.tsx) — nesting
+                        it inside another <button> would be invalid HTML and would
+                        double-fire handleSort via bubbling, so the sort trigger
+                        below is a sibling, not a wrapper, of the term label. Both
+                        funnel into th's onClick above via bubbling: a click or an
+                        Enter/Space-synthesized click on either fires it exactly once. */}
                     {col.term ? (
                       <Term term={col.term} glossary={glossary}>
                         {col.label}
                       </Term>
                     ) : (
-                      col.label
+                      <span className="col-label">{col.label}</span>
                     )}
                     {col.direction === "up-good" && <span className="dir-hint"> ↑ better</span>}
                     {col.direction === "down-good" && <span className="dir-hint"> ↓ better</span>}
-                    {sorted && (
-                      <span className="sort-indicator"> {state.sortDir === "desc" ? "▼" : "▲"}</span>
-                    )}
+                    <button type="button" className="sort-trigger" aria-label={`Sort by ${col.label}`}>
+                      {sorted ? (
+                        <span className="sort-indicator">{state.sortDir === "desc" ? "▼" : "▲"}</span>
+                      ) : (
+                        <span className="sort-indicator sort-indicator--idle" aria-hidden="true">
+                          ⇅
+                        </span>
+                      )}
+                    </button>
                   </th>
                 );
               })}

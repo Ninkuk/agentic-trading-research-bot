@@ -34,6 +34,16 @@ test("numeric sort toggles and shows indicator", async () => {
   expect(cellTexts(0)).toEqual(["1", "5", "9"]);
 });
 
+test("keyboard: focusing the sort button and pressing Enter applies the sort", async () => {
+  render(<DataTable columns={COLS} rows={ROWS3} storageKey="t5" />);
+  const sortButton = screen.getByRole("button", { name: /sort by score/i });
+  sortButton.focus();
+  expect(sortButton).toHaveFocus();
+  await userEvent.keyboard("{Enter}");
+  expect(cellTexts(0)).toEqual(["9", "5", "1"]); // desc first, same as the click-sort test
+  expect(screen.getByText("▼")).toBeInTheDocument();
+});
+
 test("show-all reveals rows beyond initialRows and persists", async () => {
   const { unmount } = render(
     <DataTable columns={COLS} rows={ROWS10} storageKey="t2" initialRows={3} />,
