@@ -141,9 +141,21 @@
           "in_portfolio": false,
           "flagged": false,
           "history": null
+        },
+        {
+          "symbol": "DECK",
+          "score_sum": 3,
+          "bullish": 3,
+          "bearish": 0,
+          "total": 3,
+          "coverage": 0.7,
+          "worst_staleness_days": 1,
+          "in_portfolio": true,
+          "flagged": true,
+          "history": [1, 2, 3]
         }
       ],
-      "total": 3
+      "total": 4
     },
     "signal-efficacy": {
       "title": "Signal efficacy",
@@ -230,6 +242,237 @@
       "rows": [],
       "caveat": "Several signals are graded at once, so a few clear the bar by luck.",
       "empty": "no matured buckets yet — appears once conviction-bucketed opinions reach their grading horizon"
+    },
+    "research-reopens": {
+      "title": "Research reopens",
+      "kicker": "Research",
+      "note": "Names already researched in depth and set aside, each with the stated evidence that would reopen the question.",
+      "columns": [
+        { "key": "ticker", "label": "Ticker", "numeric": false, "direction": null, "term": null },
+        { "key": "verdict", "label": "Verdict", "numeric": false, "direction": null, "term": null },
+        { "key": "due", "label": "Due", "numeric": false, "direction": null, "term": null },
+        { "key": "trigger", "label": "Trigger", "numeric": false, "direction": null, "term": null },
+        { "key": "thesis_date", "label": "Thesis date", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [
+        {
+          "ticker": "BLBD",
+          "verdict": "UNPROVEN",
+          "due": "2026-09-15",
+          "trigger": "epa-2026-nofo",
+          "thesis_date": "2026-07-28",
+          "thesis_path": "research/BLBD-2026-07-28.md"
+        },
+        {
+          "ticker": "DASH",
+          "verdict": "SOUND",
+          "due": null,
+          "trigger": "reopen-140",
+          "thesis_date": "2026-07-28",
+          "thesis_path": "research/DASH-2026-07-28.md"
+        }
+      ],
+      "dated": 1,
+      "events": 1
+    },
+    "human-filter": {
+      "title": "Human-filter tally",
+      "kicker": "Track record",
+      "note": "Of the opinions this page flagged, you either acted or passed.",
+      "columns": [
+        { "key": "response", "label": "Response", "numeric": false, "direction": null, "term": null },
+        { "key": "horizon", "label": "Horizon", "numeric": true, "direction": null, "term": null },
+        { "key": "n", "label": "N", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "avg_dir_excess", "label": "Directional excess", "numeric": true, "direction": null, "term": null },
+        { "key": "avg_fwd_return", "label": "Fwd return", "numeric": true, "direction": "up-good", "term": null }
+      ],
+      "rows": [
+        { "response": "acted", "horizon": 21, "n": 12, "avg_dir_excess": 0.018, "avg_fwd_return": 0.021 },
+        { "response": "passed", "horizon": 21, "n": 9, "avg_dir_excess": -0.006, "avg_fwd_return": 0.004 }
+      ],
+      "caveat": "Compares acted-on vs. passed-on flags from a still-small decision journal. A handful of trades can swing the comparison either way.",
+      "empty": "no matured flagged opinions yet — appears once an acted-on or passed-on flag reaches its grading horizon"
+    },
+    "regime-performance": {
+      "title": "Regime edge",
+      "kicker": "Track record",
+      "note": "Does the market-mood call itself have forward edge?",
+      "columns": [
+        { "key": "regime", "label": "Regime", "numeric": false, "direction": null, "term": null },
+        { "key": "horizon", "label": "Horizon", "numeric": true, "direction": null, "term": null },
+        { "key": "n_matured", "label": "N", "numeric": true, "direction": null, "term": null },
+        { "key": "avg_bench_return", "label": "Avg return", "numeric": true, "direction": null, "term": null },
+        { "key": "min_bench_return", "label": "Min return", "numeric": true, "direction": null, "term": null },
+        { "key": "max_bench_return", "label": "Max return", "numeric": true, "direction": null, "term": null }
+      ],
+      "rows": [
+        { "regime": "risk_on", "horizon": 21, "n_matured": 34, "avg_bench_return": 0.019, "min_bench_return": -0.08, "max_bench_return": 0.14 },
+        { "regime": "risk_off", "horizon": 21, "n_matured": 11, "avg_bench_return": -0.012, "min_bench_return": -0.15, "max_bench_return": 0.06 }
+      ],
+      "caveat": "Regime windows are contiguous stretches, not independent draws.",
+      "empty": "no matured regime outcomes yet — appears once a market-mood window reaches its grading horizon"
+    },
+    "pending": {
+      "title": "In-flight opinions",
+      "kicker": "Track record",
+      "note": "Opinions already recorded whose outcome has not matured yet.",
+      "columns": [
+        { "key": "kind", "label": "Kind", "numeric": false, "direction": null, "term": null },
+        { "key": "composite_date", "label": "Composite date", "numeric": false, "direction": null, "term": null },
+        { "key": "symbol", "label": "Entity", "numeric": false, "direction": null, "term": null },
+        { "key": "horizon", "label": "Horizon", "numeric": true, "direction": null, "term": null },
+        { "key": "entry_date", "label": "Entry date", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [
+        { "kind": "ticker", "composite_date": "2026-07-28", "symbol": "AAPL", "horizon": 21, "entry_date": "2026-07-08" },
+        { "kind": "ticker", "composite_date": "2026-07-28", "symbol": "TSLA", "horizon": 63, "entry_date": "2026-06-10" }
+      ],
+      "total": 4123,
+      "caveat": "These flags haven't reached their grading horizon yet, so nothing here is a result — it's a worklist.",
+      "empty": "nothing pending — everything registered so far has matured — fills once tonight's opinions are registered"
+    },
+    "basis-breaks": {
+      "title": "Data-integrity checks",
+      "kicker": "Track record",
+      "note": "Days where a price moved so far that it looks like a split or a bad tick.",
+      "columns": [
+        { "key": "symbol", "label": "Symbol", "numeric": false, "direction": null, "term": null },
+        { "key": "prev_date", "label": "Prev date", "numeric": false, "direction": null, "term": null },
+        { "key": "prev_close", "label": "Prev close", "numeric": true, "direction": null, "term": null },
+        { "key": "price_date", "label": "Price date", "numeric": false, "direction": null, "term": null },
+        { "key": "close", "label": "Close", "numeric": true, "direction": null, "term": null },
+        { "key": "ratio", "label": "Ratio", "numeric": true, "direction": null, "term": null }
+      ],
+      "rows": [],
+      "caveat": null,
+      "empty": "no basis breaks detected — an empty table is the good outcome; fills only when a price move looks like a split or a bad tick"
+    },
+    "plan-001-report": {
+      "title": "Signal recommendations",
+      "kicker": "Track record",
+      "note": "The verdict on each signal, graded against the base rate.",
+      "verdict": { "text": "1 keep / 1 watch / 0 anti-signal", "tone": "on" },
+      "columns": [
+        { "key": "signal_id", "label": "Signal", "numeric": false, "direction": null, "term": null },
+        { "key": "via_crosswalk", "label": "Via crosswalk", "numeric": true, "direction": null, "term": null },
+        { "key": "horizon", "label": "Horizon", "numeric": true, "direction": null, "term": null },
+        { "key": "n_blocks", "label": "Independent windows", "numeric": true, "direction": null, "term": null },
+        { "key": "avg_directional_excess", "label": "Directional excess", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "hit_rate", "label": "Hit rate", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "hit_ci_lo", "label": "Hit-rate CI low", "numeric": true, "direction": null, "term": null },
+        { "key": "hit_ci_hi", "label": "Hit-rate CI high", "numeric": true, "direction": null, "term": null },
+        { "key": "recommendation", "label": "Recommendation", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [
+        { "signal_id": "si_spike", "via_crosswalk": 0, "horizon": 21, "n_blocks": 6, "avg_directional_excess": 0.012, "hit_rate": 0.58, "hit_ci_lo": 0.49, "hit_ci_hi": 0.67, "recommendation": "keep" },
+        { "signal_id": "rsi_oversold", "via_crosswalk": 0, "horizon": 63, "n_blocks": 4, "avg_directional_excess": -0.004, "hit_rate": 0.46, "hit_ci_lo": 0.36, "hit_ci_hi": 0.56, "recommendation": "watch" }
+      ],
+      "caveat": "A backtest replay against ALFRED vintages, not live trading — read excess/beats-baseline, never hit-rate alone.",
+      "empty": "insufficient evidence for every signal (young scorer) — expected; fills in once a signal's evidence crosses the reliability floor"
+    },
+    "plan-004-scorecard": {
+      "title": "Trader scorecard",
+      "kicker": "Track record",
+      "note": "A plain-text report grading past decision quality.",
+      "text_lines": [
+        "=== Trader Scorecard ===",
+        "",
+        "Filtered opinions:   42",
+        "Unfiltered opinions: 58",
+        "",
+        "Freelance (unrecommended) trades: 5",
+        "  avg return: +1.8%",
+        "",
+        "Execution cost: -0.12% avg slippage vs. signal price"
+      ],
+      "caveat": "Grades the human's own decisions from the journal. Coverage is whatever got journaled, not a random sample of every flag shown."
+    },
+    "candidate-efficacy": {
+      "title": "Candidates screen edge",
+      "kicker": "Track record",
+      "note": "A name's first entry onto the candidates reading list starts a stopwatch.",
+      "columns": [
+        { "key": "screen_version", "label": "Screen version", "numeric": false, "direction": null, "term": null },
+        { "key": "branch", "label": "Dislocation door", "numeric": false, "direction": null, "term": null },
+        { "key": "horizon", "label": "Horizon", "numeric": true, "direction": null, "term": null },
+        { "key": "n", "label": "N", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "hit_rate", "label": "Hit rate", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "avg_excess", "label": "Excess", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "avg_fwd_return", "label": "Fwd return", "numeric": true, "direction": "up-good", "term": null }
+      ],
+      "rows": [],
+      "caveat": "Episodes are few and overlap early. The view carries plain averages with no confidence interval, so read n before believing any row.",
+      "empty": "no matured episodes yet — first grades appear ~21 trading days after the first screen night"
+    },
+    "group-heat": {
+      "title": "Advisor group heat",
+      "kicker": "Your book",
+      "note": "Correlated positions collapsed into single bets.",
+      "columns": [
+        { "key": "bet", "label": "Bet", "numeric": false, "direction": null, "term": null },
+        { "key": "members", "label": "Members", "numeric": true, "direction": null, "term": null },
+        { "key": "symbols", "label": "Symbols", "numeric": false, "direction": null, "term": null },
+        { "key": "heat_dollars", "label": "Heat $", "numeric": true, "direction": "down-good", "term": null },
+        { "key": "heat_pct", "label": "Heat %", "numeric": true, "direction": "down-good", "term": null }
+      ],
+      "rows": [
+        { "bet": "energy", "members": 2, "symbols": "XOM, CVX", "heat_dollars": 210.5, "heat_pct": 0.25 }
+      ],
+      "empty": "no group heat yet — appears once the advisor computes tonight's book"
+    },
+    "position-heat": {
+      "title": "Per-position heat",
+      "kicker": "Your book",
+      "note": "Risk contribution of each individual holding.",
+      "columns": [
+        { "key": "symbol", "label": "Symbol", "numeric": false, "direction": null, "term": null },
+        { "key": "group_name", "label": "Group", "numeric": false, "direction": null, "term": null },
+        { "key": "quantity", "label": "Qty", "numeric": true, "direction": null, "term": null },
+        { "key": "market_value", "label": "Market value", "numeric": true, "direction": null, "term": null },
+        { "key": "price", "label": "Price", "numeric": true, "direction": null, "term": null },
+        { "key": "heat_dollars", "label": "Heat $", "numeric": true, "direction": "down-good", "term": null },
+        { "key": "heat_pct", "label": "Heat %", "numeric": true, "direction": "down-good", "term": null },
+        { "key": "weight_pct", "label": "Weight %", "numeric": true, "direction": "down-good", "term": null },
+        { "key": "score_sum", "label": "Score", "numeric": true, "direction": null, "term": null },
+        { "key": "atr_stale", "label": "Stale?", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [
+        { "symbol": "AAPL", "group_name": "tech", "quantity": 10, "market_value": 1980.5, "price": 198.05, "heat_dollars": 42.1, "heat_pct": 0.5, "weight_pct": 2.35, "score_sum": 4, "atr_stale": false }
+      ],
+      "empty": "no positions with heat yet"
+    },
+    "disagreements": {
+      "title": "Disagreements",
+      "kicker": "Your book",
+      "note": "Tickers where tonight's score points the opposite way from a position you already hold.",
+      "columns": [
+        { "key": "symbol", "label": "Symbol", "numeric": false, "direction": null, "term": null },
+        { "key": "score_sum", "label": "Score", "numeric": true, "direction": null, "term": null },
+        { "key": "group_name", "label": "Group", "numeric": false, "direction": null, "term": null },
+        { "key": "strong", "label": "Strong", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [
+        { "symbol": "TSLA", "score_sum": -2, "group_name": "auto", "strong": false }
+      ],
+      "empty": "no disagreements"
+    },
+    "size-caps": {
+      "title": "Size caps",
+      "kicker": "Your book",
+      "note": "A volatility-scaled ceiling on how large each candidate position could be.",
+      "columns": [
+        { "key": "symbol", "label": "Symbol", "numeric": false, "direction": null, "term": null },
+        { "key": "direction", "label": "Direction", "numeric": false, "direction": null, "term": null },
+        { "key": "score_sum", "label": "Score", "numeric": true, "direction": null, "term": null },
+        { "key": "cap_shares", "label": "Cap shares", "numeric": true, "direction": null, "term": null },
+        { "key": "cap_dollars", "label": "Cap $", "numeric": true, "direction": null, "term": null },
+        { "key": "group_name", "label": "Group", "numeric": false, "direction": null, "term": null },
+        { "key": "exceeds_buying_power", "label": "Exceeds buying power?", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [
+        { "symbol": "AAPL", "direction": "long", "score_sum": 4, "cap_shares": 25, "cap_dollars": 4950.0, "group_name": "tech", "exceeds_buying_power": false }
+      ],
+      "empty": "no caps tonight"
     }
   },
   "tickers": {

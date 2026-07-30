@@ -25,9 +25,26 @@
 import type { ComponentType } from "react";
 import { Sparkline } from "../charts/Sparkline";
 import { signed } from "../format";
+import { BasisBreaks } from "../sections/BasisBreaks";
+import { BookHeat } from "../sections/BookHeat";
+import { BucketPerformance } from "../sections/BucketPerformance";
+import { CandidateEfficacy } from "../sections/CandidateEfficacy";
+import { Candidates } from "../sections/Candidates";
+import { Disagreements } from "../sections/Disagreements";
+import { GroupHeat } from "../sections/GroupHeat";
+import { HumanFilter } from "../sections/HumanFilter";
 import { MacroDrivers } from "../sections/MacroDrivers";
+import { Pending } from "../sections/Pending";
+import { PositionHeat } from "../sections/PositionHeat";
 import { Regime } from "../sections/Regime";
+import { RegimePerformance } from "../sections/RegimePerformance";
 import { RegimeTimelineSection } from "../sections/RegimeTimelineSection";
+import { ResearchReopens } from "../sections/ResearchReopens";
+import { Scorecard } from "../sections/Scorecard";
+import { SignalEfficacy } from "../sections/SignalEfficacy";
+import { SignalRecommendations } from "../sections/SignalRecommendations";
+import { SizeCaps } from "../sections/SizeCaps";
+import { TraderScorecard } from "../sections/TraderScorecard";
 import { KICKERS, type DashboardDoc, type Glossary, type Section } from "../types";
 import { DataTable } from "../ui/DataTable";
 import { Masthead } from "../ui/Masthead";
@@ -62,6 +79,23 @@ const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> =
   regime: Regime,
   "regime-timeline": RegimeTimelineSection,
   "macro-drivers": MacroDrivers,
+  candidates: Candidates,
+  "research-reopens": ResearchReopens,
+  scorecard: Scorecard,
+  "signal-efficacy": SignalEfficacy,
+  "bucket-performance": BucketPerformance,
+  "human-filter": HumanFilter,
+  "regime-performance": RegimePerformance,
+  pending: Pending,
+  "basis-breaks": BasisBreaks,
+  "book-heat": BookHeat,
+  "group-heat": GroupHeat,
+  "position-heat": PositionHeat,
+  disagreements: Disagreements,
+  "size-caps": SizeCaps,
+  "plan-001-report": SignalRecommendations,
+  "plan-004-scorecard": TraderScorecard,
+  "candidate-efficacy": CandidateEfficacy,
 };
 
 function GenericSection({ sec, glossary, id }: SectionComponentProps) {

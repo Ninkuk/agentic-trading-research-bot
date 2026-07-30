@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import fixture from "../fixtures/data.json";
 import { KICKERS, type DashboardDoc, type Kicker } from "../types";
@@ -66,11 +66,25 @@ test("the masthead search box navigates to the ticker route on Enter, uppercased
 });
 
 test("an unregistered section id falls back to the generic DataTable renderer", () => {
-  render(<Main doc={doc} />);
-  // "scorecard" has no dedicated component registered in Task 13 — it must
-  // still render its columns and rows via GenericSection, not go blank.
-  expect(screen.getByRole("columnheader", { name: /symbol/i })).toBeInTheDocument();
-  expect(screen.getByText("AAPL")).toBeInTheDocument();
+  // Task 14 registered a dedicated component for every real section id, so
+  // this constructs a synthetic id no registry entry can ever claim — it
+  // must still render its columns and rows via GenericSection, not go blank.
+  const withUnregistered: DashboardDoc = {
+    ...doc,
+    sections: {
+      ...doc.sections,
+      "totally-new-section": {
+        title: "Totally New Section",
+        kicker: "Signals",
+        columns: [{ key: "symbol", label: "Symbol", numeric: false, direction: null, term: null }],
+        rows: [{ symbol: "ZZZZ" }],
+      },
+    },
+  };
+  render(<Main doc={withUnregistered} />);
+  const region = within(document.getElementById("totally-new-section") as HTMLElement);
+  expect(region.getByRole("columnheader", { name: /symbol/i })).toBeInTheDocument();
+  expect(region.getByText("ZZZZ")).toBeInTheDocument();
 });
 
 test("generic fallback sections with duplicate titles keep independent persisted state (keyed by id, not title)", async () => {

@@ -5,11 +5,13 @@
 // column's value) keeps specific rows above the rest regardless of sort;
 // the active sort still applies within each group. `renderCell` lets a
 // section inject a chart or custom formatting into a cell instead of the
-// plain-text default.
+// plain-text default. `rowClassName` lets a section (Scorecard's flagged
+// rows) apply a row-level CSS hook without owning row markup itself.
 
 import { useState, type ReactNode } from "react";
 import { usePrefs } from "../hooks/usePrefs";
 import type { CellValue, Column, Glossary, Row } from "../types";
+import { formatCell } from "./formatCell";
 import { Term } from "./Term";
 
 export interface DataTableProps {
@@ -20,6 +22,11 @@ export interface DataTableProps {
   renderCell?: (row: Row, col: Column) => ReactNode;
   pinnedFirst?: string[];
   glossary?: Glossary;
+  // Extra class(es) for a row's <tr> — e.g. Scorecard's "flag" class, which
+  // triggers the ★ + brass left-edge treatment purely through CSS
+  // (tr.flag / tr.flag .sym::after in index.css). Returning undefined
+  // leaves the row unclassed.
+  rowClassName?: (row: Row) => string | undefined;
 }
 
 type SortDir = "asc" | "desc" | null;
@@ -61,13 +68,6 @@ function sortRows(rows: Row[], col: Column | undefined, dir: SortDir): Row[] {
   return [...rows].sort((r1, r2) => compareValues(r1[col.key], r2[col.key], col.numeric, dir));
 }
 
-function formatCell(value: CellValue | undefined): ReactNode {
-  if (value === undefined || value === null) return "—";
-  if (typeof value === "boolean") return value ? "yes" : "no";
-  if (Array.isArray(value)) return "—";
-  return String(value);
-}
-
 export function DataTable({
   columns,
   rows,
@@ -76,6 +76,7 @@ export function DataTable({
   renderCell,
   pinnedFirst,
   glossary = {},
+  rowClassName,
 }: DataTableProps) {
   const [state, setState] = usePrefs<TableState>(storageKey, DEFAULT_STATE);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -191,7 +192,7 @@ export function DataTable({
           </thead>
           <tbody>
             {displayedRows.map((row, i) => (
-              <tr key={rowKeyOf(row, columns) || i}>
+              <tr key={rowKeyOf(row, columns) || i} className={rowClassName?.(row)}>
                 {visibleColumns.map((col) => (
                   <td key={col.key} className={col.numeric ? "num" : undefined}>
                     {renderCell ? renderCell(row, col) : formatCell(row[col.key])}
