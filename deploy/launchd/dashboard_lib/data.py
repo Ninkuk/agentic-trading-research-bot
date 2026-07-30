@@ -16,6 +16,7 @@ caller's job to catch (mirrors dashboard.py's "generation failed" page: an
 absent data.json would be worse than an honest error banner).
 """
 
+import json
 import re
 import sqlite3
 import sys
@@ -405,6 +406,20 @@ _REOPEN_FIELD_RE = re.compile(r"\breopen=(\d{4}-\d{2}-\d{2}|event):(\S+)")
 _REOPEN_TICKER_RE = re.compile(r"^[A-Z0-9.\-]+$")
 _REOPEN_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _REOPEN_VERDICTS = {"SOUND", "FLAWED", "UNPROVEN"}
+
+# research_verdicts.doc is recorded by the research-ticker skill as a bare
+# filename "<TICKER>-<YYYY-MM-DD>.md" (see .claude/skills/research-ticker's
+# journal-ingest doc), never a full path or URL — this guard mirrors
+# _thesis_path's "don't trust a free-text column" posture before joining it
+# under research/.
+_VERDICT_DOC_RE = re.compile(r"^[A-Z0-9.\-]+-\d{4}-\d{2}-\d{2}\.md$")
+
+
+def _verdict_thesis_path(doc: str | None) -> str | None:
+    if doc is None or not _VERDICT_DOC_RE.match(doc):
+        return None
+    return f"research/{doc}"
+
 
 _RESEARCH_REOPENS_COLUMNS: list[dict[str, Any]] = [
     {"key": "ticker", "label": "Ticker", "numeric": False, "direction": None, "term": None},
@@ -1205,6 +1220,276 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
 ]
 
 
+# --- Hero bullets (Task 8) --------------------------------------------------
+# Ports sections.py:1184-1343's `_hero_*_clause` SQL into plain dicts for
+# narrative.hero_bullets. Each fetch is its own try/except (mirrors
+# sections.py's `_hero_clause` wrapper) so a missing/unreadable advisor.db
+# drops only the book/disagreement bullets, never the whole hero.
+
+
+def _hero_regime_input(data_dir: str) -> dict[str, Any] | None:
+    """{"regime", "streak_nights", "vix"} from composite.db, or None on any
+    failure (missing DB, no snapshot yet) — ports `_hero_regime_clause`."""
+    try:
+        conn = _ro(data_dir, "composite.db")
+        try:
+            r = conn.execute("SELECT regime, vix FROM v_latest_regime").fetchone()
+            if r is None:
+                return None
+            return {
+                "regime": r["regime"],
+                "streak_nights": _streak_nights(conn),
+                "vix": r["vix"],
+            }
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
+def _hero_book_input(data_dir: str) -> dict[str, Any] | None:
+    """{"heat_pct", "positions"} from advisor.db — ports `_hero_book_clause`.
+    `heat_pct` is percent-scale (the view's fraction × 100), matching
+    narrative.hero_bullets' documented contract, same unit trap as the
+    your-book strand's section exporters above."""
+    try:
+        conn = _ro(data_dir, "advisor.db")
+        try:
+            r = conn.execute("SELECT heat_pct, positions FROM v_book_heat").fetchone()
+            if r is None:
+                return None
+            heat_pct = None if r["heat_pct"] is None else r["heat_pct"] * 100
+            return {"heat_pct": heat_pct, "positions": r["positions"] or 0}
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
+def _hero_disagreements_input(data_dir: str) -> list[str] | None:
+    """Strong-only disagreement symbols from advisor.db — ports
+    `_hero_disagreement_clause`. The strength judgment itself already lives
+    in v_disagreements.strong (STRONG_MIN_ABS_SCORE/STRONG_MIN_TOTAL,
+    computed in SQL by advisor/db.py); this just filters on it. None on any
+    failure — narrative.hero_bullets treats None the same as an empty list
+    (falls through to the flagged-tickers bullet)."""
+    try:
+        conn = _ro(data_dir, "advisor.db")
+        try:
+            rows = conn.execute(
+                "SELECT symbol FROM v_disagreements WHERE strong ORDER BY symbol"
+            ).fetchall()
+            return [r["symbol"] for r in rows]
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
+def _hero(data_dir: str) -> dict[str, Any]:
+    return {
+        "bullets": narrative.hero_bullets(
+            regime=_hero_regime_input(data_dir),
+            book=_hero_book_input(data_dir),
+            disagreements=_hero_disagreements_input(data_dir),
+            flagged=flagged_tickers(data_dir),
+        )
+    }
+
+
+# --- Ticker drill-down (Task 8) ---------------------------------------------
+# Bounded to headline_symbols(composite) ∪ held (advisor v_latest_heat) ∪
+# journal (scorer decisions symbols) — NOT the full ~1,017-row scorecard
+# (same size-blocker review note as `headline_symbols`'s docstring). Each of
+# the three source DBs is its own try/except: a missing scorer.db degrades
+# `verdicts`/`fills` to `[]` for every ticker rather than blanking the whole
+# `tickers` dict, and a missing composite/advisor.db behaves the same way
+# for the fields only it can supply.
+
+_TICKER_SCORE_HISTORY_LIMIT = 90
+
+
+def _ticker_universe(data_dir: str) -> set[str]:
+    headline: set[str] = set()
+    try:
+        conn = _ro(data_dir, "composite.db")
+        try:
+            headline = headline_symbols(conn)
+        finally:
+            conn.close()
+    except Exception:
+        pass
+
+    held: set[str] = set()
+    try:
+        conn = _ro(data_dir, "advisor.db")
+        try:
+            held = {r["symbol"] for r in conn.execute("SELECT symbol FROM v_latest_heat")}
+        finally:
+            conn.close()
+    except Exception:
+        pass
+
+    journal: set[str] = set()
+    try:
+        conn = _ro(data_dir, "scorer.db")
+        try:
+            journal = {r["symbol"] for r in conn.execute("SELECT DISTINCT symbol FROM decisions")}
+        finally:
+            conn.close()
+    except Exception:
+        pass
+
+    return headline | held | journal
+
+
+def _empty_ticker_detail() -> dict[str, Any]:
+    return {"score_history": [], "signals": [], "verdicts": [], "fills": [], "position": None}
+
+
+def _fill_composite_ticker_fields(
+    data_dir: str, symbols: set[str], tickers: dict[str, dict[str, Any]]
+) -> None:
+    """score_history (last 90, {"date", "score_sum"}) and signals
+    ({"signal", "score", "raw_value"}) — one grouped query per field, never
+    one query per symbol (same pattern as `_scorecard`'s history fetch)."""
+    try:
+        conn = _ro(data_dir, "composite.db")
+        try:
+            marks = ",".join("?" * len(symbols))
+            syms = tuple(symbols)
+
+            history: dict[str, list[dict[str, Any]]] = {s: [] for s in symbols}
+            for r in conn.execute(
+                f"SELECT symbol, captured_at, score_sum FROM v_score_history"
+                f" WHERE symbol IN ({marks}) ORDER BY captured_at ASC",
+                syms,
+            ):
+                history[r["symbol"]].append(
+                    {"date": phx_date(r["captured_at"]), "score_sum": r["score_sum"]}
+                )
+
+            signals: dict[str, list[dict[str, Any]]] = {s: [] for s in symbols}
+            for r in conn.execute(
+                f"SELECT entity AS symbol, signal_id, score, raw_value FROM v_signal_detail"
+                f" WHERE entity IN ({marks})",
+                syms,
+            ):
+                signals[r["symbol"]].append(
+                    {"signal": r["signal_id"], "score": r["score"], "raw_value": r["raw_value"]}
+                )
+        finally:
+            conn.close()
+    except Exception:
+        return
+    for sym in symbols:
+        tickers[sym]["score_history"] = history[sym][-_TICKER_SCORE_HISTORY_LIMIT:]
+        tickers[sym]["signals"] = signals[sym]
+
+
+def _fill_advisor_ticker_fields(
+    data_dir: str, symbols: set[str], tickers: dict[str, dict[str, Any]]
+) -> None:
+    """position ({"quantity", "market_value", "heat_dollars", "heat_pct"} |
+    None) from advisor.db's v_latest_heat. heat_pct is percent-scale (the
+    view's fraction × 100), same unit trap as the your-book strand above."""
+    try:
+        conn = _ro(data_dir, "advisor.db")
+        try:
+            marks = ",".join("?" * len(symbols))
+            rows = {
+                r["symbol"]: r
+                for r in conn.execute(
+                    "SELECT symbol, quantity, market_value, heat_dollars, heat_pct"
+                    f" FROM v_latest_heat WHERE symbol IN ({marks})",
+                    tuple(symbols),
+                )
+            }
+        finally:
+            conn.close()
+    except Exception:
+        return
+    for sym in symbols:
+        r = rows.get(sym)
+        if r is None:
+            continue
+        tickers[sym]["position"] = {
+            "quantity": r["quantity"],
+            "market_value": r["market_value"],
+            "heat_dollars": r["heat_dollars"],
+            "heat_pct": None if r["heat_pct"] is None else r["heat_pct"] * 100,
+        }
+
+
+def _fill_scorer_ticker_fields(
+    data_dir: str, symbols: set[str], tickers: dict[str, dict[str, Any]]
+) -> None:
+    """verdicts ({"date", "verdict", "thesis_path"}) from research_verdicts
+    and fills ({"action", "side", "fill_date", "fill_price", "quantity",
+    "exit_fill_date", "exit_fill_price", "opinion_score_sum"}) from
+    decisions — an explicit column list, NEVER `SELECT *`: `decisions` also
+    carries note/order_ref/exit_order_ref/placed_agent, which Task 7's
+    privacy walk test bans from this subtree. research_verdicts' own `note`
+    column is left out the same way."""
+    try:
+        conn = _ro(data_dir, "scorer.db")
+        try:
+            marks = ",".join("?" * len(symbols))
+            syms = tuple(symbols)
+
+            verdicts: dict[str, list[dict[str, Any]]] = {s: [] for s in symbols}
+            for r in conn.execute(
+                "SELECT symbol, verdict, verdict_date, doc FROM research_verdicts"
+                f" WHERE symbol IN ({marks}) ORDER BY verdict_date DESC",
+                syms,
+            ):
+                verdicts[r["symbol"]].append(
+                    {
+                        "date": r["verdict_date"],
+                        "verdict": r["verdict"],
+                        "thesis_path": _verdict_thesis_path(r["doc"]),
+                    }
+                )
+
+            fills: dict[str, list[dict[str, Any]]] = {s: [] for s in symbols}
+            for r in conn.execute(
+                "SELECT symbol, action, side, fill_date, fill_price, quantity,"
+                " exit_fill_date, exit_fill_price, opinion_score_sum FROM decisions"
+                f" WHERE symbol IN ({marks}) ORDER BY fill_date",
+                syms,
+            ):
+                fills[r["symbol"]].append(
+                    {
+                        "action": r["action"],
+                        "side": r["side"],
+                        "fill_date": r["fill_date"],
+                        "fill_price": r["fill_price"],
+                        "quantity": r["quantity"],
+                        "exit_fill_date": r["exit_fill_date"],
+                        "exit_fill_price": r["exit_fill_price"],
+                        "opinion_score_sum": r["opinion_score_sum"],
+                    }
+                )
+        finally:
+            conn.close()
+    except Exception:
+        return
+    for sym in symbols:
+        tickers[sym]["verdicts"] = verdicts[sym]
+        tickers[sym]["fills"] = fills[sym]
+
+
+def _tickers(data_dir: str) -> dict[str, dict[str, Any]]:
+    symbols = _ticker_universe(data_dir)
+    tickers: dict[str, dict[str, Any]] = {s: _empty_ticker_detail() for s in symbols}
+    if not symbols:
+        return tickers
+    _fill_composite_ticker_fields(data_dir, symbols, tickers)
+    _fill_advisor_ticker_fields(data_dir, symbols, tickers)
+    _fill_scorer_ticker_fields(data_dir, symbols, tickers)
+    return tickers
+
+
 def _ro(data_dir: str, db_name: str) -> sqlite3.Connection:
     """Read-only connection to `<data_dir>/<db_name>` — never write access."""
     conn = sqlite3.connect(f"file:{Path(data_dir) / db_name}?mode=ro", uri=True)
@@ -1280,8 +1565,15 @@ def export_data(data_dir: str, now_iso: str, repo_root: str | None = None) -> di
         "generated_at": now_iso,
         "edition_date": _edition_date(now_iso),
         "snapshot_number": _snapshot_number(data_dir),
-        "hero": {"bullets": []},
+        "hero": _hero(data_dir),
         "sections": sections,
-        "tickers": {},
+        "tickers": _tickers(data_dir),
         "glossary": load_glossary(root / "docs" / "GLOSSARY.md"),
     }
+
+
+def export_json(data_dir: str, now_iso: str, repo_root: str | None = None) -> str:
+    """Compact-serialized `export_data(...)` — Task 9's entrypoint consumes
+    this exact name/signature so the CLI and tests never diverge on
+    serialization (separators, key order via dict insertion order)."""
+    return json.dumps(export_data(data_dir, now_iso, repo_root), separators=(",", ":"))

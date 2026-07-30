@@ -380,3 +380,95 @@ def test_research_reopens_exports_relative_thesis_paths(tmp_path):
     assert all(
         not r["thesis_path"].startswith("http") for r in sec.get("rows", []) if r["thesis_path"]
     )
+
+
+# --- Task 8: hero bullets + ticker drill-down -------------------------------
+
+
+def test_hero_bullets_present_on_populated(populated_data_dir):
+    doc = data.export_data(populated_data_dir, NOW)
+    assert doc["hero"]["bullets"], "populated fixture must produce at least the mood bullet"
+    assert any(
+        "Risk-on" in b["text"] or "risk" in b["text"].lower() for b in doc["hero"]["bullets"]
+    )
+
+
+def test_hero_survives_missing_advisor_db(populated_data_dir):
+    Path(populated_data_dir, "advisor.db").unlink()
+    doc = data.export_data(populated_data_dir, NOW)
+    assert isinstance(doc["hero"]["bullets"], list)  # degraded, not crashed
+    assert doc["hero"]["bullets"], "regime + flagged bullets survive on composite.db alone"
+
+
+def test_hero_disagreements_bullet_uses_strong_only(populated_data_dir):
+    doc = data.export_data(populated_data_dir, NOW)
+    # fixture: XOM is the only strong disagreement (score_sum=-4, total=4)
+    assert any("XOM" in b["text"] for b in doc["hero"]["bullets"])
+
+
+def test_ticker_detail_bounded_to_headline_held_journal(populated_data_dir):
+    doc = data.export_data(populated_data_dir, NOW)
+    sec = doc["sections"]["scorecard"]
+    headline = {r["symbol"] for r in sec["rows"] if r["history"] is not None}
+    held = {"AAPL", "XOM", "XLE"}  # fixture's advisor.db positions
+    journal = {"FLAG1", "NVDA", "PRIV1"}  # fixture's scorer.db decisions symbols
+    assert set(doc["tickers"]) <= headline | held | journal
+    assert set(doc["tickers"]), "populated fixture must export at least one detail"
+    assert "XOM" in doc["tickers"]  # held, exercises position export
+
+
+def test_ticker_detail_shapes(populated_data_dir):
+    doc = data.export_data(populated_data_dir, NOW)
+    t = doc["tickers"]["FLAG1"]
+    assert {"score_history", "signals", "verdicts", "fills", "position"} == set(t)
+    assert t["score_history"], "FLAG1 has 2 snapshots of history"
+    assert {"date", "score_sum"} == set(t["score_history"][0])
+    assert t["signals"], "FLAG1 has 4 ticker-grain signals on the latest snapshot"
+    assert {"signal", "score", "raw_value"} == set(t["signals"][0])
+    assert t["fills"], "FLAG1 has one decision row"
+
+    xom = doc["tickers"]["XOM"]
+    assert xom["position"] == {
+        "quantity": 5.0,
+        "market_value": 500.0,
+        "heat_dollars": 10.0,
+        "heat_pct": 0.1,  # fraction 0.001 * 100
+    }
+
+    plain1 = doc["tickers"].get("PLAIN1")
+    if plain1 is not None:
+        assert plain1["position"] is None  # not held
+
+
+def test_fills_export_only_allowed_columns(populated_data_dir):
+    doc = data.export_data(populated_data_dir, NOW)
+    allowed = {
+        "action",
+        "side",
+        "fill_date",
+        "fill_price",
+        "quantity",
+        "exit_fill_date",
+        "exit_fill_price",
+        "opinion_score_sum",
+    }
+    assert doc["tickers"]["PRIV1"]["fills"], "PRIV1 has one decision row"
+    for t in doc["tickers"].values():
+        for f in t["fills"]:
+            assert set(f) <= allowed
+
+
+def test_tickers_degrade_per_field_on_missing_scorer_db(populated_data_dir):
+    Path(populated_data_dir, "scorer.db").unlink()
+    doc = data.export_data(populated_data_dir, NOW)
+    assert doc["tickers"], "composite/advisor-backed tickers still export"
+    for t in doc["tickers"].values():
+        assert t["verdicts"] == []
+        assert t["fills"] == []
+
+
+def test_export_json_matches_export_data(populated_data_dir):
+    doc = data.export_data(populated_data_dir, NOW)
+    blob = data.export_json(populated_data_dir, NOW)
+    assert json.loads(blob) == doc
+    assert blob == json.dumps(doc, separators=(",", ":"))  # compact separators, same call shape
