@@ -285,6 +285,87 @@ def test_candidate_efficacy_exports_branch_rows(populated_data_dir):
     assert sec["caveat"]
 
 
+def test_book_heat_verdict_uses_percent_scale(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["book-heat"]
+    heat_tile = next(t for t in sec["tiles"] if "heat" in t["label"])
+    assert heat_tile["value"] > 0.1  # fixture heat is 0.21% — percent, not fraction
+    assert sec["verdict"]["tone"] in ("on", "off", "mid")
+    assert heat_tile["band"] is not None
+
+
+def test_book_heat_tiles_cover_positions_coverage_equity_sources_failed(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["book-heat"]
+    labels = {t["label"] for t in sec["tiles"]}
+    assert {"positions", "coverage", "equity", "sources failed"} <= labels
+    positions_tile = next(t for t in sec["tiles"] if t["label"] == "positions")
+    assert positions_tile["value"] == 3  # fixture holds AAPL/XOM/XLE
+
+
+def test_book_heat_degrades_on_no_snapshot(tmp_path):
+    sec = data.export_data(str(tmp_path), NOW)["sections"]["book-heat"]
+    assert "error" in sec  # missing advisor.db entirely: whole-section degrade
+
+
+def test_group_heat_collapses_energy_group_and_scales_percent(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["group-heat"]
+    energy = next(r for r in sec["rows"] if r["bet"] == "energy")
+    assert energy["members"] == 2  # XOM + XLE collapsed into one bet
+    assert energy["heat_pct"] > 0.1  # percent, not the view's raw fraction
+    direction = next(c["direction"] for c in sec["columns"] if c["key"] == "heat_pct")
+    assert direction == "down-good"
+
+
+def test_position_heat_excludes_join_key_and_scales_percent(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["position-heat"]
+    assert sec["rows"], "fixture holds 3 positions with heat"
+    row = sec["rows"][0]
+    assert "snapshot_id" not in row and "id" not in row
+    assert {
+        "symbol",
+        "group_name",
+        "quantity",
+        "market_value",
+        "price",
+        "heat_dollars",
+        "heat_pct",
+        "weight_pct",
+        "score_sum",
+        "atr_stale",
+    } == set(row)
+    aapl = next(r for r in sec["rows"] if r["symbol"] == "AAPL")
+    assert aapl["heat_pct"] == 0.3  # fraction 0.003 * 100
+    assert aapl["weight_pct"] == 15.0  # fraction 0.15 * 100
+
+
+def test_disagreements_flags_strong_holding_against_score(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["disagreements"]
+    xom = next(r for r in sec["rows"] if r["symbol"] == "XOM")
+    assert xom["strong"] is True  # fixture: score_sum=-4, total=4
+
+
+def test_size_caps_exports_buying_power_warning(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["size-caps"]
+    nvda = next(r for r in sec["rows"] if r["symbol"] == "NVDA")
+    assert nvda["exceeds_buying_power"] is True
+    assert nvda["direction"] == "bullish"
+
+
+def test_ticker_subtree_never_leaks_journal_private_fields(populated_data_dir):
+    doc = data.export_data(populated_data_dir, NOW)
+    banned = {"note", "order_ref", "exit_order_ref", "placed_agent"}
+
+    def walk(node):
+        if isinstance(node, dict):
+            assert not (banned & set(node)), f"private key leaked: {banned & set(node)}"
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+
+    walk(doc["tickers"])  # sections' `note` prose lives outside this subtree
+
+
 def test_research_reopens_exports_relative_thesis_paths(tmp_path):
     (tmp_path / "research").mkdir()
     (tmp_path / "research" / "verdicts.log").write_text(

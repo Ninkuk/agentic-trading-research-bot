@@ -309,6 +309,20 @@ def _build_scorer_db(path):
         (NOW,),
     )
 
+    # Task 7 privacy-parity guard: a decision row with non-NULL note/
+    # order_ref/exit_order_ref/placed_agent — the four fields
+    # test_ticker_subtree_never_leaks_journal_private_fields bans from the
+    # exported doc["tickers"] subtree. Additive-only (doesn't touch the
+    # FLAG1/NVDA rows above). The walk is trivially green until Task 8
+    # populates doc["tickers"] — that ordering is expected, not a gap.
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, fill_date, fill_price,"
+        " quantity, order_ref, exit_order_ref, note, placed_agent, recorded_at)"
+        " VALUES ('PRIV1', 'acted', 'buy', '2026-07-03', 50.0, 3,"
+        " 'ord-priv-1', 'ord-priv-1-exit', 'private note text', 'agentic', ?)",
+        (NOW,),
+    )
+
     # v_candidate_efficacy: one matured candidates-screen list-entry episode
     # via the rsi dislocation door (direct-but-schema-true insert, mirroring
     # tests/test_scorer_candidates.py's own fixture shape).

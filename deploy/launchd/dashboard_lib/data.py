@@ -506,7 +506,10 @@ _UP_GOOD = {
     "avg_fwd_return",
     "n",
 }
-_DOWN_GOOD = {"null_rate"}
+# heat_dollars/heat_pct/weight_pct (Task 7, your-book strand): less dollars/
+# percent of the book at risk on a one-ATR adverse day is always the better
+# state, same "lower is safer" logic as null_rate.
+_DOWN_GOOD = {"null_rate", "heat_dollars", "heat_pct", "weight_pct"}
 
 
 def _direction(key: str) -> str | None:
@@ -780,6 +783,198 @@ def _candidate_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any
     }
 
 
+# --- Your-book strand (Task 7) ----------------------------------------------
+# Review-caught unit trap: advisor.db's v_book_heat/v_group_heat/v_latest_heat
+# store heat_pct and weight_pct as FRACTIONS (heat_dollars / equity or market
+# value), but sections.py's HTML always ran them through `_pct()` before
+# display, and narrative.book_verdict/qualitative_band("book_heat_pct", ...)
+# are calibrated in PERCENT (band cutoffs 1.5/3.0). Every one of these four
+# exporters multiplies by 100 at the boundary — the one deliberate deviation
+# from "export raw numbers" in this module, because the raw fraction would
+# silently neuter the book verdict's bands (a live 0.0196 reads as
+# "comfortable" under a percent-scale threshold table).
+
+
+def _book_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Book-wide risk-at-risk tiles — ported from sections.py:658-674
+    (_book_heat). `heat_pct` is v_book_heat's FRACTION; converted to percent
+    before it reaches narrative.book_verdict/qualitative_band (see the
+    strand-level unit-trap note above)."""
+    r = conn.execute(
+        "SELECT positions, heat_pct, heat_coverage, equity, sources_failed FROM v_book_heat"
+    ).fetchone()
+    if r is None:
+        return {
+            "verdict": None,
+            "tiles": [],
+            "empty": "no advisor snapshot yet",
+        }
+    heat_pct_percent = None if r["heat_pct"] is None else r["heat_pct"] * 100
+    heat_band = (
+        None
+        if heat_pct_percent is None
+        else narrative.qualitative_band("book_heat_pct", heat_pct_percent)
+    )
+    tiles = [
+        {"label": "positions", "value": r["positions"] or 0, "band": None, "tone": None},
+        {"label": "book heat %", "value": heat_pct_percent, "band": heat_band, "tone": None},
+        {"label": "coverage", "value": r["heat_coverage"], "band": None, "tone": None},
+        {"label": "equity", "value": r["equity"], "band": None, "tone": None},
+        {
+            "label": "sources failed",
+            "value": r["sources_failed"] or 0,
+            "band": None,
+            "tone": None,
+        },
+    ]
+    return {"verdict": narrative.book_verdict(heat_pct_percent), "tiles": tiles}
+
+
+_GROUP_HEAT_COLUMNS: list[dict[str, Any]] = [
+    _track_col("bet", "Bet", numeric=False),
+    _track_col("members", "Members"),
+    _track_col("symbols", "Symbols", numeric=False),
+    _track_col("heat_dollars", "Heat $"),
+    _track_col("heat_pct", "Heat %"),
+]
+
+
+def _group_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Correlated positions collapsed into single bets — ported from
+    sections.py:677-692 (_group_heat). `heat_pct` is percent-converted, same
+    unit trap as `_book_heat` above."""
+    rows = conn.execute(
+        "SELECT bet, members, symbols, heat_dollars, heat_pct FROM v_group_heat"
+    ).fetchall()
+    return {
+        "columns": _GROUP_HEAT_COLUMNS,
+        "rows": [
+            {
+                "bet": r["bet"],
+                "members": r["members"],
+                "symbols": r["symbols"] or "",
+                "heat_dollars": r["heat_dollars"],
+                "heat_pct": None if r["heat_pct"] is None else r["heat_pct"] * 100,
+            }
+            for r in rows
+        ],
+        "empty": "no group heat yet — appears once the advisor computes tonight's book",
+    }
+
+
+_POSITION_HEAT_COLUMNS: list[dict[str, Any]] = [
+    _track_col("symbol", "Symbol", numeric=False),
+    _track_col("group_name", "Group", numeric=False),
+    _track_col("quantity", "Qty"),
+    _track_col("market_value", "Market value"),
+    _track_col("price", "Price"),
+    _track_col("heat_dollars", "Heat $"),
+    _track_col("heat_pct", "Heat %"),
+    _track_col("weight_pct", "Weight %"),
+    _track_col("score_sum", "Score"),
+    _track_col("atr_stale", "Stale?", numeric=False),
+]
+
+
+def _position_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Per-position risk contribution — ported from sections.py:695-735
+    (_position_heat). The view's join-key column (snapshot_id) is internal
+    bookkeeping and must never reach the page — explicit column list, never
+    SELECT *. heat_pct/weight_pct are percent-converted, same unit trap as
+    `_book_heat` above."""
+    rows = conn.execute(
+        "SELECT symbol, group_name, quantity, market_value, price, heat_dollars,"
+        " heat_pct, weight_pct, score_sum, atr_stale FROM v_latest_heat"
+        " ORDER BY heat_dollars DESC"
+    ).fetchall()
+    return {
+        "columns": _POSITION_HEAT_COLUMNS,
+        "rows": [
+            {
+                "symbol": r["symbol"],
+                "group_name": r["group_name"],
+                "quantity": r["quantity"],
+                "market_value": r["market_value"],
+                "price": r["price"],
+                "heat_dollars": r["heat_dollars"],
+                "heat_pct": None if r["heat_pct"] is None else r["heat_pct"] * 100,
+                "weight_pct": None if r["weight_pct"] is None else r["weight_pct"] * 100,
+                "score_sum": r["score_sum"],
+                "atr_stale": bool(r["atr_stale"]),
+            }
+            for r in rows
+        ],
+        "empty": "no positions with heat yet",
+    }
+
+
+_DISAGREEMENTS_COLUMNS: list[dict[str, Any]] = [
+    _track_col("symbol", "Symbol", numeric=False),
+    _track_col("score_sum", "Score"),
+    _track_col("group_name", "Group", numeric=False),
+    _track_col("strong", "Strong", numeric=False),
+]
+
+
+def _disagreements(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Held positions where tonight's score points the opposite way — ported
+    from sections.py:738-752 (_disagreements). `strong` mirrors composite's
+    v_flagged thresholds (STRONG_MIN_ABS_SCORE/STRONG_MIN_TOTAL)."""
+    rows = conn.execute(
+        "SELECT symbol, score_sum, group_name, strong FROM v_disagreements"
+    ).fetchall()
+    return {
+        "columns": _DISAGREEMENTS_COLUMNS,
+        "rows": [
+            {
+                "symbol": r["symbol"],
+                "score_sum": r["score_sum"],
+                "group_name": r["group_name"],
+                "strong": bool(r["strong"]),
+            }
+            for r in rows
+        ],
+        "empty": "no disagreements",
+    }
+
+
+_SIZE_CAPS_COLUMNS: list[dict[str, Any]] = [
+    _track_col("symbol", "Symbol", numeric=False),
+    _track_col("direction", "Direction", numeric=False),
+    _track_col("score_sum", "Score"),
+    _track_col("cap_shares", "Cap shares"),
+    _track_col("cap_dollars", "Cap $"),
+    _track_col("group_name", "Group", numeric=False),
+    _track_col("exceeds_buying_power", "Exceeds buying power?", numeric=False),
+]
+
+
+def _size_caps(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Volatility-scaled position-size ceiling per flagged candidate —
+    ported from sections.py:755-778 (_size_caps). Decision support only,
+    never an order (see this section's registry `note` below)."""
+    rows = conn.execute(
+        "SELECT symbol, direction, score_sum, cap_shares, cap_dollars,"
+        " group_name, exceeds_buying_power FROM v_latest_caps"
+    ).fetchall()
+    return {
+        "columns": _SIZE_CAPS_COLUMNS,
+        "rows": [
+            {
+                "symbol": r["symbol"],
+                "direction": r["direction"],
+                "score_sum": r["score_sum"],
+                "cap_shares": r["cap_shares"],
+                "cap_dollars": r["cap_dollars"],
+                "group_name": r["group_name"],
+                "exceeds_buying_power": bool(r["exceeds_buying_power"]),
+            }
+            for r in rows
+        ],
+        "empty": "no caps tonight",
+    }
+
+
 # (sid, title, db_name, fn, kicker, note) — same ids/titles/kickers/notes as
 # sections.py's SECTIONS; prose copied verbatim from sections.py:907-1116.
 # candidate-efficacy has no sections.py counterpart (new 2026-07-29).
@@ -916,6 +1111,58 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         " tick rather than a real move. Surfaced so a silent data problem"
         " cannot quietly skew every grade above. An empty table is the good"
         " outcome.",
+    ),
+    (
+        "book-heat",
+        "Advisor book heat",
+        "advisor.db",
+        _book_heat,
+        "Your book",
+        "How much of your account is genuinely at risk right now, adding up"
+        " the dollars at risk on a one-ATR adverse day across every open"
+        " position. That is NOT the stop-out loss — the stop sits further"
+        " out, so being stopped costs more. Coverage says how much of the"
+        " book that number actually accounts for.",
+    ),
+    (
+        "group-heat",
+        "Advisor group heat",
+        "advisor.db",
+        _group_heat,
+        "Your book",
+        "Correlated positions collapsed into single bets (e.g. two energy"
+        " names become one energy bet), because risk adds up within a group.",
+    ),
+    (
+        "position-heat",
+        "Per-position heat",
+        "advisor.db",
+        _position_heat,
+        "Your book",
+        "Risk contribution of each individual holding — the detail behind"
+        " the book and group heat totals above. “Heat” is quantity ×"
+        " ATR: the dollars at risk on a one-ATR adverse day, not the loss"
+        " if the stop triggers.",
+    ),
+    (
+        "disagreements",
+        "Disagreements",
+        "advisor.db",
+        _disagreements,
+        "Your book",
+        "Tickers where tonight's score points the opposite way from a"
+        " position you already hold. ‘Strong’ means the score is far"
+        " enough from neutral to be worth a look.",
+    ),
+    (
+        "size-caps",
+        "Size caps",
+        "advisor.db",
+        _size_caps,
+        "Your book",
+        "A volatility-scaled ceiling on how large each candidate position"
+        " could be — decision support, never an order. The warning marker"
+        " means the cap exceeds buying power.",
     ),
     (
         "plan-001-report",
