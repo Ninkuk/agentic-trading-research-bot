@@ -311,16 +311,20 @@ def _build_scorer_db(path):
     )
 
     # Task 7 privacy-parity guard: a decision row with non-NULL note/
-    # order_ref/exit_order_ref/placed_agent — the four fields
-    # test_ticker_subtree_never_leaks_journal_private_fields bans from the
-    # exported doc["tickers"] subtree. Additive-only (doesn't touch the
+    # order_ref/exit_order_ref/placed_agent/contract_ref/strategy_ref — the
+    # six fields test_ticker_subtree_never_leaks_journal_private_fields bans
+    # from the exported doc["tickers"] subtree (contract_ref/strategy_ref are
+    # option-identity columns, not exported today but banned so the guard
+    # matches the full sensitive set). Additive-only (doesn't touch the
     # FLAG1/NVDA rows above). The walk is trivially green until Task 8
     # populates doc["tickers"] — that ordering is expected, not a gap.
     conn.execute(
         "INSERT INTO decisions (symbol, action, side, fill_date, fill_price,"
-        " quantity, order_ref, exit_order_ref, note, placed_agent, recorded_at)"
+        " quantity, order_ref, exit_order_ref, note, placed_agent,"
+        " contract_ref, strategy_ref, recorded_at)"
         " VALUES ('PRIV1', 'acted', 'buy', '2026-07-03', 50.0, 3,"
-        " 'ord-priv-1', 'ord-priv-1-exit', 'private note text', 'agentic', ?)",
+        " 'ord-priv-1', 'ord-priv-1-exit', 'private note text', 'agentic',"
+        " 'PRIV1260101C00050000', 'strategy-ref-1', ?)",
         (NOW,),
     )
 

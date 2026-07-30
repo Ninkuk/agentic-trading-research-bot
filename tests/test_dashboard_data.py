@@ -352,7 +352,14 @@ def test_size_caps_exports_buying_power_warning(populated_data_dir):
 
 def test_ticker_subtree_never_leaks_journal_private_fields(populated_data_dir):
     doc = data.export_data(populated_data_dir, NOW)
-    banned = {"note", "order_ref", "exit_order_ref", "placed_agent"}
+    banned = {
+        "note",
+        "order_ref",
+        "exit_order_ref",
+        "placed_agent",
+        "contract_ref",
+        "strategy_ref",
+    }
 
     def walk(node):
         if isinstance(node, dict):

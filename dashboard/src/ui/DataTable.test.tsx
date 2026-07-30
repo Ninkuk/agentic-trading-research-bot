@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Column, Row } from "../types";
+import type { Column, Glossary, Row } from "../types";
 import { DataTable } from "./DataTable";
 
 const COLS: Column[] = [
@@ -83,4 +83,17 @@ test("pinnedFirst groups pinned rows above sort", () => {
   );
   render(<DataTable columns={cols} rows={rows} storageKey="t4" pinnedFirst={["ZED"]} />);
   expect(cellTexts(0)).toEqual(["ZED", "AAA", "BBB"]); // ZED pinned first despite lowest score
+});
+
+test("clicking a glossary term in a header opens the popover without sorting the table", async () => {
+  const glossary: Glossary = { score: "The composite opinion score." };
+  const cols: Column[] = [
+    { key: "score", label: "Score", numeric: true, direction: null, term: "score" },
+    { key: "symbol", label: "Symbol", numeric: false, direction: null, term: null },
+  ];
+  render(<DataTable columns={cols} rows={ROWS3} storageKey="t6" glossary={glossary} />);
+  const before = cellTexts(0);
+  await userEvent.click(screen.getByRole("button", { name: "Score" }));
+  expect(screen.getByRole("tooltip")).toHaveTextContent("The composite opinion score.");
+  expect(cellTexts(0)).toEqual(before); // row order unchanged — the click did not sort
 });

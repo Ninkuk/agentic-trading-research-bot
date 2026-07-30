@@ -21,7 +21,7 @@ function formatValue(value: CellValue | undefined): string {
   if (value === undefined || value === null) return "—";
   if (typeof value === "boolean") return value ? "yes" : "no";
   if (Array.isArray(value)) return "—";
-  if (typeof value === "number") return num(value);
+  if (typeof value === "number") return Number.isInteger(value) ? num(value, 0) : num(value);
   return value;
 }
 

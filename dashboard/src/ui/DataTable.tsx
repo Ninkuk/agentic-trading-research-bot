@@ -192,7 +192,7 @@ export function DataTable({
           </thead>
           <tbody>
             {displayedRows.map((row, i) => (
-              <tr key={rowKeyOf(row, columns) || i} className={rowClassName?.(row)}>
+              <tr key={`${rowKeyOf(row, columns)}:${i}`} className={rowClassName?.(row)}>
                 {visibleColumns.map((col) => (
                   <td key={col.key} className={col.numeric ? "num" : undefined}>
                     {renderCell ? renderCell(row, col) : formatCell(row[col.key])}

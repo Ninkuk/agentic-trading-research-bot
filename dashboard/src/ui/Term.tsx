@@ -38,7 +38,10 @@ export function Term({ term, glossary, children }: TermProps) {
         className="term-trigger"
         aria-expanded={open}
         aria-describedby={open ? popoverId : undefined}
-        onClick={() => setOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
       >
