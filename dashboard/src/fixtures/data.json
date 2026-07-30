@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-29T04:13:00+00:00",
+  "edition_date": "July 28, 2026",
+  "snapshot_number": 42,
+  "hero": {
+    "bullets": [
+      {
+        "text": "Risk-on — leaning into risky assets, 3rd night in a row, VIX calm at 14.2.",
+        "tone": "on"
+      },
+      {
+        "text": "Your book holds 5 positions, heat comfortable at 1.2%.",
+        "tone": "on"
+      }
+    ]
+  },
+  "sections": {
+    "regime": {
+      "title": "Regime",
+      "kicker": "Macro",
+      "note": "The market's mood. The label is decided by three inputs — the VIX, its term structure, and high-yield spreads; the other seven are tracked and shown but do not move it.",
+      "verdict": { "text": "Risk-on, 3rd night", "tone": "on" },
+      "tiles": [
+        { "label": "regime", "value": "risk_on", "band": null, "tone": "on" },
+        { "label": "VIX", "value": 14.2, "band": "calm", "tone": null },
+        { "label": "inputs", "value": "11/11", "band": null, "tone": null }
+      ],
+      "columns": [
+        { "key": "input", "label": "Input", "numeric": false, "direction": null, "term": null },
+        { "key": "value", "label": "Value", "numeric": true, "direction": null, "term": null },
+        { "key": "lean", "label": "Lean", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [
+        { "input": "VIX level", "value": 14.2, "lean": "on" },
+        { "input": "10y–2y spread", "value": 0.35, "lean": "mid" },
+        { "input": "high-yield spread", "value": 3.1, "lean": "on" },
+        { "input": "VIX backwardation", "value": 0, "lean": "on" }
+      ]
+    },
+    "macro-drivers": {
+      "title": "Macro drivers",
+      "kicker": "Macro",
+      "note": "The regime's three deciding inputs with their recent history.",
+      "tiles": [
+        {
+          "label": "10y–2y spread",
+          "series_id": "T10Y2Y",
+          "value": 0.35,
+          "delta": 0.02,
+          "band": null,
+          "history": [
+            { "date": "2026-07-27", "value": 0.33 },
+            { "date": "2026-07-28", "value": 0.35 }
+          ]
+        },
+        {
+          "label": "high-yield spread",
+          "series_id": "BAMLH0A0HYM2",
+          "value": 3.1,
+          "delta": -0.05,
+          "band": "calm",
+          "history": [
+            { "date": "2026-07-27", "value": 3.15 },
+            { "date": "2026-07-28", "value": 3.1 }
+          ]
+        },
+        {
+          "label": "VIX",
+          "series_id": "VIXCLS",
+          "value": 14.2,
+          "delta": -0.4,
+          "band": "calm",
+          "history": [
+            { "date": "2026-07-27", "value": 14.6 },
+            { "date": "2026-07-28", "value": 14.2 }
+          ]
+        }
+      ]
+    },
+    "scorecard": {
+      "title": "Ticker scorecard",
+      "kicker": "Signals",
+      "note": "Every stock's net vote. Independent signals each lean bullish or bearish.",
+      "verdict": null,
+      "columns": [
+        { "key": "symbol", "label": "Symbol", "numeric": false, "direction": null, "term": null },
+        { "key": "score_sum", "label": "Score", "numeric": true, "direction": null, "term": null },
+        { "key": "bullish", "label": "Bullish", "numeric": true, "direction": null, "term": null },
+        { "key": "bearish", "label": "Bearish", "numeric": true, "direction": null, "term": null },
+        { "key": "total", "label": "Signals", "numeric": true, "direction": null, "term": null },
+        { "key": "coverage", "label": "Coverage", "numeric": true, "direction": "up-good", "term": "Coverage" },
+        { "key": "worst_staleness_days", "label": "Data age (days)", "numeric": true, "direction": "down-good", "term": null },
+        { "key": "in_portfolio", "label": "Held", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [
+        {
+          "symbol": "AAPL",
+          "score_sum": 4,
+          "bullish": 3,
+          "bearish": 1,
+          "total": 4,
+          "coverage": 0.8,
+          "worst_staleness_days": 1,
+          "in_portfolio": true,
+          "flagged": true,
+          "history": [2, 3, 4]
+        },
+        {
+          "symbol": "TSLA",
+          "score_sum": -2,
+          "bullish": 1,
+          "bearish": 3,
+          "total": 4,
+          "coverage": 0.75,
+          "worst_staleness_days": 2,
+          "in_portfolio": true,
+          "flagged": false,
+          "history": [0, -1, -2]
+        },
+        {
+          "symbol": "MSFT",
+          "score_sum": 1,
+          "bullish": 2,
+          "bearish": 1,
+          "total": 3,
+          "coverage": 0.6,
+          "worst_staleness_days": 3,
+          "in_portfolio": false,
+          "flagged": false,
+          "history": null
+        }
+      ],
+      "total": 3
+    },
+    "signal-efficacy": {
+      "title": "Signal efficacy",
+      "kicker": "Track record",
+      "note": "Every signal's raw report card: how often it has been right so far.",
+      "columns": [
+        { "key": "signal_id", "label": "Signal", "numeric": false, "direction": null, "term": null },
+        { "key": "via_crosswalk", "label": "Via crosswalk", "numeric": true, "direction": null, "term": null },
+        { "key": "horizon", "label": "Horizon", "numeric": true, "direction": null, "term": null },
+        { "key": "n_bench", "label": "N benchmarked", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "n_dates", "label": "N dates", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "hit_rate", "label": "Hit rate", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "hit_ci_lo", "label": "Hit-rate CI low", "numeric": true, "direction": null, "term": null },
+        { "key": "hit_ci_hi", "label": "Hit-rate CI high", "numeric": true, "direction": null, "term": null },
+        { "key": "null_rate", "label": "Base rate", "numeric": true, "direction": "down-good", "term": null },
+        { "key": "avg_directional_excess", "label": "Directional excess", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "recommendation", "label": "Recommendation", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [
+        {
+          "signal_id": "si_spike",
+          "via_crosswalk": 0,
+          "horizon": 21,
+          "n_bench": 118,
+          "n_dates": 42,
+          "hit_rate": 0.58,
+          "hit_ci_lo": 0.49,
+          "hit_ci_hi": 0.67,
+          "null_rate": 0.41,
+          "avg_directional_excess": 0.012,
+          "recommendation": "keep"
+        },
+        {
+          "signal_id": "rsi_oversold",
+          "via_crosswalk": 0,
+          "horizon": 63,
+          "n_bench": 96,
+          "n_dates": 33,
+          "hit_rate": 0.46,
+          "hit_ci_lo": 0.36,
+          "hit_ci_hi": 0.56,
+          "null_rate": 0.5,
+          "avg_directional_excess": -0.004,
+          "recommendation": "watch"
+        }
+      ],
+      "caveat": "Nominal and uncorrected across ~48 comparisons — hold every verdict loosely.",
+      "empty": "no matured signal outcomes yet — appears once a signal's flagged calls reach their grading horizon"
+    },
+    "book-heat": {
+      "title": "Advisor book heat",
+      "kicker": "Your book",
+      "note": "How much of your account is genuinely at risk right now.",
+      "verdict": { "text": "Book heat comfortable", "tone": "on" },
+      "tiles": [
+        { "label": "positions", "value": 5, "band": null, "tone": null },
+        { "label": "book heat %", "value": 1.2, "band": "comfortable", "tone": null },
+        { "label": "coverage", "value": 0.9, "band": null, "tone": null },
+        { "label": "equity", "value": 84213.55, "band": null, "tone": null },
+        { "label": "sources failed", "value": 0, "band": null, "tone": null }
+      ]
+    },
+    "candidates": {
+      "title": "Research candidates",
+      "kicker": "Signals",
+      "note": "Businesses worth reading about, screened quality-first.",
+      "error": "unavailable (stocks.db: OperationalError)"
+    },
+    "bucket-performance": {
+      "title": "Bucket performance",
+      "kicker": "Track record",
+      "note": "Grouping every past opinion by conviction bucket: did stronger scores actually produce better forward returns than SPY?",
+      "columns": [
+        { "key": "bucket", "label": "Bucket", "numeric": false, "direction": null, "term": null },
+        { "key": "horizon", "label": "Horizon", "numeric": true, "direction": null, "term": null },
+        { "key": "n_bench", "label": "N", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "avg_fwd_return", "label": "Fwd return", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "avg_excess", "label": "Excess", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "hit_rate", "label": "Hit rate", "numeric": true, "direction": "up-good", "term": null },
+        { "key": "null_rate", "label": "Base rate", "numeric": true, "direction": "down-good", "term": null },
+        { "key": "edge", "label": "Edge", "numeric": true, "direction": null, "term": null },
+        { "key": "reliable", "label": "Reliable", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [],
+      "caveat": "Several signals are graded at once, so a few clear the bar by luck.",
+      "empty": "no matured buckets yet — appears once conviction-bucketed opinions reach their grading horizon"
+    }
+  },
+  "tickers": {
+    "AAPL": {
+      "score_history": [
+        { "date": "2026-07-27", "score_sum": 2 },
+        { "date": "2026-07-28", "score_sum": 3 },
+        { "date": "2026-07-29", "score_sum": 4 }
+      ],
+      "signals": [
+        { "signal": "si_spike", "score": 2, "raw_value": 1.8 },
+        { "signal": "rsi_oversold", "score": 2, "raw_value": 28.4 }
+      ],
+      "verdicts": [
+        { "date": "2026-06-15", "verdict": "SOUND", "thesis_path": "research/AAPL-2026-06-15.md" }
+      ],
+      "fills": [
+        {
+          "action": "buy",
+          "side": "long",
+          "fill_date": "2026-06-16",
+          "fill_price": 194.32,
+          "quantity": 10,
+          "exit_fill_date": null,
+          "exit_fill_price": null,
+          "opinion_score_sum": 3
+        }
+      ],
+      "position": {
+        "quantity": 10,
+        "market_value": 1980.5,
+        "heat_dollars": 42.1,
+        "heat_pct": 0.5
+      }
+    },
+    "TSLA": {
+      "score_history": [
+        { "date": "2026-07-27", "score_sum": 0 },
+        { "date": "2026-07-28", "score_sum": -1 },
+        { "date": "2026-07-29", "score_sum": -2 }
+      ],
+      "signals": [
+        { "signal": "si_spike", "score": -1, "raw_value": 3.4 },
+        { "signal": "rsi_oversold", "score": -1, "raw_value": 61.2 }
+      ],
+      "verdicts": [],
+      "fills": [
+        {
+          "action": "buy",
+          "side": "long",
+          "fill_date": "2026-05-02",
+          "fill_price": 268.1,
+          "quantity": 5,
+          "exit_fill_date": "2026-07-10",
+          "exit_fill_price": 245.6,
+          "opinion_score_sum": 1
+        }
+      ],
+      "position": {
+        "quantity": 5,
+        "market_value": 1310.25,
+        "heat_dollars": 38.7,
+        "heat_pct": 0.46
+      }
+    }
+  },
+  "glossary": {
+    "VIX": "The CBOE Volatility Index — the market's expected 30-day volatility, derived from S&P 500 option prices. Higher means more fear.",
+    "Regime": "This page's one-word read on market mood — risk-on, risk-off, or mixed — decided by the VIX, its term structure, and high-yield credit spreads.",
+    "Coverage": "The fraction of catalog signals that actually produced a reading for a given ticker tonight, out of every signal that could apply.",
+    "Piotroski score": "A 0-9 score of balance-sheet and profitability quality; higher generally means a financially healthier company.",
+    "Heat": "Quantity times ATR — the dollars at risk on a one-ATR adverse day for a position, book, or correlated group of positions.",
+    "Score sum": "The net vote across every independent signal that fired for a ticker tonight — positive leans bullish, negative leans bearish."
+  }
+}

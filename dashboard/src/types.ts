@@ -1,0 +1,138 @@
+// Mirrors deploy/launchd/dashboard_lib/data.py's export_data() — the shape
+// of reports/data.json. Every field that a section/exporter can omit is
+// optional here; the client must typecheck against a degraded document
+// (missing DB, dropped view, zero rows) exactly as the export itself
+// degrades (see data.py's SECTION_EXPORTERS try/except).
+
+export type SectionId = string;
+
+export type Tone = "on" | "off" | "mid";
+
+export interface Verdict {
+  text: string;
+  tone: Tone;
+}
+
+export interface Bullet {
+  text: string;
+  tone: Tone;
+}
+
+export type ColumnDirection = "up-good" | "down-good" | null;
+
+export interface Column {
+  key: string;
+  label: string;
+  numeric: boolean;
+  direction?: ColumnDirection;
+  term?: string | null;
+}
+
+// A row's field values (columns), or a tile's own catch-all fields — plain
+// JSON leaves plus nested history/band shapes narrower sections attach.
+export type CellValue = string | number | boolean | null;
+
+// A table row: the shape varies per section (scorecard vs. regime drivers
+// vs. track-record views), so it stays a loose keyed bag rather than a
+// per-section union — narrow it at the call site when a specific section's
+// columns are known.
+export type Row = Record<string, CellValue>;
+
+export interface Tile {
+  label: string;
+  value?: CellValue;
+  band?: string | null;
+  tone?: Tone | null;
+  // macro-drivers tiles only:
+  series_id?: string;
+  delta?: number | null;
+  history?: { date: string; value: number | null }[];
+}
+
+// One section of the document (sections[<id>]). A section that failed to
+// export degrades to `{ title, kicker, note, error }` only — every other
+// field is therefore optional. A healthy section carries some subset of
+// verdict/tiles/columns/rows/text_lines depending on its exporter (see
+// data.py's per-section return shapes: tile sections like `regime`/
+// `book-heat`, table sections like `scorecard`/`signal-efficacy`, and the
+// text-only `plan-004-scorecard`).
+export interface Section {
+  title?: string;
+  kicker?: string;
+  note?: string;
+  verdict?: Verdict | null;
+  tiles?: Tile[];
+  columns?: Column[];
+  rows?: Row[];
+  text_lines?: string[];
+  caveat?: string | null;
+  empty?: string;
+  total?: number;
+  error?: string;
+  // candidates-only:
+  snapshot_date?: string | null;
+  // research-reopens-only:
+  dated?: number;
+  events?: number;
+}
+
+export interface ScoreHistoryPoint {
+  date: string;
+  score_sum: number | null;
+}
+
+export interface TickerSignal {
+  signal: string;
+  score: number | null;
+  raw_value: number | null;
+}
+
+export interface TickerVerdict {
+  date: string | null;
+  verdict: string | null;
+  thesis_path: string | null;
+}
+
+export interface TickerFill {
+  action: string | null;
+  side: string | null;
+  fill_date: string | null;
+  fill_price: number | null;
+  quantity: number | null;
+  exit_fill_date: string | null;
+  exit_fill_price: number | null;
+  opinion_score_sum: number | null;
+}
+
+export interface TickerPosition {
+  quantity: number | null;
+  market_value: number | null;
+  heat_dollars: number | null;
+  heat_pct: number | null;
+}
+
+export interface TickerDetail {
+  score_history: ScoreHistoryPoint[];
+  signals: TickerSignal[];
+  verdicts: TickerVerdict[];
+  fills: TickerFill[];
+  position: TickerPosition | null;
+}
+
+export interface Hero {
+  bullets: Bullet[];
+}
+
+// glossary: term -> definition (docs/GLOSSARY.md, parsed).
+export type Glossary = Record<string, string>;
+
+export interface DashboardDoc {
+  schema_version: number;
+  generated_at: string;
+  edition_date: string;
+  snapshot_number: number | null;
+  hero: Hero;
+  sections: Record<SectionId, Section>;
+  tickers: Record<string, TickerDetail>;
+  glossary: Glossary;
+}

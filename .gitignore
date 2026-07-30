@@ -21,3 +21,9 @@ logs/
 reports/
 docs/plans/
 docs/superpowers/
+
+# dashboard/ (React app) — build output and the dev-server copy of the
+# fixture are derived, never checked in.
+dashboard/node_modules/
+dashboard/dist/
+dashboard/public/data.json
