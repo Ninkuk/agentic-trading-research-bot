@@ -1,14 +1,16 @@
-// A one-line verdict pill. The tone drives the color, but the text is
-// always the primary channel — color is never the only signal (a colorblind
-// reader, or a printed/grayscale copy, still gets "Risk-on" vs "Risk-off").
+// A one-line verdict chip on the shadcn Badge component — the tone maps to
+// Badge's tinted up/down/hold variants (the lab palette, defined once in
+// components/ui/badge.tsx for both themes). The text is always the primary
+// channel — color is never the only signal (a colorblind reader, or a
+// printed/grayscale copy, still gets "Risk-on" vs "Risk-off").
 
-import { tokens } from "../theme";
 import type { Tone, Verdict } from "../types";
+import { Badge } from "../components/ui/badge";
 
-const TONE_COLOR: Record<Tone, string> = {
-  on: tokens.up,
-  off: tokens.down,
-  mid: tokens.muted,
+const TONE_VARIANT: Record<Tone, "up" | "down" | "hold"> = {
+  on: "up",
+  off: "down",
+  mid: "hold",
 };
 
 export interface VerdictChipProps {
@@ -19,13 +21,13 @@ export interface VerdictChipProps {
 
 export function VerdictChip({ verdict, className }: VerdictChipProps) {
   return (
-    <span
-      className={["pill", "verdict-chip", `verdict-chip--${verdict.tone}`, className]
+    <Badge
+      variant={TONE_VARIANT[verdict.tone]}
+      className={["verdict-chip", `verdict-chip--${verdict.tone}`, className]
         .filter(Boolean)
         .join(" ")}
-      style={{ color: TONE_COLOR[verdict.tone] }}
     >
       {verdict.text}
-    </span>
+    </Badge>
   );
 }

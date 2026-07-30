@@ -5,12 +5,13 @@ import { SignalEfficacy } from "./SignalEfficacy";
 
 const doc = fixture as unknown as DashboardDoc;
 
-test("renders the recommendation as text-in-pill, one pill per known value", () => {
+test("renders the recommendation as a tinted shadcn badge per known value", () => {
   render(<SignalEfficacy sec={doc.sections["signal-efficacy"]} glossary={doc.glossary} />);
   const keepPill = screen.getByText("keep");
-  expect(keepPill).toHaveClass("pill", "keep");
+  expect(keepPill).toHaveAttribute("data-slot", "badge");
+  expect(keepPill).toHaveClass("rec--up");
   const watchPill = screen.getByText("watch");
-  expect(watchPill).toHaveClass("pill", "watch");
+  expect(watchPill).toHaveClass("rec--hold");
 });
 
 test("renders the hit-rate dot plot's point estimate for a row", () => {

@@ -191,25 +191,33 @@ export function DataTable({
                       arrow. Either way every click funnels into th's
                       onClick above via bubbling, exactly once. */}
                   {col.term ? (
-                    <>
+                    // One aligned row, same height as the ghost-button
+                    // headers — Term keeps its own button (nesting it in
+                    // the sort Button would be invalid HTML), so the
+                    // arrow rides in a compact icon button beside it.
+                    <span
+                      className={`inline-flex h-8 items-center gap-1.5 text-xs font-medium ${
+                        col.numeric ? "justify-end" : ""
+                      }`}
+                    >
                       <Term term={col.term} glossary={glossary}>
                         {col.label}
                       </Term>
                       {col.direction === "up-good" && (
-                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal"> ↑ better</span>
+                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal">↑ better</span>
                       )}
                       {col.direction === "down-good" && (
-                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal"> ↓ better</span>
+                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal">↓ better</span>
                       )}
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="sort-trigger ml-0.5 h-8 px-1.5"
+                        size="icon"
+                        className="sort-trigger size-6"
                         aria-label={`Sort by ${col.label}`}
                       >
                         <SortIcon sorted={sorted} dir={state.sortDir} />
                       </Button>
-                    </>
+                    </span>
                   ) : (
                     <Button
                       variant="ghost"

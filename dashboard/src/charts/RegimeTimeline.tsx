@@ -11,8 +11,8 @@
 // container itself (ResizeObserver, explicit fallback) and passes
 // responsive={false} — pixel-identical in a real browser.
 
-import { useEffect, useRef, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
 import {
   ChartContainer,
   ChartTooltip,
@@ -39,23 +39,6 @@ const REGIME_DOT: Record<string, string> = {
 };
 
 const vixConfig = { vix: { label: "VIX", color: "var(--chart-2)" } } satisfies ChartConfig;
-
-function useMeasuredWidth(fallback: number) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(fallback);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const apply = () => {
-      if (el.clientWidth > 0) setWidth(el.clientWidth);
-    };
-    const ro = new ResizeObserver(apply);
-    ro.observe(el);
-    apply();
-    return () => ro.disconnect();
-  }, []);
-  return { ref, width };
-}
 
 export function RegimeTimeline({ rows, height = 208 }: RegimeTimelineProps) {
   const { ref, width } = useMeasuredWidth(640);

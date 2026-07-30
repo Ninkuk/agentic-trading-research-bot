@@ -1,14 +1,11 @@
-// The page header: publication name, edition date + snapshot number, the
-// global ticker search box, and the theme toggle. The search box uppercases
-// as you type (tickers are conventionally upper-case, and it doubles as a
-// hint this is a symbol field) and on Enter jumps to `#/ticker/<SYMBOL>` —
-// the same convention useHashRoute parses.
+// The page header: publication name, edition date + snapshot number, and
+// the theme toggle. (The global ticker search box was removed 2026-07-30 —
+// per-ticker navigation happens through scorecard symbol links and the
+// per-table filters.)
 
-import { useState, type KeyboardEvent } from "react";
-import { Monitor, Moon, Search, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme, type ThemeMode } from "../hooks/useTheme";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
 
 export interface MastheadProps {
   editionDate: string;
@@ -44,15 +41,6 @@ export function ThemeToggle() {
 }
 
 export function Masthead({ editionDate, snapshotNumber }: MastheadProps) {
-  const [symbol, setSymbol] = useState("");
-
-  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>): void {
-    if (e.key !== "Enter") return;
-    const trimmed = symbol.trim();
-    if (!trimmed) return;
-    location.hash = `#/ticker/${trimmed}`;
-  }
-
   return (
     <header className="mast mb-5 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b pb-4">
       <div>
@@ -74,21 +62,6 @@ export function Masthead({ editionDate, snapshotNumber }: MastheadProps) {
               Snapshot <b className="text-foreground font-medium">#{snapshotNumber}</b>
             </>
           )}
-        </div>
-        <div className="relative">
-          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
-          <Input
-            type="text"
-            className="ticker-search h-8 w-32 pl-8 font-mono text-xs uppercase"
-            placeholder="Ticker…"
-            aria-label="Search ticker"
-            autoComplete="off"
-            spellCheck={false}
-            enterKeyHint="go"
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            onKeyDown={handleKeyDown}
-          />
         </div>
         <ThemeToggle />
       </div>

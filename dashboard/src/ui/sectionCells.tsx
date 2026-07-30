@@ -13,6 +13,7 @@
 import type { ReactNode } from "react";
 import { pct, signed, usd } from "../format";
 import type { Column, Row } from "../types";
+import { Badge } from "../components/ui/badge";
 import { formatCell } from "./formatCell";
 
 // Fractions of 1 → percent (0.58 → 58%).
@@ -42,16 +43,20 @@ export function scoreCell(v: unknown): ReactNode {
   return <span className={`font-semibold ${v < 0 ? "tag-off" : "tag-on"}`}>{signed(v, 0)}</span>;
 }
 
-const REC_CLASS: Record<string, string> = {
-  keep: "keep",
-  watch: "watch",
-  "anti-signal": "anti",
-  anti: "anti",
+const REC_VARIANT: Record<string, "up" | "down" | "hold"> = {
+  keep: "up",
+  watch: "hold",
+  "anti-signal": "down",
+  anti: "down",
 };
 
 export function recommendationPill(v: unknown): ReactNode {
   const text = typeof v === "string" && v ? v : "insufficient evidence";
-  return <span className={`pill ${REC_CLASS[text] ?? "ins"}`}>{text}</span>;
+  return (
+    <Badge variant={REC_VARIANT[text] ?? "secondary"} className={`rec rec--${REC_VARIANT[text] ?? "ins"}`}>
+      {text}
+    </Badge>
+  );
 }
 
 /** hit_rate with its CI folded in when the row carries ci columns — the CI
@@ -87,9 +92,9 @@ export function sectionCell(row: Row, col: Column): ReactNode {
   if (k === "score_sum") return scoreCell(v);
   if (k === "recommendation") return recommendationPill(v);
   if (k === "hit_rate") return hitRateCell(row);
-  if (k === "in_portfolio") return v === true ? <span className="pill outline">held</span> : null;
+  if (k === "in_portfolio") return v === true ? <Badge variant="outline">held</Badge> : null;
   if (k === "exceeds_buying_power")
-    return v === true ? <span className="pill anti">over BP</span> : "—";
+    return v === true ? <Badge variant="destructive">over BP</Badge> : "—";
   if (k === "worst_staleness_days")
     return typeof v === "number" ? `${formatCell(v)}d` : formatCell(v);
   if (PCT_FRACTION.has(k)) return typeof v === "number" ? pct(v * 100, 0) : formatCell(v);

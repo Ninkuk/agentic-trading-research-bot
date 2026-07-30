@@ -81,6 +81,14 @@ function strandId(label: string): string {
   return label.toLowerCase().replace(/\s+/g, "-");
 }
 
+/** UTC export timestamp → the reader's local clock ("Jul 30, 2026, 10:31 AM").
+ * Falls back to the raw string if the timestamp doesn't parse. */
+function formatGeneratedAt(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
 function slug(s: string): string {
   return s
     .toLowerCase()
@@ -241,10 +249,11 @@ export function Main({ doc }: MainProps) {
         ))}
       </Tabs>
 
-      {/* Ledger colophon: exact generation timestamp (the masthead's edition
-          date is the Phoenix trading date, not the run time) + source link. */}
+      {/* Ledger colophon: generation timestamp in the READER's local time
+          (the raw export is UTC; the masthead's edition date is the Phoenix
+          trading date, not the run time) + source link. */}
       <footer className="colophon text-muted-foreground mt-8 text-xs">
-        Generated {doc.generated_at.replace("T", " ").replace("+00:00", " UTC")} ·{" "}
+        Generated {formatGeneratedAt(doc.generated_at)} ·{" "}
         <a href={REPO_URL} target="_blank" rel="noreferrer">
           source
         </a>

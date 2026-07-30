@@ -12,12 +12,19 @@
 // `pinnedFirst` — toggling here and pinning a scorecard row both write the
 // same key, so the two views never disagree about what's pinned.
 
-import { Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
+import { Line, LineChart, ReferenceLine, XAxis, YAxis } from "recharts";
 import { REPO_URL } from "../constants";
 import { dateShort, num, pct, signed, usd } from "../format";
+import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
 import { usePrefs } from "../hooks/usePrefs";
 import { tokens } from "../theme";
 import type { Column, DashboardDoc, Row, ScoreHistoryPoint, TickerPosition } from "../types";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "../components/ui/chart";
 import { DataTable } from "../ui/DataTable";
 
 export interface TickerDetailProps {
@@ -49,44 +56,49 @@ function ScoreDot(props: { cx?: number; cy?: number; payload?: ScoreHistoryPoint
   return <circle className="score-dot" cx={cx} cy={cy} r={4} fill={color} stroke={tokens.ink} strokeWidth={1} />;
 }
 
-function ScoreHistoryTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: { payload: ScoreHistoryPoint }[];
-}) {
-  if (!active || !payload?.length) return null;
-  const point = payload[0].payload;
-  return (
-    <div className="spark-tooltip">
-      {dateShort(point.date)}: {signed(point.score_sum, 0)}
-    </div>
-  );
-}
+const scoreConfig = {
+  score_sum: { label: "Score", color: "var(--chart-2)" },
+} satisfies ChartConfig;
 
 function ScoreHistoryChart({ points }: { points: ScoreHistoryPoint[] }) {
+  const { ref, width } = useMeasuredWidth(560);
   const usable = points.filter((p) => p.score_sum !== null);
   if (usable.length < 2) {
     return <p className="empty">no score history yet</p>;
   }
   return (
-    <LineChart width={560} height={180} data={usable} margin={{ top: 12, right: 16, bottom: 8, left: 8 }}>
-      <XAxis dataKey="date" tickFormatter={dateShort} />
-      <YAxis type="number" domain={["auto", "auto"]} allowDecimals={false} />
-      <Tooltip content={<ScoreHistoryTooltip />} cursor={{ stroke: tokens.edge }} />
-      <ReferenceLine y={0} stroke={tokens.edge} />
-      <Line
-        className="score-history-line"
-        type="monotone"
-        dataKey="score_sum"
-        stroke={tokens.hold}
-        strokeWidth={2}
-        dot={<ScoreDot />}
-        isAnimationActive={false}
-        connectNulls
-      />
-    </LineChart>
+    <div ref={ref} className="w-full">
+      <ChartContainer
+        config={scoreConfig}
+        responsive={false}
+        className="aspect-auto w-full"
+        style={{ height: 180 }}
+      >
+        <LineChart width={width} height={180} data={usable} margin={{ top: 12, right: 16, bottom: 0, left: 0 }}>
+          <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={dateShort} />
+          <YAxis type="number" domain={["auto", "auto"]} allowDecimals={false} width={28} tickLine={false} axisLine={false} />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                labelFormatter={(l) => dateShort(String(l))}
+                valueFormatter={(v) => (typeof v === "number" ? signed(v, 0) : String(v))}
+              />
+            }
+          />
+          <ReferenceLine y={0} stroke={tokens.edge} />
+          <Line
+            className="score-history-line"
+            type="monotone"
+            dataKey="score_sum"
+            stroke="var(--color-score_sum)"
+            strokeWidth={2}
+            dot={<ScoreDot />}
+            isAnimationActive={false}
+            connectNulls
+          />
+        </LineChart>
+      </ChartContainer>
+    </div>
   );
 }
 

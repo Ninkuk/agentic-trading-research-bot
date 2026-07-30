@@ -67,8 +67,10 @@ test("recommendation and held render as pills; signed excess is tinted", () => {
       {sectionCell(ROW, col("avg_directional_excess"))}
     </>,
   );
-  expect(screen.getByText("keep")).toHaveClass("pill", "keep");
-  expect(screen.getByText("held")).toHaveClass("pill", "outline");
+  // shadcn Badge component (data-slot) with the tinted rec-- marker class.
+  expect(screen.getByText("keep")).toHaveAttribute("data-slot", "badge");
+  expect(screen.getByText("keep")).toHaveClass("rec--up");
+  expect(screen.getByText("held")).toHaveAttribute("data-slot", "badge");
   expect(screen.getByText("+1.2%")).toHaveClass("tag-on");
 });
 

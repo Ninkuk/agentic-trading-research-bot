@@ -208,42 +208,6 @@
     color: var(--muted-foreground);
   }
 
-  /* verdict pills (VerdictChip + SignalRecommendations counts) */
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 0.125rem 0.625rem;
-    border-radius: var(--radius-md);
-    white-space: nowrap;
-  }
-  .pill.verdict-chip--on,
-  .pill.keep {
-    background: var(--tone-up-bg);
-    color: var(--tone-up);
-  }
-  .pill.verdict-chip--off,
-  .pill.anti {
-    background: var(--tone-down-bg);
-    color: var(--tone-down);
-  }
-  .pill.verdict-chip--mid,
-  .pill.watch {
-    background: var(--tone-hold-bg);
-    color: var(--tone-hold);
-  }
-  .pill.ins,
-  .pill.weak {
-    background: var(--muted);
-    color: var(--muted-foreground);
-  }
-  .pill.outline {
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--foreground);
-  }
-
   /* symbol cells */
   .sym {
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;

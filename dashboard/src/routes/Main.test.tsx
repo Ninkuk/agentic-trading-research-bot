@@ -60,11 +60,11 @@ test("a section with an error shows the unavailable note instead of crashing", (
   expect(screen.getByText(/unavailable \(stocks\.db/i)).toBeInTheDocument();
 });
 
-test("the masthead search box navigates to the ticker route on Enter, uppercased", async () => {
+test("scorecard symbols link to the ticker route", () => {
   render(<Main doc={doc} />);
-  const input = screen.getByRole("textbox", { name: /search ticker/i });
-  await userEvent.type(input, "deck{Enter}");
-  expect(location.hash).toBe("#/ticker/DECK");
+  // The masthead search box was removed 2026-07-30 — symbol links are the
+  // way into the drill-down.
+  expect(screen.getByRole("link", { name: "AAPL" })).toHaveAttribute("href", "#/ticker/AAPL");
 });
 
 test("an unregistered section id falls back to the generic DataTable renderer", () => {
