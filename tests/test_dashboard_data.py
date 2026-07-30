@@ -51,3 +51,53 @@ def test_schema_top_level_keys_locked(tmp_path):
         "tickers",
         "glossary",
     }
+
+
+def test_regime_section_exports_verdict_and_tiles(populated_data_dir):
+    doc = data.export_data(populated_data_dir, NOW)
+    sec = doc["sections"]["regime"]
+    assert "error" not in sec
+    assert sec["verdict"]["tone"] in ("on", "off", "mid")
+    assert any(t.get("band") for t in sec["tiles"])
+
+
+def test_regime_timeline_rows_oldest_first(populated_data_dir):
+    rows = data.export_data(populated_data_dir, NOW)["sections"]["regime-timeline"]["rows"]
+    assert rows == sorted(rows, key=lambda r: r["date"])
+    assert {"date", "regime", "vix"} <= set(rows[0])
+
+
+def test_macro_drivers_history_bounded(populated_data_dir):
+    tiles = data.export_data(populated_data_dir, NOW)["sections"]["macro-drivers"]["tiles"]
+    assert len(tiles) == 3
+    for t in tiles:
+        assert len(t["history"]) <= 90
+        assert t["band"] is not None
+
+
+def test_streak_nights_counts_leading_run_of_matching_regime(tmp_path):
+    """Seed [risk_off, risk_on, risk_on] chronologically (oldest first) —
+    the latest snapshot's regime (risk_on) matches the one before it but not
+    the oldest, so the streak is 2, not 3."""
+    from sources.combiners.composite import db as composite_db
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    conn = composite_db.connect(str(data_dir / "composite.db"))
+    composite_db.ensure_schema(conn)
+    for captured_at, regime, vix in (
+        ("2026-07-06T21:13:00+00:00", "risk_off", 28.0),
+        ("2026-07-07T21:13:00+00:00", "risk_on", 16.0),
+        (NOW, "risk_on", 15.0),
+    ):
+        sid = composite_db.write_snapshot(conn, captured_at, 1)
+        conn.execute(
+            "INSERT INTO market_regime (snapshot_id, vix, regime, inputs_expected,"
+            " inputs_present) VALUES (?, ?, ?, 1, 1)",
+            (sid, vix, regime),
+        )
+    conn.commit()
+    conn.close()
+
+    doc = data.export_data(str(data_dir), NOW)
+    assert doc["sections"]["regime"]["verdict"]["text"] == "Risk-on, 2nd night"
