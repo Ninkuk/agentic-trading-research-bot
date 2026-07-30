@@ -38,6 +38,18 @@
         { "input": "VIX backwardation", "value": 0, "lean": "on" }
       ]
     },
+    "regime-timeline": {
+      "title": "Regime timeline",
+      "kicker": "Macro",
+      "note": "The colored strip is the regime verdict itself, one cell per day — green risk-on, red risk-off, gray mixed. How the market mood and the VIX fear gauge have moved across recent nightly snapshots. Each dot is one snapshot; higher = more fear; color = that night's regime.",
+      "rows": [
+        { "date": "2026-07-24", "regime": "risk_off", "vix": 21.4 },
+        { "date": "2026-07-25", "regime": "mixed", "vix": 18.9 },
+        { "date": "2026-07-26", "regime": "risk_on", "vix": 15.8 },
+        { "date": "2026-07-27", "regime": "risk_on", "vix": 14.6 },
+        { "date": "2026-07-28", "regime": "risk_on", "vix": 14.2 }
+      ]
+    },
     "macro-drivers": {
       "title": "Macro drivers",
       "kicker": "Macro",

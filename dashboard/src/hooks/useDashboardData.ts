@@ -4,7 +4,11 @@
 // fetch of a top-level `{ error: "..." }` document (the exporter itself
 // failed — see dashboard_lib/data.py's export_data() error path). `stale`
 // flags a document whose `generated_at` is more than 36h behind the
-// client's clock — the nightly job missed a run.
+// client's clock — the nightly job missed a run. The total-failure error
+// document still carries `generated_at` (it's set from the literal dict in
+// data.py's error path), so `generatedAt` surfaces it for App's
+// generation-failed banner; a bare fetch failure never got a document at
+// all, so it stays undefined there.
 
 import { useEffect, useState } from "react";
 import type { DashboardDoc } from "../types";
@@ -14,7 +18,13 @@ const STALE_MS = 36 * 60 * 60 * 1000;
 export interface DashboardDataState {
   doc?: DashboardDoc;
   error?: string;
+  generatedAt?: string;
   stale: boolean;
+}
+
+interface ErrorDoc {
+  error: string;
+  generated_at?: string;
 }
 
 function isStale(generatedAt: string): boolean {
@@ -32,12 +42,12 @@ export function useDashboardData(): DashboardDataState {
     fetch("./data.json")
       .then((res) => {
         if (!res.ok) throw new Error(`data.json fetch failed: ${res.status}`);
-        return res.json() as Promise<DashboardDoc | { error: string }>;
+        return res.json() as Promise<DashboardDoc | ErrorDoc>;
       })
       .then((doc) => {
         if (cancelled) return;
         if ("error" in doc && doc.error) {
-          setState({ error: doc.error, stale: false });
+          setState({ error: doc.error, generatedAt: doc.generated_at, stale: false });
           return;
         }
         const full = doc as DashboardDoc;

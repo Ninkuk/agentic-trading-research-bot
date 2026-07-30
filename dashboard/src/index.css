@@ -785,3 +785,55 @@ th .col-label {
   color: var(--fg);
   border-color: var(--brass-dim);
 }
+
+/* Masthead ticker search (new for the React app — the static page had no
+   search, only a "#tickfilter" in-table filter). */
+.ticker-search {
+  background: var(--gutter);
+  border: 1px solid var(--edge);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 5px 9px;
+  margin-top: 6px;
+  font: 12px var(--mono);
+  text-transform: uppercase;
+  width: 140px;
+}
+.ticker-search:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 1px;
+}
+
+/* StrandNav: sticky scroll-spy nav, built on the static page's .jump
+   styling with a sticky position and an active-link accent. */
+.strand-nav {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  background: var(--ink);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--edge);
+}
+.strand-nav a.active {
+  color: var(--brass);
+  border-bottom-color: var(--brass);
+}
+
+/* KPI row: regime chip sits inline with the macro-driver tiles above the
+   strands. */
+.kpi-row {
+  align-items: center;
+  margin: 6px 0 24px;
+}
+
+.strand {
+  scroll-margin-top: 52px;
+}
+.strand-heading {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brass-dim);
+  margin: 26px 0 0;
+}

@@ -45,6 +45,24 @@ test("surfaces a top-level error document without treating it as data", async ()
   await waitFor(() => expect(result.current.error).toBeDefined());
   expect(result.current.error).toBe("sqlite locked");
   expect(result.current.doc).toBeUndefined();
+  expect(result.current.generatedAt).toBeUndefined();
+});
+
+test("surfaces generated_at from a total-failure error document (App's banner needs it)", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        schema_version: 1,
+        generated_at: "2026-07-28T04:00:00+00:00",
+        error: "generation failed (TypeError)",
+      }),
+    }),
+  );
+  const { result } = renderHook(() => useDashboardData());
+  await waitFor(() => expect(result.current.error).toBeDefined());
+  expect(result.current.generatedAt).toBe("2026-07-28T04:00:00+00:00");
 });
 
 test("flags stale when generated_at is more than 36h behind the client clock", async () => {
