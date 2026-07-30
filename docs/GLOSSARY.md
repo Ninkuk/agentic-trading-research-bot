@@ -67,3 +67,31 @@ no money moved.
 **Settings UI** — `uv run python config_ui.py`; a local browser page that
 edits `.env` (the file holding your keys and tuning knobs) safely, with API
 keys shown masked.
+
+**ATR (average true range)** — a measure of how much a stock typically bounces
+around in a single day. Higher ATR means more volatility; used here to size
+positions—bigger ATR, smaller bet.
+
+**Book heat / Heat** — a summary of how much money is riding on your current
+holdings, adjusted for market swings. High heat means concentrated risk; useful
+for knowing whether the portfolio is humming quietly or wearing thin.
+
+**Coverage** — the fraction of the stock's market cap you own (directly in shares,
+or indirectly in funds). Low coverage means tiny moves; high coverage means you
+move the needle yourself on any trade.
+
+**Hit rate** — in the backtester's report, the percentage of time the system's
+opinion was right (price went the way it was flagged). Always read alongside the
+benchmarks—if prices drift up anyway, a bearish flag "wins" by doing nothing.
+
+**Confidence interval (CI)** — a range around a measured result that's probably
+correct, expressed as "the true answer is here about 95% of the time." A wide
+interval means less certainty; a narrow one means more.
+
+**Piotroski score** — a simple nine-factor check of a company's financial health,
+ranging from 0 (weak) to 9 (strong). Looks at profitability, asset quality, and
+cash flow—rough, but a useful beginning-of-funnel filter.
+
+**Risk-on / risk-off** — the market's mood in broad strokes. "Risk-on" means
+investors are buying stocks and taking chances; "risk-off" means they're
+retreating to safe havens like bonds and cash.
