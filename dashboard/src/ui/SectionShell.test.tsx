@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import type { Section } from "../types";
 import { SectionShell } from "./SectionShell";
 
@@ -15,40 +14,18 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-test("renders kicker, title, verdict, note, caveat and children", () => {
+test("renders title, verdict, note, caveat and children — but not the kicker (the strand heading already labels the group)", () => {
   render(
     <SectionShell id="regime" sec={sec}>
       <div>body content</div>
     </SectionShell>,
   );
-  expect(screen.getByText("Macro")).toBeInTheDocument();
+  expect(screen.queryByText("Macro")).not.toBeInTheDocument();
   expect(screen.getByText("Regime")).toBeInTheDocument();
   expect(screen.getByText("Risk-on")).toBeInTheDocument();
   expect(screen.getByText("The market's mood.")).toBeInTheDocument();
   expect(screen.getByText("body content")).toBeInTheDocument();
   expect(screen.getByText("Trust lightly.")).toBeInTheDocument();
-});
-
-test("collapse toggle hides the body but keeps the header row, and persists per section id", async () => {
-  const { unmount } = render(
-    <SectionShell id="regime" sec={sec}>
-      <div>body content</div>
-    </SectionShell>,
-  );
-  await userEvent.click(screen.getByRole("button", { name: /collapse/i }));
-  expect(screen.queryByText("body content")).not.toBeInTheDocument();
-  expect(screen.queryByText("The market's mood.")).not.toBeInTheDocument();
-  expect(screen.getByText("Regime")).toBeInTheDocument();
-  expect(screen.getByText("Risk-on")).toBeInTheDocument();
-
-  unmount();
-  render(
-    <SectionShell id="regime" sec={sec}>
-      <div>body content</div>
-    </SectionShell>,
-  );
-  expect(screen.queryByText("body content")).not.toBeInTheDocument();
-  expect(screen.getByText("Regime")).toBeInTheDocument();
 });
 
 test("renders an error state inside the shell instead of children", () => {

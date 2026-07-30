@@ -35,9 +35,18 @@ export interface StaleBannerProps {
 
 export function StaleBanner({ generatedAt, onDismiss }: StaleBannerProps) {
   return (
-    <div className="lab-banner" role="status">
-      This edition is stale — generated {dateShort(generatedAt)}, more than 36 hours ago.{" "}
-      <button type="button" onClick={onDismiss}>
+    <div
+      className="lab-banner mx-auto mt-4 flex max-w-4xl items-baseline gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-700 dark:text-amber-400"
+      role="status"
+    >
+      <span>
+        This edition is stale — generated {dateShort(generatedAt)}, more than 36 hours ago.
+      </span>
+      <button
+        type="button"
+        className="cursor-pointer font-medium underline underline-offset-2 hover:opacity-80"
+        onClick={onDismiss}
+      >
         dismiss
       </button>
     </div>

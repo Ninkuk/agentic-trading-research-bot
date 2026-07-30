@@ -41,7 +41,7 @@
     "regime-timeline": {
       "title": "Regime timeline",
       "kicker": "Macro",
-      "note": "The colored strip is the regime verdict itself, one cell per day — green risk-on, red risk-off, gray mixed. How the market mood and the VIX fear gauge have moved across recent nightly snapshots. Each dot is one snapshot; higher = more fear; color = that night's regime.",
+      "note": "How the market mood and the VIX fear gauge have moved across recent nightly snapshots. Each dot is one snapshot; higher = more fear; dot color = that night's regime verdict (green risk-on, red risk-off, amber mixed).",
       "rows": [
         { "date": "2026-07-24", "regime": "risk_off", "vix": 21.4 },
         { "date": "2026-07-25", "regime": "mixed", "vix": 18.9 },

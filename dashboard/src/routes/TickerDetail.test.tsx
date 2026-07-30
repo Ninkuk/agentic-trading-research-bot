@@ -36,7 +36,7 @@ test("renders all four blocks for a fixture ticker with signals, verdicts, fills
   // journal fills + position card
   expect(screen.getByText("194.32")).toBeInTheDocument(); // fill price
   expect(screen.getByText("$1,980.50")).toBeInTheDocument(); // market value
-  expect(screen.getByText("0.5%")).toBeInTheDocument(); // heat pct
+  expect(screen.getByText("0.50%")).toBeInTheDocument(); // heat pct (2 dp, matching the advisor tables)
 });
 
 test("each block degrades independently: TSLA has no research verdicts", () => {

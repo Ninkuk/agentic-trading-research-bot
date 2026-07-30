@@ -1,44 +1,27 @@
-// Signals strand flagship: every scored ticker's net vote. `renderCell`
-// injects the diverging ScoreBar into the "score_sum" column, plus a trend
-// Sparkline underneath when the row carries score history (only headline
-// symbols get one — data.py's `_SCORECARD_HISTORY_LIMIT` — a bare
-// `number[]` of past score_sums, not the {date,value} shape Sparkline
-// wants, so index-position stands in for a date here). The "symbol" column
-// becomes a link to the ticker drill-down. Flagged rows keep the ★ +
-// brass left-edge treatment via DataTable's `rowClassName` hook, which
-// applies the "flag" class the static page's CSS already understands
-// (tr.flag / tr.flag .sym::after in index.css) — no extra JSX marker
-// needed. The ticker filter reuses the legacy `#tickfilter` id and its
-// styling, persisted via usePrefs so a filter typed tonight survives a
-// reload. `pinnedFirst` reads the same `usePrefs("pins", [])` list
-// TickerDetail's pin toggle writes — a ticker pinned from its drill-down
-// page groups above the rest here too, active sort still applying within
-// each group (DataTable's own pinnedFirst grouping).
+// Signals strand flagship: every scored ticker's net vote. The "symbol"
+// column is a link to the ticker drill-down; every other column renders
+// through the shared lab heuristics (tinted signed score, coverage %,
+// staleness "Nd", held pill — see ui/sectionCells.tsx). Flagged rows keep
+// the ★ + amber-tint treatment via DataTable's `rowClassName` hook
+// (tr.flag / tr.flag .sym::after in index.css). The ticker filter keeps
+// the legacy `#tickfilter` id, persisted via usePrefs so a filter typed
+// tonight survives a reload. `pinnedFirst` reads the same
+// `usePrefs("pins", [])` list TickerDetail's pin toggle writes — a ticker
+// pinned from its drill-down page groups above the rest here too, active
+// sort still applying within each group.
 
 import { type ReactNode } from "react";
-import { Sparkline, type SparklinePoint } from "../charts/Sparkline";
-import { ScoreBar } from "../charts/ScoreBar";
+import { Search } from "lucide-react";
 import { usePrefs } from "../hooks/usePrefs";
-import type { CellValue, Column, Glossary, Row, Section } from "../types";
+import type { Column, Glossary, Row, Section } from "../types";
+import { Input } from "../components/ui/input";
 import { DataTable } from "../ui/DataTable";
-import { formatCell } from "../ui/formatCell";
+import { sectionCell } from "../ui/sectionCells";
 
 export interface SectionComponentProps {
   sec: Section;
   glossary: Glossary;
   id?: string;
-}
-
-// Mirrors sections.py's `_SCORE_BAR_MAX` — the bar's fixed comparison cap
-// (not per-row 2*total), so bars stay comparable down the column.
-const SCORE_BAR_MAX = 5;
-
-function toSparklinePoints(history: CellValue | undefined): SparklinePoint[] {
-  if (!Array.isArray(history)) return [];
-  return history.map((value, i) => ({
-    date: String(i),
-    value: typeof value === "number" ? value : null,
-  }));
 }
 
 function renderScorecardCell(row: Row, col: Column): ReactNode {
@@ -50,19 +33,12 @@ function renderScorecardCell(row: Row, col: Column): ReactNode {
       </a>
     );
   }
-  if (col.key === "score_sum") {
-    const value = typeof row.score_sum === "number" ? row.score_sum : 0;
-    const bullish = typeof row.bullish === "number" ? row.bullish : 0;
-    const bearish = typeof row.bearish === "number" ? row.bearish : 0;
-    const points = toSparklinePoints(row.history);
-    return (
-      <>
-        <ScoreBar value={value} bullish={bullish} bearish={bearish} max={SCORE_BAR_MAX} />
-        {points.length >= 2 && <Sparkline points={points} tone="hold" />}
-      </>
-    );
-  }
-  return formatCell(row[col.key]);
+  // Everything else — the tinted signed score (the lab design; the old
+  // diverging ScoreBar and the 3-point trend sparkline are both retired),
+  // coverage as a percent, staleness as "Nd", held as a pill — comes from
+  // the shared lab heuristics. The full score history lives on the ticker
+  // drill-down chart, one click away via the symbol link.
+  return sectionCell(row, col);
 }
 
 export function Scorecard({ sec, glossary }: SectionComponentProps) {
@@ -76,15 +52,19 @@ export function Scorecard({ sec, glossary }: SectionComponentProps) {
     : allRows;
 
   return (
-    <>
-      <input
-        id="tickfilter"
-        type="search"
-        placeholder="filter tickers"
-        aria-label="filter tickers"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value.toUpperCase())}
-      />
+    <div className="space-y-2.5">
+      <div className="relative w-full max-w-52">
+        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
+        <Input
+          id="tickfilter"
+          type="search"
+          placeholder="filter tickers"
+          aria-label="filter tickers"
+          className="h-8 pl-8 font-mono text-sm uppercase"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value.toUpperCase())}
+        />
+      </div>
       <DataTable
         columns={columns}
         rows={rows}
@@ -93,7 +73,8 @@ export function Scorecard({ sec, glossary }: SectionComponentProps) {
         renderCell={renderScorecardCell}
         rowClassName={(row) => (row.flagged ? "flag" : undefined)}
         pinnedFirst={pins}
+        filterable={false}
       />
-    </>
+    </div>
   );
 }

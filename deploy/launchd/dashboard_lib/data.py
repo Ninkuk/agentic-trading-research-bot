@@ -1011,11 +1011,10 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "composite.db",
         _regime_timeline,
         "Macro",
-        "The colored strip is the regime verdict itself, one cell per day —"
-        " green risk-on, red risk-off, gray mixed. How the market mood and"
-        " the VIX fear gauge have moved across recent nightly snapshots."
-        " Each dot is one snapshot; higher = more fear; color = that"
-        " night's regime.",
+        "How the market mood and the VIX fear gauge have moved across"
+        " recent nightly snapshots. Each dot is one snapshot; higher = more"
+        " fear; dot color = that night's regime verdict (green risk-on, red"
+        " risk-off, amber mixed).",
     ),
     (
         "macro-drivers",

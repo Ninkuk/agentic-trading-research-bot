@@ -44,6 +44,7 @@ export function Term({ term, glossary, children }: TermProps) {
         }}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
+        onBlur={() => setOpen(false)}
       >
         {children}
       </button>

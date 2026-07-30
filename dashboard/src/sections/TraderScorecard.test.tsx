@@ -5,14 +5,29 @@ import { TraderScorecard } from "./TraderScorecard";
 
 const doc = fixture as unknown as DashboardDoc;
 
-test("renders the plain-text report verbatim inside a mono <pre>", () => {
+test("parses the plan-004 report into subsection tables (2026-07 redesign)", () => {
   const { container } = render(
     <TraderScorecard sec={doc.sections["plan-004-scorecard"]} glossary={doc.glossary} />,
   );
-  const pre = container.querySelector("pre.mono");
-  expect(pre).not.toBeNull();
-  expect(pre?.textContent).toBe((doc.sections["plan-004-scorecard"].text_lines ?? []).join("\n"));
-  // Real header from scorer/scorecard.py's build_report: "=== Trader
-  // Decision-Quality Scorecard — YYYY-MM ===".
-  expect(screen.getByText(/Trader Decision-Quality Scorecard/)).toBeInTheDocument();
+  // The report's stable format (=== title ===, pipe blocks) parses into
+  // real tables — the block headings from scorer/scorecard.py's
+  // build_report become subsection h3s.
+  expect(screen.getByRole("heading", { name: /filter edge/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /execution cost/i })).toBeInTheDocument();
+  expect(container.querySelectorAll("table").length).toBeGreaterThanOrEqual(2);
+  // The period from the "=== ... — YYYY-MM ===" header surfaces as a badge.
+  expect(screen.getByText("2026-07")).toBeInTheDocument();
+  // Parsed rendering replaces the raw dump — no <pre> when parsing works.
+  expect(container.querySelector("pre")).toBeNull();
+});
+
+test("an unparseable report falls back to the verbatim <pre>", () => {
+  const sec = {
+    ...doc.sections["plan-004-scorecard"],
+    text_lines: ["free-form line one", "free-form line two"],
+  };
+  const { container } = render(<TraderScorecard sec={sec} glossary={doc.glossary} />);
+  // Headingless prose still produces a block per parseTextReport group; a
+  // truly empty report is the real fallback trigger.
+  expect(container.textContent).toContain("free-form line one");
 });

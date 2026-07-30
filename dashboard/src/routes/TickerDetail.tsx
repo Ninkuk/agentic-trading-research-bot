@@ -106,7 +106,7 @@ function PositionCard({ position }: { position: TickerPosition }) {
         <div className="k">Heat $</div>
       </div>
       <div className="tile">
-        <div className="v">{pct(position.heat_pct)}</div>
+        <div className="v">{pct(position.heat_pct, 2)}</div>
         <div className="k">Heat %</div>
       </div>
     </div>
@@ -141,12 +141,20 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
 
   return (
     <div className="page ticker-detail">
-      <header className="ticker-header">
-        <a href="#/" className="back-link">
+      <header className="ticker-header mb-5 flex items-baseline gap-4 border-b pb-4">
+        <a
+          href="#/"
+          className="back-link text-muted-foreground hover:text-foreground text-xs no-underline"
+        >
           ← back
         </a>
-        <h1>{symbol}</h1>
-        <button type="button" className="pin-toggle" aria-pressed={pinned} onClick={togglePin}>
+        <h1 className="m-0 font-mono text-2xl font-semibold tracking-tight">{symbol}</h1>
+        <button
+          type="button"
+          className="pin-toggle text-muted-foreground hover:text-foreground hover:border-foreground/30 ml-auto cursor-pointer rounded-md border bg-transparent px-3 py-1 font-mono text-xs aria-pressed:border-amber-500/50 aria-pressed:bg-amber-500/10 aria-pressed:text-amber-700 dark:aria-pressed:text-amber-400"
+          aria-pressed={pinned}
+          onClick={togglePin}
+        >
           {pinned ? "★ pinned" : "☆ pin"}
         </button>
       </header>
@@ -157,13 +165,13 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
         </p>
       ) : (
         <>
-          <section className="ticker-block">
-            <h2>Score history</h2>
+          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5 shadow-sm">
+            <h2 className="m-0 mb-3 text-base font-semibold">Score history</h2>
             <ScoreHistoryChart points={detail.score_history} />
           </section>
 
-          <section className="ticker-block">
-            <h2>Signal breakdown</h2>
+          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5 shadow-sm">
+            <h2 className="m-0 mb-3 text-base font-semibold">Signal breakdown</h2>
             {signalRows.length > 0 ? (
               <DataTable columns={SIGNAL_COLUMNS} rows={signalRows} storageKey={`ticker:${symbol}:signals`} />
             ) : (
@@ -171,8 +179,8 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
             )}
           </section>
 
-          <section className="ticker-block">
-            <h2>Research verdicts</h2>
+          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5 shadow-sm">
+            <h2 className="m-0 mb-3 text-base font-semibold">Research verdicts</h2>
             {detail.verdicts.length > 0 ? (
               <ul className="verdict-list">
                 {detail.verdicts.map((v, i) => (
@@ -194,15 +202,23 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
             )}
           </section>
 
-          <section className="ticker-block">
-            <h2>Journal fills</h2>
+          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5 shadow-sm">
+            <h2 className="m-0 mb-3 text-base font-semibold">Journal fills</h2>
             {fillRows.length > 0 ? (
               <DataTable columns={FILL_COLUMNS} rows={fillRows} storageKey={`ticker:${symbol}:fills`} />
             ) : (
               <p className="empty">no journal fills yet</p>
             )}
-            {detail.position && <PositionCard position={detail.position} />}
           </section>
+
+          {/* Own heading, not a tail of Journal fills — unlabeled tiles right
+              under that table read as the table's footer. */}
+          {detail.position && (
+            <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5 shadow-sm">
+              <h2 className="m-0 mb-3 text-base font-semibold">Your position</h2>
+              <PositionCard position={detail.position} />
+            </section>
+          )}
         </>
       )}
     </div>

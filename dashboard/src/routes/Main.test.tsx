@@ -18,10 +18,10 @@ test("renders every hero bullet", () => {
   }
 });
 
-test("renders all five strand headings in order", () => {
+test("renders all five strand tabs in order", () => {
   render(<Main doc={doc} />);
-  const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
-  const indices = KICKERS.map((label) => headings.indexOf(label));
+  const tabs = screen.getAllByRole("tab").map((t) => t.textContent);
+  const indices = KICKERS.map((label) => tabs.indexOf(label));
   for (const idx of indices) expect(idx).toBeGreaterThanOrEqual(0);
   expect(indices).toEqual([...indices].sort((a, b) => a - b));
 });
@@ -43,14 +43,16 @@ test("a section with a kicker matching no known strand still renders, in a trail
     },
   };
   render(<Main doc={drifted} />);
-  expect(screen.getByRole("heading", { name: "Other" })).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Other" })).toBeInTheDocument();
+  // Tab contents are force-mounted (hidden when inactive), so the drifted
+  // section's content is in the DOM even though the Other tab isn't active.
   expect(screen.getByText("Renamed Strand Section")).toBeInTheDocument();
   expect(screen.getByText("hello")).toBeInTheDocument();
 });
 
-test("no Other group renders when every section's kicker matches a known strand", () => {
+test("no Other tab renders when every section's kicker matches a known strand", () => {
   render(<Main doc={doc} />);
-  expect(screen.queryByRole("heading", { name: "Other" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("tab", { name: "Other" })).not.toBeInTheDocument();
 });
 
 test("a section with an error shows the unavailable note instead of crashing", () => {

@@ -1,22 +1,24 @@
-// CVD-validated palette (aqua-green/red diverging, neutral-gray midpoint)
-// against the #151a1e surface, validated 2026-07-28 with the dataviz
-// palette validator (see the 2026-07-28 charts spec). `hold` is a deliberate
-// alias of `muted` — the neutral midpoint, never brass. `brass` is accent
-// ink only (kickers, links, focus rings) and must never be used as a data
-// mark (up/down/hold).
+// Chart-mark tokens as CSS variable references — SVG stroke/fill accept
+// var(), so Recharts marks follow the active light/dark theme without any
+// JS theme plumbing. The values live in index.css (`--tone-*`, shadcn
+// tokens): light emerald-700/red-700/amber-600, dark emerald-400/red-400/
+// amber-400 — both sides of each pair chosen for AA contrast on their
+// surface. `hold` is the amber midpoint; text remains the primary channel
+// (color is never the only signal).
 export const tokens = {
-  up: "#199e70",
-  down: "#e66767",
-  hold: "#9aa1ab",
-  brass: "#e0bd76",
-  brassDim: "#b39758",
-  ink: "#0d1013",
-  paper: "#151a1e",
-  gutter: "#10161a",
-  edge: "#232c33",
-  fg: "#e8e6df",
-  muted: "#9aa1ab",
-  faint: "#7b828c",
+  up: "var(--tone-up)",
+  down: "var(--tone-down)",
+  hold: "var(--tone-hold)",
+  // Accent ink (RegimeTimeline's brush). The brass hue itself is retired —
+  // accent now follows the theme's primary.
+  brass: "var(--primary)",
+  ink: "var(--background)",
+  paper: "var(--card)",
+  gutter: "var(--muted)",
+  edge: "var(--border)",
+  fg: "var(--foreground)",
+  muted: "var(--muted-foreground)",
+  faint: "var(--muted-foreground)",
 } as const;
 
 export type ThemeTokens = typeof tokens;

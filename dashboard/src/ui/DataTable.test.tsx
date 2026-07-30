@@ -29,9 +29,16 @@ test("numeric sort toggles and shows indicator", async () => {
   render(<DataTable columns={COLS} rows={ROWS3} storageKey="t1" />);
   await userEvent.click(screen.getByRole("columnheader", { name: /score/i }));
   expect(cellTexts(0)).toEqual(["9", "5", "1"]); // desc first
-  expect(screen.getByText("▼")).toBeInTheDocument();
+  expect(screen.getByRole("columnheader", { name: /score/i })).toHaveAttribute(
+    "aria-sort",
+    "descending",
+  );
   await userEvent.click(screen.getByRole("columnheader", { name: /score/i }));
   expect(cellTexts(0)).toEqual(["1", "5", "9"]);
+  expect(screen.getByRole("columnheader", { name: /score/i })).toHaveAttribute(
+    "aria-sort",
+    "ascending",
+  );
 });
 
 test("keyboard: focusing the sort button and pressing Enter applies the sort", async () => {
@@ -41,7 +48,10 @@ test("keyboard: focusing the sort button and pressing Enter applies the sort", a
   expect(sortButton).toHaveFocus();
   await userEvent.keyboard("{Enter}");
   expect(cellTexts(0)).toEqual(["9", "5", "1"]); // desc first, same as the click-sort test
-  expect(screen.getByText("▼")).toBeInTheDocument();
+  expect(screen.getByRole("columnheader", { name: /score/i })).toHaveAttribute(
+    "aria-sort",
+    "descending",
+  );
 });
 
 test("show-all reveals rows beyond initialRows and persists", async () => {
@@ -54,16 +64,6 @@ test("show-all reveals rows beyond initialRows and persists", async () => {
   unmount();
   render(<DataTable columns={COLS} rows={ROWS10} storageKey="t2" initialRows={3} />);
   expect(screen.getAllByRole("row")).toHaveLength(1 + 10); // localStorage
-});
-
-test("column picker hides a column and persists", async () => {
-  const { unmount } = render(<DataTable columns={COLS} rows={ROWS3} storageKey="t3" />);
-  await userEvent.click(screen.getByRole("button", { name: /columns/i }));
-  await userEvent.click(screen.getByRole("checkbox", { name: /score/i }));
-  expect(screen.queryByRole("columnheader", { name: /score/i })).not.toBeInTheDocument();
-  unmount();
-  render(<DataTable columns={COLS} rows={ROWS3} storageKey="t3" />);
-  expect(screen.queryByRole("columnheader", { name: /score/i })).not.toBeInTheDocument();
 });
 
 test("pinnedFirst groups pinned rows above sort", () => {
@@ -79,7 +79,7 @@ test("pinnedFirst groups pinned rows above sort", () => {
   ];
   localStorage.setItem(
     "atrb:t4",
-    JSON.stringify({ sortKey: "score", sortDir: "desc", expanded: false, hiddenCols: [] }),
+    JSON.stringify({ sortKey: "score", sortDir: "desc", expanded: false }),
   );
   render(<DataTable columns={cols} rows={rows} storageKey="t4" pinnedFirst={["ZED"]} />);
   expect(cellTexts(0)).toEqual(["ZED", "AAA", "BBB"]); // ZED pinned first despite lowest score
@@ -96,4 +96,11 @@ test("clicking a glossary term in a header opens the popover without sorting the
   await userEvent.click(screen.getByRole("button", { name: "Score" }));
   expect(screen.getByRole("tooltip")).toHaveTextContent("The composite opinion score.");
   expect(cellTexts(0)).toEqual(before); // row order unchanged — the click did not sort
+});
+
+test("negative numbers render with a typographic minus in default cells", () => {
+  render(
+    <DataTable columns={COLS} rows={[{ score: -2, symbol: "NEG" }]} storageKey="t8" />,
+  );
+  expect(screen.getByText("−2")).toBeInTheDocument();
 });

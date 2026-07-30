@@ -1,16 +1,15 @@
 // Track record: every signal's raw report card — how often it has been
 // right, against the base rate it would need to beat to be worth anything.
-// `renderCell` injects the EfficacyDotPlot (point estimate + 95% CI whisker
-// against the null-rate band) into the "hit_rate" column, and a
-// keep/watch/anti-signal/insufficient-evidence pill into "recommendation"
-// (`.pill.{cls}` — mirrors sections.py's `_rec_badge`; text is always the
-// primary channel, color never carries meaning alone).
+// The lab treatment: the CI columns fold INTO the hit-rate cell (a muted
+// "CI 49–67" stacked under "58%") instead of sitting beside it as three
+// raw-fraction columns, and the keep/watch/anti-signal verdict renders as
+// a tinted pill (text is always the primary channel — color never carries
+// meaning alone). Column dropping + per-key formatting both come from
+// ui/sectionCells.tsx so this table and plan-001's stay in lockstep.
 
-import { type ReactNode } from "react";
-import { EfficacyDotPlot } from "../charts/EfficacyDotPlot";
-import type { CellValue, Column, Glossary, Row, Section } from "../types";
+import type { Glossary, Section } from "../types";
 import { DataTable } from "../ui/DataTable";
-import { formatCell } from "../ui/formatCell";
+import { sectionCell, visibleColumns } from "../ui/sectionCells";
 
 export interface SectionComponentProps {
   sec: Section;
@@ -18,49 +17,14 @@ export interface SectionComponentProps {
   id?: string;
 }
 
-const REC_CLASS: Record<string, string> = {
-  keep: "keep",
-  watch: "watch",
-  "anti-signal": "anti",
-};
-
-function asNumberOrNull(v: CellValue | undefined): number | null {
-  return typeof v === "number" ? v : null;
-}
-
-function RecommendationPill({ value }: { value: CellValue | undefined }) {
-  const text = typeof value === "string" && value ? value : "insufficient evidence";
-  const cls = REC_CLASS[text] ?? "ins";
-  return <span className={`pill ${cls}`}>{text}</span>;
-}
-
-function renderEfficacyCell(row: Row, col: Column): ReactNode {
-  if (col.key === "hit_rate") {
-    return (
-      <EfficacyDotPlot
-        row={{
-          hit_rate: asNumberOrNull(row.hit_rate),
-          hit_ci_lo: asNumberOrNull(row.hit_ci_lo),
-          hit_ci_hi: asNumberOrNull(row.hit_ci_hi),
-          null_rate: asNumberOrNull(row.null_rate),
-        }}
-      />
-    );
-  }
-  if (col.key === "recommendation") {
-    return <RecommendationPill value={row.recommendation} />;
-  }
-  return formatCell(row[col.key]);
-}
-
 export function SignalEfficacy({ sec, glossary }: SectionComponentProps) {
   return (
     <DataTable
-      columns={sec.columns ?? []}
+      columns={visibleColumns(sec.columns ?? [])}
       rows={sec.rows ?? []}
       storageKey="signal-efficacy"
       glossary={glossary}
-      renderCell={renderEfficacyCell}
+      renderCell={sectionCell}
     />
   );
 }

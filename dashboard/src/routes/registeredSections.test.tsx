@@ -54,7 +54,9 @@ test.each(ids)('section "%s" renders via its registered component without throwi
       expect(region?.querySelectorAll(".tile").length).toBeGreaterThan(0);
       break;
     case "text":
-      expect(region?.querySelector("pre")).not.toBeNull();
+      // TextReport parses the plan-004 report into tables; its fallback for
+      // an unparseable format is the raw <pre> — accept either rendering.
+      expect(region?.querySelector("table, pre")).not.toBeNull();
       break;
     case "rows":
       // Most row-carrying sections render through DataTable (a <table>);

@@ -1,7 +1,8 @@
 // Your book: correlated positions collapsed into single bets (risk adds up
-// within a group). Plain DataTable.
+// within a group). sectionCell formats the dollar/percent columns.
 
 import type { Glossary, Section } from "../types";
+import { sectionCell } from "../ui/sectionCells";
 import { DataTable } from "../ui/DataTable";
 
 export interface SectionComponentProps {
@@ -17,6 +18,7 @@ export function GroupHeat({ sec, glossary }: SectionComponentProps) {
       rows={sec.rows ?? []}
       storageKey="group-heat"
       glossary={glossary}
+      renderCell={sectionCell}
     />
   );
 }

@@ -1,18 +1,17 @@
-// Regime history: two synced layers over the same nightly rows.
-//   (a) a strip — one HTML cell per night, colored by that night's regime
-//       (tokens.up/down for the two poles, tokens.hold for anything else —
-//       a neutral-gray midpoint, never a third hue, per the dataviz
-//       diverging-mark rule).
-//   (b) a Recharts VIX LineChart with a Brush for zoom.
-// Recharts' Brush already restricts the line's own visible window; the
-// strip doesn't get that for free, so its window is lifted into state via
-// Brush.onChange and applied by slicing `rows` ourselves.
-// No ResponsiveContainer — see Sparkline's note; charts take explicit
-// width/height.
+// The regime-timeline chart, exactly as the design lab shipped it: a
+// full-width VIX AreaChart in the chart token (soft fill, horizontal grid,
+// MM-DD ticks) whose per-night dots are colored by that night's regime
+// verdict, with the shadcn-style tooltip and a dot-color caption below.
+// The old strip + zoom-brush layers are retired (2026-07 redesign).
+//
+// Width is measured from the container (ResizeObserver) with an explicit
+// fallback instead of Recharts' ResponsiveContainer — jsdom measures that
+// 0x0, which would silently blank every geometry assertion in tests (see
+// KpiSpark's note).
 
-import { useMemo, useState } from "react";
-import { Brush, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
-import { dateShort, num } from "../format";
+import { useEffect, useRef, useState } from "react";
+import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
+import { num } from "../format";
 import { tokens } from "../theme";
 
 export interface RegimeTimelineRow {
@@ -23,7 +22,6 @@ export interface RegimeTimelineRow {
 
 export interface RegimeTimelineProps {
   rows: RegimeTimelineRow[];
-  width?: number;
   height?: number;
 }
 
@@ -36,10 +34,24 @@ function regimeColor(regime: string | null): string {
   return (regime && REGIME_COLOR[regime]) || tokens.hold;
 }
 
-function cellTitle(row: RegimeTimelineRow): string {
-  return `${row.date} · ${row.regime ?? "unknown"} · VIX ${num(row.vix, 1)}`;
+function useMeasuredWidth(fallback: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(fallback);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const apply = () => {
+      if (el.clientWidth > 0) setWidth(el.clientWidth);
+    };
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    apply();
+    return () => ro.disconnect();
+  }, []);
+  return { ref, width };
 }
 
+/** The lab's shadcn tooltip: date label on top, swatch + series + value. */
 function VixTooltip({
   active,
   payload,
@@ -50,76 +62,89 @@ function VixTooltip({
   if (!active || !payload?.length) return null;
   const row = payload[0].payload;
   return (
-    <div className="spark-tooltip">
-      {dateShort(row.date)}: VIX {num(row.vix, 1)}
+    <div className="bg-popover text-popover-foreground grid min-w-32 items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
+      <div className="font-medium">{row.date}</div>
+      <div className="flex w-full items-center gap-2">
+        <div className="size-2.5 shrink-0 rounded-[2px]" style={{ background: "var(--chart-2)" }} />
+        <div className="flex flex-1 items-center justify-between gap-4 leading-none">
+          <span className="text-muted-foreground">VIX</span>
+          <span className="text-foreground font-mono font-medium tabular-nums">
+            {num(row.vix, 1)}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
 
-export function RegimeTimeline({ rows, width = 640, height = 200 }: RegimeTimelineProps) {
-  const lastIndex = Math.max(rows.length - 1, 0);
-  const [range, setRange] = useState({ startIndex: 0, endIndex: lastIndex });
-
-  // rows can grow between renders (a fresh export); clamp so a stale
-  // endIndex from a shorter prior array never slices past the new end.
-  const clampedEnd = Math.min(range.endIndex, lastIndex);
-  const visible = useMemo(
-    () => rows.slice(range.startIndex, clampedEnd + 1),
-    [rows, range.startIndex, clampedEnd],
+/** Per-night dot colored by that night's regime verdict — the lab design's
+ * signature mark on this chart. */
+function RegimeDot(props: { cx?: number; cy?: number; payload?: RegimeTimelineRow; index?: number }) {
+  const { cx, cy, payload, index } = props;
+  if (cx === undefined || cy === undefined || !payload || payload.vix === null) return null;
+  return (
+    <circle
+      key={index}
+      className="regime-dot"
+      cx={cx}
+      cy={cy}
+      r={4}
+      fill={regimeColor(payload.regime)}
+      stroke={tokens.ink}
+      strokeWidth={1.5}
+    />
   );
+}
+
+export function RegimeTimeline({ rows, height = 208 }: RegimeTimelineProps) {
+  const { ref, width } = useMeasuredWidth(640);
 
   if (rows.length === 0) {
     return <p className="empty">no data</p>;
   }
 
   return (
-    <div className="regime-timeline">
-      <div
-        className="stripwrap"
-        role="img"
-        aria-label={`regime by night, ${visible[0]?.date} to ${visible[visible.length - 1]?.date}`}
-      >
-        <div className="strip">
-          {visible.map((row, i) => (
-            <div
-              key={`${row.date}-${i}`}
-              className="strip-cell"
-              style={{ backgroundColor: regimeColor(row.regime) }}
-              title={cellTitle(row)}
-            />
-          ))}
-        </div>
-      </div>
-      <LineChart
+    <div ref={ref} className="regime-timeline w-full">
+      <AreaChart
         width={width}
         height={height}
         data={rows}
-        margin={{ top: 8, right: 8, bottom: 4, left: 8 }}
+        margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
       >
-        <XAxis dataKey="date" hide />
-        <YAxis type="number" domain={["auto", "auto"]} hide />
+        <CartesianGrid vertical={false} stroke={tokens.edge} />
+        <XAxis
+          dataKey="date"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          tick={{ fill: tokens.muted, fontSize: 11 }}
+          tickFormatter={(d: string) => d.slice(5)}
+        />
+        <YAxis
+          type="number"
+          domain={["auto", "auto"]}
+          width={32}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fill: tokens.muted, fontSize: 11 }}
+        />
         <Tooltip content={<VixTooltip />} cursor={{ stroke: tokens.edge }} />
-        <Line
+        <Area
           className="regime-vix-line"
           type="monotone"
           dataKey="vix"
-          stroke={tokens.hold}
+          stroke="var(--chart-2)"
           strokeWidth={2}
-          dot={false}
+          fill="var(--chart-2)"
+          fillOpacity={0.12}
+          dot={<RegimeDot />}
           isAnimationActive={false}
           connectNulls
         />
-        <Brush
-          dataKey="date"
-          height={20}
-          travellerWidth={8}
-          stroke={tokens.brass}
-          fill={tokens.gutter}
-          startIndex={range.startIndex}
-          endIndex={clampedEnd}
-          onChange={({ startIndex, endIndex }) => setRange({ startIndex, endIndex })}
-        />
-      </LineChart>
+      </AreaChart>
+      <p className="text-muted-foreground mt-2 text-xs">
+        Dot color = that night's regime verdict (green risk-on, red risk-off, amber mixed).
+      </p>
     </div>
   );
 }

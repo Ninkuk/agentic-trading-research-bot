@@ -1,11 +1,13 @@
 // Track record (id "plan-001-report"): the verdict on each signal, graded
-// against its own base rate. Plain DataTable — `recommendation` renders as
-// plain text here (unlike SignalEfficacy's pill treatment on the same
-// column name); the section's own verdict chip (keep/watch/anti-signal
-// tally) already carries the at-a-glance read, via SectionShell.
+// against its own base rate. Same lab treatment as Signal efficacy — CI
+// columns fold into the stacked hit-rate cell, recommendation renders as a
+// tinted pill, signed excess as a tinted percent — all via the shared
+// heuristics in ui/sectionCells.tsx, so the two signal report cards never
+// disagree about how the same quantities read.
 
 import type { Glossary, Section } from "../types";
 import { DataTable } from "../ui/DataTable";
+import { sectionCell, visibleColumns } from "../ui/sectionCells";
 
 export interface SectionComponentProps {
   sec: Section;
@@ -16,10 +18,11 @@ export interface SectionComponentProps {
 export function SignalRecommendations({ sec, glossary }: SectionComponentProps) {
   return (
     <DataTable
-      columns={sec.columns ?? []}
+      columns={visibleColumns(sec.columns ?? [])}
       rows={sec.rows ?? []}
       storageKey="plan-001-report"
       glossary={glossary}
+      renderCell={sectionCell}
     />
   );
 }
