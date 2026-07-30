@@ -14,7 +14,7 @@ from dashboard_lib import data  # noqa: E402
 sys.path.insert(
     0, str(Path(__file__).resolve().parent)
 )  # tests/ itself, for a bare `conftest` import
-from conftest import NOW, ROLLOVER_NOW  # noqa: E402
+from conftest import NOW, ROLLOVER_NOW, _build_composite_db  # noqa: E402
 
 
 def test_empty_data_dir_degrades_not_crashes(tmp_path):
@@ -101,3 +101,99 @@ def test_streak_nights_counts_leading_run_of_matching_regime(tmp_path):
 
     doc = data.export_data(str(data_dir), NOW)
     assert doc["sections"]["regime"]["verdict"]["text"] == "Risk-on, 2nd night"
+
+
+def test_scorecard_rows_carry_history_and_flag(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["scorecard"]
+    row = sec["rows"][0]  # rows ordered by |score_sum| desc: row 0 is headline
+    assert {"symbol", "score_sum", "flagged", "history"} <= set(row)
+    assert row["symbol"] == "FLAG1"
+    assert row["flagged"] is True
+    assert isinstance(row["history"], list)
+    assert sec["total"] == len(sec["rows"]) == 2
+
+
+def test_scorecard_unflagged_row_not_in_headline_has_no_history(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["scorecard"]
+    plain = next(r for r in sec["rows"] if r["symbol"] == "PLAIN1")
+    assert plain["flagged"] is False
+    assert isinstance(plain["history"], list)  # still headline: only 2 scored tickers total
+
+
+def test_scorecard_history_only_for_headline_rows(tmp_path):
+    """_build_composite_db seeds only FLAG1 (flagged) + PLAIN1 by default —
+    extended here with 20 extra unflagged tickers (one signal each, so
+    total=1 never crosses v_flagged's total>=2 gate) to get >15 unflagged
+    rows and exercise the headline-only history size cap."""
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    extras = [{"symbol": f"EXTRA{i:02d}", "score": 2} for i in range(20)]
+    _build_composite_db(data_dir / "composite.db", extra_tickers=extras)
+
+    sec = data.export_data(str(data_dir), NOW)["sections"]["scorecard"]
+    tail = [r for r in sec["rows"] if not r["flagged"]][15:]
+    assert tail and all(r["history"] is None for r in tail)
+    head = [r for r in sec["rows"] if not r["flagged"]][:1]
+    assert head and head[0]["history"] is not None
+
+
+def test_scorecard_columns_have_direction_metadata(populated_data_dir):
+    cols = data.export_data(populated_data_dir, NOW)["sections"]["scorecard"]["columns"]
+    assert any(c["direction"] is None for c in cols)  # diverging score: no direction arrow
+    coverage = next(c for c in cols if c["key"] == "coverage")
+    assert coverage["term"] == "Coverage"
+
+
+def test_headline_symbols_includes_flagged(populated_data_dir):
+    conn = data._ro(populated_data_dir, "composite.db")
+    try:
+        assert "FLAG1" in data.headline_symbols(conn)
+    finally:
+        conn.close()
+
+
+def test_flagged_tickers_helper(populated_data_dir):
+    assert data.flagged_tickers(populated_data_dir) == ["FLAG1"]
+
+
+def test_flagged_tickers_helper_degrades_on_missing_db(tmp_path):
+    assert data.flagged_tickers(str(tmp_path)) == []
+
+
+def test_candidates_section_exports_screened_rows(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["candidates"]
+    assert "error" not in sec
+    assert sec["rows"], "fixture's ADBE/PEGA should pass the screen"
+    row = sec["rows"][0]
+    assert {"symbol", "sector", "marketCap", "roic", "fcfYield", "fScore", "rsi", "ch6m"} <= set(
+        row
+    )
+    assert row["marketCap"] == 8.4e10  # raw dollars, not pre-divided into $B
+
+
+def test_research_reopens_dated_upcoming_event_and_superseded(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["research-reopens"]
+    by_ticker = {r["ticker"]: r for r in sec["rows"]}
+    assert by_ticker["STNE"]["due"] == "2026-07-07"  # NOW's Phoenix date is 2026-07-08: due
+    assert by_ticker["GNTX"]["due"] == "2026-08-20"  # ahead of today: upcoming
+    assert by_ticker["GFI"]["due"] is None  # event-shaped trigger, no date
+    assert by_ticker["GFI"]["trigger"] == "tarkwa-renewal"
+    assert "OLD" not in by_ticker  # re-researched after its trigger: superseded, no reopen=
+    assert by_ticker["STNE"]["verdict"] == "UNPROVEN"
+    assert by_ticker["STNE"]["thesis_path"] == "research/STNE-2026-07-01.md"
+
+
+def test_research_reopens_exports_relative_thesis_paths(tmp_path):
+    (tmp_path / "research").mkdir()
+    (tmp_path / "research" / "verdicts.log").write_text(
+        "2026-07-27 STNE UNPROVEN conditions=6 refuted=0 unknown=3"
+        " reopen=2026-08-13:q2-print-cost-of-risk\n",
+        encoding="utf-8",
+    )  # real line shape (verified): <date> <TICKER> <SOUND|FLAWED|UNPROVEN>
+    # conditions=n refuted=n unknown=n [reopen=<date|event>:<slug>]
+    sec = data.export_data(str(tmp_path / "data"), NOW, repo_root=str(tmp_path))["sections"][
+        "research-reopens"
+    ]
+    assert all(
+        not r["thesis_path"].startswith("http") for r in sec.get("rows", []) if r["thesis_path"]
+    )

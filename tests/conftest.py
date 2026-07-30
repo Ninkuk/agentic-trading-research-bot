@@ -85,11 +85,19 @@ def _write_market_signals(conn, sid, vix):
     )
 
 
-def _build_composite_db(path):
+def _build_composite_db(path, extra_tickers: list[dict] | None = None):
     """composite.db with 2 snapshots (>=2 points for the regime timeline
     sparkline) and, on the latest, one flagged ticker (FLAG1, held) and one
     non-flagged ticker (PLAIN1) — via real write_signal_values +
-    write_ticker_scores/write_market_regime, not direct table pokes."""
+    write_ticker_scores/write_market_regime, not direct table pokes.
+
+    `extra_tickers` (additive-only, default None keeps prior behavior
+    identical) seeds further unflagged latest-snapshot rows for
+    `test_scorecard_history_only_for_headline_rows` (dashboard export needs
+    >15 unflagged rows to exercise its headline-only history size cap) —
+    each item is `{"symbol": str, "score": int}`, written as one ticker-grain
+    bullish/bearish signal (`total=1`, so it never crosses `v_flagged`'s
+    `total >= 2` gate) on the same latest snapshot as FLAG1/PLAIN1."""
     conn = composite_db.connect(str(path))
     composite_db.ensure_schema(conn)
 
@@ -172,6 +180,23 @@ def _build_composite_db(path):
             )
         ],
     )
+    if extra_tickers:
+        composite_db.write_signal_values(
+            conn,
+            latest,
+            [
+                dict(
+                    signal_id="sig_extra",
+                    grain="ticker",
+                    entity=t["symbol"],
+                    raw_value=1.0,
+                    score=t["score"],
+                    obs_date="2026-07-07",
+                    staleness_days=0.5,
+                )
+                for t in extra_tickers
+            ],
+        )
     composite_db.write_ticker_scores(conn, latest)
     conn.commit()
     conn.close()
