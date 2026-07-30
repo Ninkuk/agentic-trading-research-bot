@@ -586,6 +586,21 @@ summary:focus-visible {
 .strip rect:hover {
   opacity: 0.8;
 }
+/* RegimeTimeline strip — an HTML flex row (not SVG rects like the static
+   page's `.strip`, since this needs to re-slice on every brush change). */
+.strip {
+  display: flex;
+  gap: 2px;
+}
+.strip-cell {
+  flex: 1 1 0;
+  min-width: 2px;
+  height: 18px;
+  border-radius: 3px;
+}
+.strip-cell:hover {
+  opacity: 0.8;
+}
 
 .tile .tspark {
   display: block;
