@@ -31,6 +31,9 @@ _ROW = dict(
     fScore=7.0,
     rsi=42.3,
     ch6m=-29.2,
+    high52ch=-30.5,
+    zScore=6.1,
+    interestCoverage=25.0,
     priceDate="2026-07-24",
 )
 

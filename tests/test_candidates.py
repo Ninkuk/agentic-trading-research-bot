@@ -16,10 +16,13 @@ _COLS = (
     "symbol TEXT, marketCap REAL, dollarVolume REAL, isPrimaryListing TEXT,"
     " isin TEXT, sector TEXT, roic REAL, roic5y REAL, fcfYield REAL,"
     " revenueGrowth3Y REAL, netDebtEbitda REAL, sharesYoY REAL, fScore REAL,"
-    " rsi REAL, ch6m REAL, priceDate TEXT"
+    " rsi REAL, ch6m REAL, high52ch REAL, zScore REAL, interestCoverage REAL,"
+    " priceDate TEXT"
 )
 
 # A name that passes every gate. Tests mutate one field at a time off this.
+# high52ch is deliberately ABOVE the dislocation branch's bar, so a row here
+# qualifies through the RSI branch alone and gate tests stay single-field.
 _CLEAN = dict(
     symbol="GOOD",
     marketCap=20e9,
@@ -36,6 +39,9 @@ _CLEAN = dict(
     fScore=7.0,
     rsi=38.0,
     ch6m=-20.0,
+    high52ch=-20.0,
+    zScore=6.0,
+    interestCoverage=12.0,
     priceDate="2026-07-24",
 )
 
@@ -94,10 +100,79 @@ def test_excludes_roic_denominator_blowup(tmp_path):
     assert _symbols(conn) == []
 
 
+def test_excludes_roic5y_denominator_blowup(tmp_path):
+    """The artifact ceiling applies to the 5y average too: where history
+    exists it is gated, NULL-tolerance notwithstanding."""
+    conn = _stocks_db(tmp_path, {"symbol": "BLOWUP5", "roic5y": 376.5})
+    assert _symbols(conn) == []
+
+
 def test_excludes_nonpositive_rsi(tmp_path):
     """26 rows carry rsi <= 0 — out of domain for a 0-100 oscillator. The
     composite catalog already guards `rsi > 0` on this same column."""
     conn = _stocks_db(tmp_path, {"symbol": "ZERO", "rsi": 0.0})
+    assert _symbols(conn) == []
+
+
+# ------------------------------------------------- dislocation branches ----
+# The dislocation gate is momentum (rsi) OR price level (52w drawdown):
+# measured 2026-07-29, a pure-RSI gate kills 113 of the 122 names passing
+# every quality gate while missing exactly the large-cap price dislocations
+# the screen exists for — 14-day RSI mean-reverts in days, the price stays
+# down for months.
+
+
+def test_deep_52w_drawdown_admits_a_stabilized_name(tmp_path):
+    """INTU on 2026-07-29: 61% off its high, fcf yield 9.1, fScore 8 — and
+    RSI 62, invisible to a pure-RSI gate because the fall had stabilized."""
+    conn = _stocks_db(tmp_path, {"symbol": "INTU", "rsi": 62.0, "high52ch": -45.0})
+    assert _symbols(conn) == ["INTU"]
+
+
+def test_shallow_drawdown_with_high_rsi_is_still_excluded(tmp_path):
+    """Neither branch: not oversold, not far off the high — no dislocation."""
+    conn = _stocks_db(tmp_path, {"symbol": "FAIR", "rsi": 62.0, "high52ch": -10.0})
+    assert _symbols(conn) == []
+
+
+def test_52w_branch_boundary_is_inclusive(tmp_path):
+    conn = _stocks_db(
+        tmp_path,
+        {"symbol": "EDGE", "rsi": 55.0, "high52ch": candidates.HIGH52_DISLOCATION_MAX},
+    )
+    assert _symbols(conn) == ["EDGE"]
+
+
+def test_nonpositive_rsi_is_excluded_even_with_a_deep_drawdown(tmp_path):
+    """The rsi > 0 domain guard covers BOTH dislocation branches: a junk
+    rsi=0 row must not slip in through the 52w-high door (26 such rows
+    exist; unguarded, a $702B phantom qualifies)."""
+    conn = _stocks_db(tmp_path, {"symbol": "JUNK", "rsi": 0.0, "high52ch": -60.0})
+    assert _symbols(conn) == []
+
+
+def test_null_high52ch_still_screens_on_rsi(tmp_path):
+    """high52ch is an OR branch (1,990/1,991 populated); a NULL there must
+    not drop a row that already qualifies on RSI."""
+    conn = _stocks_db(tmp_path, {"symbol": "NOHI", "high52ch": None})
+    assert _symbols(conn) == ["NOHI"]
+
+
+def test_null_high52ch_is_not_itself_a_dislocation(tmp_path):
+    """The converse pin: when RSI does NOT qualify, a missing high52ch must
+    exclude the row, not admit it. Guards against a plausible future
+    'NULL-tolerance by analogy' edit (COALESCE-style) copied from the
+    roic5y/netDebtEbitda gates two clauses up — SQL's False-OR-NULL already
+    does the right thing, and this test keeps it that way."""
+    conn = _stocks_db(tmp_path, {"symbol": "NODATA", "rsi": 62.0, "high52ch": None})
+    assert _symbols(conn) == []
+
+
+def test_median_fscore_is_not_admitted(tmp_path):
+    """The universe median fScore is 5 (p50, 2026-07-29), and a bar at the
+    median binds nothing (N-1 audit: 0 marginal kills of 122) — decorative.
+    The bar is 6; Piotroski's own 'high' is 8-9."""
+    conn = _stocks_db(tmp_path, {"symbol": "MEDIAN", "fScore": 5.0})
     assert _symbols(conn) == []
 
 
@@ -106,6 +181,8 @@ def test_excludes_nonpositive_rsi(tmp_path):
     [
         ("roic", candidates.ROIC_MAX, True),  # BETWEEN is inclusive
         ("roic", candidates.ROIC_MIN, True),
+        ("roic5y", candidates.ROIC_MAX, True),  # shares roic's artifact ceiling
+        ("roic5y", candidates.ROIC5Y_MIN, True),
         ("rsi", candidates.RSI_MAX, False),  # `<` is exclusive
         ("sharesYoY", candidates.SHARES_YOY_MAX, False),
         ("netDebtEbitda", candidates.NET_DEBT_EBITDA_MAX, False),
@@ -134,8 +211,18 @@ def test_null_leverage_is_admitted_not_dropped(tmp_path):
     assert _symbols(conn) == ["NOLEV"]
 
 
+def test_null_roic5y_is_admitted_like_null_leverage(tmp_path):
+    """roic5y is absent for 365 of 1,991 eligible companies — every listing
+    younger than five years, including $251B spinoffs (GEV: roic 41%,
+    rsi 38.7) — and adds little where present: roic x roic5y correlate
+    +0.72. Same policy as netDebtEbitda: absent is not disqualifying,
+    present-and-bad is (see test_gate_excludes)."""
+    conn = _stocks_db(tmp_path, {"symbol": "SPINCO", "roic5y": None})
+    assert _symbols(conn) == ["SPINCO"]
+
+
 @pytest.mark.parametrize(
-    "field", ["marketCap", "dollarVolume", "roic", "roic5y", "fcfYield", "fScore", "rsi"]
+    "field", ["marketCap", "dollarVolume", "roic", "fcfYield", "fScore", "rsi"]
 )
 def test_null_on_a_required_gate_drops_the_row(tmp_path, field):
     """Documents the deliberate asymmetry with netDebtEbitda above: these
@@ -235,12 +322,16 @@ def test_rows_are_ordered_by_fcf_yield_then_roic(tmp_path):
 def test_field_names_map_to_the_right_values(tmp_path):
     """_FIELDS is zipped positionally onto the SELECT list; a reorder of either
     would silently print roic5y's value under the roic header."""
-    conn = _stocks_db(tmp_path, {"symbol": "MAP", "roic": 33.0, "roic5y": 22.0, "rsi": 41.0})
+    conn = _stocks_db(
+        tmp_path,
+        {"symbol": "MAP", "roic": 33.0, "roic5y": 22.0, "rsi": 41.0, "high52ch": -33.0},
+    )
     row = candidates.screen(conn)[0]
     assert row["symbol"] == "MAP"
     assert row["roic"] == 33.0
     assert row["roic5y"] == 22.0
     assert row["rsi"] == 41.0
+    assert row["high52ch"] == -33.0
 
 
 def test_report_renders_empty_without_crash(tmp_path):
@@ -272,13 +363,47 @@ def test_report_columns_do_not_overflow_on_wide_negatives(tmp_path):
     assert len({len(ln) for ln in lines}) == 1, "header and rows must be the same width"
 
 
+def test_report_columns_hold_the_annotation_extremes(tmp_path):
+    """zScore and interestCoverage are UNGATED annotations, so their widths
+    must fit the live distribution's tails, not just typical values — the
+    2026-07-29 base universe reaches interestCoverage 176,266.99 and
+    zScore -36.46 (near-zero denominators, same artifact family as roic)."""
+    conn = _stocks_db(
+        tmp_path,
+        {"symbol": "WIDE", "zScore": -36.4624, "interestCoverage": 176266.98676},
+    )
+    lines = [ln for ln in candidates.build_report(conn, NOW).splitlines() if "|" in ln]
+    assert len({len(ln) for ln in lines}) == 1, "header and rows must be the same width"
+
+
 def test_report_shows_every_gated_quality_field(tmp_path):
-    """A reader must be able to audit why a name cleared each gate; roic5y was
-    gated but not rendered in the first cut."""
+    """A reader must be able to audit why a name cleared each gate — every
+    gated column, including the off52w dislocation branch, must render."""
     conn = _stocks_db(tmp_path, {})
     header = next(ln for ln in candidates.build_report(conn, NOW).splitlines() if "symbol" in ln)
-    for label in ("roic", "roic5y", "fcfy", "rev3y", "fS", "rsi"):
+    for label in ("roic", "roic5y", "fcfy", "rev3y", "fS", "rsi", "off52w"):
         assert label in header
+
+
+def test_report_annotates_ungated_risk_columns(tmp_path):
+    """zScore and interestCoverage are ANNOTATIONS, never gates — printed so
+    the reader sees the leverage dimension netDebtEbitda can miss (TIMB on
+    2026-07-29: interest coverage 0.49 beside nde 0.24) without shrinking the
+    funnel. No forward-return data exists to justify gating them."""
+    conn = _stocks_db(tmp_path, {})
+    header = next(ln for ln in candidates.build_report(conn, NOW).splitlines() if "symbol" in ln)
+    labels = [c.strip() for c in header.split("|")]
+    assert "z" in labels
+    assert "intCov" in labels
+
+
+def test_report_survives_null_annotations(tmp_path):
+    """Annotation columns are NULL-tolerant by definition; a None must render
+    as n/a, not TypeError inside the nightly digest's formatting."""
+    conn = _stocks_db(tmp_path, {"zScore": None, "interestCoverage": None, "high52ch": None})
+    report = candidates.build_report(conn, NOW)
+    assert "GOOD" in report
+    assert "n/a" in report
 
 
 def test_report_uses_the_phoenix_calendar_date(tmp_path):

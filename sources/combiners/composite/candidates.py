@@ -17,8 +17,8 @@ WHAT THIS IS NOT. There is no forward-return evidence for this screen and
 nothing downstream grades it. It is a reading list, not an opinion, and
 deliberately produces no signal_values rows and no flags.
 
-Every gate below encodes a defect measured in stocks.db on 2026-07-26; none
-of them are stylistic:
+Every gate below encodes a defect measured in stocks.db (audits dated
+2026-07-26 and 2026-07-29); none of them are stylistic:
   * ONE ROW PER COMPANY — share classes INHERIT the whole-company marketCap
     (BRK.A $1,059.5B vs BRK.B $1,058.9B; BF.A == BF.B bit-identical), so a
     cap screen counts one company twice. See _COMPANY_KEY below for why the
@@ -29,12 +29,29 @@ of them are stylistic:
   * ROIC_MAX — roic ranges -23,089%..+12,239% across the table; NTES reads
     376% because net cash ($23.2B) nearly equals equity ($24.6B), collapsing
     invested capital. A bare `roic > 12` admits the artifact, not the quality.
+  * roic5y NULL-TOLERANT — 365 of 1,991 eligible companies have no 5y
+    history: every listing younger than five years, including $251B
+    spinoffs (GEV). roic x roic5y correlate +0.72, so requiring the field
+    buys little and costs exactly the spinoffs a quality screen wants.
+    Same policy as netDebtEbitda: absent is not disqualifying.
   * FSCORE_MIN — every other gate is a LEVEL, and levels cannot distinguish
     oversold quality from a falling knife. Piotroski is the trend read, and
-    it covers 5,594/5,597 symbols. It is what excludes LULU (fScore 4, -43%
-    over six months) while keeping ADBE (fScore 7).
+    it covers 5,594/5,597 symbols. The universe median is 5, so a bar of 5
+    binds nothing (N-1 audit: 0 marginal kills of 122); Piotroski's own
+    "high" of 8-9 empties the screen. 6 binds without emptying.
+  * DISLOCATION = rsi OR 52w drawdown — either branch alone misses the
+    other's names: a pure-RSI gate does 92% of all filtering (113 of 122
+    quality names) yet cannot surface a stabilized fall, because 14-day RSI
+    mean-reverts in days while price stays dislocated for months (INTU:
+    61% off its high, fcf yield 9.1, fScore 8, RSI 62).
   * rsi > 0 — 26 rows carry a non-positive RSI, out of domain for a 0-100
-    oscillator. composite/catalog.py guards the same column the same way.
+    oscillator; the guard covers BOTH dislocation branches, since an
+    unguarded drawdown branch admits those junk rows (a $702B phantom
+    qualifies otherwise). composite/catalog.py guards the same column the
+    same way.
+  * zScore / interestCoverage are ANNOTATIONS, never gates — they surface
+    the leverage dimension netDebtEbitda can miss (TIMB: interest coverage
+    0.49 beside nde 0.24) without shrinking an ungraded funnel.
 """
 
 import argparse
@@ -56,8 +73,9 @@ FCF_YIELD_MIN = 4.0
 REV_GROWTH_3Y_MIN = 5.0
 NET_DEBT_EBITDA_MAX = 3.0
 SHARES_YOY_MAX = 2.0  # percent; buybacks are negative
-FSCORE_MIN = 5.0
-RSI_MAX = 45.0  # the dislocation: timing, not the thesis
+FSCORE_MIN = 6.0
+RSI_MAX = 45.0  # dislocation branch 1: momentum washout
+HIGH52_DISLOCATION_MAX = -30.0  # dislocation branch 2: percent off 52w high
 
 # One row per company. Both expressions are imported from catalog.py rather
 # than restated here, so this screen and composite's stocks_rsi signal can
@@ -81,18 +99,20 @@ _SCREEN_SQL = f"""
 WITH eligible AS (
     SELECT symbol, sector, marketCap, dollarVolume, roic, roic5y, fcfYield,
            revenueGrowth3Y, netDebtEbitda, sharesYoY, fScore, rsi, ch6m,
+           high52ch, zScore, interestCoverage,
            priceDate, isin, isPrimaryListing
     FROM v_latest
     WHERE symbol NOT LIKE '%.PR%'                 -- preferreds are not common equity
       AND marketCap >= {MARKET_CAP_MIN}
       AND dollarVolume >= {DOLLAR_VOLUME_MIN}
       AND roic BETWEEN {ROIC_MIN} AND {ROIC_MAX}
-      AND roic5y BETWEEN {ROIC5Y_MIN} AND {ROIC_MAX}
+      AND (roic5y IS NULL OR roic5y BETWEEN {ROIC5Y_MIN} AND {ROIC_MAX})
       AND fcfYield >= {FCF_YIELD_MIN}
       AND revenueGrowth3Y >= {REV_GROWTH_3Y_MIN}
       AND sharesYoY < {SHARES_YOY_MAX}
       AND fScore >= {FSCORE_MIN}
-      AND rsi > 0 AND rsi < {RSI_MAX}
+      AND rsi > 0                                 -- domain guard for BOTH branches
+      AND (rsi < {RSI_MAX} OR high52ch <= {HIGH52_DISLOCATION_MAX})
       AND (netDebtEbitda IS NULL OR netDebtEbitda < {NET_DEBT_EBITDA_MAX})
 ),
 ranked AS (
@@ -103,7 +123,8 @@ ranked AS (
     FROM eligible
 )
 SELECT symbol, sector, marketCap, dollarVolume, roic, roic5y, fcfYield,
-       revenueGrowth3Y, netDebtEbitda, sharesYoY, fScore, rsi, ch6m, priceDate
+       revenueGrowth3Y, netDebtEbitda, sharesYoY, fScore, rsi, ch6m,
+       high52ch, zScore, interestCoverage, priceDate
 FROM ranked WHERE rn = 1
 ORDER BY fcfYield DESC, roic DESC, symbol
 """
@@ -124,6 +145,9 @@ _FIELDS = [
     "fScore",
     "rsi",
     "ch6m",
+    "high52ch",
+    "zScore",
+    "interestCoverage",
     "priceDate",
 ]
 
@@ -141,6 +165,12 @@ _LAYOUT = (
     ("fS", 2),
     ("rsi", 5),
     ("ch6m", 7),
+    ("off52w", 7),
+    # Ungated annotations get tail-sized widths: the live base universe
+    # reaches interestCoverage 176,266.99 and zScore -36.46 (near-zero
+    # denominators), and an overflow misaligns the whole table.
+    ("z", 6),
+    ("intCov", 9),
 )
 
 
@@ -218,6 +248,9 @@ def _row_cells(r: dict) -> list[str]:
         _num(r["fScore"], 0),
         _num(r["rsi"]),
         _num(r["ch6m"]),
+        _num(r["high52ch"]),
+        _num(r["zScore"]),
+        _num(r["interestCoverage"]),
     ]
 
 
@@ -252,12 +285,15 @@ def build_report(conn, now_iso: str) -> str:
             "",
             f"Screen: one row per company, cap >= ${MARKET_CAP_MIN / 1e9:.0f}B,"
             f" ${DOLLAR_VOLUME_MIN / 1e6:.0f}M+ daily volume,",
-            f"  roic and roic5y within {ROIC_MIN:.0f}-{ROIC_MAX:.0f}%,"
-            f" fcf yield >= {FCF_YIELD_MIN:.0f}%,"
-            f" 3y revenue growth >= {REV_GROWTH_3Y_MIN:.0f}%,",
-            f"  net debt/ebitda < {NET_DEBT_EBITDA_MAX:.0f} or absent,"
-            f" dilution < {SHARES_YOY_MAX:.0f}%/yr,"
-            f" fScore >= {FSCORE_MIN:.0f}, rsi < {RSI_MAX:.0f}.",
+            f"  roic within {ROIC_MIN:.0f}-{ROIC_MAX:.0f}%,"
+            f" roic5y within {ROIC5Y_MIN:.0f}-{ROIC_MAX:.0f}% or absent,"
+            f" fcf yield >= {FCF_YIELD_MIN:.0f}%,",
+            f"  3y revenue growth >= {REV_GROWTH_3Y_MIN:.0f}%,"
+            f" net debt/ebitda < {NET_DEBT_EBITDA_MAX:.0f} or absent,"
+            f" dilution < {SHARES_YOY_MAX:.0f}%/yr,",
+            f"  fScore >= {FSCORE_MIN:.0f}, dislocation: rsi < {RSI_MAX:.0f}"
+            f" or >= {-HIGH52_DISLOCATION_MAX:.0f}% off the 52w high."
+            " z and intCov are annotations, not gates.",
             "",
             "This is an UNGRADED screen and NOT A RECOMMENDATION. No forward-return",
             "evidence exists for it and nothing downstream scores it. Row order is",
