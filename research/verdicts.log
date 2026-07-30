@@ -75,3 +75,5 @@
 2026-07-30 FFIV SOUND conditions=5 refuted=0 unknown=0 reopen=2026-10-26:ffiv-fy27-guide
 2026-07-30 BSY UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-08-06:bsy-q2-print-nrr-and-api-monetization
 2026-07-30 FIX SOUND conditions=5 refuted=0 unknown=1 reopen=event:price-le-1100-or-margin-holds-at-low-growth
+2026-07-30 APPF UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-29:appf-q3-units-vas-margin
+2026-07-30 ERO SOUND conditions=4 refuted=0 unknown=0 reopen=event:copper-normalization-or-pullback-implied-ge-12pct-at-4.60
