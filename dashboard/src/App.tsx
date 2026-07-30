@@ -8,22 +8,14 @@
 //   a dismissable-for-this-session (never persisted) banner above it — a
 //   stale run should keep nagging on the next visit.
 // - Route switch via useHashRoute: `#/` (or anything else) renders Main;
-//   `#/ticker/<SYMBOL>` renders a stub Task 15 replaces with the real
-//   drill-down.
+//   `#/ticker/<SYMBOL>` renders the per-ticker drill-down (TickerDetail).
 
 import { useState } from "react";
 import { useDashboardData } from "./hooks/useDashboardData";
 import { useHashRoute } from "./hooks/useHashRoute";
 import { Main } from "./routes/Main";
+import { TickerDetail } from "./routes/TickerDetail";
 import { GenerationFailedBanner, StaleBanner } from "./ui/Banners";
-
-function TickerPlaceholder({ symbol }: { symbol: string }) {
-  return (
-    <div className="page">
-      <p className="empty">Ticker detail for {symbol} — coming soon.</p>
-    </div>
-  );
-}
 
 function App() {
   const { doc, error, generatedAt, stale } = useDashboardData();
@@ -47,7 +39,7 @@ function App() {
       {stale && !staleDismissed && (
         <StaleBanner generatedAt={doc.generated_at} onDismiss={() => setStaleDismissed(true)} />
       )}
-      {route.route === "ticker" ? <TickerPlaceholder symbol={route.symbol} /> : <Main doc={doc} />}
+      {route.route === "ticker" ? <TickerDetail doc={doc} symbol={route.symbol} /> : <Main doc={doc} />}
     </>
   );
 }

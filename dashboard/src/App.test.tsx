@@ -50,9 +50,16 @@ test("a stale document renders normally with a dismissable banner", async () => 
   expect(screen.getByText("Tonight in plain English")).toBeInTheDocument();
 });
 
-test("the ticker hash route renders the placeholder route", async () => {
+test("the ticker hash route renders the drill-down for a known symbol", async () => {
+  location.hash = "#/ticker/AAPL";
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => fixture }));
+  render(<App />);
+  await waitFor(() => expect(screen.getByRole("heading", { name: "AAPL" })).toBeInTheDocument());
+});
+
+test("the ticker hash route shows an honest message for a symbol with no exported detail", async () => {
   location.hash = "#/ticker/DECK";
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => fixture }));
   render(<App />);
-  await waitFor(() => expect(screen.getByText(/ticker detail for deck/i)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText(/no detail exported for DECK/i)).toBeInTheDocument());
 });

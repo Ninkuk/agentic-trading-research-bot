@@ -110,6 +110,20 @@ test("generic fallback sections with duplicate titles keep independent persisted
   expect(localStorage.getItem("atrb:generic:dup-two")).toBeNull();
 });
 
+test("a pinned ticker (shared pins pref) stays first in the scorecard despite an active score sort", () => {
+  localStorage.setItem("atrb:pins", JSON.stringify(["MSFT"]));
+  localStorage.setItem(
+    "atrb:scorecard",
+    JSON.stringify({ sortKey: "score_sum", sortDir: "desc", expanded: false, hiddenCols: [] }),
+  );
+  render(<Main doc={doc} />);
+  const scorecard = within(document.getElementById("scorecard") as HTMLElement);
+  const rows = scorecard.getAllByRole("row").slice(1); // drop the header row
+  // Sorted desc by score_sum without pinning would put AAPL (4) first —
+  // MSFT (1) must lead anyway because it's pinned.
+  expect(within(rows[0]).getByRole("link")).toHaveTextContent("MSFT");
+});
+
 test("regime section renders its tiles and drivers table", () => {
   render(<Main doc={doc} />);
   // The regime verdict shows twice by design: once compact in the KPI row,

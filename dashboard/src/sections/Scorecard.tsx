@@ -10,7 +10,10 @@
 // (tr.flag / tr.flag .sym::after in index.css) — no extra JSX marker
 // needed. The ticker filter reuses the legacy `#tickfilter` id and its
 // styling, persisted via usePrefs so a filter typed tonight survives a
-// reload.
+// reload. `pinnedFirst` reads the same `usePrefs("pins", [])` list
+// TickerDetail's pin toggle writes — a ticker pinned from its drill-down
+// page groups above the rest here too, active sort still applying within
+// each group (DataTable's own pinnedFirst grouping).
 
 import { type ReactNode } from "react";
 import { Sparkline, type SparklinePoint } from "../charts/Sparkline";
@@ -64,6 +67,7 @@ function renderScorecardCell(row: Row, col: Column): ReactNode {
 
 export function Scorecard({ sec, glossary }: SectionComponentProps) {
   const [filter, setFilter] = usePrefs("scorecard:filter", "");
+  const [pins] = usePrefs<string[]>("pins", []);
   const columns = sec.columns ?? [];
   const allRows = sec.rows ?? [];
   const needle = filter.trim().toUpperCase();
@@ -88,6 +92,7 @@ export function Scorecard({ sec, glossary }: SectionComponentProps) {
         glossary={glossary}
         renderCell={renderScorecardCell}
         rowClassName={(row) => (row.flagged ? "flag" : undefined)}
+        pinnedFirst={pins}
       />
     </>
   );
