@@ -57,3 +57,4 @@
 2026-07-29 SFM UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-28:q3-print-lap-expiry
 2026-07-29 CAPR FLAWED conditions=5 refuted=2 unknown=2 reopen=event:halt-lift-then-pdufa-2026-08-22
 2026-07-29 BLBD UNPROVEN conditions=6 refuted=0 unknown=1 reopen=event:epa-csb-2026-nofo-or-price-55
+2026-07-30 GDDY UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-07-30:q2-bookings-parity-then-499-cohort-renewal
