@@ -1,3 +1,5 @@
+import os
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -6,8 +8,9 @@ from deploy.launchd.publish_dashboard import (
     GIT_TIMEOUT_PUSH,
     NOINDEX_META,
     ROBOTS_TXT,
-    inject_noindex,
     is_fresh,
+    main,
+    publish,
     stage,
 )
 
@@ -41,51 +44,64 @@ def test_is_fresh_survives_utc_rollover():
     assert is_fresh(_epoch(2026, 7, 21, 23, 0), "2026-07-22T04:20:00+00:00")
 
 
-def test_inject_noindex_after_head():
-    out = inject_noindex("<html><head><title>x</title></head><body>b</body></html>")
-    assert NOINDEX_META in out
-    assert out.index(NOINDEX_META) < out.index("<title>")
+def _make_dist(dist_dir: Path) -> None:
+    dist_dir.mkdir(parents=True)
+    (dist_dir / "index.html").write_text(
+        f"<html><head>{NOINDEX_META}</head><body>app</body></html>", encoding="utf-8"
+    )
+    assets = dist_dir / "assets"
+    assets.mkdir()
+    (assets / "index-abc123.js").write_text("console.log('x')", encoding="utf-8")
+    (assets / "index-abc123.css").write_text("body{}", encoding="utf-8")
 
 
-def test_inject_noindex_without_head_tag():
-    out = inject_noindex("<p>no head here</p>")
-    assert NOINDEX_META in out
-    assert "<p>no head here</p>" in out
+def test_stage_copies_dist_tree(tmp_path):
+    dist = tmp_path / "dist"
+    _make_dist(dist)
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    stage(dist, '{"a": 1}', dest)
+    assert (dest / "index.html").exists()
+    assert (dest / "assets" / "index-abc123.js").read_text(encoding="utf-8") == "console.log('x')"
+    assert (dest / "assets" / "index-abc123.css").exists()
 
 
-def test_inject_noindex_is_idempotent():
-    once = inject_noindex("<html><head></head></html>")
-    assert inject_noindex(once) == once
+def test_stage_writes_data_json_last(tmp_path):
+    dist = tmp_path / "dist"
+    _make_dist(dist)
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    stage(dist, '{"real": true}', dest)
+    assert (dest / "data.json").read_text(encoding="utf-8") == '{"real": true}'
 
 
-def test_stage_writes_three_files(tmp_path):
-    stage("<html><head></head><body>hi</body></html>", tmp_path)
-    assert (tmp_path / "index.html").exists()
-    assert (tmp_path / ".nojekyll").exists()
-    assert (tmp_path / "robots.txt").exists()
+def test_stage_data_json_clobbers_fixture_leaked_from_dist(tmp_path):
+    """Guards the stale-fixture hazard: predev copies a fixture into
+    dashboard/public/data.json, and vite build copies public/* into dist/. If
+    dist already carries a data.json (the fixture), stage() must overwrite it
+    with the real reports/data.json content, never merge or skip it.
+    """
+    dist = tmp_path / "dist"
+    _make_dist(dist)
+    (dist / "data.json").write_text('{"fixture": true}', encoding="utf-8")
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    stage(dist, '{"real": true}', dest)
+    assert (dest / "data.json").read_text(encoding="utf-8") == '{"real": true}'
 
 
-def test_stage_index_has_noindex_and_content(tmp_path):
-    stage("<html><head></head><body>hi</body></html>", tmp_path)
-    out = (tmp_path / "index.html").read_text(encoding="utf-8")
-    assert NOINDEX_META in out
-    assert "hi" in out
-
-
-def test_stage_robots_disallows_all(tmp_path):
-    stage("<html></html>", tmp_path)
-    assert (tmp_path / "robots.txt").read_text(encoding="utf-8") == ROBOTS_TXT
+def test_stage_output_contains_dist_assets_and_meta_files(tmp_path):
+    dist = tmp_path / "dist"
+    _make_dist(dist)
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    stage(dist, '{"a": 1}', dest)
+    assert (dest / "assets" / "index-abc123.js").exists()
+    assert (dest / "assets" / "index-abc123.css").exists()
+    assert (dest / "robots.txt").read_text(encoding="utf-8") == ROBOTS_TXT
     assert "Disallow: /" in ROBOTS_TXT
+    assert (dest / ".nojekyll").read_text(encoding="utf-8") == ""
 
-
-def test_stage_nojekyll_is_empty(tmp_path):
-    stage("<html></html>", tmp_path)
-    assert (tmp_path / ".nojekyll").read_text(encoding="utf-8") == ""
-
-
-import subprocess
-
-from deploy.launchd.publish_dashboard import publish
 
 FRESH_NOW = "2026-07-22T04:20:00+00:00"  # 9:20pm Phoenix on 2026-07-21
 
@@ -143,24 +159,28 @@ class FakeGit:
         )
 
 
-def _repo_with_dashboard(tmp_path, mtime_epoch):
+def _repo_with_data(tmp_path, mtime_epoch, data_json='{"ok": true}'):
     (tmp_path / "reports").mkdir()
-    html = tmp_path / "reports" / "dashboard.html"
-    html.write_text("<html><head></head><body>book</body></html>", encoding="utf-8")
-    import os
-
-    os.utime(html, (mtime_epoch, mtime_epoch))
+    data_path = tmp_path / "reports" / "data.json"
+    data_path.write_text(data_json, encoding="utf-8")
+    os.utime(data_path, (mtime_epoch, mtime_epoch))
     return tmp_path
 
 
+def _repo_with_data_and_dist(tmp_path, mtime_epoch, data_json='{"ok": true}'):
+    repo = _repo_with_data(tmp_path, mtime_epoch, data_json)
+    _make_dist(repo / "dashboard" / "dist")
+    return repo
+
+
 def test_publish_returns_zero_on_fresh_file(tmp_path):
-    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    repo = _repo_with_data_and_dist(tmp_path, _epoch(2026, 7, 22, 4, 13))
     git = FakeGit()
     assert publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=lambda m: None) == 0
 
 
 def test_publish_force_pushes_to_gh_pages(tmp_path):
-    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    repo = _repo_with_data_and_dist(tmp_path, _epoch(2026, 7, 22, 4, 13))
     git = FakeGit()
     publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=lambda m: None)
     push = git.argv_for("push")
@@ -174,14 +194,14 @@ def test_publish_commit_disables_gpg_signing(tmp_path):
     A non-interactive commit without --no-gpg-sign blocks on the 1Password
     approval prompt forever, hanging the launchd job every night with no error.
     """
-    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    repo = _repo_with_data_and_dist(tmp_path, _epoch(2026, 7, 22, 4, 13))
     git = FakeGit()
     publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=lambda m: None)
     assert "--no-gpg-sign" in git.argv_for("commit")
 
 
 def test_publish_refuses_stale_file_and_runs_no_git(tmp_path):
-    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 20, 4, 13))  # two days back
+    repo = _repo_with_data_and_dist(tmp_path, _epoch(2026, 7, 20, 4, 13))  # two days back
     git = FakeGit()
     msgs: list[str] = []
     assert publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=msgs.append) == 1
@@ -194,10 +214,32 @@ def test_publish_refuses_missing_file(tmp_path):
     msgs: list[str] = []
     assert publish(now_iso=FRESH_NOW, repo_root=tmp_path, run=git, log=msgs.append) == 1
     assert git.calls == []
+    assert any("reports/data.json missing" in m for m in msgs)
+
+
+def test_publish_refuses_missing_dist(tmp_path):
+    repo = _repo_with_data(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    git = FakeGit()
+    msgs: list[str] = []
+    assert publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=msgs.append) == 1
+    assert git.calls == []
+    assert any("dashboard/dist missing" in m for m in msgs)
+
+
+def test_publish_refuses_dist_without_noindex_meta(tmp_path):
+    repo = _repo_with_data(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    dist = repo / "dashboard" / "dist"
+    dist.mkdir(parents=True)
+    (dist / "index.html").write_text("<html><head></head><body>app</body></html>", encoding="utf-8")
+    git = FakeGit()
+    msgs: list[str] = []
+    assert publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=msgs.append) == 1
+    assert git.calls == []
+    assert any("lacks the noindex meta" in m for m in msgs)
 
 
 def test_publish_reports_push_failure_loudly(tmp_path):
-    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    repo = _repo_with_data_and_dist(tmp_path, _epoch(2026, 7, 22, 4, 13))
     git = FakeGit(fail_on="push")
     msgs: list[str] = []
     assert publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=msgs.append) == 1
@@ -205,7 +247,7 @@ def test_publish_reports_push_failure_loudly(tmp_path):
 
 
 def test_publish_redacts_credentials_in_git_errors(tmp_path):
-    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    repo = _repo_with_data_and_dist(tmp_path, _epoch(2026, 7, 22, 4, 13))
     git = FakeGit(fail_on="push", stderr="fatal: https://user:ghp_SECRET@github.com/x.git")
     msgs: list[str] = []
     publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=msgs.append)
@@ -219,7 +261,7 @@ def test_publish_reports_git_timeout_loudly_and_without_secrets(tmp_path):
     -- the FAILED line must name only the subcommand and the timeout, never the
     exception itself.
     """
-    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    repo = _repo_with_data_and_dist(tmp_path, _epoch(2026, 7, 22, 4, 13))
     secret_remote = "https://user:ghp_TIMEOUTSECRET@github.com/x.git"
     git = FakeGit(remote=secret_remote, timeout_on="push")
     msgs: list[str] = []
@@ -237,7 +279,7 @@ def test_publish_gives_push_the_larger_timeout_budget(tmp_path):
     collapsed to the same value. The explicit `>` assertion is what actually
     pins push having a strictly larger budget than a local git call.
     """
-    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    repo = _repo_with_data_and_dist(tmp_path, _epoch(2026, 7, 22, 4, 13))
     git = FakeGit()
     publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=lambda m: None)
     assert git.timeout_for("push") == GIT_TIMEOUT_PUSH
@@ -254,7 +296,7 @@ def test_publish_stages_and_operates_outside_the_live_worktree(tmp_path):
     itself would mutate the live worktree/branch while publishing whatever
     happened to be sitting in it.
     """
-    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    repo = _repo_with_data_and_dist(tmp_path, _epoch(2026, 7, 22, 4, 13))
     git = FakeGit()
     assert publish(now_iso=FRESH_NOW, repo_root=repo, run=git, log=lambda m: None) == 0
 
@@ -269,17 +311,14 @@ def test_publish_stages_and_operates_outside_the_live_worktree(tmp_path):
         assert git.index_present_for(subcommand) is True
 
 
-def test_publish_does_not_modify_source_html(tmp_path):
-    repo = _repo_with_dashboard(tmp_path, _epoch(2026, 7, 22, 4, 13))
-    before = (repo / "reports" / "dashboard.html").read_text(encoding="utf-8")
+def test_publish_does_not_modify_source_data_json(tmp_path):
+    repo = _repo_with_data_and_dist(tmp_path, _epoch(2026, 7, 22, 4, 13))
+    before = (repo / "reports" / "data.json").read_text(encoding="utf-8")
     publish(now_iso=FRESH_NOW, repo_root=repo, run=FakeGit(), log=lambda m: None)
-    assert (repo / "reports" / "dashboard.html").read_text(encoding="utf-8") == before
+    assert (repo / "reports" / "data.json").read_text(encoding="utf-8") == before
 
 
-from deploy.launchd.publish_dashboard import main
-
-
-def test_main_returns_one_when_dashboard_missing(tmp_path, monkeypatch):
+def test_main_returns_one_when_data_json_missing(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     assert main([]) == 1
 

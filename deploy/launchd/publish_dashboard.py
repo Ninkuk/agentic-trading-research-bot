@@ -1,8 +1,8 @@
-"""Publish reports/dashboard.html to the gh-pages branch backing GitHub Pages.
+"""Publish the built dashboard React app + fresh reports/data.json to gh-pages.
 
 The page is *current state*, not history: each run force-pushes a single-commit
 orphan branch, so the previous blob is orphaned and reclaimed by gc rather than
-accumulating ~400KB a night in the repo.
+accumulating a nightly delta in the repo.
 
 Everything happens in a temp directory. The live worktree, index, and HEAD are
 never touched -- a branch switch at 9:20pm could collide with the owner working
@@ -11,13 +11,23 @@ in the repo, or with another scheduled job reading data/.
 Runs at 9:20pm Phoenix, AFTER the 9:15pm daily-summary ntfy, so a slow or hung
 push can neither delay nor suppress that health alert.
 
-Refuses to publish a stale file. If the 9:13pm dashboard job did not run,
-reports/dashboard.html is yesterday's, and pushing it would put an old page up
+Refuses to publish stale data. If the 9:13pm dashboard job did not run,
+reports/data.json is yesterday's, and pushing it would put an old page up
 wearing a fresh publication time -- worse than an honest failure, which is the
-same judgment dashboard.py applies to its own generation-failed page.
+same judgment dashboard.py applies to its own generation-failed output.
+
+Refuses to publish a dashboard/dist that was never built for production, or
+was built without the noindex guard: the frontend build (`npm run build` in
+dashboard/) is expected to bake `NOINDEX_META` into dist/index.html, and this
+module only verifies that -- it never injects the tag itself. This also
+catches the stale-fixture hazard: `predev` copies a fixture into
+dashboard/public/data.json, and any `vite build` copies public/* into dist/,
+so dist/data.json (if present) may be that fixture. stage() always writes the
+real reports/data.json content last, clobbering whatever vite copied in.
 """
 
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -28,7 +38,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sources.common.clock import phx_date  # noqa: E402
 
-DASHBOARD_PATH = "reports/dashboard.html"
+DATA_PATH = "reports/data.json"
+DIST_DIR = "dashboard/dist"
 BRANCH = "gh-pages"
 NOINDEX_META = '<meta name="robots" content="noindex,nofollow">'
 # The noindex meta tag above is the only crawler control that works here -- it is honored
@@ -56,23 +67,18 @@ def is_fresh(mtime_epoch: float, now_iso: str) -> bool:
     return phx_date(file_dt) == phx_date(now_iso)
 
 
-def inject_noindex(html: str) -> str:
-    """Add a robots noindex meta to the published copy. Idempotent."""
-    if NOINDEX_META in html:
-        return html
-    if "<head>" in html:
-        return html.replace("<head>", "<head>" + NOINDEX_META, 1)
-    return NOINDEX_META + html
-
-
-def stage(html: str, dest: Path) -> None:
+def stage(dist_dir: Path, data_json: str, dest: Path) -> None:
     """Write the publishable tree into dest.
 
-    .nojekyll disables Jekyll processing: the dashboard is already self-contained
-    HTML with no external asset of any kind, so Jekyll could only add latency and
-    a chance of mangling it.
+    Order matters: the dist tree is copied first, then data.json is written
+    LAST so it clobbers any fixture that leaked into dist via dashboard/public/
+    (predev copies a fixture there, and vite build copies public/* into dist/).
+    .nojekyll disables Jekyll processing -- the build output is already
+    self-contained static assets, so Jekyll could only add latency and a
+    chance of mangling something.
     """
-    (dest / "index.html").write_text(inject_noindex(html), encoding="utf-8")
+    shutil.copytree(dist_dir, dest, dirs_exist_ok=True)
+    (dest / "data.json").write_text(data_json, encoding="utf-8")
     (dest / ".nojekyll").write_text("", encoding="utf-8")
     (dest / "robots.txt").write_text(ROBOTS_TXT, encoding="utf-8")
 
@@ -119,21 +125,33 @@ def publish(
     run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
     log: Callable[[str], None] = print,
 ) -> int:
-    """Force-push the current dashboard to BRANCH. Returns 0 on success, 1 on failure."""
-    html_path = repo_root / DASHBOARD_PATH
-    if not html_path.exists():
-        log(f"FAILED: {DASHBOARD_PATH} missing — did the 9:13pm dashboard job run?")
+    """Force-push the built dashboard to BRANCH. Returns 0 on success, 1 on failure."""
+    data_path = repo_root / DATA_PATH
+    if not data_path.exists():
+        log(f"FAILED: {DATA_PATH} missing — did the 9:13pm dashboard job run?")
         return 1
     today = phx_date(now_iso)
-    if not is_fresh(html_path.stat().st_mtime, now_iso):
-        log(f"STALE: {DASHBOARD_PATH} is not from {today} (Phoenix) — refusing to publish")
+    if not is_fresh(data_path.stat().st_mtime, now_iso):
+        log(f"STALE: {DATA_PATH} is not from {today} (Phoenix) — refusing to publish")
+        return 1
+
+    dist_dir = repo_root / DIST_DIR
+    index_path = dist_dir / "index.html"
+    if not index_path.exists():
+        log(
+            f"FAILED: {DIST_DIR} missing — run 'npm run build' in dashboard/ after frontend changes"
+        )
+        return 1
+    index_html = index_path.read_text(encoding="utf-8")
+    if NOINDEX_META not in index_html:
+        log("FAILED: built index.html lacks the noindex meta")
         return 1
 
     try:
         remote = _git(run, repo_root, "remote", "get-url", "origin").stdout.strip()
         with tempfile.TemporaryDirectory() as tmp:
             dest = Path(tmp)
-            stage(html_path.read_text(encoding="utf-8"), dest)
+            stage(dist_dir, data_path.read_text(encoding="utf-8"), dest)
             _git(run, dest, "init", "-q", "-b", BRANCH)
             _git(run, dest, "add", "-A")
             # --no-gpg-sign is mandatory: see the module docstring in the plan and
