@@ -1,28 +1,33 @@
-"""Generate the zero-dependency nightly HTML dashboard.
+"""Generate the nightly dashboard's data.json.
 
-Thin entrypoint over dashboard_lib/ (style.py CSS + color tokens, svg.py pure
-chart builders, sections.py assembly, js.py inline script). Kept at this path
-because dashboard.sh and launchd invoke it, and tests import `dashboard`.
+Thin entrypoint over dashboard_lib/ (data.py assembles the document from
+each source DB; sections.py/svg.py/style.py/js.py back the legacy HTML
+generator, re-exported below for tests until Task 17 retires them). Kept at
+this path because dashboard.sh and launchd invoke it, and tests import
+`dashboard`.
 
-A single self-contained static HTML file summarizing the pipeline's accumulated
-state — regime, ticker scorecard, signal efficacy/recommendations, bucket
-performance, the human-filter tally, and the advisor book — for a human to
-review before the weekly reweighting decision. Opens locally (double-click,
-file://); no server, no auth, no JS framework, no CDN, no external asset of any
-kind (CLAUDE.md's stdlib-only constraint, extended to the emitted HTML).
+Writes reports/data.json: the same accumulated pipeline state as the old
+HTML dashboard — regime, ticker scorecard, signal efficacy/recommendations,
+bucket performance, the human-filter tally, and the advisor book — exported
+as plain data for a React frontend to render instead of server-rendered
+markup.
 
-Mirrors deploy/launchd/daily_summary.py: reads each source DB with
-`sqlite3.connect("file:data/<db>?mode=ro", uri=True)`, strictly read-only, and
-wraps every section in its own try/except so a missing DB, a dropped view, or
-zero rows degrades to a visible "unavailable"/"no rows yet" note rather than a
-crash. A total failure still writes an explicit "generation failed" page — a
-stale dashboard with no error banner would be worse than an honest one.
+Mirrors deploy/launchd/daily_summary.py: dashboard_lib.data reads each
+source DB with `sqlite3.connect("file:data/<db>?mode=ro", uri=True)`,
+strictly read-only, and wraps every section in its own try/except so a
+missing DB, a dropped view, or zero rows degrades to an `"error"` key on
+that section rather than crashing. A total failure here still writes an
+explicit minimal error document ({"schema_version", "generated_at",
+"error"}) — an absent/stale data.json with no error signal would be worse
+than an honest one.
 
 Wired as its own launchd slot at 9:13pm (after advisor 9:12, before the
 daily-summary ntfy at 9:15) so it reflects tonight's rows; being a separate
-process, a bug here can never delay or suppress that health alert.
+process, a bug here can never delay or suppress that health alert — hence
+`main()` always returns 0, success or failure alike.
 """
 
+import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -32,6 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # repo root
 
 # Re-exports below: tests and launchd import `dashboard`; keep this list in
 # sync with dashboard_lib.sections.
+from dashboard_lib import data  # noqa: E402
 from dashboard_lib.sections import (  # noqa: E402,F401
     _EFFICACY_COLS,
     _HERO_FALLBACK,
@@ -76,20 +82,37 @@ from dashboard_lib.sections import (  # noqa: E402,F401
 )
 from dashboard_lib.svg import _esc, _num, _pct, _signed_num, _sparkline_svg, _yn  # noqa: E402,F401
 
+# Local definitions (not re-exported from sections.py, which stays HTML-only
+# until Task 17): the new JSON output path, and DATA_DIR redefined here so
+# both survive sections.py's eventual deletion. DATA_DIR's value is
+# identical to the re-import above ("data") — this line shadows it, it does
+# not change behavior.
+DATA_OUTPUT_PATH = "reports/data.json"
+DATA_DIR = "data"  # noqa: F811 — intentional shadow of the sections.py re-export
+
+_SIZE_WARNING_BYTES = 1_500_000
+
 
 def main() -> int:
     now_iso = datetime.now(UTC).isoformat()
     try:
-        page = build_page(DATA_DIR, now_iso)
-    except Exception as e:  # never leave a stale file with no error banner
-        page = (
-            "<!doctype html>\n<html><head><meta charset='utf-8'>"
-            "<title>Agentic Trading Research Bot Dashboard</title></head><body>"
-            f"<h1>Agentic Trading Research Bot Dashboard</h1><p>generation failed"
-            f" ({_esc(type(e).__name__)})</p></body></html>\n"
+        text = data.export_json(DATA_DIR, now_iso)
+    except Exception as e:  # never leave a stale file with no error signal
+        text = json.dumps(
+            {
+                "schema_version": 1,
+                "generated_at": now_iso,
+                # type name only — never str(e)/repr(e), which can embed a
+                # DB path or (for an upstream urllib error) a URL.
+                "error": f"generation failed ({type(e).__name__})",
+            },
+            separators=(",", ":"),
         )
-    write_dashboard(page, OUTPUT_PATH)
-    print(f"wrote {OUTPUT_PATH}")
+    write_dashboard(text, DATA_OUTPUT_PATH)
+    size = len(text.encode("utf-8"))
+    print(f"wrote {DATA_OUTPUT_PATH} ({size} bytes)")
+    if size > _SIZE_WARNING_BYTES:
+        print("WARNING: data.json exceeds 1.5MB target")
     return 0
 
 

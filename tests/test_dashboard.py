@@ -636,17 +636,6 @@ def test_write_dashboard_is_atomic_replace(tmp_path):
     assert leftovers == []
 
 
-def test_main_writes_page_and_returns_zero(tmp_path, monkeypatch):
-    out = tmp_path / "dashboard.html"
-    monkeypatch.setattr(dashboard, "DATA_DIR", str(tmp_path / "data"))
-    monkeypatch.setattr(dashboard, "OUTPUT_PATH", str(out))
-    rc = dashboard.main()
-    assert rc == 0
-    assert out.exists() and "Agentic Trading Research Bot Dashboard" in out.read_text(
-        encoding="utf-8"
-    )
-
-
 # --- populated-DB fixture: real rows via each combiner's own db.py, for
 # every one of the 16 section renderers (plan 003) ---------------------------
 #
