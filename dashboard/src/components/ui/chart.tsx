@@ -39,10 +39,16 @@ export function ChartContainer({
   className,
   children,
   config,
+  responsive = true,
   ...props
 }: ComponentProps<"div"> & {
   config: ChartConfig;
   children: ComponentProps<typeof RechartsPrimitive.ResponsiveContainer>["children"];
+  // responsive=false renders the child chart at its own explicit size
+  // instead of via ResponsiveContainer — jsdom measures that 0x0, so any
+  // chart whose geometry is asserted in tests needs the escape hatch
+  // (callers pair it with a measured-width hook; see RegimeTimeline).
+  responsive?: boolean;
 }) {
   const uniqueId = useId();
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
@@ -61,7 +67,11 @@ export function ChartContainer({
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>{children}</RechartsPrimitive.ResponsiveContainer>
+        {responsive ? (
+          <RechartsPrimitive.ResponsiveContainer>{children}</RechartsPrimitive.ResponsiveContainer>
+        ) : (
+          children
+        )}
       </div>
     </ChartContext.Provider>
   );

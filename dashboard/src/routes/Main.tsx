@@ -195,9 +195,11 @@ export function Main({ doc }: MainProps) {
                   Lab Variant C's KPI anatomy: label above a mono value with
                   the delta inline, sparkline to the right. */}
               <div id="macro-drivers" className="kpi-row flex flex-wrap items-center gap-x-8 gap-y-3">
-                {regimeSec?.verdict && <VerdictChip verdict={regimeSec.verdict} />}
+                {regimeSec?.verdict && (
+                  <VerdictChip verdict={regimeSec.verdict} className="text-sm" />
+                )}
                 {(macroSec?.tiles ?? []).map((tile) => (
-                  <div key={tile.label} className="tile flex items-center gap-2.5">
+                  <div key={tile.label} className="tile flex items-center gap-3">
                     <div>
                       <div className="text-muted-foreground text-[11px]">{tile.label}</div>
                       <div className="font-mono text-base leading-tight font-semibold tabular-nums">
@@ -231,7 +233,7 @@ export function Main({ doc }: MainProps) {
             key={label}
             value={strandId(label)}
             forceMount
-            className="strand space-y-4 pt-3 data-[state=inactive]:hidden"
+            className="strand space-y-4 pt-2 data-[state=inactive]:hidden"
             id={strandId(label)}
           >
             {strandSections(label).map(renderSection)}

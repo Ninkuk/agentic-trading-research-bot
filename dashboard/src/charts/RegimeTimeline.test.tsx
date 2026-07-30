@@ -1,5 +1,4 @@
 import { render } from "@testing-library/react";
-import { tokens } from "../theme";
 import { RegimeTimeline, type RegimeTimelineRow } from "./RegimeTimeline";
 
 const ROWS: RegimeTimelineRow[] = [
@@ -10,20 +9,21 @@ const ROWS: RegimeTimelineRow[] = [
   { date: "2026-07-05", regime: null, vix: null },
 ];
 
-test("VIX area renders in the chart token", () => {
+test("VIX area renders through the chart's injected color variable", () => {
   const { container } = render(<RegimeTimeline rows={ROWS} />);
   const curve = container.querySelector(".regime-vix-line .recharts-area-curve");
-  expect(curve).toHaveAttribute("stroke", "var(--chart-2)");
+  // ChartContainer's ChartStyle maps --color-vix -> var(--chart-2).
+  expect(curve).toHaveAttribute("stroke", "var(--color-vix)");
 });
 
-test("per-night dots wear the regime's tone, gray-amber midpoint for anything else", () => {
+test("per-night dots wear the lab regime palette, amber midpoint for anything else", () => {
   const { container } = render(<RegimeTimeline rows={ROWS} />);
   const dots = container.querySelectorAll(".regime-dot");
   // One dot per non-null VIX row (the null 07-05 row draws no dot).
   expect(dots).toHaveLength(4);
-  expect(dots[0]).toHaveAttribute("fill", tokens.up); // risk_on
-  expect(dots[2]).toHaveAttribute("fill", tokens.down); // risk_off
-  expect(dots[3]).toHaveAttribute("fill", tokens.hold); // mixed
+  expect(dots[0]).toHaveAttribute("fill", "#10b981"); // risk_on
+  expect(dots[2]).toHaveAttribute("fill", "#ef4444"); // risk_off
+  expect(dots[3]).toHaveAttribute("fill", "#f59e0b"); // mixed
 });
 
 test("empty rows degrades to a no-data note instead of an empty chart", () => {

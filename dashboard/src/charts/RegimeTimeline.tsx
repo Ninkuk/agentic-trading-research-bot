@@ -1,18 +1,24 @@
-// The regime-timeline chart, exactly as the design lab shipped it: a
-// full-width VIX AreaChart in the chart token (soft fill, horizontal grid,
-// MM-DD ticks) whose per-night dots are colored by that night's regime
-// verdict, with the shadcn-style tooltip and a dot-color caption below.
-// The old strip + zoom-brush layers are retired (2026-07 redesign).
+// The regime-timeline chart, verbatim from the design lab's
+// RegimeTimelineChart: a full-width VIX AreaChart inside ChartContainer
+// (which owns the grid/axis/cursor styling via its CSS hooks and injects
+// the per-chart --color-vix variable), per-night dots colored by that
+// night's regime verdict (the lab's exact hexes), the shadcn
+// ChartTooltipContent, and the dot-color caption below.
 //
-// Width is measured from the container (ResizeObserver) with an explicit
-// fallback instead of Recharts' ResponsiveContainer — jsdom measures that
-// 0x0, which would silently blank every geometry assertion in tests (see
-// KpiSpark's note).
+// The one deviation from the lab file: width. The lab used
+// ResponsiveContainer ("aspect-auto w-full"); jsdom measures that 0x0 and
+// every geometry assertion in tests silently blanks, so this measures the
+// container itself (ResizeObserver, explicit fallback) and passes
+// responsive={false} — pixel-identical in a real browser.
 
 import { useEffect, useRef, useState } from "react";
-import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
-import { num } from "../format";
-import { tokens } from "../theme";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "../components/ui/chart";
 
 export interface RegimeTimelineRow {
   date: string;
@@ -25,14 +31,14 @@ export interface RegimeTimelineProps {
   height?: number;
 }
 
-const REGIME_COLOR: Record<string, string> = {
-  risk_on: tokens.up,
-  risk_off: tokens.down,
+// The lab's dot palette — fixed hexes, same in both themes.
+const REGIME_DOT: Record<string, string> = {
+  risk_on: "#10b981",
+  risk_off: "#ef4444",
+  mixed: "#f59e0b",
 };
 
-function regimeColor(regime: string | null): string {
-  return (regime && REGIME_COLOR[regime]) || tokens.hold;
-}
+const vixConfig = { vix: { label: "VIX", color: "var(--chart-2)" } } satisfies ChartConfig;
 
 function useMeasuredWidth(fallback: number) {
   const ref = useRef<HTMLDivElement>(null);
@@ -51,51 +57,6 @@ function useMeasuredWidth(fallback: number) {
   return { ref, width };
 }
 
-/** The lab's shadcn tooltip: date label on top, swatch + series + value. */
-function VixTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: { payload: RegimeTimelineRow }[];
-}) {
-  if (!active || !payload?.length) return null;
-  const row = payload[0].payload;
-  return (
-    <div className="bg-popover text-popover-foreground grid min-w-32 items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
-      <div className="font-medium">{row.date}</div>
-      <div className="flex w-full items-center gap-2">
-        <div className="size-2.5 shrink-0 rounded-[2px]" style={{ background: "var(--chart-2)" }} />
-        <div className="flex flex-1 items-center justify-between gap-4 leading-none">
-          <span className="text-muted-foreground">VIX</span>
-          <span className="text-foreground font-mono font-medium tabular-nums">
-            {num(row.vix, 1)}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** Per-night dot colored by that night's regime verdict — the lab design's
- * signature mark on this chart. */
-function RegimeDot(props: { cx?: number; cy?: number; payload?: RegimeTimelineRow; index?: number }) {
-  const { cx, cy, payload, index } = props;
-  if (cx === undefined || cy === undefined || !payload || payload.vix === null) return null;
-  return (
-    <circle
-      key={index}
-      className="regime-dot"
-      cx={cx}
-      cy={cy}
-      r={4}
-      fill={regimeColor(payload.regime)}
-      stroke={tokens.ink}
-      strokeWidth={1.5}
-    />
-  );
-}
-
 export function RegimeTimeline({ rows, height = 208 }: RegimeTimelineProps) {
   const { ref, width } = useMeasuredWidth(640);
 
@@ -105,43 +66,65 @@ export function RegimeTimeline({ rows, height = 208 }: RegimeTimelineProps) {
 
   return (
     <div ref={ref} className="regime-timeline w-full">
-      <AreaChart
-        width={width}
-        height={height}
-        data={rows}
-        margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
+      <ChartContainer
+        config={vixConfig}
+        responsive={false}
+        className="aspect-auto w-full"
+        style={{ height }}
       >
-        <CartesianGrid vertical={false} stroke={tokens.edge} />
-        <XAxis
-          dataKey="date"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tick={{ fill: tokens.muted, fontSize: 11 }}
-          tickFormatter={(d: string) => d.slice(5)}
-        />
-        <YAxis
-          type="number"
-          domain={["auto", "auto"]}
-          width={32}
-          tickLine={false}
-          axisLine={false}
-          tick={{ fill: tokens.muted, fontSize: 11 }}
-        />
-        <Tooltip content={<VixTooltip />} cursor={{ stroke: tokens.edge }} />
-        <Area
-          className="regime-vix-line"
-          type="monotone"
-          dataKey="vix"
-          stroke="var(--chart-2)"
-          strokeWidth={2}
-          fill="var(--chart-2)"
-          fillOpacity={0.12}
-          dot={<RegimeDot />}
-          isAnimationActive={false}
-          connectNulls
-        />
-      </AreaChart>
+        <AreaChart
+          width={width}
+          height={height}
+          data={rows}
+          margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
+        >
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="date"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            tickFormatter={(d: string) => d.slice(5)}
+          />
+          <YAxis width={32} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                valueFormatter={(v) => (typeof v === "number" ? v.toFixed(1) : String(v))}
+              />
+            }
+          />
+          <Area
+            className="regime-vix-line"
+            dataKey="vix"
+            type="monotone"
+            stroke="var(--color-vix)"
+            strokeWidth={2}
+            fill="var(--color-vix)"
+            fillOpacity={0.12}
+            isAnimationActive={false}
+            connectNulls
+            dot={({ cx, cy, payload, index }) =>
+              cx === undefined || cy === undefined || payload.vix === null ? (
+                // null-VIX nights draw no dot (the lab fixture had none;
+                // live exports can) — recharts requires an element back
+                <g key={index} />
+              ) : (
+                <circle
+                  key={index}
+                  className="regime-dot"
+                  cx={cx}
+                  cy={cy}
+                  r={4}
+                  fill={REGIME_DOT[String(payload.regime)] ?? "var(--color-vix)"}
+                  stroke="var(--background)"
+                  strokeWidth={1.5}
+                />
+              )
+            }
+          />
+        </AreaChart>
+      </ChartContainer>
       <p className="text-muted-foreground mt-2 text-xs">
         Dot color = that night's regime verdict (green risk-on, red risk-off, amber mixed).
       </p>

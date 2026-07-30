@@ -13,6 +13,7 @@ import { useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { usePrefs } from "../hooks/usePrefs";
 import type { CellValue, Column, Glossary, Row } from "../types";
+import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import {
   Table,
@@ -55,6 +56,18 @@ const DEFAULT_STATE: TableState = {
 
 /** Tables shorter than this skip the filter chrome. */
 const FILTER_MIN_ROWS = 4;
+
+function SortIcon({ sorted, dir }: { sorted: boolean; dir: SortDir }) {
+  if (!sorted)
+    return (
+      <ArrowUpDown className="sort-indicator sort-indicator--idle size-3.5 opacity-40" aria-hidden="true" />
+    );
+  return dir === "desc" ? (
+    <ArrowDown className="sort-indicator text-foreground size-3.5" />
+  ) : (
+    <ArrowUp className="sort-indicator text-foreground size-3.5" />
+  );
+}
 
 function rowKeyOf(row: Row, columns: Column[]): string {
   const idCol = columns[0];
@@ -140,7 +153,7 @@ export function DataTable({
     <div className="datatable space-y-2.5">
       {filterable && (
         <div className="flex items-center justify-between gap-3">
-          <div className="relative w-full max-w-52">
+          <div className="relative w-full max-w-56">
             <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
             <Input
               value={filter}
@@ -169,43 +182,53 @@ export function DataTable({
                   aria-sort={sorted ? (state.sortDir === "asc" ? "ascending" : "descending") : "none"}
                   onClick={() => handleSort(col)}
                 >
-                  {/* Term already renders its own <button> (see Term.tsx) — nesting
-                      it inside another <button> would be invalid HTML and would
-                      double-fire handleSort via bubbling, so the sort trigger
-                      below is a sibling, not a wrapper, of the term label. Both
-                      funnel into th's onClick above via bubbling: a click or an
-                      Enter/Space-synthesized click on either fires it exactly once. */}
+                  {/* The lab's header anatomy: a ghost Button holding the
+                      label + sort arrow. Term already renders its own
+                      <button> (see Term.tsx) — nesting it inside another
+                      <button> would be invalid HTML and would double-fire
+                      handleSort via bubbling, so term columns keep the
+                      label as a sibling and the button carries only the
+                      arrow. Either way every click funnels into th's
+                      onClick above via bubbling, exactly once. */}
                   {col.term ? (
-                    <Term term={col.term} glossary={glossary}>
-                      {col.label}
-                    </Term>
+                    <>
+                      <Term term={col.term} glossary={glossary}>
+                        {col.label}
+                      </Term>
+                      {col.direction === "up-good" && (
+                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal"> ↑ better</span>
+                      )}
+                      {col.direction === "down-good" && (
+                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal"> ↓ better</span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="sort-trigger ml-0.5 h-8 px-1.5"
+                        aria-label={`Sort by ${col.label}`}
+                      >
+                        <SortIcon sorted={sorted} dir={state.sortDir} />
+                      </Button>
+                    </>
                   ) : (
-                    <span className="col-label">{col.label}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`sort-trigger -ml-2 h-8 gap-1.5 px-2 text-xs font-medium ${
+                        col.numeric ? "-mr-2 ml-auto flex" : ""
+                      }`}
+                      aria-label={`Sort by ${col.label}`}
+                    >
+                      <span className="col-label">{col.label}</span>
+                      {col.direction === "up-good" && (
+                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal">↑ better</span>
+                      )}
+                      {col.direction === "down-good" && (
+                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal">↓ better</span>
+                      )}
+                      <SortIcon sorted={sorted} dir={state.sortDir} />
+                    </Button>
                   )}
-                  {col.direction === "up-good" && (
-                    <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal"> ↑ better</span>
-                  )}
-                  {col.direction === "down-good" && (
-                    <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal"> ↓ better</span>
-                  )}
-                  <button
-                    type="button"
-                    className="sort-trigger hover:bg-accent hover:text-accent-foreground ml-1 inline-flex cursor-pointer items-center rounded-md border-0 bg-transparent p-1 align-middle text-inherit"
-                    aria-label={`Sort by ${col.label}`}
-                  >
-                    {sorted ? (
-                      state.sortDir === "desc" ? (
-                        <ArrowDown className="sort-indicator text-foreground size-3.5" />
-                      ) : (
-                        <ArrowUp className="sort-indicator text-foreground size-3.5" />
-                      )
-                    ) : (
-                      <ArrowUpDown
-                        className="sort-indicator sort-indicator--idle size-3.5 opacity-40"
-                        aria-hidden="true"
-                      />
-                    )}
-                  </button>
                 </TableHead>
               );
             })}

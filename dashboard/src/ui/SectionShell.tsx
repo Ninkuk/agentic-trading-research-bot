@@ -7,6 +7,7 @@
 // the page rather than a broken hole in it.
 
 import type { ReactNode } from "react";
+import { CircleAlert, Inbox } from "lucide-react";
 import type { Section, SectionId } from "../types";
 import { Card, CardAction, CardContent, CardHeader } from "../components/ui/card";
 import { CaveatLine } from "./CaveatLine";
@@ -24,21 +25,27 @@ export function SectionShell({ id, sec, children }: SectionShellProps) {
 
   return (
     <section className="ledger scroll-mt-16" id={id}>
-      <Card className="gap-4">
-        <CardHeader className="gap-1">
-          {sec.title && <h2 className="m-0 text-base leading-snug font-semibold">{sec.title}</h2>}
-          {sec.note && <p className="text-muted-foreground m-0 text-sm leading-relaxed">{sec.note}</p>}
+      <Card>
+        <CardHeader>
+          {sec.title && <h2 className="m-0 text-base leading-none font-semibold">{sec.title}</h2>}
+          {sec.note && <p className="text-muted-foreground m-0 text-sm">{sec.note}</p>}
           {sec.verdict && (
             <CardAction>
               <VerdictChip verdict={sec.verdict} />
             </CardAction>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {sec.error ? (
-            <p className="unavailable">{sec.error}</p>
+            <p className="unavailable">
+              <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span>{sec.error}</span>
+            </p>
           ) : showEmpty ? (
-            <p className="empty">{sec.empty}</p>
+            <p className="empty">
+              <Inbox className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span>{sec.empty}</span>
+            </p>
           ) : (
             children
           )}

@@ -13,12 +13,16 @@ const TONE_COLOR: Record<Tone, string> = {
 
 export interface VerdictChipProps {
   verdict: Verdict;
+  /** Extra classes — the summary card's chip reads at text-sm (lab spec). */
+  className?: string;
 }
 
-export function VerdictChip({ verdict }: VerdictChipProps) {
+export function VerdictChip({ verdict, className }: VerdictChipProps) {
   return (
     <span
-      className={`pill verdict-chip verdict-chip--${verdict.tone}`}
+      className={["pill", "verdict-chip", `verdict-chip--${verdict.tone}`, className]
+        .filter(Boolean)
+        .join(" ")}
       style={{ color: TONE_COLOR[verdict.tone] }}
     >
       {verdict.text}
