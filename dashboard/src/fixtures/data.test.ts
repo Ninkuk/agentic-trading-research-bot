@@ -1,4 +1,4 @@
-import type { DashboardDoc } from "../types";
+import { KICKERS, type DashboardDoc } from "../types";
 import fixture from "./data.json";
 
 // JSON imports lose literal narrowing — a JSON "on" reads back as `string`,
@@ -39,4 +39,14 @@ test("fixture covers a scorecard row with sparkline history", () => {
     (r) => Array.isArray(r.history) && r.history.length > 0,
   );
   expect(withHistory).toBeDefined();
+});
+
+// Belongs alongside the schema-drift guard above: the Loosen<T> check can't
+// catch a live kicker value disagreeing with the Kicker union (JSON always
+// reads back as plain `string`), so this asserts it at runtime instead —
+// the guard Main.tsx's strand grouping relies on staying meaningful.
+test("every section's kicker is a known strand", () => {
+  for (const [id, sec] of Object.entries(fixture.sections)) {
+    expect(KICKERS, `section "${id}" has kicker ${JSON.stringify(sec.kicker)}`).toContain(sec.kicker);
+  }
 });

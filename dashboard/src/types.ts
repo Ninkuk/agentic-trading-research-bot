@@ -52,6 +52,22 @@ export interface Tile {
   history?: { date: string; value: number | null }[];
 }
 
+// The five strand groups a section's `kicker` sorts it into (Main.tsx's
+// STRANDS, data.py's SECTION_EXPORTERS kicker column). Kept as a real union
+// — not a bare `string` — so a hand-authored Section (tests, fixtures the
+// Loosen<T> guard checks) gets a compile-time nudge toward a real strand
+// name. This can't catch a *live* JSON payload disagreeing at runtime
+// (JSON always reads back as plain `string`) — that's what the
+// "every fixture section's kicker is a known strand" test in
+// fixtures/data.test.ts is for, and why Main.tsx's strand grouping still
+// runs a defensive membership check and routes anything unrecognized into
+// a trailing "Other" group rather than ever silently dropping it.
+export type Kicker = "Macro" | "Signals" | "Research" | "Track record" | "Your book";
+
+// Canonical strand order — the single source Main.tsx, StrandNav, and the
+// fixture drift test all read from, so the list can't fork.
+export const KICKERS: readonly Kicker[] = ["Macro", "Signals", "Research", "Track record", "Your book"];
+
 // One section of the document (sections[<id>]). A section that failed to
 // export degrades to `{ title, kicker, note, error }` only — every other
 // field is therefore optional. A healthy section carries some subset of
@@ -61,7 +77,7 @@ export interface Tile {
 // text-only `plan-004-scorecard`).
 export interface Section {
   title?: string;
-  kicker?: string;
+  kicker?: Kicker;
   note?: string;
   verdict?: Verdict | null;
   tiles?: Tile[];

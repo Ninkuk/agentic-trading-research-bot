@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import fixture from "../fixtures/data.json";
-import type { DashboardDoc } from "../types";
+import { KICKERS, type DashboardDoc, type Kicker } from "../types";
 import { Main } from "./Main";
 
 const doc = fixture as unknown as DashboardDoc;
@@ -21,10 +21,36 @@ test("renders every hero bullet", () => {
 test("renders all five strand headings in order", () => {
   render(<Main doc={doc} />);
   const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
-  const strandOrder = ["Macro", "Signals", "Research", "Track record", "Your book"];
-  const indices = strandOrder.map((label) => headings.indexOf(label));
+  const indices = KICKERS.map((label) => headings.indexOf(label));
   for (const idx of indices) expect(idx).toBeGreaterThanOrEqual(0);
   expect(indices).toEqual([...indices].sort((a, b) => a - b));
+});
+
+test("a section with a kicker matching no known strand still renders, in a trailing Other group", () => {
+  const drifted: DashboardDoc = {
+    ...doc,
+    sections: {
+      ...doc.sections,
+      "renamed-strand-section": {
+        title: "Renamed Strand Section",
+        // Simulates a Python-side kicker rename/typo the frontend hasn't
+        // caught up to — TypeScript can't catch this (it's live JSON), so
+        // this is the runtime case the "Other" fallback exists for.
+        kicker: "Vibes" as unknown as Kicker,
+        columns: [{ key: "x", label: "X", numeric: false, direction: null, term: null }],
+        rows: [{ x: "hello" }],
+      },
+    },
+  };
+  render(<Main doc={drifted} />);
+  expect(screen.getByRole("heading", { name: "Other" })).toBeInTheDocument();
+  expect(screen.getByText("Renamed Strand Section")).toBeInTheDocument();
+  expect(screen.getByText("hello")).toBeInTheDocument();
+});
+
+test("no Other group renders when every section's kicker matches a known strand", () => {
+  render(<Main doc={doc} />);
+  expect(screen.queryByRole("heading", { name: "Other" })).not.toBeInTheDocument();
 });
 
 test("a section with an error shows the unavailable note instead of crashing", () => {
@@ -45,6 +71,29 @@ test("an unregistered section id falls back to the generic DataTable renderer", 
   // still render its columns and rows via GenericSection, not go blank.
   expect(screen.getByRole("columnheader", { name: /symbol/i })).toBeInTheDocument();
   expect(screen.getByText("AAPL")).toBeInTheDocument();
+});
+
+test("generic fallback sections with duplicate titles keep independent persisted state (keyed by id, not title)", async () => {
+  const columns = [{ key: "x", label: "X", numeric: false, direction: null, term: null }];
+  const manyRows = Array.from({ length: 10 }, (_, i) => ({ x: `row-${i}` }));
+  const dup: DashboardDoc = {
+    ...doc,
+    sections: {
+      ...doc.sections,
+      "dup-one": { title: "Duplicate Title", kicker: "Research", columns, rows: manyRows },
+      "dup-two": { title: "Duplicate Title", kicker: "Research", columns, rows: manyRows },
+    },
+  };
+  render(<Main doc={dup} />);
+  const showAllButtons = screen.getAllByText(/show all 10/i);
+  expect(showAllButtons).toHaveLength(2); // both start collapsed, independently
+  await userEvent.click(showAllButtons[0]);
+  // Expanding one duplicate-titled section must not touch the other's
+  // persisted state — a title-keyed storageKey would collide and expand
+  // (or collapse) both at once.
+  expect(screen.queryAllByText(/show all 10/i)).toHaveLength(1);
+  expect(localStorage.getItem("atrb:generic:dup-one")).toContain('"expanded":true');
+  expect(localStorage.getItem("atrb:generic:dup-two")).toBeNull();
 });
 
 test("regime section renders its tiles and drivers table", () => {

@@ -16,6 +16,11 @@
 // change. The five strand headings render unconditionally in a fixed order
 // even when a given night's document has no section for one (e.g. no
 // research-reopens entry yet), because StrandNav always offers all five.
+// `KICKERS`' compile-time union can't validate a live JSON payload (JSON
+// always reads back as plain `string`), so any section whose kicker isn't
+// one of the five known strands — a rename, a typo, a brand-new kicker the
+// frontend hasn't caught up to yet — still renders, in a trailing "Other"
+// group, rather than silently vanishing.
 
 import type { ComponentType } from "react";
 import { Sparkline } from "../charts/Sparkline";
@@ -23,7 +28,7 @@ import { signed } from "../format";
 import { MacroDrivers } from "../sections/MacroDrivers";
 import { Regime } from "../sections/Regime";
 import { RegimeTimelineSection } from "../sections/RegimeTimelineSection";
-import type { DashboardDoc, Glossary, Section } from "../types";
+import { KICKERS, type DashboardDoc, type Glossary, type Section } from "../types";
 import { DataTable } from "../ui/DataTable";
 import { Masthead } from "../ui/Masthead";
 import { SectionShell } from "../ui/SectionShell";
@@ -34,9 +39,13 @@ import { VerdictChip } from "../ui/VerdictChip";
 interface SectionComponentProps {
   sec: Section;
   glossary: Glossary;
+  // Registered components (Regime, RegimeTimelineSection, MacroDrivers) may
+  // ignore this — only GenericSection needs it, for a storageKey that
+  // survives a section title rename/duplicate.
+  id?: string;
 }
 
-const STRANDS = ["Macro", "Signals", "Research", "Track record", "Your book"] as const;
+const STRAND_SET = new Set<string>(KICKERS);
 
 function strandId(label: string): string {
   return label.toLowerCase().replace(/\s+/g, "-");
@@ -55,13 +64,13 @@ const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> =
   "macro-drivers": MacroDrivers,
 };
 
-function GenericSection({ sec, glossary }: SectionComponentProps) {
+function GenericSection({ sec, glossary, id }: SectionComponentProps) {
   if (sec.columns && sec.rows) {
     return (
       <DataTable
         columns={sec.columns}
         rows={sec.rows}
-        storageKey={`generic:${slug(sec.title ?? "section")}`}
+        storageKey={`generic:${id ?? slug(sec.title ?? "section")}`}
         glossary={glossary}
       />
     );
@@ -91,11 +100,22 @@ export function Main({ doc }: MainProps) {
   const regimeSec = doc.sections["regime"];
   const macroSec = doc.sections["macro-drivers"];
 
+  function renderSection([id, sec]: [string, Section]) {
+    const Component = SECTION_COMPONENTS[id] ?? GenericSection;
+    return (
+      <SectionShell key={id} id={id} sec={sec}>
+        <Component sec={sec} glossary={glossary} id={id} />
+      </SectionShell>
+    );
+  }
+
+  const otherSections = entries.filter(([, sec]) => !sec.kicker || !STRAND_SET.has(sec.kicker));
+
   return (
     <div className="page">
       <Masthead editionDate={doc.edition_date} snapshotNumber={doc.snapshot_number} />
 
-      <StrandNav strands={STRANDS.map((label) => ({ id: strandId(label), label }))} />
+      <StrandNav strands={KICKERS.map((label) => ({ id: strandId(label), label }))} />
 
       <div className="hero">
         <p className="eyebrow">Tonight in plain English</p>
@@ -116,22 +136,22 @@ export function Main({ doc }: MainProps) {
         ))}
       </div>
 
-      {STRANDS.map((label) => {
+      {KICKERS.map((label) => {
         const strandSections = entries.filter(([, sec]) => sec.kicker === label);
         return (
           <section key={label} id={strandId(label)} className="strand">
             <h2 className="strand-heading">{label}</h2>
-            {strandSections.map(([id, sec]) => {
-              const Component = SECTION_COMPONENTS[id] ?? GenericSection;
-              return (
-                <SectionShell key={id} id={id} sec={sec}>
-                  <Component sec={sec} glossary={glossary} />
-                </SectionShell>
-              );
-            })}
+            {strandSections.map(renderSection)}
           </section>
         );
       })}
+
+      {otherSections.length > 0 && (
+        <section id="other" className="strand">
+          <h2 className="strand-heading">Other</h2>
+          {otherSections.map(renderSection)}
+        </section>
+      )}
     </div>
   );
 }

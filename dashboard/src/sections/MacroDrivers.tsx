@@ -13,6 +13,9 @@ import { StatTile } from "../ui/StatTile";
 export interface SectionComponentProps {
   sec: Section;
   glossary: Glossary;
+  // Main.tsx always passes the section id (GenericSection needs it for a
+  // stable storageKey); MacroDrivers doesn't need it, so it's unused here.
+  id?: string;
 }
 
 export function MacroDrivers({ sec }: SectionComponentProps) {

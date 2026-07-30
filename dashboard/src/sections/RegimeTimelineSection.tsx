@@ -9,6 +9,10 @@ import type { Glossary, Row, Section } from "../types";
 export interface SectionComponentProps {
   sec: Section;
   glossary: Glossary;
+  // Main.tsx always passes the section id (GenericSection needs it for a
+  // stable storageKey); RegimeTimelineSection doesn't need it, so it's
+  // unused here.
+  id?: string;
 }
 
 function toTimelineRow(row: Row): RegimeTimelineRow {
