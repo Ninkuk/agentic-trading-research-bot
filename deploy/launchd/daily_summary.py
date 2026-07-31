@@ -631,6 +631,54 @@ def format_checkpoint_lines(due, today):
     return out
 
 
+# Same 7-day quiet-after rule as _REOPEN_WINDOW_DAYS, plus 7 days of
+# lookahead: a print you can see coming is one you can plan around.
+_CHECKPOINT_WINDOW_DAYS = 7
+
+
+def _held_symbols(db_path):
+    """Symbols with a positive quantity in the latest portfolio snapshot.
+    Equity positions only (spec: options out of scope until one needs a
+    checkpoint). Raises on a missing/corrupt DB -- caller is total."""
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    try:
+        rows = conn.execute(
+            "SELECT symbol FROM v_latest_positions WHERE CAST(quantity AS REAL) > 0"
+        )
+        return {r[0] for r in rows}
+    finally:
+        conn.close()
+
+
+def position_checkpoints(now_utc, research_dir=None, portfolio_db=None):
+    """Dated reopen= checkpoints for HELD tickers, due within +/-
+    _CHECKPOINT_WINDOW_DAYS Phoenix days. Newest verdict line per ticker
+    (via _newest_verdict_lines); event: reopens never surface. The generic
+    reopen section stays as-is -- this is the position-holder's lens on the
+    same ledger. TOTAL like research_digest: any failure degrades to []."""
+    try:
+        vlog = (research_dir or Path("research")) / "verdicts.log"
+        if not vlog.is_file():
+            return []
+        held = _held_symbols(portfolio_db or DATA / "portfolio.db")
+        if not held:
+            return []
+        today = phx_date(now_utc.isoformat())
+        floor = phx_date((now_utc - dt.timedelta(days=_CHECKPOINT_WINDOW_DAYS)).isoformat())
+        ceiling = phx_date((now_utc + dt.timedelta(days=_CHECKPOINT_WINDOW_DAYS)).isoformat())
+        due = []
+        for ticker, (thesis_date, line) in _newest_verdict_lines(vlog).items():
+            if ticker not in held:
+                continue
+            m = _REOPEN_DATED_RE.search(line)
+            if m and floor <= m.group(1) <= ceiling:
+                due.append((ticker, m.group(1), m.group(2), thesis_date))
+        return format_checkpoint_lines(due, today)
+    except Exception as e:  # noqa: BLE001 -- total by design
+        print(f"position checkpoints failed ({type(e).__name__})", file=sys.stderr)
+        return []
+
+
 def build_summary(now_local, now_utc):
     total_runs, problems = 0, []
 
