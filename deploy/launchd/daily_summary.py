@@ -619,6 +619,18 @@ def reopen_digest(now_utc, research_dir=None):
         return []
 
 
+def format_checkpoint_lines(due, today):
+    """Pure: [(ticker, reopen_date, slug, thesis_date)] + today (YYYY-MM-DD)
+    -> digest lines, sorted by (reopen_date, ticker)."""
+    t = dt.date.fromisoformat(today)
+    out = []
+    for date, ticker, slug, thesis in sorted((d, tk, s, td) for tk, d, s, td in due):
+        delta = (dt.date.fromisoformat(date) - t).days
+        when = "today" if delta == 0 else f"in {delta}d" if delta > 0 else f"{-delta}d ago"
+        out.append(f"{ticker} {date} {slug} ({when}, thesis {thesis})")
+    return out
+
+
 def build_summary(now_local, now_utc):
     total_runs, problems = 0, []
 
