@@ -186,3 +186,20 @@ def test_corrupt_db_returns_empty(tmp_path):
     assert (
         daily_summary.position_checkpoints(NOW_UTC, research_dir=tmp_path, portfolio_db=bad) == []
     )
+
+
+def test_build_summary_includes_section(tmp_path, monkeypatch):
+    # Wiring only: stub the section fn; build_summary must render its lines
+    # under the header without affecting health judgment.
+    monkeypatch.chdir(tmp_path)  # no logs/, data/, research/ -> all sections degrade
+    monkeypatch.setattr(daily_summary, "job_exit_codes", dict)
+    monkeypatch.setattr(daily_summary, "running_jobs", dict)
+    monkeypatch.setattr(
+        daily_summary,
+        "position_checkpoints",
+        lambda now_utc: ["BR 2026-08-04 fy27-guide (in 6d, thesis 2026-07-30)"],
+    )
+    healthy, summary = daily_summary.build_summary(dt.datetime(2026, 7, 29, 21, 15), NOW_UTC)
+    assert "— position checkpoints —" in summary
+    assert "BR 2026-08-04 fy27-guide" in summary
+    assert healthy  # informational only

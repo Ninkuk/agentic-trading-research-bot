@@ -733,6 +733,9 @@ def build_summary(now_local, now_utc):
     reopens = reopen_digest(now_utc)
     if reopens:
         lines += ["", "— reopen due —", *reopens]
+    checkpoints = position_checkpoints(now_utc)
+    if checkpoints:
+        lines += ["", "— position checkpoints —", *checkpoints]
     return healthy, "\n".join(lines)
 
 
