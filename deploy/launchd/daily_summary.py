@@ -579,6 +579,21 @@ def format_reopen_lines(due):
     ]
 
 
+def _newest_verdict_lines(vlog):
+    """verdicts.log Path -> {ticker: (thesis_date, line)}. Only each ticker's
+    NEWEST verdict line counts (ties: later line wins) -- re-researching a
+    name retires the older thesis's fields. Shared by reopen_digest and
+    position_checkpoints so the two can't drift."""
+    newest: dict[str, tuple[str, str]] = {}
+    for line in vlog.read_text().splitlines():
+        parts = line.split()
+        if len(parts) < 2 or line.lstrip().startswith("#"):
+            continue
+        if parts[1] not in newest or parts[0] >= newest[parts[1]][0]:
+            newest[parts[1]] = (parts[0], line)
+    return newest
+
+
 def reopen_digest(now_utc, research_dir=None):
     """Dated reopen= triggers from verdicts.log that are due -- reopen date
     within the last _REOPEN_WINDOW_DAYS Phoenix days. Only each ticker's
@@ -593,15 +608,8 @@ def reopen_digest(now_utc, research_dir=None):
             return []
         today = phx_date(now_utc.isoformat())
         floor = phx_date((now_utc - dt.timedelta(days=_REOPEN_WINDOW_DAYS)).isoformat())
-        newest: dict[str, tuple[str, str]] = {}
-        for line in vlog.read_text().splitlines():
-            parts = line.split()
-            if len(parts) < 2 or line.lstrip().startswith("#"):
-                continue
-            if parts[1] not in newest or parts[0] >= newest[parts[1]][0]:
-                newest[parts[1]] = (parts[0], line)
         due = []
-        for ticker, (thesis_date, line) in newest.items():
+        for ticker, (thesis_date, line) in _newest_verdict_lines(vlog).items():
             m = _REOPEN_DATED_RE.search(line)
             if m and floor <= m.group(1) <= today:
                 due.append((ticker, m.group(1), m.group(2), thesis_date))
