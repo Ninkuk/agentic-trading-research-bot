@@ -83,3 +83,4 @@
 2026-08-03 CHKP FLAWED conditions=6 refuted=2 unknown=4 reopen=2026-10-27:q3-trough-and-q4-setup
 2026-08-03 LOPE UNPROVEN conditions=6 refuted=0 unknown=3 reopen=2026-11-04:q3-fall-online-new-starts
 2026-08-03 PCTY UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-08-04:pcty-fy27-guide-recurring-ge-9-exfloat-margin
+2026-08-03 FTI SOUND conditions=5 refuted=0 unknown=1 reopen=event:fti-price-le-52-or-2027-fcf-guide-ge-2b
