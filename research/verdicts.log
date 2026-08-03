@@ -79,3 +79,5 @@
 2026-07-30 ERO SOUND conditions=4 refuted=0 unknown=0 reopen=event:copper-normalization-or-pullback-implied-ge-12pct-at-4.60
 2026-07-30 PRIM UNPROVEN conditions=7 refuted=0 unknown=4 reopen=2026-08-05:prim-q2-ringfence
 2026-07-30 SAP UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-21:sap-q3-ccb-cloudgm-2027-guide
+2026-08-03 CINF UNPROVEN conditions=5 refuted=0 unknown=2 reopen=event:cinf-price-le-145-or-market-hardening
+2026-08-03 CHKP FLAWED conditions=6 refuted=2 unknown=4 reopen=2026-10-27:q3-trough-and-q4-setup
