@@ -15,6 +15,7 @@ __all__ = [
     "SLIPPAGE",
     "STALE_QUOTE_SEC",
     "MIN_REF_PRICE",
+    "MIN_NOTIONAL",
     "Limits",
     "load_limits",
 ]
@@ -26,6 +27,7 @@ WINDOW_END_MIN = 45
 SLIPPAGE = Decimal("1.002")
 STALE_QUOTE_SEC = 300
 MIN_REF_PRICE = 1.0  # cents rounding distorts sub-$1 limits; refuse at queue time
+MIN_NOTIONAL = 1.0  # broker minimum for dollar-based (fractional) orders
 
 _REQUIRED = (
     "ROBINHOOD_ACCOUNT_NUMBER",

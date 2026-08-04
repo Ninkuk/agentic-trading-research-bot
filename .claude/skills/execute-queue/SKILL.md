@@ -1,6 +1,6 @@
 ---
 name: execute-queue
-description: Headless market-open executor for the human-queued order list in data/orders.db. Invoked ONLY by deploy/launchd/order_execution.sh — never interactively except for the one-time first-run verification. Fetches quotes, pipes them into the deterministic planner, places exactly the planned limit orders, records results.
+description: Headless market-open executor for the human-queued order list in data/orders.db. Invoked ONLY by deploy/launchd/order_execution.sh — never interactively except for the one-time first-run verification. Fetches quotes, pipes them into the deterministic planner, places exactly the planned orders, records results.
 ---
 
 # execute-queue
@@ -53,14 +53,23 @@ exit code — the output says what happened.
 3. **Plan.** Run:
    `uv run python main.py orders plan --db data/orders.db --calendar-db data/market_calendar.db --input <that file>`
    The stdout JSON is the complete, final execution plan:
-   `{"account_number": ..., "orders": [{"queue_id", "symbol", "qty", "limit_price", "ref_id"}]}`.
+   `{"account_number": ..., "orders": [...]}` where each order carries a
+   `type` discriminator:
+   - `"type": "limit"` — `{"queue_id", "symbol", "type", "qty", "limit_price", "ref_id"}`
+   - `"type": "market_notional"` — `{"queue_id", "symbol", "type", "dollar_amount", "ref_id"}`
    If `orders` is empty, skip to step 5 with an empty results list.
 
 4. **Place.** For each plan order, in the order given: call
-   `review_equity_order`, then `place_equity_order`, with EXACTLY the plan's
-   `symbol`, `qty`, `limit_price`, `ref_id`, and `account_number` — side
-   buy, limit order, time-in-force GFD (day), regular market hours. Copy the
-   qty and limit strings verbatim; do not reformat numbers.
+   `review_equity_order`, then `place_equity_order`, mapping by the plan's
+   `type` — never convert one kind into the other:
+   - `limit`: EXACTLY the plan's `symbol`, `qty`, `limit_price`, `ref_id`,
+     and `account_number` — side buy, limit order, time-in-force GFD (day),
+     regular market hours.
+   - `market_notional`: EXACTLY the plan's `symbol`, `dollar_amount`,
+     `ref_id`, and `account_number` — side buy, market order, time-in-force
+     GFD, regular market hours, NO quantity and NO limit_price (the broker
+     computes fractional shares from the dollar amount).
+   Copy the qty/limit/dollar strings verbatim; do not reformat numbers.
    - Review alerts (halt, PDT, buying power) are informational for a
      limit-bounded order: include them in the result's `raw`, and proceed.
    - On an ambiguous failure (timeout, unclear response): retry ONCE with

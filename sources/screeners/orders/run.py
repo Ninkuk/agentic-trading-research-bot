@@ -11,6 +11,13 @@ only transcribes the plan param-for-param. Money safety rests on:
 - the per-order ref_id UUID the broker deduplicates on,
 - the limit ceiling ref_price*(1+max_gap_pct) from human-supplied numbers,
 - enumerated wrapper Bash grants (queue/resolve are never granted headless).
+
+Two order kinds. Whole-share rows (qty) plan a GFD limit order under the
+ceiling above. Notional rows (dollar amount) plan a dollar-based MARKET
+order — the broker only accepts fractional as market type — so the price
+protection shifts shape: the spend is capped exactly by the notional, and
+the same ref_price gap band vetoes placement against a fresh quote; only
+the seconds between plan and fill are unprotected.
 """
 
 import argparse
@@ -82,7 +89,8 @@ def _compute_decision(
     spent_so_far: Decimal,
     settled_cash: float,
 ) -> tuple[str, str]:
-    """Pure per-row decision. Returns ('planned', limit_price_str) or
+    """Pure per-row decision. Returns ('planned', money_str) — the limit
+    price for share rows, the exact dollar amount for notional rows — or
     (status, reason). A 'vetoed' result is terminal only on the row's last
     eligible day — run_plan requeues earlier vetoes for the next open."""
     if row["expires_on"] < phx_date(now_iso):
@@ -106,24 +114,31 @@ def _compute_decision(
         # news, not a bargain to auto-buy — without this, ask=0.01 plans a
         # penny limit and permanently consumes the human's intent.
         return "vetoed", f"gapped down: ask {quote.ask} < floor {floor:.2f}"
-    limit = min(Decimal(str(quote.ask)) * SLIPPAGE, ceiling).quantize(
-        Decimal("0.01"), rounding=ROUND_DOWN
-    )
-    notional = limit * row["qty"]
+    if row["qty"] is not None:
+        limit = min(Decimal(str(quote.ask)) * SLIPPAGE, ceiling).quantize(
+            Decimal("0.01"), rounding=ROUND_DOWN
+        )
+        notional = limit * row["qty"]
+        money = str(limit)
+    else:
+        # Dollar-based market order: the spend IS the notional, known exactly.
+        notional = Decimal(str(row["notional"])).quantize(Decimal("0.01"))
+        money = str(notional)
     if notional > Decimal(str(limits.max_order_notional)):
         return "vetoed", f"order notional {notional} over cap"
     if spent_so_far + notional > Decimal(str(limits.max_daily_notional)):
         return "vetoed", "daily notional cap"
     if Decimal(str(settled_cash)) - spent_so_far - notional < Decimal(str(limits.cash_floor)):
         return "vetoed", "cash floor"
-    return "planned", str(limit)
+    return "planned", money
 
 
 def run_queue(
     db_path: str,
     cal_db_path: str,
     symbol: str,
-    qty: int,
+    qty: int | None,
+    notional: float | None,
     ref_price: float,
     max_gap_pct: float,
     expires_on: str | None,
@@ -132,7 +147,8 @@ def run_queue(
     stdin_isatty: bool,
     env: dict,
 ) -> int:
-    """Insert one human buy decision. Semantics: attempt at the NEXT market
+    """Insert one human buy decision — whole shares (qty) or a dollar
+    amount (notional), never both. Semantics: attempt at the NEXT market
     open; a veto (gap, stale quote, caps) or a stand-down morning retries at
     each later open until expires_on (Phoenix date, inclusive) — a veto on
     the last eligible day is terminal."""
@@ -144,8 +160,16 @@ def run_queue(
     symbol = symbol.strip().upper()
     if not symbol:
         raise ValueError("symbol is empty")
-    if qty < 1 or int(qty) != qty:
+    if (qty is None) == (notional is None):
+        raise ValueError("exactly one of --qty or --notional is required")
+    if qty is not None and (qty < 1 or int(qty) != qty):
         raise ValueError("qty must be a positive whole number of shares")
+    if notional is not None:
+        amount = Decimal(str(notional))
+        if amount < Decimal(str(catalog.MIN_NOTIONAL)):
+            raise ValueError(f"notional below ${catalog.MIN_NOTIONAL} (broker minimum)")
+        if amount != amount.quantize(Decimal("0.01")):
+            raise ValueError("notional must be a whole-cent dollar amount")
     if ref_price < catalog.MIN_REF_PRICE:
         raise ValueError(f"ref_price below ${catalog.MIN_REF_PRICE} (sub-$1 names unsupported)")
     if not 0 <= max_gap_pct <= 20:
@@ -177,9 +201,9 @@ def run_queue(
         if dup:
             raise ValueError(f"duplicate open queue row for {symbol}")
         cur = conn.execute(
-            "INSERT INTO queue (symbol, qty, ref_price, max_gap_pct, expires_on, note,"
-            " queued_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (symbol, qty, ref_price, max_gap_pct, expires_on, note, now_iso),
+            "INSERT INTO queue (symbol, qty, notional, ref_price, max_gap_pct, expires_on,"
+            " note, queued_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (symbol, qty, notional, ref_price, max_gap_pct, expires_on, note, now_iso),
         )
         conn.commit()
         return int(cur.lastrowid or 0)
@@ -236,14 +260,14 @@ def run_plan(db_path: str, cal_db_path: str, doc: dict, now_iso: str, env: dict)
             conn.commit()
             return {"account_number": limits.account_number, "orders": []}
         rows = conn.execute(
-            "SELECT id, symbol, qty, ref_price, max_gap_pct, expires_on"
+            "SELECT id, symbol, qty, notional, ref_price, max_gap_pct, expires_on"
             " FROM queue WHERE status='queued' ORDER BY id"
         ).fetchall()
         spent = Decimal("0")
         for row_t in rows:
             row = dict(
                 zip(
-                    ("id", "symbol", "qty", "ref_price", "max_gap_pct", "expires_on"),
+                    ("id", "symbol", "qty", "notional", "ref_price", "max_gap_pct", "expires_on"),
                     row_t,
                     strict=True,
                 )
@@ -253,22 +277,35 @@ def run_plan(db_path: str, cal_db_path: str, doc: dict, now_iso: str, env: dict)
             )
             if status == "planned":
                 ref_id = str(uuid.uuid4())
-                spent += Decimal(detail) * row["qty"]
                 conn.execute(
                     "UPDATE queue SET status='planned', ref_id=?, planned_limit=?,"
                     " resolved_at=?, resolution_reason='planned'"
                     " WHERE id=? AND status='queued'",
                     (ref_id, detail, now_iso, row["id"]),
                 )
-                planned.append(
-                    {
-                        "queue_id": row["id"],
-                        "symbol": row["symbol"],
-                        "qty": str(row["qty"]),
-                        "limit_price": detail,
-                        "ref_id": ref_id,
-                    }
-                )
+                if row["qty"] is not None:
+                    spent += Decimal(detail) * row["qty"]
+                    planned.append(
+                        {
+                            "queue_id": row["id"],
+                            "symbol": row["symbol"],
+                            "type": "limit",
+                            "qty": str(row["qty"]),
+                            "limit_price": detail,
+                            "ref_id": ref_id,
+                        }
+                    )
+                else:
+                    spent += Decimal(detail)
+                    planned.append(
+                        {
+                            "queue_id": row["id"],
+                            "symbol": row["symbol"],
+                            "type": "market_notional",
+                            "dollar_amount": detail,
+                            "ref_id": ref_id,
+                        }
+                    )
             elif status == "vetoed" and row["expires_on"] > phx_date(now_iso):
                 # Not the last eligible day: the veto retries at the next
                 # open. Status stays 'queued' (resolved_at stays NULL) so
@@ -464,6 +501,44 @@ def run_resolve(
         conn.close()
 
 
+def run_cancel(
+    db_path: str,
+    queue_id: int,
+    reason: str | None,
+    now_iso: str,
+    stdin_isatty: bool,
+    env: dict,
+) -> None:
+    """Human-only withdrawal of a still-'queued' row, before the morning claim
+    takes it. Strictly risk-reducing (a buy that never happens), so it needs no
+    counterpart in the headless allowlist — and must never gain one. The
+    guarded UPDATE (WHERE status='queued') loses the race against plan's
+    BEGIN IMMEDIATE claim atomically: a claimed row refuses here, and resolve
+    stays the only exit from 'planned'."""
+    if not stdin_isatty and env.get("ORDERS_ALLOW_NONINTERACTIVE") != "1":
+        raise ValueError(
+            "refusing non-interactive cancel (set ORDERS_ALLOW_NONINTERACTIVE=1 from"
+            " a human-driven session; the headless slot must never gain it)"
+        )
+    conn = db.connect(db_path)
+    try:
+        db.ensure_schema(conn)
+        conn.execute("BEGIN IMMEDIATE")
+        cur = conn.execute(
+            "UPDATE queue SET status='cancelled', resolved_at=?, resolution_reason=?"
+            " WHERE id=? AND status='queued'",
+            (now_iso, "cancelled" if reason is None else f"cancelled: {reason}", queue_id),
+        )
+        if cur.rowcount != 1:
+            raise ValueError(f"queue row {queue_id} is not in status 'queued'")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def _load_doc(path: str) -> dict:
     if path == "-":
         return dict(json.load(sys.stdin))
@@ -479,7 +554,13 @@ def main(argv=None) -> None:
     q.add_argument("--db", default="orders.db")
     q.add_argument("--calendar-db", default="market_calendar.db")
     q.add_argument("--symbol", required=True)
-    q.add_argument("--qty", type=int, required=True)
+    q.add_argument("--qty", type=int, default=None, help="whole shares (GFD limit order)")
+    q.add_argument(
+        "--notional",
+        type=float,
+        default=None,
+        help="dollar amount (fractional, dollar-based market order; exact spend)",
+    )
     q.add_argument("--ref-price", type=float, required=True)
     q.add_argument("--max-gap-pct", type=float, required=True)
     q.add_argument("--expires", default=None, help="Phoenix date; default next trading day")
@@ -502,6 +583,11 @@ def main(argv=None) -> None:
     r.add_argument("--as", required=True, choices=("placed", "failed"), dest="as_state")
     r.add_argument("--order-id", default=None)
 
+    c = sub.add_parser("cancel", help="human-only withdrawal of a still-queued row")
+    c.add_argument("--db", default="orders.db")
+    c.add_argument("--id", type=int, required=True, dest="queue_id")
+    c.add_argument("--reason", default=None, help="why the decision was withdrawn")
+
     a = p.parse_args(argv)
     now_iso = datetime.now(UTC).isoformat()
 
@@ -512,6 +598,7 @@ def main(argv=None) -> None:
                 a.calendar_db,
                 a.symbol,
                 a.qty,
+                a.notional,
                 a.ref_price,
                 a.max_gap_pct,
                 a.expires,
@@ -520,7 +607,8 @@ def main(argv=None) -> None:
                 sys.stdin.isatty(),
                 dict(os.environ),
             )
-            print(f"queued #{qid}: {a.symbol.upper()} x{a.qty} into {a.db}")
+            size = f"x{a.qty}" if a.qty is not None else f"${a.notional} notional"
+            print(f"queued #{qid}: {a.symbol.upper()} {size} into {a.db}")
         elif a.cmd == "preflight":
             # Config check FIRST, loudly: the headless session cannot hunt
             # for the account number (get_portfolio requires it; get_accounts
@@ -557,6 +645,9 @@ def main(argv=None) -> None:
         elif a.cmd == "resolve":
             run_resolve(a.db, a.queue_id, a.as_state, a.order_id, now_iso)
             print(f"resolved #{a.queue_id} as {a.as_state}")
+        elif a.cmd == "cancel":
+            run_cancel(a.db, a.queue_id, a.reason, now_iso, sys.stdin.isatty(), dict(os.environ))
+            print(f"cancelled #{a.queue_id}")
     except ValueError as e:
         print(f"error: {e}", file=sys.stderr)
         raise SystemExit(1) from None

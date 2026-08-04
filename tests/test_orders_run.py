@@ -30,12 +30,22 @@ def dbs(tmp_path):
     return orders_path, cal_path
 
 
-def _queue(orders_path, cal_path, symbol="TSLA", qty=10, ref=310.0, gap=3.0, expires="2026-07-27"):
+def _queue(
+    orders_path,
+    cal_path,
+    symbol="TSLA",
+    qty=10,
+    notional=None,
+    ref=310.0,
+    gap=3.0,
+    expires="2026-07-27",
+):
     return run.run_queue(
         orders_path,
         cal_path,
         symbol,
         qty,
+        notional,
         ref,
         gap,
         expires,
@@ -63,6 +73,7 @@ def test_happy_path_plans_with_capped_limit(dbs):
     assert o == {
         "queue_id": qid,
         "symbol": "TSLA",
+        "type": "limit",
         "qty": "10",
         "limit_price": "312.62",
         "ref_id": o["ref_id"],
@@ -308,6 +319,7 @@ def test_queue_validation(dbs):
             cal_path,
             "PENNY",
             10,
+            None,
             0.40,
             3.0,
             "2026-07-28",
@@ -333,6 +345,7 @@ def test_queue_default_expiry_refused_when_calendar_blind(dbs, tmp_path):
             blind_cal,
             "TSLA",
             1,
+            None,
             300.0,
             3.0,
             None,  # default expiry needs the calendar
@@ -347,6 +360,7 @@ def test_queue_default_expiry_refused_when_calendar_blind(dbs, tmp_path):
         blind_cal,
         "TSLA",
         1,
+        None,
         300.0,
         3.0,
         "2026-07-28",
@@ -365,6 +379,7 @@ def test_queue_refuses_non_tty_without_env():
             "c.db",
             "TSLA",
             1,
+            None,
             300.0,
             3.0,
             "2026-07-28",
@@ -485,6 +500,7 @@ def test_queue_rejects_non_iso_expiry(dbs):
                 cal_path,
                 "TSLA",
                 1,
+                None,
                 300.0,
                 3.0,
                 bad,
@@ -651,3 +667,161 @@ def test_preflight_cli_fails_loud_on_incomplete_env(dbs, monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "env incomplete" in captured.err
     assert "account:" not in captured.out
+
+
+def test_notional_happy_path_plans_dollar_market_order(dbs):
+    orders_path, cal_path = dbs
+    qid = _queue(orders_path, cal_path, qty=None, notional=10.0)
+    plan = run.run_plan(orders_path, cal_path, _plan_doc(), SUMMER_OPEN, ENV)
+    (o,) = plan["orders"]
+    assert o == {
+        "queue_id": qid,
+        "symbol": "TSLA",
+        "type": "market_notional",
+        "dollar_amount": "10.00",
+        "ref_id": o["ref_id"],
+    }
+    conn = orders_db.connect(orders_path)
+    status, planned_limit = conn.execute(
+        "SELECT status, planned_limit FROM queue WHERE id=?", (qid,)
+    ).fetchone()
+    conn.close()
+    assert (status, planned_limit) == ("planned", "10.00")
+
+
+def test_notional_gap_veto_applies_same_band(dbs):
+    # The dollar-based market order gets the SAME ref-price gap band as a
+    # share row: ask outside ref*(1±gap) refuses placement.
+    orders_path, cal_path = dbs
+    _queue(orders_path, cal_path, qty=None, notional=10.0, ref=300.0, gap=3.0)  # ceiling 309
+    plan = run.run_plan(orders_path, cal_path, _plan_doc(ask=312.0), SUMMER_OPEN, ENV)
+    assert plan["orders"] == []
+    conn = orders_db.connect(orders_path)
+    status, reason = conn.execute("SELECT status, resolution_reason FROM queue").fetchone()
+    conn.close()
+    assert status == "vetoed" and "gapped" in reason
+
+
+def test_notional_caps_and_mixed_daily_accumulation(dbs):
+    # A notional row over the per-order cap is vetoed; notional spend
+    # accumulates into the same daily pot as share rows.
+    orders_path, cal_path = dbs
+    _queue(orders_path, cal_path, symbol="AAA", qty=None, notional=6000.0)  # > 5000 cap
+    _queue(orders_path, cal_path, symbol="BBB", qty=10, ref=310.0)  # ~3126 notional
+    _queue(orders_path, cal_path, symbol="CCC", qty=None, notional=4900.0)  # breaches 8000 daily
+    _queue(orders_path, cal_path, symbol="DDD", qty=None, notional=100.0)  # fits
+    doc = {
+        "as_of": SUMMER_OPEN,
+        "quotes": [
+            {"symbol": s, "ask": 312.0, "quote_ts": "2026-07-27T13:34:30+00:00"}
+            for s in ("AAA", "BBB", "CCC", "DDD")
+        ],
+        "portfolio": {"settled_cash": 20000.0},
+    }
+    plan = run.run_plan(orders_path, cal_path, doc, SUMMER_OPEN, ENV)
+    assert [(o["symbol"], o["type"]) for o in plan["orders"]] == [
+        ("BBB", "limit"),
+        ("DDD", "market_notional"),
+    ]
+    conn = orders_db.connect(orders_path)
+    reasons = dict(
+        conn.execute("SELECT symbol, resolution_reason FROM queue WHERE status='vetoed'")
+    )
+    conn.close()
+    assert "over cap" in reasons["AAA"] and reasons["CCC"] == "daily notional cap"
+
+
+def test_notional_cash_floor_veto(dbs):
+    orders_path, cal_path = dbs
+    _queue(orders_path, cal_path, qty=None, notional=200.0)
+    # settled_cash 650 - 200 = 450 < 500 floor
+    plan = run.run_plan(orders_path, cal_path, _plan_doc(cash=650.0), SUMMER_OPEN, ENV)
+    assert plan["orders"] == []
+
+
+def test_notional_record_stores_dollar_amount(dbs):
+    orders_path, cal_path = dbs
+    qid = _queue(orders_path, cal_path, qty=None, notional=10.0)
+    plan = run.run_plan(orders_path, cal_path, _plan_doc(), SUMMER_OPEN, ENV)
+    results = {
+        "results": [
+            {
+                "queue_id": qid,
+                "ref_id": plan["orders"][0]["ref_id"],
+                "account_number": "TESTACCT0",
+                "order_id": "ord-frac-1",
+                "state": "placed",
+                "raw": {},
+            }
+        ]
+    }
+    placed, errors = run.run_record(orders_path, results, "t", ENV)
+    assert (placed, errors) == (1, 0)
+    conn = orders_db.connect(orders_path)
+    assert conn.execute("SELECT limit_price FROM placements").fetchone()[0] == "10.00"
+    conn.close()
+
+
+def test_queue_rejects_both_or_neither_size(dbs):
+    orders_path, cal_path = dbs
+    with pytest.raises(ValueError, match="exactly one"):
+        _queue(orders_path, cal_path, qty=10, notional=10.0)
+    with pytest.raises(ValueError, match="exactly one"):
+        _queue(orders_path, cal_path, qty=None, notional=None)
+
+
+def test_queue_notional_validation(dbs):
+    orders_path, cal_path = dbs
+    with pytest.raises(ValueError, match="broker minimum"):
+        _queue(orders_path, cal_path, qty=None, notional=0.50)
+    with pytest.raises(ValueError, match="whole-cent"):
+        _queue(orders_path, cal_path, qty=None, notional=10.005)
+
+
+def test_cancel_withdraws_queued_row(dbs):
+    orders_path, cal_path = dbs
+    qid = _queue(orders_path, cal_path)
+    run.run_cancel(orders_path, qid, "changed my mind", "t2", stdin_isatty=True, env=ENV)
+    conn = orders_db.connect(orders_path)
+    status, resolved_at, reason = conn.execute(
+        "SELECT status, resolved_at, resolution_reason FROM queue WHERE id=?", (qid,)
+    ).fetchone()
+    assert (status, resolved_at, reason) == ("cancelled", "t2", "cancelled: changed my mind")
+    assert conn.execute("SELECT COUNT(*) FROM v_open_queue").fetchone()[0] == 0
+    assert conn.execute("SELECT COUNT(*) FROM v_unreconciled").fetchone()[0] == 0
+    conn.close()
+
+
+def test_cancel_loses_race_against_claim(dbs):
+    # plan's BEGIN IMMEDIATE flipped the row queued->planned; a cancel of a
+    # claimed row must refuse (resolve is the exit for planned rows).
+    orders_path, cal_path = dbs
+    qid = _queue(orders_path, cal_path)
+    run.run_plan(orders_path, cal_path, _plan_doc(), SUMMER_OPEN, ENV)
+    with pytest.raises(ValueError, match="not in status 'queued'"):
+        run.run_cancel(orders_path, qid, None, "t2", stdin_isatty=True, env=ENV)
+    conn = orders_db.connect(orders_path)
+    assert conn.execute("SELECT status FROM queue WHERE id=?", (qid,)).fetchone()[0] == "planned"
+    conn.close()
+
+
+def test_cancel_unknown_id_refuses(dbs):
+    orders_path, _ = dbs
+    conn = orders_db.connect(orders_path)
+    orders_db.ensure_schema(conn)
+    conn.close()
+    with pytest.raises(ValueError, match="not in status 'queued'"):
+        run.run_cancel(orders_path, 99, None, "t", stdin_isatty=True, env=ENV)
+
+
+def test_cancel_refuses_non_tty_without_env():
+    with pytest.raises(ValueError, match="interactive"):
+        run.run_cancel("x.db", 1, None, "t", stdin_isatty=False, env={})
+
+
+def test_cancel_cli(dbs, monkeypatch, capsys):
+    orders_path, cal_path = dbs
+    qid = _queue(orders_path, cal_path)
+    monkeypatch.setenv("ORDERS_ALLOW_NONINTERACTIVE", "1")
+    run.main(["cancel", "--db", orders_path, "--id", str(qid), "--reason", "repriced"])
+    assert f"cancelled #{qid}" in capsys.readouterr().out

@@ -11,15 +11,27 @@ Wednesday's open is still ahead. A veto (gap, stale quote, caps) or a
 stand-down morning (holiday, window miss) **retries at each later open until
 `expires_on` (Phoenix date, inclusive); a veto on the last eligible day is
 terminal**. The 6:32/7:32 launchd slot plans against a fresh quote, applies
-the gap/cap/cash rails, and places a GFD limit order.
+the gap/cap/cash rails, and places a GFD limit order (share rows) or a
+dollar-based GFD market order (notional rows).
 
 ## Queueing
 
-1. Gather: symbol, whole-share qty, reference price, max gap %, optional
-   expiry (default: next trading day), and the rationale. If the user has no
-   reference price, offer to fetch `get_equity_quotes` and pin it to the
-   live quote — with their confirmation, since ref_price × (1 + gap) is the
-   hard price ceiling the morning run can never exceed.
+1. Gather: symbol, size — whole-share `--qty` OR dollar `--notional`, never
+   both — reference price, max gap %, optional expiry (default: next trading
+   day), and the rationale. If the user has no reference price, offer to
+   fetch `get_equity_quotes` and pin it to the live quote — with their
+   confirmation, since ref_price × (1 + gap) is the hard price ceiling
+   (share rows) / the pre-placement gap veto band (notional rows).
+
+   Order-kind semantics — say this back to the user when queueing notional:
+   - `--qty N` plans a GFD LIMIT order capped at ref × (1 + gap). The fill
+     price can never exceed the ceiling.
+   - `--notional D` plans a dollar-based MARKET order (the broker only
+     accepts fractional as market type). The spend is exactly $D; the gap
+     veto still refuses placement when the fresh ask is outside
+     ref × (1 ± gap), but between that check and the fill the price floats —
+     a gap-through-the-band risk of seconds, acceptable only because the
+     notional itself caps the damage. Minimum $1, whole cents.
 2. Run (env override needed because tool-driven shells have no TTY; this is
    the sanctioned human-in-the-loop path — the headless slot's allowlist
    never includes this subcommand):
@@ -34,11 +46,13 @@ the gap/cap/cash rails, and places a GFD limit order.
 3. Read back `v_open_queue` (`sqlite3 file:data/orders.db?mode=ro "SELECT *
    FROM v_open_queue"` — always the read-only URI; writes go through the
    dispatcher only) and confirm to the user exactly what the next open will
-   consider, including the implied price ceiling per order.
+   consider, including the implied price ceiling (share rows) or exact
+   spend and veto band (notional rows) per order.
 
-Constraints the dispatcher enforces (don't fight them): whole shares, no
-sub-$1 names, gap within [0, 20]%, one open row per symbol, dollar caps and
-cash floor from `.env` under committed hard ceilings.
+Constraints the dispatcher enforces (don't fight them): exactly one of
+whole-share qty or ≥$1 whole-cent notional, no sub-$1 names, gap within
+[0, 20]%, one open row per symbol, dollar caps and cash floor from `.env`
+under committed hard ceilings.
 
 ## Reviewing / clearing
 
@@ -47,6 +61,11 @@ cash floor from `.env` under committed hard ceilings.
 - A stuck `planned` row (session died between place and record) is cleared
   ONLY via `uv run python main.py orders resolve --db data/orders.db --id N
   --as placed|failed [--order-id ...]` — never ad-hoc SQL against orders.db.
+- The human withdrawing a still-`queued` row (changed mind, repricing) uses
+  `ORDERS_ALLOW_NONINTERACTIVE=1 uv run python main.py orders cancel --db
+  data/orders.db --id N [--reason "..."]`. Human-only like `queue`; refuses
+  once the morning claim has flipped the row to `planned` (then `resolve` is
+  the only exit). Never granted to the headless slot.
 
 ## First-run verification (mandatory before go-live)
 
