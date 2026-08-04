@@ -11,6 +11,11 @@ your job is to move data to it and copy its plan to the broker
 param-for-param. You never adjust a price, substitute an order type,
 reorder, split, skip, or add an order, and you never mint a `ref_id`.
 
+(Steps 2–5 are also invoked interactively by queue-order's intraday branch,
+with `--intraday` appended to the `plan` command. The headless slot NEVER
+passes that flag — its allowlist matches the literal morning commands
+below, and the morning window is the point of this job.)
+
 ## Steps
 
 Run every command below EXACTLY as written — never append `; echo $?`, pipe,

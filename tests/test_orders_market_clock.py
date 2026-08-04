@@ -51,3 +51,31 @@ def test_window_uses_phoenix_date_not_utc_slice():
     # relevant session is the 27th's (long over -> 'after'), not the 28th's
     # (not started -> 'before'). A [:10] slice gets this wrong.
     assert market_clock.window_state("2026-07-28T04:12:00+00:00", is_trading_day=True) == "after"
+
+
+def test_session_state_boundaries():
+    # Session gate is [open+2min, open+385min]: same settle-in start as the
+    # window, ending 15:55 ET so a GFD order placed on 'open' still executes
+    # today instead of silently queueing for the next open. Summer open
+    # 13:30 UTC -> end 19:55 UTC.
+    day = "2026-07-27"
+    cases = [
+        (f"{day}T13:31:00+00:00", "before"),  # open+1
+        (f"{day}T13:32:00+00:00", "open"),  # open+2 inclusive
+        (f"{day}T18:30:00+00:00", "open"),  # 2:30pm ET, deep intraday
+        (f"{day}T19:55:00+00:00", "open"),  # open+385 inclusive
+        (f"{day}T19:56:00+00:00", "after"),  # inside the last 5 min
+        (f"{day}T20:00:00+00:00", "after"),  # the close itself
+    ]
+    for now_iso, expected in cases:
+        assert market_clock.session_state(now_iso, is_trading_day=True) == expected, now_iso
+
+
+def test_session_state_closed_day_and_winter():
+    assert (
+        market_clock.session_state("2026-07-27T18:00:00+00:00", is_trading_day=False)
+        == "closed_day"
+    )
+    # Winter open 14:30 UTC -> session end 20:55 UTC.
+    assert market_clock.session_state("2026-01-05T20:55:00+00:00", is_trading_day=True) == "open"
+    assert market_clock.session_state("2026-01-05T20:56:00+00:00", is_trading_day=True) == "after"

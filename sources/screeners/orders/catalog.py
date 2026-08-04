@@ -12,6 +12,7 @@ __all__ = [
     "HARD_MAX_DAILY_NOTIONAL",
     "WINDOW_START_MIN",
     "WINDOW_END_MIN",
+    "SESSION_END_MIN",
     "SLIPPAGE",
     "STALE_QUOTE_SEC",
     "MIN_REF_PRICE",
@@ -24,6 +25,10 @@ HARD_MAX_ORDER_NOTIONAL = 5_000.0
 HARD_MAX_DAILY_NOTIONAL = 10_000.0
 WINDOW_START_MIN = 2
 WINDOW_END_MIN = 45
+# Intraday gate (interactive queue-order path only): full regular session
+# minus a 5-minute close buffer, so a GFD order placed on 'open' executes
+# today rather than silently queueing for the next open. 385 = 15:55 ET.
+SESSION_END_MIN = 385
 SLIPPAGE = Decimal("1.002")
 STALE_QUOTE_SEC = 300
 MIN_REF_PRICE = 1.0  # cents rounding distorts sub-$1 limits; refuse at queue time

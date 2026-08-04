@@ -8,9 +8,9 @@ market_calendar/compute.py."""
 from datetime import UTC, date, datetime, time, timedelta
 
 from sources.common.clock import phx_date
-from sources.screeners.orders.catalog import WINDOW_END_MIN, WINDOW_START_MIN
+from sources.screeners.orders.catalog import SESSION_END_MIN, WINDOW_END_MIN, WINDOW_START_MIN
 
-__all__ = ["market_open_utc", "window_state"]
+__all__ = ["market_open_utc", "session_state", "window_state"]
 
 
 def _nth_sunday(year: int, month: int, n: int) -> date:
@@ -30,10 +30,7 @@ def market_open_utc(d: date) -> datetime:
     return (naive_et - _et_utc_offset(d)).replace(tzinfo=UTC)
 
 
-def window_state(now_iso: str, is_trading_day: bool) -> str:
-    """'open' iff now is inside [open+WINDOW_START_MIN, open+WINDOW_END_MIN]
-    of *today's Phoenix-date* session. The Phoenix date (not a UTC slice)
-    picks the session: 04:12 UTC is the previous Phoenix evening."""
+def _state(now_iso: str, is_trading_day: bool, end_min: int) -> str:
     if not is_trading_day:
         return "closed_day"
     now = datetime.fromisoformat(now_iso)
@@ -42,6 +39,21 @@ def window_state(now_iso: str, is_trading_day: bool) -> str:
     opened = market_open_utc(date.fromisoformat(phx_date(now_iso)))
     if now < opened + timedelta(minutes=WINDOW_START_MIN):
         return "before"
-    if now > opened + timedelta(minutes=WINDOW_END_MIN):
+    if now > opened + timedelta(minutes=end_min):
         return "after"
     return "open"
+
+
+def window_state(now_iso: str, is_trading_day: bool) -> str:
+    """'open' iff now is inside [open+WINDOW_START_MIN, open+WINDOW_END_MIN]
+    of *today's Phoenix-date* session. The Phoenix date (not a UTC slice)
+    picks the session: 04:12 UTC is the previous Phoenix evening."""
+    return _state(now_iso, is_trading_day, WINDOW_END_MIN)
+
+
+def session_state(now_iso: str, is_trading_day: bool) -> str:
+    """'open' iff now is inside [open+WINDOW_START_MIN, open+SESSION_END_MIN]
+    — the interactive intraday gate: same settle-in start as the window
+    (the first minutes after the bell serve stale/crossed quotes), ending
+    at the close buffer, not the morning window."""
+    return _state(now_iso, is_trading_day, SESSION_END_MIN)

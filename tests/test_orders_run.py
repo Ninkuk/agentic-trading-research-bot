@@ -269,6 +269,69 @@ def test_preflight_codes(dbs):
     assert run.run_preflight(orders_path, cal_path, "2026-07-26T13:35:00+00:00")[0] == 3  # Sunday
 
 
+AFTERNOON = "2026-07-27T18:30:00+00:00"  # 2:30pm ET — in session, outside the window
+
+
+def test_plan_intraday_gates_on_session_not_window(dbs):
+    orders_path, cal_path = dbs
+    qid = _queue(orders_path, cal_path)
+    # Same afternoon instant: the morning gate claims nothing...
+    doc = _plan_doc(ts="2026-07-27T18:29:30+00:00")
+    assert run.run_plan(orders_path, cal_path, doc, AFTERNOON, ENV)["orders"] == []
+    # ...and the intraday gate plans the very same row.
+    plan = run.run_plan(orders_path, cal_path, doc, AFTERNOON, ENV, intraday=True)
+    assert len(plan["orders"]) == 1 and plan["orders"][0]["queue_id"] == qid
+
+
+def test_plan_intraday_after_close_claims_nothing(dbs):
+    orders_path, cal_path = dbs
+    qid = _queue(orders_path, cal_path)
+    plan = run.run_plan(
+        orders_path, cal_path, _plan_doc(), "2026-07-27T20:00:00+00:00", ENV, intraday=True
+    )
+    assert plan["orders"] == []
+    conn = orders_db.connect(orders_path)
+    assert conn.execute("SELECT status FROM queue WHERE id=?", (qid,)).fetchone()[0] == "queued"
+
+
+def test_preflight_intraday_codes(dbs):
+    orders_path, cal_path = dbs
+    _queue(orders_path, cal_path)
+    # Afternoon: morning gate stands down, intraday gate goes.
+    assert run.run_preflight(orders_path, cal_path, AFTERNOON)[0] == 3
+    assert run.run_preflight(orders_path, cal_path, AFTERNOON, True) == (0, ["TSLA"])
+    # After the 15:55 ET buffer: intraday stands down too.
+    assert run.run_preflight(orders_path, cal_path, "2026-07-27T20:00:00+00:00", True)[0] == 3
+
+
+def test_cli_passes_intraday_flag(dbs, monkeypatch, capsys, tmp_path):
+    orders_path, cal_path = dbs
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    seen = {}
+    monkeypatch.setattr(
+        run,
+        "run_preflight",
+        lambda db, cal, now, intraday=False: seen.update(p=intraday) or (3, []),
+    )
+    with pytest.raises(SystemExit):
+        run.main(["preflight", "--db", orders_path, "--calendar-db", cal_path, "--intraday"])
+    assert seen["p"] is True
+    doc = tmp_path / "in.json"
+    doc.write_text("{}")
+    monkeypatch.setattr(
+        run,
+        "run_plan",
+        lambda db, cal, d, now, env, intraday=False: (
+            seen.update(q=intraday) or {"account_number": "TESTACCT0", "orders": []}
+        ),
+    )
+    run.main(
+        ["plan", "--db", orders_path, "--calendar-db", cal_path, "--input", str(doc), "--intraday"]
+    )
+    assert seen["q"] is True
+
+
 def test_preflight_holiday_stands_down(dbs, tmp_path):
     orders_path, cal_path = dbs
     conn = cal_db.connect(cal_path)

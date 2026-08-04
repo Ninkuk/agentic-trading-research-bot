@@ -87,8 +87,11 @@ state via MCP and pipes it in as JSON: `portfolio` (`.claude/skills/account-posi
 system only through those dispatchers; never write SQL against `portfolio.db` or
 `orders.db` directly.
 
-**`orders` is the repo's ONLY broker write path** (market-open buys queued by the human,
-executed by `deploy/launchd/order_execution.sh` → `.claude/skills/execute-queue`). The
+**`orders` is the repo's ONLY broker write path** (buys queued by the human; executed at
+market open by `deploy/launchd/order_execution.sh` → `.claude/skills/execute-queue`, or
+immediately when queued in-session via `queue-order`'s intraday branch — same
+plan/place/record cycle with `--intraday`, which swaps the morning-window gate for a
+full-session gate ending 15:55 ET and changes nothing else). The
 human-only property of `orders queue` rests on allowlist ENUMERATION plus the pinned
 permission mode — the headless slot is granted exactly `orders preflight/plan/record`,
 never the wildcard, never `queue`/`resolve`/`cancel`; `ORDERS_ALLOW_NONINTERACTIVE` is a

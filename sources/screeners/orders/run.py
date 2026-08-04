@@ -214,9 +214,13 @@ def run_queue(
         conn.close()
 
 
-def run_preflight(db_path: str, cal_db_path: str, now_iso: str) -> tuple[int, list[str]]:
+def run_preflight(
+    db_path: str, cal_db_path: str, now_iso: str, intraday: bool = False
+) -> tuple[int, list[str]]:
     """The wrapper's cheap gate. (0, symbols) go; (3, []) quiet stand-down;
-    (1, []) loud calendar-blind. Always writes a preflight runs header."""
+    (1, []) loud calendar-blind. Always writes a preflight runs header.
+    intraday gates on the full session instead of the morning window —
+    the interactive queue-order path; the headless slot never passes it."""
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)
@@ -226,7 +230,8 @@ def run_preflight(db_path: str, cal_db_path: str, now_iso: str) -> tuple[int, li
             _write_run(conn, now_iso, "preflight", "calendar-blind")
             conn.commit()
             return 1, []
-        state = market_clock.window_state(now_iso, trading)
+        gate = market_clock.session_state if intraday else market_clock.window_state
+        state = gate(now_iso, trading)
         if state != "open":
             _write_run(conn, now_iso, "preflight", f"stand-down: {state}")
             conn.commit()
@@ -243,10 +248,14 @@ def run_preflight(db_path: str, cal_db_path: str, now_iso: str) -> tuple[int, li
         conn.close()
 
 
-def run_plan(db_path: str, cal_db_path: str, doc: dict, now_iso: str, env: dict) -> dict:
+def run_plan(
+    db_path: str, cal_db_path: str, doc: dict, now_iso: str, env: dict, intraday: bool = False
+) -> dict:
     """All safety arithmetic + the atomic claim, in ONE BEGIN IMMEDIATE
     transaction: two concurrent plans cannot claim the same row, and a
-    rollback erases the runs header so the wrapper's freshness check fires."""
+    rollback erases the runs header so the wrapper's freshness check fires.
+    intraday swaps the morning-window gate for the full-session gate; every
+    rail (gap band, caps, cash floor, atomic claim) is unchanged."""
     limits = catalog.load_limits(env)
     pi: PlanInput = fetch.parse_plan_input(doc)
     trading = _trading_day(cal_db_path, now_iso)
@@ -255,8 +264,9 @@ def run_plan(db_path: str, cal_db_path: str, doc: dict, now_iso: str, env: dict)
         db.ensure_schema(conn)
         planned: list[dict] = []
         conn.execute("BEGIN IMMEDIATE")
-        _write_run(conn, now_iso, "plan")
-        if market_clock.window_state(now_iso, trading) != "open":
+        _write_run(conn, now_iso, "plan", "intraday" if intraday else "")
+        gate = market_clock.session_state if intraday else market_clock.window_state
+        if gate(now_iso, trading) != "open":
             conn.commit()
             return {"account_number": limits.account_number, "orders": []}
         rows = conn.execute(
@@ -574,6 +584,13 @@ def main(argv=None) -> None:
         if name == "plan":
             s.add_argument("--calendar-db", default="market_calendar.db")
             s.add_argument("--input", required=True)
+        if name in ("preflight", "plan"):
+            s.add_argument(
+                "--intraday",
+                action="store_true",
+                help="gate on the full regular session (to 15:55 ET) instead of the"
+                " market-open window; interactive queue-order path only",
+            )
         if name in ("record", "reconcile"):
             s.add_argument("--input", required=True)
 
@@ -621,7 +638,7 @@ def main(argv=None) -> None:
             except ValueError as e:
                 print(f"error: env incomplete: {e}", file=sys.stderr)
                 raise SystemExit(1) from None
-            code, symbols = run_preflight(a.db, a.calendar_db, now_iso)
+            code, symbols = run_preflight(a.db, a.calendar_db, now_iso, a.intraday)
             if code == 0:
                 print(f"account: {lim.account_number}")
                 for s_ in symbols:
@@ -632,7 +649,9 @@ def main(argv=None) -> None:
                 print("error: calendar-blind — refuse to fly", file=sys.stderr)
             raise SystemExit(code)
         elif a.cmd == "plan":
-            plan = run_plan(a.db, a.calendar_db, _load_doc(a.input), now_iso, dict(os.environ))
+            plan = run_plan(
+                a.db, a.calendar_db, _load_doc(a.input), now_iso, dict(os.environ), a.intraday
+            )
             print(json.dumps(plan))
         elif a.cmd == "record":
             placed, errors = run_record(a.db, _load_doc(a.input), now_iso, dict(os.environ))
