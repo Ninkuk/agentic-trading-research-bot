@@ -95,13 +95,19 @@ def test_unresearched_preserves_screen_order():
     assert worklist.unresearched(["GDDY", "LDOS", "ADBE", "CI"], theses) == ["LDOS", "CI"]
 
 
-def test_worklists_are_disjoint_by_construction():
-    """A reopen ticker HAS a thesis, so it can never be un-researched. The
-    spec's overlap rule is a property of the data model, not a code path."""
-    theses = {"NICE": "2026-07-27"}
+def test_worklists_are_disjoint_when_the_thesis_is_named_correctly(tmp_path):
+    """A reopen ticker has a thesis, so it is not un-researched -- but that
+    holds only through the FILENAME, which is why this drives list_theses over
+    a real directory instead of a hand-built index. A misnamed file (`-v2`,
+    lowercase) breaks the property, and build() then dedupes: see
+    test_build_counts_a_ticker_in_both_lists_once_under_max."""
+    (tmp_path / "NICE-2026-07-27.md").write_text("x")
+    (tmp_path / "NICE-2026-07-27-v2.md").write_text("misnamed sibling, unindexed")
     newest = {"NICE": ("2026-07-27", "2026-07-27 NICE UNPROVEN reopen=2026-08-05:q2-print")}
-    new = worklist.unresearched(["NICE", "LDOS"], theses)
+    new = worklist.unresearched(["NICE", "LDOS"], worklist.list_theses(tmp_path))
     reopens = {r[0] for r in worklist.due_reopens(newest, "2026-08-05")}
+    assert reopens == {"NICE"}
+    assert new == ["LDOS"]
     assert set(new).isdisjoint(reopens)
 
 
