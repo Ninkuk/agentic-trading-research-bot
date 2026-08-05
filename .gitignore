@@ -27,3 +27,6 @@ docs/superpowers/
 dashboard/node_modules/
 dashboard/dist/
 dashboard/public/data.json
+
+# Local worktrees for isolated task execution (never committed).
+.worktrees/
