@@ -279,14 +279,14 @@
           "ticker": "DASH",
           "held": true,
           "verdict": "SOUND",
-          "due": null,
+          "due": "2026-08-05",
           "trigger": "reopen-140",
           "thesis_date": "2026-07-28",
           "thesis_path": "research/DASH-2026-07-28.md"
         }
       ],
-      "dated": 1,
-      "events": 1,
+      "dated": 2,
+      "events": 0,
       "checkpoints": [
         {
           "ticker": "DASH",
@@ -524,7 +524,7 @@
       ],
       "rows": [
         { "kind": "stale", "target": "cftc.db", "detail": "10d old (limit 9d)" },
-        { "kind": "log", "target": "cboe_stats", "detail": "2 FAILED lines in 24h" }
+        { "kind": "log", "target": "cboe-stats", "detail": "2 FAILED lines in 24h" }
       ]
     }
   },

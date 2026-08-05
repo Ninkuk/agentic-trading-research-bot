@@ -16,11 +16,27 @@ test("links a dated row's ticker to its thesis doc on GitHub", () => {
 });
 
 test("an event-trigger row's ticker also links to its thesis doc", () => {
-  render(<ResearchReopens sec={doc.sections["research-reopens"]} glossary={doc.glossary} />);
-  const link = screen.getByRole("link", { name: "DASH" });
+  // Built inline rather than pulled from the fixture: link rendering keys
+  // off thesis_path only (see renderReopensCell), never `due` — an
+  // event-shaped row (due: null) must link exactly like a dated one.
+  const sec = {
+    ...doc.sections["research-reopens"],
+    rows: [
+      {
+        ticker: "GFI",
+        verdict: "UNPROVEN",
+        due: null,
+        trigger: "tarkwa-renewal",
+        thesis_date: "2026-07-01",
+        thesis_path: "research/GFI-2026-07-01.md",
+      },
+    ],
+  };
+  render(<ResearchReopens sec={sec} glossary={doc.glossary} />);
+  const link = screen.getByRole("link", { name: "GFI" });
   expect(link).toHaveAttribute(
     "href",
-    `${REPO_URL}/blob/main/research/DASH-2026-07-28.md`,
+    `${REPO_URL}/blob/main/research/GFI-2026-07-01.md`,
   );
 });
 
@@ -53,4 +69,16 @@ test("no checkpoint list renders when checkpoints is absent", () => {
   const sec = { ...doc.sections["research-reopens"], checkpoints: undefined };
   render(<ResearchReopens sec={sec} glossary={doc.glossary} />);
   expect(screen.queryByText(/held position checkpoint/)).not.toBeInTheDocument();
+});
+
+test("every checkpoint's ticker has a fixture row with a non-null due", () => {
+  // Pins what the exporter actually guarantees: `checkpoints` is built only
+  // from dated (due != null) rows (data.py's `_research_reopens`), so a
+  // checkpoint whose ticker's row has `due: null` is an impossible shape
+  // the exporter cannot emit.
+  const sec = doc.sections["research-reopens"];
+  const rowsByTicker = new Map((sec.rows ?? []).map((r) => [r.ticker, r]));
+  for (const c of sec.checkpoints ?? []) {
+    expect(rowsByTicker.get(c.ticker)?.due).not.toBeNull();
+  }
 });

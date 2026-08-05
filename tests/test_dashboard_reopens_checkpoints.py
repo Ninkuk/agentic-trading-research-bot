@@ -152,3 +152,42 @@ def test_event_reopen_never_becomes_checkpoint(tmp_path):
     row = next(r for r in sec["rows"] if r["ticker"] == "HHH")
     assert row["held"] is True
     assert row["due"] is None
+
+
+def test_malformed_date_on_held_ticker_drops_only_that_checkpoint(tmp_path):
+    """`_REOPEN_FIELD_RE` validates digit shape only, never calendar
+    validity -- verdicts.log is human-written, so a typo like 2026-02-30
+    (2026 is not a leap year: Feb tops out at 28) is a live possibility.
+    Before this branch `_research_reopens` only string-compared these
+    values, so a bad date was inert; now it is `date.fromisoformat`-parsed
+    for `when_days` and must not take the whole section down with it --
+    only the one bad checkpoint drops, every row and every other checkpoint
+    survives."""
+    now = "2026-02-24T21:13:00+00:00"  # Phoenix 2026-02-24; window 02-17..03-03
+    _write_vlog(
+        tmp_path / "research",
+        "2026-01-01 JJJ UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-02-30:bad-date",
+        "2026-01-01 KKK UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-02-25:good-date",
+    )
+    _write_pdb(tmp_path / "data", "JJJ", "KKK")
+    sec = data._research_reopens(str(tmp_path / "data"), now)
+    assert {r["ticker"] for r in sec["rows"]} == {"JJJ", "KKK"}  # rows all survive
+    assert {c["ticker"] for c in sec["checkpoints"]} == {"KKK"}  # JJJ's bad date dropped
+
+
+def test_checkpoint_window_boundary_inclusive_both_ends(tmp_path):
+    """The floor/ceiling comparison is inclusive on ISO strings -- a reopen
+    dated exactly on `floor` (2026-07-15) and one exactly on `ceiling`
+    (2026-07-29, per NOW's +/- 7 day window) must both become checkpoints.
+    No existing test pinned this boundary."""
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 LLL UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-15:on-floor",
+        "2026-07-01 MMM UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-29:on-ceiling",
+    )
+    _write_pdb(tmp_path / "data", "LLL", "MMM")
+    checkpoints = data._research_reopens(str(tmp_path / "data"), NOW)["checkpoints"]
+    by_ticker = {c["ticker"]: c for c in checkpoints}
+    assert set(by_ticker) == {"LLL", "MMM"}
+    assert by_ticker["LLL"]["when_days"] == -7
+    assert by_ticker["MMM"]["when_days"] == 7

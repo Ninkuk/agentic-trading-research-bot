@@ -219,10 +219,12 @@ def snapshot_date(conn) -> str | None:
 def data_age_label(data_date: str | None, now_iso: str) -> str:
     """`data_date` decorated with how stale it is: '2026-07-24 (2d old)'.
 
-    Shared by both consumers — the CLI report and the dashboard — so they
-    cannot disagree about how old the same snapshot is. Never raises: it
-    sits inside the candidates-section path, and a bare date still informs
-    when the clock cannot be parsed."""
+    Used by the CLI report (`build_report`) to age-label `snapshot_date`;
+    the dashboard exports the raw `snapshot_date` instead and formats age
+    client-side, so this function has exactly one production call site —
+    `snapshot_date` is the value genuinely shared by both consumers. Never
+    raises: it sits inside the candidates-section path, and a bare date
+    still informs when the clock cannot be parsed."""
     if not data_date:
         return "date unknown"
     try:

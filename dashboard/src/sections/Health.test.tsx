@@ -11,7 +11,7 @@ test("unhealthy fixture section renders tiles and both problem rows", () => {
   expect(screen.getByText("runs (24h)")).toBeInTheDocument();
   expect(screen.getByText("jobs loaded")).toBeInTheDocument();
   expect(screen.getByText("cftc.db")).toBeInTheDocument();
-  expect(screen.getByText("cboe_stats")).toBeInTheDocument();
+  expect(screen.getByText("cboe-stats")).toBeInTheDocument();
 });
 
 test("healthy section (empty rows) shows the all-clear line, not a table", () => {

@@ -99,13 +99,16 @@ def test_export_data_dispatches_health_to_the_success_body(tmp_path, monkeypatch
 
 
 def test_rollover_now_local(tmp_path, monkeypatch):
-    """A `start:` line stamped 2026-07-22 21:00:00 (13 minutes before the
-    9:13pm Phoenix slot) must count as a run in the 24h window. now_iso's
-    UTC date is 2026-07-23 — if now_local were derived UTC-side (no
-    Phoenix offset applied), `since` would land on the wrong calendar day
-    and this in-window run would be missed."""
+    """now_iso = 2026-07-23T04:13:00+00:00 (9:13pm Phoenix on 2026-07-22).
+    Correctly derived (Phoenix) the 24h window is
+    [2026-07-21 21:13, 2026-07-22 21:13]; derived UTC-side (no Phoenix
+    offset applied) it would instead be [2026-07-22 04:13, 2026-07-23
+    04:13]. A `start:` line stamped 2026-07-22 00:30:00 sits in the
+    Phoenix-only window and NOT the buggy UTC one -- it's inside the
+    former, before the latter's 04:13 floor -- so it is the discriminating
+    fixture: it counts as a run only under a correct Phoenix derivation."""
     data_dir, logs_dir = _layout(tmp_path)
-    (logs_dir / "fred.log").write_text("[2026-07-22 21:00:00] start: fred\n")
+    (logs_dir / "fred.log").write_text("[2026-07-22 00:30:00] start: fred\n")
     monkeypatch.setattr(data.health, "job_exit_codes", lambda: {})
     monkeypatch.setattr(data.health, "running_jobs", lambda: set())
 

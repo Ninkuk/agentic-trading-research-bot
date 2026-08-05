@@ -135,11 +135,11 @@ def running_jobs():
     PREVIOUS status, not a sentinel -- so it cannot answer "is this running
     right now". The PID column can: a running job shows a real PID there, an
     idle one shows "-". status.sh resolves the same ambiguity via
-    `launchctl print` instead; this resolves it via the PID column so the
-    digest can check all jobs with one `launchctl list` call here (a second,
-    separate call is made by job_exit_codes() -- a job that exits between the
-    two is simply not reported that night; harmless, since it self-corrects
-    the following night).
+    `launchctl print` instead; this resolves it via the PID column so
+    build_health can check all jobs with one `launchctl list` call here (a
+    second, separate call is made by job_exit_codes() -- a job that exits
+    between the two is simply not reported that snapshot; harmless, since
+    it self-corrects the next time the health section is built).
     """
     out = subprocess.run(["launchctl", "list"], capture_output=True, text=True).stdout
     running = set()

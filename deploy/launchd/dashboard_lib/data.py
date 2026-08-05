@@ -527,18 +527,30 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
         }
         for ticker, slug, thesis_date, verdict in events
     ]
-    checkpoints = [
-        {
-            "ticker": ticker,
-            "reopen_date": when,
-            "trigger": slug,
-            "thesis_date": thesis_date,
-            "when_days": (date.fromisoformat(when) - date.fromisoformat(today)).days,
-            "thesis_path": _thesis_path(ticker, thesis_date),
-        }
-        for when, ticker, slug, thesis_date, _verdict in dated
-        if ticker in held and floor <= when <= ceiling
-    ]
+    today_date = date.fromisoformat(today)
+    checkpoints = []
+    for when, ticker, slug, thesis_date, _verdict in dated:
+        if ticker not in held or not (floor <= when <= ceiling):
+            continue
+        try:
+            when_days = (date.fromisoformat(when) - today_date).days
+        except ValueError:
+            # _REOPEN_FIELD_RE validates digit shape only, never calendar
+            # validity (verdicts.log is human-written) -- a malformed date
+            # like 2026-02-30 drops just this one checkpoint, not the whole
+            # section: TOTAL applies per-row here, same as everywhere else
+            # in this module.
+            continue
+        checkpoints.append(
+            {
+                "ticker": ticker,
+                "reopen_date": when,
+                "trigger": slug,
+                "thesis_date": thesis_date,
+                "when_days": when_days,
+                "thesis_path": _thesis_path(ticker, thesis_date),
+            }
+        )
     return {
         "columns": _RESEARCH_REOPENS_COLUMNS,
         "rows": rows,

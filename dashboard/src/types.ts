@@ -52,7 +52,7 @@ export interface Tile {
   history?: { date: string; value: number | null }[];
 }
 
-// The five strand groups a section's `kicker` sorts it into (Main.tsx's
+// The six strand groups a section's `kicker` sorts it into (Main.tsx's
 // STRANDS, data.py's SECTION_EXPORTERS kicker column). Kept as a real union
 // — not a bare `string` — so a hand-authored Section (tests, fixtures the
 // Loosen<T> guard checks) gets a compile-time nudge toward a real strand
