@@ -58,6 +58,21 @@ def _bare_date(s) -> bool:
     return True
 
 
+def _numeric(value) -> float | None:
+    """A number OR a numeric string, else None. The broker returns every
+    price/quantity as a decimal string ('178.141500', '0.056135' — fractional
+    fills especially) and the transcribing session copies values verbatim, so
+    the deterministic layer owns the conversion (same rule as orders fetch)."""
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)
+
+
 def parse_doc(doc) -> tuple:
     """Validate one input document into (fills, passes, verdicts, skipped_count).
     Rows missing/failing required fields are skipped and counted, never
@@ -77,13 +92,12 @@ def parse_doc(doc) -> tuple:
         raw = f.get("symbol")
         symbol = raw.strip().upper() if isinstance(raw, str) else ""
         side = f.get("side")
-        price = f.get("price")
+        price = _numeric(f.get("price"))
         filled_at = f.get("filled_at")
         if (
             not symbol
             or side not in ("buy", "sell")
-            or isinstance(price, bool)
-            or not isinstance(price, (int, float))
+            or price is None
             or not isinstance(filled_at, str)
             or "T" not in filled_at
         ):
@@ -96,9 +110,7 @@ def parse_doc(doc) -> tuple:
             continue
         if fill_dt.tzinfo is None:
             fill_dt = fill_dt.replace(tzinfo=UTC)
-        quantity = f.get("quantity")
-        if isinstance(quantity, bool) or not isinstance(quantity, (int, float)):
-            quantity = None
+        quantity = _numeric(f.get("quantity"))
         agent = f.get("placed_agent")
         # Option fills: contract_ref marks one. side is remapped to the
         # DIRECTIONAL intent for opens (buy put = bearish = 'sell'); a close
@@ -132,8 +144,8 @@ def parse_doc(doc) -> tuple:
             dict(
                 symbol=symbol,
                 side=side,
-                price=float(price),
-                quantity=float(quantity) if quantity is not None else None,
+                price=price,
+                quantity=quantity,
                 filled_at=filled_at,
                 fill_date=_phx_date(fill_dt),
                 order_ref=f.get("order_ref"),

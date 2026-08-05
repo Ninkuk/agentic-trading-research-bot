@@ -44,7 +44,7 @@ def test_missing_fields_skip_and_count():
         "fills": [
             _fill(symbol=""),
             _fill(side="short"),
-            _fill(price="94.30"),  # string price is invalid
+            _fill(price="n/a"),  # non-numeric price string is invalid
             _fill(price=True),  # bools are not prices
             _fill(filled_at=None),
             _fill(filled_at="not-a-date!!"),
@@ -229,3 +229,20 @@ def test_strategy_ref_passthrough():
     assert skipped == 0
     assert fills[0]["strategy_ref"] == "ord-77"
     assert fills[1]["strategy_ref"] is None  # equity fill: absent -> None
+
+
+def test_broker_decimal_strings_accepted_for_price_and_quantity():
+    # Live shape (2026-07-31 fractional first flight): the broker returns
+    # every number as a decimal string; a verbatim-copying session must not
+    # lose the fill (price) or its size (quantity).
+    fills, _, _, skipped = journal.parse_doc(
+        {"fills": [_fill(price="178.141500", quantity="0.056135")]}
+    )
+    assert skipped == 0
+    assert fills[0]["price"] == 178.1415
+    assert fills[0]["quantity"] == 0.056135
+
+
+def test_non_numeric_price_string_still_skips():
+    fills, _, _, skipped = journal.parse_doc({"fills": [_fill(price="n/a")]})
+    assert fills == [] and skipped == 1
