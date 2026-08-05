@@ -5,7 +5,9 @@
 // at 0 and a series hovering around 14 renders as a solid filled box),
 // and the shadcn ChartTooltipContent floated ABOVE the chart — the
 // tooltip is larger than the sparkline, so inside the viewbox it would
-// cover the mark it describes. Degrades to nothing under 2 usable points.
+// cover the mark it describes. Degrades to nothing under 3 usable points
+// (DESIGN_MEMORY: no tiny 2-point sparklines — a short series drops the
+// chart; the tile still shows value, delta, and label).
 
 import { Area, AreaChart, XAxis, YAxis } from "recharts";
 import {
@@ -27,7 +29,7 @@ export interface KpiSparkProps {
 
 export function KpiSpark({ label, points }: KpiSparkProps) {
   const usable = points.filter((p) => p.value !== null);
-  if (usable.length < 2) return null;
+  if (usable.length < 3) return null;
   const config = { value: { label, color: "var(--chart-2)" } } satisfies ChartConfig;
   return (
     <ChartContainer config={config} className="aspect-auto h-9 w-24">

@@ -28,6 +28,13 @@ test("dashes a missing value", () => {
   expect(screen.getByText("—")).toBeInTheDocument();
 });
 
+test("mid tone renders in the amber tone class, like its sibling surfaces", () => {
+  render(<StatTile tile={{ label: "regime", value: "mixed", tone: "mid" }} />);
+  // DESIGN_MEMORY: on/off/mid → emerald/red/amber. The hero dot and the
+  // verdict badge already render mid as amber; the tile value must agree.
+  expect(screen.getByText("mixed")).toHaveClass("tag-hold");
+});
+
 test("renders an optional sparkline slot via children", () => {
   render(
     <StatTile tile={{ label: "regime", value: "risk_on" }}>

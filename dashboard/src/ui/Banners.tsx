@@ -36,7 +36,7 @@ export interface StaleBannerProps {
 export function StaleBanner({ generatedAt, onDismiss }: StaleBannerProps) {
   return (
     <div
-      className="lab-banner mx-auto mt-4 flex max-w-4xl items-baseline gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-700 dark:text-amber-400"
+      className="lab-banner mx-auto mt-4 flex max-w-(--page-width) items-baseline gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-700 dark:text-amber-400"
       role="status"
     >
       <span>

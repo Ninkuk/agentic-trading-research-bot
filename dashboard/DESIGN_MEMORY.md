@@ -14,6 +14,17 @@
   (`Badge variant="up|down|hold"`); text is always the primary channel.
 
 ## Layout
+- Page width is the `--page-width` token in `:root` (72rem since 2026-08-03,
+  was 56rem — tables were clipping). `.page` and StaleBanner both read it;
+  StaleBanner renders outside `.page`, so a literal there silently desyncs.
+- Prose caps at `max-w-[75ch]` (section notes) — the card is page-wide, which
+  is far too wide a measure for the plain-English explanations.
+- Section notes are ONE sentence of meaning ("what is this and should I
+  care"), never widget anatomy; the long-form explainer lives in the
+  per-section About modal (info icon in the header action slot, AboutDialog,
+  `sec.about` heading+body blocks from data.py). Anatomy — bar geometry, dot
+  colors, column mechanics — goes in an about block, not the note
+  (2026-08-03, after "wall of text" feedback).
 - One summary card (hero + regime chip + macro KPIs w/ sparklines) above five
   strand Tabs; sections are Cards with note as description, verdict badge in
   the header action slot, caveat as italic bordered footnote.

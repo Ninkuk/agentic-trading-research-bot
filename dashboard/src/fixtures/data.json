@@ -93,7 +93,17 @@
     "scorecard": {
       "title": "Ticker scorecard",
       "kicker": "Signals",
-      "note": "Every stock's net vote. Independent signals each lean bullish or bearish.",
+      "note": "Stocks doing something statistically odd right now — dislocation, not quality.",
+      "about": [
+        {
+          "heading": "What this is",
+          "body": "Every signal here is market microstructure — short interest, days-to-cover, oversold RSI, FTD spikes, retail chatter. A high score means something unusual is happening to the stock, usually a small one, and says nothing about the business."
+        },
+        {
+          "heading": "How much to trust it",
+          "body": "Treat it as a to-research feed: most flags deserve rejection, and by design the research step kills nearly everything."
+        }
+      ],
       "verdict": null,
       "columns": [
         { "key": "symbol", "label": "Symbol", "numeric": false, "direction": null, "term": null },

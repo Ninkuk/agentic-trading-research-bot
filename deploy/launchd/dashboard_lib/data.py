@@ -990,20 +990,37 @@ def _size_caps(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     }
 
 
-# (sid, title, db_name, fn, kicker, note) — same ids/titles/kickers/notes as
-# sections.py's SECTIONS; prose copied verbatim from sections.py:907-1116.
+# (sid, title, db_name, fn, kicker, note, about) — ids/titles/kickers match
+# sections.py's SECTIONS. `note` is the one-sentence essence shown on the
+# card; `about` is the full explainer as (heading, body) blocks, rendered in
+# the dashboard's per-section About modal. Copy rule (2026-08-03): the note
+# answers "what is this and should I care", never widget anatomy — bar
+# geometry, dot colors, and column mechanics belong in an about block.
 # candidate-efficacy has no sections.py counterpart (new 2026-07-29).
-# Grows through Task 7-8 as the remaining (advisor/hero) sections register.
-SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str, str]] = [
+SECTION_EXPORTERS: list[
+    tuple[str, str, str, Callable[..., dict[str, Any]], str, str, list[tuple[str, str]]]
+] = [
     (
         "regime",
         "Regime",
         "composite.db",
         _regime,
         "Macro",
-        "The market's mood. The label is decided by three inputs — the VIX, its term structure, and high-yield spreads; the other seven are tracked and shown but do not move it. “Risk-on” means"
-        " money is flowing toward risk; the VIX is a fear gauge — lower is"
-        " calmer. Open the drivers to see which inputs argued which way.",
+        "The market's mood tonight — is money flowing toward risk, or away from it?",
+        [
+            (
+                "What decides it",
+                "Three inputs move the label: the VIX, its term structure,"
+                " and high-yield credit spreads. The other seven inputs are"
+                " tracked and shown but do not vote.",
+            ),
+            (
+                "How to read it",
+                "“Risk-on” means money is flowing toward risk; the VIX is a"
+                " fear gauge — lower is calmer. Open the drivers to see"
+                " which inputs argued which way.",
+            ),
+        ],
     ),
     (
         "regime-timeline",
@@ -1011,10 +1028,21 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "composite.db",
         _regime_timeline,
         "Macro",
-        "How the market mood and the VIX fear gauge have moved across"
-        " recent nightly snapshots. Each dot is one snapshot; higher = more"
-        " fear; dot color = that night's regime verdict (green risk-on, red"
-        " risk-off, amber mixed).",
+        "How the market's mood has shifted across recent nights.",
+        [
+            (
+                "How to read it",
+                "Each dot is one nightly snapshot; higher means more fear"
+                " (the VIX). Color is that night's verdict: green risk-on,"
+                " red risk-off, amber mixed.",
+            ),
+            (
+                "Why it matters",
+                "A mood that just flipped is weaker evidence than one that"
+                " has held for weeks — the streak is the signal, not any"
+                " single night.",
+            ),
+        ],
     ),
     (
         "macro-drivers",
@@ -1022,10 +1050,20 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "fred.db",
         _macro_drivers,
         "Macro",
-        "The regime's three deciding inputs with their recent history: the"
-        " 10y–2y Treasury spread, the high-yield credit spread, and the VIX."
-        " Each tile is today's value, the one-day change, and the last 90"
-        " observations' trend.",
+        "The three inputs that actually decide the regime call, with their recent history.",
+        [
+            (
+                "What they are",
+                "The 10y–2y Treasury spread (the recession watcher), the"
+                " high-yield credit spread (are lenders scared?), and the"
+                " VIX (the equity fear gauge).",
+            ),
+            (
+                "How to read it",
+                "Each tile shows today's value, the one-day change, and the"
+                " last 90 observations' trend.",
+            ),
+        ],
     ),
     (
         "candidates",
@@ -1033,13 +1071,28 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "stocks.db",
         _candidates,
         "Signals",
-        "Businesses worth reading about, screened quality-first: durable returns"
-        " on capital, real free cash flow, a rising Piotroski score, and a share"
-        " price currently well off its highs. The scorecard below finds stocks"
-        " doing something odd right now; this finds good companies that happen"
-        " to be marked down. List entries are graded for calibration only"
-        " (scorer.db v_candidate_efficacy) — it is a reading queue, not an"
-        " opinion.",
+        "Good companies currently marked down — a reading queue, not an opinion.",
+        [
+            (
+                "What this screens for",
+                "Quality first: durable returns on capital, real free cash"
+                " flow, a rising Piotroski score — and a share price"
+                " currently well off its highs.",
+            ),
+            (
+                "How it differs from the scorecard",
+                "The scorecard below finds stocks doing something odd right"
+                " now; this finds good businesses that happen to be cheap."
+                " Quality enters the funnel here; dislocation is only the"
+                " timing.",
+            ),
+            (
+                "What happens next",
+                "Names go to deep research before any decision. List"
+                " entries are graded for calibration only — see Candidates"
+                " screen edge under Track record.",
+            ),
+        ],
     ),
     (
         "research-reopens",
@@ -1047,12 +1100,21 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "research/verdicts.log",
         _research_reopens,
         "Research",
-        "Names already researched in depth and set aside, each with the stated"
-        " evidence that would reopen the question. A dated trigger is usually"
-        " an earnings report — “due” means that evidence now exists and the"
-        " name deserves a fresh look. An event trigger waits on a filing or a"
-        " price, with no date attached. A row retires when the name is"
-        " re-researched; the ticker links to the full thesis.",
+        "Researched names set aside, each with the evidence that would reopen the question.",
+        [
+            (
+                "How to read it",
+                "A dated trigger is usually an earnings report — “due”"
+                " means that evidence now exists and the name deserves a"
+                " fresh look. An event trigger waits on a filing or a"
+                " price, with no date attached.",
+            ),
+            (
+                "Lifecycle",
+                "A row retires when the name is re-researched; the ticker"
+                " links to the full thesis.",
+            ),
+        ],
     ),
     (
         "scorecard",
@@ -1060,10 +1122,38 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "composite.db",
         _scorecard,
         "Signals",
-        "Every stock's net vote. Independent signals each lean bullish or"
-        " bearish; the number is the summed score (the bar shows it, left of"
-        " center for bearish). Split is the raw bullish/bearish count. A"
-        " ★ marks strong agreement. A tally — not a buy or sell list.",
+        "Stocks doing something statistically odd right now — dislocation, not quality.",
+        [
+            (
+                "What this is",
+                "Every signal here is market microstructure — short"
+                " interest, days-to-cover, oversold RSI, FTD spikes, retail"
+                " chatter. A high score means something unusual is"
+                " happening to the stock, usually a small one, and says"
+                " nothing about the business.",
+            ),
+            (
+                "Why a crashing stock flags bullish",
+                "Deeply oversold RSI and crowded shorts vote bullish on a"
+                " mean-reversion hunch. That hunch is worthless when the"
+                " drop had a real cause — a stock down 40% on bad news will"
+                " sit here flagged bullish every night until the price"
+                " stabilizes.",
+            ),
+            (
+                "How to read it",
+                "The bar is the summed vote, left of center bearish; Split"
+                " is the raw bullish/bearish count; ★ marks strong"
+                " agreement.",
+            ),
+            (
+                "How much to trust it",
+                "Treat it as a to-research feed: most flags deserve"
+                " rejection, and by design the research step kills nearly"
+                " everything. Whether any single signal has proven edge is"
+                " graded under Track record — so far none has.",
+            ),
+        ],
     ),
     (
         "signal-efficacy",
@@ -1071,10 +1161,21 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "scorer.db",
         _signal_efficacy,
         "Track record",
-        "Every signal's raw report card: how often it has been right so far,"
-        " and by how much it beat simply holding SPY. This is the unfiltered"
-        " table — the verdict on whether each one is trustworthy yet lives"
-        " in Signal recommendations below.",
+        "Every signal's raw report card against simply holding SPY.",
+        [
+            (
+                "What this is",
+                "How often each signal has been right so far, and by how"
+                " much it beat the SPY benchmark. Unfiltered — every signal"
+                " appears, proven or not.",
+            ),
+            (
+                "Where the verdict lives",
+                "Whether a signal is trustworthy yet is decided in Signal"
+                " recommendations below, which grades against the real base"
+                " rate instead of a coin flip.",
+            ),
+        ],
     ),
     (
         "bucket-performance",
@@ -1082,9 +1183,16 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "scorer.db",
         _bucket_performance,
         "Track record",
-        "Grouping every past opinion by conviction bucket (strong-bull down"
-        " to strong-bear): did stronger scores actually produce better"
-        " forward returns than SPY?",
+        "Did stronger conviction actually produce better forward returns?",
+        [
+            (
+                "How to read it",
+                "Every past opinion grouped by conviction bucket,"
+                " strong-bull down to strong-bear, each graded against SPY."
+                " If conviction means anything, stronger buckets should do"
+                " better — this checks that.",
+            ),
+        ],
     ),
     (
         "human-filter",
@@ -1092,9 +1200,15 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "scorer.db",
         _human_filter,
         "Track record",
-        "Of the opinions this page flagged, you either acted or passed. This"
-        " compares how the acted-on ones did versus the passed ones — did"
-        " your judgment add edge?",
+        "You acted on some flags and passed on the rest — did your judgment add edge?",
+        [
+            (
+                "How to read it",
+                "Compares forward returns of the opinions you acted on"
+                " versus the ones you passed. The gap between the two is"
+                " the value of the human filter.",
+            ),
+        ],
     ),
     (
         "regime-performance",
@@ -1102,9 +1216,14 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "scorer.db",
         _regime_performance,
         "Track record",
-        "Does the market-mood call itself have forward edge — do risk-on"
-        " nights actually precede better returns than risk-off nights? Each"
-        " row is one mood at one horizon.",
+        "Does the market-mood call itself predict forward returns?",
+        [
+            (
+                "How to read it",
+                "Each row is one mood at one horizon: did risk-on nights"
+                " actually precede better returns than risk-off nights?",
+            ),
+        ],
     ),
     (
         "pending",
@@ -1112,8 +1231,15 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "scorer.db",
         _pending,
         "Track record",
-        "Opinions already recorded whose outcome has not matured yet — what"
-        " is still being measured, and therefore not yet in any grade above.",
+        "Opinions recorded but not yet old enough to grade.",
+        [
+            (
+                "What this is",
+                "Every graded table above includes only matured outcomes."
+                " This is the queue still being measured — what will become"
+                " those grades.",
+            ),
+        ],
     ),
     (
         "basis-breaks",
@@ -1121,10 +1247,17 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "scorer.db",
         _basis_breaks,
         "Track record",
-        "Days where a price moved so far that it looks like a split or a bad"
-        " tick rather than a real move. Surfaced so a silent data problem"
-        " cannot quietly skew every grade above. An empty table is the good"
-        " outcome.",
+        "Price moves that look like data errors, caught before they can"
+        " poison the grades — an empty table is the good outcome.",
+        [
+            (
+                "What this is",
+                "Days where a price moved so far it looks like a stock"
+                " split or a bad tick rather than a real move. Surfaced so"
+                " a silent data problem cannot quietly skew every grade"
+                " above.",
+            ),
+        ],
     ),
     (
         "book-heat",
@@ -1132,11 +1265,21 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "advisor.db",
         _book_heat,
         "Your book",
-        "How much of your account is genuinely at risk right now, adding up"
-        " the dollars at risk on a one-ATR adverse day across every open"
-        " position. That is NOT the stop-out loss — the stop sits further"
-        " out, so being stopped costs more. Coverage says how much of the"
-        " book that number actually accounts for.",
+        "How much of your account is genuinely at risk right now.",
+        [
+            (
+                "What “heat” means",
+                "The dollars lost across every open position on a one-ATR"
+                " adverse day — a normal bad day, not a crash.",
+            ),
+            (
+                "What it is not",
+                "Not the stop-out loss: stops sit further out, so being"
+                " stopped costs more. Coverage says how much of the book"
+                " the number actually accounts for — positions missing"
+                " inputs count as uncovered.",
+            ),
+        ],
     ),
     (
         "group-heat",
@@ -1144,8 +1287,16 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "advisor.db",
         _group_heat,
         "Your book",
-        "Correlated positions collapsed into single bets (e.g. two energy"
-        " names become one energy bet), because risk adds up within a group.",
+        "Correlated positions collapsed into single bets.",
+        [
+            (
+                "Why",
+                "Two energy names are one energy bet — risk adds up within"
+                " a group, and sizing that ignores this quietly doubles"
+                " exposure. Hedges net out: a protective put reduces its"
+                " bet's heat.",
+            ),
+        ],
     ),
     (
         "position-heat",
@@ -1153,10 +1304,15 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "advisor.db",
         _position_heat,
         "Your book",
-        "Risk contribution of each individual holding — the detail behind"
-        " the book and group heat totals above. “Heat” is quantity ×"
-        " ATR: the dollars at risk on a one-ATR adverse day, not the loss"
-        " if the stop triggers.",
+        "Each holding's contribution to the risk totals above.",
+        [
+            (
+                "What “heat” means",
+                "Quantity × ATR: the dollars at risk on a one-ATR adverse"
+                " day, not the loss if the stop triggers. The detail behind"
+                " the book and group totals.",
+            ),
+        ],
     ),
     (
         "disagreements",
@@ -1164,9 +1320,16 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "advisor.db",
         _disagreements,
         "Your book",
-        "Tickers where tonight's score points the opposite way from a"
-        " position you already hold. ‘Strong’ means the score is far"
-        " enough from neutral to be worth a look.",
+        "Positions you hold that tonight's signals argue against.",
+        [
+            (
+                "How to read it",
+                "Tickers where the score points the opposite way from an"
+                " open position. “Strong” means the score is far enough"
+                " from neutral to be worth a look — a prompt to re-check"
+                " the thesis, not an exit order.",
+            ),
+        ],
     ),
     (
         "size-caps",
@@ -1174,9 +1337,16 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "advisor.db",
         _size_caps,
         "Your book",
-        "A volatility-scaled ceiling on how large each candidate position"
-        " could be — decision support, never an order. The warning marker"
-        " means the cap exceeds buying power.",
+        "A volatility-scaled ceiling on each candidate's size — advice, never an order.",
+        [
+            (
+                "How to read it",
+                "More volatile names get smaller ceilings, so a one-ATR bad"
+                " day costs roughly the same dollars across positions. The"
+                " warning marker means the cap exceeds current buying"
+                " power.",
+            ),
+        ],
     ),
     (
         "plan-001-report",
@@ -1184,14 +1354,29 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "scorer.db",
         _signal_recommendation,
         "Track record",
-        "The verdict on each signal, graded against the BASE RATE rather than"
-        " a coin flip: a randomly chosen scored ticker beat its benchmark only"
-        " ~40% of the time over these windows, so a 61% hit-rate can still be"
-        " worth nothing. ‘Keep’ means the whole confidence range sits above"
-        " that baseline, ‘anti-signal’ entirely below it, ‘watch’"
-        " straddling. Several signals are graded at once, so a few clear the"
-        " bar by luck — hold every verdict loosely. Re-weighting the catalog"
-        " is always a human decision; nothing here feeds back.",
+        "The verdict on each signal — keep, watch, or anti-signal — graded"
+        " against the real base rate.",
+        [
+            (
+                "Why the base rate matters",
+                "A randomly chosen scored ticker beat its benchmark only"
+                " ~40% of the time over these windows, so a 61% hit-rate"
+                " can still be worth nothing. Every verdict is measured"
+                " against that baseline, not a coin flip.",
+            ),
+            (
+                "The verdicts",
+                "“Keep” means the whole confidence range sits above the"
+                " baseline; “anti-signal” sits entirely below it —"
+                " significantly wrong, never a win; “watch” straddles.",
+            ),
+            (
+                "Hold it loosely",
+                "Several signals are graded at once, so a few clear the bar"
+                " by luck. Re-weighting the catalog is always a human"
+                " decision; nothing here feeds back automatically.",
+            ),
+        ],
     ),
     (
         "plan-004-scorecard",
@@ -1199,9 +1384,15 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "scorer.db",
         _trader_scorecard,
         "Track record",
-        "A plain-text report grading past decision quality: did filtering"
-        " help, what did execution cost, how did unrecommended (freelance)"
-        " trades do.",
+        "A grade of your past decision quality.",
+        [
+            (
+                "What this is",
+                "A plain-text report: did filtering the flags help, what"
+                " did execution cost, and how did unrecommended (freelance)"
+                " trades do?",
+            ),
+        ],
     ),
     (
         "candidate-efficacy",
@@ -1209,12 +1400,22 @@ SECTION_EXPORTERS: list[tuple[str, str, str, Callable[..., dict[str, Any]], str,
         "scorer.db",
         _candidate_efficacy,
         "Track record",
-        "A name's first ENTRY onto the candidates reading list starts a"
-        " stopwatch: its 21- and 63-trading-day return is measured against"
-        " SPY, split by which dislocation door let it in — oversold RSI, a"
-        " price drawdown, or both at once. This grades TIMING only, never"
-        " the multi-year quality thesis behind the pick, and none of it"
-        " feeds back into the screen's own gates.",
+        "Does the candidates screen's timing beat SPY after a name first enters the list?",
+        [
+            (
+                "How it is measured",
+                "A name's first entry onto the reading list starts a"
+                " stopwatch: its 21- and 63-trading-day return is measured"
+                " against SPY, split by which dislocation door let it in —"
+                " oversold RSI, a price drawdown, or both at once.",
+            ),
+            (
+                "What it does not grade",
+                "Timing only, never the multi-year quality thesis behind"
+                " the pick — and none of it feeds back into the screen's"
+                " own gates.",
+            ),
+        ],
     ),
 ]
 
@@ -1538,8 +1739,13 @@ def export_data(data_dir: str, now_iso: str, repo_root: str | None = None) -> di
     root = Path(repo_root) if repo_root is not None else _REPO_ROOT
 
     sections: dict[str, Any] = {}
-    for sid, title, db_name, fn, kicker, note in SECTION_EXPORTERS:
-        header = {"title": title, "kicker": kicker, "note": note}
+    for sid, title, db_name, fn, kicker, note, about in SECTION_EXPORTERS:
+        header = {
+            "title": title,
+            "kicker": kicker,
+            "note": note,
+            "about": [{"heading": h, "body": b} for h, b in about],
+        }
         try:
             if db_name.endswith(".db"):
                 conn = _ro(data_dir, db_name)

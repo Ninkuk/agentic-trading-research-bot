@@ -75,10 +75,18 @@ export const KICKERS: readonly Kicker[] = ["Macro", "Signals", "Research", "Trac
 // data.py's per-section return shapes: tile sections like `regime`/
 // `book-heat`, table sections like `scorecard`/`signal-efficacy`, and the
 // text-only `plan-004-scorecard`).
+// One headed block of a section's long-form explainer, shown in the About
+// modal (data.py's SECTION_EXPORTERS `about` column).
+export interface AboutBlock {
+  heading: string;
+  body: string;
+}
+
 export interface Section {
   title?: string;
   kicker?: Kicker;
   note?: string;
+  about?: AboutBlock[];
   verdict?: Verdict | null;
   tiles?: Tile[];
   columns?: Column[];

@@ -44,6 +44,9 @@
 
 :root {
   --radius: 0.625rem;
+  /* Single source of truth for page width: `.page` below, and StaleBanner,
+     which renders outside `.page` and has to match it by hand. */
+  --page-width: 72rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
@@ -134,7 +137,7 @@
 @layer components {
   /* page container */
   .page {
-    max-width: 56rem;
+    max-width: var(--page-width);
     margin: 0 auto;
     padding: 1.5rem 1.25rem 4rem;
   }
@@ -204,8 +207,8 @@
   .tag-off {
     color: var(--tone-down);
   }
-  .tag-dim {
-    color: var(--muted-foreground);
+  .tag-hold {
+    color: var(--tone-hold);
   }
 
   /* symbol cells */

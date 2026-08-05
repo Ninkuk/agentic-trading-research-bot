@@ -14,7 +14,7 @@ export interface StatTileProps {
 const TONE_CLASS: Record<Tone, string> = {
   on: "tag-on",
   off: "tag-off",
-  mid: "tag-dim",
+  mid: "tag-hold",
 };
 
 function formatValue(value: CellValue | undefined): string {
