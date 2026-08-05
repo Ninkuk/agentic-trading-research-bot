@@ -64,3 +64,71 @@ job_end() {
 step_start() {
     echo "[$(date '+%F %T')] step: $*"
 }
+
+# Hard wall-clock cap for ONE foreground command: run_with_timeout <secs> cmd...
+# macOS ships neither timeout(1) nor gtimeout, so this is a plain bash
+# watchdog -- run the command in the background and race a sleeper against it.
+#
+# Why a cap exists at all: on 2026-08-04 the journal slot sat wedged for 7h11m
+# on 4s of CPU (stalled inside a `claude -p` MCP call), holding its launchd
+# slot the whole time. launchd will not re-spawn a job while the instance is
+# alive, and daily_summary.py's hang tier is DETECTION ONLY by design (see
+# hung_jobs' docstring) -- so nothing in the system could reap it. The cap has
+# to live in the job itself.
+#
+# Keep the cap BELOW daily_summary.py's _HUNG_SLOW_MIN (60min) for these jobs:
+# a wedge should die and fail loudly on its own run rather than survive to
+# collide with tomorrow's.
+#
+# Returns the command's status, or 124 (the conventional timeout status) when
+# the cap fired. The FAILED: line is what daily_summary.py's _BAD markers
+# match, so a killed run reports as a failure even if it died after writing
+# its rows -- silence here would read as success.
+#
+# Polls with a FOREGROUND `sleep 1` rather than racing a background
+# `( sleep "$limit"; kill ... ) &` sleeper. The sleeper version is the obvious
+# shape and it is wrong: on the NORMAL path the command finishes first, and
+# killing the sleeper subshell orphans the `sleep` still inside it (reparented
+# to init, so it cannot be reaped by PID either). That orphan holds the job's
+# inherited stdout/stderr for the remainder of the cap -- up to 20 minutes of a
+# stray process in the job's group, which is the very "still running" symptom
+# this function exists to remove. Caught by
+# test_run_with_timeout_passes_through_a_fast_commands_own_status, which hung.
+# Here the only other child is a 1s foreground sleep that always completes.
+run_with_timeout() {
+    local limit="$1"; shift
+    local cmd="$1"
+
+    "$@" &
+    local cmd_pid=$!
+
+    local waited=0
+    while [ "$waited" -lt "$limit" ] && kill -0 "$cmd_pid" 2>/dev/null; do
+        sleep 1
+        waited=$((waited + 1))
+    done
+
+    # A plain variable, not an exit-status guess: a command may legitimately
+    # return 124/143 on its own, so only this loop may claim the cap fired.
+    local timed_out=0
+    if kill -0 "$cmd_pid" 2>/dev/null; then
+        timed_out=1
+        # TERM first so claude can close its MCP children; KILL as backstop.
+        kill -TERM "$cmd_pid" 2>/dev/null
+        sleep 5
+        kill -KILL "$cmd_pid" 2>/dev/null
+    fi
+
+    local status=0
+    wait "$cmd_pid" || status=$?
+
+    # On the killed path bash also prints its own job-control notice for the
+    # reaped command ("... Terminated: 15  \"$@\""). Left alone deliberately:
+    # it carries the PID and signal, and it contains none of daily_summary.py's
+    # _BAD markers, so it cannot be misread as an additional failure.
+    if [ "$timed_out" -eq 1 ]; then
+        echo "[$(date '+%F %T')] FAILED: $cmd exceeded ${limit}s — killed" >&2
+        status=124
+    fi
+    return "$status"
+}

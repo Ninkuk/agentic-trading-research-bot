@@ -163,6 +163,69 @@ def test_step_start_emits_step_not_start():
     assert "start:" not in body
 
 
+def test_headless_claude_slots_are_wall_clock_capped():
+    """An uncapped `claude -p` can wedge indefinitely: on 2026-08-04 the
+    journal slot sat 7h11m at 4s of CPU inside a stalled MCP call, holding
+    its launchd slot (launchd will not re-spawn a job while the instance
+    lives) with nothing able to reap it -- daily_summary.py's hang tier is
+    detection-only by design. Both headless slots must route claude through
+    run_with_timeout, under that digest's 60min _HUNG_SLOW_MIN so a wedge
+    dies on its own run instead of colliding with the next one."""
+    for wrapper in ("portfolio_snapshot.sh", "journal_sync.sh"):
+        text = (LAUNCHD / wrapper).read_text()
+        assert "run_with_timeout" in text, f"{wrapper} runs claude uncapped"
+        secs = re.search(r"run_with_timeout \"\$\{[A-Z_]+:-(\d+)\}\"", text)
+        assert secs, f"{wrapper} has no overridable numeric cap"
+        assert 0 < int(secs.group(1)) < 60 * 60, (
+            f"{wrapper} cap must stay under daily_summary.py's 60min hang tier"
+        )
+
+
+def test_run_with_timeout_kills_a_wedged_command_and_reports_it(tmp_path):
+    """The watchdog must (a) kill a command that outlives its cap, (b) return
+    124 rather than the command's own status, and (c) emit a FAILED: line --
+    daily_summary.py matches FAILED, so a silently-killed run would otherwise
+    read as a success in the nightly digest."""
+    script = tmp_path / "probe.sh"
+    script.write_text(
+        textwrap.dedent(
+            f"""\
+            #!/bin/bash
+            set -uo pipefail
+            source "{LAUNCHD / "env.sh"}"
+            run_with_timeout 1 sleep 60
+            echo "status=$?"
+            """
+        )
+    )
+    result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=30)
+
+    assert "status=124" in result.stdout, result.stdout
+    assert "FAILED:" in result.stderr, result.stderr
+
+
+def test_run_with_timeout_passes_through_a_fast_commands_own_status(tmp_path):
+    """The cap must be invisible on the normal path: the command's real exit
+    status has to survive, or the wrappers' `FRESH` checks would grade every
+    run against the watchdog's status instead of claude's."""
+    script = tmp_path / "probe.sh"
+    script.write_text(
+        textwrap.dedent(
+            f"""\
+            #!/bin/bash
+            set -uo pipefail
+            source "{LAUNCHD / "env.sh"}"
+            run_with_timeout 30 bash -c 'exit 7'
+            echo "status=$?"
+            """
+        )
+    )
+    result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=30)
+
+    assert "status=7" in result.stdout, result.stdout
+    assert "FAILED:" not in result.stderr, result.stderr
+
+
 def test_env_sh_exit_trap_emits_exactly_one_end_line_with_the_real_exit_code(tmp_path):
     """env.sh's EXIT trap must fire exactly once and log the ACTUAL exit
     code, even when `set -e` aborts the script on a failing command -- this

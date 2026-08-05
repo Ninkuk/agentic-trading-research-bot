@@ -15,6 +15,9 @@ job_start "journal sync"
 # headless runs (proven 2026-07-22 by a research-nightly session committing
 # an unreviewed file). Pinning the mode makes this allowlist a real envelope;
 # Skill (loads /journal-sync) and TodoWrite become explicit for that reason.
+# 20min cap vs. a ~100s normal run. This is the slot that wedged for 7h11m on
+# 2026-08-04; see run_with_timeout in env.sh.
+run_with_timeout "${JOURNAL_TIMEOUT_SECS:-1200}" \
 claude -p "/journal-sync" \
     --model sonnet \
     --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_equity_orders,mcp__claude_ai_Robinhood_MCP__get_option_orders,mcp__claude_ai_Robinhood_MCP__get_realized_pnl,mcp__claude_ai_Robinhood_MCP__get_pnl_trade_history,Write,Bash(uv run python main.py journal *),Bash(uv run python main.py orders reconcile *),Bash(sqlite3 file:data/orders.db?mode=ro *)" \

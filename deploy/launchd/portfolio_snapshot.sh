@@ -17,14 +17,23 @@ job_start "portfolio snapshot"
 # different axis and DO get added as the skill grows to call them; a skill
 # calling a getter the wrapper omits is a silent weekday outage, which is why
 # test_launchd_wrappers.py asserts the two sets agree.
+# get_equity_quotes is granted for that reason, but note the trigger: the
+# UPSTREAM tool changed, not the skill. get_equity_positions stopped
+# returning market_value and its guide now redirects to get_equity_quotes,
+# so market value is derived (price x quantity) and the slot failed
+# 2026-08-03/04 on the denial. No offline test can catch a vendor contract
+# change -- the allowlist test only fires once the skill names the getter.
 # --permission-mode default is load-bearing: a global defaultMode=auto in
 # ~/.claude/settings.json AUTO-APPROVES tools outside --allowedTools in
 # headless runs (proven 2026-07-22 by a research-nightly session committing
 # an unreviewed file). Pinning the mode makes this allowlist a real envelope;
 # Skill (loads /account-positions) and TodoWrite become explicit for that reason.
+# 20min cap vs. a ~30-80s normal run: ~15x headroom, and safely under
+# daily_summary.py's 60min hang tier so a wedge dies on its own run.
+run_with_timeout "${PORTFOLIO_TIMEOUT_SECS:-1200}" \
 claude -p "/account-positions" \
     --model sonnet \
-    --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_portfolio,mcp__claude_ai_Robinhood_MCP__get_equity_positions,mcp__claude_ai_Robinhood_MCP__get_option_positions,Write,Bash(uv run python main.py portfolio *)" \
+    --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_portfolio,mcp__claude_ai_Robinhood_MCP__get_equity_positions,mcp__claude_ai_Robinhood_MCP__get_equity_quotes,mcp__claude_ai_Robinhood_MCP__get_option_positions,Write,Bash(uv run python main.py portfolio *)" \
     --permission-mode default \
     --output-format json
 
