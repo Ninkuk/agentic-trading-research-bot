@@ -346,9 +346,16 @@ def build_health(
     for log in sorted(logs_dir.glob("*.log")):
         if log.name == SELF_LOG:  # the dashboard job is running as it builds this
             continue
-        if not log.is_file():  # degenerate entry (e.g. a directory) -- hung_jobs
-            continue  # already reports it if the job is running; don't blank the rest
-        runs, markers = scan_log(log, since)
+        try:
+            runs, markers = scan_log(log, since)
+        except Exception as e:
+            # A degenerate entry (directory, unreadable permissions, a log
+            # rotated out from under us) must not blank every other finding
+            # -- report it and keep going, same idiom as hung_jobs.
+            problems.append(
+                {"kind": "log", "target": log.stem, "detail": f"scan failed ({type(e).__name__})"}
+            )
+            continue
         total_runs += runs
         for marker, count in sorted(markers.items()):
             noun = "line" if count == 1 else "lines"

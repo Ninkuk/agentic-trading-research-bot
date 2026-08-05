@@ -6,8 +6,11 @@ one-bad-log guard from test_daily_summary_resilience.py (a degenerate log
 must not blank out other findings).
 """
 
+import os
 import sys
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "deploy" / "launchd"))
 from dashboard_lib import health  # noqa: E402
@@ -111,6 +114,38 @@ def test_one_degenerate_log_cannot_blank_the_rest(tmp_path, monkeypatch):
     result = health.build_health(logs, data, NOW_LOCAL, NOW_UTC)
     kinds = [p["kind"] for p in result["problems"]]
     assert "hung" in kinds
+    assert "stale" in kinds
+
+
+def test_unreadable_log_cannot_blank_the_rest(tmp_path, monkeypatch):
+    """The directory case above is one failure mode of a broader class: any
+    OSError raised while scanning a log (permission removed by a botched
+    chmod, a different-UID wrapper run, log rotation mid-write) must not
+    take down the whole report. Pin it with a real unreadable file, not just
+    a directory, so an is_file()-only guard (which passes an unreadable file
+    through) cannot silently satisfy this test for the wrong reason."""
+    logs = tmp_path / "logs"
+    logs.mkdir(exist_ok=True)
+    data = tmp_path / "data"
+    data.mkdir(exist_ok=True)
+    locked = logs / "locked.log"
+    locked.write_text("[2026-07-22 12:00:00] start: locked\n")
+    locked.chmod(0o000)
+    if os.access(locked, os.R_OK):
+        pytest.skip("running with privileges that bypass file permissions (e.g. root)")
+    old = (NOW_UTC - health.dt.timedelta(days=30)).isoformat()
+    with health.sqlite3.connect(data / "stale.db") as conn:
+        conn.execute("CREATE TABLE snapshots (id INTEGER PRIMARY KEY, captured_at TEXT)")
+        conn.execute("INSERT INTO snapshots (captured_at) VALUES (?)", (old,))
+        conn.commit()
+    monkeypatch.setattr(health, "job_exit_codes", lambda: {})
+    monkeypatch.setattr(health, "running_jobs", lambda: set())
+    try:
+        result = health.build_health(logs, data, NOW_LOCAL, NOW_UTC)
+    finally:
+        locked.chmod(0o644)  # tmp_path cleanup must not fail on a locked file
+    kinds = [p["kind"] for p in result["problems"]]
+    assert "log" in kinds
     assert "stale" in kinds
 
 
