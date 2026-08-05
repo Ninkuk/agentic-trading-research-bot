@@ -61,6 +61,10 @@ def test_masked_tail_is_html_escaped():
 
 
 def test_help_link_excludes_trailing_punctuation():
-    html = _page()
-    assert 'href="https://ntfy.sh"' in html
-    assert 'href="https://ntfy.sh."' not in html
+    # A generic property of _field's help-text linkifier, not tied to any
+    # particular catalog entry's wording — exercised directly with a
+    # synthetic Knob whose help text ends a URL with a period.
+    knob = config_ui.Knob("EXAMPLE", "Example", "see https://example.com.", "str")
+    html = config_ui._field(knob, {}, {})
+    assert 'href="https://example.com"' in html
+    assert 'href="https://example.com."' not in html

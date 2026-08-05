@@ -8,7 +8,7 @@ import config_ui  # noqa: E402
 
 ENV = """FRED_API_KEY=oldsecret123
 #RESEARCH_NIGHTLY_MAX=3
-NTFY_TOPIC=ZZ_NTFY_TOPIC_ZZ
+NASS_API_KEY=ZZ_NASS_API_KEY_ZZ
 """
 
 
@@ -20,18 +20,15 @@ def test_catalog_matches_spec():
     kinds = {k.key: k.kind for k in config_ui.KNOBS}
     assert kinds["RESEARCH_NIGHTLY_MAX"] == "int"
     assert kinds["RESEARCH_NIGHTLY_MODEL"] == "enum"
-    assert kinds["NTFY_SERVER"] == "str"
     for secret in (
         "FRED_API_KEY",
         "CFTC_APP_TOKEN",
         "EIA_API_KEY",
         "NASS_API_KEY",
-        "NTFY_TOKEN",
-        "NTFY_TOPIC",
         "HEALTHCHECK_URL",
     ):
         assert kinds[secret] == "secret"
-    assert len(config_ui.KNOBS) == 11
+    assert len(config_ui.KNOBS) == 8
 
 
 def test_sentinel_and_empty_are_unset():
@@ -58,8 +55,10 @@ def test_validate_int_rejects_unicode_digits_without_crashing():
 
 
 def test_validate_rejects_env_breaking_characters():
-    s = _knob("NTFY_SERVER")
-    assert config_ui.validate(s, "https://ntfy.example.com") is None
+    # str and secret share the .env-safety check (config_ui.validate); a
+    # secret knob exercises it just as well as a plain str one would.
+    s = _knob("HEALTHCHECK_URL")
+    assert config_ui.validate(s, "https://hc-ping.com/abc123") is None
     for bad in ("has space", 'quo"te', "hash#tag", "back\\slash"):
         assert config_ui.validate(s, bad) is not None
 
@@ -67,10 +66,10 @@ def test_validate_rejects_env_breaking_characters():
 def test_handle_save_sets_clears_and_ignores_unchanged():
     form = {
         "RESEARCH_NIGHTLY_MAX": "2",  # set (uncomment)
-        "NTFY_SERVER": "",  # clear (absent -> noop)
+        "RESEARCH_NIGHTLY_MODEL": "",  # clear (absent -> noop)
         "secret_FRED_API_KEY": "",  # blank secret = unchanged
         "secret_EIA_API_KEY": "newkey42",  # set secret
-        "clear_NTFY_TOPIC": "on",  # clear secret (sentinel present)
+        "clear_NASS_API_KEY": "on",  # clear secret (sentinel present)
     }
     new_text, errors = config_ui.handle_save(ENV, form)
     assert errors == {}
@@ -78,7 +77,7 @@ def test_handle_save_sets_clears_and_ignores_unchanged():
     assert parsed["RESEARCH_NIGHTLY_MAX"] == "2"
     assert parsed["FRED_API_KEY"] == "oldsecret123"  # untouched
     assert parsed["EIA_API_KEY"] == "newkey42"
-    assert "NTFY_TOPIC" not in parsed
+    assert "NASS_API_KEY" not in parsed
 
 
 def test_handle_save_all_or_nothing_on_error():

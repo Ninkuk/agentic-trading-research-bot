@@ -137,8 +137,8 @@ def test_run_job_sh_never_execs():
 
 
 def test_every_wrapper_except_env_and_status_calls_job_start():
-    """Every job-running wrapper must call job_start so daily_summary.py has
-    a `start:`/`end:` pair to read. env.sh defines job_start (it doesn't
+    """Every job-running wrapper must call job_start so dashboard_lib/health.py
+    has a `start:`/`end:` pair to read. env.sh defines job_start (it doesn't
     call it) and status.sh is a read-only report, not a job -- both are
     correctly exempt."""
     skip = {"env.sh", "status.sh"}
@@ -150,9 +150,9 @@ def test_every_wrapper_except_env_and_status_calls_job_start():
 
 def test_step_start_emits_step_not_start():
     """step_start's line shape must stay `step:`, distinct from job_start's
-    `start:` -- daily_summary.py's scan_log counts only `start:` lines toward
-    the "N runs in 24h" headline, and last_progress needs to tell "the run
-    started" apart from "the run is still making progress". If step_start
+    `start:` -- dashboard_lib/health.py's scan_log counts only `start:` lines
+    toward the "N runs in 24h" headline, and last_progress needs to tell "the
+    run started" apart from "the run is still making progress". If step_start
     reverts to emitting `start:`, a multi-step wrapper (cftc_weekly.sh: 3
     families, preopen_batch.sh: 4 steps) silently inflates that headline by
     the step count, with nothing failing. Extracted just this function's body
@@ -167,25 +167,25 @@ def test_headless_claude_slots_are_wall_clock_capped():
     """An uncapped `claude -p` can wedge indefinitely: on 2026-08-04 the
     journal slot sat 7h11m at 4s of CPU inside a stalled MCP call, holding
     its launchd slot (launchd will not re-spawn a job while the instance
-    lives) with nothing able to reap it -- daily_summary.py's hang tier is
-    detection-only by design. Both headless slots must route claude through
-    run_with_timeout, under that digest's 60min _HUNG_SLOW_MIN so a wedge
-    dies on its own run instead of colliding with the next one."""
+    lives) with nothing able to reap it -- dashboard_lib/health.py's hang
+    tier is detection-only by design. Both headless slots must route claude
+    through run_with_timeout, under health.py's 60min HUNG_SLOW_MIN so a
+    wedge dies on its own run instead of colliding with the next one."""
     for wrapper in ("portfolio_snapshot.sh", "journal_sync.sh"):
         text = (LAUNCHD / wrapper).read_text()
         assert "run_with_timeout" in text, f"{wrapper} runs claude uncapped"
         secs = re.search(r"run_with_timeout \"\$\{[A-Z_]+:-(\d+)\}\"", text)
         assert secs, f"{wrapper} has no overridable numeric cap"
         assert 0 < int(secs.group(1)) < 60 * 60, (
-            f"{wrapper} cap must stay under daily_summary.py's 60min hang tier"
+            f"{wrapper} cap must stay under dashboard_lib/health.py's 60min hang tier"
         )
 
 
 def test_run_with_timeout_kills_a_wedged_command_and_reports_it(tmp_path):
     """The watchdog must (a) kill a command that outlives its cap, (b) return
     124 rather than the command's own status, and (c) emit a FAILED: line --
-    daily_summary.py matches FAILED, so a silently-killed run would otherwise
-    read as a success in the nightly digest."""
+    dashboard_lib/health.py's scan_log matches FAILED, so a silently-killed
+    run would otherwise read as a success in the nightly health section."""
     script = tmp_path / "probe.sh"
     script.write_text(
         textwrap.dedent(

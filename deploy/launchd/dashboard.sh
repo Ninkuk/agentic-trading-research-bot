@@ -1,7 +1,6 @@
 #!/bin/bash
-# Nightly dashboard data.json into reports/data.json (see dashboard.py).
-# Runs after advisor (9:12pm) and before the daily-summary ntfy (9:15pm); a
-# separate process, so a failure here cannot delay that alert.
+# Runs after advisor (9:12pm) as the last nightly reporter; renders
+# data.json and pings the dead-man's switch.
 set -uo pipefail
 source "$(dirname "$0")/env.sh"
 job_start "dashboard"

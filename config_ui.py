@@ -166,24 +166,6 @@ KNOBS: tuple[Knob, ...] = (
         default="opus",
     ),
     Knob(
-        "NTFY_SERVER",
-        "ntfy server",
-        "Optional self-hosted ntfy server URL; leave unset for https://ntfy.sh.",
-        "str",
-    ),
-    Knob(
-        "NTFY_TOPIC",
-        "ntfy topic",
-        "Notification topic name; treat it like a password (anyone who knows it can read your alerts). https://ntfy.sh",
-        "secret",
-    ),
-    Knob(
-        "NTFY_TOKEN",
-        "ntfy token",
-        "Optional Bearer token for protected topics.",
-        "secret",
-    ),
-    Knob(
         "FRED_API_KEY",
         "FRED API key",
         "St. Louis Fed (macro/regime reader): https://fred.stlouisfed.org/docs/api/api_key.html",
@@ -210,7 +192,7 @@ KNOBS: tuple[Knob, ...] = (
     Knob(
         "HEALTHCHECK_URL",
         "Healthcheck URL",
-        "Dead-man's-switch URL pinged nightly (the URL itself is the secret): https://healthchecks.io",
+        "Dead-man's-switch URL pinged by the nightly dashboard job (the URL itself is the secret): https://healthchecks.io",
         "secret",
     ),
 )

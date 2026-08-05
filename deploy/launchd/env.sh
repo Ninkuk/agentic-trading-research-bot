@@ -21,8 +21,8 @@ job_start() {
     # aborts and explicit `exit N` preserve the real status there), so a job
     # terminated by a signal -- e.g. a human `kill` after noticing a hang --
     # would otherwise log a false "exit 0" at exactly the moment that matters
-    # most. (daily_summary.py's hang detection is detection-only: it reports
-    # a job running past its budget, it never kills or restarts one.)
+    # most. (dashboard_lib/health.py's hang detection is detection-only: it
+    # reports a job running past its budget, it never kills or restarts one.)
     # Re-raise the conventional 128+N status via a signal trap so it reaches
     # job_end intact; install the EXIT trap last so it still fires exactly
     # once, after these have set $? for it to read.
@@ -52,11 +52,11 @@ job_end() {
 # line -- it never touches the whole-run timer or the trap.
 #
 # Emits `step:`, NOT `start:` -- deliberately distinct from job_start's line
-# shape. A `start:` line means "a run began"; daily_summary.py's scan_log
-# counts only those for its "N runs in 24h" headline, and its hang-detector
-# (last_progress) needs to tell "the run started" apart from "the run is
-# still making progress" while still treating both as evidence the job is
-# alive. Before this, step_start emitted `start:` too, so a multi-step
+# shape. A `start:` line means "a run began"; dashboard_lib/health.py's
+# scan_log counts only those for its "N runs in 24h" headline, and its
+# hang-detector (last_progress) needs to tell "the run started" apart from
+# "the run is still making progress" while still treating both as evidence
+# the job is alive. Before this, step_start emitted `start:` too, so a multi-step
 # wrapper's last_start picked up the CURRENT STEP's timestamp under a "run
 # start" label, silently turning a whole-run budget into a per-step one
 # (cftc_weekly.sh: 3x; preopen_batch.sh: 4x) and inflating the run count by
@@ -72,18 +72,18 @@ step_start() {
 # Why a cap exists at all: on 2026-08-04 the journal slot sat wedged for 7h11m
 # on 4s of CPU (stalled inside a `claude -p` MCP call), holding its launchd
 # slot the whole time. launchd will not re-spawn a job while the instance is
-# alive, and daily_summary.py's hang tier is DETECTION ONLY by design (see
-# hung_jobs' docstring) -- so nothing in the system could reap it. The cap has
-# to live in the job itself.
+# alive, and dashboard_lib/health.py's hang tier is DETECTION ONLY by design
+# (see hung_jobs' docstring) -- so nothing in the system could reap it. The
+# cap has to live in the job itself.
 #
-# Keep the cap BELOW daily_summary.py's _HUNG_SLOW_MIN (60min) for these jobs:
-# a wedge should die and fail loudly on its own run rather than survive to
-# collide with tomorrow's.
+# Keep the cap BELOW dashboard_lib/health.py's HUNG_SLOW_MIN (60min) for
+# these jobs: a wedge should die and fail loudly on its own run rather than
+# survive to collide with tomorrow's.
 #
 # Returns the command's status, or 124 (the conventional timeout status) when
-# the cap fired. The FAILED: line is what daily_summary.py's _BAD markers
-# match, so a killed run reports as a failure even if it died after writing
-# its rows -- silence here would read as success.
+# the cap fired. The FAILED: line is what dashboard_lib/health.py's
+# BAD_MARKERS match, so a killed run reports as a failure even if it died
+# after writing its rows -- silence here would read as success.
 #
 # Polls with a FOREGROUND `sleep 1` rather than racing a background
 # `( sleep "$limit"; kill ... ) &` sleeper. The sleeper version is the obvious
@@ -124,8 +124,9 @@ run_with_timeout() {
 
     # On the killed path bash also prints its own job-control notice for the
     # reaped command ("... Terminated: 15  \"$@\""). Left alone deliberately:
-    # it carries the PID and signal, and it contains none of daily_summary.py's
-    # _BAD markers, so it cannot be misread as an additional failure.
+    # it carries the PID and signal, and it contains none of
+    # dashboard_lib/health.py's BAD_MARKERS, so it cannot be misread as an
+    # additional failure.
     if [ "$timed_out" -eq 1 ]; then
         echo "[$(date '+%F %T')] FAILED: $cmd exceeded ${limit}s — killed" >&2
         status=124

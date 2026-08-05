@@ -156,9 +156,10 @@ Finally, append one line to `research/verdicts.log` (create it if absent):
 `<YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n> [reopen=<YYYY-MM-DD|event>:<slug>]`
 — the ledger that makes verdict drift measurable (see the design note below).
 `reopen=` encodes the flip-evidence sentence above: a date when the deciding
-evidence lands (earnings print, ruling, PDUFA — surfaced by the nightly
-daily-summary when due), or `event:` for undated triggers (a filing, a price
-level — grep-only). The slug is a pointer; the thesis holds the condition.
+evidence lands (earnings print, ruling, PDUFA — surfaced on the dashboard's
+research-reopens section when due), or `event:` for undated triggers (a
+filing, a price level — grep-only). The slug is a pointer; the thesis holds
+the condition.
 Omit the field only when the thesis genuinely states no reopen condition.
 
 ## Design note: the one-way-check budget is frozen

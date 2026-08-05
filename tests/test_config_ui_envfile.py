@@ -9,7 +9,7 @@ import config_ui  # noqa: E402
 SAMPLE = """# Free API keys — signup URLs inside.
 FRED_API_KEY=abc123secret       # St. Louis Fed
 EIA_API_KEY=ZZ_EIA_API_KEY_ZZ   # sentinel, still unset
-# NTFY_SERVER=https://ntfy.sh       # optional; self-hosted
+# HEALTHCHECK_URL=https://hc-ping.com/xxx   # optional; dead-man's switch
 #RESEARCH_NIGHTLY_MAX=3
 UNKNOWN_FUTURE_KEY=keepme
 """
@@ -19,7 +19,7 @@ def test_parse_strips_trailing_comment_and_keeps_unknown():
     got = config_ui.parse_env(SAMPLE)
     assert got["FRED_API_KEY"] == "abc123secret"
     assert got["UNKNOWN_FUTURE_KEY"] == "keepme"
-    assert "NTFY_SERVER" not in got  # commented-out line is not an assignment
+    assert "HEALTHCHECK_URL" not in got  # commented-out line is not an assignment
     assert "RESEARCH_NIGHTLY_MAX" not in got
 
 
@@ -36,7 +36,7 @@ def test_apply_uncomments_default_line_in_place():
     lines = out.splitlines()
     assert "RESEARCH_NIGHTLY_MAX=2" in lines
     assert "#RESEARCH_NIGHTLY_MAX=3" not in out
-    # position preserved: still directly after the NTFY_SERVER comment line
+    # position preserved: still directly after the HEALTHCHECK_URL comment line
     assert lines.index("RESEARCH_NIGHTLY_MAX=2") == 4
 
 

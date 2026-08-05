@@ -401,8 +401,7 @@ def _candidates(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     }
 
 
-# Mirrors daily_summary._REOPEN_DATED_RE / sections.py's own regex — both
-# read the same verdicts.log lines.
+# Mirrors sections.py's own regex — both read the same verdicts.log lines.
 _REOPEN_FIELD_RE = re.compile(r"\breopen=(\d{4}-\d{2}-\d{2}|event):(\S+)")
 _REOPEN_TICKER_RE = re.compile(r"^[A-Z0-9.\-]+$")
 _REOPEN_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -558,9 +557,9 @@ _HEALTH_COLUMNS: list[dict[str, Any]] = [
 
 def _health(data_dir: str, now_iso: str) -> dict[str, Any]:
     """Pipeline health: launchctl exit codes, hung jobs, log FAILED/STALE
-    counts, stale/empty DBs — the layers the retired nightly ntfy carried.
-    now_local is naive Phoenix (wrapper logs are bash-`date`-stamped local);
-    the fixed offset is safe only because Phoenix has no DST."""
+    counts, stale/empty DBs — the dashboard's nightly Ops section. now_local
+    is naive Phoenix (wrapper logs are bash-`date`-stamped local); the fixed
+    offset is safe only because Phoenix has no DST."""
     now_utc = datetime.fromisoformat(now_iso)
     if now_utc.tzinfo is None:
         now_utc = now_utc.replace(tzinfo=UTC)

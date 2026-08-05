@@ -3,7 +3,7 @@
 `stale_dbs` judges freshness on `captured_at` alone, so a fresh snapshot with
 zero rows (DNS blip, endpoint schema drift, expired token) reads as healthy.
 These tests exercise the added count-column check independently of the
-freshness/age logic already covered by test_daily_summary_resilience.py.
+freshness/age logic, which is covered by test_dashboard_health_build.py.
 """
 
 import sqlite3

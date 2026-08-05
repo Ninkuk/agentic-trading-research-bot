@@ -29,7 +29,7 @@ job_start "portfolio snapshot"
 # an unreviewed file). Pinning the mode makes this allowlist a real envelope;
 # Skill (loads /account-positions) and TodoWrite become explicit for that reason.
 # 20min cap vs. a ~30-80s normal run: ~15x headroom, and safely under
-# daily_summary.py's 60min hang tier so a wedge dies on its own run.
+# dashboard_lib/health.py's 60min hang tier so a wedge dies on its own run.
 run_with_timeout "${PORTFOLIO_TIMEOUT_SECS:-1200}" \
 claude -p "/account-positions" \
     --model sonnet \

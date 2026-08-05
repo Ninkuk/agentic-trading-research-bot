@@ -1,6 +1,6 @@
 """Tests for the `health` section exporter (data._health): the pipeline
-health payload the retired nightly ntfy carried, now exported into
-data.json. Because data.json is published to a public gh-pages site, the
+health payload exported into data.json for the dashboard's Ops strand.
+Because data.json is published to a public gh-pages site, the
 load-bearing property under test is that a raw log line — which can contain
 whatever a subprocess printed, including a URL with an API key — never
 reaches the exported payload; health.build_health already enforces that

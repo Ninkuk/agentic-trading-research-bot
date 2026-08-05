@@ -139,22 +139,20 @@ JOBS = {
     "scorer": (job("scorer", "--keep-days", "365"), weekly(range(7), 21, 10)),
     "advisor": (job("advisor", "--keep-days", "365"), weekly(range(7), 21, 12)),
     # Dashboard data export: renders composite/scorer/advisor rows read-only
-    # into reports/data.json for the dashboard/ React app. Between advisor
-    # (9:12) and daily-summary (9:15) so it reflects tonight's rows; a
-    # separate process, so a render bug can never delay or suppress the
-    # 9:15pm health ntfy.
+    # into reports/data.json for the dashboard/ React app, plus the pipeline
+    # health section (launchctl exit codes, hung jobs, stale DBs) and the
+    # HEALTHCHECK_URL dead-man's-switch ping. After advisor (9:12) so it
+    # reflects tonight's rows — this is the LAST nightly reporter; nothing
+    # else observes or summarizes the pipeline after it.
     "dashboard": (script("dashboard.sh"), weekly(range(7), 21, 13)),
-    # -- observability (every day, after the 8:30pm edgar run + retry) --
-    "daily-summary": (script("daily_summary.sh"), weekly(range(7), 21, 15)),
     # Push the built dashboard/dist + fresh reports/data.json to the
-    # gh-pages branch behind GitHub Pages. AFTER daily-summary (9:15), not
-    # before: a hung push must not be able to delay or suppress the health
-    # ntfy. Refuses to publish a stale data.json, so a failed 9:13 dashboard
-    # run surfaces here rather than silently republishing yesterday's page
-    # under tonight's timestamp. Git calls are bounded: push at 300s, other
-    # git calls at 120s, so the job cannot exceed ~13min worst case. The
-    # frontend itself is rebuilt manually via `npm run build` after
-    # dashboard/ changes — launchd never invokes Node.
+    # gh-pages branch behind GitHub Pages. Refuses to publish a stale
+    # data.json, so a failed 9:13 dashboard run surfaces here rather than
+    # silently republishing yesterday's page under tonight's timestamp. Git
+    # calls are bounded: push at 300s, other git calls at 120s, so the job
+    # cannot exceed ~13min worst case. The frontend itself is rebuilt
+    # manually via `npm run build` after dashboard/ changes — launchd never
+    # invokes Node.
     "publish-dashboard": (script("publish_dashboard.sh"), weekly(range(7), 21, 20)),
     # -- agentic research (after the combine chain, summary, and publish:
     #    selects from TONIGHT's v_flagged; up to RESEARCH_NIGHTLY_MAX

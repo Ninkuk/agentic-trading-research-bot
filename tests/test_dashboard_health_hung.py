@@ -5,8 +5,8 @@ it holds a RUNNING job's PREVIOUS exit status, not a sentinel, and reads 0
 both for "exited cleanly" and "has never exited" (see status.sh). Without
 running_jobs() reading the PID column instead, a job stuck forever is
 silently skipped, and launchd will not re-spawn a StartCalendarInterval job
-while an instance is alive -- so that job never runs again while every
-nightly ntfy says "All healthy."
+while an instance is alive -- so that job never runs again while the
+dashboard's health section keeps reporting "All healthy."
 """
 
 import sys
@@ -48,7 +48,7 @@ def test_slow_tier_job_past_its_own_limit_is_reported(tmp_path):
     assert len(health.hung_jobs({"fred-vintages"}, NOW, tmp_path)) == 1
 
 
-def test_the_digest_never_reports_itself(tmp_path):
+def test_the_dashboard_job_never_reports_itself(tmp_path):
     """dashboard is running by definition while it builds the health section."""
     _log(tmp_path, "dashboard", 600)
     assert health.hung_jobs({"dashboard"}, NOW, tmp_path) == []
@@ -131,12 +131,12 @@ def test_last_progress_returns_the_newest_step_marker(tmp_path):
     assert health.last_progress(path) == step
 
 
-def test_edgar_45min_into_its_designed_retry_sleep_is_not_flagged(tmp_path):
-    """edgar starts at 20:30, 45min before the 21:15 digest, and
-    edgar_daily.sh's `sleep 900` retry pause is a DESIGNED wait, not a hang.
-    Under the 15min default tier this would false-alarm every time SEC
-    throttles edgar into its retry sleep."""
-    _log(tmp_path, "edgar", 45)
+def test_edgar_43min_into_its_designed_retry_sleep_is_not_flagged(tmp_path):
+    """edgar starts at 20:30, 43min before the 21:13 dashboard health
+    snapshot, and edgar_daily.sh's `sleep 900` retry pause is a DESIGNED
+    wait, not a hang. Under the 15min default tier this would false-alarm
+    every time SEC throttles edgar into its retry sleep."""
+    _log(tmp_path, "edgar", 43)
     assert health.hung_jobs({"edgar"}, NOW, tmp_path) == []
 
 

@@ -16,8 +16,9 @@ UNPROVEN?" is answerable with data; the one-way-check freeze in
 `.claude/skills/kill-thesis/SKILL.md` is revisited when it holds ten lines.
 
 A verdict line may carry the thesis's stated revisit trigger as
-`reopen=<YYYY-MM-DD>:<slug>` (dated — the nightly daily-summary ntfy surfaces
-it when due) or `reopen=event:<slug>` (undated — listed on the dashboard's
-research-reopens section, otherwise grep-only). The slug is a pointer; the
-thesis file holds the actual condition. Only a ticker's newest verdict line
-counts: re-researching a name retires the older thesis's trigger.
+`reopen=<YYYY-MM-DD>:<slug>` (dated) or `reopen=event:<slug>` (undated). Both
+are listed on the dashboard's research-reopens section; a dated trigger for a
+held ticker due within +/-7 days also surfaces in that section's checkpoints
+list. The slug is a pointer; the thesis file holds the actual condition.
+Only a ticker's newest verdict line counts: re-researching a name retires
+the older thesis's trigger.

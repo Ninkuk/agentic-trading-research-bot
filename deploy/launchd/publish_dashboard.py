@@ -8,8 +8,8 @@ Everything happens in a temp directory. The live worktree, index, and HEAD are
 never touched -- a branch switch at 9:20pm could collide with the owner working
 in the repo, or with another scheduled job reading data/.
 
-Runs at 9:20pm Phoenix, AFTER the 9:15pm daily-summary ntfy, so a slow or hung
-push can neither delay nor suppress that health alert.
+Runs at 9:20pm Phoenix, a separate process from the 9:13pm dashboard render,
+so a slow or hung push can never delay or block it.
 
 Refuses to publish stale data. If the 9:13pm dashboard job did not run,
 reports/data.json is yesterday's, and pushing it would put an old page up

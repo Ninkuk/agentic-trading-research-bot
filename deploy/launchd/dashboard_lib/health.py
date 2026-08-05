@@ -1,8 +1,8 @@
-"""Three pipeline-health layers ported from the retired daily_summary.py:
-launchctl exit codes, log activity, and DB snapshot freshness. Structured
-findings only -- data.json is published to public gh-pages, so raw log
-lines never enter the payload (a subprocess can print anything, including a
-URL with an API key).
+"""Three pipeline-health layers -- launchctl exit codes, log activity, and DB
+snapshot freshness -- assembled into the dashboard's nightly health section.
+Structured findings only -- data.json is published to public gh-pages, so raw
+log lines never enter the payload (a subprocess can print anything, including
+a URL with an API key).
 """
 
 import datetime as dt
@@ -19,18 +19,20 @@ SELF_LOG = "dashboard.log"
 _TS = re.compile(r"^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]")
 BAD_MARKERS = ("FAILED", "STALE", "Traceback", "Error:")
 
-# How long a job may run before the digest calls it hung. INTERIM two-tier
-# stopgap: replace with measured per-job values once env.sh's `end:` lines have
-# accumulated (~2 weeks). A stopgap with no recorded end date becomes permanent.
+# How long a job may run before the health section calls it hung. INTERIM
+# two-tier stopgap: replace with measured per-job values once env.sh's `end:`
+# lines have accumulated (~2 weeks). A stopgap with no recorded end date
+# becomes permanent.
 #
-# A threshold only matters for a job still plausibly running at 21:15 (the
-# digest fires once, nightly) -- i.e. one that starts within roughly an hour
-# of it. Measured gaps: dashboard 2min, advisor 3min, scorer 5min, composite
-# 10min -- all safe under the default tier. `edgar` (20:30, 45min before the
-# digest) is the only slow-tier entry that is actually load-bearing today;
-# every other _SLOW_JOBS entry starts 2h-17h earlier; if still alive at
-# digest time it would be flagged under either tier, so those are defensive
-# against future schedule changes rather than currently load-bearing.
+# A threshold only matters for a job still plausibly running at 21:13 (the
+# dashboard job builds the health section once, nightly) -- i.e. one that
+# starts within roughly an hour of it. Measured gaps: dashboard 2min, advisor
+# 3min, scorer 5min, composite 10min -- all safe under the default tier.
+# `edgar` (20:30, 43min before the snapshot) is the only slow-tier entry that
+# is actually load-bearing today; every other SLOW_JOBS entry starts 2h-17h
+# earlier; if still alive at snapshot time it would be flagged under either
+# tier, so those are defensive against future schedule changes rather than
+# currently load-bearing.
 HUNG_DEFAULT_MIN = 15
 HUNG_SLOW_MIN = 60
 SLOW_JOBS = {

@@ -2,9 +2,9 @@
 
 Exercises the best-effort ping in isolation (no network): a fake `get` seam
 stands in for the real HTTP call, and HEALTHCHECK_URL is monkeypatched via
-the environment. Mirrors the resilience style of test_daily_summary_advisor.py
-and test_daily_summary_resilience.py — never let a ping failure raise or
-affect main()'s exit code, and never let the URL leak to stderr.
+the environment. Same resilience posture as the rest of dashboard.py's
+main() — never let a ping failure raise or affect the exit code, and never
+let the URL leak to stderr.
 """
 
 import sys

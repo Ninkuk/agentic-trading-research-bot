@@ -1,9 +1,8 @@
 """build_health assembles the three health layers into one structured payload
-for data.json. Absorbs the ported behaviors of test_daily_summary_self_echo.py
-(the digest must not read its own log), test_daily_summary_weekend_echo.py
-(a stale exit code must not re-red days the job didn't run), and the
-one-bad-log guard from test_daily_summary_resilience.py (a degenerate log
-must not blank out other findings).
+for data.json. Covers: the dashboard job must not read its own log while
+building tonight's section, a stale exit code must not re-red days the job
+didn't run, and a degenerate log (unreadable, or a directory where a file was
+expected) must not blank out other findings.
 """
 
 import os

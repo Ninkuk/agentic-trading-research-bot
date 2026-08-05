@@ -60,12 +60,11 @@ summer open (6:30am Phoenix).
 | `ftd-full` | 15th 8:00am | `--full` re-ingests all 24 months of FTD half-months; the weekly probe only re-fetches ~1 month back, so SEC reposts older than that land only here |
 | `short-interest-full` | 15th 7:00pm | `--full` re-ingests ~12 months of settlements; the daily probe only re-fetches ~1 month back, FINRA corrections older than that land only here |
 | `usda-wasde` | 12th & 16th 10:15am | WASDE lands ~9th–12th, occasionally later — the 16th probe catches stragglers |
-| `composite` | every day 9:05pm | Combines all source DBs into `data/composite.db` (read-only attaches; regime + ticker scorecard). Must stay after every collector's last daily slot INCLUDING edgar's 15-min failure retry (~8:45pm+) and before daily-summary at 9:15pm |
+| `composite` | every day 9:05pm | Combines all source DBs into `data/composite.db` (read-only attaches; regime + ticker scorecard). Must stay after every collector's last daily slot INCLUDING edgar's 15-min failure retry (~8:45pm+) and before dashboard at 9:13pm |
 | `scorer` | every day 9:10pm | Grades composite opinions: harvests closes into data/scorer.db, registers pending outcomes, matures forward returns. Must stay after composite 9:05pm. Outcome tables AND the close-price ledger are permanent (never pruned; the ledger is the future backtest store, growing a few hundred MB/year). Entries are next-day closes (no look-ahead), so a snapshot registers the night after its entry close is harvested — the newest snapshot printing `defer` is steady-state, not a failure |
-| `advisor` | every day 9:12pm | Sizing/risk advice into `data/advisor.db`: joins the composite scorecard against portfolio holdings + stocks/etfs ATR + scorer efficacy (all attached read-only). Book heat (`v_book_heat`/`v_group_heat`, crosswalk groups = one bet), holdings composite disagrees with (`v_disagreements`), and 1%-risk-budget size caps (`v_latest_caps`). Must stay after scorer 9:10pm, before daily-summary 9:15pm. Weekend runs size against Friday's 2:30pm portfolio snapshot — `portfolio_captured_at` in the header makes that auditable |
-| `dashboard` | every day 9:13pm | Renders `composite`/`scorer`/`advisor` rows read-only into `reports/data.json` (plain data for the `dashboard/` React app to render; see `deploy/launchd/dashboard.py`). After advisor 9:12pm so it reflects tonight's rows; a separate process from daily-summary, so a render bug can never delay or suppress the 9:15pm ntfy. Each section is independently try/excepted — a missing DB/view degrades to an "unavailable" note, never a crash |
-| `daily-summary` | every day 9:15pm | ntfy digest (see below) |
-| `publish-dashboard` | every day 9:20pm | Force-pushes the built `dashboard/dist` assembly (React app + fresh `reports/data.json`) to the `gh-pages` branch behind GitHub Pages (https://ninkuk.github.io/agentic-trading-research-bot/). **After** the 9:15pm ntfy by design — a hung push must not delay or suppress the health alert. Refuses to publish unless `reports/data.json`'s mtime is tonight's *Phoenix* date, so a failed 9:13pm dashboard run fails loudly here instead of silently republishing yesterday's page. Single-commit orphan branch, force-pushed from a temp dir; the live worktree is never touched. Git calls are now bounded — push at 300s, other git calls at 120s — so the job cannot exceed roughly 13 minutes worst case. The page carries live account positions, so the shipped `index.html` bakes in `<meta name="robots" content="noindex,nofollow">` — the only crawler control that works here. It also publishes a `robots.txt`, but that lands at the project-page path `.../agentic-trading-research-bot/robots.txt`, which no crawler ever consults (robots.txt is per-origin, fetched only from `ninkuk.github.io/robots.txt`) — it is inert here, not a second layer of protection. The frontend itself (`dashboard/dist`) is rebuilt manually via `npm run build` after `dashboard/` changes — launchd never needs Node |
+| `advisor` | every day 9:12pm | Sizing/risk advice into `data/advisor.db`: joins the composite scorecard against portfolio holdings + stocks/etfs ATR + scorer efficacy (all attached read-only). Book heat (`v_book_heat`/`v_group_heat`, crosswalk groups = one bet), holdings composite disagrees with (`v_disagreements`), and 1%-risk-budget size caps (`v_latest_caps`). Must stay after scorer 9:10pm, before dashboard at 9:13pm. Weekend runs size against Friday's 2:30pm portfolio snapshot — `portfolio_captured_at` in the header makes that auditable |
+| `dashboard` | every day 9:13pm | Renders `composite`/`scorer`/`advisor` rows read-only into `reports/data.json` (plain data for the `dashboard/` React app to render; see `deploy/launchd/dashboard.py`). After advisor 9:12pm so it reflects tonight's rows — the LAST nightly reporter. Also computes the pipeline health section (launchctl exit codes, hung jobs, log activity, stale/empty DBs; see `deploy/launchd/dashboard_lib/health.py`) and pings `HEALTHCHECK_URL`, the dead-man's switch. Each section is independently try/excepted — a missing DB/view degrades to an "unavailable" note, never a crash |
+| `publish-dashboard` | every day 9:20pm | Force-pushes the built `dashboard/dist` assembly (React app + fresh `reports/data.json`) to the `gh-pages` branch behind GitHub Pages (https://ninkuk.github.io/agentic-trading-research-bot/). A separate process from the 9:13pm dashboard render, so a hung push can never delay or block it. Refuses to publish unless `reports/data.json`'s mtime is tonight's *Phoenix* date, so a failed 9:13pm dashboard run fails loudly here instead of silently republishing yesterday's page. Single-commit orphan branch, force-pushed from a temp dir; the live worktree is never touched. Git calls are now bounded — push at 300s, other git calls at 120s — so the job cannot exceed roughly 13 minutes worst case. The page carries live account positions, so the shipped `index.html` bakes in `<meta name="robots" content="noindex,nofollow">` — the only crawler control that works here. It also publishes a `robots.txt`, but that lands at the project-page path `.../agentic-trading-research-bot/robots.txt`, which no crawler ever consults (robots.txt is per-origin, fetched only from `ninkuk.github.io/robots.txt`) — it is inert here, not a second layer of protection. The frontend itself (`dashboard/dist`) is rebuilt manually via `npm run build` after `dashboard/` changes — launchd never needs Node |
 | `research-nightly` | every day 10:00pm | Headless `claude -p "/research-ticker <T>"` per selected ticker (≤`RESEARCH_NIGHTLY_MAX`, default 3, on `RESEARCH_NIGHTLY_MODEL`, default opus). Selects tonight's new `v_flagged` names first, then stale flagged, then stale held (`RESEARCH_STALE_DAYS`, default 30). Read-only tool allowlist — order tools never granted; verdict rows land in `scorer.db` via `main.py journal` (the loop's one DB write). Success = fresh `research/<T>-<date>.md` ≥2KB; exits nonzero only if ALL selected fail. Theses sit untracked until human review |
 
 ## Quarterly
@@ -100,40 +99,43 @@ summer open (6:30am Phoenix).
   `deploy/launchd/env.sh`: `start:` (whole-run begin, `job_start`), `step:`
   (sub-step progress inside a multi-step wrapper, e.g. `cftc_weekly.sh`'s
   three families or `preopen_batch.sh`'s four steps — `step_start`; deliberately
-  distinct from `start:` so it doesn't inflate the digest's run count), `end:`
-  (whole-run finish with duration + exit code, from the EXIT trap), plus
-  ad hoc `FAILED`/`STALE` lines from individual wrappers.
-- **Hang detection**: `daily_summary.py` cross-references `launchctl list`'s
-  PID column (not the exit-status column, which cannot distinguish "running"
-  from "exited cleanly" — see `status.sh`) against each running job's newest
-  `start:`/`step:` line. Past 15 minutes (default) or 60 minutes (`_SLOW_JOBS`
-  — jobs with a legitimately long single run, e.g. `fred-vintages`, or one
-  starting close enough to 9:15pm that a designed pause could still be live,
-  e.g. `edgar`'s post-throttle `sleep 900`) it's reported as a possible hang.
-  Detection only — it never kills or restarts a job. For a multi-step
-  wrapper, the age measured is the CURRENT STEP's, not the whole run's,
-  since `step:` resets the clock same as `start:` does. A running job whose
-  start time can't be determined is reported rather than skipped: `<job>:
-  running with no log — start time unknown` (no `logs/<job>.log` at all) or
-  `<job>: running with an unparseable log — start time unknown` (a log with
-  no parseable `start:`/`step:` line).
-  Known limitation: `edgar` starts at 8:30pm, 45 minutes before the 9:15pm
-  digest, so its measured age is always ~45min — permanently under the
-  60-minute slow tier it needs to avoid false-alarming on its designed
-  post-throttle `sleep 900` retry pause. A genuinely wedged `edgar` is
-  therefore not caught the same night; it surfaces in the following night's
-  digest at ~25h old instead. Accepted cost of a fixed tier, to be closed by
-  the planned follow-up to measured per-job thresholds (see
-  `_HUNG_DEFAULT_MIN`'s docstring in `daily_summary.py`).
-- **Nightly push**: `daily_summary.py` sends an ntfy digest at 9:15pm — run
-  counts, FAILED/STALE lines, non-zero exit codes, stale DBs vs expected
-  cadence, possible hangs (see above). Healthy = ✅ default priority; problems
-  = ⚠️ high priority. No
-  9:15pm ping at all ⇒ the machine (or login session) is down — the summary
-  can't report its own absence. If `HEALTHCHECK_URL` is set (see
-  `.env.example`), a successful run also pings an external dead-man's switch
-  (e.g. healthchecks.io); configure that service to alarm when the ping is
-  absent by a deadline, closing exactly this gap.
+  distinct from `start:` so it doesn't inflate the health section's run
+  count), `end:` (whole-run finish with duration + exit code, from the EXIT
+  trap), plus ad hoc `FAILED`/`STALE` lines from individual wrappers.
+- **Hang detection**: `deploy/launchd/dashboard_lib/health.py` cross-references
+  `launchctl list`'s PID column (not the exit-status column, which cannot
+  distinguish "running" from "exited cleanly" — see `status.sh`) against each
+  running job's newest `start:`/`step:` line. Past 15 minutes (default) or 60
+  minutes (`SLOW_JOBS` — jobs with a legitimately long single run, e.g.
+  `fred-vintages`, or one starting close enough to 9:13pm that a designed
+  pause could still be live, e.g. `edgar`'s post-throttle `sleep 900`) it's
+  reported as a possible hang. Detection only — it never kills or restarts a
+  job. For a multi-step wrapper, the age measured is the CURRENT STEP's, not
+  the whole run's, since `step:` resets the clock same as `start:` does. A
+  running job whose start time can't be determined is reported rather than
+  skipped: `<job>: running with no log — start time unknown` (no
+  `logs/<job>.log` at all) or `<job>: running with an unparseable log — start
+  time unknown` (a log with no parseable `start:`/`step:` line).
+  Known limitation: `edgar` starts at 8:30pm, 43 minutes before the 9:13pm
+  dashboard health snapshot, so its measured age is always ~43min —
+  permanently under the 60-minute slow tier it needs to avoid false-alarming
+  on its designed post-throttle `sleep 900` retry pause. A genuinely wedged
+  `edgar` is therefore not caught the same night; it surfaces in the
+  following night's health section at ~25h old instead. Accepted cost of a
+  fixed tier, to be closed by the planned follow-up to measured per-job
+  thresholds (see `HUNG_DEFAULT_MIN`'s docstring in
+  `deploy/launchd/dashboard_lib/health.py`).
+- **Nightly health section**: the 9:13pm `dashboard` job computes the
+  pipeline health section (run counts, FAILED/STALE lines, non-zero exit
+  codes, stale DBs vs expected cadence, possible hangs — see above) and
+  exports it into `reports/data.json`, rendered on the dashboard page's Ops
+  strand. No push channel exists any more — reading the dashboard is the way
+  to see pipeline health. If `HEALTHCHECK_URL` is set (see `.env.example`),
+  the same job also pings an external dead-man's switch (e.g.
+  healthchecks.io) on success; configure that service to alarm when the ping
+  is absent by a deadline — it is the only active alert, and it fires on
+  absence (a down machine or login session can't report its own absence any
+  other way).
 - **Backtest replay** (manual, unscheduled by design):
   `uv run python main.py backtest --db data/backtest.db` — copies FRED
   vintages + SP500 closes out of `data/fred.db` (read-only) and prints

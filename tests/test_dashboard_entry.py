@@ -1,8 +1,9 @@
 """Tests for deploy/launchd/dashboard.py's main() entrypoint: writes
 reports/data.json (via dashboard_lib.data.export_json), keeps the exit-0
-contract on total failure (the 9:15pm health-alert ordering invariant), and
-warns on oversize output. Every test monkeypatches dashboard.OUTPUT_PATH
-to a tmp_path location so none of them ever write into the real reports/.
+contract on a generation failure (so the HEALTHCHECK_URL ping still fires --
+an error document still proves the host and scheduler are alive), and warns
+on oversize output. Every test monkeypatches dashboard.OUTPUT_PATH to a
+tmp_path location so none of them ever write into the real reports/.
 """
 
 import json

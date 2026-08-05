@@ -3,9 +3,9 @@
 `stale_dbs` ages every data/*.db against MAX_AGE_DAYS with a 4-day default
 sized for daily jobs, while install.py owns the real cadence — two parallel
 registries that have drifted before: backtest shipped as a weekly Saturday
-job with no MAX_AGE_DAYS entry, so the nightly summary false-alarmed
-"backtest.db: 5d old (limit 4d)" every Wed-Fri night. This test derives each
-DB's worst-case healthy age from the schedule itself so the next
+job with no MAX_AGE_DAYS entry, so the staleness check would have
+false-alarmed "backtest.db: 5d old (limit 4d)" every Wed-Fri night. This test
+derives each DB's worst-case healthy age from the schedule itself so the next
 slow-cadence job cannot ship without a matching limit.
 """
 
@@ -13,12 +13,13 @@ import sys
 from itertools import pairwise
 from pathlib import Path
 
-# Both modules live in deploy/launchd (not a package); import them the same
-# way the other daily_summary tests do.
+# install.py lives directly in deploy/launchd (not a package); health.py
+# lives in its dashboard_lib subpackage. Import them the same way the
+# dashboard health tests do.
 DEPLOY = Path(__file__).resolve().parents[1] / "deploy" / "launchd"
 sys.path.insert(0, str(DEPLOY))
-import daily_summary  # noqa: E402
 import install  # noqa: E402
+from dashboard_lib import health  # noqa: E402
 
 
 def _max_gap_days(intervals):
@@ -53,16 +54,17 @@ def _healthy_age_by_db():
 
 
 def test_max_age_limit_outlives_every_scheduled_run_gap():
-    # Strictly greater: run hour precedes the 21:15 summary, so at limit ==
-    # gap a healthy DB can already read gap-days-plus-hours old (the daily
-    # default is 4 for a 3-day Fri->Mon gap for exactly this reason).
+    # Strictly greater: run hour precedes the 21:13 dashboard health
+    # snapshot, so at limit == gap a healthy DB can already read
+    # gap-days-plus-hours old (the daily default is 4 for a 3-day Fri->Mon
+    # gap for exactly this reason).
     violations = []
     for db, gap in sorted(_healthy_age_by_db().items()):
-        limit = daily_summary.MAX_AGE_DAYS.get(db, daily_summary.DEFAULT_MAX_AGE_DAYS)
+        limit = health.MAX_AGE_DAYS.get(db, health.DEFAULT_MAX_AGE_DAYS)
         if limit <= gap:
             violations.append(
                 f"{db}: scheduled writer runs every {gap}d but stale_dbs limit is "
-                f"{limit}d — add an entry to MAX_AGE_DAYS in daily_summary.py"
+                f"{limit}d — add an entry to MAX_AGE_DAYS in dashboard_lib/health.py"
             )
     assert not violations, "\n".join(violations)
 

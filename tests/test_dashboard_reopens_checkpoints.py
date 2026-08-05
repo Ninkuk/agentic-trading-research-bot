@@ -1,8 +1,7 @@
 """Position checkpoints: held-ticker dated reopen triggers within +/- 7
-Phoenix days, ported from the retired `deploy/launchd/daily_summary.py`'s
-`position_checkpoints` into `dashboard_lib.data._research_reopens`'s
-`checkpoints` list. Mirrors `tests/test_daily_summary_checkpoints.py`'s
-scenarios against the new home."""
+Phoenix days, computed by `dashboard_lib.data._research_reopens`'s
+`checkpoints` list and rendered on the dashboard's research-reopens
+section."""
 
 import sqlite3
 import sys
