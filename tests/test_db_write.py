@@ -60,7 +60,7 @@ def test_prune_removes_old_snapshots_and_their_metrics():
 
 
 def test_write_snapshot_json_encodes_nonscalar_values():
-    # stockanalysis.com now returns arrays for some Company-Info data-points
+    # stockanalysis.com returns arrays for some Company-Info data-points
     # (e.g. inIndex=["SP500","NASDAQ100"], tags=["clean-energy"]). SQLite cannot
     # bind a list/dict, so the writer must JSON-encode non-scalars to TEXT
     # (reversible + queryable via json_each) rather than crash.

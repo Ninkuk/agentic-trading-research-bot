@@ -85,7 +85,7 @@ def _mini_scorer(dirpath, reliable_signal="sig_a"):
     # 30 matured, benchmarked rows on 30 NON-OVERLAPPING forward windows
     # (7-day windows spaced 10 days apart) for one (signal_id, horizon)
     # group -> n_bench = n_dates = n_blocks = 30 -> reliable = 1 in
-    # v_signal_efficacy (row and date counts alone no longer clear the bar).
+    # v_signal_efficacy (row and date counts alone do not clear the bar).
     conn.executemany(
         "INSERT INTO signal_outcomes (composite_snapshot_id, composite_date,"
         " signal_id, entity, score, via_crosswalk, horizon, entry_date,"

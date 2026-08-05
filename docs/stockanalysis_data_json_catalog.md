@@ -33,7 +33,7 @@ same data the page hydrates from.
 ### Don't guess routes — read the app's own route table
 
 The client bundle ships the complete SvelteKit route dictionary — the
-authoritative list (172 routes as of 2026-07-29). `financials/` is a catch-all
+authoritative list. `financials/` is a catch-all
 (`…/financials/[...routes]`), so its statement slugs (`income-statement`, …)
 resolve server-side and never appear in this table. Enumerate from it:
 
@@ -236,7 +236,7 @@ sectors/industries, full ratings history) · `/analysts/top-stocks/`
 
 Behind the pages sits a plain-JSON API (no `devalue`, no auth, no key). All
 endpoints answer `{"status": 200, "data": …}`. Found by grepping the
-`_app/immutable/**` chunks for `/_api/`; verified live 2026-07-09.
+`_app/immutable/**` chunks for `/_api/`.
 
 Hitting `/stocks/screener/__data.json` returns the **entire universe in one
 request** (~1 MB) with a fixed default column set

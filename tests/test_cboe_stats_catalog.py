@@ -9,8 +9,8 @@ def test_catalog_has_pcr_and_vol_indices():
 
 
 def test_enabled_ids_includes_all_feeds():
-    # PCR is back on by default: it now reads the daily market-statistics
-    # page's server-rendered payload (the free CSV was discontinued).
+    # PCR is on by default: it reads the daily market-statistics page's
+    # server-rendered payload (the free CSV is discontinued).
     ids = enabled_ids()
     assert {"PCR", "VIX", "VIX3M", "VIX9D", "VVIX"} <= set(ids)
 

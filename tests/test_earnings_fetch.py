@@ -40,8 +40,8 @@ DECODED = {
 }
 
 
-# Real live shape (2026-07): rows moved from top-level data[].rows to
-# earnings[week].days[day].symbols; per-symbol keys (s/n/t/e/eg/r/rg/m) unchanged.
+# Real live shape: symbols nest at earnings[week].days[day].symbols with the
+# same per-symbol keys (s/n/t/e/eg/r/rg/m) as the flat data[].rows shape above.
 # Top-level "days" carries counts only (no symbols) and must be ignored.
 DECODED_NESTED = {
     "view": "Daily",

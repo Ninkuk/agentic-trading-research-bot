@@ -69,11 +69,11 @@ CBOE_EQUITY_PCR_SCORE = (
 # the energy proxy (XLE), not SP500.
 #
 # Crude and natgas are SEPARATE constants that happen to be identical today.
-# They shared one expression until 2026-07-09, which made either one impossible
-# to retune without silently retuning the other — they are different physical
-# commodities on different weekly release schedules (WPSR Wed vs WNGSR Thu) and
-# there is no reason their thresholds must agree. Keep them apart even while
-# equal; a test pins each signal to its own constant.
+# A shared expression would make either one impossible to retune without
+# silently retuning the other — they are different physical commodities on
+# different weekly release schedules (WPSR Wed vs WNGSR Thu) and there is no
+# reason their thresholds must agree. Keep them apart even while equal; a
+# test pins each signal to its own constant.
 EIA_CRUDE_CHANGE_SCORE = (
     "CASE WHEN change_pct <= -2.0 THEN 1 WHEN change_pct >= 2.0 THEN -1 ELSE 0 END"
 )
@@ -470,7 +470,7 @@ SIGNALS: list[dict[str, Any]] = [
     {
         # NEW shorting pressure (vs own 6-period base) reads as informed
         # bears arriving: bearish. Distinct from the level read above.
-        # At the old >= 1.5 floor this emitted 1,135 rows (52% of all signal
+        # A >= 1.5 floor emits 1,135 rows (52% of all signal
         # rows) and skewed the composite bearish (measured 2026-07-06);
         # >= 2.5 = 443 rows, >= 8.0 = 82 -- matching si_days_to_cover's scale.
         "signal_id": "si_spike",
@@ -498,7 +498,7 @@ SIGNALS: list[dict[str, Any]] = [
         """,
     },
     {
-        # DEMOTED TO ANNOTATION 2026-07-27 (score 0, listed in
+        # ANNOTATION ONLY (score 0, listed in
         # db.INFORMATIONAL_SIGNALS). The contrarian thesis — persistent
         # fails-to-deliver = delivery stress = squeeze fuel = bullish — is not
         # weak, it is BACKWARDS. Graded against the universe base rate rather
@@ -508,9 +508,9 @@ SIGNALS: list[dict[str, Any]] = [
         # bleeding fails kept bleeding.
         #
         # It also supplied 2 of the 3 points on EVERY flag composite produced
-        # (BBAI/CRML/EOSE were all ftd +2 plus stocks_rsi +1), so demoting it
-        # takes the flag count to zero — which is the honest outcome while the
-        # only evidence for the flag layer is -19.6pp on the bull bucket.
+        # (BBAI/CRML/EOSE were all ftd +2 plus stocks_rsi +1), so without its
+        # votes the flag count is zero — the honest outcome while the only
+        # evidence for the flag layer is -19.6pp on the bull bucket.
         #
         # NOT deleted: the streak is still recorded so the claim can be
         # re-graded once horizon=10 spans a non-risk_on regime. Every composite
@@ -676,8 +676,7 @@ SIGNALS: list[dict[str, Any]] = [
         # .claude/skills/shared/options-read.md). SPX/VIX are excluded: index
         # products, not tradeable tickers, and their put/call flow is hedging-
         # dominated. Scored versions are deferred until v_iv_rank n_days >= 60
-        # (~mid-Sept 2026) plus a measured calibration pass — see
-        # docs/superpowers/specs/2026-07-21-composite-options-annotation-design.md.
+        # (~mid-Sept 2026) plus a measured calibration pass.
         "signal_id": "options_iv30",
         "db": "options.db",
         "grain": "ticker",

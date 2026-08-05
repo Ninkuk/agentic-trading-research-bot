@@ -202,8 +202,8 @@ def test_coverage_rejects_a_malformed_event_date_with_ipo_date() -> None:
 def test_coverage_rejects_a_non_zero_padded_date_rather_than_misordering_it() -> None:
     # Raw-string sort would silently put "2024-1-5" after "2024-01-10" (lexicographic
     # '1' > '0'), reporting the wrong `last`. On this repo's Python (3.12.7),
-    # date.fromisoformat rejects the non-zero-padded form outright, so the old wrong
-    # answer (last == "2024-1-5") is impossible either way: it now raises instead.
+    # date.fromisoformat rejects the non-zero-padded form outright, so the wrong
+    # answer (last == "2024-1-5") is impossible: it raises instead.
     with pytest.raises(ValueError, match="2024-1-5"):
         coverage([{"eventDate": "2024-1-5"}, {"eventDate": "2024-01-10"}])
 
