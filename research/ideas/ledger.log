@@ -106,3 +106,13 @@
 2026-07-27 NLBXgSmRBgU insample-mcpt DEFERRED gate=7:priority reopen=signal_outcomes.distinct_composite_date@matured>=100
 2026-07-27 NLBXgSmRBgU walkforward-mcpt SURVIVED
 2026-07-27 NLBXgSmRBgU stable-lookback-plateau SURVIVED
+2026-08-03 LvUcTBmVCXI pelosi-887-headline DEAD gate=1:provenance
+2026-08-03 LvUcTBmVCXI hit-rate-vs-benchmark DEAD gate=2:duplication
+2026-08-03 LvUcTBmVCXI disclosure-lag-execution DEAD gate=2:duplication
+2026-08-03 LvUcTBmVCXI control-universe-test DEAD gate=2:duplication
+2026-08-03 LvUcTBmVCXI copy-congress-60d-underperforms DEAD gate=4:point-in-time
+2026-08-03 LvUcTBmVCXI congress-hold-until-sell-edge DEAD gate=5:architecture
+2026-08-03 LvUcTBmVCXI congress-buyer-count-signal DEAD gate=5:architecture
+2026-08-03 LvUcTBmVCXI washington-composite-backwards DEAD gate=6:statistics
+2026-08-03 LvUcTBmVCXI lobbying-spend-signal DEAD gate=7:priority
+2026-08-03 LvUcTBmVCXI federal-contract-awards-signal DEAD gate=7:priority
