@@ -193,9 +193,9 @@ source itself. Import a screener/monitor/combiner's internals as `sources.screen
 and no writes, each a pure core under (at most) a thin read-only shell. Today:
 `tools/research/worklist.py`, the research-sweep selection rules (un-researched
 candidates, due `reopen=` triggers) and the canonical home of two rules the dashboard
-and `research_nightly.py` import rather than copy — the one module here that reads
-(`stocks.db` read-only via `candidates`, `research/`) and the one that takes a clock,
-as an injected `now_iso` its pure core never reaches for;
+and `research_nightly.py` import rather than copy — the only module here that touches a
+DB (`stocks.db` read-only via `candidates`) or a clock (an injected `now_iso` its pure
+core never reaches for);
 `tools/valuation/reverse_dcf.py`, the bisection
 solver behind the `research-ticker` skill; `tools/options/implied_move.py`, the
 options-implied-move arithmetic behind the research skills' options check (straddle/spot

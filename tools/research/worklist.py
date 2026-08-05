@@ -186,15 +186,15 @@ def build(
     # reads the name as un-researched while its verdict line still yields a
     # due reopen. Keep the reopen -- it carries the prior thesis's context --
     # so one name never eats two --max slots or gets researched twice.
-    reopen_names = [r[0] for r in reopens]
-    new = [s for s in new if s not in set(reopen_names)]
+    reopen_names = {r[0] for r in reopens}
+    new = [s for s in new if s not in reopen_names]
 
     # Reopens first, then new names. --max is opt-in and NEVER silent: what
     # it drops is carried in the document and printed. `ordered` is deduped
     # above, so the cap counts survivors and `dropped` is exactly the excluded.
     dropped: list[str] = []
     if max_n is not None:
-        ordered = reopen_names + new
+        ordered = [r[0] for r in reopens] + new
         keep = set(ordered[:max_n])
         dropped = ordered[max_n:]
         reopens = [r for r in reopens if r[0] in keep]
