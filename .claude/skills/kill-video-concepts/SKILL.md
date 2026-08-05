@@ -307,12 +307,10 @@ individually defensible. Mirrors the same freeze in `kill-thesis`.
   that proved junk, or a ledger showing it under-kills. "A reviewer thought of
   another failure mode" is the exact accumulation this note exists to stop.
 - **Revisit after ≈20 videos of real use**, counted from an empty ledger — check
-  `wc -l research/ideas/ledger.log`. The prior validation runs and their
-  distribution were deleted on 2026-07-26 at the author's request, so **no
-  historical evidence backs this budget any more**; the next revisit derives its
-  own from the live ledger rather than quoting a number from here. The
-  measured-miss rule for *adding* a gate is unchanged and is not relaxed by that
-  deletion.
+  `wc -l research/ideas/ledger.log`. **No historical evidence backs this
+  budget** — it is a prior, not a measurement; the revisit derives its own
+  numbers from the live ledger rather than quoting any from here. The
+  measured-miss rule for *adding* a gate applies regardless.
 
 The skill can improve itself: research-skill hardening is a landing zone, so a
 concept whose real value is a check this gauntlet lacks lands as a proposal

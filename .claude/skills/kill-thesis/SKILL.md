@@ -161,7 +161,7 @@ daily-summary when due), or `event:` for undated triggers (a filing, a price
 level — grep-only). The slug is a pointer; the thesis holds the condition.
 Omit the field only when the thesis genuinely states no reopen condition.
 
-## Design note: the one-way-check budget is frozen (2026-07-21)
+## Design note: the one-way-check budget is frozen
 
 Several steps can only ever move a verdict *away* from SOUND — step 2's
 uncertainty-never-credits rule, the standing checks, the statistical checks,
