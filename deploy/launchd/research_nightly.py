@@ -13,7 +13,6 @@ selection or >=1 success; exit 1 iff every selected ticker failed.
 import datetime as dt
 import json
 import os
-import re
 import sqlite3
 import subprocess
 import sys
@@ -21,23 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sources.common.clock import phx_date  # noqa: E402
-
-THESIS_RE = re.compile(r"^([A-Z0-9.\-]+)-(\d{4}-\d{2}-\d{2})\.md$")
-
-
-def list_theses(research_dir: Path) -> dict[str, str]:
-    """{TICKER: newest thesis date} from research/<TICKER>-<YYYY-MM-DD>.md."""
-    newest: dict[str, str] = {}
-    if not research_dir.is_dir():
-        return newest
-    for p in research_dir.iterdir():
-        m = THESIS_RE.match(p.name)
-        if not m:
-            continue
-        ticker, date = m.group(1), m.group(2)
-        if date > newest.get(ticker, ""):
-            newest[ticker] = date
-    return newest
+from tools.research.worklist import list_theses  # noqa: E402
 
 
 def _read_symbols(db_path: str, query: str) -> list[str]:
