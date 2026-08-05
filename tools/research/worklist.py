@@ -17,9 +17,14 @@ the sweep disagree about what is still open.
 Not registered in registry.py: this is a helper, not a data pipeline.
 """
 
+import argparse
+import datetime as dt
+import json
 import re
+import sys
 from collections.abc import Iterable, Mapping
 from pathlib import Path
+from typing import Any
 
 THESIS_RE = re.compile(r"^([A-Z0-9.\-]+)-(\d{4}-\d{2}-\d{2})\.md$")
 
@@ -90,3 +95,145 @@ def unresearched(symbols: Iterable[str], theses: Mapping[str, str]) -> list[str]
     staleness gate: staleness is what the reopen convention is for, and
     research_nightly.py already sweeps stale flagged/held names nightly."""
     return [s for s in symbols if s not in theses]
+
+
+def read_candidates(db_path: str) -> tuple[list[str], str | None]:
+    """Screen symbols in screen order, or ([], error class name). Delegates
+    to candidates.screen() rather than restating its SQL, so the sweep and
+    `main.py candidates` can never disagree about what qualifies."""
+    from sources.combiners.composite import candidates
+
+    try:
+        conn = candidates.connect_ro(db_path)
+        try:
+            return [row["symbol"] for row in candidates.screen(conn)], None
+        finally:
+            conn.close()
+    except Exception as e:  # noqa: BLE001 -- total by design
+        return [], type(e).__name__
+
+
+def read_verdicts(research_dir: Path) -> tuple[dict[str, tuple[str, str]], str | None]:
+    """Newest verdict line per ticker, or ({}, error class name)."""
+    try:
+        text = (research_dir / "verdicts.log").read_text(encoding="utf-8")
+    except Exception as e:  # noqa: BLE001 -- total by design
+        return {}, type(e).__name__
+    return newest_verdict_lines(text.splitlines()), None
+
+
+def build(
+    db_path: str,
+    research_dir: Path,
+    today: str,
+    kind: str,
+    max_n: int | None,
+) -> dict[str, Any]:
+    """The two worklists plus whatever went wrong reading them. Reopens lead
+    -- they answer a live question on a name that may be held."""
+    errors: list[str] = []
+    new: list[str] = []
+    reopens: list[tuple[str, str, str, str]] = []
+
+    if kind in ("new", "both"):
+        symbols, err = read_candidates(db_path)
+        if err:
+            errors.append(f"candidates unreadable ({err})")
+        new = unresearched(symbols, list_theses(research_dir))
+    if kind in ("reopen", "both"):
+        newest, err = read_verdicts(research_dir)
+        if err:
+            errors.append(f"verdicts.log unreadable ({err})")
+        reopens = due_reopens(newest, today)
+
+    # Reopens first, then new names. --max is opt-in and NEVER silent: what
+    # it drops is carried in the document and printed.
+    dropped: list[str] = []
+    if max_n is not None:
+        ordered = [r[0] for r in reopens] + new
+        keep = set(ordered[:max_n])
+        dropped = ordered[max_n:]
+        reopens = [r for r in reopens if r[0] in keep]
+        new = [s for s in new if s in keep]
+
+    return {
+        "today": today,
+        "new": new,
+        "reopens": reopens,
+        "dropped": dropped,
+        "errors": errors,
+    }
+
+
+# Above this many names the SKILL re-confirms before dispatching. It is a
+# prompt threshold, never a truncation -- see the plan's Task 5.
+SWEEP_LARGE = 20
+
+
+def format_worklist(doc: Mapping[str, Any]) -> list[str]:
+    """Human-readable rendering. Empty is a normal, common result and says so
+    rather than implying work exists."""
+    out = [f"=== Research Sweep worklist — {doc['today']} ==="]
+    for err in doc["errors"]:
+        out.append(f"  ! {err}")
+
+    reopens = doc["reopens"]
+    out.append("")
+    out.append(f"B. due reopens (<= today): {len(reopens)}")
+    for ticker, due, slug, thesis_date in reopens:
+        out.append(f"    {ticker}  due {due}  {slug}  (thesis {thesis_date})")
+
+    new = doc["new"]
+    out.append("")
+    out.append(f"A. un-researched candidates: {len(new)}")
+    for symbol in new:
+        out.append(f"    {symbol}")
+
+    if doc["dropped"]:
+        out.append("")
+        out.append(f"DROPPED by --max ({len(doc['dropped'])}): {', '.join(doc['dropped'])}")
+
+    total = len(new) + len(reopens)
+    out.append("")
+    if total == 0:
+        out.append("nothing to research — both worklists are empty.")
+    else:
+        out.append(f"{total} name(s). NOT A RECOMMENDATION — input to research-ticker.")
+    if total > SWEEP_LARGE:
+        out.append(
+            f"LARGE SWEEP: {total} names (> {SWEEP_LARGE}). The session "
+            "web-search budget is shared and unreadable mid-run; a long "
+            "sweep may degrade later runs' search quality."
+        )
+    return out
+
+
+def main(argv: list[str] | None = None, now_iso: str | None = None) -> int:
+    from sources.common.clock import phx_date
+
+    p = argparse.ArgumentParser(
+        prog="worklist",
+        description=(
+            "Names needing research: candidate-screen entries with no thesis, "
+            "plus theses whose dated reopen trigger has come due. Reads "
+            "read-only; writes nothing; recommends nothing."
+        ),
+    )
+    p.add_argument("--db", default="data/stocks.db")
+    p.add_argument("--research-dir", default="research")
+    p.add_argument("--kind", choices=("new", "reopen", "both"), default="both")
+    p.add_argument("--max", dest="max_n", type=int, default=None)
+    p.add_argument("--json", action="store_true")
+    args = p.parse_args(argv)
+
+    now_iso = now_iso or dt.datetime.now(dt.UTC).isoformat()
+    doc = build(args.db, Path(args.research_dir), phx_date(now_iso), args.kind, args.max_n)
+    if args.json:
+        print(json.dumps(doc, indent=2))
+    else:
+        print("\n".join(format_worklist(doc)))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
