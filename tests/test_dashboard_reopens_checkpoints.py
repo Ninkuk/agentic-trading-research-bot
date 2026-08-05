@@ -1,0 +1,155 @@
+"""Position checkpoints: held-ticker dated reopen triggers within +/- 7
+Phoenix days, ported from the retired `deploy/launchd/daily_summary.py`'s
+`position_checkpoints` into `dashboard_lib.data._research_reopens`'s
+`checkpoints` list. Mirrors `tests/test_daily_summary_checkpoints.py`'s
+scenarios against the new home."""
+
+import sqlite3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "deploy" / "launchd"))
+from dashboard_lib import data  # noqa: E402
+
+# 9:13pm Phoenix on 2026-07-22 == 04:13 UTC on the 23rd -- deliberately
+# straddles the UTC rollover so a UTC-side date derivation (today would come
+# out as 2026-07-23) is caught by test_phoenix_date_not_utc_date below.
+NOW = "2026-07-23T04:13:00+00:00"
+TODAY = "2026-07-22"  # phx_date(NOW)
+# Window bounds for the fixture above: floor 2026-07-15, ceiling 2026-07-29.
+
+HEADER = "# Format: ... [reopen=<YYYY-MM-DD|event>:<slug>]\n"
+
+
+def _write_vlog(research_dir: Path, *lines: str) -> None:
+    research_dir.mkdir(exist_ok=True)
+    (research_dir / "verdicts.log").write_text(
+        HEADER + "".join(f"{ln}\n" for ln in lines), encoding="utf-8"
+    )
+
+
+def _write_pdb(data_dir: Path, *symbols: str) -> None:
+    """Fake portfolio.db: the real schema's `v_latest_positions` shape, with
+    `quantity` kept TEXT (per the brief) to mirror the real column type that
+    the query's CAST(quantity AS REAL) works around."""
+    data_dir.mkdir(exist_ok=True)
+    conn = sqlite3.connect(data_dir / "portfolio.db")
+    conn.executescript(
+        "CREATE TABLE positions (symbol TEXT, quantity TEXT);"
+        "CREATE VIEW v_latest_positions AS SELECT symbol, quantity FROM positions;"
+    )
+    for s in symbols:
+        conn.execute("INSERT INTO positions VALUES (?, '1')", (s,))
+    conn.commit()
+    conn.close()
+
+
+def test_held_ticker_dated_reopen_today_is_checkpoint(tmp_path):
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 AAA UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-22:q2-print",
+    )
+    _write_pdb(tmp_path / "data", "AAA")
+    sec = data._research_reopens(str(tmp_path / "data"), NOW)
+    assert sec["checkpoints"] == [
+        {
+            "ticker": "AAA",
+            "reopen_date": "2026-07-22",
+            "trigger": "q2-print",
+            "thesis_date": "2026-07-01",
+            "when_days": 0,
+            "thesis_path": "research/AAA-2026-07-01.md",
+        }
+    ]
+
+
+def test_held_ticker_past_and_future_checkpoints_have_signed_when_days(tmp_path):
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 BBB UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-20:past-print",
+        "2026-07-01 CCC UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-25:future-print",
+    )
+    _write_pdb(tmp_path / "data", "BBB", "CCC")
+    checkpoints = data._research_reopens(str(tmp_path / "data"), NOW)["checkpoints"]
+    by_ticker = {c["ticker"]: c for c in checkpoints}
+    assert by_ticker["BBB"]["when_days"] == -2  # 2 days ago
+    assert by_ticker["CCC"]["when_days"] == 3  # 3 days ahead
+
+
+def test_phoenix_date_not_utc_date(tmp_path):
+    """NOW's UTC calendar date is 2026-07-23 but its Phoenix date is
+    2026-07-22 (9:13pm the prior evening). A reopen dated 2026-07-23 is
+    *tomorrow* on the correct Phoenix clock (when_days == 1) -- a UTC-side
+    `today` would instead compute 0. This is the regression the brief calls
+    out explicitly."""
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 III UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-23:rollover",
+    )
+    _write_pdb(tmp_path / "data", "III")
+    checkpoints = data._research_reopens(str(tmp_path / "data"), NOW)["checkpoints"]
+    assert len(checkpoints) == 1
+    assert checkpoints[0]["when_days"] == 1
+
+
+def test_unheld_ticker_in_rows_not_checkpoints(tmp_path):
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 DDD UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-22:q2-print",
+    )
+    _write_pdb(tmp_path / "data")  # nothing held
+    sec = data._research_reopens(str(tmp_path / "data"), NOW)
+    assert sec["checkpoints"] == []
+    row = next(r for r in sec["rows"] if r["ticker"] == "DDD")
+    assert row["held"] is False
+    assert row["due"] == "2026-07-22"
+
+
+def test_held_ticker_outside_window_not_checkpoint(tmp_path):
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 EEE UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-08-15:q3-print",
+    )
+    _write_pdb(tmp_path / "data", "EEE")
+    sec = data._research_reopens(str(tmp_path / "data"), NOW)
+    assert sec["checkpoints"] == []
+    row = next(r for r in sec["rows"] if r["ticker"] == "EEE")
+    assert row["held"] is True
+    assert row["due"] == "2026-08-15"
+
+
+def test_only_newest_verdict_line_counts(tmp_path):
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 FFF UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-25:old-trigger",
+        "2026-07-15 FFF UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-07-27:new-trigger",
+    )
+    _write_pdb(tmp_path / "data", "FFF")
+    checkpoints = data._research_reopens(str(tmp_path / "data"), NOW)["checkpoints"]
+    assert len(checkpoints) == 1
+    assert checkpoints[0]["trigger"] == "new-trigger"
+    assert checkpoints[0]["thesis_date"] == "2026-07-15"
+
+
+def test_missing_portfolio_db_degrades_to_no_checkpoints(tmp_path):
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 GGG UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-22:q2-print",
+    )
+    (tmp_path / "data").mkdir()  # no portfolio.db written at all
+    sec = data._research_reopens(str(tmp_path / "data"), NOW)
+    assert sec["checkpoints"] == []
+    assert all(r["held"] is False for r in sec["rows"])
+
+
+def test_event_reopen_never_becomes_checkpoint(tmp_path):
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 HHH UNPROVEN conditions=6 refuted=0 unknown=2 reopen=event:some-trigger",
+    )
+    _write_pdb(tmp_path / "data", "HHH")
+    sec = data._research_reopens(str(tmp_path / "data"), NOW)
+    assert sec["checkpoints"] == []
+    row = next(r for r in sec["rows"] if r["ticker"] == "HHH")
+    assert row["held"] is True
+    assert row["due"] is None

@@ -21,7 +21,7 @@ import re
 import sqlite3
 import sys
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -424,6 +424,7 @@ def _verdict_thesis_path(doc: str | None) -> str | None:
 
 _RESEARCH_REOPENS_COLUMNS: list[dict[str, Any]] = [
     {"key": "ticker", "label": "Ticker", "numeric": False, "direction": None, "term": None},
+    {"key": "held", "label": "Held", "numeric": False, "direction": None, "term": None},
     {"key": "verdict", "label": "Verdict", "numeric": False, "direction": None, "term": None},
     {"key": "due", "label": "Due", "numeric": False, "direction": None, "term": None},
     {"key": "trigger", "label": "Trigger", "numeric": False, "direction": None, "term": None},
@@ -445,6 +446,25 @@ def _thesis_path(ticker: str, thesis_date: str) -> str | None:
     if not _REOPEN_TICKER_RE.match(ticker) or not _REOPEN_DATE_RE.match(thesis_date):
         return None
     return f"research/{ticker}-{thesis_date}.md"
+
+
+def _held_symbols(data_dir: str) -> set[str]:
+    """Symbols with a positive quantity in the latest portfolio snapshot.
+    Equity only (options out of scope until one needs a checkpoint). TOTAL:
+    a missing/unreadable portfolio.db degrades to 'nothing held' — the
+    reopens table must render without the checkpoint lens, never crash
+    because of it."""
+    try:
+        conn = _ro(data_dir, "portfolio.db")
+        try:
+            rows = conn.execute(
+                "SELECT symbol FROM v_latest_positions WHERE CAST(quantity AS REAL) > 0"
+            )
+            return {r[0] for r in rows}
+        finally:
+            conn.close()
+    except Exception:
+        return set()
 
 
 def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
@@ -479,9 +499,16 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
             dated.append((m.group(1), ticker, m.group(2), thesis_date, verdict))
     dated.sort(key=lambda t: (t[0], t[1]))
 
+    held = _held_symbols(data_dir)
+    today = phx_date(now_iso)
+    now_dt = datetime.fromisoformat(now_iso)
+    floor = phx_date(now_dt - timedelta(days=7))
+    ceiling = phx_date(now_dt + timedelta(days=7))
+
     rows = [
         {
             "ticker": ticker,
+            "held": ticker in held,
             "verdict": verdict,
             "due": when,
             "trigger": slug,
@@ -492,6 +519,7 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
     ] + [
         {
             "ticker": ticker,
+            "held": ticker in held,
             "verdict": verdict,
             "due": None,
             "trigger": slug,
@@ -500,11 +528,24 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
         }
         for ticker, slug, thesis_date, verdict in events
     ]
+    checkpoints = [
+        {
+            "ticker": ticker,
+            "reopen_date": when,
+            "trigger": slug,
+            "thesis_date": thesis_date,
+            "when_days": (date.fromisoformat(when) - date.fromisoformat(today)).days,
+            "thesis_path": _thesis_path(ticker, thesis_date),
+        }
+        for when, ticker, slug, thesis_date, _verdict in dated
+        if ticker in held and floor <= when <= ceiling
+    ]
     return {
         "columns": _RESEARCH_REOPENS_COLUMNS,
         "rows": rows,
         "dated": len(dated),
         "events": len(events),
+        "checkpoints": checkpoints,
     }
 
 
