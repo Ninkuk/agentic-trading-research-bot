@@ -31,6 +31,7 @@ from dashboard_lib.glossary import load_glossary  # noqa: E402
 from sources.combiners.composite import candidates as candidates_mod  # noqa: E402
 from sources.combiners.scorer import scorecard as scorer_scorecard  # noqa: E402
 from sources.common.clock import PHOENIX_UTC_OFFSET, phx_date  # noqa: E402
+from tools.research.worklist import REOPEN_FIELD_RE, newest_verdict_lines  # noqa: E402
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -401,8 +402,6 @@ def _candidates(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     }
 
 
-# Mirrors sections.py's own regex — both read the same verdicts.log lines.
-_REOPEN_FIELD_RE = re.compile(r"\breopen=(\d{4}-\d{2}-\d{2}|event):(\S+)")
 _REOPEN_TICKER_RE = re.compile(r"^[A-Z0-9.\-]+$")
 _REOPEN_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _REOPEN_VERDICTS = {"SOUND", "FLAWED", "UNPROVEN"}
@@ -473,18 +472,12 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
     counts — a re-researched name retires its old trigger whether or not
     the new verdict sets its own."""
     vlog = Path(data_dir).parent / "research" / "verdicts.log"
-    newest: dict[str, tuple[str, str]] = {}
-    for raw in vlog.read_text(encoding="utf-8").splitlines():
-        parts = raw.split()
-        if len(parts) < 2 or raw.lstrip().startswith("#"):
-            continue
-        if parts[1] not in newest or parts[0] >= newest[parts[1]][0]:
-            newest[parts[1]] = (parts[0], raw)
+    newest = newest_verdict_lines(vlog.read_text(encoding="utf-8").splitlines())
 
     dated: list[tuple[str, str, str, str, str | None]] = []
     events: list[tuple[str, str, str, str | None]] = []
     for ticker, (thesis_date, line) in sorted(newest.items()):
-        m = _REOPEN_FIELD_RE.search(line)
+        m = REOPEN_FIELD_RE.search(line)
         if m is None:
             continue
         # Verdict-token extraction (field 2) is new logic, not a port of the
@@ -535,7 +528,7 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
         try:
             when_days = (date.fromisoformat(when) - today_date).days
         except ValueError:
-            # _REOPEN_FIELD_RE validates digit shape only, never calendar
+            # REOPEN_FIELD_RE validates digit shape only, never calendar
             # validity (verdicts.log is human-written) -- a malformed date
             # like 2026-02-30 drops just this one checkpoint, not the whole
             # section: TOTAL applies per-row here, same as everywhere else
