@@ -22,6 +22,13 @@ def test_empty_data_dir_degrades_not_crashes(tmp_path):
     assert doc["schema_version"] == 1
     assert doc["generated_at"] == NOW
     for sid, body in doc["sections"].items():
+        # health doesn't read a DB under data_dir at all -- it reads launchctl
+        # (mocked empty by the autouse fixture in conftest.py) and a sibling
+        # logs/ dir, both of which are legitimately "nothing to report" on an
+        # empty tmp_path, not an error condition. Every other section reads a
+        # DB directly under data_dir, which is genuinely absent here.
+        if sid == "health":
+            continue
         assert "error" in body, f"{sid} should degrade on empty dir"
         assert body["title"] and body["kicker"] and body["note"]
 

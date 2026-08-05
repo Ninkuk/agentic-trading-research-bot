@@ -75,6 +75,29 @@ def test_export_data_degrades_health_not_crashes(tmp_path, monkeypatch):
     assert "sections" in doc and "tickers" in doc and "glossary" in doc
 
 
+def test_export_data_dispatches_health_to_the_success_body(tmp_path, monkeypatch):
+    """Mirrors tests/test_dashboard_data.py's per-section positive-path
+    pattern (e.g. test_regime_section_exports_verdict_and_tiles,
+    data.py:56-61). Exercises the real dispatch path in export_data --
+    catching a regression like the one this test was added to guard: a
+    SECTION_EXPORTERS db_name literal that (by accident) ends in `.db` would
+    route health into the sqlite branch instead of the file-backed branch,
+    so `_health` would never run and the section would degrade to `error`
+    even when nothing is actually broken."""
+    data_dir, _logs_dir = _layout(tmp_path)
+    monkeypatch.setattr(data.health, "job_exit_codes", lambda: {"fred": 0})
+    monkeypatch.setattr(data.health, "running_jobs", lambda: set())
+
+    doc = data.export_data(str(data_dir), NOW, repo_root=str(tmp_path))
+    sec = doc["sections"]["health"]
+
+    assert "error" not in sec
+    assert sec["healthy"] is True
+    assert len(sec["tiles"]) == 3
+    assert sec["columns"] == data._HEALTH_COLUMNS
+    assert sec["rows"] == []
+
+
 def test_rollover_now_local(tmp_path, monkeypatch):
     """A `start:` line stamped 2026-07-22 21:00:00 (13 minutes before the
     9:13pm Phoenix slot) must count as a run in the 24h window. now_iso's

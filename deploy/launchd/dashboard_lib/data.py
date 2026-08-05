@@ -1461,7 +1461,7 @@ SECTION_EXPORTERS: list[
     (
         "health",
         "Pipeline health",
-        "launchctl + logs + data/*.db",
+        "launchctl + logs + snapshot DBs",
         _health,
         "Ops",
         "Did last night's machinery actually run — and is every database fresh?",

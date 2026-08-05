@@ -27,8 +27,54 @@ from sources.combiners.composite import catalog as composite_catalog
 from sources.combiners.composite import db as composite_db
 from sources.combiners.scorer import db as scorer_db
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "deploy" / "launchd"))
+from dashboard_lib import health  # noqa: E402
+
 NOW = "2026-07-08T21:13:00+00:00"
 ROLLOVER_NOW = "2026-07-08T04:13:00+00:00"
+
+
+class _NoJobsRunning:
+    stdout = ""
+
+
+@pytest.fixture(autouse=True)
+def _no_real_launchctl(monkeypatch):
+    """Global safety net: dashboard_lib.data's `health` section shells out to
+    `launchctl list` via health.job_exit_codes/running_jobs. Any test that
+    exercises data.export_data generically (e.g.
+    test_empty_data_dir_degrades_not_crashes, which iterates every section
+    id) would otherwise reach real launchctl -- violating the repo-wide
+    no-shelling-in-tests invariant and making results machine-dependent.
+    Autouse so no test can hit it by accident.
+
+    `health.subprocess` IS the real stdlib `subprocess` module (Python
+    caches it in sys.modules -- there's only ever one), so patching
+    `health.subprocess.run` unconditionally would silently stub out every
+    OTHER test's subprocess.run too, including the real bash-wrapper
+    invocations in test_launchd_wrappers.py / test_config_ui_envfile.py
+    (verified: doing that turned their real script runs into no-ops and
+    broke them). The guard below only intercepts the exact
+    `["launchctl", "list"]` call and passes every other command through to
+    the real subprocess.run unchanged.
+
+    Deliberately does NOT patch job_exit_codes/running_jobs directly either:
+    those two functions parse real `launchctl list` output, and
+    test_running_jobs_detects_running_via_pid_column_not_status_column
+    (test_dashboard_health_build.py) monkeypatches health.subprocess.run
+    itself and calls the real running_jobs() to exercise that parsing --
+    patching the functions here would shadow that test's own patch and make
+    it pass for the wrong reason. Tests that want specific
+    exit-code/running-job scenarios monkeypatch job_exit_codes/running_jobs
+    directly, which overrides this default regardless."""
+    real_run = health.subprocess.run
+
+    def _guarded_run(cmd, *args, **kwargs):
+        if isinstance(cmd, list | tuple) and list(cmd[:2]) == ["launchctl", "list"]:
+            return _NoJobsRunning()
+        return real_run(cmd, *args, **kwargs)
+
+    monkeypatch.setattr(health.subprocess, "run", _guarded_run)
 
 
 def _make_fred_db(path):
