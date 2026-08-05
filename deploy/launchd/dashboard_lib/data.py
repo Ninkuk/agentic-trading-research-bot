@@ -21,15 +21,16 @@ import re
 import sqlite3
 import sys
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
-from dashboard_lib import narrative  # noqa: E402
+from dashboard_lib import health, narrative  # noqa: E402
 from dashboard_lib.glossary import load_glossary  # noqa: E402
 from sources.combiners.composite import candidates as candidates_mod  # noqa: E402
 from sources.combiners.scorer import scorecard as scorer_scorecard  # noqa: E402
-from sources.common.clock import phx_date  # noqa: E402
+from sources.common.clock import PHOENIX_UTC_OFFSET, phx_date  # noqa: E402
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -505,6 +506,46 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
         "dated": len(dated),
         "events": len(events),
     }
+
+
+_HEALTH_COLUMNS: list[dict[str, Any]] = [
+    {"key": "kind", "label": "Kind", "numeric": False, "direction": None, "term": None},
+    {"key": "target", "label": "Job / DB", "numeric": False, "direction": None, "term": None},
+    {"key": "detail", "label": "Detail", "numeric": False, "direction": None, "term": None},
+]
+
+
+def _health(data_dir: str, now_iso: str) -> dict[str, Any]:
+    """Pipeline health: launchctl exit codes, hung jobs, log FAILED/STALE
+    counts, stale/empty DBs — the layers the retired nightly ntfy carried.
+    now_local is naive Phoenix (wrapper logs are bash-`date`-stamped local);
+    the fixed offset is safe only because Phoenix has no DST."""
+    now_utc = datetime.fromisoformat(now_iso)
+    if now_utc.tzinfo is None:
+        now_utc = now_utc.replace(tzinfo=UTC)
+    now_local = (now_utc.astimezone(UTC) - PHOENIX_UTC_OFFSET).replace(tzinfo=None)
+    base = Path(data_dir).parent
+    body = health.build_health(base / "logs", Path(data_dir), now_local, now_utc)
+    problems = body["problems"]
+    tiles = [
+        {"label": "runs (24h)", "value": body["runs_24h"], "band": None, "tone": None},
+        {"label": "jobs loaded", "value": body["jobs_loaded"], "band": None, "tone": None},
+        {
+            "label": "problems",
+            "value": len(problems),
+            "band": None,
+            "tone": "on" if not problems else "off",
+        },
+    ]
+    out: dict[str, Any] = {
+        "healthy": body["healthy"],
+        "tiles": tiles,
+        "columns": _HEALTH_COLUMNS,
+        "rows": problems,
+    }
+    if not problems:
+        out["empty"] = "All healthy — every job ran clean, every database is fresh."
+    return out
 
 
 # --- Track-record strand (Task 6) ------------------------------------------
@@ -1414,6 +1455,30 @@ SECTION_EXPORTERS: list[
                 "Timing only, never the multi-year quality thesis behind"
                 " the pick — and none of it feeds back into the screen's"
                 " own gates.",
+            ),
+        ],
+    ),
+    (
+        "health",
+        "Pipeline health",
+        "launchctl + logs + data/*.db",
+        _health,
+        "Ops",
+        "Did last night's machinery actually run — and is every database fresh?",
+        [
+            (
+                "What it checks",
+                "Three layers: every scheduled job's last exit code and"
+                " whether any is hung mid-run, FAILED/STALE markers in the"
+                " last 24h of logs (as counts — the log itself stays on the"
+                " host), and each database's newest snapshot age against its"
+                " expected cadence.",
+            ),
+            (
+                "How to read it",
+                "Green with zero problems is the normal state. Any row here"
+                " means a number elsewhere on this page may be stale — check"
+                " this section first when something looks off.",
             ),
         ],
     ),
