@@ -8,7 +8,9 @@ URL with an API key).
 import datetime as dt
 import re
 import sqlite3
+import subprocess
 from pathlib import Path
+from typing import Any
 
 PREFIX = "com.tradingbot."
 # The section is built BY the dashboard job, which is running by definition
@@ -96,6 +98,53 @@ EMPTY_OK = {
     "short_interest.db",  # FINRA short interest is bimonthly; off-cycle runs are empty
     "nyfed.db",  # some NY Fed domains (iorb, primary_dealer) are empty by design
 }
+
+
+def job_exit_codes():
+    """{job-name: launchctl's last-exit-status column}.
+
+    NOT a running-vs-not indicator, despite appearances. `launchctl list`
+    prints 0 in this column both for "exited cleanly" and for "has never
+    exited" (see status.sh), and -- the part that matters here -- a job that
+    is CURRENTLY RUNNING still shows its PREVIOUS exit status in this column,
+    not a sentinel. Verified live: all 35 jobs read 0 here, including one
+    caught mid-run. Use running_jobs() for a running/not signal instead.
+    """
+    out = subprocess.run(["launchctl", "list"], capture_output=True, text=True).stdout
+    codes = {}
+    for line in out.splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[2].startswith(PREFIX):
+            try:
+                code = None if parts[1] == "-" else int(parts[1])
+            except ValueError:
+                continue
+            codes[parts[2][len(PREFIX) :]] = code
+    return codes
+
+
+def running_jobs():
+    """{job names} currently running, per launchctl's PID column.
+
+    `launchctl list`'s three columns are PID, last-exit-status, label. As
+    job_exit_codes documents, the exit-status column is ambiguous -- 0 means
+    both "exited cleanly" and "never exited", and it holds a RUNNING job's
+    PREVIOUS status, not a sentinel -- so it cannot answer "is this running
+    right now". The PID column can: a running job shows a real PID there, an
+    idle one shows "-". status.sh resolves the same ambiguity via
+    `launchctl print` instead; this resolves it via the PID column so the
+    digest can check all jobs with one `launchctl list` call here (a second,
+    separate call is made by job_exit_codes() -- a job that exits between the
+    two is simply not reported that night; harmless, since it self-corrects
+    the following night).
+    """
+    out = subprocess.run(["launchctl", "list"], capture_output=True, text=True).stdout
+    running = set()
+    for line in out.splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[2].startswith(PREFIX) and parts[0] != "-":
+            running.add(parts[2][len(PREFIX) :])
+    return running
 
 
 def last_progress(path):
@@ -265,3 +314,52 @@ def stale_dbs(now_utc: dt.datetime, data_dir: Path) -> list[dict[str, str]]:
                     }
                 )
     return problems
+
+
+def build_health(
+    logs_dir: Path, data_dir: Path, now_local: dt.datetime, now_utc: dt.datetime
+) -> dict[str, Any]:
+    """The three health layers as one structured payload. `now_local` is
+    NAIVE Phoenix time (wrapper logs are stamped by bash `date`); `now_utc`
+    is aware -- snapshot timestamps are stored UTC. Problems carry only
+    code-formatted strings (job/db names, counts, limits) -- never raw log
+    content; this document is published to public gh-pages."""
+    problems: list[dict[str, str]] = []
+    since = now_local - dt.timedelta(hours=24)
+
+    codes = job_exit_codes()
+    for job, code in sorted(codes.items()):
+        if code in (None, 0):
+            continue
+        # launchctl holds the code until the job's NEXT run, so a weekday-only
+        # job that failed Friday would re-red the weekend with no new
+        # information. Report only while the run that produced it is in-window.
+        log = logs_dir / f"{job}.log"
+        progress = last_progress(log) if log.exists() else None
+        if log.exists() and progress is not None and progress < since:
+            continue
+        problems.append({"kind": "exit", "target": job, "detail": f"last exit {code}"})
+
+    problems.extend(hung_jobs(running_jobs(), now_local, logs_dir))
+
+    total_runs = 0
+    for log in sorted(logs_dir.glob("*.log")):
+        if log.name == SELF_LOG:  # the dashboard job is running as it builds this
+            continue
+        if not log.is_file():  # degenerate entry (e.g. a directory) -- hung_jobs
+            continue  # already reports it if the job is running; don't blank the rest
+        runs, markers = scan_log(log, since)
+        total_runs += runs
+        for marker, count in sorted(markers.items()):
+            noun = "line" if count == 1 else "lines"
+            problems.append(
+                {"kind": "log", "target": log.stem, "detail": f"{count} {marker} {noun} in 24h"}
+            )
+
+    problems.extend(stale_dbs(now_utc, data_dir))
+    return {
+        "healthy": not problems,
+        "runs_24h": total_runs,
+        "jobs_loaded": len(codes),
+        "problems": problems,
+    }
