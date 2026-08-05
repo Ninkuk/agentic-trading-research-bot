@@ -584,8 +584,6 @@ def _health(data_dir: str, now_iso: str) -> dict[str, Any]:
         "columns": _HEALTH_COLUMNS,
         "rows": problems,
     }
-    if not problems:
-        out["empty"] = "All healthy — every job ran clean, every database is fresh."
     return out
 
 

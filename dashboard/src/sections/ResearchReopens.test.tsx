@@ -42,3 +42,15 @@ test("a row with no resolvable thesis path renders plain text instead of a link"
   expect(screen.getByText("XYZ")).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: "XYZ" })).not.toBeInTheDocument();
 });
+
+test("held-ticker checkpoints render above the table, with a 'today' label for when_days: 0", () => {
+  render(<ResearchReopens sec={doc.sections["research-reopens"]} glossary={doc.glossary} />);
+  expect(screen.getByText(/held position checkpoint/)).toBeInTheDocument();
+  expect(screen.getByText(/\(today\)/)).toBeInTheDocument();
+});
+
+test("no checkpoint list renders when checkpoints is absent", () => {
+  const sec = { ...doc.sections["research-reopens"], checkpoints: undefined };
+  render(<ResearchReopens sec={sec} glossary={doc.glossary} />);
+  expect(screen.queryByText(/held position checkpoint/)).not.toBeInTheDocument();
+});

@@ -32,14 +32,32 @@ function renderReopensCell(row: Row, col: Column): ReactNode {
   return formatCell(row[col.key]);
 }
 
+function whenLabel(days: number): string {
+  if (days === 0) return "today";
+  return days > 0 ? `in ${days}d` : `${-days}d ago`;
+}
+
 export function ResearchReopens({ sec, glossary }: SectionComponentProps) {
+  const checkpoints = sec.checkpoints ?? [];
   return (
-    <DataTable
-      columns={sec.columns ?? []}
-      rows={sec.rows ?? []}
-      storageKey="research-reopens"
-      glossary={glossary}
-      renderCell={renderReopensCell}
-    />
+    <>
+      {checkpoints.length > 0 && (
+        <ul className="verdict-list">
+          {checkpoints.map((c) => (
+            <li key={`${c.ticker}-${c.reopen_date}`}>
+              <strong>{c.ticker}</strong> — held position checkpoint: {c.trigger} ·{" "}
+              {c.reopen_date} ({whenLabel(c.when_days)})
+            </li>
+          ))}
+        </ul>
+      )}
+      <DataTable
+        columns={sec.columns ?? []}
+        rows={sec.rows ?? []}
+        storageKey="research-reopens"
+        glossary={glossary}
+        renderCell={renderReopensCell}
+      />
+    </>
   );
 }

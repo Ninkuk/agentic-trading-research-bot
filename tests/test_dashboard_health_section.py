@@ -36,7 +36,7 @@ def test_healthy_body_shape(tmp_path, monkeypatch):
     assert body["healthy"] is True
     assert len(body["tiles"]) == 3
     assert body["rows"] == []
-    assert "empty" in body
+    assert "empty" not in body
 
 
 def test_problem_rows_are_structured(tmp_path, monkeypatch):

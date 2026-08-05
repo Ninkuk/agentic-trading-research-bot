@@ -36,6 +36,7 @@ import { CandidateEfficacy } from "../sections/CandidateEfficacy";
 import { Candidates } from "../sections/Candidates";
 import { Disagreements } from "../sections/Disagreements";
 import { GroupHeat } from "../sections/GroupHeat";
+import { Health } from "../sections/Health";
 import { HumanFilter } from "../sections/HumanFilter";
 import { Pending } from "../sections/Pending";
 import { PositionHeat } from "../sections/PositionHeat";
@@ -119,6 +120,7 @@ const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> =
   "plan-001-report": SignalRecommendations,
   "plan-004-scorecard": TraderScorecard,
   "candidate-efficacy": CandidateEfficacy,
+  health: Health,
 };
 
 function GenericSection({ sec, glossary, id }: SectionComponentProps) {

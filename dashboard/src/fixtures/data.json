@@ -259,6 +259,7 @@
       "note": "Names already researched in depth and set aside, each with the stated evidence that would reopen the question.",
       "columns": [
         { "key": "ticker", "label": "Ticker", "numeric": false, "direction": null, "term": null },
+        { "key": "held", "label": "Held", "numeric": false, "direction": null, "term": null },
         { "key": "verdict", "label": "Verdict", "numeric": false, "direction": null, "term": null },
         { "key": "due", "label": "Due", "numeric": false, "direction": null, "term": null },
         { "key": "trigger", "label": "Trigger", "numeric": false, "direction": null, "term": null },
@@ -267,6 +268,7 @@
       "rows": [
         {
           "ticker": "BLBD",
+          "held": false,
           "verdict": "UNPROVEN",
           "due": "2026-09-15",
           "trigger": "epa-2026-nofo",
@@ -275,6 +277,7 @@
         },
         {
           "ticker": "DASH",
+          "held": true,
           "verdict": "SOUND",
           "due": null,
           "trigger": "reopen-140",
@@ -283,7 +286,17 @@
         }
       ],
       "dated": 1,
-      "events": 1
+      "events": 1,
+      "checkpoints": [
+        {
+          "ticker": "DASH",
+          "reopen_date": "2026-08-05",
+          "trigger": "reopen-140",
+          "thesis_date": "2026-07-28",
+          "when_days": 0,
+          "thesis_path": "research/DASH-2026-07-28.md"
+        }
+      ]
     },
     "human-filter": {
       "title": "Human-filter tally",
@@ -493,6 +506,26 @@
         { "symbol": "AAPL", "direction": "long", "score_sum": 4, "cap_shares": 25, "cap_dollars": 4950.0, "group_name": "tech", "exceeds_buying_power": false }
       ],
       "empty": "no caps tonight"
+    },
+    "health": {
+      "title": "Pipeline health",
+      "kicker": "Ops",
+      "note": "Launchd job exit codes, hung jobs, log FAILED/STALE counts, and stale or empty databases — everything the retired nightly ntfy push carried.",
+      "healthy": false,
+      "tiles": [
+        { "label": "runs (24h)", "value": 14, "band": null, "tone": null },
+        { "label": "jobs loaded", "value": 22, "band": null, "tone": null },
+        { "label": "problems", "value": 2, "band": null, "tone": "off" }
+      ],
+      "columns": [
+        { "key": "kind", "label": "Kind", "numeric": false, "direction": null, "term": null },
+        { "key": "target", "label": "Job / DB", "numeric": false, "direction": null, "term": null },
+        { "key": "detail", "label": "Detail", "numeric": false, "direction": null, "term": null }
+      ],
+      "rows": [
+        { "kind": "stale", "target": "cftc.db", "detail": "10d old (limit 9d)" },
+        { "kind": "log", "target": "cboe_stats", "detail": "2 FAILED lines in 24h" }
+      ]
     }
   },
   "tickers": {

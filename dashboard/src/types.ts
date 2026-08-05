@@ -62,11 +62,19 @@ export interface Tile {
 // fixtures/data.test.ts is for, and why Main.tsx's strand grouping still
 // runs a defensive membership check and routes anything unrecognized into
 // a trailing "Other" group rather than ever silently dropping it.
-export type Kicker = "Macro" | "Signals" | "Research" | "Track record" | "Your book";
+export type Kicker = "Macro" | "Signals" | "Research" | "Track record" | "Your book" | "Ops";
 
 // Canonical strand order — the single source Main.tsx, StrandNav, and the
-// fixture drift test all read from, so the list can't fork.
-export const KICKERS: readonly Kicker[] = ["Macro", "Signals", "Research", "Track record", "Your book"];
+// fixture drift test all read from, so the list can't fork. "Ops" is
+// appended last: pipeline health is plumbing, not signal.
+export const KICKERS: readonly Kicker[] = [
+  "Macro",
+  "Signals",
+  "Research",
+  "Track record",
+  "Your book",
+  "Ops",
+];
 
 // One section of the document (sections[<id>]). A section that failed to
 // export degrades to `{ title, kicker, note, error }` only — every other
@@ -101,6 +109,21 @@ export interface Section {
   // research-reopens-only:
   dated?: number;
   events?: number;
+  checkpoints?: ReopenCheckpoint[];
+  // health-only:
+  healthy?: boolean;
+}
+
+// research-reopens-only: held-ticker revisit checkpoints (data.py's
+// `checkpoints` list) — a held position's thesis re-check date, distinct
+// from the due-date rows already in `columns`/`rows`.
+export interface ReopenCheckpoint {
+  ticker: string;
+  reopen_date: string;
+  trigger: string;
+  thesis_date: string;
+  when_days: number;
+  thesis_path: string | null;
 }
 
 export interface ScoreHistoryPoint {
