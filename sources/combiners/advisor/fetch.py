@@ -162,11 +162,12 @@ def read_metrics(conn, symbols) -> dict:
 def read_research_verdicts(conn) -> dict:
     """symbol -> the research-ticker skill's most recent buy/pass call.
 
-    The nightly digest ends with size caps, and a cap reads far closer to an
-    instruction than the scorecard tally does — so a cap for a name research
-    already rejected is the most misleading line in the push. It is annotated,
-    never suppressed: a pass is the skill's opinion, not a prohibition, and
-    hiding the row would remove information the human may disagree with.
+    The dashboard's advisor section ends with size caps, and a cap reads far
+    closer to an instruction than the scorecard tally does — so a cap for a
+    name research already rejected is the most misleading line there. It is
+    annotated, never suppressed: a pass is the skill's opinion, not a
+    prohibition, and hiding the row would remove information the human may
+    disagree with.
 
     Total: a scorer.db predating the verdicts table degrades to {} rather than
     stopping advisor from sizing at all."""

@@ -402,7 +402,7 @@ def test_report_annotates_ungated_risk_columns(tmp_path):
 
 def test_report_survives_null_annotations(tmp_path):
     """Annotation columns are NULL-tolerant by definition; a None must render
-    as n/a, not TypeError inside the nightly digest's formatting."""
+    as n/a, not TypeError inside the CLI report's formatting."""
     conn = _stocks_db(tmp_path, {"zScore": None, "interestCoverage": None, "high52ch": None})
     report = candidates.build_report(conn, NOW)
     assert "GOOD" in report

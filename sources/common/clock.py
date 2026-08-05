@@ -2,8 +2,8 @@
 
 Timestamps are stored as UTC isoformat() instants, but a *date* is not
 derivable from one by slicing. UTC midnight falls at 17:00 Phoenix, and the
-launchd schedule runs nine jobs after that (cboe_stats 18:00 through
-publish-dashboard 21:20), so `now_iso[:10]` yields *tomorrow* for every one of
+launchd schedule runs twelve jobs after that (cboe_stats 18:00 through
+research-nightly 22:00), so `now_iso[:10]` yields *tomorrow* for every one of
 them. Composite stamps opinions with the Phoenix date and the journal matches
 fills on it; anything comparing against those must agree, or ages come out one
 day high and a fill can appear to precede an opinion formed after it.

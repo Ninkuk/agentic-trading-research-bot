@@ -134,7 +134,7 @@ JOBS = {
     # events and this job re-adds them.
     "market-calendar-refresh": (job("market_calendar", "--refresh"), monthly([1], 5, 30)),
     # -- combine (every day, after all collectors incl. edgar's 15-min
-    #    failure retry; before the nightly summary) --
+    #    failure retry; before the dashboard render) --
     "composite": (job("composite", "--keep-days", "365"), weekly(range(7), 21, 5)),
     "scorer": (job("scorer", "--keep-days", "365"), weekly(range(7), 21, 10)),
     "advisor": (job("advisor", "--keep-days", "365"), weekly(range(7), 21, 12)),
@@ -154,7 +154,7 @@ JOBS = {
     # manually via `npm run build` after dashboard/ changes — launchd never
     # invokes Node.
     "publish-dashboard": (script("publish_dashboard.sh"), weekly(range(7), 21, 20)),
-    # -- agentic research (after the combine chain, summary, and publish:
+    # -- agentic research (after the combine chain, dashboard, and publish:
     #    selects from TONIGHT's v_flagged; up to RESEARCH_NIGHTLY_MAX
     #    headless `claude -p /research-ticker` runs, ~20min each) --
     "research-nightly": (script("research_nightly.sh"), weekly(range(7), 22, 0)),

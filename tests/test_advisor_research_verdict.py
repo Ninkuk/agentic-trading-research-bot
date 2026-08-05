@@ -1,11 +1,11 @@
 """Size caps must disclose that research already rejected the name.
 
-The nightly push ends with `cap: BBAI <= 9.99sh · CRML <= 2.98sh · EOSE <=
-3.90sh` — all three composite flags, and all three carry research documents
-concluding PASS. advisor reads scorer.db already (for signal reliability) but
-never read research_verdicts, so the last line of the digest sized names the
-research layer had explicitly killed. A cap reads much closer to an
-instruction than a scorecard tally does.
+The dashboard's advisor section ends with a size-caps card: `cap: BBAI <=
+9.99sh · CRML <= 2.98sh · EOSE <= 3.90sh` — all three composite flags, and
+all three carry research documents concluding PASS. advisor reads scorer.db
+already (for signal reliability) but never read research_verdicts, so the
+size-caps card sized names the research layer had explicitly killed. A cap
+reads much closer to an instruction than a scorecard tally does.
 
 The cap is NOT suppressed. A pass is the research skill's opinion, not a
 prohibition, and the human may disagree — hiding the row would remove

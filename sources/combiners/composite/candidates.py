@@ -210,7 +210,7 @@ def snapshot_date(conn) -> str | None:
         ).fetchone()
         # phx_date raises ValueError on a malformed timestamp, which
         # `except sqlite3.Error` alone would not catch — and this function is a
-        # dependency of the nightly health alert.
+        # dependency of the dashboard's candidates section.
         return phx_date(row[0]) if row and row[0] else None
     except (sqlite3.Error, ValueError, TypeError):
         return None
@@ -219,10 +219,10 @@ def snapshot_date(conn) -> str | None:
 def data_age_label(data_date: str | None, now_iso: str) -> str:
     """`data_date` decorated with how stale it is: '2026-07-24 (2d old)'.
 
-    Shared by all three consumers — the CLI report, the nightly push and the
-    dashboard — so they cannot disagree about how old the same snapshot is.
-    Never raises: it sits inside the health-alert path, and a bare date still
-    informs when the clock cannot be parsed."""
+    Shared by both consumers — the CLI report and the dashboard — so they
+    cannot disagree about how old the same snapshot is. Never raises: it
+    sits inside the candidates-section path, and a bare date still informs
+    when the clock cannot be parsed."""
     if not data_date:
         return "date unknown"
     try:

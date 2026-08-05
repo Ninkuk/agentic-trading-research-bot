@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "deploy" / "launchd"))
 from dashboard_lib import health  # noqa: E402
 
-NOW = health.dt.datetime(2026, 7, 22, 21, 15, 0)
+NOW = health.dt.datetime(2026, 7, 22, 21, 13, 0)
 
 
 def _log(tmp_path, name, minutes_ago):

@@ -26,13 +26,14 @@ BAD_MARKERS = ("FAILED", "STALE", "Traceback", "Error:")
 #
 # A threshold only matters for a job still plausibly running at 21:13 (the
 # dashboard job builds the health section once, nightly) -- i.e. one that
-# starts within roughly an hour of it. Measured gaps: dashboard 2min, advisor
-# 3min, scorer 5min, composite 10min -- all safe under the default tier.
-# `edgar` (20:30, 43min before the snapshot) is the only slow-tier entry that
-# is actually load-bearing today; every other SLOW_JOBS entry starts 2h-17h
-# earlier; if still alive at snapshot time it would be flagged under either
-# tier, so those are defensive against future schedule changes rather than
-# currently load-bearing.
+# starts within roughly an hour of it. Measured gaps: advisor 1min, scorer
+# 3min, composite 8min -- all safe under the default tier. (dashboard itself
+# is excluded from hang reporting altogether -- see SELF_LOG above -- so no
+# threshold applies to it.) `edgar` (20:30, 43min before the snapshot) is the
+# only slow-tier entry that is actually load-bearing today; every other
+# SLOW_JOBS entry starts 2h-17h earlier; if still alive at snapshot time it
+# would be flagged under either tier, so those are defensive against future
+# schedule changes rather than currently load-bearing.
 HUNG_DEFAULT_MIN = 15
 HUNG_SLOW_MIN = 60
 SLOW_JOBS = {
@@ -44,7 +45,7 @@ SLOW_JOBS = {
     "ftd-full",  # re-ingests 24 months
     "short-interest-full",  # re-ingests ~12 months
     "fundamentals-bulk",  # downloads + ingests a DERA quarterly ZIP
-    "edgar",  # starts 45min before the digest AND has a designed sleep 900 retry pause
+    "edgar",  # starts 43min before the health snapshot AND has a designed sleep 900 retry pause
     "research-nightly",  # headless `claude -p` per ticker, ~20min each, up to 3
 }
 

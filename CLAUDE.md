@@ -235,7 +235,7 @@ with a fetch that lives outside it — skill prose or `yt-dlp`. Not registered i
 
 - **Timestamps are UTC; calendar dates are Phoenix.** Never slice a date out of a timestamp
   (`now_iso[:10]`) — always `phx_date(now_iso)` from `sources/common/clock.py`. UTC midnight is
-  17:00 Phoenix and nine launchd jobs run after it (cboe_stats 6pm .. publish-dashboard 9:20pm), so
+  17:00 Phoenix and twelve launchd jobs run after it (cboe_stats 6pm .. research-nightly 10pm), so
   `[:10]` yields *tomorrow* for every one of them. `composite` stamps `obs_date` on the Phoenix
   date and `journal` matches fills on it; anything comparing against those must agree or ages
   come out a day high and a fill can appear to precede the opinion it answered. The offset is a
