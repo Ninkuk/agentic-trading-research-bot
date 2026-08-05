@@ -10,8 +10,9 @@ bucket performance, the human-filter tally, and the advisor book — exported
 as plain data for the dashboard/ React frontend to render instead of
 server-rendered markup.
 
-Mirrors deploy/launchd/daily_summary.py: dashboard_lib.data reads each
-source DB with `sqlite3.connect("file:data/<db>?mode=ro", uri=True)`,
+Reads each source DB read-only, the same pattern as every other launchd
+reporter: dashboard_lib.data opens with
+`sqlite3.connect("file:data/<db>?mode=ro", uri=True)`,
 strictly read-only, and wraps every section in its own try/except so a
 missing DB, a dropped view, or zero rows degrades to an `"error"` key on
 that section rather than crashing. A total failure here still writes an
@@ -19,20 +20,25 @@ explicit minimal error document ({"schema_version", "generated_at",
 "error"}) — an absent/stale data.json with no error signal would be worse
 than an honest one.
 
-Wired as its own launchd slot at 9:13pm (after advisor 9:12, before the
-daily-summary ntfy at 9:15) so it reflects tonight's rows; being a separate
-process, a bug here can never delay or suppress that health alert. `main()`
-returns 0 on both a clean run and a GENERATION failure (any exception from
+Wired as its own launchd slot at 9:13pm (after advisor 9:12) so it reflects
+tonight's rows. It is now the last nightly reporter, and after writing the
+document it pings HEALTHCHECK_URL as the external dead-man's switch — so an
+absent ping means a dead host or a dead scheduler, the one failure an
+on-host reporter structurally cannot detect for itself. `main()` returns 0
+on both a clean run and a GENERATION failure (any exception from
 `data.export_json` — a missing DB, a dropped view, a bad row — is caught and
-degrades to the minimal error document above). A failure in the WRITE itself
-(reports/ unwritable, disk full) is not caught and propagates as a process
-crash with a non-zero exit — same as any other process crash, it still
-cannot delay the 9:15 alert, since that is a separate process either way.
+degrades to the minimal error document above); the ping still fires on that
+path, since a document generated with errors still proves the host and
+scheduler are alive. A failure in the WRITE itself (reports/ unwritable,
+disk full) is not caught and propagates as a process crash with a non-zero
+exit, and the ping correctly never fires.
 """
 
 import json
 import os
 import sys
+import urllib.error
+import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -77,7 +83,29 @@ def main() -> int:
     print(f"wrote {OUTPUT_PATH} ({size} bytes)")
     if size > _SIZE_WARNING_BYTES:
         print("WARNING: data.json exceeds 1.5MB target")
+    heartbeat()
     return 0
+
+
+def heartbeat(get=None):
+    """Best-effort ping to an external dead-man's switch (e.g. healthchecks.io)
+    so an absent ping — a dead host/scheduler — raises an alarm the on-host
+    summary structurally cannot. No-op if HEALTHCHECK_URL is unset. Never raises
+    and never affects the exit code; a failure prints only the exception type."""
+    url = os.environ.get("HEALTHCHECK_URL")
+    if not url:
+        return
+    get = get or _default_get
+    try:
+        get(url)
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        # Never re-raise: the URL (its own auth secret) rides in the message.
+        print(f"heartbeat failed ({type(e).__name__})", file=sys.stderr)
+
+
+def _default_get(url: str) -> None:
+    with urllib.request.urlopen(url, timeout=10):
+        pass
 
 
 if __name__ == "__main__":
