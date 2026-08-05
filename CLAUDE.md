@@ -189,15 +189,21 @@ sources/
 source itself. Import a screener/monitor/combiner's internals as `sources.screeners.<name>.<module>` /
 `sources.monitors.<name>.<module>` / `sources.combiners.<name>.<module>`.
 
-`tools/` holds code that is neither a source nor a dispatcher — pure helpers with no
-network, no DB, and no clock. Today: `tools/valuation/reverse_dcf.py`, the bisection
+`tools/` holds code that is neither a source nor a dispatcher — helpers with no network
+and no writes, each a pure core under (at most) a thin read-only shell. Today:
+`tools/research/worklist.py`, the research-sweep selection rules (un-researched
+candidates, due `reopen=` triggers) and the canonical home of two rules the dashboard
+and `research_nightly.py` import rather than copy — the one module here that reads
+(`stocks.db` read-only via `candidates`, `research/`) and the one that takes a clock,
+as an injected `now_iso` its pure core never reaches for;
+`tools/valuation/reverse_dcf.py`, the bisection
 solver behind the `research-ticker` skill; `tools/options/implied_move.py`, the
 options-implied-move arithmetic behind the research skills' options check (straddle/spot
 is a MEAN, never a ceiling); `tools/research/transcripts.py`, earnings-call attribution
 (keyed on `company`, never `role`); and `tools/research/youtube_captions.py`, the
 `json3`→timestamped-transcript decoder behind both `eval-research-ticker`'s YouTube benchmarks
 and `kill-video-concepts`' video ingestion (`json3` never `vtt` — vtt doubles every line of a
-rolling caption window). Each pairs
+rolling caption window). Apart from `worklist.py`, each pairs
 with a fetch that lives outside it — skill prose or `yt-dlp`. Not registered in
 `registry.py`; they are not data pipelines.
 

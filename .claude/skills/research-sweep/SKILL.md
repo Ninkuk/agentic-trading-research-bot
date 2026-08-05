@@ -19,7 +19,9 @@ uv run python -m tools.research.worklist
 **A — un-researched candidates:** names on `main.py candidates` with no
 `research/<TICKER>-*.md` of any date. No staleness gate — staleness is what
 the reopen convention is for, and `research_nightly.py` already sweeps stale
-flagged and held names nightly at 10pm.
+flagged and held names nightly at 10pm. The header names the stocks.db
+snapshot date and its age — the screener does not run at weekends, so a
+Sunday sweep is reading Friday's list.
 
 **B — due reopens:** the newest verdict line per ticker in
 `research/verdicts.log` whose dated `reopen=` has arrived (`<= today`,
@@ -33,16 +35,22 @@ it cannot also be un-researched.
 **Empty is the normal result.** If both lists are empty, say so and stop. Do
 not manufacture work, do not widen the rules to find something.
 
+**An `!` line is not empty — it is blind.** Any `!` (or the `INCOMPLETE`
+verdict) means a source could not be read: stop and report what failed. A
+failed overnight `stocks` run yields zero candidates, which is not the same
+fact as an empty backlog.
+
 ## 2. Gate — always, no exceptions
 
 Show the human **every** name, the count, and that each run costs roughly
 156k–231k tokens. Wait for an explicit go. Never auto-dispatch.
 
-Above **20 names**, re-confirm once and name the risk: the session
-web-search budget is shared and cannot be read from inside a session, so a
-long sweep may degrade later runs' search quality. Even then, never truncate
-— if the human wants a shorter list they pass `--max N`, which prints what
-it dropped.
+When the CLI prints its own `LARGE SWEEP` warning — above
+`worklist.SWEEP_LARGE` names, which owns the threshold — re-confirm once and
+name the risk: the session web-search budget is shared and cannot be read
+from inside a session, so a long sweep may degrade later runs' search
+quality. Even then, never truncate — if the human wants a shorter list they
+pass `--max N` (at least 1), which prints what it dropped.
 
 ## 3. Dispatch
 
