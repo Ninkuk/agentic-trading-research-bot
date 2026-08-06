@@ -131,9 +131,11 @@ def _alignment_section(conn) -> str:
     rows = alignment(conn)
     if not rows:
         return "  no matured acted decisions yet"
-    lines = ["  horizon | aligned=1 | aligned=0 | aligned=NULL"]
+    # Human column names, not the view's aligned=1/0/NULL coding: the report
+    # is a reading surface (CLI and dashboard both render it verbatim).
+    lines = ["  horizon | agreed | contrarian | no opinion"]
     for r in rows:
-        lines.append(f"  {r['horizon']:>7} | {r['yes']:>9} | {r['no']:>9} | {r['null']:>12}")
+        lines.append(f"  {r['horizon']:>7} | {r['yes']:>6} | {r['no']:>10} | {r['null']:>10}")
     return "\n".join(lines)
 
 
@@ -153,7 +155,8 @@ def _freelance_section(conn) -> str:
     # realized_return is fills-only; unrealized freelance positions are counted
     # and listed but excluded from the average (spec §3.4).
     avg_txt = _avg_or_suppressed(n, _frac(avg)) if avg is not None else f"insufficient data (n={n})"
-    lines.append(f"  n={n}, avg_realized_return={avg_txt}")
+    trade_word = "trade" if n == 1 else "trades"
+    lines.append(f"  {n} {trade_word}, average realized return {avg_txt}")
     return "\n".join(lines)
 
 
