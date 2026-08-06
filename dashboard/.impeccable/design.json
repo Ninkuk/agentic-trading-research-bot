@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-06T00:00:00Z",
+  "title": "Design System: Trading Research Dashboard",
+  "extensions": {
+    "colorMeta": {
+      "ink-zinc": {
+        "role": "primary",
+        "displayName": "Ink Zinc",
+        "canonical": "oklch(0.141 0.005 285.823)",
+        "tonalRamp": ["oklch(0.15 0.005 286)", "oklch(0.25 0.005 286)", "oklch(0.35 0.005 286)", "oklch(0.45 0.005 286)", "oklch(0.55 0.005 286)", "oklch(0.7 0.005 286)", "oklch(0.85 0.005 286)", "oklch(0.95 0.005 286)"]
+      },
+      "caption-zinc": {
+        "role": "neutral",
+        "displayName": "Caption Zinc",
+        "canonical": "oklch(0.552 0.016 285.938)",
+        "tonalRamp": ["oklch(0.15 0.016 286)", "oklch(0.25 0.016 286)", "oklch(0.35 0.016 286)", "oklch(0.45 0.016 286)", "oklch(0.55 0.016 286)", "oklch(0.7 0.016 286)", "oklch(0.85 0.016 286)", "oklch(0.95 0.016 286)"]
+      },
+      "tone-up": {
+        "role": "tertiary",
+        "displayName": "Tone Up (emerald)",
+        "canonical": "oklch(0.508 0.118 165)",
+        "tonalRamp": ["oklch(0.2 0.09 165)", "oklch(0.3 0.11 165)", "oklch(0.4 0.12 165)", "oklch(0.51 0.12 165)", "oklch(0.6 0.13 165)", "oklch(0.72 0.14 165)", "oklch(0.85 0.1 165)", "oklch(0.95 0.04 165)"]
+      },
+      "tone-down": {
+        "role": "tertiary",
+        "displayName": "Tone Down (red)",
+        "canonical": "oklch(0.505 0.19 27)",
+        "tonalRamp": ["oklch(0.2 0.12 27)", "oklch(0.3 0.15 27)", "oklch(0.4 0.18 27)", "oklch(0.5 0.19 27)", "oklch(0.6 0.19 27)", "oklch(0.72 0.16 27)", "oklch(0.85 0.09 27)", "oklch(0.95 0.03 27)"]
+      },
+      "tone-hold": {
+        "role": "tertiary",
+        "displayName": "Tone Hold (amber)",
+        "canonical": "oklch(0.646 0.15 70)",
+        "tonalRamp": ["oklch(0.2 0.08 70)", "oklch(0.3 0.1 70)", "oklch(0.45 0.13 70)", "oklch(0.55 0.14 70)", "oklch(0.65 0.15 70)", "oklch(0.75 0.15 70)", "oklch(0.87 0.1 70)", "oklch(0.96 0.04 70)"]
+      }
+    },
+    "typographyMeta": {
+      "body": { "displayName": "Body", "purpose": "Notes and prose; 75ch max measure." },
+      "title": { "displayName": "Title", "purpose": "Card/section titles at 1.125rem; a 1.29 step over body." },
+      "stat": { "displayName": "Stat", "purpose": "Stat-tile values only." },
+      "numeric": { "displayName": "Numeric", "purpose": "Table cells and ticker symbols; tabular-nums, right-aligned in tables." }
+    },
+    "shadows": [
+      { "name": "float-tooltip", "value": "0 4px 12px rgba(0,0,0,0.15)", "purpose": "Sparkline tooltips; floating layers only." },
+      { "name": "float-popover", "value": "0 6px 18px rgba(0,0,0,0.15)", "purpose": "Glossary term popovers; floating layers only." }
+    ],
+    "motion": [
+      { "name": "reduced-motion-kill", "value": "transition: none !important", "purpose": "Global under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "page", "value": "72rem" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Tone Badge (up)",
+      "kind": "chip",
+      "refersTo": "badge-up",
+      "description": "Soft-tinted verdict badge; text label always present.",
+      "html": "<span class=\"ds-badge-up\">ON</span>",
+      "css": ".ds-badge-up { display: inline-block; background: var(--tone-up-bg, rgba(16,185,129,0.14)); color: var(--tone-up, #047857); border-radius: 6px; padding: 2px 8px; font-size: 0.75rem; font-weight: 500; }"
+    },
+    {
+      "name": "Tone Badge (down)",
+      "kind": "chip",
+      "refersTo": "badge-down",
+      "description": "Negative/off verdict badge.",
+      "html": "<span class=\"ds-badge-down\">OFF</span>",
+      "css": ".ds-badge-down { display: inline-block; background: var(--tone-down-bg, rgba(239,68,68,0.13)); color: var(--tone-down, #b91c1c); border-radius: 6px; padding: 2px 8px; font-size: 0.75rem; font-weight: 500; }"
+    },
+    {
+      "name": "Tone Badge (hold)",
+      "kind": "chip",
+      "refersTo": "badge-hold",
+      "description": "Neutral/hold verdict badge.",
+      "html": "<span class=\"ds-badge-hold\">HOLD</span>",
+      "css": ".ds-badge-hold { display: inline-block; background: var(--tone-hold-bg, rgba(245,158,11,0.15)); color: var(--tone-hold, #d97706); border-radius: 6px; padding: 2px 8px; font-size: 0.75rem; font-weight: 500; }"
+    },
+    {
+      "name": "Stat Tile",
+      "kind": "custom",
+      "refersTo": "stat",
+      "description": "Unboxed mono value over a caption label; the dashboard's KPI unit.",
+      "html": "<div class=\"ds-tile\"><div class=\"ds-tile-v\">+2.4%</div><div class=\"ds-tile-k\">21d excess vs SPY</div></div>",
+      "css": ".ds-tile-v { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; font-size: 1.125rem; font-weight: 600; line-height: 1.2; } .ds-tile-k { color: var(--muted-foreground, oklch(0.552 0.016 285.938)); font-size: 0.75rem; margin-top: 0.125rem; }"
+    },
+    {
+      "name": "Glossary Term",
+      "kind": "custom",
+      "refersTo": "body",
+      "description": "Dotted-underline term that opens a definition popover on hover/focus.",
+      "html": "<button class=\"ds-term\">book heat</button>",
+      "css": ".ds-term { background: none; border: none; padding: 0; color: inherit; font: inherit; cursor: help; border-bottom: 1px dotted oklch(0.552 0.016 285.938); } .ds-term:hover { border-bottom-color: currentColor; } .ds-term:focus-visible { outline: 2px solid oklch(0.705 0.015 286.067); outline-offset: 2px; border-radius: 2px; }"
+    },
+    {
+      "name": "Empty State",
+      "kind": "card",
+      "refersTo": "section-card",
+      "description": "Honest degraded state for a section with no rows this run.",
+      "html": "<p class=\"ds-empty\">No disagreements this run.</p>",
+      "css": ".ds-empty { display: flex; align-items: flex-start; gap: 0.625rem; border: 1px dashed oklch(0.92 0.004 286.32); border-radius: 0.625rem; padding: 1rem 1.25rem; color: oklch(0.552 0.016 285.938); font-size: 0.875rem; margin: 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Plain-English Briefing",
+    "overview": "A nightly report you read, not a terminal you watch. shadcn/ui zinc on Tailwind v4: near-white paper, near-black ink, hairline borders, comfortable density. Every visual element defers to a sentence of plain English; color exists only to echo what the words already said. The system rejects both its newspaper-ledger predecessor (retired 2026-07-30 as too stylized) and trading-terminal maximalism.",
+    "keyCharacteristics": [
+      "Borders over shadows; flat surfaces, hairline separation",
+      "Text is the primary channel; tones reinforce, never replace",
+      "Mono tabular numerals for every number, sans for every sentence",
+      "One-sentence section notes; deep anatomy behind an About modal",
+      "Honest degraded states (dashed empty, red mono unavailable)"
+    ],
+    "rules": [
+      { "name": "The Words-First Rule", "body": "Color never carries meaning alone. Every tone badge has a text label; every flagged row also gets a ★ suffix. If removing all color would lose information, the design is wrong.", "section": "colors" },
+      { "name": "The Three-Tones Rule", "body": "Up, down, hold — that is the entire semantic palette. New signal states map into these three; never mint a fourth color.", "section": "colors" },
+      { "name": "The Mono-Numbers Rule", "body": "Every numeral the user might compare or scan is mono with tabular-nums and right-aligned in tables. Sans numerals are permitted only inside running prose.", "section": "typography" },
+      { "name": "The 12px Floor Rule", "body": "No functional text below 0.75rem, ever, and nothing below full muted-foreground contrast. A hint too small or too faint to pass AA is a hint that doesn't exist.", "section": "typography" },
+      { "name": "The Floating-Only Rule", "body": "A shadow means the element is temporally floating (tooltip, popover, dialog). Nothing that rests in the page flow casts one.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep section notes to ONE sentence of meaning; move all widget anatomy to the About modal.",
+      "Do read page width from --page-width (72rem) everywhere, including components outside .page like StaleBanner.",
+      "Do cap prose at 75ch even when the card is page-wide.",
+      "Do render partial data as empty/unavailable states; a missing section must say so.",
+      "Do respect prefers-reduced-motion (global transition kill)."
+    ],
+    "donts": [
+      "Don't revive newspaper ornament: no serif display, no brass accents, no margin gutters.",
+      "Don't build trading-terminal maximalism: no dense blinking grids, no neon-on-black, no data density as identity.",
+      "Don't put counts in tab labels.",
+      "Don't ship 2-point sparklines or zero-baseline sparkline domains.",
+      "Don't use color as the only signal; every tone needs a text twin.",
+      "Don't add resting shadows, side-stripe borders, or gradient text; separation is a 1px hairline, emphasis is weight."
+    ]
+  }
+}
