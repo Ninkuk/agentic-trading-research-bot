@@ -60,7 +60,7 @@ markets. Extreme positioning can mark crowded trades.
 *would* have done — using only the information that was actually available on
 each historical day, so the replay can't cheat by peeking at the future.
 
-**Forward return / paper outcome** — how a stock actually performed in the
+**Forward return (paper outcome)** — how a stock actually performed in the
 weeks *after* the system flagged it. "Paper" means graded on the record only;
 no money moved.
 
@@ -99,3 +99,40 @@ cash flow—rough, but a useful beginning-of-funnel filter.
 **Risk-on / risk-off** — the market's mood in broad strokes. "Risk-on" means
 investors are buying stocks and taking chances; "risk-off" means they're
 retreating to safe havens like bonds and cash.
+
+**Score (composite score)** — the nightly sum of a ticker's signal votes.
+Positive means more bullish signals fired than bearish ones. The size says how
+lopsided the vote was, not how far the price will move.
+
+**Base rate** — how often the benchmark moved that way anyway. A hit rate only
+means something when it beats this number; otherwise the "wins" were just the
+market drifting.
+
+**Edge** — hit rate minus base rate. A positive edge means the signal called
+direction better than the market's own drift; zero means it added nothing.
+
+**Excess (excess return)** — how much better or worse a stock did than the
+benchmark over the same stretch. Positive excess means it beat the market, not
+just that it went up.
+
+**Directional excess** — excess return counted in the direction the signal
+called. A bearish flag earns positive directional excess when the stock does
+*worse* than the market.
+
+**RSI (relative strength index)** — a 0-to-100 gauge of how hard a stock has
+been bought or sold lately. Below about 30 usually reads as oversold; above 70,
+overbought.
+
+**ROIC (return on invested capital)** — how much profit a company earns on
+each dollar tied up in the business. A steady double-digit ROIC is a mark of
+quality.
+
+**FCF yield (free cash flow yield)** — the spare cash a business generates in
+a year, divided by the price of the whole company. Higher means each dollar of
+cash costs you less to own.
+
+**Market cap (market capitalization)** — the total price tag on all of a
+company's shares put together.
+
+**Data age** — how many days old the freshest input behind a number is. Small
+means current; large means the reading is running on stale data.

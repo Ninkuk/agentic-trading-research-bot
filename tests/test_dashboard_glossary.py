@@ -50,4 +50,24 @@ def test_real_glossary_parses_nonempty():
 
 def test_real_glossary_covers_dashboard_terms():
     g = load_glossary(REPO / "docs" / "GLOSSARY.md")
-    assert {"ATR", "Coverage", "Hit rate", "CI"} <= set(g)
+    # Keys the dashboard wires explicitly (data.py `term=`) or matches by
+    # column label (DataTable's normalized-label fallback): a rename here
+    # silently unwires a popover, so pin the full set.
+    assert {
+        "ATR",
+        "Coverage",
+        "Hit rate",
+        "CI",
+        "Forward return",
+        "Score",
+        "Base rate",
+        "Edge",
+        "Excess",
+        "Directional excess",
+        "RSI",
+        "ROIC",
+        "FCF yield",
+        "Market cap",
+        "Data age",
+        "Piotroski score",
+    } <= set(g)
