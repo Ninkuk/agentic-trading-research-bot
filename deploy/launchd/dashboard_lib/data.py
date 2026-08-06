@@ -127,13 +127,16 @@ def _regime(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
             "tiles": [],
             "columns": _REGIME_DRIVER_COLUMNS,
             "rows": [],
-            "empty": "no composite snapshot yet — fills after the first nightly run",
+            "empty": "no composite snapshot yet; fills after the first nightly run",
         }
     verdict = narrative.regime_verdict(r["regime"], _streak_nights(conn))
     tone = verdict["tone"] if verdict is not None else "mid"
     vix_band = None if r["vix"] is None else narrative.qualitative_band("vix", r["vix"])
+    # The tile is a reading surface, not a data dump: "risk_on" is a machine
+    # id, "risk-on" is the glossary's own spelling of the same idea.
+    regime_display = {"risk_on": "risk-on", "risk_off": "risk-off"}.get(r["regime"], r["regime"])
     tiles = [
-        {"label": "regime", "value": r["regime"], "band": None, "tone": tone},
+        {"label": "regime", "value": regime_display, "band": None, "tone": tone},
         {"label": "VIX", "value": r["vix"], "band": vix_band, "tone": None},
         {
             "label": "inputs",
@@ -576,7 +579,10 @@ def _health(data_dir: str, now_iso: str) -> dict[str, Any]:
         {"label": "runs (24h)", "value": body["runs_24h"], "band": None, "tone": None},
         {"label": "jobs loaded", "value": body["jobs_loaded"], "band": None, "tone": None},
         {
-            "label": "problems",
+            # Singular/plural at the source: the tile renders "1" over its
+            # label, and "1 problems" was the most conspicuous typo on the
+            # page (alert red, stat size).
+            "label": "problem" if len(problems) == 1 else "problems",
             "value": len(problems),
             "band": None,
             "tone": "on" if not problems else "off",
@@ -619,6 +625,12 @@ def _direction(key: str) -> str | None:
     return None
 
 
+# `term` names a docs/GLOSSARY.md key for the column-header popover. The
+# dashboard also matches labels against glossary keys itself (DataTable's
+# normalized-label fallback), so a column whose label IS a glossary key —
+# "Hit rate", "Coverage", "RSI" — wires without an explicit term here. Pass
+# term= only when the label and the glossary key diverge ("Hit-rate CI low"
+# → "CI"); test_dashboard_glossary.py pins the keys both paths rely on.
 def _track_col(
     key: str, label: str, numeric: bool = True, term: str | None = None
 ) -> dict[str, Any]:
@@ -638,8 +650,8 @@ _SIGNAL_EFFICACY_COLUMNS: list[dict[str, Any]] = [
     _track_col("n_bench", "N benchmarked"),
     _track_col("n_dates", "N dates"),
     _track_col("hit_rate", "Hit rate"),
-    _track_col("hit_ci_lo", "Hit-rate CI low"),
-    _track_col("hit_ci_hi", "Hit-rate CI high"),
+    _track_col("hit_ci_lo", "Hit-rate CI low", term="CI"),
+    _track_col("hit_ci_hi", "Hit-rate CI high", term="CI"),
     _track_col("null_rate", "Base rate"),
     _track_col("avg_directional_excess", "Directional excess"),
     _track_col("recommendation", "Recommendation", numeric=False),
@@ -663,7 +675,7 @@ def _signal_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         "columns": _SIGNAL_EFFICACY_COLUMNS,
         "rows": [dict(r) for r in rows],
         "caveat": narrative.CAVEATS.get("signal-efficacy"),
-        "empty": "no matured signal outcomes yet — appears once a signal's"
+        "empty": "no matured signal outcomes yet; appears once a signal's"
         " flagged calls reach their grading horizon",
     }
 
@@ -672,7 +684,7 @@ _BUCKET_PERFORMANCE_COLUMNS: list[dict[str, Any]] = [
     _track_col("bucket", "Bucket", numeric=False),
     _track_col("horizon", "Horizon"),
     _track_col("n_bench", "N"),
-    _track_col("avg_fwd_return", "Fwd return"),
+    _track_col("avg_fwd_return", "Fwd return", term="Forward return"),
     _track_col("avg_excess", "Excess"),
     _track_col("hit_rate", "Hit rate"),
     _track_col("null_rate", "Base rate"),
@@ -691,7 +703,7 @@ def _bucket_performance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any
         "columns": _BUCKET_PERFORMANCE_COLUMNS,
         "rows": [dict(r) for r in rows],
         "caveat": narrative.CAVEATS.get("bucket-performance"),
-        "empty": "no matured buckets yet — appears once conviction-bucketed"
+        "empty": "no matured buckets yet; appears once conviction-bucketed"
         " opinions reach their grading horizon",
     }
 
@@ -701,7 +713,7 @@ _HUMAN_FILTER_COLUMNS: list[dict[str, Any]] = [
     _track_col("horizon", "Horizon"),
     _track_col("n", "N"),
     _track_col("avg_dir_excess", "Directional excess"),
-    _track_col("avg_fwd_return", "Fwd return"),
+    _track_col("avg_fwd_return", "Fwd return", term="Forward return"),
 ]
 
 
@@ -714,7 +726,7 @@ def _human_filter(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         "columns": _HUMAN_FILTER_COLUMNS,
         "rows": [dict(r) for r in rows],
         "caveat": narrative.CAVEATS.get("human-filter"),
-        "empty": "no matured flagged opinions yet — appears once an acted-on"
+        "empty": "no matured flagged opinions yet; appears once an acted-on"
         " or passed-on flag reaches its grading horizon",
     }
 
@@ -769,8 +781,8 @@ def _pending(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         "rows": [dict(r) for r in rows],
         "total": total,
         "caveat": narrative.CAVEATS.get("pending"),
-        "empty": "nothing pending — everything registered so far has matured"
-        " — fills once tonight's opinions are registered",
+        "empty": "nothing pending (everything registered so far has matured);"
+        " fills once tonight's opinions are registered",
     }
 
 
@@ -796,8 +808,8 @@ def _basis_breaks(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         # would be noise (deliberate; narrative.CAVEATS has no entry for
         # "basis-breaks", see Task 2's deviations note).
         "caveat": narrative.CAVEATS.get("basis-breaks"),
-        "empty": "no basis breaks detected — an empty table is the good"
-        " outcome; fills only when a price move looks like a split or a bad tick",
+        "empty": "no basis breaks detected, which is the good outcome;"
+        " fills only when a price move looks like a split or a bad tick",
     }
 
 
@@ -808,8 +820,8 @@ _SIGNAL_RECOMMENDATION_COLUMNS: list[dict[str, Any]] = [
     _track_col("n_blocks", "Independent windows"),
     _track_col("avg_directional_excess", "Directional excess"),
     _track_col("hit_rate", "Hit rate"),
-    _track_col("hit_ci_lo", "Hit-rate CI low"),
-    _track_col("hit_ci_hi", "Hit-rate CI high"),
+    _track_col("hit_ci_lo", "Hit-rate CI low", term="CI"),
+    _track_col("hit_ci_hi", "Hit-rate CI high", term="CI"),
     _track_col("recommendation", "Recommendation", numeric=False),
 ]
 
@@ -833,8 +845,9 @@ def _signal_recommendation(conn: sqlite3.Connection, now_iso: str) -> dict[str, 
         "columns": _SIGNAL_RECOMMENDATION_COLUMNS,
         "rows": [dict(r) for r in rows],
         "caveat": narrative.CAVEATS.get("plan-001-report"),
-        "empty": "insufficient evidence for every signal (young scorer) —"
-        " expected; fills in once a signal's evidence crosses the reliability floor",
+        "empty": "insufficient evidence for every signal so far, which is"
+        " expected of a young scorer; fills in once a signal's evidence"
+        " crosses the reliability floor",
     }
 
 
@@ -858,7 +871,7 @@ _CANDIDATE_EFFICACY_COLUMNS: list[dict[str, Any]] = [
     _track_col("n", "N"),
     _track_col("hit_rate", "Hit rate"),
     _track_col("avg_excess", "Excess"),
-    _track_col("avg_fwd_return", "Fwd return"),
+    _track_col("avg_fwd_return", "Fwd return", term="Forward return"),
 ]
 
 
@@ -877,7 +890,7 @@ def _candidate_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any
         "columns": _CANDIDATE_EFFICACY_COLUMNS,
         "rows": [dict(r) for r in rows],
         "caveat": narrative.CAVEATS.get("candidate-efficacy"),
-        "empty": "no matured episodes yet — first grades appear ~21 trading"
+        "empty": "no matured episodes yet; first grades appear ~21 trading"
         " days after the first screen night",
     }
 
@@ -957,7 +970,7 @@ def _group_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
             }
             for r in rows
         ],
-        "empty": "no group heat yet — appears once the advisor computes tonight's book",
+        "empty": "no group heat yet; appears once the advisor computes tonight's book",
     }
 
 
@@ -1090,7 +1103,7 @@ SECTION_EXPORTERS: list[
         "composite.db",
         _regime,
         "Macro",
-        "The market's mood tonight — is money flowing toward risk, or away from it?",
+        "Is money flowing toward risk or away from it? Tonight's read on the market's mood.",
         [
             (
                 "What decides it",
@@ -1101,7 +1114,7 @@ SECTION_EXPORTERS: list[
             (
                 "How to read it",
                 "“Risk-on” means money is flowing toward risk; the VIX is a"
-                " fear gauge — lower is calmer. Open the drivers to see"
+                " fear gauge (lower is calmer). Open the drivers to see"
                 " which inputs argued which way.",
             ),
         ],
@@ -1123,7 +1136,7 @@ SECTION_EXPORTERS: list[
             (
                 "Why it matters",
                 "A mood that just flipped is weaker evidence than one that"
-                " has held for weeks — the streak is the signal, not any"
+                " has held for weeks; watch the streak rather than any"
                 " single night.",
             ),
         ],
@@ -1155,12 +1168,12 @@ SECTION_EXPORTERS: list[
         "stocks.db",
         _candidates,
         "Signals",
-        "Good companies currently marked down — a reading queue, not an opinion.",
+        "A reading queue of good companies whose shares are currently marked down; nothing on it is a recommendation.",
         [
             (
                 "What this screens for",
                 "Quality first: durable returns on capital, real free cash"
-                " flow, a rising Piotroski score — and a share price"
+                " flow, a rising Piotroski score, and a share price"
                 " currently well off its highs.",
             ),
             (
@@ -1188,7 +1201,7 @@ SECTION_EXPORTERS: list[
         [
             (
                 "How to read it",
-                "A dated trigger is usually an earnings report — “due”"
+                "A dated trigger is usually an earnings report; “due”"
                 " means that evidence now exists and the name deserves a"
                 " fresh look. An event trigger waits on a filing or a"
                 " price, with no date attached.",
@@ -1206,7 +1219,7 @@ SECTION_EXPORTERS: list[
         "composite.db",
         _scorecard,
         "Signals",
-        "Stocks doing something statistically odd right now — dislocation, not quality.",
+        "Stocks doing something statistically odd right now, which says nothing about business quality.",
         [
             (
                 "What this is",
@@ -1220,7 +1233,7 @@ SECTION_EXPORTERS: list[
                 "Why a crashing stock flags bullish",
                 "Deeply oversold RSI and crowded shorts vote bullish on a"
                 " mean-reversion hunch. That hunch is worthless when the"
-                " drop had a real cause — a stock down 40% on bad news will"
+                " drop had a real cause: a stock down 40% on bad news will"
                 " sit here flagged bullish every night until the price"
                 " stabilizes.",
             ),
@@ -1235,7 +1248,7 @@ SECTION_EXPORTERS: list[
                 "Treat it as a to-research feed: most flags deserve"
                 " rejection, and by design the research step kills nearly"
                 " everything. Whether any single signal has proven edge is"
-                " graded under Track record — so far none has.",
+                " graded under Track record; so far none has.",
             ),
         ],
     ),
@@ -1250,7 +1263,7 @@ SECTION_EXPORTERS: list[
             (
                 "What this is",
                 "How often each signal has been right so far, and by how"
-                " much it beat the SPY benchmark. Unfiltered — every signal"
+                " much it beat the SPY benchmark. Unfiltered: every signal"
                 " appears, proven or not.",
             ),
             (
@@ -1274,7 +1287,7 @@ SECTION_EXPORTERS: list[
                 "Every past opinion grouped by conviction bucket,"
                 " strong-bull down to strong-bear, each graded against SPY."
                 " If conviction means anything, stronger buckets should do"
-                " better — this checks that.",
+                " better; this checks that.",
             ),
         ],
     ),
@@ -1284,7 +1297,7 @@ SECTION_EXPORTERS: list[
         "scorer.db",
         _human_filter,
         "Track record",
-        "You acted on some flags and passed on the rest — did your judgment add edge?",
+        "When you chose which flags to act on and which to pass, did your judgment add anything?",
         [
             (
                 "How to read it",
@@ -1320,8 +1333,8 @@ SECTION_EXPORTERS: list[
             (
                 "What this is",
                 "Every graded table above includes only matured outcomes."
-                " This is the queue still being measured — what will become"
-                " those grades.",
+                " This is the queue still being measured; these rows become"
+                " those grades once they age.",
             ),
         ],
     ),
@@ -1332,7 +1345,7 @@ SECTION_EXPORTERS: list[
         _basis_breaks,
         "Track record",
         "Price moves that look like data errors, caught before they can"
-        " poison the grades — an empty table is the good outcome.",
+        " poison the grades; an empty table is the good outcome.",
         [
             (
                 "What this is",
@@ -1354,7 +1367,7 @@ SECTION_EXPORTERS: list[
             (
                 "What “heat” means",
                 "The dollars lost across every open position on a one-ATR"
-                " adverse day — a normal bad day, not a crash.",
+                " adverse day: a normal bad day, not a crash.",
             ),
             (
                 "What it is not",
@@ -1375,9 +1388,9 @@ SECTION_EXPORTERS: list[
         [
             (
                 "Why",
-                "Two energy names are one energy bet — risk adds up within"
+                "Two energy names are one energy bet: risk adds up within"
                 " a group, and sizing that ignores this quietly doubles"
-                " exposure. Hedges net out: a protective put reduces its"
+                " exposure. Hedges net out, so a protective put reduces its"
                 " bet's heat.",
             ),
         ],
@@ -1410,8 +1423,8 @@ SECTION_EXPORTERS: list[
                 "How to read it",
                 "Tickers where the score points the opposite way from an"
                 " open position. “Strong” means the score is far enough"
-                " from neutral to be worth a look — a prompt to re-check"
-                " the thesis, not an exit order.",
+                " from neutral to be worth a look. Treat it as a prompt to"
+                " re-check the thesis rather than an exit order.",
             ),
         ],
     ),
@@ -1421,7 +1434,7 @@ SECTION_EXPORTERS: list[
         "advisor.db",
         _size_caps,
         "Your book",
-        "A volatility-scaled ceiling on each candidate's size — advice, never an order.",
+        "A volatility-scaled ceiling on each candidate's size; the advisor only suggests, it never places orders.",
         [
             (
                 "How to read it",
@@ -1438,7 +1451,7 @@ SECTION_EXPORTERS: list[
         "scorer.db",
         _signal_recommendation,
         "Track record",
-        "The verdict on each signal — keep, watch, or anti-signal — graded"
+        "The verdict on each signal (keep, watch, or anti-signal), graded"
         " against the real base rate.",
         [
             (
@@ -1451,8 +1464,8 @@ SECTION_EXPORTERS: list[
             (
                 "The verdicts",
                 "“Keep” means the whole confidence range sits above the"
-                " baseline; “anti-signal” sits entirely below it —"
-                " significantly wrong, never a win; “watch” straddles.",
+                " baseline; “anti-signal” sits entirely below it"
+                " (significantly wrong, never a win); “watch” straddles.",
             ),
             (
                 "Hold it loosely",
@@ -1490,13 +1503,13 @@ SECTION_EXPORTERS: list[
                 "How it is measured",
                 "A name's first entry onto the reading list starts a"
                 " stopwatch: its 21- and 63-trading-day return is measured"
-                " against SPY, split by which dislocation door let it in —"
-                " oversold RSI, a price drawdown, or both at once.",
+                " against SPY, split by which dislocation door let it in"
+                " (oversold RSI, a price drawdown, or both at once).",
             ),
             (
                 "What it does not grade",
                 "Timing only, never the multi-year quality thesis behind"
-                " the pick — and none of it feeds back into the screen's"
+                " the pick, and none of it feeds back into the screen's"
                 " own gates.",
             ),
         ],
@@ -1507,20 +1520,20 @@ SECTION_EXPORTERS: list[
         "launchctl + logs + snapshot DBs",
         _health,
         "Ops",
-        "Did last night's machinery actually run — and is every database fresh?",
+        "Did last night's machinery actually run, and is every database fresh?",
         [
             (
                 "What it checks",
                 "Three layers: every scheduled job's last exit code and"
                 " whether any is hung mid-run, FAILED/STALE markers in the"
-                " last 24h of logs (as counts — the log itself stays on the"
+                " last 24h of logs (as counts; the log itself stays on the"
                 " host), and each database's newest snapshot age against its"
                 " expected cadence.",
             ),
             (
                 "How to read it",
                 "Green with zero problems is the normal state. Any row here"
-                " means a number elsewhere on this page may be stale — check"
+                " means a number elsewhere on this page may be stale, so check"
                 " this section first when something looks off.",
             ),
         ],

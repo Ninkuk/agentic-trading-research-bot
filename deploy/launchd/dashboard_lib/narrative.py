@@ -152,7 +152,7 @@ def hero_bullets(
         vix_txt = "" if vix is None else f", VIX {qualitative_band('vix', vix)} at {vix:.1f}"
         bullets.append(
             {
-                "text": f"{label} — {mood}, {_ordinal(streak)} night in a row{vix_txt}.",
+                "text": f"{label}: {mood}, {_ordinal(streak)} night in a row{vix_txt}.",
                 "tone": tone,
             }
         )
@@ -182,15 +182,15 @@ def hero_bullets(
 
     if disagreements:
         if len(disagreements) == 1:
-            text = f"{disagreements[0]} is worth a look — its signal has turned against it."
+            text = f"{disagreements[0]} is worth a look; its signal has turned against it."
         else:
-            text = f"{len(disagreements)} holdings are worth a look — see Disagreements below."
+            text = f"{len(disagreements)} holdings are worth a look; see Disagreements below."
         bullets.append({"text": text, "tone": "mid"})
     elif flagged:
         if len(flagged) == 1:
-            text = f"{flagged[0]} is flagged tonight — worth a look."
+            text = f"{flagged[0]} is flagged tonight and worth a look."
         else:
-            text = f"{', '.join(flagged[:3])} flagged tonight — worth a look."
+            text = f"{', '.join(flagged[:3])} are flagged tonight and worth a look."
         bullets.append({"text": text, "tone": "mid"})
 
     return bullets[:3]
@@ -202,7 +202,7 @@ CAVEATS: dict[str, str] = {
         "signals at once. Grades firm up as distinct composite dates accumulate."
     ),
     "bucket-performance": (
-        "Buckets group flags by strength, not by independence — the same "
+        "Buckets group flags by strength, not by independence; the same "
         "overlapping-episode caveat applies within each bucket. Read the count "
         "before trusting a bucket's average."
     ),
@@ -211,17 +211,17 @@ CAVEATS: dict[str, str] = {
         "journal. A handful of trades can swing the comparison either way."
     ),
     "regime-performance": (
-        "Regime windows are contiguous stretches, not independent draws — a "
-        "single risk-on run dominates the sample until more regimes accumulate."
+        "Regime windows are contiguous stretches rather than independent draws; "
+        "a single risk-on run dominates the sample until more regimes accumulate."
     ),
     "pending": (
         "These flags haven't reached their grading horizon yet, so nothing "
-        "here is a result — it's a worklist."
+        "here is a result; it's a worklist."
     ),
     "plan-001-report": (
-        "A backtest replay against ALFRED vintages, not live trading — read "
-        "excess/beats-baseline, never hit-rate alone, and treat it as one "
-        "history, not a distribution."
+        "A backtest replay against ALFRED vintages, not live trading. Read "
+        "excess and beats-baseline rather than hit-rate alone, and remember "
+        "this is one history, not a distribution."
     ),
     "plan-004-scorecard": (
         "Grades the human's own decisions from the journal. Coverage is "
