@@ -1,6 +1,9 @@
 // A sortable, filterable, expandable table on the shadcn table kit. Sort
-// order and expanded state persist per `storageKey` via usePrefs — a reader
-// who sorts scorecard by score sees the same layout on the next visit.
+// order persists per `storageKey` via usePrefs — a reader who sorts
+// scorecard by score sees the same layout on the next visit. Expansion is
+// session-only on purpose (like filter text): sort is a stable preference,
+// "show all 1148" is a momentary act, and persisting it made every future
+// visit open as a full-length wall with no visible cause.
 // Tables with ≥4 rows get a text filter (matches any visible column,
 // case-insensitive). `pinnedFirst` (row identity = the first column's
 // value) keeps specific rows above the rest regardless of sort; the active
@@ -9,7 +12,7 @@
 // (Scorecard's flagged rows) apply a row-level CSS hook without owning row
 // markup itself.
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { usePrefs } from "../hooks/usePrefs";
 import type { CellValue, Column, Glossary, Row } from "../types";
@@ -42,17 +45,56 @@ export interface DataTableProps {
 
 type SortDir = "asc" | "desc" | null;
 
+// Older persisted blobs also carried an `expanded` key; it parses fine and
+// is simply no longer read (see the header comment on session-only
+// expansion).
 interface TableState {
   sortKey: string | null;
   sortDir: SortDir;
-  expanded: boolean;
 }
 
 const DEFAULT_STATE: TableState = {
   sortKey: null,
   sortDir: null,
-  expanded: false,
 };
+
+/** Lowercased, parenthetical-free, alphanumeric-only form for matching
+ * column labels against glossary keys ("FCF yield %" → "fcfyield"). */
+function normalizeKey(s: string): string {
+  return s
+    .replace(/\([^)]*\)/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+/** Index glossary keys by normalized form, including each half of
+ * slash-compound keys ("Book heat / Heat" answers for "Heat $") and any
+ * parenthetical alias ("Confidence interval (CI)" answers for "CI"). */
+function buildGlossaryIndex(glossary: Glossary): Map<string, string> {
+  const index = new Map<string, string>();
+  for (const key of Object.keys(glossary)) {
+    const paren = /\(([^)]+)\)/.exec(key);
+    const candidates = [key, ...key.split("/")];
+    if (paren?.[1]) candidates.push(paren[1]);
+    for (const candidate of candidates) {
+      const norm = normalizeKey(candidate);
+      if (norm && !index.has(norm)) index.set(norm, key);
+    }
+  }
+  return index;
+}
+
+/** The exporter's explicit `term` wins; otherwise fall back to a
+ * normalized label match so a glossary entry that plainly names the
+ * column still gets its popover without an exporter change. */
+function termForColumn(
+  col: Column,
+  glossary: Glossary,
+  index: Map<string, string>,
+): string | undefined {
+  if (col.term && glossary[col.term] !== undefined) return col.term;
+  return index.get(normalizeKey(col.label));
+}
 
 /** Tables shorter than this skip the filter chrome. */
 const FILTER_MIN_ROWS = 4;
@@ -112,9 +154,28 @@ export function DataTable({
   filterable: filterableProp = true,
 }: DataTableProps) {
   const [state, setState] = usePrefs<TableState>(storageKey, DEFAULT_STATE);
-  // Filter text is session-only on purpose — a persisted filter would make
-  // tomorrow's edition open mysteriously truncated.
+  // Filter text and expansion are session-only on purpose — a persisted
+  // filter would make tomorrow's edition open mysteriously truncated, and a
+  // persisted expansion would make it open as a 1,000-row wall.
   const [filter, setFilter] = useState("");
+  const [expanded, setExpanded] = useState(false);
+
+  const glossaryIndex = useMemo(() => buildGlossaryIndex(glossary), [glossary]);
+
+  // A column whose every value is identical carries zero information —
+  // "Held: no" × 27 rows is grid noise, not data. Hide it (identity column
+  // exempt; small tables exempt, where a constant can still be worth
+  // reading). Computed from the full row set, not the filtered one, so
+  // filtering can't make columns pop in and out.
+  const visibleColumns = useMemo(() => {
+    if (rows.length < FILTER_MIN_ROWS) return columns;
+    return columns.filter((col, i) => {
+      if (i === 0) return true;
+      const first = rows[0]?.[col.key] ?? null;
+      if (Array.isArray(first)) return true;
+      return !rows.every((r) => (r[col.key] ?? null) === first);
+    });
+  }, [columns, rows]);
 
   const sortCol = columns.find((c) => c.key === state.sortKey);
 
@@ -133,7 +194,7 @@ export function DataTable({
     ...sortRows(restRows, sortCol, state.sortDir),
   ];
 
-  const displayedRows = state.expanded ? processedRows : processedRows.slice(0, initialRows);
+  const displayedRows = expanded ? processedRows : processedRows.slice(0, initialRows);
   const hasMore = processedRows.length > initialRows;
   const filterable = filterableProp && rows.length >= FILTER_MIN_ROWS;
 
@@ -145,9 +206,6 @@ export function DataTable({
     );
   }
 
-  function showAll(): void {
-    setState({ ...state, expanded: true });
-  }
 
   return (
     <div className="datatable space-y-2.5">
@@ -171,8 +229,9 @@ export function DataTable({
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            {columns.map((col) => {
+            {visibleColumns.map((col) => {
               const sorted = state.sortKey === col.key;
+              const term = termForColumn(col, glossary, glossaryIndex);
               return (
                 <TableHead
                   key={col.key}
@@ -190,7 +249,7 @@ export function DataTable({
                       label as a sibling and the button carries only the
                       arrow. Either way every click funnels into th's
                       onClick above via bubbling, exactly once. */}
-                  {col.term ? (
+                  {term ? (
                     // One aligned row, same height as the ghost-button
                     // headers — Term keeps its own button (nesting it in
                     // the sort Button would be invalid HTML), so the
@@ -200,14 +259,14 @@ export function DataTable({
                         col.numeric ? "justify-end" : ""
                       }`}
                     >
-                      <Term term={col.term} glossary={glossary}>
+                      <Term term={term} glossary={glossary}>
                         {col.label}
                       </Term>
                       {col.direction === "up-good" && (
-                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal">↑ better</span>
+                        <span className="dir-hint text-muted-foreground text-xs font-normal">↑ better</span>
                       )}
                       {col.direction === "down-good" && (
-                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal">↓ better</span>
+                        <span className="dir-hint text-muted-foreground text-xs font-normal">↓ better</span>
                       )}
                       <Button
                         variant="ghost"
@@ -229,10 +288,10 @@ export function DataTable({
                     >
                       <span className="col-label">{col.label}</span>
                       {col.direction === "up-good" && (
-                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal">↑ better</span>
+                        <span className="dir-hint text-muted-foreground text-xs font-normal">↑ better</span>
                       )}
                       {col.direction === "down-good" && (
-                        <span className="dir-hint text-muted-foreground/70 text-[10px] font-normal">↓ better</span>
+                        <span className="dir-hint text-muted-foreground text-xs font-normal">↓ better</span>
                       )}
                       <SortIcon sorted={sorted} dir={state.sortDir} />
                     </Button>
@@ -245,14 +304,14 @@ export function DataTable({
         <TableBody>
           {needle && processedRows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={columns.length} className="text-muted-foreground h-14 text-center">
+              <TableCell colSpan={visibleColumns.length} className="text-muted-foreground h-14 text-center">
                 No rows match "{filter}".
               </TableCell>
             </TableRow>
           ) : (
             displayedRows.map((row, i) => (
               <TableRow key={`${rowKeyOf(row, columns)}:${i}`} className={rowClassName?.(row)}>
-                {columns.map((col) => (
+                {visibleColumns.map((col) => (
                   <TableCell
                     key={col.key}
                     className={col.numeric ? "num text-right font-mono tabular-nums" : undefined}
@@ -265,13 +324,13 @@ export function DataTable({
           )}
         </TableBody>
       </Table>
-      {hasMore && !state.expanded && (
+      {(hasMore || expanded) && (
         <button
           type="button"
           className="show-all text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0 pt-1 text-xs font-medium underline underline-offset-2"
-          onClick={showAll}
+          onClick={() => setExpanded(!expanded)}
         >
-          Show all {processedRows.length}
+          {expanded ? "Show fewer" : `Show all ${processedRows.length}`}
         </button>
       )}
     </div>

@@ -20,10 +20,22 @@ export interface GenerationFailedBannerProps {
 export function GenerationFailedBanner({ message, generatedAt }: GenerationFailedBannerProps) {
   return (
     <div className="page">
-      <p className="unavailable" role="alert">
-        Dashboard generation failed: {message}
-        {generatedAt && ` (last attempt ${dateShort(generatedAt)})`}
-      </p>
+      <div
+        className="border-destructive/30 bg-destructive/5 space-y-2 rounded-lg border px-5 py-4"
+        role="alert"
+      >
+        <p className="m-0 font-medium">
+          Tonight's dashboard couldn't be generated, so there's nothing new to read yet.
+        </p>
+        <p className="mono text-destructive m-0">
+          {message}
+          {generatedAt && ` (last attempt ${dateShort(generatedAt)})`}
+        </p>
+        <p className="text-muted-foreground m-0 text-sm">
+          The nightly job will try again on its own this evening. To retry now, run the dashboard
+          export job (deploy/launchd/dashboard.sh) and reload this page.
+        </p>
+      </div>
     </div>
   );
 }

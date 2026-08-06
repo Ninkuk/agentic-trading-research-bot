@@ -25,7 +25,7 @@
 // macro-drivers is the one section not repeated inside its strand: the
 // summary card at the top IS its rendering (tiles + sparklines).
 
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { KpiSpark } from "../charts/KpiSpark";
 import { REPO_URL } from "../constants";
 import { signed } from "../format";
@@ -97,6 +97,22 @@ function slug(s: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+/** Wrap known ticker symbols in hero-bullet text with drill-down links —
+ * the hero names the one thing worth attention tonight, so it must also be
+ * the path to it. Only exact uppercase tokens that match an exported
+ * ticker qualify, so prose words can't false-positive. */
+function linkifyTickers(text: string, known: Set<string>): ReactNode[] {
+  return text.split(/\b/).map((part, i) =>
+    part.length >= 2 && /^[A-Z]+$/.test(part) && known.has(part) ? (
+      <a key={i} className="sym" href={`#/ticker/${part}`}>
+        {part}
+      </a>
+    ) : (
+      part
+    ),
+  );
+}
+
 // macro-drivers has no entry: it renders in the summary card (see
 // HEADER_SECTIONS); if its kicker ever stops matching, GenericSection's
 // tiles path still covers it.
@@ -156,6 +172,7 @@ export interface MainProps {
 
 export function Main({ doc }: MainProps) {
   const glossary = doc.glossary ?? {};
+  const knownTickers = new Set(Object.keys(doc.tickers ?? {}));
   const entries = Object.entries(doc.sections);
   const regimeSec = doc.sections["regime"];
   const macroSec = doc.sections["macro-drivers"];
@@ -187,13 +204,13 @@ export function Main({ doc }: MainProps) {
         <CardContent className="space-y-4 px-5">
           <div className="space-y-1.5">
             {doc.hero.bullets.map((bullet, i) => (
-              <p className="read m-0 flex items-start gap-2.5 text-[15px]" key={i}>
+              <p className="read m-0 flex items-start gap-2.5 text-base" key={i}>
                 <span
                   aria-hidden="true"
                   className="mt-1.5 size-2.5 shrink-0 rounded-full"
                   style={{ background: TONE_DOT[bullet.tone] }}
                 />
-                {bullet.text}
+                <span>{linkifyTickers(bullet.text, knownTickers)}</span>
               </p>
             ))}
           </div>
@@ -211,7 +228,7 @@ export function Main({ doc }: MainProps) {
                 {(macroSec?.tiles ?? []).map((tile) => (
                   <div key={tile.label} className="tile flex items-center gap-3">
                     <div>
-                      <div className="text-muted-foreground text-[11px]">{tile.label}</div>
+                      <div className="text-muted-foreground text-xs">{tile.label}</div>
                       <div className="font-mono text-base leading-tight font-semibold tabular-nums">
                         {typeof tile.value === "number" ? tile.value : String(tile.value ?? "—")}
                         {typeof tile.delta === "number" && (
@@ -231,7 +248,12 @@ export function Main({ doc }: MainProps) {
       </Card>
 
       <Tabs defaultValue={strandId(KICKERS[0])}>
-        <TabsList className="w-full">
+        {/* justify-start + overflow-x-auto: six triggers don't fit a phone
+            width, and TabsTrigger never shrinks below its label — without a
+            scroll container the strip widens the whole document (the
+            "Macro" → "cro" bug). Desktop is unaffected: flex-1 triggers
+            still fill the full width. */}
+        <TabsList className="w-full justify-start overflow-x-auto [scrollbar-width:none]">
           {tabLabels.map((label) => (
             <TabsTrigger key={label} value={strandId(label)}>
               {label}

@@ -1,5 +1,8 @@
 # Design Memory — dashboard
 
+Formalized 2026-08-06 as PRODUCT.md (strategy) + DESIGN.md (visual spec,
+named rules) for the impeccable skill; keep all three in sync.
+
 ## Brand tone
 - Beginner-friendly, practical, calm. Plain-English explanations are a
   feature: every section keeps its note, every stat its caption.
@@ -33,6 +36,19 @@
 - Tables: sortable headers with persistence, filter box at ≥4 rows, numeric
   right-aligned mono tabular-nums. Merge CI into the hit-rate cell, stacked
   (never a wide inline suffix — it smushes neighbors).
+- Expansion ("Show all N") is a two-way toggle and session-only; persisting
+  it made every later visit open as a 44,000px wall (2026-08-06).
+- Columns whose every value is identical auto-hide at ≥4 rows (DataTable);
+  the identity column is exempt.
+- Machine ids never render raw: formatCell/StatTile humanize snake_case and
+  kebab slugs ("SI days to cover"), raw id kept in a title attribute.
+- Glossary popovers portal to document.body (table overflow clips them
+  otherwise) and columns fall back to a normalized label→glossary match
+  when the exporter sets no term.
+- No functional text below 12px or below full muted-foreground contrast
+  (the 12px Floor Rule; 10px dir-hints failed AA in light mode).
+- No resting shadows (cards, tabs); shadows only on floating layers
+  (dialog shadow-lg, tooltips).
 - Charts: shadcn ChartContainer/ChartTooltip. Sparklines need hidden
   auto-domain YAxis (zero-baseline turns them into filled boxes) and
   tooltips positioned above the chart. No tiny 2-point sparklines — if the

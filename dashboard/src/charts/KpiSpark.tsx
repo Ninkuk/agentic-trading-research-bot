@@ -31,11 +31,19 @@ export function KpiSpark({ label, points }: KpiSparkProps) {
   const usable = points.filter((p) => p.value !== null);
   if (usable.length < 3) return null;
   const config = { value: { label, color: "var(--chart-2)" } } satisfies ChartConfig;
+  // Pad the domain 15% beyond the data's own range: a bare
+  // [dataMin, dataMax] domain rendered one series as a near-solid box and
+  // its neighbor as a thin ribbon — three sparklines that should read as
+  // one chart type looked like three.
+  const values = usable.map((p) => p.value as number);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const pad = (max - min || Math.abs(max) || 1) * 0.15;
   return (
     <ChartContainer config={config} className="aspect-auto h-9 w-24">
       <AreaChart data={usable} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
         <XAxis dataKey="date" hide />
-        <YAxis hide domain={["dataMin", "dataMax"]} />
+        <YAxis hide domain={[min - pad, max + pad]} />
         <ChartTooltip
           allowEscapeViewBox={{ x: true, y: true }}
           position={{ y: -46 }}

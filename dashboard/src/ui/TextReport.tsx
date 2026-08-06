@@ -132,8 +132,10 @@ export function TextReport({ lines }: { lines: string[] }) {
   return (
     <div className="space-y-5">
       {period && (
-        <Badge variant="secondary" className="font-mono">
-          {period}
+        // "period" labels the bare chip — an unlabeled "2026-08" reads as a
+        // tag, not as the reporting month.
+        <Badge variant="secondary">
+          period <span className="font-mono">{period}</span>
         </Badge>
       )}
       {parsed.blocks.map((b) => {

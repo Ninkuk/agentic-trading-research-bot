@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
 import { pct, signed, usd } from "../format";
 import type { Column, Row } from "../types";
 import { Badge } from "../components/ui/badge";
-import { formatCell } from "./formatCell";
+import { formatCell, humanizeId, isMachineId } from "./formatCell";
 
 // Fractions of 1 → percent (0.58 → 58%).
 const PCT_FRACTION = new Set(["coverage", "hit_rate", "hit_ci_lo", "hit_ci_hi", "null_rate", "avg_excess"]);
@@ -30,7 +30,10 @@ const PCT_SIGNED = new Set([
 // Already expressed in percent units (advisor heat).
 const PCT_UNIT = new Set(["heat_pct", "weight_pct"]);
 const DOLLARS = new Set(["heat_dollars", "cap_dollars", "market_value", "price", "prev_close", "close"]);
-const MONO = new Set(["symbol", "ticker", "signal_id", "symbols", "trigger"]);
+// Symbols stay mono; signal ids and reopen triggers are no longer here —
+// they humanize into words (see the branches in sectionCell below), and
+// words are sans per the Mono-Numbers Rule.
+const MONO = new Set(["symbol", "ticker", "symbols"]);
 
 export function signedPctCell(v: unknown): ReactNode {
   if (typeof v !== "number") return "—";
@@ -49,6 +52,22 @@ const REC_VARIANT: Record<string, "up" | "down" | "hold"> = {
   "anti-signal": "down",
   anti: "down",
 };
+
+// Research verdicts get the same tone treatment as every other verdict on
+// the page — SOUND/FLAWED as bare uppercase text made a failed thesis
+// visually identical to a sound one (the Three-Tones Rule, unapplied).
+const RESEARCH_VERDICT_VARIANT: Record<string, "up" | "down" | "hold"> = {
+  SOUND: "up",
+  FLAWED: "down",
+  UNPROVEN: "hold",
+};
+
+export function researchVerdictPill(v: unknown): ReactNode {
+  if (typeof v !== "string" || !v) return "—";
+  const variant = RESEARCH_VERDICT_VARIANT[v.toUpperCase()];
+  if (!variant) return formatCell(v);
+  return <Badge variant={variant}>{v}</Badge>;
+}
 
 export function recommendationPill(v: unknown): ReactNode {
   const text = typeof v === "string" && v ? v : "insufficient evidence";
@@ -70,7 +89,7 @@ export function hitRateCell(row: Row): ReactNode {
   return (
     <span className="inline-flex flex-col items-end leading-tight">
       <span>{rate}</span>
-      <span className="text-muted-foreground text-[11px]">
+      <span className="text-muted-foreground text-xs">
         CI {Math.round(lo * 100)}–{Math.round(hi * 100)}
       </span>
     </span>
@@ -85,10 +104,28 @@ export function visibleColumns(columns: Column[]): Column[] {
   return columns.filter((c) => !HIDDEN_CI_KEYS.has(c.key));
 }
 
+/** Machine ids render as words with the raw id preserved in a title
+ * attribute; reopen triggers additionally drop a leading ticker prefix
+ * ("bsy-q2-print…" in a row whose Ticker column already says BSY). */
+export function machineIdCell(row: Row, key: string, v: unknown): ReactNode {
+  if (typeof v !== "string" || !v) return formatCell(v as never);
+  let slug = v;
+  if (key === "trigger") {
+    const ticker = typeof row.ticker === "string" ? row.ticker.toLowerCase() : null;
+    if (ticker && slug.toLowerCase().startsWith(`${ticker}-`)) {
+      slug = slug.slice(ticker.length + 1);
+    }
+  }
+  if (!isMachineId(slug)) return slug;
+  return <span title={v}>{humanizeId(slug)}</span>;
+}
+
 /** The generic per-cell dispatcher — the lab's buildRenderers, flattened. */
 export function sectionCell(row: Row, col: Column): ReactNode {
   const k = col.key;
   const v = row[k];
+  if (k === "signal_id" || k === "trigger") return machineIdCell(row, k, v);
+  if (k === "verdict") return researchVerdictPill(v);
   if (k === "score_sum") return scoreCell(v);
   if (k === "recommendation") return recommendationPill(v);
   if (k === "hit_rate") return hitRateCell(row);

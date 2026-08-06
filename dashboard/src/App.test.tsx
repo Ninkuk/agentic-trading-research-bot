@@ -12,7 +12,7 @@ afterEach(() => {
 test("renders the main page once the fixture doc loads", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => fixture }));
   render(<App />);
-  await waitFor(() => expect(screen.getByText(/Risk-on — leaning into risky assets/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText(/Risk-on: leaning into risky assets/)).toBeInTheDocument());
 });
 
 test("a fetch failure shows the full-page generation-failed banner", async () => {
@@ -47,7 +47,7 @@ test("a stale document renders normally with a dismissable banner", async () => 
   await waitFor(() => expect(screen.getByRole("status")).toBeInTheDocument());
   await userEvent.click(screen.getByRole("button", { name: /dismiss/i }));
   expect(screen.queryByRole("status")).not.toBeInTheDocument();
-  expect(screen.getByText(/Risk-on — leaning into risky assets/)).toBeInTheDocument();
+  expect(screen.getByText(/Risk-on: leaning into risky assets/)).toBeInTheDocument();
 });
 
 test("the ticker hash route renders the drill-down for a known symbol", async () => {

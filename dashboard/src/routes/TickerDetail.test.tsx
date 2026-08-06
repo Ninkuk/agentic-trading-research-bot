@@ -22,8 +22,8 @@ test("renders all four blocks for a fixture ticker with signals, verdicts, fills
 
   // signal breakdown
   expect(screen.getByRole("columnheader", { name: /signal/i })).toBeInTheDocument();
-  expect(screen.getByText("si_spike")).toBeInTheDocument();
-  expect(screen.getByText("rsi_oversold")).toBeInTheDocument();
+  expect(screen.getByText("SI spike")).toBeInTheDocument();
+  expect(screen.getByText("RSI oversold")).toBeInTheDocument();
 
   // research verdicts
   expect(screen.getByText(/SOUND/)).toBeInTheDocument();
@@ -44,7 +44,7 @@ test("each block degrades independently: TSLA has no research verdicts", () => {
   expect(screen.getByRole("heading", { name: "TSLA" })).toBeInTheDocument();
   expect(screen.getByText(/no research verdicts yet/i)).toBeInTheDocument();
   // signals and fills still render
-  expect(screen.getByText("si_spike")).toBeInTheDocument();
+  expect(screen.getByText("SI spike")).toBeInTheDocument();
 });
 
 test("score-history dots diverge by sign: zero is neutral, negative is down-colored", () => {
@@ -60,29 +60,29 @@ test("an unknown symbol shows an honest no-detail message, but the header (and p
   render(<TickerDetail doc={doc} symbol="ZZZZ" />);
   expect(screen.getByRole("heading", { name: "ZZZZ" })).toBeInTheDocument();
   expect(
-    screen.getByText(/no detail exported for ZZZZ — it was not in tonight's scorecard, holdings, or journal\./i),
+    screen.getByText(/no detail exported for ZZZZ; it was not in tonight's scorecard, holdings, or journal\./i),
   ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /pin/i })).toBeInTheDocument();
 });
 
 test("pin toggle persists across remount via the shared pins pref", async () => {
   const { unmount } = render(<TickerDetail doc={doc} symbol="AAPL" />);
-  const pinButton = screen.getByRole("button", { name: "☆ pin" });
+  const pinButton = screen.getByRole("button", { name: "☆ pin to top" });
   await userEvent.click(pinButton);
-  expect(screen.getByRole("button", { name: "★ pinned" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "★ pinned to top" })).toBeInTheDocument();
   unmount();
 
   render(<TickerDetail doc={doc} symbol="AAPL" />);
-  expect(screen.getByRole("button", { name: "★ pinned" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "★ pinned to top" })).toBeInTheDocument();
   expect(localStorage.getItem("atrb:pins")).toBe('["AAPL"]');
 });
 
 test("pinning one symbol does not pin another", async () => {
   const { unmount } = render(<TickerDetail doc={doc} symbol="AAPL" />);
-  await userEvent.click(screen.getByRole("button", { name: "☆ pin" }));
+  await userEvent.click(screen.getByRole("button", { name: "☆ pin to top" }));
   unmount();
 
   render(<TickerDetail doc={doc} symbol="TSLA" />);
-  expect(screen.getByRole("button", { name: "☆ pin" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "☆ pin to top" })).toBeInTheDocument();
   expect(localStorage.getItem("atrb:pins")).toBe('["AAPL"]');
 });

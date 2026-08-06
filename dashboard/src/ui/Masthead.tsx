@@ -50,7 +50,7 @@ export function Masthead({ editionDate, snapshotNumber }: MastheadProps) {
           Agentic Trading Research Bot
         </h1>
         <p className="text-muted-foreground m-0 text-sm">
-          Nightly signal digest — research notes, not investment advice
+          A nightly digest of research notes; nothing here is investment advice
         </p>
       </div>
       <div className="flex items-center gap-3">

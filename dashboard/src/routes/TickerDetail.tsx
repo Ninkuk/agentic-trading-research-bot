@@ -26,6 +26,8 @@ import {
   type ChartConfig,
 } from "../components/ui/chart";
 import { DataTable } from "../ui/DataTable";
+import { Masthead } from "../ui/Masthead";
+import { researchVerdictPill } from "../ui/sectionCells";
 
 export interface TickerDetailProps {
   doc: DashboardDoc;
@@ -153,6 +155,10 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
 
   return (
     <div className="page ticker-detail">
+      {/* Same masthead as the main page — the drill-down kept dropping the
+          theme toggle and edition context, which made it feel like a
+          different product. */}
+      <Masthead editionDate={doc.edition_date} snapshotNumber={doc.snapshot_number} />
       <header className="ticker-header mb-5 flex items-baseline gap-4 border-b pb-4">
         <a
           href="#/"
@@ -166,24 +172,31 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
           className="pin-toggle text-muted-foreground hover:text-foreground hover:border-foreground/30 ml-auto cursor-pointer rounded-md border bg-transparent px-3 py-1 font-mono text-xs aria-pressed:border-amber-500/50 aria-pressed:bg-amber-500/10 aria-pressed:text-amber-700 dark:aria-pressed:text-amber-400"
           aria-pressed={pinned}
           onClick={togglePin}
+          title="Pinned tickers stay at the top of the ticker scorecard"
         >
-          {pinned ? "★ pinned" : "☆ pin"}
+          {pinned ? "★ pinned to top" : "☆ pin to top"}
         </button>
       </header>
 
       {!detail ? (
         <p className="empty">
-          no detail exported for {symbol} — it was not in tonight's scorecard, holdings, or journal.
+          no detail exported for {symbol}; it was not in tonight's scorecard, holdings, or journal.
         </p>
       ) : (
         <>
-          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5 shadow-sm">
-            <h2 className="m-0 mb-3 text-base font-semibold">Score history</h2>
+          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
+            <h2 className="m-0 mb-1 text-lg font-semibold">Score history</h2>
+            <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
+              How the nightly vote on this name has moved; dots above zero lean bullish.
+            </p>
             <ScoreHistoryChart points={detail.score_history} />
           </section>
 
-          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5 shadow-sm">
-            <h2 className="m-0 mb-3 text-base font-semibold">Signal breakdown</h2>
+          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
+            <h2 className="m-0 mb-1 text-lg font-semibold">Signal breakdown</h2>
+            <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
+              Tonight's individual votes behind the score.
+            </p>
             {signalRows.length > 0 ? (
               <DataTable columns={SIGNAL_COLUMNS} rows={signalRows} storageKey={`ticker:${symbol}:signals`} />
             ) : (
@@ -191,20 +204,21 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
             )}
           </section>
 
-          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5 shadow-sm">
-            <h2 className="m-0 mb-3 text-base font-semibold">Research verdicts</h2>
+          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
+            <h2 className="m-0 mb-1 text-lg font-semibold">Research verdicts</h2>
+            <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
+              What deep research concluded about the business, with a link to each thesis.
+            </p>
             {detail.verdicts.length > 0 ? (
               <ul className="verdict-list">
                 {detail.verdicts.map((v, i) => (
-                  <li key={i}>
-                    {dateShort(v.date)} — {v.verdict ?? "—"}
+                  <li key={i} className="flex items-baseline gap-2">
+                    <span>{dateShort(v.date)}</span>
+                    {researchVerdictPill(v.verdict)}
                     {v.thesis_path && (
-                      <>
-                        {" "}
-                        <a href={`${REPO_URL}/blob/main/${v.thesis_path}`} target="_blank" rel="noreferrer">
-                          thesis
-                        </a>
-                      </>
+                      <a href={`${REPO_URL}/blob/main/${v.thesis_path}`} target="_blank" rel="noreferrer">
+                        thesis
+                      </a>
                     )}
                   </li>
                 ))}
@@ -214,8 +228,11 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
             )}
           </section>
 
-          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5 shadow-sm">
-            <h2 className="m-0 mb-3 text-base font-semibold">Journal fills</h2>
+          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
+            <h2 className="m-0 mb-1 text-lg font-semibold">Journal fills</h2>
+            <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
+              Your own recorded trades in this name, matched against the opinions they answered.
+            </p>
             {fillRows.length > 0 ? (
               <DataTable columns={FILL_COLUMNS} rows={fillRows} storageKey={`ticker:${symbol}:fills`} />
             ) : (
@@ -226,8 +243,8 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
           {/* Own heading, not a tail of Journal fills — unlabeled tiles right
               under that table read as the table's footer. */}
           {detail.position && (
-            <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5 shadow-sm">
-              <h2 className="m-0 mb-3 text-base font-semibold">Your position</h2>
+            <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
+              <h2 className="m-0 mb-3 text-lg font-semibold">Your position</h2>
               <PositionCard position={detail.position} />
             </section>
           )}

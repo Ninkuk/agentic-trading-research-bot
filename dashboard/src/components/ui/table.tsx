@@ -60,7 +60,10 @@ export function TableCell({ className, ...props }: ComponentProps<"td">) {
   return (
     <td
       data-slot="table-cell"
-      className={cn("p-2 align-middle whitespace-nowrap", className)}
+      // max-sm: label cells may wrap so a 3-column table (Regime drivers)
+      // fits a phone without hiding its meaning-carrying last column behind
+      // a horizontal scroll; numeric cells are spaceless and never wrap.
+      className={cn("p-2 align-middle whitespace-nowrap max-sm:whitespace-normal", className)}
       {...props}
     />
   );

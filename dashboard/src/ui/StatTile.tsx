@@ -5,6 +5,7 @@
 import type { ReactNode } from "react";
 import { num, usd } from "../format";
 import type { CellValue, Tile, Tone } from "../types";
+import { humanizeId, isMachineId } from "./formatCell";
 
 export interface StatTileProps {
   tile: Tile;
@@ -22,7 +23,9 @@ function formatValue(value: CellValue | undefined): string {
   if (typeof value === "boolean") return value ? "yes" : "no";
   if (Array.isArray(value)) return "—";
   if (typeof value === "number") return Number.isInteger(value) ? num(value, 0) : num(value);
-  return value;
+  // A machine id as a tile headline ("risk_on") is the exporter's raw
+  // value showing through — render it as words either way.
+  return isMachineId(value) ? humanizeId(value) : value;
 }
 
 export function StatTile({ tile, children }: StatTileProps) {

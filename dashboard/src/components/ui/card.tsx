@@ -6,7 +6,9 @@ export function Card({ className, ...props }: ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        // No resting shadow (the Floating-Only rule: borders separate
+        // surfaces; shadows are reserved for floating layers).
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6",
         className,
       )}
       {...props}

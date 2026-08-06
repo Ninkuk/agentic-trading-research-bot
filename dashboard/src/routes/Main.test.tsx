@@ -18,6 +18,20 @@ test("renders every hero bullet", () => {
   }
 });
 
+test("hero bullets link known tickers to their drill-down route", () => {
+  const withFlag: DashboardDoc = {
+    ...doc,
+    hero: { bullets: [{ text: "AAPL is flagged tonight and worth a look.", tone: "mid" }] },
+  };
+  render(<Main doc={withFlag} />);
+  // Scope to the hero: the scorecard below also links AAPL by design.
+  const hero = within(document.querySelector(".hero") as HTMLElement);
+  const link = hero.getByRole("link", { name: "AAPL" });
+  expect(link).toHaveAttribute("href", "#/ticker/AAPL");
+  // Words that merely look uppercase-ish but aren't exported tickers stay text.
+  expect(hero.queryByRole("link", { name: "VIX" })).not.toBeInTheDocument();
+});
+
 test("renders all five strand tabs in order", () => {
   render(<Main doc={doc} />);
   const tabs = screen.getAllByRole("tab").map((t) => t.textContent);
@@ -89,7 +103,7 @@ test("an unregistered section id falls back to the generic DataTable renderer", 
   expect(region.getByText("ZZZZ")).toBeInTheDocument();
 });
 
-test("generic fallback sections with duplicate titles keep independent persisted state (keyed by id, not title)", async () => {
+test("generic fallback sections with duplicate titles keep independent expand state (keyed by id, not title)", async () => {
   const columns = [{ key: "x", label: "X", numeric: false, direction: null, term: null }];
   const manyRows = Array.from({ length: 10 }, (_, i) => ({ x: `row-${i}` }));
   const dup: DashboardDoc = {
@@ -104,12 +118,11 @@ test("generic fallback sections with duplicate titles keep independent persisted
   const showAllButtons = screen.getAllByText(/show all 10/i);
   expect(showAllButtons).toHaveLength(2); // both start collapsed, independently
   await userEvent.click(showAllButtons[0]);
-  // Expanding one duplicate-titled section must not touch the other's
-  // persisted state — a title-keyed storageKey would collide and expand
-  // (or collapse) both at once.
+  // Expanding one duplicate-titled section must not touch the other —
+  // expansion is per-table component state now, but the sort prefs are
+  // still storageKey-scoped, so duplicate titles must not share a key.
   expect(screen.queryAllByText(/show all 10/i)).toHaveLength(1);
-  expect(localStorage.getItem("atrb:generic:dup-one")).toContain('"expanded":true');
-  expect(localStorage.getItem("atrb:generic:dup-two")).toBeNull();
+  expect(screen.getByText(/show fewer/i)).toBeInTheDocument();
 });
 
 test("a pinned ticker (shared pins pref) stays first in the scorecard despite an active score sort", () => {

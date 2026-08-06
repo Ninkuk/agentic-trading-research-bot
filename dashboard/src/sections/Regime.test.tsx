@@ -11,7 +11,8 @@ beforeEach(() => {
 
 test("renders regime tiles and the drivers table", () => {
   render(<Regime sec={doc.sections.regime} glossary={doc.glossary} />);
-  expect(screen.getByText("risk_on")).toBeInTheDocument();
+  // The raw `risk_on` id humanizes at the render boundary (StatTile).
+  expect(screen.getByText("Risk on")).toBeInTheDocument();
   expect(screen.getByText("14.20")).toBeInTheDocument();
   expect(screen.getByText("10y–2y spread")).toBeInTheDocument();
 });

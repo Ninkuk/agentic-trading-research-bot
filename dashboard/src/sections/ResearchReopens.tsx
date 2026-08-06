@@ -10,7 +10,7 @@ import { type ReactNode } from "react";
 import { REPO_URL } from "../constants";
 import type { Column, Glossary, Row, Section } from "../types";
 import { DataTable } from "../ui/DataTable";
-import { formatCell } from "../ui/formatCell";
+import { sectionCell } from "../ui/sectionCells";
 
 export interface SectionComponentProps {
   sec: Section;
@@ -29,7 +29,9 @@ function renderReopensCell(row: Row, col: Column): ReactNode {
       </a>
     );
   }
-  return formatCell(row[col.key]);
+  // Everything else through the shared heuristics: verdict pills
+  // (SOUND/FLAWED/UNPROVEN tones) and humanized trigger slugs included.
+  return sectionCell(row, col);
 }
 
 function whenLabel(days: number): string {

@@ -216,6 +216,19 @@
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-weight: 600;
   }
+  /* Symbol LINKS read as links without hovering: a quiet underline in a
+     mixed muted tone, sharpening to full ink on hover. cursor:pointer was
+     the only cue before, which made 1,148 links invisible. */
+  a.sym {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+    text-underline-offset: 3px;
+  }
+  a.sym:hover {
+    color: var(--foreground);
+    text-decoration-color: currentColor;
+  }
   tr.flag td {
     background: var(--tone-hold-bg);
   }
@@ -232,7 +245,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 4px 8px;
-    font: 0.6875rem/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font: 0.75rem/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     color: var(--popover-foreground);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     white-space: nowrap;
@@ -274,7 +287,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 6px 10px;
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     line-height: 1.5;
     font-family: ui-sans-serif, system-ui, sans-serif;
     color: var(--popover-foreground);

@@ -30,14 +30,19 @@ export function SectionShell({ id, sec, children }: SectionShellProps) {
     <section className="ledger scroll-mt-16" id={id}>
       <Card>
         <CardHeader>
-          {sec.title && <h2 className="m-0 text-base leading-none font-semibold">{sec.title}</h2>}
+          {/* text-lg: a real step over 14px body (1.29 ratio) — at text-base
+              the whole page read as one flat size. */}
+          {sec.title && <h2 className="m-0 text-lg leading-none font-semibold">{sec.title}</h2>}
           {/* max-w keeps the note at a readable measure — the card itself is
               as wide as the page (72rem), which is far too wide for prose. */}
           {sec.note && (
             <p className="text-muted-foreground m-0 max-w-[75ch] text-sm">{sec.note}</p>
           )}
           {(sec.verdict || (sec.about && sec.about.length > 0)) && (
-            <CardAction className="flex items-center gap-1">
+            /* On phones the action slot stops sharing a row with the note —
+               a side-by-side grid squeezes the one-sentence note into a
+               ~130px column while the right half sits empty. */
+            <CardAction className="flex items-center gap-1 max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-3 max-sm:justify-self-start">
               {sec.verdict && <VerdictChip verdict={sec.verdict} />}
               <AboutDialog title={sec.title ?? "About this section"} about={sec.about} />
             </CardAction>

@@ -8,6 +8,54 @@
 import type { ReactNode } from "react";
 import type { CellValue } from "../types";
 
+// Machine identifiers (snake_case signal ids like `sv_ratio_spike`,
+// kebab-case reopen slugs like `q2-print-nrr-and-api-monetization`) never
+// reach the page raw — the product's one rule is plain English, and a
+// mystery id is the purest mystery widget. The exporter is moving toward
+// display names; this render-boundary fallback covers everything it hasn't
+// named yet. TextReport.prettyHeader applies the same idea to its headers.
+const SNAKE_ID = /^[a-z0-9]+(?:_[a-z0-9]+)+$/;
+const SLUG_ID = /^[a-z0-9]+(?:-[a-z0-9]+){2,}$/;
+
+// Domain abbreviations that read wrong lowercased ("si days to cover").
+const ABBREVIATIONS: Record<string, string> = {
+  api: "API",
+  atr: "ATR",
+  ci: "CI",
+  cot: "COT",
+  eia: "EIA",
+  fcf: "FCF",
+  ftd: "FTD",
+  hy: "HY",
+  natgas: "nat gas",
+  nrr: "NRR",
+  pcr: "PCR",
+  q1: "Q1",
+  q2: "Q2",
+  q3: "Q3",
+  q4: "Q4",
+  roic: "ROIC",
+  rsi: "RSI",
+  sa: "SA",
+  si: "SI",
+  spy: "SPY",
+  sv: "SV",
+  vix: "VIX",
+};
+
+export function isMachineId(value: string): boolean {
+  return SNAKE_ID.test(value) || SLUG_ID.test(value);
+}
+
+/** `si_days_to_cover` → "SI days to cover". Keeps the raw id available to
+ * callers for a `title` attribute so traceability survives the prettying. */
+export function humanizeId(value: string): string {
+  const words = value.split(/[_-]+/).map((w) => ABBREVIATIONS[w] ?? w);
+  const joined = words.join(" ");
+  const first = joined.charAt(0);
+  return first === first.toUpperCase() ? joined : first.toUpperCase() + joined.slice(1);
+}
+
 export function formatCell(value: CellValue | undefined): ReactNode {
   if (value === undefined || value === null) return "—";
   if (typeof value === "boolean") return value ? "yes" : "no";
@@ -30,6 +78,7 @@ export function formatCell(value: CellValue | undefined): ReactNode {
     const rounded = Math.round(value * 100) / 100;
     return rounded < 0 ? `−${String(Math.abs(rounded))}` : String(rounded);
   }
+  if (isMachineId(value)) return humanizeId(value);
   return String(value);
 }
 
