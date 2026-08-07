@@ -122,6 +122,45 @@ def implied_discount_rate(
     return (low + high) / 2.0
 
 
+def cost_of_equity(risk_free: float, beta: float, equity_risk_premium: float) -> float:
+    """The hurdle an implied equity return is read against: rf + beta * ERP.
+
+    The ERP here is Damodaran's implied premium (solved monthly from the index
+    level), not a historical average. A cost of equity pairs with levered cash
+    flows and market cap only — never with an EV-paired unlevered flow, whose
+    hurdle is a WACC this function does not compute.
+    """
+    if equity_risk_premium < 0:
+        raise ValueError(f"equity_risk_premium must be non-negative, got {equity_risk_premium}")
+    return risk_free + beta * equity_risk_premium
+
+
+def reinvestment_rate(base_fcf: float, base_earnings: float) -> float:
+    """Fraction of earnings retained in the business: 1 - FCF/earnings.
+
+    Zero or negative means every dollar earned (and then some) already leaves
+    as free cash flow — there is nothing funding future growth.
+    """
+    if base_earnings <= 0:
+        raise ValueError(f"base_earnings must be positive, got {base_earnings}")
+    return 1.0 - base_fcf / base_earnings
+
+
+def implied_terminal_return(terminal_growth: float, reinvestment: float) -> float | None:
+    """Return on reinvested capital the terminal growth implicitly claims.
+
+    Growth is never free: g = reinvestment rate x return, so the terminal value
+    silently assumes a return of g / reinvestment rate on whatever is retained.
+    Returns None when positive growth meets zero-or-negative reinvestment —
+    the "growth without reinvestment" case, where no finite return exists.
+    """
+    if terminal_growth > 0 and reinvestment <= 0:
+        return None
+    if reinvestment == 0:
+        return 0.0
+    return terminal_growth / reinvestment
+
+
 def enterprise_value(market_cap: float, net_debt: float = 0.0) -> float:
     """Bridge equity value to enterprise value.
 
@@ -161,9 +200,61 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="One growth rate per explicit forecast year, e.g. 0.08 0.06 0.04",
     )
     parser.add_argument("--terminal-growth", type=float, required=True)
+    parser.add_argument(
+        "--risk-free",
+        type=float,
+        default=None,
+        help=(
+            "10-year Treasury rate, e.g. 0.0474. Caps --terminal-growth (no "
+            "firm outgrows its economy forever) and prints the implied premium."
+        ),
+    )
+    parser.add_argument(
+        "--beta",
+        type=float,
+        default=None,
+        help="Equity beta. With --erp and --risk-free, prints the hurdle and spread.",
+    )
+    parser.add_argument(
+        "--erp",
+        type=float,
+        default=None,
+        help="Implied equity risk premium (Damodaran, monthly), e.g. 0.0428.",
+    )
+    parser.add_argument(
+        "--base-earnings",
+        type=float,
+        default=None,
+        help=(
+            "Trailing net income, same period as --base-fcf. Prints the "
+            "terminal reinvestment rate and the return it implies."
+        ),
+    )
     args = parser.parse_args(argv)
 
     try:
+        if (args.beta is None) != (args.erp is None):
+            raise ValueError("--beta and --erp must be supplied together")
+        if args.beta is not None and args.risk_free is None:
+            raise ValueError("the hurdle needs --risk-free alongside --beta/--erp")
+        if args.beta is not None and args.net_debt != 0.0:
+            raise ValueError(
+                "--net-debt declares an unlevered flow paired with EV; a cost of "
+                "equity is the wrong hurdle for it — compute a WACC by hand instead"
+            )
+        if args.risk_free is not None and args.terminal_growth > args.risk_free:
+            raise ValueError(
+                f"terminal_growth {args.terminal_growth} exceeds the risk-free "
+                f"rate {args.risk_free} — no firm outgrows its economy forever"
+            )
+        hurdle = (
+            cost_of_equity(args.risk_free, args.beta, args.erp) if args.beta is not None else None
+        )
+        reinvestment = (
+            reinvestment_rate(args.base_fcf, args.base_earnings)
+            if args.base_earnings is not None
+            else None
+        )
         flows = project_cash_flows(args.base_fcf, args.growth)
         target = enterprise_value(args.market_cap, args.net_debt)
         rate = implied_discount_rate(target, flows, args.terminal_growth)
@@ -180,6 +271,33 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     print(f"implied_discount_rate: {rate:.4f}  ({rate:.2%} per year)")
     print(f"horizon_years: {len(flows)}  terminal_growth: {args.terminal_growth:.2%}")
+    if args.risk_free is not None:
+        print(
+            f"implied_premium_over_risk_free: {rate - args.risk_free:.4f}  "
+            f"({rate - args.risk_free:.2%})"
+        )
+    if hurdle is not None:
+        spread = rate - hurdle
+        print(
+            f"hurdle_cost_of_equity: {hurdle:.4f}  "
+            f"(risk_free {args.risk_free:.2%} + beta {args.beta:g} x erp {args.erp:.2%})"
+        )
+        print(f"spread_vs_hurdle: {spread:+.4f}  ({spread * 10_000:+.0f} bps)")
+    if reinvestment is not None:
+        print(f"terminal_reinvestment_rate: {reinvestment:.4f}  (1 - base_fcf/base_earnings)")
+        terminal_return = implied_terminal_return(args.terminal_growth, reinvestment)
+        if terminal_return is None:
+            print(
+                f"growth without reinvestment: base FCF >= base earnings leaves "
+                f"nothing reinvested, yet terminal_growth is "
+                f"{args.terminal_growth:.2%} — real terminal growth needs "
+                f"reinvestment (g = reinvestment rate x return)"
+            )
+        else:
+            print(
+                f"implied_terminal_roe: {terminal_return:.4f}  "
+                f"(terminal_growth / reinvestment_rate)"
+            )
     return 0
 
 

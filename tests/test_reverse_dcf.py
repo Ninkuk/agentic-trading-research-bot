@@ -2,11 +2,14 @@ import pytest
 
 from tools.valuation.reverse_dcf import (
     MAX_RATE,
+    cost_of_equity,
     enterprise_value,
     implied_discount_rate,
+    implied_terminal_return,
     main,
     present_value,
     project_cash_flows,
+    reinvestment_rate,
 )
 
 
@@ -198,6 +201,288 @@ def test_main_reports_no_solution_without_pretending(
     assert "no solution" in out.lower()
     # It must not also print a rate. A clamping CLI would emit both.
     assert "implied_discount_rate" not in out
+
+
+def test_cost_of_equity_is_riskfree_plus_beta_times_erp() -> None:
+    # CAPM with the implied ERP: the hurdle an implied return is read against.
+    assert cost_of_equity(0.0474, 0.9, 0.0428) == pytest.approx(0.08592)
+    assert cost_of_equity(0.0474, 1.0, 0.0428) == pytest.approx(0.0902)
+
+
+def test_cost_of_equity_rejects_negative_erp() -> None:
+    # A negative equity risk premium is a category error, not a market view.
+    with pytest.raises(ValueError, match="equity_risk_premium"):
+        cost_of_equity(0.0474, 0.9, -0.01)
+
+
+def test_reinvestment_rate_is_one_minus_fcf_over_earnings() -> None:
+    assert reinvestment_rate(80.0, 100.0) == pytest.approx(0.20)
+
+
+def test_reinvestment_rate_goes_negative_when_fcf_exceeds_earnings() -> None:
+    # FCF above earnings means nothing is being reinvested — the rate must
+    # surface that as <= 0, not clamp to zero.
+    assert reinvestment_rate(110.0, 100.0) == pytest.approx(-0.10)
+
+
+def test_reinvestment_rate_rejects_non_positive_earnings() -> None:
+    with pytest.raises(ValueError, match="base_earnings"):
+        reinvestment_rate(80.0, 0.0)
+    with pytest.raises(ValueError, match="base_earnings"):
+        reinvestment_rate(80.0, -50.0)
+
+
+def test_implied_terminal_return_solves_the_growth_identity() -> None:
+    # g = reinvestment rate x return  =>  return = g / reinvestment rate.
+    assert implied_terminal_return(0.025, 0.20) == pytest.approx(0.125)
+
+
+def test_implied_terminal_return_is_zero_when_growth_is_zero() -> None:
+    assert implied_terminal_return(0.0, 0.20) == pytest.approx(0.0)
+
+
+def test_implied_terminal_return_is_none_without_reinvestment() -> None:
+    # Positive growth funded by zero (or negative) reinvestment has no finite
+    # implied return — that IS the "growth without reinvestment" finding.
+    assert implied_terminal_return(0.02, 0.0) is None
+    assert implied_terminal_return(0.02, -0.10) is None
+
+
+def test_main_prints_premium_when_risk_free_given(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--base-fcf",
+            "100",
+            "--growth",
+            "0.05",
+            "--terminal-growth",
+            "0.02",
+            "--risk-free",
+            "0.0474",
+        ]
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "implied_premium" in out
+    assert "hurdle" not in out  # premium alone; hurdle needs beta and erp
+
+
+def test_main_prints_hurdle_and_spread_with_beta_and_erp(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--base-fcf",
+            "100",
+            "--growth",
+            "0.05",
+            "--terminal-growth",
+            "0.02",
+            "--risk-free",
+            "0.0474",
+            "--beta",
+            "0.9",
+            "--erp",
+            "0.0428",
+        ]
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "hurdle_cost_of_equity" in out
+    assert "spread_vs_hurdle" in out
+
+
+def test_main_refuses_terminal_growth_above_risk_free(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # No firm outgrows its economy forever; the risk-free rate is the proxy cap.
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--base-fcf",
+            "100",
+            "--growth",
+            "0.05",
+            "--terminal-growth",
+            "0.05",
+            "--risk-free",
+            "0.0474",
+        ]
+    )
+    assert code == 2
+    assert "terminal_growth" in capsys.readouterr().err
+
+
+def test_main_allows_terminal_growth_equal_to_risk_free(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--base-fcf",
+            "100",
+            "--growth",
+            "0.05",
+            "--terminal-growth",
+            "0.0474",
+            "--risk-free",
+            "0.0474",
+        ]
+    )
+    assert code == 0
+    assert "implied_discount_rate" in capsys.readouterr().out
+
+
+def test_main_refuses_beta_or_erp_alone(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    base = [
+        "--market-cap",
+        "1000",
+        "--base-fcf",
+        "100",
+        "--growth",
+        "0.05",
+        "--terminal-growth",
+        "0.02",
+        "--risk-free",
+        "0.0474",
+    ]
+    assert main([*base, "--beta", "0.9"]) == 2
+    assert "erp" in capsys.readouterr().err
+    assert main([*base, "--erp", "0.0428"]) == 2
+    assert "beta" in capsys.readouterr().err
+
+
+def test_main_refuses_hurdle_without_risk_free(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--base-fcf",
+            "100",
+            "--growth",
+            "0.05",
+            "--terminal-growth",
+            "0.02",
+            "--beta",
+            "0.9",
+            "--erp",
+            "0.0428",
+        ]
+    )
+    assert code == 2
+    assert "risk-free" in capsys.readouterr().err
+
+
+def test_main_refuses_cost_of_equity_hurdle_against_unlevered_flow(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # --net-debt declares the flow unlevered (paired with EV); a cost of
+    # equity is the wrong hurdle for it. Same ethos as the solver never
+    # guessing which flow it was handed.
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--net-debt",
+            "250",
+            "--base-fcf",
+            "100",
+            "--growth",
+            "0.05",
+            "--terminal-growth",
+            "0.02",
+            "--risk-free",
+            "0.0474",
+            "--beta",
+            "0.9",
+            "--erp",
+            "0.0428",
+        ]
+    )
+    assert code == 2
+    assert "net-debt" in capsys.readouterr().err
+
+
+def test_main_prints_terminal_reinvestment_with_base_earnings(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--base-fcf",
+            "80",
+            "--base-earnings",
+            "100",
+            "--growth",
+            "0.05",
+            "--terminal-growth",
+            "0.02",
+        ]
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "terminal_reinvestment_rate" in out
+    assert "implied_terminal_roe" in out
+
+
+def test_main_warns_on_growth_without_reinvestment(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # FCF at/above earnings + positive terminal growth: the terminal value is
+    # assuming growth nobody paid for. Annotate, don't refuse — the read is
+    # the skill's job.
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--base-fcf",
+            "110",
+            "--base-earnings",
+            "100",
+            "--growth",
+            "0.05",
+            "--terminal-growth",
+            "0.02",
+        ]
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "growth without reinvestment" in out
+    assert "implied_terminal_roe" not in out
+
+
+def test_main_refuses_non_positive_base_earnings(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    code = main(
+        [
+            "--market-cap",
+            "1000",
+            "--base-fcf",
+            "80",
+            "--base-earnings",
+            "-100",
+            "--growth",
+            "0.05",
+            "--terminal-growth",
+            "0.02",
+        ]
+    )
+    assert code == 2
+    assert "base_earnings" in capsys.readouterr().err
 
 
 def test_main_reports_a_refusal_without_a_traceback(
