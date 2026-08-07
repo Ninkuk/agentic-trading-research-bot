@@ -124,7 +124,13 @@ re-weighting the catalog is a human decision made by reading `v_signal_efficacy`
 paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`. Single-leg option
 fills journal with contract identity (`contract_ref`/`position_effect`) but grade **selection
 only** — their P&L columns are NULL by design (no premium ledger exists), and they land in
-`v_flag_response` as their own `acted_option` bucket. The scorer also grades the `candidates`
+`v_flag_response` as their own `acted_option` bucket.
+The scorer also keeps the permanent `equity_ledger`/`transfers` pair
+(harvested nightly from portfolio.db before its prune; transfers recorded
+human-confirmed via `main.py journal --transfer`) and the scorecard chains
+them into a time-weighted portfolio-vs-SPY section — reporting only, and it
+refuses to chain across a transfer dated where no equity observation exists.
+The scorer also grades the `candidates`
 screen: it records each night's list from stocks.db (`candidate_appearances` — the screen's
 only point-in-time record; no vendor serves screener vintages) and grades list-**entry**
 episodes only (a name sits on the list for weeks; grading every sighting re-counts one call)

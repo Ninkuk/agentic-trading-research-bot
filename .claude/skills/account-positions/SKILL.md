@@ -76,6 +76,30 @@ directly.
 
 4. Report to the user: snapshot id, position count (+ skipped count if any),
    and equity / cash / buying power.
+5. Transfer check (detect + confirm — never silent): compare against the
+   last equity-ledger row (read-only):
+
+   ```bash
+   sqlite3 "file:data/scorer.db?mode=ro" \
+     "SELECT obs_date, equity, cash FROM equity_ledger ORDER BY obs_date DESC LIMIT 1"
+   ```
+
+   Estimate the unexplained cash move: `suspected = (cash_now − cash_prev) +
+   net_buys_since`, where `net_buys_since` is the sum of `fill_price ×
+   quantity` for buy fills minus sells in scorer.db `decisions` with
+   `fill_date > obs_date_prev` (read-only query; dividends are small enough
+   to ignore at this account scale). If `|suspected| >= 5` dollars, tell the
+   user the amount and direction and ask them to confirm the transfer; on
+   confirmation record it (Phoenix calendar date it landed):
+
+   ```bash
+   uv run python main.py journal --db data/scorer.db --transfer <amount> --date <YYYY-MM-DD>
+   ```
+
+   Never record without an explicit yes — a genuine rally on a concentrated
+   book can look like a deposit. If the user denies, report the discrepancy
+   and move on. An empty equity_ledger (feature just shipped, scorer hasn't
+   run) skips this step silently.
 
 ## Rules
 
@@ -83,6 +107,9 @@ directly.
   only — never message bodies, URLs, or payload fragments.
 - **Write scope**: this command writes ONLY `data/portfolio.db`, only via
   the dispatcher. Everything else it touches is read-only.
+- **Write scope addendum**: the transfer check reads scorer.db strictly
+  read-only (`mode=ro` URI) and writes only via `main.py journal --transfer`
+  after explicit human confirmation.
 - Positions missing symbol or a numeric quantity are skipped and counted by
   the parser — mention the skip count rather than retrying by hand.
 - Tax lots (`get_equity_tax_lots`) are available live and are **deliberately not
