@@ -163,3 +163,36 @@ def test_portfolio_section_thin_ledger(tmp_path):
     conn = _fresh(tmp_path)
     text = scorecard._portfolio_section(conn)
     assert "insufficient data" in text
+
+
+def _seed_lockstep(conn, n_days=25, daily=0.01):
+    """n_days of consecutive SPY trading days where the book moves EXACTLY with
+    SPY and nothing is deposited — so true excess is zero in every window."""
+    equity, spy = 100.0, 500.0
+    for i in range(1, n_days + 1):
+        obs_date = f"2026-06-{i:02d}"
+        conn.execute(
+            "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
+            " VALUES (?, ?, 0, '2026-07-01T04:00:00+00:00')",
+            (obs_date, equity),
+        )
+        conn.execute(
+            "INSERT INTO prices (symbol, price_date, close) VALUES ('SPY', ?, ?)",
+            (obs_date, spy),
+        )
+        equity *= 1.0 + daily
+        spy *= 1.0 + daily
+    conn.commit()
+
+
+def test_portfolio_section_window_excess_is_zero_in_lockstep(tmp_path):
+    conn = _fresh(tmp_path)
+    _seed_lockstep(conn)
+    text = scorecard._portfolio_section(conn)
+    line = next(ln for ln in text.splitlines() if ln.strip().startswith("21d"))
+    # The 21d window must measure the SAME 21 trading days on both sides. The
+    # anchor row's own port_return is the leg INTO the window from the day
+    # before it — chaining it gives the book 22 legs against SPY's 21 and
+    # invents excess (+1.23% here) for a book that tracked SPY exactly.
+    assert line.split("|")[1].strip() == line.split("|")[2].strip()
+    assert line.rsplit("|", 1)[1].strip() == "0.00%"

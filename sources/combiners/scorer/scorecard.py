@@ -231,7 +231,14 @@ def _portfolio_section(conn) -> str:
     lines = ["  window     | portfolio TWR | SPY      | excess"]
 
     def _window(label, window_rows):
-        twr = _chain(window_rows)
+        # The first row is the window's ANCHOR: both sides measure forward from
+        # its close. Its own port_return is the leg INTO the anchor from the day
+        # before, which is outside the window — chaining it would give the book
+        # one more leg than SPY's endpoint span and invent excess for a book
+        # that merely tracked SPY. (Harmless for inception, whose first
+        # port_return is NULL by construction, but stated once and applied
+        # uniformly rather than left to that coincidence.)
+        twr = _chain(window_rows[1:])
         spy = _spy_endpoint_return(window_rows)
         if twr is None:
             lines.append(f"  {label:<10} | insufficient data")
