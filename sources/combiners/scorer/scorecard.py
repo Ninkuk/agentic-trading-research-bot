@@ -85,6 +85,61 @@ def deliberate_freelance(conn) -> list[dict]:
     ]
 
 
+def equity_curve(conn) -> list[dict]:
+    """v_equity_curve rows in date order — TWR legs plus same-date SPY close."""
+    return [
+        dict(
+            obs_date=r[0],
+            equity=r[1],
+            flow=r[2],
+            prev_equity=r[3],
+            port_return=r[4],
+            spy_close=r[5],
+        )
+        for r in conn.execute(
+            "SELECT obs_date, equity, flow, prev_equity, port_return, spy_close"
+            " FROM v_equity_curve ORDER BY obs_date"
+        )
+    ]
+
+
+def orphan_transfer_dates(conn) -> list[str]:
+    """Transfers dated where no equity observation exists. Each one poisons
+    chaining across it — the single case where a bad/missing point does NOT
+    self-cancel — so the section refuses rather than guesses (the same
+    refuse-to-grade stance as the crosswalk rule in db.py)."""
+    return [
+        r[0]
+        for r in conn.execute(
+            "SELECT DISTINCT t.obs_date FROM transfers t"
+            " LEFT JOIN equity_ledger e ON e.obs_date = t.obs_date"
+            " WHERE e.obs_date IS NULL ORDER BY t.obs_date"
+        )
+    ]
+
+
+def _chain(rows) -> float | None:
+    """Geometric linking of per-leg returns (None until a second observation
+    creates the first leg)."""
+    legs = [r["port_return"] for r in rows if r["port_return"] is not None]
+    if not legs:
+        return None
+    total = 1.0
+    for leg in legs:
+        total *= 1.0 + leg
+    return total - 1.0
+
+
+def _spy_endpoint_return(rows) -> float | None:
+    """SPY over the same window, from endpoint closes — per-day alignment is
+    unnecessary for a cumulative comparison and weekend ledger rows have no
+    SPY close to align with."""
+    closes = [r["spy_close"] for r in rows if r["spy_close"] is not None]
+    if len(closes) < 2:
+        return None
+    return closes[-1] / closes[0] - 1.0
+
+
 def _frac(x) -> str:
     return "n/a" if x is None else f"{x:.4f}"
 
@@ -160,6 +215,50 @@ def _freelance_section(conn) -> str:
     return "\n".join(lines)
 
 
+def _portfolio_section(conn) -> str:
+    orphans = orphan_transfer_dates(conn)
+    if orphans:
+        return (
+            "  cannot chain: transfer(s) on "
+            + ", ".join(orphans)
+            + " have no equity observation — backfill the ledger for those"
+            " dates or correct the transfer date"
+        )
+    rows = equity_curve(conn)
+    if len(rows) < 2:
+        return f"  insufficient data (n={len(rows)} ledger dates)"
+    trading = [r for r in rows if r["spy_close"] is not None]
+    lines = ["  window     | portfolio TWR | SPY      | excess"]
+
+    def _window(label, window_rows):
+        twr = _chain(window_rows)
+        spy = _spy_endpoint_return(window_rows)
+        if twr is None:
+            lines.append(f"  {label:<10} | insufficient data")
+            return
+        excess = _pct(twr - spy) if spy is not None else "n/a"
+        lines.append(f"  {label:<10} | {_pct(twr):>13} | {_pct(spy):>8} | {excess}")
+
+    _window("inception", rows)
+    for n in (21, 63):
+        if len(trading) >= n + 1:
+            start = trading[-(n + 1)]["obs_date"]
+            _window(f"{n}d", [r for r in rows if r["obs_date"] >= start])
+        else:
+            lines.append(f"  {n:>2}d        | insufficient data (n={len(trading)} trading days)")
+    gaps = conn.execute(
+        "SELECT COUNT(*) FROM prices p WHERE p.symbol='SPY'"
+        " AND p.price_date > ? AND p.price_date < ?"
+        " AND p.price_date NOT IN (SELECT obs_date FROM equity_ledger)",
+        (rows[0]["obs_date"], rows[-1]["obs_date"]),
+    ).fetchone()[0]
+    lines.append(
+        f"  coverage: {len(rows)} ledger dates {rows[0]['obs_date']}..{rows[-1]['obs_date']},"
+        f" {gaps} trading days missing"
+    )
+    return "\n".join(lines)
+
+
 def build_report(conn, now_iso: str) -> str:
     """Assemble the text scorecard. Read-only over scorer.db's journal views;
     every section renders its header + an explicit body even when empty, so a
@@ -179,6 +278,9 @@ def build_report(conn, now_iso: str) -> str:
         "",
         "Freelance trades (deliberate only)",
         _freelance_section(conn),
+        "",
+        "Portfolio vs SPY (time-weighted)",
+        _portfolio_section(conn),
     ]
     return "\n".join(parts)
 

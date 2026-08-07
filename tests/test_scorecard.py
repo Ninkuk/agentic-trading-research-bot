@@ -117,3 +117,49 @@ def test_freelance_excludes_automatic_fills(tmp_path):
     assert symbols == {"NVDA"}  # drip excluded by design
     report = scorecard.build_report(conn, NOW)
     assert "NVDA" in report and "KO" not in report
+
+
+def _seed_curve(conn):
+    conn.executemany(
+        "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
+        " VALUES (?, ?, 0, '2026-08-06T04:00:00+00:00')",
+        [("2026-07-31", 197.0), ("2026-08-04", 303.0), ("2026-08-05", 306.0)],
+    )
+    conn.execute(
+        "INSERT INTO transfers (obs_date, amount, recorded_at)"
+        " VALUES ('2026-08-04', 100.0, '2026-08-06T04:00:00+00:00')"
+    )
+    conn.executemany(
+        "INSERT INTO prices (symbol, price_date, close) VALUES ('SPY', ?, ?)",
+        [("2026-07-31", 630.0), ("2026-08-04", 636.3), ("2026-08-05", 640.0)],
+    )
+    conn.commit()
+
+
+def test_portfolio_section_chains_around_deposit(tmp_path):
+    conn = _fresh(tmp_path)
+    _seed_curve(conn)
+    text = scorecard._portfolio_section(conn)
+    # TWR ≈ 1.0305 × 1.0099 − 1 ≈ +4.07%; naive equity change is +55% —
+    # the section must print the former shape, never the latter.
+    assert "4.0" in text and "55" not in text
+    # SPY leg from endpoint closes: 640/630 − 1 ≈ +1.59%
+    assert "1.5" in text
+
+
+def test_portfolio_section_refuses_orphan_transfer(tmp_path):
+    conn = _fresh(tmp_path)
+    _seed_curve(conn)
+    conn.execute(
+        "INSERT INTO transfers (obs_date, amount, recorded_at)"
+        " VALUES ('2026-08-02', 25.0, '2026-08-06T04:00:00+00:00')"
+    )
+    conn.commit()
+    text = scorecard._portfolio_section(conn)
+    assert "cannot chain" in text and "2026-08-02" in text
+
+
+def test_portfolio_section_thin_ledger(tmp_path):
+    conn = _fresh(tmp_path)
+    text = scorecard._portfolio_section(conn)
+    assert "insufficient data" in text
