@@ -83,7 +83,7 @@ down", the negation dropped and the claim inverted. So:
   reads exactly like the guest's claim, and a point you cannot attribute cannot
   be a `MISS` — tag it `JUDGMENT` or drop it.
 
-## Rubric — fixed core (7 dimensions)
+## Rubric — fixed core (8 dimensions)
 
 Score the run on each; then set the professional's coverage beside it.
 
@@ -95,6 +95,10 @@ Score the run on each; then set the professional's coverage beside it.
 5. **Business decomposition** — every segment and revenue line, concretely.
 6. **Load-bearing conditions & falsifiers** — enumerated and counted.
 7. **UNKNOWNs** — holes marked, never filled with a plausible number.
+8. **Assumption plausibility** — implied return read against the hurdle
+   (spread stated, ERP as-of dated); terminal growth ≤ risk-free; the
+   growth-without-reinvestment warning answered, not ignored; an aggressive
+   growth path backed by its implied-market-share sentence.
 
 Add ticker-specific dimensions; never drop a core one.
 

@@ -51,6 +51,14 @@ the answer per lot, not per position.
    to make it false. Under genuine uncertainty, **never credit the condition** —
    uncertainty withholds SOUND, it never earns it.
 
+   Before hunting external evidence, check whether the condition list attacks
+   itself: claims of **high growth**, **low reinvestment**, and **low risk**
+   made simultaneously are internally strained — growth must be paid for with
+   reinvestment (g = reinvestment rate × return on capital), and the excess
+   returns a moat claim asserts are exactly what draws the competition the
+   low-risk claim denies. An internally inconsistent pair is an attack that
+   costs nothing to run.
+
    Then say *which kind* of uncertainty you hit, because they route to
    different verdicts and are constantly confused:
 
@@ -70,6 +78,10 @@ the answer per lot, not per position.
    - **Base rate.** What normally happens to companies in this position?
      Rapidly extended credit to borrowers with no history usually ends badly.
      Turnarounds usually don't. Say the base rate before crediting the story.
+     Measured rates beat folklore: only ~29% of firms earn above their cost
+     of capital (Damodaran's EVA dataset, annual — so "the excess return
+     persists" is a 3-in-10 proposition before any evidence), and fewer than
+     a third of new firms survive seven years (BLS). Cite the rate you used.
    - **The short case.** What does someone short this stock see? Not a
      strawman — the strongest version. If you cannot construct one, you do
      not understand the business well enough to be long it.
