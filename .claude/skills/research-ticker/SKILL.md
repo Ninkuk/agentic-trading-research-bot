@@ -183,8 +183,16 @@ specific is another thing that has to go right.
 Then, explicitly:
 
 - **Enumerate the load-bearing conditions and count them.** Print the count.
+  Tag each one by evidence tier — **probable** (evidence exists today),
+  **plausible** (a reasoned argument, no tangible evidence yet), or
+  **possible** (could happen; can't say what or when). A *possible*-tier
+  condition may not be load-bearing for the base case: it is upside option
+  value or it is out. "Five conditions, two merely plausible" reads very
+  differently from "five probable conditions" — that is the point of tagging.
 - **Name the falsifiers.** What observable evidence would make you sell? A
-  thesis with no falsifier is a position, not an argument.
+  thesis with no falsifier is a position, not an argument. Say for each
+  whether it is a **break** (the story is over — sell) or a **shift** (an
+  input moved — revalue); the reopen trigger inherits the classification.
 - **Mark every UNKNOWN.** Never fill a hole with a plausible number.
 
 ## Phase 4 — What return is already priced in?
@@ -250,7 +258,17 @@ back subsidies — Uber, and its kind). The value is in the margin lever the fla
 rate fixes. Model bookings × margin — grow the top line and the margin
 separately — or front-load `--growth` above the revenue rate for the expansion
 years and fade it. Say which you did. A single-rate run understates such a name;
-don't quote it as the ceiling.
+don't quote it as the ceiling. When you model the top line and margin
+separately, don't improvise the reinvestment that growth costs: take the
+industry sales-to-capital ratio (reinvestment ≈ Δrevenue / sales-to-capital)
+and the steady-state margin anchor from `references/damodaran-anchors.md`.
+
+**An aggressive growth path owes a market-share sentence.** Compound the
+`--growth` path out and state what the end-state revenue implies as a share of
+the addressable market — one sentence, e.g. "8% for five years puts revenue at
+$X, ~Y% of the segment." A forecast that quietly needs most of its market is
+Damodaran's "bigger than the market" failure; catching it at authoring time is
+cheaper than in review.
 
 **An "asset-light" claim is a balance-sheet question, not a vibe.** Before you
 trust a low-capex base — management's "capital-light" framing, a sell-side
@@ -268,10 +286,41 @@ the write-up, and say why the chosen `--terminal-growth` survives it, or cut
 the rate. A terminal rate that never met the company's own disclosed endgame
 risk is arithmetic, not knowledge.
 
+**Read the implied return against a hurdle, not against feelings.** Fetch the
+current risk-free rate and implied equity risk premium (one `curl` — recipe in
+`references/damodaran-anchors.md`), take beta from the statistics page, and add
+`--risk-free --beta --erp` to the run. The tool prints the hurdle
+(`rf + beta × ERP` — a cost of equity, so levered-FCF ↔ market-cap runs only;
+it refuses the combination with `--net-debt`) and the spread against it. **The
+spread is the finding**, not the raw rate: +50bp over the hurdle on
+conservative assumptions and −50bp on optimistic ones are different write-ups
+that a bare "9.6%" hides. Clamp against the distribution too: the US median
+cost of capital is ~7.8% and 80% of firms sit within roughly 5–10% (as-of
+dates in the reference) — an implied return below the bottom of that band is a
+strong pass regardless of story.
+
+**Terminal growth is capped and growth is never free.** With `--risk-free`
+supplied the tool refuses `--terminal-growth` above it — no firm outgrows its
+economy forever. Separately, pass `--base-earnings` (trailing net income, same
+period as the FCF) and read the reinvestment lines: the terminal value's
+growth silently claims a return of `g / reinvestment rate` on retained
+earnings, and when FCF ≥ earnings the tool prints its `growth without
+reinvestment` warning. Two honest responses: cut terminal growth to ~inflation
+(repricing existing assets needs no reinvestment; real growth beyond that
+does), or show the earnings base is understated — heavy acquired-intangible
+amortization does exactly this (BR: FCF > net income for that reason) — and
+rerun with cash earnings (net income + acquired-intangible amortization),
+saying so. Never leave the warning unanswered in the write-up.
+
 Read the output honestly:
 
 - A **low** implied return on **optimistic** assumptions is a bad bet.
 - A **high** implied return on **conservative** assumptions is interesting.
+- The default read for the terminal period is **excess returns fading, not
+  persisting** — only ~29% of firms earn above their cost of capital (anchor
+  reference has the source). A terminal story that needs the excess return to
+  hold forever must say what defends it; that is the same question the Item 1A
+  terminal-risk sweep answers, asked from the other side.
 - `no solution` (exit 1) means the price implies a return above 100%/yr. That
   is information, not an error.
 - `refused` (exit 2) means the input was a category error — usually a
@@ -305,7 +354,8 @@ Write `research/<TICKER>-<YYYY-MM-DD>.md` with these sections, then commit it:
    kill-thesis verdict and the load-bearing condition count.
 2. **Business** — created / captured / protected.
 3. **Threads pulled** — including the dead ends, and what they ruled out.
-4. **Valuation** — the implied return, and every assumption behind it. Add
+4. **Valuation** — the implied return, the spread against the hurdle (with
+   the risk-free/ERP as-of date), and every assumption behind it. Add
    the options-implied move where available: name the path used (path 1 —
    CBOE `iv30` percentile from `data/options.db`; path 2 — the Robinhood
    stopgap) and the DTE, or state explicitly "no listed options."
