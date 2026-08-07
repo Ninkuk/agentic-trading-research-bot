@@ -491,6 +491,17 @@ def main(argv=None) -> None:
     p.add_argument(
         "--last-run", action="store_true", help="print the latest run timestamp and exit"
     )
+    p.add_argument(
+        "--transfer",
+        type=float,
+        default=None,
+        help="record an external cash flow: signed dollars, + deposit,"
+        " - withdrawal (requires --date; ignores --input)",
+    )
+    p.add_argument(
+        "--date", default=None, help="Phoenix calendar date (YYYY-MM-DD) the flow landed"
+    )
+    p.add_argument("--note", default=None, help="optional transfer annotation")
     a = p.parse_args(argv)
 
     if a.last_run:
@@ -501,6 +512,22 @@ def main(argv=None) -> None:
         finally:
             conn.close()
         print(row[0] or "never")
+        return
+    if a.transfer is not None:
+        if a.transfer == 0:
+            p.error("--transfer must be nonzero")
+        if not a.date or not _bare_date(a.date):
+            p.error("--transfer requires --date as a bare YYYY-MM-DD Phoenix date")
+        conn = db.connect(a.db)
+        try:
+            db.ensure_schema(conn)
+            tid = db.record_transfer(
+                conn, a.date, a.transfer, a.note, datetime.now(UTC).isoformat()
+            )
+        finally:
+            conn.close()
+        kind = "deposit" if a.transfer > 0 else "withdrawal"
+        print(f"transfer {tid}: {kind} {abs(a.transfer):.2f} on {a.date}, into {a.db}")
         return
     if not a.input:
         p.error("--input is required unless --last-run")

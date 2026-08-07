@@ -989,6 +989,19 @@ def upsert_equity(conn, rows) -> int:
     return n
 
 
+def record_transfer(conn, obs_date, amount, note, now_iso) -> int:
+    """External cash flow (signed: + deposit, − withdrawal), dated on the
+    Phoenix calendar date it landed. Permanent — never pruned. The scorecard
+    subtracts the date's summed flow before chaining, so an unrecorded
+    transfer reads as (fake) performance."""
+    cur = conn.execute(
+        "INSERT INTO transfers (obs_date, amount, note, recorded_at) VALUES (?, ?, ?, ?)",
+        (obs_date, amount, note, now_iso),
+    )
+    conn.commit()
+    return cur.lastrowid
+
+
 def entry_for(conn, symbol, composite_date, max_age_days):
     """First ledger close STRICTLY AFTER composite_date — the earliest price
     the opinion could actually be acted on. The composite forms its opinion
