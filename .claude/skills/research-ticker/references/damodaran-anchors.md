@@ -49,6 +49,37 @@ The `datafile/*.html` pages are US-only mirrors of the xls files and parse
 with stdlib; the regional variants are Excel-only (legacy BIFF — not
 stdlib-readable, don't bother).
 
+## Deeper mining index (site fully indexed 2026-08-06; fetch on demand)
+
+The site is far larger than the anchors above — a full section index found
+these directly practice-relevant resources not yet mined (all under
+`pages.stern.nyu.edu/~adamodar/`, static, robots-clean):
+
+- `New_Home_Page/glossary.htm` — his ~310-term valuation glossary, one
+  page; the canonical vocabulary source for skill prose and `docs/GLOSSARY.md`.
+- `New_Home_Page/valquestions/valquestions.htm` — "25 Questions on DCF
+  Valuation (and my opinionated answers)": FCFF definition, growth, terminal
+  value — the judgment calls Phase 4 makes, in checklist form.
+- `pdfiles/eqnotes/webcasts/TermValueCheck/termvaluecheck.xls` — his own
+  terminal-value consistency checker; the reference implementation behind
+  this repo's g/reinvestment discipline.
+- `New_Home_Page/definitions.html` — ~100 ratios with per-measure *misuse*
+  commentary; attack material for condition checks.
+- `pdfiles/eqnotes/valpacket1-3spr26.pdf` — the complete current valuation
+  course (supersedes older note PDFs); free-online twin with worked 10-K
+  exercises at `New_Home_Page/webcastvalonline.htm`.
+- Unread practice papers (method, not numbers — many pre-date ASC 842 /
+  current tax rates): `pdfiles/papers/{multiples,returnmeasures,
+  cashvaluation,growthorigins,HighGrow,riskfreerate,ERPfull}.pdf`.
+- `pc/blog/AlldataMarch2026.xlsx` — every current industry dataset in one
+  workbook (filename rotates; scrape home.htm for the current link).
+- `New_Home_Page/dataaddon.html` / `databreakdown.html` — dataset changelog
+  and variable definitions; check before reading a YoY jump in an anchor as
+  a market move rather than a provider/definition switch.
+- `New_Home_Page/covals.htm` — 37 worked valuations by company type (banks,
+  distress, cyclicals, index DCF) — templates for cases the simple levered
+  path handles poorly.
+
 ## Rules
 
 - The hurdle (`rf + beta × ERP`) is a **cost of equity**: it reads against
