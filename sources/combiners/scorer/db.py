@@ -899,6 +899,30 @@ SELECT screen_version, branch, horizon, COUNT(*) AS n,
 FROM v_candidate_outcomes
 WHERE matured_at IS NOT NULL
 GROUP BY screen_version, branch, horizon;
+
+DROP VIEW IF EXISTS v_equity_curve;
+-- Daily time-weighted-return legs over LEDGER dates. flow is the date's
+-- summed external transfers; port_return = (E_t − flow_t)/E_{{t−1}} − 1, the
+-- standard TWR convention that neutralizes deposit timing. Ledger gaps
+-- simply widen one leg — harmless UNLESS a transfer hides inside the gap,
+-- which is why the scorecard refuses to chain past an orphan transfer.
+-- spy_close rides along where a same-date SPY row exists (weekend ledger
+-- rows carry NULL); readers compute SPY's cumulative leg from window
+-- ENDPOINT closes, never per-day here.
+CREATE VIEW v_equity_curve AS
+SELECT e.obs_date,
+       e.equity,
+       COALESCE(t.flow, 0.0) AS flow,
+       LAG(e.equity) OVER (ORDER BY e.obs_date) AS prev_equity,
+       (e.equity - COALESCE(t.flow, 0.0))
+           / NULLIF(LAG(e.equity) OVER (ORDER BY e.obs_date), 0) - 1
+           AS port_return,
+       p.close AS spy_close
+FROM equity_ledger e
+LEFT JOIN (
+    SELECT obs_date, SUM(amount) AS flow FROM transfers GROUP BY obs_date
+) t ON t.obs_date = e.obs_date
+LEFT JOIN prices p ON p.symbol = 'SPY' AND p.price_date = e.obs_date;
 """
 
 

@@ -834,3 +834,44 @@ def test_verdict_correct_tie_boundary(tmp_path):
         conn.execute("SELECT symbol, verdict_correct FROM v_research_verdict_outcomes").fetchall()
     )
     assert rows == {"AAA": 1, "BBB": 0}
+
+
+def test_equity_curve_subtracts_flow_before_chaining(tmp_path):
+    conn = _conn(tmp_path)  # module's existing schema-backed connection helper
+    conn.executemany(
+        "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
+        " VALUES (?, ?, 0, '2026-08-06T04:00:00+00:00')",
+        [("2026-07-31", 197.0), ("2026-08-04", 303.0), ("2026-08-05", 306.0)],
+    )
+    conn.execute(
+        "INSERT INTO transfers (obs_date, amount, recorded_at)"
+        " VALUES ('2026-08-04', 100.0, '2026-08-06T04:00:00+00:00')"
+    )
+    conn.executemany(
+        "INSERT INTO prices (symbol, price_date, close) VALUES ('SPY', ?, ?)",
+        [("2026-07-31", 630.0), ("2026-08-04", 636.3), ("2026-08-05", 640.0)],
+    )
+    conn.commit()
+    rows = conn.execute(
+        "SELECT obs_date, flow, prev_equity, port_return, spy_close"
+        " FROM v_equity_curve ORDER BY obs_date"
+    ).fetchall()
+    assert rows[0] == ("2026-07-31", 0.0, None, None, 630.0)
+    # deposit day: (303-100)/197 - 1 ≈ +3.05%, NOT +53.8%
+    assert rows[1][0:3] == ("2026-08-04", 100.0, 197.0)
+    assert abs(rows[1][3] - ((303.0 - 100.0) / 197.0 - 1.0)) < 1e-9
+    assert abs(rows[2][3] - (306.0 / 303.0 - 1.0)) < 1e-9
+
+
+def test_equity_curve_missing_spy_date_is_null_not_dropped(tmp_path):
+    conn = _conn(tmp_path)
+    conn.executemany(
+        "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
+        " VALUES (?, ?, 0, '2026-08-06T04:00:00+00:00')",
+        [("2026-08-01", 200.0), ("2026-08-04", 202.0)],  # 08-01 is a Saturday
+    )
+    conn.commit()
+    rows = conn.execute(
+        "SELECT obs_date, spy_close FROM v_equity_curve ORDER BY obs_date"
+    ).fetchall()
+    assert rows == [("2026-08-01", None), ("2026-08-04", None)]
