@@ -153,3 +153,29 @@ def test_verdicts_recorded_migrates_existing_db(tmp_path):
     cols = {r[1] for r in conn.execute("PRAGMA table_info(journal_runs)")}
     assert "verdicts_recorded" in cols
     conn.close()
+
+
+def test_equity_ledger_and_transfers_tables(tmp_path):
+    conn = _conn(tmp_path)
+    tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    assert {"equity_ledger", "transfers"} <= tables
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(equity_ledger)")}
+    assert cols == {"obs_date", "equity", "cash", "captured_at"}
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(transfers)")}
+    assert cols == {"id", "obs_date", "amount", "note", "recorded_at"}
+
+
+def test_prune_never_touches_equity_ledger_or_transfers(tmp_path):
+    conn = _conn(tmp_path)
+    conn.execute(
+        "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
+        " VALUES ('2020-01-02', 100.0, 10.0, '2020-01-03T04:30:00+00:00')"
+    )
+    conn.execute(
+        "INSERT INTO transfers (obs_date, amount, recorded_at)"
+        " VALUES ('2020-01-02', 50.0, '2020-01-03T04:31:00+00:00')"
+    )
+    conn.commit()
+    db.prune(conn, 1, "2026-08-07T04:00:00+00:00")  # positional, matching run.py's call
+    assert conn.execute("SELECT COUNT(*) FROM equity_ledger").fetchone()[0] == 1
+    assert conn.execute("SELECT COUNT(*) FROM transfers").fetchone()[0] == 1

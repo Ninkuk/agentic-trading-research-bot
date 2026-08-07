@@ -99,6 +99,27 @@ CREATE TABLE IF NOT EXISTS prices (
     PRIMARY KEY (symbol, price_date)
 );
 
+-- Permanent account-equity ledger, one row per Phoenix date, harvested out
+-- of portfolio.db's prunable snapshots before the cascade eats them (same
+-- settled-ledger pattern as prices). NEVER pruned. transfers records
+-- external cash flows (signed: + deposit, − withdrawal) so the scorecard's
+-- time-weighted chaining can neutralize deposit timing; without it a
+-- deposit reads as alpha. NEVER pruned.
+CREATE TABLE IF NOT EXISTS equity_ledger (
+    obs_date    TEXT PRIMARY KEY,
+    equity      REAL NOT NULL,
+    cash        REAL,
+    captured_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS transfers (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    obs_date    TEXT NOT NULL,
+    amount      REAL NOT NULL,
+    note        TEXT,
+    recorded_at TEXT NOT NULL
+);
+
 -- Registration marker: a composite snapshot is registered atomically with
 -- all its outcome rows, or not at all.
 CREATE TABLE IF NOT EXISTS registered_snapshots (
@@ -1409,7 +1430,9 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     """Run headers only. The prices ledger and the outcome tables are both
     permanent — outcomes ARE the experiment, and the ledger is the backtest
     evidence (a few hundred MB/year; pruning it would discard history no
-    source can re-serve)."""
+    source can re-serve). equity_ledger and transfers are permanent for the
+    same reason: they are the only record of account equity once
+    portfolio.db's snapshot cascade has run."""
     header_cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
     n = conn.execute("DELETE FROM snapshots WHERE captured_at < ?", (header_cutoff,)).rowcount
     conn.commit()
