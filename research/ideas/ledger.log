@@ -116,3 +116,13 @@
 2026-08-03 LvUcTBmVCXI washington-composite-backwards DEAD gate=6:statistics
 2026-08-03 LvUcTBmVCXI lobbying-spend-signal DEAD gate=7:priority
 2026-08-03 LvUcTBmVCXI federal-contract-awards-signal DEAD gate=7:priority
+2026-08-06 sres2R8etKA country-risk-not-diversifiable DEAD gate=7:priority
+2026-08-06 sres2R8etKA mature-market-erp-anchor DEAD gate=7:priority
+2026-08-06 sres2R8etKA country-erp-scaling DEAD gate=3:source
+2026-08-06 sres2R8etKA local-currency-debt-defaults DEAD gate=7:priority
+2026-08-06 sres2R8etKA operations-weighted-erp SURVIVED
+2026-08-06 sres2R8etKA risk-free-by-differential-inflation DEAD gate=7:priority
+2026-08-06 sres2R8etKA cds-vs-ratings-cross-check DEAD gate=3:source
+2026-08-06 sres2R8etKA democracy-discrete-vs-continuous-risk DEAD gate=1:provenance
+2026-08-06 sres2R8etKA climate-not-yet-country-risk DEAD gate=7:priority
+2026-08-06 sres2R8etKA country-life-cycle-narrative-weight DEAD gate=7:priority
