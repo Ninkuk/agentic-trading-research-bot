@@ -82,6 +82,36 @@ def harvest_prices(conn) -> list:
     ]
 
 
+def harvest_equity(conn) -> list:
+    """(obs_date, equity, cash, captured_at) — one row per Phoenix date from
+    the ATTACHed portfolio.db, ahead of its snapshot prune.
+
+    Within a date the snapshot captured in the post-close window
+    (13:00-16:59 Phoenix — the stable 14:30 daily slot) beats any
+    out-of-window one: the broker's overnight reads land ~21:20 Phoenix and
+    return glitch equity ($0.00 / $10.80 with cash unchanged, observed
+    2026-07). Ties and window-less dates fall back to latest captured_at.
+    Re-harvest is idempotent repair (upsert_equity is last-write-wins)."""
+    cols = {r[1] for r in conn.execute("PRAGMA src.table_info(account)")}
+    missing = {"snapshot_id", "equity", "cash"} - cols
+    if missing:
+        raise ValueError("portfolio account table missing columns")
+    return conn.execute(
+        "SELECT obs_date, equity, cash, captured_at FROM ("
+        " SELECT substr(datetime(s.captured_at, '-7 hours'), 1, 10) AS obs_date,"
+        "        a.equity, a.cash, s.captured_at,"
+        "        ROW_NUMBER() OVER ("
+        "            PARTITION BY substr(datetime(s.captured_at, '-7 hours'), 1, 10)"
+        "            ORDER BY (CAST(substr(datetime(s.captured_at, '-7 hours'), 12, 2)"
+        "                      AS INTEGER) BETWEEN 13 AND 16) DESC,"
+        "                     s.captured_at DESC"
+        "        ) AS rn"
+        " FROM src.snapshots s JOIN src.account a ON a.snapshot_id = s.id"
+        " WHERE a.equity IS NOT NULL"
+        ") WHERE rn = 1 ORDER BY obs_date"
+    ).fetchall()
+
+
 def read_snapshots(conn) -> list:
     """Composite snapshots that state an opinion (have a regime row).
 

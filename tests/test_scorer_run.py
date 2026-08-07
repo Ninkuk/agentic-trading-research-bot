@@ -92,13 +92,13 @@ def test_rerun_is_idempotent(tmp_path):
 
 def test_missing_source_skip_and_continue(tmp_path, capsys):
     _mini_prices(tmp_path / "stocks.db", {"AAPL": 100.0})
-    # no etfs.db, no composite.db
+    # no etfs.db, no portfolio.db, no composite.db
     out = str(tmp_path / "scorer.db")
     sid, harvested, registered, matured, skipped = run_mod.run(out, str(tmp_path), now_iso=NOW)
     assert harvested == 5 and registered == 0
     err = capsys.readouterr().out
-    # two missing sources -> two skip lines, type names only, no traceback
-    assert err.count("FileNotFoundError") == 2
+    # three missing sources -> three skip lines, type names only, no traceback
+    assert err.count("FileNotFoundError") == 3
     assert "Traceback" not in err
 
 
@@ -238,4 +238,24 @@ def test_verdict_registers_and_matures_via_run(tmp_path):
         ).fetchone()[0]
         == 0
     )
+    conn.close()
+
+
+def test_run_harvests_equity_ledger(tmp_path):
+    from sources.screeners.portfolio_screener import db as portfolio_db
+
+    pconn = portfolio_db.connect(str(tmp_path / "portfolio.db"))
+    portfolio_db.ensure_schema(pconn)
+    portfolio_db.write_snapshot(
+        pconn,
+        "2026-07-07T21:30:00+00:00",
+        {"equity": 200.4, "cash": 200.4, "buying_power": 200.4},
+        [],
+    )
+    pconn.close()
+    run_mod.run(str(tmp_path / "scorer.db"), str(tmp_path), now_iso=NOW)
+    conn = sqlite3.connect(str(tmp_path / "scorer.db"))
+    assert conn.execute("SELECT obs_date, equity FROM equity_ledger").fetchall() == [
+        ("2026-07-07", 200.4)
+    ]
     conn.close()

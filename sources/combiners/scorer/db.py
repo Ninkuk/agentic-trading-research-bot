@@ -970,6 +970,25 @@ def insert_prices(conn, rows) -> int:
     return n
 
 
+def upsert_equity(conn, rows) -> int:
+    """equity_ledger writer: one row per Phoenix date, LAST WRITE WINS —
+    unlike insert_prices' INSERT OR IGNORE, because a re-harvest that found
+    a better in-window snapshot must be able to replace a fallback row."""
+    n = 0
+    for obs_date, equity, cash, captured_at in rows:
+        if obs_date is None or equity is None:
+            continue
+        conn.execute(
+            "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
+            " VALUES (?, ?, ?, ?)"
+            " ON CONFLICT(obs_date) DO UPDATE SET equity=excluded.equity,"
+            " cash=excluded.cash, captured_at=excluded.captured_at",
+            (obs_date, equity, cash, captured_at),
+        )
+        n += 1
+    return n
+
+
 def entry_for(conn, symbol, composite_date, max_age_days):
     """First ledger close STRICTLY AFTER composite_date — the earliest price
     the opinion could actually be acted on. The composite forms its opinion

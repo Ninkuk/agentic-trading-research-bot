@@ -37,6 +37,23 @@ def run(db_path, db_dir, now_iso=None, keep_days=None, rebuild_prices=False):
                 print(f"skip {src_db}: {type(e).__name__}")
             finally:
                 fetch.detach(conn)
+        # 1b) equity ledger (portfolio.db read-only, harvested before its
+        # snapshot prune erases the history)
+        path = os.path.join(db_dir, catalog.PORTFOLIO_DB)
+        try:
+            fetch.attach_ro(conn, path)
+        except Exception as e:
+            print(f"skip {catalog.PORTFOLIO_DB}: {type(e).__name__}")
+        else:
+            try:
+                equity_dates = db.upsert_equity(conn, fetch.harvest_equity(conn))
+                conn.commit()
+                print(f"equity ledger: {equity_dates} dates")
+            except Exception as e:
+                conn.rollback()
+                print(f"skip {catalog.PORTFOLIO_DB}: {type(e).__name__}")
+            finally:
+                fetch.detach(conn)
         # 2) register
         path = os.path.join(db_dir, catalog.COMPOSITE_DB)
         try:

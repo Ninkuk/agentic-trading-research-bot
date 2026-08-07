@@ -3,7 +3,8 @@ import sqlite3
 import pytest
 
 from sources.combiners.composite import db as composite_db
-from sources.combiners.scorer import fetch
+from sources.combiners.scorer import db, fetch
+from sources.screeners.portfolio_screener import db as portfolio_db
 from sources.screeners.stock_analysis_screener import db as stocks_db
 
 NOW = "2026-07-06T21:05:00+00:00"
@@ -184,3 +185,58 @@ def test_reads_composite_only_regimed_snapshots(tmp_path):
     sigs = fetch.read_signal_rows(conn, sid)
     assert [s["signal_id"] for s in sigs] == ["si_days_to_cover"]  # no score-0
     assert fetch.read_regime(conn, sid) == "mixed"
+
+
+def _scorer_conn(tmp_path):
+    conn = db.connect(str(tmp_path / "scorer.db"))
+    db.ensure_schema(conn)
+    return conn
+
+
+def _mini_portfolio(path, snapshots):
+    """snapshots: [(captured_at, equity, cash)] written via the real
+    portfolio_screener writer, so column drift breaks this test loudly."""
+    conn = portfolio_db.connect(str(path))
+    portfolio_db.ensure_schema(conn)
+    for captured_at, equity, cash in snapshots:
+        portfolio_db.write_snapshot(
+            conn, captured_at, {"equity": equity, "cash": cash, "buying_power": cash}, []
+        )
+    conn.close()
+
+
+def test_harvest_equity_prefers_postclose_window(tmp_path):
+    # Both rows land on Phoenix date 2026-07-07: 21:30Z = 14:30 Phoenix
+    # (in-window) and 04:22Z NEXT UTC DAY = 21:22 Phoenix (the overnight
+    # glitch shape observed in the real db). The in-window row must win
+    # even though the glitch row has the later captured_at.
+    src = tmp_path / "portfolio.db"
+    _mini_portfolio(
+        src,
+        [
+            ("2026-07-07T21:30:00+00:00", 200.4, 200.4),
+            ("2026-07-08T04:22:00+00:00", 16.2, 184.15),
+        ],
+    )
+    conn = _scorer_conn(tmp_path)
+    fetch.attach_ro(conn, str(src))
+    rows = fetch.harvest_equity(conn)
+    fetch.detach(conn)
+    assert rows == [("2026-07-07", 200.4, 200.4, "2026-07-07T21:30:00+00:00")]
+
+
+def test_harvest_equity_falls_back_to_last_row_of_date(tmp_path):
+    # A date with ONLY out-of-window snapshots still harvests (latest wins).
+    src = tmp_path / "portfolio.db"
+    _mini_portfolio(
+        src,
+        [
+            ("2026-07-09T04:58:00+00:00", 10.8, 189.38),  # 2026-07-08 21:58 Phoenix
+            ("2026-07-09T04:20:00+00:00", 11.0, 189.38),  # 2026-07-08 21:20 Phoenix
+        ],
+    )
+    conn = _scorer_conn(tmp_path)
+    fetch.attach_ro(conn, str(src))
+    rows = fetch.harvest_equity(conn)
+    fetch.detach(conn)
+    assert rows == [("2026-07-08", 10.8, 189.38, "2026-07-09T04:58:00+00:00")]
