@@ -11,7 +11,7 @@ write-up — the figures below are examples pinned to their as-of dates so you
 know what shape to expect. The ERP updates monthly; the industry datasets
 update each January.
 
-## The two run-time fetches
+## The run-time fetches
 
 **Risk-free + implied ERP** (monthly, first of the month) — both sit in the
 first screen of his home page:
@@ -27,6 +27,31 @@ ERP, not the alternates he lists beside it.
 
 **Beta** — already on the stockanalysis statistics page Phase 4 probes
 (`valuation` block). No extra fetch.
+
+**Country ERPs** (conditional): the headline ERP above is a US premium. When
+the filing's geographic segment note shows material non-US revenue or
+production, the hurdle ERP is the **operations-weighted** country ERP —
+never the country of incorporation's, never the flat US number:
+
+```bash
+curl -s https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html
+```
+
+This is the one country dataset that parses with stdlib — a static HTML
+table (country | Moody's rating | default spread | country risk premium |
+**total ERP** | …), unlike the Excel-only regional files noted below. Cite
+the page's own "Last updated" stamp: it lags his July country-risk paper
+(checked 2026-08-06: page still on the January 5, 2026 vintage).
+
+`ERP_company = Σ wᵢ × total-ERPᵢ` over the segment note's countries.
+Weights: revenues for consumer businesses, production for resource
+extraction, a stated mix for manufacturers. Slot the result into the same
+`rf + beta × ERP` hurdle (pass as `--erp`). Take **every** country's ERP
+from this one table — its US row included when there is a US weight — never
+mixing in the monthly headline number: one vintage per calculation. Shape
+(as of Jan 5, 2026): Germany/Australia (Aaa) **4.23%**, US (Aa1) **4.46%**,
+South Africa (Ba2) **8.13%**, Ghana (Caa1) **13.94%**. A US-only name stays
+on the headline monthly ERP — no fetch, nothing changes.
 
 ## The clamps (annual, refreshed each January — re-check the year)
 
