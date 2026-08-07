@@ -128,8 +128,8 @@ each dollar tied up in the business. A steady double-digit ROIC is a mark of
 quality.
 
 **FCF yield (free cash flow yield)** — the spare cash a business generates in
-a year, divided by the price of the whole company. Higher means each dollar of
-cash costs you less to own.
+a year, divided by the stock-market value of its shares (market cap). Higher
+means each dollar of cash costs you less to own.
 
 **Market cap (market capitalization)** — the total price tag on all of a
 company's shares put together.
@@ -140,8 +140,9 @@ price already bakes in. A high implied return on cautious assumptions is
 interesting; a low one on rosy assumptions is a warning.
 
 **Hurdle (cost of equity)** — the return an investment has to beat to be worth
-the risk: the safe Treasury rate plus a premium scaled by how volatile the
-stock is. An implied return only means something next to this number.
+the risk: the safe Treasury rate plus a premium scaled by beta — the stock's
+exposure to market-wide swings, not its own choppiness. An implied return
+only means something next to this number.
 
 **Equity risk premium (ERP)** — the extra yearly return investors demand for
 holding stocks instead of Treasuries. Damodaran re-solves it monthly from the
@@ -154,6 +155,18 @@ rate, which is why that one assumption gets policed hardest.
 **Terminal growth** — the forever growth rate inside the terminal value.
 Capped at the Treasury rate (nothing outgrows the economy forever), and real
 growth above inflation has to be paid for with reinvested earnings.
+
+**Enterprise value (EV)** — the market value of a company's equity and debt
+together, net of its cash: what buying the whole business would cost, not
+just its shares.
+
+**Beta** — a stock's exposure to risk that diversification can't remove:
+how much it moves with the market, standardized around 1. Not the same as
+volatility — a wild mover that ignores the market can still have a low beta.
+
+**Reinvestment rate** — the share of profit plowed back into the business
+instead of flowing out as free cash. Growth has to be paid from here: growth
+rate = reinvestment rate × return on that reinvested capital.
 
 **Data age** — how many days old the freshest input behind a number is. Small
 means current; large means the reading is running on stale data.
