@@ -20,6 +20,13 @@ SPY at 21/63 trading days, split by dislocation branch) — that measures the
 TIMING gates, never the multi-year quality thesis, and nothing feeds back
 into the gates below; re-tuning them stays a human decision.
 
+The gate set also picks a LIFE-CYCLE STAGE, on purpose: profitable ROIC
+history + FCF yield + moderate revenue growth structurally selects
+mature-growth compounders, so young growth and declining/turnaround names
+can never appear here no matter their merit. That is the screen acting its
+age (a metric built for one stage misreads every other stage); a different
+stage would need a different funnel, not looser gates.
+
 Every gate below encodes a defect measured in stocks.db (audits dated
 2026-07-26 and 2026-07-29); none of them are stylistic:
   * ONE ROW PER COMPANY — share classes INHERIT the whole-company marketCap

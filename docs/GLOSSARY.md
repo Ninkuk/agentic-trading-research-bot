@@ -134,5 +134,26 @@ cash costs you less to own.
 **Market cap (market capitalization)** — the total price tag on all of a
 company's shares put together.
 
+**Reverse DCF (implied return)** — instead of guessing what a stock is worth,
+hold the cash-flow assumptions fixed and solve for the yearly return today's
+price already bakes in. A high implied return on cautious assumptions is
+interesting; a low one on rosy assumptions is a warning.
+
+**Hurdle (cost of equity)** — the return an investment has to beat to be worth
+the risk: the safe Treasury rate plus a premium scaled by how volatile the
+stock is. An implied return only means something next to this number.
+
+**Equity risk premium (ERP)** — the extra yearly return investors demand for
+holding stocks instead of Treasuries. Damodaran re-solves it monthly from the
+market's own level; it is the market-wide half of the hurdle.
+
+**Terminal value** — the part of a valuation covering everything past the
+forecast years, usually most of the total. It leans on a "forever" growth
+rate, which is why that one assumption gets policed hardest.
+
+**Terminal growth** — the forever growth rate inside the terminal value.
+Capped at the Treasury rate (nothing outgrows the economy forever), and real
+growth above inflation has to be paid for with reinvested earnings.
+
 **Data age** — how many days old the freshest input behind a number is. Small
 means current; large means the reading is running on stale data.
