@@ -69,6 +69,10 @@ on the headline monthly ERP — no fetch, nothing changes.
 - **Sales-to-capital by industry** (`New_Home_Page/datafile/capex.html`):
   the reinvestment denominator when modelling bookings × margin —
   reinvestment ≈ Δrevenue / sales-to-capital.
+- **Mature-company cost-of-capital anchor** (his terminal checker's default
+  block): a stable company's cost of capital ≈ **risk-free + 4.5%**. A
+  hurdle far below that for a mature name deserves a sentence — it is the
+  absolute companion to the 0.8–1.2 stable-beta band.
 
 The `datafile/*.html` pages are US-only mirrors of the xls files and parse
 with stdlib; the regional variants are Excel-only (legacy BIFF — not

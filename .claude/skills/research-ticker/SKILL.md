@@ -312,6 +312,32 @@ amortization does exactly this (BR: FCF > net income for that reason) — and
 rerun with cash earnings (net income + acquired-intangible amortization),
 saying so. Never leave the warning unanswered in the write-up.
 
+**Base-and-terminal integrity checks** (from Damodaran's own terminal-value
+checker and his 25-DCF-questions page — pointers in the anchors reference):
+
+- **Read `implied_terminal_roe` two-sided against the hurdle.** Below it, the
+  terminal value assumes the company destroys value forever — say if that is
+  intentional. More than ~5 points above it is "tough to do" in perpetuity —
+  defend it or cut the growth.
+- **Base-year cash tax rate vs the marginal rate.** A base FCF flattered by
+  NOLs or deferrals inflates every projected flow; if cash taxes run well
+  below marginal, say when that ends and haircut the base.
+- **A serial acquirer's growth is not free.** `fcf = NCFO − capex` excludes
+  acquisition spend (cash *and* stock), so a growth path that assumes
+  continued M&A gets that growth without paying for it and the implied
+  return reads too high. Grow the organic base only, or charge historical
+  acquisition spend against the base FCF — say which.
+- **High-SBC names overstate levered FCF.** NCFO adds stock compensation
+  back, but SBC is compensation, not cash the owner keeps. Deduct the SBC
+  run-rate from the base before solving, and note any large option/RSU
+  overhang the share count hides.
+- **Cash-heavy names bias the implied return low.** Market cap includes a
+  cash pile the levered FCF barely earns on; on a large net-cash balance,
+  solve against market cap net of excess cash and say so.
+- **The haircut list is longer than minority interests.** Material pension
+  underfunding and probable litigation payouts are equity claims too —
+  subtract before pairing, same as the NCI haircut.
+
 Read the output honestly:
 
 - A **low** implied return on **optimistic** assumptions is a bad bet.
