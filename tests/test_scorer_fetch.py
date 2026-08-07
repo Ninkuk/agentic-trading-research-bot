@@ -225,6 +225,27 @@ def test_harvest_equity_prefers_postclose_window(tmp_path):
     assert rows == [("2026-07-07", 200.4, 200.4, "2026-07-07T21:30:00+00:00")]
 
 
+def test_harvest_equity_skips_date_whose_only_snapshot_is_zero_equity(tmp_path):
+    # The real 2026-07-13 shape: a single snapshot, INSIDE the post-close
+    # window, reading $0.00 equity with cash intact. Harvesting it would put
+    # an exactly -100% leg in the permanent ledger and pin every chained
+    # window at -100% forever, so the date must drop out entirely (an
+    # ordinary ledger gap) while neighbouring dates harvest normally.
+    src = tmp_path / "portfolio.db"
+    _mini_portfolio(
+        src,
+        [
+            ("2026-07-13T21:30:00+00:00", 0.0, 200.4),
+            ("2026-07-14T21:30:00+00:00", 200.4, 200.4),
+        ],
+    )
+    conn = _scorer_conn(tmp_path)
+    fetch.attach_ro(conn, str(src))
+    rows = fetch.harvest_equity(conn)
+    fetch.detach(conn)
+    assert rows == [("2026-07-14", 200.4, 200.4, "2026-07-14T21:30:00+00:00")]
+
+
 def test_harvest_equity_falls_back_to_last_row_of_date(tmp_path):
     # A date with ONLY out-of-window snapshots still harvests (latest wins).
     src = tmp_path / "portfolio.db"

@@ -196,3 +196,19 @@ def test_portfolio_section_window_excess_is_zero_in_lockstep(tmp_path):
     # invents excess (+1.23% here) for a book that tracked SPY exactly.
     assert line.split("|")[1].strip() == line.split("|")[2].strip()
     assert line.rsplit("|", 1)[1].strip() == "0.00%"
+
+
+def test_portfolio_section_trims_leading_row_without_spy_close(tmp_path):
+    conn = _fresh(tmp_path)
+    # A weekend ledger row BEFORE the first SPY close, at a different equity.
+    # Its successor's leg (+11.1%) is one SPY's endpoint span never measures,
+    # so an untrimmed window invents that much excess for a lockstep book.
+    conn.execute(
+        "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
+        " VALUES ('2026-05-30', 90.0, 0, '2026-07-01T04:00:00+00:00')"
+    )
+    _seed_lockstep(conn)
+    text = scorecard._portfolio_section(conn)
+    for label in ("inception", "21d"):
+        line = next(ln for ln in text.splitlines() if ln.strip().startswith(label))
+        assert line.rsplit("|", 1)[1].strip() == "0.00%", line

@@ -140,6 +140,20 @@ def _spy_endpoint_return(rows) -> float | None:
     return closes[-1] / closes[0] - 1.0
 
 
+def _trim_to_spy_endpoints(rows):
+    """Rows from the first to the last one carrying a SPY close.
+
+    SPY's leg is measured from the window's endpoint closes, so a leading or
+    trailing ledger row without a same-date close (a Saturday first row, say)
+    hands the book a leg SPY's span never measures and invents excess.
+    Interior gaps are kept: they widen one leg on both sides equally and are
+    TWR-neutral. A window with no SPY close at all is returned untouched —
+    there is nothing to align against and the section already prints SPY and
+    excess as n/a."""
+    marked = [i for i, r in enumerate(rows) if r["spy_close"] is not None]
+    return rows if not marked else rows[marked[0] : marked[-1] + 1]
+
+
 def _frac(x) -> str:
     return "n/a" if x is None else f"{x:.4f}"
 
@@ -231,12 +245,15 @@ def _portfolio_section(conn) -> str:
     lines = ["  window     | portfolio TWR | SPY      | excess"]
 
     def _window(label, window_rows):
-        # The first row is the window's ANCHOR: both sides measure forward from
-        # its close. Its own port_return is the leg INTO the anchor from the day
-        # before, which is outside the window — chaining it would give the book
-        # one more leg than SPY's endpoint span and invent excess for a book
-        # that merely tracked SPY. (Harmless for inception, whose first
-        # port_return is NULL by construction, but stated once and applied
+        # Both endpoints first: SPY can only measure between rows that HAVE a
+        # close, so trim the window to that span before anything else.
+        window_rows = _trim_to_spy_endpoints(window_rows)
+        # The first remaining row is the window's ANCHOR: both sides measure
+        # forward from its close. Its own port_return is the leg INTO the anchor
+        # from the day before, which is outside the window — chaining it would
+        # give the book one more leg than SPY's endpoint span and invent excess
+        # for a book that merely tracked SPY. (Harmless for inception, whose
+        # first port_return is NULL by construction, but stated once and applied
         # uniformly rather than left to that coincidence.)
         twr = _chain(window_rows[1:])
         spy = _spy_endpoint_return(window_rows)

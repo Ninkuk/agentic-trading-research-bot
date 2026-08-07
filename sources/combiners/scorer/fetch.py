@@ -91,7 +91,21 @@ def harvest_equity(conn) -> list:
     out-of-window one: the broker's overnight reads land ~21:20 Phoenix and
     return glitch equity ($0.00 / $10.80 with cash unchanged, observed
     2026-07). Ties and window-less dates fall back to latest captured_at.
-    Re-harvest is idempotent repair (upsert_equity is last-write-wins)."""
+    Re-harvest is idempotent repair (upsert_equity is last-write-wins).
+
+    Zero equity is EXCLUDED outright, whichever window it sits in — the
+    glitch also occurs in-window (2026-07-13/14/16/17 each have a single
+    14:30 Phoenix snapshot reading $0.00 with cash intact), and a zero in the
+    permanent ledger makes the leg into it exactly -100%: the chained product
+    pins at 0 forever and the leg out divides by zero into NULL, so inception
+    would print -100.00% permanently. Excluded dates simply become ordinary
+    ledger gaps, which only widen the neighbouring leg.
+
+    LIMITATION: the fallback is value-blind, so a nonzero glitch on a date
+    with ONLY out-of-window snapshots (live 2026-07-07 $16.21, 2026-07-08
+    $10.80) still lands in the ledger, and a window ANCHOR on one prints
+    absurd TWR. Repair is manual — correct the source and re-harvest
+    (last-write-wins), or fix the ledger row directly."""
     cols = {r[1] for r in conn.execute("PRAGMA src.table_info(account)")}
     missing = {"snapshot_id", "equity", "cash"} - cols
     if missing:
@@ -107,7 +121,7 @@ def harvest_equity(conn) -> list:
         "                     s.captured_at DESC"
         "        ) AS rn"
         " FROM src.snapshots s JOIN src.account a ON a.snapshot_id = s.id"
-        " WHERE a.equity IS NOT NULL"
+        " WHERE a.equity IS NOT NULL AND a.equity > 0"
         ") WHERE rn = 1 ORDER BY obs_date"
     ).fetchall()
 
