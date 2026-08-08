@@ -53,6 +53,11 @@ named rules) for the impeccable skill; keep all three in sync.
   auto-domain YAxis (zero-baseline turns them into filled boxes) and
   tooltips positioned above the chart. No tiny 2-point sparklines — if the
   series is short, drop the chart.
+- Equity curve's SPY series is deliberately neutral gray (`--muted-foreground`,
+  dashed): a subordinate benchmark, so it fails the dataviz chroma floor by
+  design. Gated checks (CVD separation, normal-vision floor) pass in both modes
+  (validated 2026-08-07) — don't "fix" the gray or re-litigate without re-running
+  the validator.
 - No counts in tab labels (user preference, 2026-07-30).
 
 ## Repo conventions

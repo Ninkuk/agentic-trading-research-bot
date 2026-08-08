@@ -58,16 +58,31 @@ def test_indexes_rebase_and_exclude_deposit(tmp_path):
 
 
 def test_weekend_rows_compound_portfolio_but_null_spy(tmp_path):
+    # 07-26 is a Sunday with no SPY close, so the chart window trims to
+    # 07-31..08-04 — but coverage counts uncharted SPY days over the WHOLE
+    # ledger (the scorecard's binding): 07-28 in the trimmed-off leading gap
+    # and 08-03 interior. Binding the trimmed endpoints would see only 08-03.
     _seed(
         tmp_path,
-        ledger=[("2026-07-31", 200.0), ("2026-08-01", 201.0), ("2026-08-04", 202.0)],
-        spy=[("2026-07-31", 630.0), ("2026-08-04", 640.0)],
+        ledger=[
+            ("2026-07-26", 199.0),
+            ("2026-07-31", 200.0),
+            ("2026-08-01", 201.0),
+            ("2026-08-04", 202.0),
+        ],
+        spy=[
+            ("2026-07-28", 626.0),
+            ("2026-07-31", 630.0),
+            ("2026-08-03", 638.0),
+            ("2026-08-04", 640.0),
+        ],
     )
     sec = _section(tmp_path)
     dates = [r["date"] for r in sec["curve"]]
     assert dates == ["2026-07-31", "2026-08-01", "2026-08-04"]
     assert sec["curve"][1]["spy"] is None
     assert abs(sec["curve"][2]["portfolio"] - 101.0) < 0.01  # 202/200 across both legs
+    assert sec["curve_summary"]["missing_trading_days"] == 2
 
 
 def test_orphan_transfer_refuses_with_dates(tmp_path):

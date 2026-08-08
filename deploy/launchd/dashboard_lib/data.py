@@ -913,7 +913,10 @@ def _equity_curve(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         "SELECT COUNT(*) FROM prices p WHERE p.symbol='SPY'"
         " AND p.price_date > ? AND p.price_date < ?"
         " AND p.price_date NOT IN (SELECT obs_date FROM equity_ledger)",
-        (rows[0]["obs_date"], rows[-1]["obs_date"]),
+        # UNTRIMMED endpoints, exactly as scorecard.py binds them: coverage is
+        # a property of the ledger, not of the charted window, so an edge row
+        # the SPY trim drops must still have its gap counted.
+        (all_rows[0]["obs_date"], all_rows[-1]["obs_date"]),
     ).fetchone()[0]
     return {
         "curve": curve,

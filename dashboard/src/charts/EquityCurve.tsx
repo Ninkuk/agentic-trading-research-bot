@@ -8,7 +8,10 @@
 // base, so they share it), 2px lines, an explicit legend because there are
 // two series, a crosshair tooltip through ChartTooltipContent, values and
 // labels in text tokens (never the series color), and transfer dates as
-// ring-outlined dots — a deposit is an event on the line, not a level.
+// ring-outlined dots — a deposit is an event on the line, not a level. The
+// ring's hole (and its legend swatch) fills with --card, not --background:
+// the chart sits on a card, so --background punches a visibly darker hole in
+// dark mode (#09090b inside #18181b).
 //
 // The two series colors stay bare token references so a palette swap is a
 // one-line change: portfolio --chart-1, SPY --muted-foreground dashed
@@ -80,7 +83,7 @@ export function EquityCurve({ rows, height = 260 }: EquityCurveProps) {
           <ChartTooltip
             content={
               <ChartTooltipContent
-                valueFormatter={(v) => (typeof v === "number" ? money(v) : String(v))}
+                valueFormatter={(v) => (typeof v === "number" ? money(v) : "—")}
               />
             }
           />
@@ -110,7 +113,7 @@ export function EquityCurve({ rows, height = 260 }: EquityCurveProps) {
               x={r.date}
               y={r.portfolio}
               r={5}
-              fill="var(--background)"
+              fill="var(--card)"
               stroke="var(--color-portfolio)"
               strokeWidth={2}
             />
@@ -134,7 +137,7 @@ export function EquityCurve({ rows, height = 260 }: EquityCurveProps) {
         {flows.length > 0 && (
           <span className="inline-flex items-center gap-1.5">
             <span
-              className="bg-background size-2.5 rounded-full border-2"
+              className="bg-card size-2.5 rounded-full border-2"
               style={{ borderColor: PORTFOLIO_COLOR }}
             />
             deposit/withdrawal (excluded from the portfolio line)
