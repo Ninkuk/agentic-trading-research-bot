@@ -1,0 +1,93 @@
+"""Positive-path tests for the equity-curve exporter: index math (deposit
+excluded), weekend spy nulls, orphan refusal, and thin-ledger empty."""
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "deploy" / "launchd"))
+from dashboard_lib import data  # noqa: E402
+
+from sources.combiners.scorer import db as scorer_db  # noqa: E402
+
+NOW = "2026-08-07T04:13:00+00:00"
+
+
+def _seed(tmp_path, ledger, transfers=(), spy=()):
+    conn = scorer_db.connect(str(tmp_path / "scorer.db"))
+    scorer_db.ensure_schema(conn)
+    conn.executemany(
+        "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
+        " VALUES (?, ?, 0, '2026-08-06T04:00:00+00:00')",
+        ledger,
+    )
+    conn.executemany(
+        "INSERT INTO transfers (obs_date, amount, recorded_at)"
+        " VALUES (?, ?, '2026-08-06T04:00:00+00:00')",
+        transfers,
+    )
+    conn.executemany("INSERT INTO prices (symbol, price_date, close) VALUES ('SPY', ?, ?)", spy)
+    conn.commit()
+    conn.close()
+
+
+def _section(tmp_path):
+    return data.export_data(str(tmp_path), NOW)["sections"]["equity-curve"]
+
+
+def test_indexes_rebase_and_exclude_deposit(tmp_path):
+    _seed(
+        tmp_path,
+        ledger=[("2026-07-31", 197.0), ("2026-08-04", 303.0), ("2026-08-05", 306.0)],
+        transfers=[("2026-08-04", 100.0)],
+        spy=[("2026-07-31", 630.0), ("2026-08-04", 636.3), ("2026-08-05", 640.0)],
+    )
+    sec = _section(tmp_path)
+    assert "error" not in sec
+    curve = sec["curve"]
+    assert curve[0] == {"date": "2026-07-31", "portfolio": 100.0, "spy": 100.0, "flow": 0.0}
+    # deposit day: portfolio index +3.05%, never +53.8%
+    assert abs(curve[1]["portfolio"] - 103.05) < 0.01
+    assert curve[1]["flow"] == 100.0
+    assert abs(curve[2]["portfolio"] - 103.05 * (306.0 / 303.0)) < 0.02
+    assert abs(curve[2]["spy"] - 100.0 * 640.0 / 630.0) < 0.01
+    s = sec["curve_summary"]
+    assert abs(s["twr"] - (103.05 * 306.0 / 303.0 / 100.0 - 1.0)) < 1e-3
+    assert abs(s["spy"] - (640.0 / 630.0 - 1.0)) < 1e-9
+    assert abs(s["excess"] - (s["twr"] - s["spy"])) < 1e-9
+    assert s["ledger_dates"] == 3
+
+
+def test_weekend_rows_compound_portfolio_but_null_spy(tmp_path):
+    _seed(
+        tmp_path,
+        ledger=[("2026-07-31", 200.0), ("2026-08-01", 201.0), ("2026-08-04", 202.0)],
+        spy=[("2026-07-31", 630.0), ("2026-08-04", 640.0)],
+    )
+    sec = _section(tmp_path)
+    dates = [r["date"] for r in sec["curve"]]
+    assert dates == ["2026-07-31", "2026-08-01", "2026-08-04"]
+    assert sec["curve"][1]["spy"] is None
+    assert abs(sec["curve"][2]["portfolio"] - 101.0) < 0.01  # 202/200 across both legs
+
+
+def test_orphan_transfer_refuses_with_dates(tmp_path):
+    _seed(
+        tmp_path,
+        ledger=[("2026-07-31", 200.0), ("2026-08-04", 202.0)],
+        transfers=[("2026-08-02", 50.0)],
+        spy=[("2026-07-31", 630.0), ("2026-08-04", 640.0)],
+    )
+    sec = _section(tmp_path)
+    assert "cannot chart" in sec["error"] and "2026-08-02" in sec["error"]
+    assert "curve" not in sec
+
+
+def test_thin_ledger_is_empty_not_error(tmp_path):
+    _seed(tmp_path, ledger=[("2026-08-04", 200.0)], spy=[("2026-08-04", 640.0)])
+    sec = _section(tmp_path)
+    assert "empty" in sec and "error" not in sec
+
+
+def test_missing_db_degrades(tmp_path):
+    sec = _section(tmp_path)  # nothing seeded, no scorer.db at all
+    assert "error" in sec

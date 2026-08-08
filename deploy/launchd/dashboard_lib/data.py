@@ -864,6 +864,69 @@ def _trader_scorecard(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     }
 
 
+def _equity_curve(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Portfolio-vs-SPY growth-of-$100 chart data. Reuses the scorecard's own
+    curve/trim/orphan functions (single source of truth) so this chart can
+    never disagree with the plan-004 text report. The anchor row's own leg is
+    excluded (the scorecard's [1:] rule); interior weekend rows compound the
+    portfolio index but export spy=None so the SPY line connects only across
+    actual closes. Orphan transfers refuse with an explicit error body —
+    refuse-to-chart mirrors the scorecard's refuse-to-chain."""
+    orphans = scorer_scorecard.orphan_transfer_dates(conn)
+    if orphans:
+        return {
+            "error": "cannot chart: transfer(s) on "
+            + ", ".join(orphans)
+            + " have no equity observation — backfill the ledger or fix the"
+            " transfer date"
+        }
+    all_rows = scorer_scorecard.equity_curve(conn)
+    rows = scorer_scorecard._trim_to_spy_endpoints(all_rows)
+    chartable = [r for r in rows if r["spy_close"] is not None]
+    if len(chartable) < 2:
+        return {
+            "empty": "needs at least two SPY-measurable ledger dates; the"
+            " nightly harvest adds one per market day"
+        }
+    curve: list[dict[str, Any]] = []
+    port_idx = 100.0
+    spy_idx = 100.0
+    prev_spy_close: float | None = None
+    for i, r in enumerate(rows):
+        if i > 0 and r["port_return"] is not None:
+            port_idx *= 1.0 + r["port_return"]
+        spy_val: float | None = None
+        if r["spy_close"] is not None:
+            if prev_spy_close is not None:
+                spy_idx *= r["spy_close"] / prev_spy_close
+            prev_spy_close = r["spy_close"]
+            spy_val = round(spy_idx, 2)
+        curve.append(
+            {
+                "date": r["obs_date"],
+                "portfolio": round(port_idx, 2),
+                "spy": spy_val,
+                "flow": r["flow"],
+            }
+        )
+    missing = conn.execute(
+        "SELECT COUNT(*) FROM prices p WHERE p.symbol='SPY'"
+        " AND p.price_date > ? AND p.price_date < ?"
+        " AND p.price_date NOT IN (SELECT obs_date FROM equity_ledger)",
+        (rows[0]["obs_date"], rows[-1]["obs_date"]),
+    ).fetchone()[0]
+    return {
+        "curve": curve,
+        "curve_summary": {
+            "twr": port_idx / 100.0 - 1.0,
+            "spy": spy_idx / 100.0 - 1.0,
+            "excess": port_idx / 100.0 - spy_idx / 100.0,
+            "ledger_dates": len(all_rows),
+            "missing_trading_days": missing,
+        },
+    }
+
+
 _CANDIDATE_EFFICACY_COLUMNS: list[dict[str, Any]] = [
     _track_col("screen_version", "Screen version", numeric=False),
     _track_col("branch", "Dislocation door", numeric=False),
@@ -1488,6 +1551,24 @@ SECTION_EXPORTERS: list[
                 "A plain-text report: did filtering the flags help, what"
                 " did execution cost, and how did unrecommended (freelance)"
                 " trades do?",
+            ),
+        ],
+    ),
+    (
+        "equity-curve",
+        "Portfolio vs SPY",
+        "scorer.db",
+        _equity_curve,
+        "Track record",
+        "Your account's time-weighted growth of $100 against SPY's.",
+        [
+            (
+                "How to read it",
+                "Both lines start at $100 on the first charted date."
+                " Deposits and withdrawals are marked but excluded from the"
+                " portfolio line — it moves only when the book's value"
+                " moves, so a gap between the lines is skill (or its"
+                " absence), never a transfer.",
             ),
         ],
     ),
