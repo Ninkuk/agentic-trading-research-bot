@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b" />
+    <title>Agentic Trading Research Bot Dashboard</title>
+    <script>
+      // Pre-paint theme guard: mirror useTheme's resolution (localStorage
+      // "theme": system default + manual override) so the first frame is
+      // already the right scheme — no flash, in either direction.
+      try {
+        var t = localStorage.getItem("theme");
+        var d =
+          t === "dark" ||
+          (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", d);
+        document.documentElement.style.colorScheme = d ? "dark" : "light";
+      } catch (e) {}
+    </script>
+    <script type="module" crossorigin src="./assets/index-Dif5Rsv5.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-2yGUlFha.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
