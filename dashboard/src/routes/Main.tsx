@@ -39,6 +39,7 @@ import { GroupHeat } from "../sections/GroupHeat";
 import { Health } from "../sections/Health";
 import { HumanFilter } from "../sections/HumanFilter";
 import { Pending } from "../sections/Pending";
+import { PortfolioVsSpy } from "../sections/PortfolioVsSpy";
 import { PositionHeat } from "../sections/PositionHeat";
 import { Regime } from "../sections/Regime";
 import { RegimePerformance } from "../sections/RegimePerformance";
@@ -135,6 +136,7 @@ const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> =
   "size-caps": SizeCaps,
   "plan-001-report": SignalRecommendations,
   "plan-004-scorecard": TraderScorecard,
+  "equity-curve": PortfolioVsSpy,
   "candidate-efficacy": CandidateEfficacy,
   health: Health,
 };

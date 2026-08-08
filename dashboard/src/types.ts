@@ -106,12 +106,38 @@ export interface Section {
   error?: string;
   // candidates-only:
   snapshot_date?: string | null;
+  // equity-curve-only:
+  curve?: EquityCurvePoint[];
+  curve_summary?: EquityCurveSummary;
   // research-reopens-only:
   dated?: number;
   events?: number;
   checkpoints?: ReopenCheckpoint[];
   // health-only:
   healthy?: boolean;
+}
+
+// equity-curve-only: one charted date on the growth-of-$100 curve.
+// `portfolio`/`spy` are 2dp-rounded index levels both starting at 100 on the
+// first charted date; `spy` is null on a ledger date with no SPY close (the
+// line connects across it). `flow` is that date's net transfer in dollars —
+// marked on the chart but deliberately absent from the portfolio index.
+export interface EquityCurvePoint {
+  date: string;
+  portfolio: number;
+  spy: number | null;
+  flow: number;
+}
+
+// equity-curve-only: inception-to-date headline numbers. Derived in Python
+// from the UNROUNDED indexes, so read these rather than recomputing them off
+// the rounded `curve` points.
+export interface EquityCurveSummary {
+  twr: number;
+  spy: number;
+  excess: number;
+  ledger_dates: number;
+  missing_trading_days: number;
 }
 
 // research-reopens-only: held-ticker revisit checkpoints (data.py's

@@ -27,6 +27,9 @@ function outcomeOf(sec: Section): Outcome {
   if (sec.error) return "error";
   const hasRows = Array.isArray(sec.rows) && sec.rows.length > 0;
   if (!hasRows && sec.empty !== undefined) return "empty";
+  // "equity-curve" carries its data as `curve`, not `rows` — it renders a
+  // chart, so it lands in the same svg-accepting branch as regime-timeline.
+  if (sec.curve) return "rows";
   if (sec.rows) return "rows";
   if (sec.tiles && sec.tiles.length > 0) return "tiles";
   if (sec.text_lines && sec.text_lines.length > 0) return "text";
@@ -60,8 +63,8 @@ test.each(ids)('section "%s" renders via its registered component without throwi
       break;
     case "rows":
       // Most row-carrying sections render through DataTable (a <table>);
-      // "regime-timeline" is the one exception — its rows drive a chart
-      // (an <svg>), not a table — so accept either.
+      // the chart sections ("regime-timeline" from `rows`, "equity-curve"
+      // from `curve`) draw an <svg> instead — so accept either.
       expect(region?.querySelector("table, svg")).not.toBeNull();
       break;
   }

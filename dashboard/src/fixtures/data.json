@@ -420,6 +420,30 @@
       ],
       "caveat": "Grades the human's own decisions from the journal. Coverage is whatever got journaled, not a random sample of every flag shown."
     },
+    "equity-curve": {
+      "title": "Portfolio vs SPY",
+      "kicker": "Track record",
+      "note": "Your account's time-weighted growth of $100 against SPY's.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Both lines start at $100 on the first charted date. Deposits and withdrawals are marked but excluded from the portfolio line — it moves only when the book's value moves, so a gap between the lines is skill (or its absence), never a transfer."
+        }
+      ],
+      "curve": [
+        { "date": "2026-07-31", "portfolio": 100.0, "spy": 100.0, "flow": 0 },
+        { "date": "2026-08-01", "portfolio": 100.2, "spy": null, "flow": 0 },
+        { "date": "2026-08-04", "portfolio": 103.05, "spy": 101.0, "flow": 100 },
+        { "date": "2026-08-05", "portfolio": 104.07, "spy": 101.59, "flow": 0 }
+      ],
+      "curve_summary": {
+        "twr": 0.0407,
+        "spy": 0.0159,
+        "excess": 0.0248,
+        "ledger_dates": 4,
+        "missing_trading_days": 1
+      }
+    },
     "candidate-efficacy": {
       "title": "Candidates screen edge",
       "kicker": "Track record",
