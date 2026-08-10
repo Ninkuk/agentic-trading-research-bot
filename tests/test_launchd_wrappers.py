@@ -56,9 +56,8 @@ _TOOL = re.compile(r"`((?:get|place|review)_[a-z_]+)`")
 
 def test_headless_slots_allowlist_every_getter_their_skill_calls():
     """A skill gaining a Robinhood getter without its wrapper gaining the
-    matching --allowedTools entry is a silent, deterministic outage: the
-    2026-07-23 option-capture work added get_option_positions/get_option_orders
-    to the skills and the portfolio/journal slots failed every weekday after.
+    matching --allowedTools entry is a silent, deterministic outage: headless,
+    nobody is there to approve the denial, so the slot fails every run.
     Anything the skill names must be granted or explicitly not-granted."""
     for wrapper, skill in _MCP_SLOTS.items():
         allowlist = (LAUNCHD / wrapper).read_text()
@@ -164,21 +163,106 @@ def test_step_start_emits_step_not_start():
 
 
 def test_headless_claude_slots_are_wall_clock_capped():
-    """An uncapped `claude -p` can wedge indefinitely: on 2026-08-04 the
-    journal slot sat 7h11m at 4s of CPU inside a stalled MCP call, holding
-    its launchd slot (launchd will not re-spawn a job while the instance
-    lives) with nothing able to reap it -- dashboard_lib/health.py's hang
-    tier is detection-only by design. Both headless slots must route claude
-    through run_with_timeout, under health.py's 60min HUNG_SLOW_MIN so a
-    wedge dies on its own run instead of colliding with the next one."""
+    """An uncapped `claude -p` can wedge indefinitely, holding its launchd
+    slot (launchd will not re-spawn a job while the instance lives) with
+    nothing able to reap it -- dashboard_lib/health.py's hang tier is
+    detection-only by design. Both headless slots must route claude through
+    run_with_timeout, under health.py's 60min HUNG_SLOW_MIN so a wedge dies
+    on its own run instead of colliding with the next one."""
     for wrapper in ("portfolio_snapshot.sh", "journal_sync.sh"):
         text = (LAUNCHD / wrapper).read_text()
         assert "run_with_timeout" in text, f"{wrapper} runs claude uncapped"
-        secs = re.search(r"run_with_timeout \"\$\{[A-Z_]+:-(\d+)\}\"", text)
+        secs = re.search(r"run_with_timeout(?:_retry)? \"\$\{[A-Z_]+:-(\d+)\}\"", text)
         assert secs, f"{wrapper} has no overridable numeric cap"
         assert 0 < int(secs.group(1)) < 60 * 60, (
             f"{wrapper} cap must stay under dashboard_lib/health.py's 60min hang tier"
         )
+
+
+def test_journal_slot_routes_claude_through_the_retry_variant():
+    """The wedge class is a transient stall inside the headless claude
+    process while the machine around it stays healthy -- an immediate second
+    attempt succeeds. Without the retry, one wedge costs the whole day's
+    sync window."""
+    lines = (LAUNCHD / "journal_sync.sh").read_text().splitlines()
+    assert any("run_with_timeout_retry" in _code_only(ln) for ln in lines), (
+        "journal_sync.sh must route claude through run_with_timeout_retry"
+    )
+
+
+def test_run_with_timeout_retry_reruns_a_wedge_kill_once(tmp_path):
+    """A command killed by the cap (124) gets exactly one more attempt, and
+    the second attempt's status is what the wrapper sees. The first attempt's
+    FAILED: line must survive in the log -- a rescued wedge still has to show
+    in the dashboard's 24h problem scan. The fake wedge `exec`s its sleep so
+    TERM reaches the sleep itself: a forked sleep would be orphaned by the
+    kill and hold the probe's stdout pipe for its full 60s (the same orphan
+    trap run_with_timeout's comment documents)."""
+    flag = tmp_path / "flag"
+    script = tmp_path / "probe.sh"
+    script.write_text(
+        textwrap.dedent(
+            f"""\
+            #!/bin/bash
+            set -uo pipefail
+            source "{LAUNCHD / "env.sh"}"
+            run_with_timeout_retry 1 bash -c 'if [ ! -f "{flag}" ]; then touch "{flag}"; exec sleep 60; fi'
+            echo "status=$?"
+            """
+        )
+    )
+    result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=60)
+
+    assert "status=0" in result.stdout, result.stdout
+    assert result.stderr.count("FAILED:") == 1, result.stderr
+    assert "RETRY:" in result.stderr, result.stderr
+
+
+def test_run_with_timeout_retry_is_bounded_at_one_retry(tmp_path):
+    """Two consecutive wedges mean the stall is environmental, not transient:
+    the slot must return 124 and fail loudly rather than loop toward the
+    60min hang tier."""
+    script = tmp_path / "probe.sh"
+    script.write_text(
+        textwrap.dedent(
+            f"""\
+            #!/bin/bash
+            set -uo pipefail
+            source "{LAUNCHD / "env.sh"}"
+            run_with_timeout_retry 1 sleep 60
+            echo "status=$?"
+            """
+        )
+    )
+    result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=60)
+
+    assert "status=124" in result.stdout, result.stdout
+    assert result.stderr.count("FAILED:") == 2, result.stderr
+    assert result.stderr.count("RETRY:") == 1, result.stderr
+
+
+def test_run_with_timeout_retry_never_retries_a_commands_own_failure(tmp_path):
+    """A non-124 status is the command's real answer (claude exiting 1 on a
+    denied tool, say) -- re-running would double MCP fetches and claude spend
+    on a deterministic failure. Only the watchdog's own 124 may trigger the
+    retry."""
+    script = tmp_path / "probe.sh"
+    script.write_text(
+        textwrap.dedent(
+            f"""\
+            #!/bin/bash
+            set -uo pipefail
+            source "{LAUNCHD / "env.sh"}"
+            run_with_timeout_retry 30 bash -c 'exit 7'
+            echo "status=$?"
+            """
+        )
+    )
+    result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=30)
+
+    assert "status=7" in result.stdout, result.stdout
+    assert "RETRY:" not in result.stderr, result.stderr
+    assert "FAILED:" not in result.stderr, result.stderr
 
 
 def test_run_with_timeout_kills_a_wedged_command_and_reports_it(tmp_path):

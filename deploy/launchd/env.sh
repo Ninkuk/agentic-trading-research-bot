@@ -8,32 +8,18 @@ if [ -f .env ]; then
     set +a
 fi
 
-# Run-duration instrumentation. job_start records t0 and installs an EXIT trap,
-# so the matching end line is emitted on EVERY exit path -- including one taken
-# by `set -e` on a failing command, where a trailing call would never run.
-# Setting the trap inside job_start (not at file scope) guarantees JOB_T0 and
-# JOB_LABEL are already set before the trap can fire, which matters under `set -u`.
+# Run-duration instrumentation. job_start records t0 and installs an EXIT trap
+# so the end line is emitted on every exit path, including `set -e` aborts. The
+# trap is set inside job_start so JOB_T0/JOB_LABEL exist before it can fire.
 job_start() {
     JOB_T0=$(date +%s)
     JOB_LABEL="$*"
     echo "[$(date '+%F %T')] start: $*"
-    # A signal-terminated process sees $? == 0 in its EXIT trap (only `set -e`
-    # aborts and explicit `exit N` preserve the real status there), so a job
-    # terminated by a signal -- e.g. a human `kill` after noticing a hang --
-    # would otherwise log a false "exit 0" at exactly the moment that matters
-    # most. (dashboard_lib/health.py's hang detection is detection-only: it
-    # reports a job running past its budget, it never kills or restarts one.)
-    # Re-raise the conventional 128+N status via a signal trap so it reaches
-    # job_end intact; install the EXIT trap last so it still fires exactly
-    # once, after these have set $? for it to read.
-    #
-    # Bash defers a trapped signal until the current foreground command
-    # finishes, so a manual `kill <bashpid>` sent while a long-running
-    # foreground command (e.g. `uv run python ...`) is executing can appear
-    # to do nothing -- the trap only runs once that command returns control
-    # to this shell. `launchctl kill`, which signals the whole process
-    # group, reaches the foreground command directly and fires the trap
-    # immediately.
+    # An EXIT trap sees $? == 0 for a signal-terminated process, so re-raise
+    # the conventional 128+N via signal traps, installing the EXIT trap last
+    # so it fires exactly once after these have set $?. Bash defers a trapped
+    # signal until the foreground command returns; `launchctl kill` signals
+    # the whole group and fires immediately.
     trap 'exit 130' INT
     trap 'exit 143' TERM
     trap 'exit 129' HUP
@@ -44,57 +30,27 @@ job_end() {
     echo "[$(date '+%F %T')] end: $JOB_LABEL ($(( $(date +%s) - JOB_T0 ))s, exit $1)"
 }
 
-# Per-step marker for scripts that run several sub-steps in one job (e.g. a
-# family/ticker loop, or a step() helper). Bash only has ONE EXIT trap per
-# shell, so calling job_start per step would repeatedly clobber JOB_T0 /
-# JOB_LABEL and leave the final end line reporting just the last step's
-# duration under the last step's name. step_start only echoes a progress
-# line -- it never touches the whole-run timer or the trap.
-#
-# Emits `step:`, NOT `start:` -- deliberately distinct from job_start's line
-# shape. A `start:` line means "a run began"; dashboard_lib/health.py's
-# scan_log counts only those for its "N runs in 24h" headline, and its
-# hang-detector (last_progress) needs to tell "the run started" apart from
-# "the run is still making progress" while still treating both as evidence
-# the job is alive. Before this, step_start emitted `start:` too, so a multi-step
-# wrapper's last_start picked up the CURRENT STEP's timestamp under a "run
-# start" label, silently turning a whole-run budget into a per-step one
-# (cftc_weekly.sh: 3x; preopen_batch.sh: 4x) and inflating the run count by
-# the same factor.
+# Per-step progress marker for multi-step jobs. Bash has ONE EXIT trap per
+# shell, so calling job_start per step would clobber JOB_T0/JOB_LABEL;
+# step_start only echoes. It emits `step:`, never `start:` --
+# dashboard_lib/health.py counts `start:` lines for its run count and
+# whole-run hang budget, so a per-step `start:` silently turns a run budget
+# into a per-step one.
 step_start() {
     echo "[$(date '+%F %T')] step: $*"
 }
 
 # Hard wall-clock cap for ONE foreground command: run_with_timeout <secs> cmd...
-# macOS ships neither timeout(1) nor gtimeout, so this is a plain bash
-# watchdog -- run the command in the background and race a sleeper against it.
-#
-# Why a cap exists at all: on 2026-08-04 the journal slot sat wedged for 7h11m
-# on 4s of CPU (stalled inside a `claude -p` MCP call), holding its launchd
-# slot the whole time. launchd will not re-spawn a job while the instance is
-# alive, and dashboard_lib/health.py's hang tier is DETECTION ONLY by design
-# (see hung_jobs' docstring) -- so nothing in the system could reap it. The
-# cap has to live in the job itself.
-#
-# Keep the cap BELOW dashboard_lib/health.py's HUNG_SLOW_MIN (60min) for
-# these jobs: a wedge should die and fail loudly on its own run rather than
-# survive to collide with tomorrow's.
-#
-# Returns the command's status, or 124 (the conventional timeout status) when
-# the cap fired. The FAILED: line is what dashboard_lib/health.py's
-# BAD_MARKERS match, so a killed run reports as a failure even if it died
-# after writing its rows -- silence here would read as success.
-#
-# Polls with a FOREGROUND `sleep 1` rather than racing a background
-# `( sleep "$limit"; kill ... ) &` sleeper. The sleeper version is the obvious
-# shape and it is wrong: on the NORMAL path the command finishes first, and
-# killing the sleeper subshell orphans the `sleep` still inside it (reparented
-# to init, so it cannot be reaped by PID either). That orphan holds the job's
-# inherited stdout/stderr for the remainder of the cap -- up to 20 minutes of a
-# stray process in the job's group, which is the very "still running" symptom
-# this function exists to remove. Caught by
-# test_run_with_timeout_passes_through_a_fast_commands_own_status, which hung.
-# Here the only other child is a 1s foreground sleep that always completes.
+# macOS ships neither timeout(1) nor gtimeout. The cap lives in the job itself
+# because nothing else can reap a wedge: launchd never re-spawns while the
+# instance is alive, and dashboard_lib/health.py's hang tier is detection-only.
+# Keep the cap BELOW health.py's HUNG_SLOW_MIN (60min) so a wedge dies loudly
+# on its own run instead of colliding with tomorrow's.
+# Returns the command's status, or 124 when the cap fired; the FAILED: line
+# matches health.py's BAD_MARKERS so a killed run reports as a failure.
+# Polls with a FOREGROUND `sleep 1`: a background `( sleep; kill ) &` sleeper,
+# killed on the normal path, orphans its `sleep`, which holds the job's
+# inherited stdout/stderr for the remainder of the cap.
 run_with_timeout() {
     local limit="$1"; shift
     local cmd="$1"
@@ -108,8 +64,8 @@ run_with_timeout() {
         waited=$((waited + 1))
     done
 
-    # A plain variable, not an exit-status guess: a command may legitimately
-    # return 124/143 on its own, so only this loop may claim the cap fired.
+    # Only this loop may claim the cap fired -- the command may legitimately
+    # return 124/143 on its own.
     local timed_out=0
     if kill -0 "$cmd_pid" 2>/dev/null; then
         timed_out=1
@@ -122,14 +78,31 @@ run_with_timeout() {
     local status=0
     wait "$cmd_pid" || status=$?
 
-    # On the killed path bash also prints its own job-control notice for the
-    # reaped command ("... Terminated: 15  \"$@\""). Left alone deliberately:
-    # it carries the PID and signal, and it contains none of
-    # dashboard_lib/health.py's BAD_MARKERS, so it cannot be misread as an
-    # additional failure.
+    # Bash's job-control notice for the reaped command ("Terminated: 15 ...")
+    # is left alone: it carries the PID and signal and matches no BAD_MARKERS.
     if [ "$timed_out" -eq 1 ]; then
         echo "[$(date '+%F %T')] FAILED: $cmd exceeded ${limit}s — killed" >&2
         status=124
     fi
     return "$status"
+}
+
+# run_with_timeout plus exactly ONE retry when the cap fired (124). The wedge
+# class this targets is a transient stall inside the headless claude process
+# while the machine around it stays healthy, so an immediate second attempt
+# succeeds. Bounded at one: a second consecutive wedge is environmental and
+# must fail loudly, not loop toward health.py's 60min hang tier. A non-124
+# status is the command's own answer and is never retried -- that would double
+# MCP fetches and claude spend on a deterministic failure. The first attempt's
+# FAILED: line stays in the log so a rescued wedge still surfaces in the
+# dashboard's problem scan; RETRY: is deliberately not in BAD_MARKERS.
+run_with_timeout_retry() {
+    local limit="$1"
+    run_with_timeout "$@"
+    local status=$?
+    if [ "$status" -ne 124 ]; then
+        return "$status"
+    fi
+    echo "[$(date '+%F %T')] RETRY: wedge killed at ${limit}s — one bounded retry" >&2
+    run_with_timeout "$@"
 }
