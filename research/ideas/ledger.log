@@ -126,3 +126,27 @@
 2026-08-06 sres2R8etKA democracy-discrete-vs-continuous-risk DEAD gate=1:provenance
 2026-08-06 sres2R8etKA climate-not-yet-country-risk DEAD gate=7:priority
 2026-08-06 sres2R8etKA country-life-cycle-narrative-weight DEAD gate=7:priority
+2026-08-06 mTGJz2AUaeY downside-total-risk-correlation DEAD gate=1:provenance
+2026-08-06 mTGJz2AUaeY pct-return-standardization DEAD gate=2:duplication
+2026-08-06 mTGJz2AUaeY semideviation-downside-measure DEAD gate=7:priority
+2026-08-06 mTGJz2AUaeY earnings-variance-risk DEFERRED gate=7:priority reopen=signal_outcomes.distinct_composite_date@matured>=100
+2026-08-06 mTGJz2AUaeY marginal-portfolio-risk DEAD gate=7:priority
+2026-08-06 mTGJz2AUaeY risk-adjusted-self-audit DEAD gate=2:duplication
+2026-08-06 mTGJz2AUaeY quarterly-frequency-handicap DEAD gate=2:duplication
+2026-08-06 X8rLxfoZ4JU duration-interest-rate-sensitivity DEAD gate=7:priority
+2026-08-06 X8rLxfoZ4JU bond-downside-only-risk DEAD gate=7:priority
+2026-08-06 X8rLxfoZ4JU default-risk-drivers DEAD gate=1:provenance
+2026-08-06 X8rLxfoZ4JU ratings-track-spreads DEAD gate=7:priority
+2026-08-06 X8rLxfoZ4JU spreads-time-varying DEAD gate=2:duplication
+2026-08-06 X8rLxfoZ4JU synthetic-rating-from-coverage DEAD gate=7:priority
+2026-08-06 X8rLxfoZ4JU cds-market-default-spread DEAD gate=3:source
+2026-08-06 nc6EKMUFPcc historical-erp-standard-error DEAD gate=2:duplication
+2026-08-06 nc6EKMUFPcc implied-erp-forward-looking DEAD gate=2:duplication
+2026-08-06 nc6EKMUFPcc beta-not-total-risk DEAD gate=7:priority
+2026-08-06 nc6EKMUFPcc beta-is-estimate-with-se DEAD gate=7:priority
+2026-08-06 nc6EKMUFPcc fama-french-size-value DEFERRED gate=7:priority reopen=signal_outcomes.distinct_composite_date@matured>=100
+2026-08-06 nc6EKMUFPcc factor-zoo-data-mining DEAD gate=2:duplication
+2026-08-06 nc6EKMUFPcc accounting-beta DEAD gate=6:statistics
+2026-08-06 nc6EKMUFPcc sector-implied-cost-of-equity DEAD gate=7:priority
+2026-08-06 nc6EKMUFPcc dividends-as-certainty-equivalent DEAD gate=7:priority
+2026-08-06 nc6EKMUFPcc earnings-variability-risk DEFERRED gate=7:priority reopen=signal_outcomes.distinct_composite_date@matured>=100
