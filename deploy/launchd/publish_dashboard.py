@@ -154,8 +154,8 @@ def publish(
             stage(dist_dir, data_path.read_text(encoding="utf-8"), dest)
             _git(run, dest, "init", "-q", "-b", BRANCH)
             _git(run, dest, "add", "-A")
-            # --no-gpg-sign is mandatory: see the module docstring in the plan and
-            # test_publish_commit_disables_gpg_signing. Without it this hangs forever.
+            # --no-gpg-sign is mandatory: a signing config that prompts pinentry
+            # hangs a headless run forever (test_publish_commit_disables_gpg_signing).
             _git(run, dest, "commit", "-q", "--no-gpg-sign", "-m", f"dashboard {today}")
             _git(
                 run,

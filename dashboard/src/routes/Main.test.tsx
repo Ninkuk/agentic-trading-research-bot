@@ -76,13 +76,13 @@ test("a section with an error shows the unavailable note instead of crashing", (
 
 test("scorecard symbols link to the ticker route", () => {
   render(<Main doc={doc} />);
-  // The masthead search box was removed 2026-07-30 — symbol links are the
+  // There is deliberately no masthead search box — symbol links are the
   // way into the drill-down.
   expect(screen.getByRole("link", { name: "AAPL" })).toHaveAttribute("href", "#/ticker/AAPL");
 });
 
 test("an unregistered section id falls back to the generic DataTable renderer", () => {
-  // Task 14 registered a dedicated component for every real section id, so
+  // Every real section id has a dedicated registered component, so
   // this constructs a synthetic id no registry entry can ever claim — it
   // must still render its columns and rows via GenericSection, not go blank.
   const withUnregistered: DashboardDoc = {

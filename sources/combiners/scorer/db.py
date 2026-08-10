@@ -34,7 +34,7 @@ WILSON_Z = 1.96  # 95% score interval on hit_rate
 # The floor applies THREE times: benchmarked rows, distinct composite
 # dates, AND non-overlapping blocks. Same-day rows are one cross-sectional
 # episode, not independent draws — si_spike carried n_bench=2,599 over 8
-# distinct dates and wore the badge (measured 2026-07-27). Distinct dates
+# distinct dates and wore the badge (measured live). Distinct dates
 # are not independent either: consecutive sessions share 4/5 of a 5-day
 # forward window, so 30 nightly runs are ~5 independent observations, not
 # 30. The binomial CI assumes independence; the nearest unit to an
@@ -265,7 +265,7 @@ CREATE TABLE IF NOT EXISTS journal_runs (
 );
 
 -- Research-verdict ledger: the research-ticker skill's own graded filter
--- (skill analog of the decision journal; see the 2026-07-22 spec). One row
+-- (skill analog of the decision journal). One row
 -- per (symbol, verdict_date) — the idempotency key; INSERT OR IGNORE makes
 -- re-ingest a counted duplicate. verdict_date is a Phoenix calendar date
 -- (bare YYYY-MM-DD, clock invariant). doc names the research/<T>-<D>.md
@@ -284,10 +284,8 @@ CREATE TABLE IF NOT EXISTS research_verdicts (
 
 -- Withdrawing a verdict recorded on a defective analysis. INSERT OR IGNORE
 -- above makes re-ingest a counted duplicate, which is the right default -- but
--- it also meant a wrong call could never be withdrawn and graded forever.
--- Found 2026-07-26 on PEGA: logged `buy`, then the analysis was found to have
--- missed a $2.04B trade-secret retrial (46% of market cap, dated 2027-01-11,
--- disclosed in a 10-Q filed five days before the run).
+-- alone it would mean a wrong call could never be withdrawn, grading a known
+-- defect forever.
 --
 -- A verdict carrying `corrects: "<reason>"` UPDATEs the row and books the
 -- prior value here. The original is preserved deliberately: v_research_filter
@@ -488,7 +486,7 @@ LEFT JOIN b ON b.bucket = g.bucket AND b.horizon = g.horizon;
 -- against a benchmark, and this universe least of all: every composite name is
 -- a microcap and the index rallied through the whole graded window, so a
 -- randomly chosen scored ticker beat SPY only 40.3% of the time at 10 days
--- (measured 2026-07-27). A hit_rate read against 0.5 was wrong in BOTH
+-- (measured live). A hit_rate read against 0.5 was wrong in BOTH
 -- directions at once -- see the note on v_signal_recommendation.
 --
 -- Population is ticker_outcomes (one row per snapshot x symbol), NOT
@@ -549,7 +547,7 @@ WITH RECURSIVE chain AS (
     -- (mature() guarantees exit > entry) but is the cycle guard: a
     -- degenerate row with entry >= exit would otherwise re-select itself
     -- forever — UNION ALL has no cycle detection (verified: infinite
-    -- recursion without this predicate, 2026-07-28).
+    -- recursion without this predicate).
     SELECT nx.signal_id, nx.via_crosswalk, nx.horizon, nx.composite_date, nx.exit_date
     FROM chain c JOIN v_signal_efficacy_by_date nx
       ON nx.signal_id = c.signal_id AND nx.via_crosswalk = c.via_crosswalk
@@ -598,7 +596,7 @@ g AS (
 ),
 -- Date-grain (cluster-mean) graded statistics: each DATE weighs equally,
 -- matching the block count the CI's n uses. Row-pooling let one heavy
--- cross-section drag the center (measured live 2026-07-28: si_spike 5d
+-- cross-section drag the center (measured live: si_spike 5d
 -- pooled 0.556 vs 0.537 by date — one date carried 26% of the rows), a
 -- bias that never shrinks as blocks accumulate. null_rate gets the same
 -- weighting so edge and the recommendation comparison stay coherent.
@@ -645,7 +643,7 @@ LEFT JOIN b ON b.signal_id = g.signal_id
 -- The comparison is against v_signal_efficacy.null_rate, NOT 0.5. Graded
 -- against a coin flip this view was wrong in both directions at once: it
 -- labelled si_spike `keep` on a +1.5pp edge and si_days_to_cover
--- `anti-signal` on a +1.1pp one (measured 2026-07-27). A NULL null_rate
+-- `anti-signal` on a +1.1pp one (measured live). A NULL null_rate
 -- (empty ticker_outcomes) makes both comparisons NULL, so the row falls
 -- through to 'watch' rather than being judged against a guess.
 -- reliable is re-derived from n_bench, n_dates and n_blocks here rather
@@ -1315,8 +1313,8 @@ def register_candidates(conn, horizons, benchmark, max_age_days, gap_days) -> in
 # Maturation: the Nth distinct ledger date after entry, per symbol.
 # NOTE: SQLite rejects a correlated OFFSET ("LIMIT 1 OFFSET t.horizon - 1"
 # fails with "no such column"), so the Nth date is selected via a
-# COUNT-correlated WHERE instead (adversarial-review F1, verified).
-# The julianday bound (F2) refuses to mature across a ledger gap wider
+# COUNT-correlated WHERE instead.
+# The julianday bound refuses to mature across a ledger gap wider
 # than the horizon could plausibly span (~2 calendar days per trading day
 # + a holiday week) — a gapped row stays pending and visible forever
 # rather than silently grading the wrong window into the permanent record.

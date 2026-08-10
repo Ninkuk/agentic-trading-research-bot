@@ -28,7 +28,7 @@ SCORER_DB = "scorer.db"
 BENCHMARK_SERIES = "SP500"  # default (market-grain) spine; unrevised index closes
 
 # Asset-class proxy benchmarks copied from scorer.db's permanent price ledger,
-# backfilled to full history by `main.py pricehistory` (plan 005). v_pit_market
+# backfilled to full history by `main.py pricehistory`. v_pit_market
 # anchors each signal's as-of value onto THIS spine, so n_days is bounded by the
 # benchmark's close count -- which is why a 3-row XLE spine graded 3 days.
 #
@@ -76,9 +76,9 @@ REPLAY_SIGNALS: list[dict[str, Any]] = [
 ]
 
 # Non-vintage market signals: unrevised series with no ALFRED vintage trail.
-# Their point-in-time read is "latest observation on or before D" (the
-# with-caveat class from the spike — a repost of an old date would overwrite
-# silently, accepted). NOT all are same-day-published: see publication_lag_days. Each copies its
+# Their point-in-time read is "latest observation on or before D" (accepted
+# caveat: a repost of an old date would overwrite silently). NOT all are
+# same-day-published: see publication_lag_days. Each copies its
 # raw score-input columns into market_obs.val1/val2, and the replay aliases
 # those back to the column names the imported composite CASE expects, so the
 # SAME flag is replayed. All graded against the shared SP500 spine.

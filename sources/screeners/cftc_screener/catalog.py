@@ -11,9 +11,8 @@ class Market:
     asset_class: str  # equity_index|rates|fx|metals|energy|ags|softs
 
 
-# Curated COT reader. Codes verified live against the Socrata API on
-# 2026-07-03; any that return no rows at implementation time are dropped or
-# corrected here (see Task 1 Step 4).
+# Curated COT reader. Codes are verified live against the Socrata API; any
+# that return no rows at implementation time are dropped or corrected here.
 CATALOG: list[Market] = [
     # equity_index
     Market("13874A", "E-Mini S&P 500", "equity_index"),

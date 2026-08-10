@@ -29,8 +29,7 @@ FRED_HY_SPREAD_SCORE = (
 # cycle (a rate unmoved for a year is neutral policy). Dead zones are
 # STRUCTURAL, not return-fitted: policy moves are quantized at 25bp, so
 # half an increment (0.125) clears every real move while the measured
-# 1-3bp month-end window-dressing jitter — the noise that killed the
-# 1-day view in the salvage — never fires it. Known residual: FUNDING
+# 1-3bp month-end window-dressing jitter never fires it. Known residual: FUNDING
 # STRESS can clear the dead zone without a policy move — the Sept 2019
 # repo squeeze pushed chg20 to +13/+18bp, a bearish "hiking" read the day
 # before an actual cut (~9 of ~2,525 replay days; bounded, and the
@@ -85,7 +84,7 @@ EIA_NATGAS_CHANGE_SCORE = (
 # constants above) because two consumers must not drift apart: this catalog's
 # stocks_rsi signal and the `candidates` reporter in this same package.
 #
-# Three candidate keys were measured against data/stocks.db on 2026-07-26 and
+# Three candidate keys were measured against live data/stocks.db and
 # only the third survives:
 #   isPrimaryListing='1'  -- would drop 11 of stocks_rsi's 117 rows, but TEN of
 #                            those are single-listing names with no duplicate to
@@ -115,7 +114,7 @@ STOCKS_COMPANY_KEY = """
 # DELIBERATELY NOT BY SIGNAL SEVERITY. When two classes both clear a signal's
 # bar, this keeps the better-price-discovery line, not the more extreme reading
 # — a thin class's extreme is more likely noise than information. The cost is
-# bounded by the data: of 11 companies with two liquid classes on 2026-07-26,
+# bounded by the data: of 11 companies measured with two liquid classes,
 # ONE had both at an RSI extreme (UHAL 72.2 / UHAL.B 70.7 — same sign, same
 # score bucket), none had opposite-signed extremes, and the largest RSI spread
 # between any company's classes was 2.0 points, since both track one business.
@@ -452,7 +451,7 @@ SIGNALS: list[dict[str, Any]] = [
         # Crowded shorts = squeeze fuel (contrarian bullish). The source
         # view pre-filters days_to_cover >= 5 / ADV >= 100k, but at >= 5
         # this blankets ~1,600 tickers and skews the whole composite
-        # bullish (measured 2026-07-06); score only genuine extremes.
+        # bullish (measured live); score only genuine extremes.
         # FAMILY OVERLAP: this and ftd_persistent both read squeeze fuel —
         # a flag driven by only these two is one phenomenon double-counted.
         "signal_id": "si_days_to_cover",
@@ -471,7 +470,7 @@ SIGNALS: list[dict[str, Any]] = [
         # NEW shorting pressure (vs own 6-period base) reads as informed
         # bears arriving: bearish. Distinct from the level read above.
         # A >= 1.5 floor emits 1,135 rows (52% of all signal
-        # rows) and skewed the composite bearish (measured 2026-07-06);
+        # rows) and skewed the composite bearish (measured live);
         # >= 2.5 = 443 rows, >= 8.0 = 82 -- matching si_days_to_cover's scale.
         "signal_id": "si_spike",
         "db": "short_interest.db",
@@ -548,10 +547,10 @@ SIGNALS: list[dict[str, Any]] = [
     },
     {
         # Mean-reversion read on RSI extremes, liquid names only, ONE row per
-        # company: UHAL and UHAL.B are one business and both cleared the
-        # liquidity floor on 2026-07-26, so composite was forming two
-        # independent opinions about it. See STOCKS_COMPANY_KEY for why the key
-        # is the US CUSIP issuer number and not isPrimaryListing or cik.
+        # company: two share classes of one business (UHAL/UHAL.B) would
+        # otherwise form two independent opinions about it. See
+        # STOCKS_COMPANY_KEY for why the key is the US CUSIP issuer number and
+        # not isPrimaryListing or cik.
         "signal_id": "stocks_rsi",
         "db": "stocks.db",
         "grain": "ticker",
@@ -583,7 +582,7 @@ SIGNALS: list[dict[str, Any]] = [
         # Piotroski F-Score (0-9): the business-quality TREND read composite
         # otherwise lacks entirely. Every other ticker signal here is
         # microstructure, which is why the universe is empirically a microcap
-        # dislocation scanner (measured 2026-07-26: si_spike fired on 527
+        # dislocation scanner (measured live: si_spike fired on 527
         # tickers, 10 of them above $2B) and why the research gate correctly
         # rejects nearly everything it flags.
         #
@@ -591,11 +590,11 @@ SIGNALS: list[dict[str, Any]] = [
         # deferred from voting exactly as options_iv30/options_pcr were. Two
         # reasons it must not vote yet: (1) no forward-return evidence for a
         # fundamental signal exists in scorer.db, and every ticker-grain number
-        # there currently comes from ONE overlapping market episode (all matured
-        # 10-day rows originate 2026-07-06..08); (2) modelling quality as
+        # there currently comes from ONE overlapping market episode (the matured
+        # 10-day rows all originate in one three-day span); (2) modelling quality as
         # several separate votes double-counts one factor. Spearman over THIS
         # signal's own universe (cap >= $2B, $10M+ volume, all three fields
-        # present; n=1587, 2026-07-26): roic x fcfYield +0.414, roic x sharesYoY
+        # present; n=1587): roic x fcfYield +0.414, roic x sharesYoY
         # -0.392, fcfYield x sharesYoY -0.461. Promote to a scored signal only
         # after a measured calibration pass over non-overlapping windows.
         "signal_id": "sa_fscore",

@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS size_caps (
     -- The research-ticker skill's most recent buy/pass call on this name, or
     -- NULL if never researched. A cap for a name research REJECTED is the
     -- most misleading line in the dashboard's advisor section (measured
-    -- 2026-07-26: all three capped names -- BBAI, CRML, EOSE -- had `pass`
+    -- live: all three capped names -- BBAI, CRML, EOSE -- had `pass`
     -- writeups). The row is annotated rather than suppressed: a pass is an
     -- opinion, not a prohibition, and the human may disagree.
     research_verdict     TEXT CHECK (research_verdict IN ('buy', 'pass')),

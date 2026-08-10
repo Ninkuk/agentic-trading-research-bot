@@ -8,8 +8,8 @@ class Series:
     theme: str  # growth|inflation|rates|labor|credit|housing|sentiment|benchmark
 
 
-# Curated macro/regime reader. Ids verified live against the FRED API on
-# 2026-07-02; any that 404 at implementation time should be dropped here.
+# Curated macro/regime reader. Ids are verified live against the FRED API;
+# any that 404 at implementation time should be dropped here.
 CATALOG: list[Series] = [
     # growth
     Series("GDPC1", "growth"),

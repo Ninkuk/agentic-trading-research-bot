@@ -5,7 +5,7 @@ it never writes back into anything it reads."""
 from sources.combiners.composite.catalog import CROSSWALK
 
 # Fraction of account equity a single position may put at risk per one-ATR
-# adverse day (user-chosen default, 2026-07-07). Caps invert this:
+# adverse day (user-chosen default). Caps invert this:
 # cap_shares = floor(max(0, RISK_BUDGET*equity - existing_group_heat) / ATR).
 RISK_BUDGET = 0.01
 
@@ -13,7 +13,7 @@ RISK_BUDGET = 0.01
 # (5 covers a weekend plus a holiday).
 ATR_MAX_AGE_DAYS = 5
 
-# --- exit advice (plan 003) -------------------------------------------------
+# --- exit advice ------------------------------------------------------------
 # ATR multiple for the suggested stop. 2x ATR is the common swing default and
 # is coherent with RISK_BUDGET: a cap-sized entry stopped at 2 ATR risks about
 # twice the one-ATR budget, which is the intended worst case for a gap-free

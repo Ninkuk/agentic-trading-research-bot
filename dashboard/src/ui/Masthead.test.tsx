@@ -12,7 +12,7 @@ test("omits the snapshot line when snapshotNumber is null", () => {
   expect(screen.queryByText(/^#/)).not.toBeInTheDocument();
 });
 
-test("carries no ticker search box (removed 2026-07-30)", () => {
+test("deliberately carries no ticker search box", () => {
   render(<Masthead editionDate="July 28, 2026" snapshotNumber={1} />);
   expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
 });

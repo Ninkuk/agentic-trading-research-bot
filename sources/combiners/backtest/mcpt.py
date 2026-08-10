@@ -14,7 +14,7 @@ and the SAME n as the real data.
 The per-cell statistic is EXCESS — the cell's hit rate minus that same
 dataset's own drift baseline (the view's `excess` on the real side; hit
 rate minus that permutation's own p_up/p_down on the permuted side) —
-NOT the raw hit rate the proposal sketched. Measured live (2026-07-28),
+NOT the raw hit rate. Measured live,
 raw hit rates lit broad-coverage cells up at p = 0.001 on +0.3pp excess:
 a cell flagging half of all days inherits its hit rate from the spine,
 and the real market's ORDERING (clustered runs the shuffle destroys)
@@ -45,7 +45,7 @@ it. Read a large family p as "the max is unremarkable", never as "no
 cell survives correction". Westfall-Young studentization is the recorded
 follow-up alongside the block-shuffle variant below.
 
-Caveat that survives (from the proposal): a whole-series shuffle destroys
+Caveat: a whole-series shuffle destroys
 autocorrelation and volatility clustering, so cells whose flags key on
 vol regimes (cboe_vix, cboe_vix_backwardation) get an optimistically
 biased null — failing even this null is death; passing it is a lead, not

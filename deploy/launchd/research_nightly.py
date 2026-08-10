@@ -72,13 +72,11 @@ def select_candidates(
 
 # Read-only envelope for the headless run. NEVER add order tools here
 # (place_*, cancel_*, review_*) — expanding this list is a deliberate,
-# reviewed act (see the phase ladder in the spec). Bash is enumerated per
-# entrypoint, never a catch-all (`uv run python *` would allow `python -c`,
-# i.e. arbitrary code — the allowlist is the write-scope guarantee): the
-# four entries below are the only Bash entrypoints the research-ticker skill
-# uses. The journal entrypoint is the loop's ONE intended DB write — the
-# skill's mandatory verdict-logging step appends decision rows to
-# data/scorer.db.
+# reviewed act. Bash is enumerated per entrypoint, never a catch-all
+# (`uv run python *` would allow `python -c`, i.e. arbitrary code — the
+# allowlist is the write-scope guarantee). The journal entrypoint is the
+# loop's ONE intended DB write: the skill's mandatory verdict-logging step
+# appends decision rows to data/scorer.db.
 ALLOWED_TOOLS = ",".join(
     [
         "Skill",  # loads /research-ticker itself; must be explicit under mode=default

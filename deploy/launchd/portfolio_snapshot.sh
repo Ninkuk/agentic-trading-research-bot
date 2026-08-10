@@ -8,28 +8,20 @@ set -uo pipefail
 source "$(dirname "$0")/env.sh"
 
 job_start "portfolio snapshot"
-# NOT haiku: it improvises tools outside --allowedTools (reaching for Edit or a
-# Bash heredoc where the allowlist grants Write) and then reports the MCP
-# connector as unauthenticated rather than retrying. Verified 2026-07-08 --
-# haiku failed this slot 3/3 while sonnet ran it clean. The allowlist is the
-# write-scope guarantee: never widen `Write`/`Bash`/`Edit` to work around a
-# model improvising — fix the model. Read-only Robinhood getters are a
-# different axis and DO get added as the skill grows to call them; a skill
-# calling a getter the wrapper omits is a silent weekday outage, which is why
-# test_launchd_wrappers.py asserts the two sets agree.
-# get_equity_quotes is granted for that reason, but note the trigger: the
-# UPSTREAM tool changed, not the skill. get_equity_positions stopped
-# returning market_value and its guide now redirects to get_equity_quotes,
-# so market value is derived (price x quantity) and the slot failed
-# 2026-08-03/04 on the denial. No offline test can catch a vendor contract
-# change -- the allowlist test only fires once the skill names the getter.
+# NOT haiku: it improvises tools outside --allowedTools and then reports the
+# MCP connector as unauthenticated rather than retrying. The allowlist is the
+# write-scope guarantee -- never widen Write/Bash/Edit to work around a model
+# improvising; fix the model. Read-only Robinhood getters are a different
+# axis and DO grow with the skill (test_launchd_wrappers.py asserts the two
+# sets agree). get_equity_quotes is granted because get_equity_positions no
+# longer returns market_value, so the skill derives it (price x quantity) --
+# a vendor contract change no offline test can catch.
 # --permission-mode default is load-bearing: a global defaultMode=auto in
 # ~/.claude/settings.json AUTO-APPROVES tools outside --allowedTools in
-# headless runs (proven 2026-07-22 by a research-nightly session committing
-# an unreviewed file). Pinning the mode makes this allowlist a real envelope;
+# headless runs. Pinning the mode makes this allowlist a real envelope;
 # Skill (loads /account-positions) and TodoWrite become explicit for that reason.
-# 20min cap vs. a ~30-80s normal run: ~15x headroom, and safely under
-# dashboard_lib/health.py's 60min hang tier so a wedge dies on its own run.
+# 20min cap vs. a ~30-80s normal run, safely under dashboard_lib/health.py's
+# 60min hang tier so a wedge dies on its own run.
 run_with_timeout "${PORTFOLIO_TIMEOUT_SECS:-1200}" \
 claude -p "/account-positions" \
     --model sonnet \

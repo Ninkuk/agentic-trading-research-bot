@@ -1,9 +1,7 @@
 """Shared fixtures for the dashboard test suite.
 
-The populated-fixture web below originated as a VERBATIM copy of the legacy
-HTML generator's own module-local fixtures (`tests/test_dashboard.py`,
-deleted in Task 17) so `tests/test_dashboard_data.py` (Task 3) and later
-dashboard test modules (Tasks 5, 9, ...) can `from conftest import ...` one
+The populated-fixture web below exists so `tests/test_dashboard_data.py`
+and the other dashboard test modules can `from conftest import ...` one
 source of truth instead of re-diverging copies. Fixtures build real
 per-combiner/screener schemas via each source's own `ensure_schema` (never
 hand-rolled DDL) — a combiner view's shape change breaks loudly here instead

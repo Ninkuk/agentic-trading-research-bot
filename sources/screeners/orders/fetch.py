@@ -60,9 +60,9 @@ def _require(doc: dict, key: str, ctx: str):
 
 def _number(value, ctx: str) -> float:
     """Accept a number OR a numeric string: the Robinhood MCP returns every
-    price as a decimal string ('737.250000', '200.4000') — verified live
-    2026-07-27 — and the transcribing session must copy values verbatim, so
-    the deterministic layer owns the conversion."""
+    price as a decimal string ('737.250000', '200.4000') and the transcribing
+    session must copy values verbatim, so the deterministic layer owns the
+    conversion."""
     if isinstance(value, str):
         try:
             return float(value)

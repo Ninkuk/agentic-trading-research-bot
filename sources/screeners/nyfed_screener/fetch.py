@@ -9,7 +9,7 @@ import sources.common.http_client as http_client
 
 API_BASE = "https://markets.newyorkfed.org/api"
 # The search.json endpoints return an EMPTY list when startDate is absent
-# (live-verified 2026-07), so every fetch sends one; this floor predates all
+# (live-verified), so every fetch sends one; this floor predates all
 # published series (rates/repo begin 2000-07, SOMA 2003-07) = full history.
 FULL_HISTORY_START = "2000-01-01"
 _UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}

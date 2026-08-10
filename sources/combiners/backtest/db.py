@@ -2,7 +2,7 @@
 
 Data tables are upsert-keyed history copied out of fred.db (never
 snapshot-scoped); prune deletes old snapshot headers ONLY. The product is
-the views (Tasks 5-6 of the plan; see the design spec): what flag
+the views: what flag
 composite WOULD have emitted on each historical date using only data
 knowable that day, and how the benchmark moved afterward. Manual analysis
 tool — deliberately unscheduled."""
@@ -347,8 +347,8 @@ GROUP BY d.benchmark, h.horizon;
 -- ABOVE the benchmark's own drift; `anti_signal` when it sits entirely BELOW
 -- (significantly wrong — the flag predicts the opposite of what follows).
 -- One two-sided "baseline outside the CI" bit conflated the two, and
--- cboe_vix bearish 21d wore beats_baseline=1 on -8.9pp excess (live data,
--- 2026-07-27) — a significantly anti-predictive cell read as a win.
+-- cboe_vix bearish 21d wore beats_baseline=1 on -8.9pp excess (live data)
+-- — a significantly anti-predictive cell read as a win.
 --
 -- Both flags are NOMINAL and UNCORRECTED — and the Wilson interval behind
 -- them counts overlapping forward windows as independent, so it is too
@@ -358,7 +358,7 @@ GROUP BY d.benchmark, h.horizon;
 -- real data (p near 1 = significantly wrong, the anti_signal mirror), and
 -- the family row in replay_null ('*','*',0) is the one
 -- corrected-for-multiplicity number for the whole scoreboard. Measured
--- 2026-07-09 (pre-perm): 11 rows flagged, of which only ~7 survived a
+-- live, only ~7 of 11 nominally flagged rows survived a
 -- Bonferroni-corrected two-proportion test. The scorer's own
 -- v_signal_efficacy carries the same caveat in its docstring; this is the
 -- replay's version of it.

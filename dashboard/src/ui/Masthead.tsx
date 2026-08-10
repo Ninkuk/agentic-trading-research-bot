@@ -1,5 +1,5 @@
 // The page header: publication name, edition date + snapshot number, and
-// the theme toggle. (The global ticker search box was removed 2026-07-30 —
+// the theme toggle. (Deliberately no global ticker search box —
 // per-ticker navigation happens through scorecard symbol links and the
 // per-table filters.)
 

@@ -3,7 +3,7 @@
 Reads the monthly report's XML rendering from /oce/commodity/wasde/ — the tidy
 `oce-wasde-report-data-*.csv` this module originally used now connection-resets
 at the edge for non-browser clients (the whole /sites/default/files/documents/
-tree; verified 2026-07), while the XML path serves fine. Only the CURRENT
+tree; verified live), while the XML path serves fine. Only the CURRENT
 release is hosted (prior months 404, the next month's pre-staged link 302s to
 an apology page) and its filename carries an unpredictable revision suffix
 (e.g. wasde0626v2.xml), so the fetch discovers the live link from the report

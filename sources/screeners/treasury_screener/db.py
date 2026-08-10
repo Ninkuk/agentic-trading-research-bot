@@ -79,7 +79,7 @@ INSERT OR IGNORE INTO calendar_now (id, today) VALUES (0, '');
 
 
 def ensure_schema(conn) -> None:
-    """Create all Treasury tables (+ views from Task 4). Idempotent.
+    """Create all Treasury tables + views. Idempotent.
     Drops v_upcoming_auctions before recreating to migrate off date('now'),
     and v_tga_trend to migrate off the pre-2022 close_balance-only body."""
     conn.execute("DROP VIEW IF EXISTS v_upcoming_auctions")

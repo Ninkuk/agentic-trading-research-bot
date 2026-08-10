@@ -5,7 +5,7 @@ A normal run never calls this — the seed in catalog.py is the source of truth.
 rows parse, we RAISE: a silently-empty holiday set would tell the bot the market
 is open every day, which is dangerous.
 
-Live-verified 2026-07-06 against both pages:
+Live-verified against both pages:
   * NYSE serves ONE <table>: header <th>Holiday</th><th>2026</th><th>2027</th>...
     sets the year per column; each body row is <th>name</th> plus one year-less
     date cell per year ("Thursday, January 1", possibly with footnote stars or

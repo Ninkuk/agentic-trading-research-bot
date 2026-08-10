@@ -12,9 +12,9 @@ class Release:
     release_time: str  # 'HH:MM' ET known time; sole source of events.event_time
 
 
-# Curated high/med-impact U.S. macro releases. Every release_id was live-verified
-# against the FRED /release/dates endpoint on 2026-07-03 (each returns a real
-# forward calendar). Most U.S. macro data prints at 08:30 ET (BLS/BEA/Census);
+# Curated high/med-impact U.S. macro releases. Every release_id is live-verified
+# against the FRED /release/dates endpoint (each returns a real forward
+# calendar). Most U.S. macro data prints at 08:30 ET (BLS/BEA/Census);
 # JOLTS is the exception at 10:00 ET.
 CATALOG: list[Release] = [
     Release(10, "cpi_release", "Consumer Price Index", "high", "inflation", "08:30"),

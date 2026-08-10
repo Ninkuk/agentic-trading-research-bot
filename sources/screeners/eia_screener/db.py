@@ -39,7 +39,7 @@ CREATE INDEX IF NOT EXISTS ix_eia_obs_period ON eia_obs(period);
 
 
 def ensure_schema(conn) -> None:
-    """Create tables + indexes (+ views from Task 4). Idempotent."""
+    """Create tables + indexes + views. Idempotent."""
     conn.executescript(_SCHEMA + _VIEWS)
     conn.commit()
 

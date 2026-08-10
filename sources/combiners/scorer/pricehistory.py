@@ -1,12 +1,12 @@
 """One-shot historical backfill of the permanent price ledger's benchmark
-proxies (plan 005). Manual, never scheduled — the nightly scorer run keeps the
+proxies. Manual, never scheduled — the nightly scorer run keeps the
 ledger current; this only gives its 18 crosswalk proxies deep history so the
 backtest combiner can grade asset-class signals against a real spine.
 
 The ledger's forward feeder (scorer.fetch.harvest_prices) stores the settled
 close for a session. This module writes the same quantity from stockanalysis's
 history API, and rows are reconciled by insert_prices' INSERT OR IGNORE:
-existing forward rows always win. Verified 2026-07-09 that the two agree on
+existing forward rows always win. Verified live that the two agree on
 every overlapping (symbol, date) — 54/54 across the 18 proxies.
 """
 

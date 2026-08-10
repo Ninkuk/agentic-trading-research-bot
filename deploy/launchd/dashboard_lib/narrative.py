@@ -2,7 +2,7 @@
 
 PURE module: every function is (values in) -> (dicts/strings out). No
 sqlite, no clock, no file I/O, no imports beyond stdlib typing — `data.py`
-(Tasks 3-8) does the fetching and hands this module plain values/dicts.
+does the fetching and hands this module plain values/dicts.
 
 `hero_bullets` inputs are plain dicts assembled by `data.py`:
 - `regime`: `{"regime": str | None, "streak_nights": int, "vix": float | None}`

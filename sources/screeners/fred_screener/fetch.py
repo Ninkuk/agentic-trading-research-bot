@@ -81,8 +81,8 @@ def fetch_observations(series_id: str, api_key: str, start=None, get=_http_get) 
     return parse_observations(json.loads(get(url)))
 
 
-# FRED per-request caps the vintage fetch must respect (both hit in the live
-# 2026-07-07 backfill): /series/vintagedates returns at most 10000 dates/page;
+# FRED per-request caps the vintage fetch must respect (both observed live):
+# /series/vintagedates returns at most 10000 dates/page;
 # /series/observations rejects (HTTP 400) a realtime window spanning more than
 # 2000 vintage dates and truncates any response at 100000 rows.
 _VINTAGE_DATE_PAGE = 10000

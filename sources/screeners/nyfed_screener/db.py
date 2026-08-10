@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS iorb (
 
 
 def ensure_schema(conn) -> None:
-    """Create all NY Fed tables (+ views from Task 4). Idempotent."""
+    """Create all NY Fed tables + views. Idempotent."""
     conn.executescript(_SCHEMA + _VIEWS)
     conn.commit()
 

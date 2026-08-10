@@ -5,7 +5,7 @@ nothing, recommends nothing.
 
 WHY THIS EXISTS. composite's ticker-grain signals are all microstructure
 (short interest, FTDs, RSI, short volume, reddit), so its universe is
-empirically a microcap dislocation scanner — measured 2026-07-26, si_spike
+empirically a microcap dislocation scanner — measured live, si_spike
 fired on 527 tickers of which 10 were above $2B. The research gate then
 correctly rejects nearly all of them, because "is this a good business to
 own for years?" has one honest answer for an oversold microcap. This screen

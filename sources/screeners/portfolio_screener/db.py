@@ -35,8 +35,7 @@ CREATE TABLE IF NOT EXISTS positions (
 );
 
 -- Option legs, keyed by CONTRACT: two contracts on one underlying are two
--- rows (the (snapshot_id, symbol) PK above could never hold them — the
--- structural blocker the 2026-07-08 options spec named). Column names
+-- rows (the (snapshot_id, symbol) PK above could never hold them). Column names
 -- follow cboe_options. quantity is SIGNED (short = negative). Capture-only
 -- today: advisor's heat math does not read this table yet, so a held
 -- option is stored but still invisible to v_book_heat until the signed

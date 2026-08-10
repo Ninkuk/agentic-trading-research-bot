@@ -275,8 +275,8 @@ def headline_symbols(conn: sqlite3.Connection) -> set[str]:
     flagged symbol (a flagged row can rank below 15 on score_sum alone,
     since flagging also gates on `total` — mirrors the union guard at
     sections.py:404-410). This is the only set that gets sparkline history
-    in the scorecard export; Task 8 reuses it to bound the ticker
-    drill-down (`tickers` in the top-level document) to the same size."""
+    in the scorecard export; the ticker drill-down (`tickers` in the
+    top-level document) is bounded to the same set."""
     top = {
         r["symbol"]
         for r in conn.execute(
@@ -288,8 +288,8 @@ def headline_symbols(conn: sqlite3.Connection) -> set[str]:
 
 
 def flagged_tickers(data_dir: str) -> list[str]:
-    """Tonight's flagged symbols, strongest-agreement first — for Task 8's
-    hero clause. Degrades to an empty list on any failure (missing DB,
+    """Tonight's flagged symbols, strongest-agreement first — for the
+    hero bullets' flagged clause. Degrades to an empty list on any failure (missing DB,
     dropped view), mirroring every other data_dir-driven helper here."""
     try:
         conn = _ro(data_dir, "composite.db")
@@ -597,7 +597,7 @@ def _health(data_dir: str, now_iso: str) -> dict[str, Any]:
     return out
 
 
-# --- Track-record strand (Task 6) ------------------------------------------
+# --- Track-record strand ---------------------------------------------------
 # Column-arrow convention, brief-specified and literal: only these exact
 # view column names get an arrow. Everything else (ids, dates, CI bounds,
 # `reliable`/`edge`/`n_blocks`/`n_matured`, via_crosswalk, recommendation)
@@ -611,7 +611,7 @@ _UP_GOOD = {
     "avg_fwd_return",
     "n",
 }
-# heat_dollars/heat_pct/weight_pct (Task 7, your-book strand): less dollars/
+# heat_dollars/heat_pct/weight_pct (your-book strand): less dollars/
 # percent of the book at risk on a one-ATR adverse day is always the better
 # state, same "lower is safer" logic as null_rate.
 _DOWN_GOOD = {"null_rate", "heat_dollars", "heat_pct", "weight_pct"}
@@ -806,7 +806,7 @@ def _basis_breaks(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         "rows": [dict(r) for r in rows],
         # No caveat: an integrity check, not a grade — a trust caveat here
         # would be noise (deliberate; narrative.CAVEATS has no entry for
-        # "basis-breaks", see Task 2's deviations note).
+        # "basis-breaks").
         "caveat": narrative.CAVEATS.get("basis-breaks"),
         "empty": "no basis breaks detected, which is the good outcome;"
         " fills only when a price move looks like a split or a bad tick",
@@ -828,7 +828,7 @@ _SIGNAL_RECOMMENDATION_COLUMNS: list[dict[str, Any]] = [
 
 def _signal_recommendation(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     """The verdict on each signal, graded against its own base rate. `verdict`
-    wires narrative.efficacy_verdict (Task 2) against a tally of this
+    wires narrative.efficacy_verdict against a tally of this
     section's own `recommendation` values — the helper would otherwise be
     dead code. Rows with recommendation == "insufficient evidence" count
     toward none of keep/watch/anti."""
@@ -942,9 +942,8 @@ _CANDIDATE_EFFICACY_COLUMNS: list[dict[str, Any]] = [
 
 
 def _candidate_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
-    """NEW section — no sections.py counterpart to port (added 2026-07-29
-    when the scorer began grading the candidates screen's list-entry timing,
-    commit 3e4741b). Reads scorer.db's v_candidate_efficacy: a matured entry
+    """No sections.py counterpart. Reads scorer.db's v_candidate_efficacy:
+    a matured entry
     episode's 21/63-trading-day return vs SPY, split by which dislocation
     door admitted the name (oversold RSI / drawdown / both)."""
     rows = conn.execute(
@@ -961,16 +960,14 @@ def _candidate_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any
     }
 
 
-# --- Your-book strand (Task 7) ----------------------------------------------
-# Review-caught unit trap: advisor.db's v_book_heat/v_group_heat/v_latest_heat
-# store heat_pct and weight_pct as FRACTIONS (heat_dollars / equity or market
-# value), but sections.py's HTML always ran them through `_pct()` before
-# display, and narrative.book_verdict/qualitative_band("book_heat_pct", ...)
-# are calibrated in PERCENT (band cutoffs 1.5/3.0). Every one of these four
-# exporters multiplies by 100 at the boundary — the one deliberate deviation
-# from "export raw numbers" in this module, because the raw fraction would
-# silently neuter the book verdict's bands (a live 0.0196 reads as
-# "comfortable" under a percent-scale threshold table).
+# --- Your-book strand --------------------------------------------------------
+# Unit trap: advisor.db's v_book_heat/v_group_heat/v_latest_heat store
+# heat_pct/weight_pct as FRACTIONS, but narrative.book_verdict and
+# qualitative_band("book_heat_pct", ...) are calibrated in PERCENT (band
+# cutoffs 1.5/3.0). These four exporters multiply by 100 at the boundary --
+# the one deliberate deviation from "export raw numbers" in this module,
+# because a raw 0.0196 would read as "comfortable" under a percent-scale
+# threshold table.
 
 
 def _book_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -1156,10 +1153,9 @@ def _size_caps(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 # (sid, title, db_name, fn, kicker, note, about) — ids/titles/kickers match
 # sections.py's SECTIONS. `note` is the one-sentence essence shown on the
 # card; `about` is the full explainer as (heading, body) blocks, rendered in
-# the dashboard's per-section About modal. Copy rule (2026-08-03): the note
+# the dashboard's per-section About modal. Copy rule: the note
 # answers "what is this and should I care", never widget anatomy — bar
 # geometry, dot colors, and column mechanics belong in an about block.
-# candidate-efficacy has no sections.py counterpart (new 2026-07-29).
 SECTION_EXPORTERS: list[
     tuple[str, str, str, Callable[..., dict[str, Any]], str, str, list[tuple[str, str]]]
 ] = [
@@ -1625,7 +1621,7 @@ SECTION_EXPORTERS: list[
 ]
 
 
-# --- Hero bullets (Task 8) --------------------------------------------------
+# --- Hero bullets -----------------------------------------------------------
 # Ports sections.py:1184-1343's `_hero_*_clause` SQL into plain dicts for
 # narrative.hero_bullets. Each fetch is its own try/except (mirrors
 # sections.py's `_hero_clause` wrapper) so a missing/unreadable advisor.db
@@ -1702,7 +1698,7 @@ def _hero(data_dir: str) -> dict[str, Any]:
     }
 
 
-# --- Ticker drill-down (Task 8) ---------------------------------------------
+# --- Ticker drill-down ------------------------------------------------------
 # Bounded to headline_symbols(composite) ∪ held (advisor v_latest_heat) ∪
 # journal (scorer decisions symbols) — NOT the full ~1,017-row scorecard
 # (same size-blocker review note as `headline_symbols`'s docstring). Each of
@@ -1833,7 +1829,7 @@ def _fill_scorer_ticker_fields(
     and fills ({"action", "side", "fill_date", "fill_price", "quantity",
     "exit_fill_date", "exit_fill_price", "opinion_score_sum"}) from
     decisions — an explicit column list, NEVER `SELECT *`: `decisions` also
-    carries note/order_ref/exit_order_ref/placed_agent, which Task 7's
+    carries note/order_ref/exit_order_ref/placed_agent, which the
     privacy walk test bans from this subtree. research_verdicts' own `note`
     column is left out the same way."""
     try:

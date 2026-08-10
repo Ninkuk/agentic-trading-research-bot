@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS snapshots (
 
 
 def ensure_schema(conn) -> None:
-    """Create tables/indexes (+ views from Task 3). Idempotent."""
+    """Create tables/indexes + views. Idempotent."""
     conn.executescript(_SCHEMA + _VIEWS)
     conn.commit()
 

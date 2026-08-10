@@ -57,7 +57,7 @@ CROSSWALK_BENCHMARK: dict[str, str | None] = {
     "IWM": "SPY",
 }
 
-# One-shot historical backfill roster for `main.py pricehistory` (plan 005).
+# One-shot historical backfill roster for `main.py pricehistory`.
 # Exactly the crosswalk proxies and their fan-out tickers: these are the only
 # symbols the scorer benchmarks against and the backtest replays against, so
 # they are the only ones whose history the ledger needs deep. A ticker-universe

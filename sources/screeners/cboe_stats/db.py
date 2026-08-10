@@ -35,7 +35,7 @@ _VIX_MAP = {
 
 
 def ensure_schema(conn) -> None:
-    """Create tables (+ views from Task 4). Idempotent."""
+    """Create tables + views. Idempotent."""
     conn.executescript(_SCHEMA + _VIEWS)
     conn.commit()
 

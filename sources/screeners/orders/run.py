@@ -629,10 +629,9 @@ def main(argv=None) -> None:
         elif a.cmd == "preflight":
             # Config check FIRST, loudly: the headless session cannot hunt
             # for the account number (get_portfolio requires it; get_accounts
-            # and general Bash are not granted — the 2026-07-28 first flight
-            # burned several denied probes discovering this), so preflight
-            # hands it over, and an incomplete .env fails here instead of at
-            # plan time with quotes already fetched.
+            # and general Bash are not granted), so preflight hands it over,
+            # and an incomplete .env fails here instead of at plan time with
+            # quotes already fetched.
             try:
                 lim = catalog.load_limits(dict(os.environ))
             except ValueError as e:

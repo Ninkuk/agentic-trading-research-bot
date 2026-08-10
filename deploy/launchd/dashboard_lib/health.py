@@ -21,19 +21,10 @@ BAD_MARKERS = ("FAILED", "STALE", "Traceback", "Error:")
 
 # How long a job may run before the health section calls it hung. INTERIM
 # two-tier stopgap: replace with measured per-job values once env.sh's `end:`
-# lines have accumulated (~2 weeks). A stopgap with no recorded end date
-# becomes permanent.
-#
-# A threshold only matters for a job still plausibly running at 21:13 (the
-# dashboard job builds the health section once, nightly) -- i.e. one that
-# starts within roughly an hour of it. Measured gaps: advisor 1min, scorer
-# 3min, composite 8min -- all safe under the default tier. (dashboard itself
-# is excluded from hang reporting altogether -- see SELF_LOG above -- so no
-# threshold applies to it.) `edgar` (20:30, 43min before the snapshot) is the
-# only slow-tier entry that is actually load-bearing today; every other
-# SLOW_JOBS entry starts 2h-17h earlier; if still alive at snapshot time it
-# would be flagged under either tier, so those are defensive against future
-# schedule changes rather than currently load-bearing.
+# lines have accumulated. A threshold only matters for a job still plausibly
+# running when the nightly dashboard job builds the health section; `edgar`
+# is the only slow-tier entry load-bearing today -- the rest start hours
+# earlier and are defensive against future schedule changes.
 HUNG_DEFAULT_MIN = 15
 HUNG_SLOW_MIN = 60
 SLOW_JOBS = {

@@ -73,12 +73,11 @@ SELECT t.* FROM ticker_scores t
 JOIN v_latest_snapshot l ON t.snapshot_id = l.id;
 
 -- Flag thresholds are hand-set and tunable; edit here (|score_sum| >= 3
--- with at least 2 voting signals present). Recalibrated 2026-07-20 against
--- the first 18 real snapshots: the original 4/3 gate was never met once —
--- the firing ticker signals draw from nearly disjoint universes, so 3
--- co-occurring signals essentially never happen. 3/2 would have flagged 14
--- symbols over those two weeks (~1/day). DROP+CREATE (not IF NOT EXISTS)
--- so a threshold edit reaches existing DBs on the next run.
+-- with at least 2 voting signals present). Calibrated against real
+-- snapshots: a stricter 4/3 gate never fires — the firing ticker signals
+-- draw from nearly disjoint universes, so 3 co-occurring signals
+-- essentially never happen — while 3/2 flags ~1/day. DROP+CREATE (not IF
+-- NOT EXISTS) so a threshold edit reaches existing DBs on the next run.
 DROP VIEW IF EXISTS v_flagged;
 CREATE VIEW v_flagged AS
 SELECT * FROM v_latest_scorecard

@@ -212,7 +212,7 @@ def build(
 
 
 # Above this many names the SKILL re-confirms before dispatching. It is a
-# prompt threshold, never a truncation -- see the plan's Task 5.
+# prompt threshold, never a truncation.
 SWEEP_LARGE = 20
 
 

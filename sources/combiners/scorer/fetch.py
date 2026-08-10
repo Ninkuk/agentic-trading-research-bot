@@ -50,7 +50,7 @@ def harvest_prices(conn) -> list:
        construction (it names a finished session), which is why rule 1's bug
        hid: switching to `price` exposes same-day, mid-session reads. A snapshot
        captured the evening of D reports an unsettled `price` for priceDate=D
-       (measured 2026-07-08: NVDA 201.01 vs a 204.12 close). Phoenix is UTC-7
+       (measured live: NVDA 201.01 vs a 204.12 close). Phoenix is UTC-7
        year-round, so the shift is a bare '-7 hours' (cf. read_snapshots).
 
     MIN(s.id) makes the pick deterministic when several settled snapshots carry

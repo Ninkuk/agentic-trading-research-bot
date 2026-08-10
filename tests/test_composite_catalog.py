@@ -276,8 +276,8 @@ def test_cboe_equity_pcr_score_case_is_hoisted_constant():
 
 def test_eia_score_cases_are_separate_hoisted_constants():
     """Crude and natgas must be DIFFERENT constants, even while the two
-    expressions are identical today. They shared one until 2026-07-09, which
-    made either impossible to retune without silently retuning the other.
+    expressions are identical today: a shared constant would make either
+    impossible to retune without silently retuning the other.
 
     Asserted on the source, not on object identity: Python interns equal string
     literals, so `EIA_CRUDE is not EIA_NATGAS` is False even when they are two
@@ -545,8 +545,8 @@ def _extract_stocks_rsi(path):
 
 
 def test_stocks_rsi_emits_one_row_per_company_not_per_share_class(tmp_path):
-    """UHAL/UHAL.B are one company with two listed classes, and BOTH cleared
-    the liquidity floor on 2026-07-26 — so composite formed two independent
+    """UHAL/UHAL.B are one company with two listed classes, and both can
+    clear the liquidity floor — composite would form two independent
     opinions about one business. The CUSIP issuer number collapses them."""
     path = _stocks_fixture(
         tmp_path,
@@ -717,7 +717,7 @@ def test_stocks_rsi_dedup_keeps_the_liquid_line_not_the_extreme_one(tmp_path):
 
     When both classes clear the extreme bar, the better-price-discovery line
     wins even though the other reads more extreme — a thin class's extreme is
-    more likely noise. Bounded by the data: on 2026-07-26 exactly one company
+    more likely noise. Bounded by the measured data: exactly one company
     had both classes extreme (same sign, same bucket) and the largest spread
     between any company's classes was 2.0 RSI points, so this can cost one
     score notch and can never flip the sign."""
