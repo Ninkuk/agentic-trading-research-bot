@@ -119,7 +119,7 @@ def parse_doc(doc) -> tuple:
         # orders are refused (spec: grade the strategy or nothing — two
         # independently-graded legs double-count one defined-risk bet).
         contract = f.get("contract_ref")
-        position_effect = expiration = None
+        position_effect = expiration = terminal = None
         if contract is not None or f.get("position_effect") is not None:
             position_effect = f.get("position_effect")
             if (
@@ -133,6 +133,21 @@ def parse_doc(doc) -> tuple:
             expiration = f.get("expiration")
             if not _bare_date(expiration):
                 expiration = None
+            terminal = None
+            broker_side = side
+            if quantity is None or quantity <= 0:
+                skipped += 1
+                continue
+            terminal = f.get("terminal")
+            if terminal is not None and (
+                position_effect != "close" or terminal not in ("exercise", "assign")
+            ):
+                skipped += 1
+                continue
+            if terminal is not None:
+                # The stock leg's cash at strike is out of scope by design;
+                # never half-capture it as premium.
+                price = 0.0
             if position_effect == "open":
                 right = f.get("right")
                 if right not in ("call", "put") or expiration is None:
@@ -155,6 +170,7 @@ def parse_doc(doc) -> tuple:
                 strategy_ref=sref if isinstance(sref, str) else None,
                 position_effect=position_effect,
                 expiration=expiration,
+                **(dict(broker_side=broker_side, terminal=terminal) if position_effect else {}),
             )
         )
     for p in doc.get("passes") or []:

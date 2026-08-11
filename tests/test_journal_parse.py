@@ -246,3 +246,70 @@ def test_broker_decimal_strings_accepted_for_price_and_quantity():
 def test_non_numeric_price_string_still_skips():
     fills, _, _, skipped = journal.parse_doc({"fills": [_fill(price="n/a")]})
     assert fills == [] and skipped == 1
+
+
+def _odoc(**kw):
+    fill = {
+        "symbol": "XLE",
+        "side": "buy",
+        "price": 2.50,
+        "quantity": 1,
+        "filled_at": "2026-07-07T14:31:00+00:00",
+        "order_ref": "o1",
+        "contract_ref": "XLE260821C00095000",
+        "position_effect": "open",
+        "right": "call",
+        "expiration": "2026-08-21",
+    }
+    fill.update(kw)
+    return {"fills": [fill]}
+
+
+def test_option_open_retains_broker_side_through_remap():
+    fills, _, _, skipped = journal.parse_doc(_odoc(side="buy", right="put"))
+    assert skipped == 0
+    assert fills[0]["side"] == "sell"  # directional intent
+    assert fills[0]["broker_side"] == "buy"  # cash-sign truth
+
+
+def test_option_close_broker_side_equals_side():
+    fills, _, _, _ = journal.parse_doc(
+        _odoc(position_effect="close", side="sell", right=None, expiration=None)
+    )
+    assert fills[0]["side"] == "sell" and fills[0]["broker_side"] == "sell"
+
+
+def test_option_fill_requires_positive_contracts():
+    for bad in (None, 0, -1, "x"):
+        _, _, _, skipped = journal.parse_doc(_odoc(quantity=bad))
+        assert skipped == 1
+
+
+def test_equity_fill_quantity_still_optional():
+    doc = {
+        "fills": [
+            {
+                "symbol": "XLE",
+                "side": "buy",
+                "price": 94.30,
+                "filled_at": "2026-07-07T14:31:00+00:00",
+            }
+        ]
+    }
+    fills, _, _, skipped = journal.parse_doc(doc)
+    assert skipped == 0 and fills[0]["quantity"] is None
+    assert "broker_side" not in fills[0]
+
+
+def test_terminal_only_on_close_and_zeroes_price():
+    fills, _, _, skipped = journal.parse_doc(
+        _odoc(position_effect="close", side="sell", terminal="assign", price=9.99)
+    )
+    assert skipped == 0
+    assert fills[0]["terminal"] == "assign" and fills[0]["price"] == 0.0
+    _, _, _, skipped = journal.parse_doc(_odoc(terminal="exercise"))  # on an open
+    assert skipped == 1
+    _, _, _, skipped = journal.parse_doc(
+        _odoc(position_effect="close", side="sell", terminal="expired")
+    )
+    assert skipped == 1
