@@ -122,9 +122,11 @@ re-weighting the catalog is a human decision made by reading `v_signal_efficacy`
 `v_bucket_performance`. The scorer package also owns the decision journal (`main.py journal --input <file|->`, fed by the
 `.claude/skills/journal-sync` MCP skill like `portfolio`): human fills and passes land in scorer.db `decisions` (never pruned) and are compared to
 paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`. Single-leg option
-fills journal with contract identity (`contract_ref`/`position_effect`) but grade **selection
-only** — their P&L columns are NULL by design (no premium ledger exists), and they land in
-`v_flag_response` as their own `acted_option` bucket.
+fills journal with contract identity (`contract_ref`/`position_effect`) and land in
+`v_flag_response` as their own `acted_option` bucket; their dollar P&L lives in the
+`premium_flows` ledger (signed cash events, broker-side signs, fixed ×100 multiplier; partial
+closes and dictated exercise/assignment supported) read via `v_option_pnl`/`v_option_actor` —
+option numbers never join the equity grading views.
 The scorer also keeps the permanent `equity_ledger`/`transfers` pair
 (harvested nightly from portfolio.db before its prune; transfers recorded
 human-confirmed via `main.py journal --transfer`) and the scorecard chains

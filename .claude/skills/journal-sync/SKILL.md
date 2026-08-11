@@ -80,17 +80,25 @@ against scorer.db directly.
      interactive run before trusting the scheduled slot.
    - **Option fills**: same `fills[]` array, with `symbol` = the
      **underlying**, `side` = the broker side, `price` = the **premium**,
-     plus `contract_ref` (OCC symbol), `position_effect` (`"open"`/`"close"`),
-     `strategy_ref` (the order id), and — required on opens — `right`
-     (`"call"`/`"put"`) and `expiration` (`"YYYY-MM-DD"`). The dispatcher
-     derives directional intent from (side, right) itself; never pre-map it.
-     On a **multi-leg** order set `"multi_leg": true` on every leg — the
-     parser refuses them by design (a spread is one bet; per-leg grading
-     would double-count it). An **exercise or assignment** produces stock
-     instead of a closing fill: report it for manual correction — the
-     dispatcher only auto-closes contracts that expire un-closed (at 0.0).
-     Option decisions grade **selection only** (`acted_option` in
-     `v_flag_response`); their P&L columns are NULL by design.
+     `quantity` = the number of **contracts** (required on option fills; the
+     ledger books dollars as premium × contracts × 100), plus `contract_ref`
+     (OCC symbol), `position_effect` (`"open"`/`"close"`), `strategy_ref`
+     (the order id), and — required on opens — `right` (`"call"`/`"put"`)
+     and `expiration` (`"YYYY-MM-DD"`). The dispatcher derives directional
+     intent from (side, right) itself; never pre-map it. On a **multi-leg**
+     order set `"multi_leg": true` on every leg — the parser refuses them by
+     design (a spread is one bet; per-leg grading would double-count it). An
+     **exercise or assignment** produces stock instead of a closing fill:
+     dictate it as a close-shaped fill with `terminal: "exercise"` or
+     `"assign"` (price ignored, booked at premium 0) — it closes the
+     contracts in the premium ledger; journal the resulting stock fill
+     separately as its own equity entry (the two are not linked). Contracts
+     that expire un-closed are auto-booked by the sweep.
+     Option decisions grade **selection** in `v_flag_response`
+     (`acted_option`) and **P&L on premium terms** in `v_option_pnl` /
+     `v_option_actor` (scorer.db); their equity-shaped P&L columns in
+     `v_decision_outcomes` stay NULL — never read those for option
+     economics.
    - `passes` only when the user dictates them; a pass must answer a
      currently-flagged ticker or it is skipped with a message.
    - Zero fills is normal: ingest the empty doc anyway — the run header is
@@ -194,4 +202,5 @@ same fill is a counted duplicate, not a double-book.
   `orders reconcile` (step 6 — an audit write, never an order write).
   Everything else it touches is read-only.
 - Reading views (`v_decision_outcomes`, `v_flag_response`, `v_human_filter`,
-  `v_freelance`) to answer questions is fine — reading is not writing.
+  `v_freelance`, `v_option_pnl`, `v_option_actor`) to answer questions is
+  fine — reading is not writing.
