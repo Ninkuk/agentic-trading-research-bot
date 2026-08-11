@@ -261,11 +261,14 @@ def match_flagged(conn, symbol, as_of_date):
 
 
 def _seen(conn, ref):
-    return (
-        ref is not None
-        and conn.execute(
+    return ref is not None and (
+        conn.execute(
             "SELECT 1 FROM decisions WHERE order_ref = ? OR exit_order_ref = ? LIMIT 1",
             (ref, ref),
+        ).fetchone()
+        is not None
+        or conn.execute(
+            "SELECT 1 FROM premium_flows WHERE order_ref = ? LIMIT 1", (ref,)
         ).fetchone()
         is not None
     )
@@ -339,16 +342,51 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                     " AND fill_date <= ? ORDER BY fill_date, id LIMIT 1",
                     (contract, f["fill_date"]),
                 ).fetchone()
-                if open_row:
+                if not open_row:
+                    skipped += 1
+                    print(f"skip close {contract}: no open decision")
+                    continue
+                did = open_row[0]
+                pos = _option_position(conn, did)
+                if pos is None:
                     conn.execute(
                         "UPDATE decisions SET exit_fill_date = ?,"
                         " exit_fill_price = ?, exit_order_ref = ? WHERE id = ?",
-                        (f["fill_date"], f["price"], ref, open_row[0]),
+                        (f["fill_date"], f["price"], ref, did),
                     )
                     exits += 1
-                else:
+                    continue
+                outstanding = pos[0] - pos[1]
+                if f["quantity"] > outstanding:
                     skipped += 1
-                    print(f"skip close {contract}: no open decision")
+                    print(
+                        f"skip close {contract}: {f['quantity']} contracts"
+                        f" > {outstanding} outstanding"
+                    )
+                    continue
+                conn.execute(
+                    "INSERT INTO premium_flows (decision_id, flow_date, kind,"
+                    " premium, contracts, cash, order_ref, recorded_at)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        did,
+                        f["fill_date"],
+                        f.get("terminal") or "close",
+                        f["price"],
+                        f["quantity"],
+                        _flow_cash(f),
+                        ref,
+                        now_iso,
+                    ),
+                )
+                flows += 1
+                if f["quantity"] == outstanding:
+                    conn.execute(
+                        "UPDATE decisions SET exit_fill_date = ?,"
+                        " exit_fill_price = ?, exit_order_ref = ? WHERE id = ?",
+                        (f["fill_date"], f["price"], ref, did),
+                    )
+                    exits += 1
                 continue
             if f["side"] == "sell" and not automatic and not contract:
                 open_buy = conn.execute(

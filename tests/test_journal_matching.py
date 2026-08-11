@@ -384,3 +384,128 @@ def test_manual_option_dedup_distinguishes_contracts(tmp_path):
     # re-ingesting the same doc is a no-op
     counts = journal.ingest(conn, fills, [], [], NOW)
     assert counts["duplicates_skipped"] == 2
+
+
+def test_partial_close_books_flow_leaves_decision_open(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(quantity=2.0),
+        _ofill(
+            order_ref="c1",
+            position_effect="close",
+            side="sell",
+            broker_side="sell",
+            price=3.10,
+            quantity=1.0,
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+    ]
+    counts = journal.ingest(conn, fills, [], [], NOW)
+    assert counts["option_flows"] == 2 and counts["exits_attached"] == 0
+    assert conn.execute(
+        "SELECT exit_fill_date FROM decisions WHERE contract_ref IS NOT NULL"
+    ).fetchone() == (None,)
+    assert conn.execute(
+        "SELECT kind, contracts, cash FROM premium_flows WHERE kind = 'close'"
+    ).fetchone() == ("close", 1.0, 310.0)
+
+
+def test_full_close_stamps_exit(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(quantity=2.0),
+        _ofill(
+            order_ref="c1",
+            position_effect="close",
+            side="sell",
+            broker_side="sell",
+            price=3.10,
+            quantity=1.0,
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+        _ofill(
+            order_ref="c2",
+            position_effect="close",
+            side="sell",
+            broker_side="sell",
+            price=2.80,
+            quantity=1.0,
+            filled_at="2026-07-10T15:00:00+00:00",
+            fill_date="2026-07-10",
+        ),
+    ]
+    counts = journal.ingest(conn, fills, [], [], NOW)
+    assert counts["exits_attached"] == 1 and counts["option_flows"] == 3
+    row = conn.execute(
+        "SELECT exit_fill_date, exit_fill_price, exit_order_ref FROM decisions"
+        " WHERE contract_ref IS NOT NULL"
+    ).fetchone()
+    assert row == ("2026-07-10", 2.80, "c2")
+
+
+def test_over_close_refused_loudly(tmp_path, capsys):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(quantity=1.0),
+        _ofill(
+            order_ref="c1",
+            position_effect="close",
+            side="sell",
+            broker_side="sell",
+            price=3.10,
+            quantity=2.0,
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+    ]
+    counts = journal.ingest(conn, fills, [], [], NOW)
+    assert counts["skipped"] == 1 and counts["option_flows"] == 1
+    assert "outstanding" in capsys.readouterr().out
+
+
+def test_partial_close_reingest_is_duplicate(tmp_path):
+    # c1 lives only in premium_flows (exit_order_ref never stamped) —
+    # _seen must still catch it on the next sync.
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    close = _ofill(
+        order_ref="c1",
+        position_effect="close",
+        side="sell",
+        broker_side="sell",
+        price=3.10,
+        quantity=1.0,
+        filled_at="2026-07-09T15:00:00+00:00",
+        fill_date="2026-07-09",
+    )
+    journal.ingest(conn, [_ofill(quantity=2.0), close], [], [], NOW)
+    counts = journal.ingest(conn, [close], [], [], NOW)
+    assert counts["duplicates_skipped"] == 1
+    assert conn.execute("SELECT COUNT(*) FROM premium_flows").fetchone()[0] == 2
+
+
+def test_close_of_preledger_decision_falls_back_to_single_exit(tmp_path):
+    # An option decision with no open flow (pre-ledger shape): today's
+    # whole-position exit behavior, no flow rows.
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, fill_date, fill_price,"
+        " quantity, order_ref, contract_ref, position_effect, expiration,"
+        " recorded_at) VALUES ('XLE', 'acted', 'buy', '2026-07-07', 2.50, 1.0,"
+        " 'pre-1', 'XLE260821C00095000', 'open', '2026-08-21', ?)",
+        (NOW,),
+    )
+    close = _ofill(
+        order_ref="c1",
+        position_effect="close",
+        side="sell",
+        broker_side="sell",
+        price=3.10,
+        quantity=1.0,
+        filled_at="2026-07-09T15:00:00+00:00",
+        fill_date="2026-07-09",
+    )
+    counts = journal.ingest(conn, [close], [], [], NOW)
+    assert counts["exits_attached"] == 1 and counts["option_flows"] == 0
+    assert conn.execute("SELECT COUNT(*) FROM premium_flows").fetchone()[0] == 0
