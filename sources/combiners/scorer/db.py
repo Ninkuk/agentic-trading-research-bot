@@ -264,11 +264,10 @@ CREATE TABLE IF NOT EXISTS journal_runs (
     expired_closed     INTEGER NOT NULL DEFAULT 0
 );
 
--- Option premium ledger: one signed cash event per row (the equity_ledger
--- pattern; never pruned). cash is stored, not derived — the sign needs the
--- BROKER side (buy = debit -, sell = credit +) and decisions.side is
--- remapped to directional intent at parse time. Long vs short is the open
--- flow's sign. Contract multiplier fixed at 100 (OCC standard).
+-- Option premium ledger (never pruned). cash is signed dollars from the
+-- BROKER side (buy debit -, sell credit +) — decisions.side is remapped
+-- to directional intent and cannot give the sign. Long vs short is the
+-- open flow's sign. Multiplier fixed at 100 (OCC standard).
 CREATE TABLE IF NOT EXISTS premium_flows (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     decision_id INTEGER NOT NULL REFERENCES decisions(id),
