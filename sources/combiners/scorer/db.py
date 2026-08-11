@@ -264,6 +264,26 @@ CREATE TABLE IF NOT EXISTS journal_runs (
     expired_closed     INTEGER NOT NULL DEFAULT 0
 );
 
+-- Option premium ledger: one signed cash event per row (the equity_ledger
+-- pattern; never pruned). cash is stored, not derived — the sign needs the
+-- BROKER side (buy = debit -, sell = credit +) and decisions.side is
+-- remapped to directional intent at parse time. Long vs short is the open
+-- flow's sign. Contract multiplier fixed at 100 (OCC standard).
+CREATE TABLE IF NOT EXISTS premium_flows (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    decision_id INTEGER NOT NULL REFERENCES decisions(id),
+    flow_date   TEXT NOT NULL,
+    kind        TEXT NOT NULL CHECK (kind IN ('open','close','expire','exercise','assign')),
+    premium     REAL NOT NULL CHECK (premium >= 0),
+    contracts   REAL NOT NULL CHECK (contracts > 0),
+    cash        REAL NOT NULL,
+    order_ref   TEXT UNIQUE,
+    recorded_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_premium_flows_decision
+    ON premium_flows (decision_id);
+
 -- Research-verdict ledger: the research-ticker skill's own graded filter
 -- (skill analog of the decision journal). One row
 -- per (symbol, verdict_date) — the idempotency key; INSERT OR IGNORE makes
@@ -962,6 +982,8 @@ def ensure_schema(conn) -> None:
         conn.execute(
             "ALTER TABLE journal_runs ADD COLUMN expired_closed INTEGER NOT NULL DEFAULT 0"
         )
+    if "option_flows" not in cols:
+        conn.execute("ALTER TABLE journal_runs ADD COLUMN option_flows INTEGER NOT NULL DEFAULT 0")
     conn.executescript(_VIEWS)
     conn.commit()
 

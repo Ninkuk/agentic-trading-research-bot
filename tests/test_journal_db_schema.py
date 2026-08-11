@@ -233,3 +233,58 @@ def test_option_columns_migrate(tmp_path):
     cols = {r[1] for r in conn.execute("PRAGMA table_info(journal_runs)")}
     assert "expired_closed" in cols
     db.ensure_schema(conn)  # and stay idempotent
+
+
+def test_premium_flows_table_exists(tmp_path):
+    conn = _conn(tmp_path)
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(premium_flows)")]
+    assert cols == [
+        "id",
+        "decision_id",
+        "flow_date",
+        "kind",
+        "premium",
+        "contracts",
+        "cash",
+        "order_ref",
+        "recorded_at",
+    ]
+
+
+def test_premium_flows_checks(tmp_path):
+    conn = _conn(tmp_path)
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, recorded_at)"
+        " VALUES ('XLE', 'acted', 'buy', ?)",
+        (NOW,),
+    )
+    ok = (
+        "INSERT INTO premium_flows (decision_id, flow_date, kind, premium,"
+        " contracts, cash, order_ref, recorded_at)"
+        " VALUES (1, '2026-07-07', ?, ?, ?, ?, ?, ?)"
+    )
+    conn.execute(ok, ("open", 2.5, 1.0, -250.0, "f1", NOW))
+    with pytest.raises(sqlite3.IntegrityError):  # bad kind
+        conn.execute(ok, ("roll", 2.5, 1.0, -250.0, "f2", NOW))
+    with pytest.raises(sqlite3.IntegrityError):  # negative premium
+        conn.execute(ok, ("close", -0.5, 1.0, 50.0, "f3", NOW))
+    with pytest.raises(sqlite3.IntegrityError):  # zero contracts
+        conn.execute(ok, ("close", 0.5, 0.0, 0.0, "f4", NOW))
+    with pytest.raises(sqlite3.IntegrityError):  # duplicate order_ref
+        conn.execute(ok, ("close", 0.5, 1.0, 50.0, "f1", NOW))
+
+
+def test_journal_runs_option_flows_migrates(tmp_path):
+    # A pre-ledger DB (journal_runs without option_flows) must converge.
+    path = str(tmp_path / "scorer.db")
+    raw = sqlite3.connect(path)
+    raw.execute(
+        "CREATE TABLE journal_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, ran_at TEXT NOT NULL)"
+    )
+    raw.commit()
+    raw.close()
+    conn = db.connect(path)
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(journal_runs)")}
+    assert "option_flows" in cols
+    db.ensure_schema(conn)  # idempotent
