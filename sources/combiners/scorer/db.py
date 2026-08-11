@@ -226,9 +226,8 @@ CREATE TABLE IF NOT EXISTS decisions (
     -- Option identity (all NULL = equity row; 2026-07 options migration).
     -- symbol stays the UNDERLYING (matching is per-ticker) and side is the
     -- DIRECTIONAL intent derived from (broker side, right) at parse time.
-    -- Option rows grade SELECTION only — the views NULL their P&L legs
-    -- (a premium over a stock close is not slippage) until an option
-    -- premium ledger exists. contract_ref is the OCC symbol; strategy_ref
+    -- Option rows grade SELECTION only in these views; their dollars live
+    -- in premium_flows / v_option_pnl. contract_ref is the OCC symbol; strategy_ref
     -- groups legs of one multi-leg order (refused at the parser today);
     -- expiration feeds the journal's terminal-event sweep.
     contract_ref          TEXT,
@@ -739,8 +738,8 @@ SELECT 'regime', composite_date, COALESCE(regime, '?'), horizon,
 -- slippage from drift on late fills. realized_return is fills-only.
 -- Option rows (contract_ref NOT NULL) grade SELECTION only: their
 -- entry_slippage and realized_return are forced NULL — fill_price is a
--- premium, entry_close a stock close, and no premium ledger exists to
--- grade an option on its own terms. aligned survives (side is the
+-- premium, entry_close a stock close, and option P&L lives in
+-- v_option_pnl, on premium terms. aligned survives (side is the
 -- directional intent derived at parse time), and the flag's own paper
 -- legs stay visible.
 DROP VIEW IF EXISTS v_decision_outcomes;
@@ -840,6 +839,42 @@ SELECT id AS decision_id, symbol, side, contract_ref, fill_date, fill_price,
             ELSE exit_fill_price / fill_price - 1 END AS realized_return,
        note, placed_agent, source, recorded_at
 FROM decisions WHERE action = 'acted' AND composite_snapshot_id IS NULL;
+
+-- Option P&L, one row per option decision, from premium_flows only.
+-- direction is the open flow's sign; pnl_dollars is realized-to-date on
+-- open positions; premium_return only once fully closed (long = return on
+-- premium paid, short = fraction of collected premium kept; a short gone
+-- wrong reads < -1.0). Equity grading views never read these numbers.
+DROP VIEW IF EXISTS v_option_pnl;
+CREATE VIEW v_option_pnl AS
+SELECT d.id AS decision_id, d.symbol, d.side, d.contract_ref, d.expiration,
+       d.composite_snapshot_id, d.composite_date, d.fill_date,
+       CASE WHEN o.cash < 0 THEN 'long' ELSE 'short' END AS direction,
+       o.contracts AS contracts_opened,
+       COALESCE(c.contracts_closed, 0) AS contracts_closed,
+       o.contracts - COALESCE(c.contracts_closed, 0) AS contracts_outstanding,
+       (o.contracts - COALESCE(c.contracts_closed, 0) = 0) AS closed,
+       o.cash + COALESCE(c.cash, 0) AS pnl_dollars,
+       CASE WHEN o.contracts - COALESCE(c.contracts_closed, 0) = 0
+             AND o.cash != 0
+            THEN (o.cash + COALESCE(c.cash, 0)) / ABS(o.cash)
+       END AS premium_return
+FROM decisions d
+JOIN premium_flows o ON o.decision_id = d.id AND o.kind = 'open'
+LEFT JOIN (SELECT decision_id, SUM(contracts) AS contracts_closed,
+                  SUM(cash) AS cash
+           FROM premium_flows WHERE kind != 'open'
+           GROUP BY decision_id) c ON c.decision_id = d.id;
+
+-- The options actor: plain averages + n (v_human_filter posture; Wilson
+-- once samples justify). hit is pnl > 0.
+DROP VIEW IF EXISTS v_option_actor;
+CREATE VIEW v_option_actor AS
+SELECT direction, COUNT(*) AS n_closed,
+       AVG(pnl_dollars > 0) AS hit_rate,
+       SUM(pnl_dollars) AS total_pnl,
+       AVG(premium_return) AS avg_premium_return
+FROM v_option_pnl WHERE closed GROUP BY direction;
 
 -- Research-verdict grading (the research-ticker skill as its own actor,
 -- distinct from the human's decisions). ONE ROW PER HORIZON: filter or

@@ -1,6 +1,76 @@
-from sources.combiners.scorer import db
+import pytest
+
+from sources.combiners.composite import db as composite_db
+from sources.combiners.scorer import db, journal
 
 NOW = "2026-07-20T21:10:00+00:00"
+
+
+def _mini_composite(path, opinions):
+    """opinions: list of (date, {symbol: (score_sum, total)}). captured_at is
+    written as <date>T21:05:00+00:00, which the Phoenix shift maps back to
+    <date> — same convention as test_scorer_run."""
+    conn = composite_db.connect(str(path))
+    composite_db.ensure_schema(conn)
+    sids = []
+    for date, scores in opinions:
+        conn.execute(
+            "INSERT INTO snapshots (captured_at, signals_expected) VALUES (?, 1)",
+            (f"{date}T21:05:00+00:00",),
+        )
+        sid = conn.execute("SELECT MAX(id) FROM snapshots").fetchone()[0]
+        for sym, (score_sum, total) in scores.items():
+            conn.execute(
+                "INSERT INTO ticker_scores (snapshot_id, symbol, total, score_sum)"
+                " VALUES (?, ?, ?, ?)",
+                (sid, sym, total, score_sum),
+            )
+        sids.append(sid)
+    conn.commit()
+    conn.close()
+    return sids
+
+
+def _scorer_with_composite(tmp_path, opinions):
+    sids = _mini_composite(tmp_path / "composite.db", opinions)
+    conn = db.connect(str(tmp_path / "scorer.db"))
+    db.ensure_schema(conn)
+    conn.execute("ATTACH DATABASE ? AS src", (f"file:{tmp_path / 'composite.db'}?mode=ro",))
+    return conn, sids
+
+
+def _fill(**kw):
+    base = dict(
+        symbol="XLE",
+        side="buy",
+        price=94.30,
+        quantity=2.0,
+        filled_at="2026-07-07T14:31:00+00:00",
+        fill_date="2026-07-07",
+        order_ref="ref-1",
+        note=None,
+    )
+    base.update(kw)
+    return base
+
+
+def _ofill(**kw):
+    """A parsed option fill as parse_doc emits it: side already directional
+    for opens, broker_side the cash-sign truth, contract identity alongside."""
+    base = _fill(
+        symbol="XLE",
+        price=2.50,
+        quantity=1.0,
+        order_ref="opt-1",
+        contract_ref="XLE260821C00095000",
+        strategy_ref=None,
+        position_effect="open",
+        expiration="2026-08-21",
+        broker_side="buy",
+        terminal=None,
+    )
+    base.update(kw)
+    return base
 
 
 def _seeded(tmp_path):
@@ -242,3 +312,125 @@ def test_freelance_option_realized_return_null(tmp_path):
     )
     row = conn.execute("SELECT realized_return, contract_ref FROM v_freelance").fetchone()
     assert row[0] is None and row[1] == "NVDA260821C00180000"
+
+
+def test_v_option_pnl_long_round_trip(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(),  # buy call 2.50 x1
+        _ofill(
+            order_ref="c1",
+            position_effect="close",
+            side="sell",
+            broker_side="sell",
+            price=3.10,
+            quantity=1.0,
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+    ]
+    journal.ingest(conn, fills, [], [], NOW)
+    row = conn.execute(
+        "SELECT direction, contracts_opened, contracts_closed,"
+        " contracts_outstanding, closed, pnl_dollars, premium_return"
+        " FROM v_option_pnl"
+    ).fetchone()
+    assert row == ("long", 1.0, 1.0, 0.0, 1, 60.0, pytest.approx(0.24))
+
+
+def test_v_option_pnl_short_expired_keeps_credit(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    journal.ingest(
+        conn,
+        [_ofill(side="buy", broker_side="sell", price=1.20, quantity=1.0, expiration="2026-07-18")],
+        [],
+        [],
+        NOW,
+    )
+    journal.ingest(conn, [], [], [], "2026-07-20T21:40:00+00:00")
+    row = conn.execute(
+        "SELECT direction, closed, pnl_dollars, premium_return FROM v_option_pnl"
+    ).fetchone()
+    assert row == ("short", 1, 120.0, pytest.approx(1.0))
+
+
+def test_v_option_pnl_partial_close_open_with_realized(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(quantity=2.0),  # debit 500
+        _ofill(
+            order_ref="c1",
+            position_effect="close",
+            side="sell",
+            broker_side="sell",
+            price=3.10,
+            quantity=1.0,
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+    ]
+    journal.ingest(conn, fills, [], [], NOW)
+    row = conn.execute(
+        "SELECT closed, contracts_outstanding, pnl_dollars, premium_return FROM v_option_pnl"
+    ).fetchone()
+    assert row == (0, 1.0, -190.0, None)  # realized-to-date; return only when closed
+
+
+def test_v_option_actor_groups_by_direction(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(),
+        _ofill(
+            order_ref="c1",
+            position_effect="close",
+            side="sell",
+            broker_side="sell",
+            price=3.10,
+            quantity=1.0,
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+        _ofill(
+            order_ref="o2",
+            contract_ref="XLE260918P00090000",
+            side="sell",
+            broker_side="sell",
+            price=1.20,
+            quantity=1.0,
+            expiration="2026-07-18",
+        ),
+    ]
+    journal.ingest(conn, fills, [], [], NOW)
+    journal.ingest(conn, [], [], [], "2026-07-20T21:40:00+00:00")
+    rows = conn.execute(
+        "SELECT direction, n_closed, hit_rate, total_pnl, avg_premium_return"
+        " FROM v_option_actor ORDER BY direction"
+    ).fetchall()
+    assert rows == [
+        ("long", 1, 1.0, 60.0, pytest.approx(0.24)),
+        ("short", 1, 1.0, 120.0, pytest.approx(1.0)),
+    ]
+
+
+def test_option_rows_still_null_in_v_decision_outcomes(tmp_path):
+    # The separation guarantee: option dollars live ONLY in v_option_pnl.
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(),
+        _ofill(
+            order_ref="c1",
+            position_effect="close",
+            side="sell",
+            broker_side="sell",
+            price=3.10,
+            quantity=1.0,
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+    ]
+    journal.ingest(conn, fills, [], [], NOW)
+    row = conn.execute(
+        "SELECT entry_slippage, realized_return FROM v_decision_outcomes"
+        " WHERE contract_ref IS NOT NULL LIMIT 1"
+    ).fetchone()
+    assert row == (None, None)
