@@ -90,9 +90,9 @@ against scorer.db directly.
      design (a spread is one bet; per-leg grading would double-count it). An
      **exercise or assignment** produces stock instead of a closing fill:
      dictate it as a close-shaped fill with `terminal: "exercise"` or
-     `"assign"` (price ignored, booked at premium 0) — it closes the
+     `"assign"` (`price: 0` — the value is ignored and booked at premium 0) — it closes the
      contracts in the premium ledger; journal the resulting stock fill
-     separately as its own equity entry (the two are not linked). Contracts
+     separately as its own equity entry (the two are not linked). A close spanning multiple open lots of the same contract is refused as an over-close: re-dictate it as per-lot closes, each with a **distinct** `order_ref` (e.g. `<broker-ref>:1`, `<broker-ref>:2`) — without distinct refs the second identical dictation dedupes as a duplicate and the remainder later expires as worthless. Contracts
      that expire un-closed are auto-booked by the sweep.
      Option decisions grade **selection** in `v_flag_response`
      (`acted_option`) and **P&L on premium terms** in `v_option_pnl` /
