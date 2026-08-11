@@ -508,6 +508,7 @@ def test_close_of_preledger_decision_falls_back_to_single_exit(tmp_path):
     )
     counts = journal.ingest(conn, [close], [], [], NOW)
     assert counts["exits_attached"] == 1 and counts["option_flows"] == 0
+    assert conn.execute("SELECT COUNT(*) FROM premium_flows").fetchone()[0] == 0
 
 
 def test_expiry_sweep_books_expire_flow(tmp_path):
