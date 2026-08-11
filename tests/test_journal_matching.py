@@ -235,7 +235,7 @@ def test_sell_never_exits_automatic_buy(tmp_path):
 
 def _ofill(**kw):
     """A parsed option fill as parse_doc emits it: side already directional
-    for opens, contract identity carried alongside."""
+    for opens, broker_side the cash-sign truth, contract identity alongside."""
     base = _fill(
         symbol="XLE",
         price=2.50,
@@ -245,9 +245,42 @@ def _ofill(**kw):
         strategy_ref=None,
         position_effect="open",
         expiration="2026-08-21",
+        broker_side="buy",
+        terminal=None,
     )
     base.update(kw)
     return base
+
+
+def test_option_open_writes_signed_open_flow(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    counts = journal.ingest(conn, [_ofill(broker_side="buy", terminal=None)], [], [], NOW)
+    assert counts["option_flows"] == 1
+    row = conn.execute(
+        "SELECT decision_id, flow_date, kind, premium, contracts, cash, order_ref"
+        " FROM premium_flows"
+    ).fetchone()
+    assert row == (1, "2026-07-07", "open", 2.50, 1.0, -250.0, "opt-1")
+
+
+def test_short_open_flow_is_credit(tmp_path):
+    # Sell-to-open a put: broker side sell -> credit; directional intent buy.
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    journal.ingest(
+        conn,
+        [_ofill(side="buy", broker_side="sell", terminal=None, price=1.20, quantity=2.0)],
+        [],
+        [],
+        NOW,
+    )
+    assert conn.execute("SELECT cash FROM premium_flows").fetchone()[0] == 240.0
+
+
+def test_equity_fill_writes_no_flow(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    counts = journal.ingest(conn, [_fill()], [], [], NOW)
+    assert counts["option_flows"] == 0
+    assert conn.execute("SELECT COUNT(*) FROM premium_flows").fetchone()[0] == 0
 
 
 def test_ingest_option_open_matches_underlying(tmp_path):

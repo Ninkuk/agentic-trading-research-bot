@@ -271,6 +271,30 @@ def _seen(conn, ref):
     )
 
 
+def _flow_cash(f) -> float:
+    """Signed dollars for one option fill: credit +, debit −, from the
+    BROKER side (decisions.side is directional intent, not cash truth)."""
+    cash = f["price"] * f["quantity"] * 100.0
+    return -cash if f.get("broker_side", f["side"]) == "buy" else cash
+
+
+def _option_position(conn, decision_id):
+    """(contracts_opened, contracts_closed) from the ledger, or None for a
+    pre-ledger decision with no open flow (legacy single-exit behavior)."""
+    opened = conn.execute(
+        "SELECT contracts FROM premium_flows WHERE decision_id = ? AND kind = 'open'",
+        (decision_id,),
+    ).fetchone()
+    if opened is None:
+        return None
+    closed = conn.execute(
+        "SELECT COALESCE(SUM(contracts), 0) FROM premium_flows"
+        " WHERE decision_id = ? AND kind != 'open'",
+        (decision_id,),
+    ).fetchone()[0]
+    return opened[0], closed
+
+
 def _dedup_ref(f) -> str:
     """The idempotency key for a fill. A broker-supplied order_ref if present;
     otherwise a deterministic synthetic key over the fill's identifying fields,
@@ -292,6 +316,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
     when fills/passes are present. Fills must be chronological (parse_doc
     guarantees it) so FIFO exit attachment is deterministic."""
     matched = freelance = exits = passes_n = verdicts_n = dupes = expired = corrected = 0
+    flows = 0
     # Phoenix clock, like fill_date/composite_date: an evening-dictated pass
     # (after the 9:05pm snapshot = next day UTC) answers THAT evening's flag.
     as_of_date = _phx_date(datetime.fromisoformat(now_iso))
@@ -343,7 +368,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                     exits += 1
                     continue
             m = None if automatic else match_opinion(conn, f["symbol"], f["fill_date"])
-            conn.execute(
+            cur = conn.execute(
                 "INSERT INTO decisions (symbol, action, side,"
                 " composite_snapshot_id, composite_date, opinion_score_sum,"
                 " opinion_total, fill_date, fill_price, quantity, order_ref,"
@@ -373,6 +398,22 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
             )
             matched += 1 if m else 0
             freelance += 0 if m else 1
+            if contract:
+                conn.execute(
+                    "INSERT INTO premium_flows (decision_id, flow_date, kind,"
+                    " premium, contracts, cash, order_ref, recorded_at)"
+                    " VALUES (?, ?, 'open', ?, ?, ?, ?, ?)",
+                    (
+                        cur.lastrowid,
+                        f["fill_date"],
+                        f["price"],
+                        f["quantity"],
+                        _flow_cash(f),
+                        ref,
+                        now_iso,
+                    ),
+                )
+                flows += 1
         # Terminal-event sweep: an option expiring un-closed produces no fill,
         # so without this its decision looks open forever and blocks close
         # attachment for a later round trip on the same contract. Premium
@@ -438,8 +479,8 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
         cur = conn.execute(
             "INSERT INTO journal_runs (ran_at, fills_seen, matched, freelance,"
             " exits_attached, passes_recorded, verdicts_recorded,"
-            " duplicates_skipped, skipped, expired_closed)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " duplicates_skipped, skipped, expired_closed, option_flows)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 now_iso,
                 len(fills),
@@ -451,6 +492,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                 dupes,
                 skipped,
                 expired,
+                flows,
             ),
         )
         return dict(
@@ -465,6 +507,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
             corrected=corrected,
             skipped=skipped,
             expired_closed=expired,
+            option_flows=flows,
         )
 
 
@@ -572,7 +615,8 @@ def main(argv=None) -> None:
         f" {c['freelance']} freelance, {c['exits_attached']} exits,"
         f" {c['passes_recorded']} passes, {c['verdicts_recorded']} verdicts,"
         f" {c['duplicates_skipped']} duplicates, {c.get('corrected', 0)} corrected,"
-        f" {c['skipped']} skipped, {c['expired_closed']} expired, into {a.db}"
+        f" {c['skipped']} skipped, {c['expired_closed']} expired,"
+        f" {c['option_flows']} option flows, into {a.db}"
     )
 
 
