@@ -452,22 +452,34 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                     ),
                 )
                 flows += 1
-        # Terminal-event sweep: an option expiring un-closed produces no fill,
-        # so without this its decision looks open forever and blocks close
-        # attachment for a later round trip on the same contract. Premium
-        # 0.0 stands in for expired-worthless; an exercised/assigned contract
-        # (stock appears instead of a closing fill) must be corrected by
-        # hand. P&L is NULLed for option rows in the views either way.
-        cur = conn.execute(
-            "UPDATE decisions SET exit_fill_date = expiration,"
-            " exit_fill_price = 0.0,"
-            " exit_order_ref = 'expired:' || contract_ref || ':' || id"
+        # Terminal-event sweep: an option expiring un-closed produces no
+        # fill. Book the remainder as an expire flow (cash 0), then stamp
+        # the exit so close attachment for later round trips stays correct.
+        # Exercised/assigned contracts are dictated as terminal closes.
+        expiring = conn.execute(
+            "SELECT id, contract_ref, expiration FROM decisions"
             " WHERE action = 'acted' AND contract_ref IS NOT NULL"
             " AND exit_fill_date IS NULL AND expiration IS NOT NULL"
             " AND expiration < ?",
             (as_of_date,),
-        )
-        expired = cur.rowcount
+        ).fetchall()
+        for did, dcontract, dexp in expiring:
+            synthetic = f"expired:{dcontract}:{did}"
+            pos = _option_position(conn, did)
+            if pos is not None and pos[0] - pos[1] > 0:
+                conn.execute(
+                    "INSERT INTO premium_flows (decision_id, flow_date, kind,"
+                    " premium, contracts, cash, order_ref, recorded_at)"
+                    " VALUES (?, ?, 'expire', 0.0, ?, 0.0, ?, ?)",
+                    (did, dexp, pos[0] - pos[1], synthetic, now_iso),
+                )
+                flows += 1
+            conn.execute(
+                "UPDATE decisions SET exit_fill_date = ?, exit_fill_price = 0.0,"
+                " exit_order_ref = ? WHERE id = ?",
+                (dexp, synthetic, did),
+            )
+        expired = len(expiring)
         for p in passes:
             m = match_flagged(conn, p["symbol"], as_of_date)
             if m is None:

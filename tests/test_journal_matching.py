@@ -508,4 +508,77 @@ def test_close_of_preledger_decision_falls_back_to_single_exit(tmp_path):
     )
     counts = journal.ingest(conn, [close], [], [], NOW)
     assert counts["exits_attached"] == 1 and counts["option_flows"] == 0
+
+
+def test_expiry_sweep_books_expire_flow(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    journal.ingest(conn, [_ofill(expiration="2026-07-18", quantity=2.0)], [], [], NOW)
+    counts = journal.ingest(conn, [], [], [], "2026-07-20T21:40:00+00:00")
+    assert counts["expired_closed"] == 1 and counts["option_flows"] == 1
+    row = conn.execute(
+        "SELECT kind, premium, contracts, cash, flow_date, order_ref"
+        " FROM premium_flows WHERE kind = 'expire'"
+    ).fetchone()
+    assert row[:5] == ("expire", 0.0, 2.0, 0.0, "2026-07-18")
+    assert row[5].startswith("expired:XLE260821C00095000")
+
+
+def test_expiry_sweep_partial_remainder_only(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(expiration="2026-07-18", quantity=2.0),
+        _ofill(
+            order_ref="c1",
+            position_effect="close",
+            side="sell",
+            broker_side="sell",
+            price=3.10,
+            quantity=1.0,
+            filled_at="2026-07-09T15:00:00+00:00",
+            fill_date="2026-07-09",
+        ),
+    ]
+    journal.ingest(conn, fills, [], [], NOW)
+    journal.ingest(conn, [], [], [], "2026-07-20T21:40:00+00:00")
+    assert conn.execute("SELECT contracts FROM premium_flows WHERE kind = 'expire'").fetchone() == (
+        1.0,
+    )
+
+
+def test_expiry_sweep_preledger_decision_no_flow(tmp_path):
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, fill_date, fill_price,"
+        " quantity, order_ref, contract_ref, position_effect, expiration,"
+        " recorded_at) VALUES ('XLE', 'acted', 'buy', '2026-07-07', 2.50, 1.0,"
+        " 'pre-1', 'XLE260821C00095000', 'open', '2026-07-18', ?)",
+        (NOW,),
+    )
+    counts = journal.ingest(conn, [], [], [], "2026-07-20T21:40:00+00:00")
+    assert counts["expired_closed"] == 1 and counts["option_flows"] == 0
     assert conn.execute("SELECT COUNT(*) FROM premium_flows").fetchone()[0] == 0
+
+
+def test_assignment_dictation_books_zero_cash_flow(tmp_path):
+    # Short call assigned: open credit stands as the whole premium P&L;
+    # the stock leg at strike is journaled separately, never here.
+    conn, _ = _scorer_with_composite(tmp_path, [("2026-07-06", {"XLE": (5, 4)})])
+    fills = [
+        _ofill(side="sell", broker_side="sell", price=1.20, quantity=1.0),
+        _ofill(
+            order_ref="a1",
+            position_effect="close",
+            side="buy",
+            broker_side="buy",
+            price=0.0,
+            quantity=1.0,
+            terminal="assign",
+            filled_at="2026-07-17T20:00:00+00:00",
+            fill_date="2026-07-17",
+        ),
+    ]
+    counts = journal.ingest(conn, fills, [], [], NOW)
+    assert counts["exits_attached"] == 1
+    assert conn.execute(
+        "SELECT kind, cash FROM premium_flows WHERE kind = 'assign'"
+    ).fetchone() == ("assign", 0.0)
