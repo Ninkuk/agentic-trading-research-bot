@@ -1,9 +1,11 @@
 """Selection rules for the research funnel: which candidate-screen names have
-no thesis yet, and which theses have a dated reopen trigger that has come due.
+no thesis yet, which theses have a dated reopen trigger that has come due,
+and which event: triggers remain open (listed for verification, never
+auto-due).
 
 A pure core under an impure shell. The rules -- `index_theses`,
-`newest_verdict_lines`, `due_reopens`, `unresearched`, `build`,
-`format_worklist` -- take already-read inputs (filenames, ledger lines,
+`newest_verdict_lines`, `due_reopens`, `open_event_triggers`, `unresearched`,
+`build`, `format_worklist` -- take already-read inputs (filenames, ledger lines,
 symbols, a Phoenix date) and return plain data, so they are testable without
 a filesystem or a DB. The shell around them is small and named:
 `list_theses`/`read_verdicts` read `research/`, `read_candidates` opens
@@ -35,9 +37,10 @@ from typing import Any
 
 THESIS_RE = re.compile(r"^([A-Z0-9.\-]+)-(\d{4}-\d{2}-\d{2})\.md$")
 
-# Two patterns, one rule. The sweep wants dated triggers only (an event:
-# trigger has no due date and is grep-only by design); the dashboard renders
-# both. Keeping them adjacent is what stops the pair from drifting.
+# Two patterns, one rule. Dated triggers are auto-due (due_reopens); event:
+# triggers have no due date and are only LISTED (open_event_triggers) — each
+# must be verified against the world before it can dispatch anything. The
+# dashboard renders both. Keeping them adjacent stops the pair from drifting.
 REOPEN_DATED_RE = re.compile(r"\breopen=(\d{4}-\d{2}-\d{2}):(\S+)")
 REOPEN_FIELD_RE = re.compile(r"\breopen=(\d{4}-\d{2}-\d{2}|event):(\S+)")
 
@@ -95,6 +98,23 @@ def due_reopens(
             due.append((ticker, m.group(1), m.group(2), thesis_date))
     due.sort(key=lambda row: (row[1], row[0]))
     return due
+
+
+def open_event_triggers(newest: Mapping[str, tuple[str, str]]) -> list[tuple[str, str, str]]:
+    """Open event: reopen triggers from each ticker's newest verdict line.
+    Listing these is query-decidable; DECIDING one is not — each names a fact
+    about the world (a filing, an approval, a price level) that must be
+    verified before it can dispatch anything, so they never join the due
+    list. Sorted by ticker.
+
+    Returns (ticker, slug, thesis_date) tuples."""
+    events: list[tuple[str, str, str]] = []
+    for ticker, (thesis_date, line) in newest.items():
+        m = REOPEN_FIELD_RE.search(line)
+        if m and m.group(1) == "event":
+            events.append((ticker, m.group(2), thesis_date))
+    events.sort()
+    return events
 
 
 def unresearched(symbols: Iterable[str], theses: Mapping[str, str]) -> list[str]:
@@ -162,6 +182,7 @@ def build(
     errors: list[str] = []
     new: list[str] = []
     reopens: list[tuple[str, str, str, str]] = []
+    events: list[tuple[str, str, str]] = []
     data_date: str | None = None
     data_age: str | None = None
 
@@ -180,6 +201,7 @@ def build(
         if err:
             errors.append(f"verdicts.log unreadable ({err})")
         reopens = due_reopens(newest, today)
+        events = open_event_triggers(newest)
 
     # A ticker in BOTH lists is one name, not two. That only happens when its
     # thesis file is MISNAMED (a -v2 suffix, a lowercase ticker): the index
@@ -192,6 +214,8 @@ def build(
     # Reopens first, then new names. --max is opt-in and NEVER silent: what
     # it drops is carried in the document and printed. `ordered` is deduped
     # above, so the cap counts survivors and `dropped` is exactly the excluded.
+    # Event triggers are outside the cap: they are a verification worklist,
+    # not a dispatch list, and dropping one would hide an open question.
     dropped: list[str] = []
     if max_n is not None:
         ordered = [r[0] for r in reopens] + new
@@ -206,6 +230,7 @@ def build(
         "data_age": data_age,
         "new": new,
         "reopens": reopens,
+        "events": events,
         "dropped": dropped,
         "errors": errors,
     }
@@ -241,6 +266,18 @@ def format_worklist(doc: Mapping[str, Any]) -> list[str]:
     for symbol in new:
         out.append(f"    {symbol}")
 
+    events = doc.get("events", [])
+    out.append("")
+    out.append(f"C. open event triggers (not auto-due — verify first): {len(events)}")
+    for ticker, slug, thesis_date in events:
+        out.append(f"    {ticker}  event:{slug}  (thesis {thesis_date})")
+    if events:
+        out.append(
+            "    a slug compresses the thesis's falsifier — read that section "
+            "before judging one fired; only a VERIFIED-fired trigger may join "
+            "the dispatch gate."
+        )
+
     if doc["dropped"]:
         out.append("")
         out.append(f"DROPPED by --max ({len(doc['dropped'])}): {', '.join(doc['dropped'])}")
@@ -258,6 +295,11 @@ def format_worklist(doc: Mapping[str, Any]) -> list[str]:
         )
         if total:
             out.append(f"{total} name(s) found so far. NOT A RECOMMENDATION.")
+    elif total == 0 and events:
+        out.append(
+            "nothing auto-due to research — but the event triggers above "
+            "stay open until verified or the name is re-researched."
+        )
     elif total == 0:
         out.append("nothing to research — both worklists are empty.")
     else:

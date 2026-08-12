@@ -90,6 +90,29 @@ def test_due_reopens_sorted_by_date_then_ticker():
     ]
 
 
+def test_open_event_triggers_lists_events_sorted_by_ticker():
+    newest = {
+        "TSLA": ("2026-07-27", "2026-07-27 TSLA FLAWED reopen=event:robotaxi-miles"),
+        "GFI": ("2026-07-27", "2026-07-27 GFI UNPROVEN reopen=event:tarkwa-renewal"),
+        "NICE": ("2026-07-27", "2026-07-27 NICE UNPROVEN reopen=2026-08-05:q2-print"),
+        "CSU": ("2026-07-10", "2026-07-10 CSU UNPROVEN conditions=6 refuted=0"),
+    }
+    assert worklist.open_event_triggers(newest) == [
+        ("GFI", "tarkwa-renewal", "2026-07-27"),
+        ("TSLA", "robotaxi-miles", "2026-07-27"),
+    ]
+
+
+def test_open_event_triggers_only_newest_line_counts():
+    """A re-research retires the old event trigger via newest_verdict_lines;
+    what reaches open_event_triggers is already one line per ticker."""
+    lines = [
+        "2026-07-01 GFI UNPROVEN reopen=event:tarkwa-renewal",
+        "2026-08-01 GFI SOUND conditions=4 refuted=0",
+    ]
+    assert worklist.open_event_triggers(worklist.newest_verdict_lines(lines)) == []
+
+
 def test_unresearched_preserves_screen_order():
     theses = {"ADBE": "2026-07-26", "GDDY": "2026-08-03"}
     assert worklist.unresearched(["GDDY", "LDOS", "ADBE", "CI"], theses) == ["LDOS", "CI"]
@@ -109,6 +132,31 @@ def test_worklists_are_disjoint_when_the_thesis_is_named_correctly(tmp_path):
     assert reopens == {"NICE"}
     assert new == ["LDOS"]
     assert set(new).isdisjoint(reopens)
+
+
+def test_build_events_outside_the_max_cap(tmp_path):
+    """--max caps dispatchable names only; the event verification list must
+    never lose a row to it."""
+    (tmp_path / "GFI-2026-07-27.md").write_text("x")
+    (tmp_path / "NICE-2026-07-27.md").write_text("x")
+    (tmp_path / "verdicts.log").write_text(
+        "2026-07-27 GFI UNPROVEN reopen=event:tarkwa-renewal\n"
+        "2026-07-27 NICE UNPROVEN reopen=2026-08-05:q2-print\n"
+    )
+    doc = worklist.build("unused.db", tmp_path, "2026-08-10", "reopen", max_n=1)
+    assert doc["reopens"][0][0] == "NICE"
+    assert doc["events"] == [("GFI", "tarkwa-renewal", "2026-07-27")]
+    assert doc["dropped"] == []
+
+
+def test_format_worklist_events_open_but_nothing_due(tmp_path):
+    (tmp_path / "GFI-2026-07-27.md").write_text("x")
+    (tmp_path / "verdicts.log").write_text("2026-07-27 GFI UNPROVEN reopen=event:tarkwa-renewal\n")
+    doc = worklist.build("unused.db", tmp_path, "2026-08-10", "reopen", max_n=None)
+    out = "\n".join(worklist.format_worklist(doc))
+    assert "GFI  event:tarkwa-renewal  (thesis 2026-07-27)" in out
+    assert "nothing auto-due" in out
+    assert "VERIFIED" in out
 
 
 def test_reopen_field_re_matches_event_and_dated():
