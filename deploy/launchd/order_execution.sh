@@ -29,7 +29,14 @@ fi
 # from the portfolio getter (the accounts getter's buying power is
 # unreliable per its own tool contract). Deliberately absent: the cancel
 # tool, all option tools, sells, Edit, general Bash.
-claude -p "/execute-queue" \
+# The wedge cap + one retry: an unbounded claude wedge holds this label past
+# the [open+2m, open+45m] window and blocks the label's other slot. The
+# retry is placement-safe — plan claims only 'queued' rows, so a session
+# killed after planning stands down and the STUCK check below alarms. Both
+# attempts (2x1200s) finish inside the window with room to plan, and stay
+# under health.py's 60min hang budget.
+run_with_timeout_retry "${ORDERS_TIMEOUT_SECS:-1200}" \
+    claude -p "/execute-queue" \
     --model sonnet \
     --allowedTools "Skill,TodoWrite,Write,mcp__claude_ai_Robinhood_MCP__get_equity_quotes,mcp__claude_ai_Robinhood_MCP__get_portfolio,mcp__claude_ai_Robinhood_MCP__review_equity_order,mcp__claude_ai_Robinhood_MCP__place_equity_order,Bash(uv run python main.py orders preflight *),Bash(uv run python main.py orders plan *),Bash(uv run python main.py orders record *)" \
     --permission-mode default \
