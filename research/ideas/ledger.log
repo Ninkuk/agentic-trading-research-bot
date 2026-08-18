@@ -150,3 +150,24 @@
 2026-08-06 nc6EKMUFPcc sector-implied-cost-of-equity DEAD gate=7:priority
 2026-08-06 nc6EKMUFPcc dividends-as-certainty-equivalent DEAD gate=7:priority
 2026-08-06 nc6EKMUFPcc earnings-variability-risk DEFERRED gate=7:priority reopen=signal_outcomes.distinct_composite_date@matured>=100
+2026-08-17 70Dj8q_ntCg kaggle-tabular-stat DEAD gate=1:provenance
+2026-08-17 70Dj8q_ntCg purge-embargo-gap DEAD gate=2:duplication
+2026-08-17 70Dj8q_ntCg survivorship-biased-universe DEAD gate=2:duplication
+2026-08-17 70Dj8q_ntCg selection-rule-drives-turnover DEAD gate=2:duplication
+2026-08-17 70Dj8q_ntCg risk-and-cost-null DEAD gate=2:duplication
+2026-08-17 70Dj8q_ntCg profit-factor-thin-ledge DEAD gate=2:duplication
+2026-08-17 70Dj8q_ntCg random-buyer-spread-baseline DEAD gate=2:duplication
+2026-08-17 70Dj8q_ntCg trees-beat-lstm-tabular DEAD gate=5:architecture
+2026-08-17 70Dj8q_ntCg sequence-models-wrong-bias DEAD gate=5:architecture
+2026-08-17 70Dj8q_ntCg leak-shows-as-dominant-feature DEAD gate=5:architecture
+2026-08-17 8EXF2YOei3U berkshire-20pct-60yr DEAD gate=1:provenance
+2026-08-17 8EXF2YOei3U partnership-30pct-13yr DEAD gate=1:provenance
+2026-08-17 8EXF2YOei3U growth-is-part-of-value DEAD gate=1:provenance
+2026-08-17 8EXF2YOei3U haircut-obscures-assumptions DEAD gate=2:duplication
+2026-08-17 8EXF2YOei3U double-conservatism-misses DEAD gate=1:provenance
+2026-08-17 8EXF2YOei3U quality-as-margin-of-safety SALVAGED gate=2:duplication
+2026-08-17 8EXF2YOei3U quality-as-margin-of-safety-salvaged DEAD gate=7:priority
+2026-08-17 8EXF2YOei3U need-vs-can-happen DEAD gate=2:duplication
+2026-08-17 8EXF2YOei3U growth-persistence-base-rate DEAD gate=1:provenance
+2026-08-17 8EXF2YOei3U tangential-competence DEAD gate=7:priority
+2026-08-17 8EXF2YOei3U buffett-bought-google DEAD gate=1:provenance
