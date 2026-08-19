@@ -151,3 +151,5 @@
 2026-08-17 HKPD UNPROVEN conditions=5 refuted=0 unknown=3 reopen=2027-01-11:hkpd-nasdaq-bid-deadline-reverse-split-or-shelf-takedown
 2026-08-18 IMAX SOUND conditions=3 refuted=0 unknown=1 reopen=2027-02-25:imax-fy26-owner-fcf-fy27-guide-or-price-below-35
 2026-08-18 COST SOUND conditions=4 refuted=0 unknown=0 reopen=event:cost-fcf-yield-4pct-or-renewal-below-90
+2026-08-18 AON SOUND conditions=5 refuted=0 unknown=1 reopen=event:aon-price-below-300
+2026-08-18 ULTA FLAWED conditions=4 refuted=1 unknown=1 reopen=2026-12-04:ulta-q2q3-margin-inflection-or-price-below-460
