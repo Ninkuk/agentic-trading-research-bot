@@ -105,8 +105,9 @@ fired event trigger, replace `due <date>` with the evidence that fired it):
 > `<slug>`, due `<date>`). Read the prior thesis first. Open the new
 > writeup with a §0 that answers the reopen question directly — did the
 > trigger condition fire, and what does that do to the thesis? — before the
-> standard sections. Follow `research/BR-2026-08-04.md` and
-> `research/CHKP-2026-08-03.md` for the shape.
+> standard sections. The reopen shape (title suffix, provenance block, §0
+> falsifier-status table) is fixed in
+> `.claude/skills/research-ticker/references/thesis-template.md`.
 
 A run that fails to land a thesis is reported; the wave continues.
 

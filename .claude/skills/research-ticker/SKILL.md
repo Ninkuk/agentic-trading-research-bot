@@ -374,25 +374,36 @@ the attack that came closest to landing.
 
 ## Output
 
-Write `research/<TICKER>-<YYYY-MM-DD>.md` with these sections, then commit it:
+Write `research/<TICKER>-<YYYY-MM-DD>.md` following
+**`references/thesis-template.md` exactly** — read it before writing; the
+title/metadata lines, section order and headings, the §1 verdict-line
+format, the enumerated tiered condition list, the scenario and options
+tables, the Break/Shift falsifier tags, the reopen-trigger line, and the
+source-tier names are all fixed there. Then commit it. The skeleton:
 
-1. **Verdict and thesis** — the conclusion first, in two sentences, with the
-   kill-thesis verdict and the load-bearing condition count.
-2. **Business** — created / captured / protected.
-3. **Threads pulled** — including the dead ends, and what they ruled out.
-4. **Valuation** — the implied return, the spread against the hurdle (with
-   the risk-free/ERP as-of date), and every assumption behind it. Add
-   the options-implied move where available: name the path used (path 1 —
-   CBOE `iv30` percentile from `data/options.db`; path 2 — the Robinhood
-   stopgap) and the DTE, or state explicitly "no listed options."
-5. **Falsifiers** — what would make you sell.
+1. **Verdict and thesis** — ownership call + kill-thesis ledger first, then
+   the plain-language thesis, closest attack, and the numbered load-bearing
+   conditions with evidence tiers.
+2. **Business** — created / captured / protected, plus the Phase 0
+   operating-leverage print.
+3. **Threads pulled** — including the mandatory options-read bullet and the
+   dead ends, and what they ruled out.
+4. **Valuation** — inputs and pairing, the hurdle (with the risk-free/ERP
+   as-of date), the scenario table with spreads, the integrity checks, and
+   the options-implied-move table: name the path used (path 1 — CBOE `iv30`
+   percentile from `data/options.db`; path 2 — the Robinhood stopgap) and
+   the DTE, or state explicitly "no listed options."
+5. **Falsifiers** — Break/Shift-tagged, closed by the reopen-trigger line.
 6. **UNKNOWNs** — what could not be found, where it would come from, and
    whether its absence kills the thesis.
 7. **Sources** — every claim, tiered: primary filings; `stockanalysis.com`
    (this repo's one vetted exception); broker/market microstructure (see the
    data-source policy in `CLAUDE.md` — real-time market state, not a
    researched disclosure, admissible only where no already-integrated
-   official source covers this ticker or field); low-confidence colour.
+   official source covers this ticker or field); reference data;
+   point-in-time repo DBs; low-confidence colour.
+8. **Kill-thesis record** (unnumbered, last) — the Phase 5 detail lands
+   here, per the template.
 
 ## Log the verdict (mandatory final step)
 

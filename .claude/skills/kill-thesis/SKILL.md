@@ -164,6 +164,13 @@ Close with exactly one, matching the vocabulary this repo's plan reviewers use:
 
 Then state, in one sentence, what evidence would flip your verdict.
 
+When the thesis under attack is (or becomes) a `research/<TICKER>-<DATE>.md`
+document, the full detail — per-condition adjudication (SURVIVED / REFUTED /
+UNKNOWN), the checks that ran, closest attack, flip evidence both ways —
+goes in that document's final unnumbered `## Kill-thesis record` section,
+per `.claude/skills/research-ticker/references/thesis-template.md`. Not an
+appendix, not a footer, not inside §1/§6/§7 — one fixed home.
+
 Finally, append one line to `research/verdicts.log` (create it if absent):
 `<YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n> [reopen=<YYYY-MM-DD|event>:<slug>]`
 — the ledger that makes verdict drift measurable (see the design note below).

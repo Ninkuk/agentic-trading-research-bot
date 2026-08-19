@@ -2,7 +2,13 @@
 
 One markdown thesis per ticker per research session, written by the
 `research-ticker` skill and reviewed by a human:
-`research/<TICKER>-<YYYY-MM-DD>.md`.
+`research/<TICKER>-<YYYY-MM-DD>.md`. The document layout (section order,
+verdict-line format, tables, tier names) is fixed by
+`.claude/skills/research-ticker/references/thesis-template.md`. Documents
+dated before 2026-08-18 were backfilled to it on 2026-08-18 — layout-only
+rewrites; a template slot the original run never filled says "not recorded"
+rather than inventing a value, and the pre-backfill originals are in git
+history.
 
 These are **decision support, not decisions**, and not a data source. Nothing
 in `sources/` reads this directory. Git supplies the history and the diffs.
