@@ -423,23 +423,28 @@
     "equity-curve": {
       "title": "Portfolio vs SPY",
       "kicker": "Track record",
-      "note": "Your account's time-weighted growth of $100 against SPY's.",
+      "note": "Your account's time-weighted growth of $100 against SPY's and overnight cash's.",
       "about": [
         {
           "heading": "How to read it",
-          "body": "Both lines start at $100 on the first charted date. Deposits and withdrawals are marked but excluded from the portfolio line — it moves only when the book's value moves, so a gap between the lines is skill (or its absence), never a transfer."
+          "body": "All lines start at $100 on the first charted date. Deposits and withdrawals are marked but excluded from the portfolio line — it moves only when the book's value moves, so a gap between the lines is skill (or its absence), never a transfer."
+        },
+        {
+          "heading": "The cash line",
+          "body": "Daily fed funds (FRED's DFF) compounded over the same window — roughly what a T-bill fund or HYSA would have paid. SPY asks whether the picks beat the index; cash asks whether the money should be in the market at all."
         }
       ],
       "curve": [
-        { "date": "2026-07-31", "portfolio": 100.0, "spy": 100.0, "flow": 0 },
-        { "date": "2026-08-01", "portfolio": 100.2, "spy": null, "flow": 0 },
-        { "date": "2026-08-04", "portfolio": 103.05, "spy": 101.0, "flow": 100 },
-        { "date": "2026-08-05", "portfolio": 104.07, "spy": 101.59, "flow": 0 }
+        { "date": "2026-07-31", "portfolio": 100.0, "spy": 100.0, "cash": 100.0, "flow": 0 },
+        { "date": "2026-08-01", "portfolio": 100.2, "spy": null, "cash": 100.01, "flow": 0 },
+        { "date": "2026-08-04", "portfolio": 103.05, "spy": 101.0, "cash": 100.04, "flow": 100 },
+        { "date": "2026-08-05", "portfolio": 104.07, "spy": 101.59, "cash": 100.05, "flow": 0 }
       ],
       "curve_summary": {
         "twr": 0.0407,
         "spy": 0.0159,
         "excess": 0.0248,
+        "cash": 0.0005,
         "ledger_dates": 4,
         "missing_trading_days": 1
       }

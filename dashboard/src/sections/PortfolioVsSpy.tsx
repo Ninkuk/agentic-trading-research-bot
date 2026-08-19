@@ -32,6 +32,7 @@ export function PortfolioVsSpy({ sec }: SectionComponentProps) {
         <span>TWR {pct(s.twr)}</span>
         <span>SPY {pct(s.spy)}</span>
         <span>excess {pct(s.excess)}</span>
+        {s.cash != null && <span>cash {pct(s.cash)}</span>}
         <span className="text-muted-foreground">
           {s.ledger_dates} ledger dates · {s.missing_trading_days} missing
         </span>

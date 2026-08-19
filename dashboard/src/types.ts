@@ -118,14 +118,17 @@ export interface Section {
 }
 
 // equity-curve-only: one charted date on the growth-of-$100 curve.
-// `portfolio`/`spy` are 2dp-rounded index levels both starting at 100 on the
-// first charted date; `spy` is null on a ledger date with no SPY close (the
-// line connects across it). `flow` is that date's net transfer in dollars —
-// marked on the chart but deliberately absent from the portfolio index.
+// `portfolio`/`spy`/`cash` are 2dp-rounded index levels all starting at 100
+// on the first charted date; `spy` is null on a ledger date with no SPY close
+// (the line connects across it), while `cash` (chained daily fed funds, FRED
+// DFF) is null on EVERY point or none — data.py refuses a partial cash line.
+// `flow` is that date's net transfer in dollars — marked on the chart but
+// deliberately absent from the portfolio index.
 export interface EquityCurvePoint {
   date: string;
   portfolio: number;
   spy: number | null;
+  cash: number | null;
   flow: number;
 }
 
@@ -136,6 +139,9 @@ export interface EquityCurveSummary {
   twr: number;
   spy: number;
   excess: number;
+  // chained daily fed funds (FRED DFF) over the same window; null when
+  // fred.db is missing or DFF doesn't cover the window's start.
+  cash: number | null;
   ledger_dates: number;
   missing_trading_days: number;
 }

@@ -12,6 +12,19 @@ test("renders summary numbers from curve_summary", () => {
   expect(screen.getByText(/TWR 4\.07%/)).toBeInTheDocument();
   expect(screen.getByText(/SPY 1\.59%/)).toBeInTheDocument();
   expect(screen.getByText(/excess 2\.48%/)).toBeInTheDocument();
+  expect(screen.getByText(/cash 0\.05%/)).toBeInTheDocument();
+});
+
+// cash is the one nullable summary stat (missing fred.db / no DFF coverage);
+// null must drop the stat, never render "cash 0.00%" or "cash NaN%".
+test("omits the cash stat when curve_summary.cash is null", () => {
+  render(
+    <PortfolioVsSpy
+      sec={{ ...sec, curve_summary: { ...sec.curve_summary!, cash: null } }}
+      glossary={GLOSSARY}
+    />,
+  );
+  expect(screen.queryByText(/cash/)).toBeNull();
 });
 
 // The stats are read straight off curve_summary (unrounded-derived), never
