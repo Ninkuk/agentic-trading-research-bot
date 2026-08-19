@@ -17,7 +17,10 @@ sources/combiners/scorer/db.py):
     data (n=k)", so one trade's outcome is never mistaken for a trend."""
 
 import argparse
-from datetime import UTC, datetime
+import sqlite3
+from bisect import bisect_right
+from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
 
 from sources.combiners.scorer import db
 from sources.combiners.scorer.journal import AUTOMATIC_AGENTS
@@ -154,6 +157,43 @@ def _trim_to_spy_endpoints(rows):
     return rows if not marked else rows[marked[0] : marked[-1] + 1]
 
 
+def dff_series(fred_conn) -> list[tuple[str, float]]:
+    """(date, annualized percent) DFF observations, oldest first — the cash
+    benchmark's raw input. fred.db is opened as its own read-only connection
+    (never attached to the scorer's write connection)."""
+    return [
+        (r[0], r[1])
+        for r in fred_conn.execute(
+            "SELECT date, value FROM observations"
+            " WHERE series_id = 'DFF' AND value IS NOT NULL ORDER BY date"
+        )
+    ]
+
+
+def cash_endpoint_return(dff, start_date: str, end_date: str) -> float | None:
+    """Chained overnight cash over [start_date, end_date): each calendar day
+    accrues DFF/360 (fed funds is annualized actual/360), carrying the most
+    recent observation forward across gaps and publication lag. None when no
+    observation exists on/before start_date — refuse, never assume 0%."""
+    rows = sorted((d, v) for d, v in dff if v is not None)
+    if start_date >= end_date or not rows:
+        return None
+    dates = [d for d, _ in rows]
+    i = bisect_right(dates, start_date) - 1
+    if i < 0:
+        return None
+    total = 1.0
+    day = date.fromisoformat(start_date)
+    end = date.fromisoformat(end_date)
+    while day < end:
+        iso = day.isoformat()
+        while i + 1 < len(dates) and dates[i + 1] <= iso:
+            i += 1
+        total *= 1.0 + rows[i][1] / 36000.0
+        day += timedelta(days=1)
+    return total - 1.0
+
+
 def _frac(x) -> str:
     return "n/a" if x is None else f"{x:.4f}"
 
@@ -229,7 +269,7 @@ def _freelance_section(conn) -> str:
     return "\n".join(lines)
 
 
-def _portfolio_section(conn) -> str:
+def _portfolio_section(conn, dff=()) -> str:
     orphans = orphan_transfer_dates(conn)
     if orphans:
         return (
@@ -242,7 +282,7 @@ def _portfolio_section(conn) -> str:
     if len(rows) < 2:
         return f"  insufficient data (n={len(rows)} ledger dates)"
     trading = [r for r in rows if r["spy_close"] is not None]
-    lines = ["  window     | portfolio TWR | SPY      | excess"]
+    lines = ["  window     | portfolio TWR | SPY      | excess   | cash (DFF)"]
 
     def _window(label, window_rows):
         # Both endpoints first: SPY can only measure between rows that HAVE a
@@ -260,8 +300,13 @@ def _portfolio_section(conn) -> str:
         if twr is None:
             lines.append(f"  {label:<10} | insufficient data")
             return
+        # Cash is a reference column, not a second excess: it spans the same
+        # trimmed endpoints as SPY, so all three columns measure one window.
+        cash = cash_endpoint_return(dff, window_rows[0]["obs_date"], window_rows[-1]["obs_date"])
         excess = _pct(twr - spy) if spy is not None else "n/a"
-        lines.append(f"  {label:<10} | {_pct(twr):>13} | {_pct(spy):>8} | {excess}")
+        lines.append(
+            f"  {label:<10} | {_pct(twr):>13} | {_pct(spy):>8} | {excess:>8} | {_pct(cash)}"
+        )
 
     _window("inception", rows)
     for n in (21, 63):
@@ -283,7 +328,7 @@ def _portfolio_section(conn) -> str:
     return "\n".join(lines)
 
 
-def build_report(conn, now_iso: str) -> str:
+def build_report(conn, now_iso: str, dff=()) -> str:
     """Assemble the text scorecard. Read-only over scorer.db's journal views;
     every section renders its header + an explicit body even when empty, so a
     thin period is visibly thin rather than silently missing."""
@@ -303,18 +348,27 @@ def build_report(conn, now_iso: str) -> str:
         "Freelance trades (deliberate only)",
         _freelance_section(conn),
         "",
-        "Portfolio vs SPY (time-weighted)",
-        _portfolio_section(conn),
+        "Portfolio vs SPY and cash (time-weighted)",
+        _portfolio_section(conn, dff),
     ]
     return "\n".join(parts)
 
 
-def run(db_path: str, now_iso: str | None = None) -> str:
+def run(db_path: str, now_iso: str | None = None, fred_db_path: str | None = None) -> str:
     now_iso = now_iso or datetime.now(UTC).isoformat()
+    # A missing fred.db degrades the cash column to n/a rather than erroring:
+    # cash is a reference benchmark, never a gate on the report itself.
+    dff: list[tuple[str, float]] = []
+    if fred_db_path and Path(fred_db_path).exists():
+        fconn = sqlite3.connect(f"file:{fred_db_path}?mode=ro", uri=True)
+        try:
+            dff = dff_series(fconn)
+        finally:
+            fconn.close()
     conn = db.connect(db_path)
     try:
         db.ensure_schema(conn)  # guarantees the views exist; never writes data
-        return build_report(conn, now_iso)
+        return build_report(conn, now_iso, dff)
     finally:
         conn.close()
 
@@ -323,11 +377,13 @@ def main(argv=None) -> None:
     p = argparse.ArgumentParser(
         prog="scorecard",
         description="Print the trader decision-quality scorecard (reads"
-        " scorer.db read-only; grades human discretion, changes nothing)",
+        " scorer.db and fred.db read-only; grades human discretion, changes"
+        " nothing)",
     )
     p.add_argument("--db", default="scorer.db")
+    p.add_argument("--fred-db", default="fred.db", help="fred.db for the cash (DFF) benchmark")
     a = p.parse_args(argv)
-    print(run(a.db))
+    print(run(a.db, fred_db_path=a.fred_db))
 
 
 if __name__ == "__main__":

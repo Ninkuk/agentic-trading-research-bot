@@ -195,7 +195,7 @@ def test_portfolio_section_window_excess_is_zero_in_lockstep(tmp_path):
     # before it — chaining it gives the book 22 legs against SPY's 21 and
     # invents excess (+1.23% here) for a book that tracked SPY exactly.
     assert line.split("|")[1].strip() == line.split("|")[2].strip()
-    assert line.rsplit("|", 1)[1].strip() == "0.00%"
+    assert line.split("|")[3].strip() == "0.00%"
 
 
 def test_portfolio_section_trims_leading_row_without_spy_close(tmp_path):
@@ -211,4 +211,85 @@ def test_portfolio_section_trims_leading_row_without_spy_close(tmp_path):
     text = scorecard._portfolio_section(conn)
     for label in ("inception", "21d"):
         line = next(ln for ln in text.splitlines() if ln.strip().startswith(label))
-        assert line.rsplit("|", 1)[1].strip() == "0.00%", line
+        assert line.split("|")[3].strip() == "0.00%", line
+
+
+# --- Cash (DFF) benchmark leg -----------------------------------------------
+
+
+def _dff(rate=3.6, month="06", start=1, end=25):
+    """Daily DFF observations at a flat annualized percent. 3.6%/360 = exactly
+    1bp of daily accrual, so expected products are powers of 1.0001."""
+    return [(f"2026-{month}-{d:02d}", rate) for d in range(start, end + 1)]
+
+
+def test_cash_endpoint_return_compounds_daily():
+    # 5 accrual days at 3.6/36000 = 1e-4 each: (1.0001)^5 - 1.
+    r = scorecard.cash_endpoint_return(_dff(), "2026-06-01", "2026-06-06")
+    assert abs(r - (1.0001**5 - 1.0)) < 1e-12
+
+
+def test_cash_endpoint_return_carries_forward_gaps():
+    # No observations on 06-02/03/05/06: each day accrues at the most recent
+    # observation on/before it (publication lag and history gaps).
+    dff = [("2026-06-01", 3.6), ("2026-06-04", 7.2)]
+    r = scorecard.cash_endpoint_return(dff, "2026-06-01", "2026-06-06")
+    assert abs(r - (1.0001**3 * 1.0002**2 - 1.0)) < 1e-12
+
+
+def test_cash_endpoint_return_refuses_without_coverage():
+    # No observation on/before the window start: refuse (None), never 0%.
+    assert scorecard.cash_endpoint_return([("2026-06-10", 3.6)], "2026-06-01", "2026-06-06") is None
+    assert scorecard.cash_endpoint_return([], "2026-06-01", "2026-06-06") is None
+    assert scorecard.cash_endpoint_return(_dff(), "2026-06-06", "2026-06-06") is None
+
+
+def test_portfolio_section_prints_cash_column(tmp_path):
+    conn = _fresh(tmp_path)
+    _seed_lockstep(conn)  # 25 rows, 2026-06-01..2026-06-25
+    text = scorecard._portfolio_section(conn, dff=_dff())
+    assert "cash (DFF)" in text.splitlines()[0]
+    inception = next(ln for ln in text.splitlines() if ln.strip().startswith("inception"))
+    # 24 calendar days of accrual at 1bp/day: (1.0001)^24 - 1 = 0.24%.
+    assert inception.split("|")[4].strip() == "0.24%"
+    d21 = next(ln for ln in text.splitlines() if ln.strip().startswith("21d"))
+    assert d21.split("|")[4].strip() == "0.21%"
+
+
+def test_portfolio_section_cash_na_without_dff(tmp_path):
+    conn = _fresh(tmp_path)
+    _seed_lockstep(conn)
+    text = scorecard._portfolio_section(conn)
+    inception = next(ln for ln in text.splitlines() if ln.strip().startswith("inception"))
+    assert inception.split("|")[4].strip() == "n/a"
+
+
+def test_run_reads_fred_db_for_cash(tmp_path):
+    conn = _fresh(tmp_path)
+    _seed_curve(conn)
+    conn.close()
+
+    from sources.screeners.fred_screener import db as fred_db
+
+    fconn = fred_db.connect(str(tmp_path / "fred.db"))
+    fred_db.ensure_schema(fconn)
+    fred_db.write_observations(
+        fconn, "DFF", [{"date": d, "value": v} for d, v in _dff(month="07", start=28, end=31)]
+    )
+    fconn.commit()
+    fconn.close()
+
+    report = scorecard.run(str(tmp_path / "scorer.db"), NOW, fred_db_path=str(tmp_path / "fred.db"))
+    inception = next(ln for ln in report.splitlines() if ln.strip().startswith("inception"))
+    # Window 07-31..08-05 = 5 accrual days, carried forward from the 07-31
+    # observation: (1.0001)^5 - 1 = 0.05%.
+    assert inception.split("|")[4].strip() == "0.05%"
+
+
+def test_run_missing_fred_db_degrades_to_na(tmp_path):
+    conn = _fresh(tmp_path)
+    _seed_curve(conn)
+    conn.close()
+    report = scorecard.run(str(tmp_path / "scorer.db"), NOW, fred_db_path=str(tmp_path / "nope.db"))
+    inception = next(ln for ln in report.splitlines() if ln.strip().startswith("inception"))
+    assert inception.split("|")[4].strip() == "n/a"
