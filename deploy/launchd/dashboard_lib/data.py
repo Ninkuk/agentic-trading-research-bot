@@ -851,20 +851,40 @@ def _signal_recommendation(conn: sqlite3.Connection, now_iso: str) -> dict[str, 
     }
 
 
-def _trader_scorecard(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+def _dff_series(data_dir: str) -> list[tuple[str, float]]:
+    """DFF observations for the cash benchmark leg; [] on any failure
+    (missing fred.db, no DFF rows yet) so the cash column/line degrades to
+    n/a-null rather than blanking the scorer sections it rides along with."""
+    try:
+        conn = _ro(data_dir, "fred.db")
+        try:
+            return scorer_scorecard.dff_series(conn)
+        finally:
+            conn.close()
+    except Exception:
+        return []
+
+
+def _trader_scorecard(data_dir: str, now_iso: str) -> dict[str, Any]:
     """Reuses the plan-004 report verbatim (single source of truth,
     scorer/scorecard.py's own `build_report`) — a plain-text report, not a
     table, so the export is `text_lines` only: no `columns`/`rows`, no
     `empty` (the report always renders a full structure, even a thin one,
-    so there is no legacy empty-state prose to port)."""
-    report = scorer_scorecard.build_report(conn, now_iso)
+    so there is no legacy empty-state prose to port). Takes data_dir, not a
+    conn: the cash column needs fred.db alongside scorer.db."""
+    dff = _dff_series(data_dir)
+    conn = _ro(data_dir, "scorer.db")
+    try:
+        report = scorer_scorecard.build_report(conn, now_iso, dff)
+    finally:
+        conn.close()
     return {
         "text_lines": report.split("\n"),
         "caveat": narrative.CAVEATS.get("plan-004-scorecard"),
     }
 
 
-def _equity_curve(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+def _equity_curve_body(conn: sqlite3.Connection, dff: list[tuple[str, float]]) -> dict[str, Any]:
     """Portfolio-vs-SPY growth-of-$100 chart data. Reuses the scorecard's own
     curve/trim/orphan functions (single source of truth) so this chart can
     never disagree with the plan-004 text report. The anchor row's own leg is
@@ -888,6 +908,17 @@ def _equity_curve(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
             "empty": "needs at least two SPY-measurable ledger dates; the"
             " nightly harvest adds one per market day"
         }
+    # Cash (DFF) index legs between consecutive charted dates. All-or-nothing:
+    # if any leg is unmeasurable (no fred.db, no DFF on/before the anchor) the
+    # whole line is null — a cash line that starts mid-window would read as a
+    # return, the same invented-excess trap the SPY trim exists to prevent.
+    cash_levels: list[float | None] = [100.0]
+    for prev, cur in zip(rows, rows[1:], strict=False):
+        leg = scorer_scorecard.cash_endpoint_return(dff, prev["obs_date"], cur["obs_date"])
+        last = cash_levels[-1]
+        cash_levels.append(None if leg is None or last is None else last * (1.0 + leg))
+    if any(v is None for v in cash_levels):
+        cash_levels = [None] * len(rows)
     curve: list[dict[str, Any]] = []
     port_idx = 100.0
     spy_idx = 100.0
@@ -901,11 +932,13 @@ def _equity_curve(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
                 spy_idx *= r["spy_close"] / prev_spy_close
             prev_spy_close = r["spy_close"]
             spy_val = round(spy_idx, 2)
+        cash_level = cash_levels[i]
         curve.append(
             {
                 "date": r["obs_date"],
                 "portfolio": round(port_idx, 2),
                 "spy": spy_val,
+                "cash": None if cash_level is None else round(cash_level, 2),
                 "flow": r["flow"],
             }
         )
@@ -918,16 +951,30 @@ def _equity_curve(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         # the SPY trim drops must still have its gap counted.
         (all_rows[0]["obs_date"], all_rows[-1]["obs_date"]),
     ).fetchone()[0]
+    cash_end = cash_levels[-1]
     return {
         "curve": curve,
         "curve_summary": {
             "twr": port_idx / 100.0 - 1.0,
             "spy": spy_idx / 100.0 - 1.0,
             "excess": port_idx / 100.0 - spy_idx / 100.0,
+            "cash": None if cash_end is None else cash_end / 100.0 - 1.0,
             "ledger_dates": len(all_rows),
             "missing_trading_days": missing,
         },
     }
+
+
+def _equity_curve(data_dir: str, now_iso: str) -> dict[str, Any]:
+    """data_dir-taking shell for `_equity_curve_body`: the chart reads
+    scorer.db plus fred.db (the cash line), so it can't ride the runner's
+    single-conn branch."""
+    dff = _dff_series(data_dir)
+    conn = _ro(data_dir, "scorer.db")
+    try:
+        return _equity_curve_body(conn, dff)
+    finally:
+        conn.close()
 
 
 _CANDIDATE_EFFICACY_COLUMNS: list[dict[str, Any]] = [
@@ -1540,7 +1587,7 @@ SECTION_EXPORTERS: list[
     (
         "plan-004-scorecard",
         "Trader scorecard",
-        "scorer.db",
+        "scorer + fred DBs",
         _trader_scorecard,
         "Track record",
         "A grade of your past decision quality.",
@@ -1556,18 +1603,25 @@ SECTION_EXPORTERS: list[
     (
         "equity-curve",
         "Portfolio vs SPY",
-        "scorer.db",
+        "scorer + fred DBs",
         _equity_curve,
         "Track record",
-        "Your account's time-weighted growth of $100 against SPY's.",
+        "Your account's time-weighted growth of $100 against SPY's and overnight cash's.",
         [
             (
                 "How to read it",
-                "Both lines start at $100 on the first charted date."
+                "All lines start at $100 on the first charted date."
                 " Deposits and withdrawals are marked but excluded from the"
                 " portfolio line — it moves only when the book's value"
                 " moves, so a gap between the lines is skill (or its"
                 " absence), never a transfer.",
+            ),
+            (
+                "The cash line",
+                "Daily fed funds (FRED's DFF) compounded over the same"
+                " window — roughly what a T-bill fund or HYSA would have"
+                " paid. SPY asks whether the picks beat the index; cash asks"
+                " whether the money should be in the market at all.",
             ),
         ],
     ),

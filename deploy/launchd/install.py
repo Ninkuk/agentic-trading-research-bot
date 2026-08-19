@@ -138,8 +138,9 @@ JOBS = {
     "composite": (job("composite", "--keep-days", "365"), weekly(range(7), 21, 5)),
     "scorer": (job("scorer", "--keep-days", "365"), weekly(range(7), 21, 10)),
     "advisor": (job("advisor", "--keep-days", "365"), weekly(range(7), 21, 12)),
-    # Dashboard data export: renders composite/scorer/advisor rows read-only
-    # into reports/data.json for the dashboard/ React app, plus the pipeline
+    # Dashboard data export: renders composite/scorer/advisor/fred rows
+    # read-only into reports/data.json for the dashboard/ React app (fred.db
+    # feeds macro drivers and the equity curve's cash-DFF leg), plus the pipeline
     # health section (launchctl exit codes, hung jobs, stale DBs) and the
     # HEALTHCHECK_URL dead-man's-switch ping. After advisor (9:12) so it
     # reflects tonight's rows — this is the LAST nightly reporter; nothing
