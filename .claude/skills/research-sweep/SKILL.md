@@ -119,7 +119,15 @@ trigger. Note any run that failed and why.
 Each `research-ticker` run writes its own thesis, appends its own
 `verdicts.log` line, and journals its own buy/pass. **This skill never does
 those on a run's behalf** — no thesis writing, no ledger appends, no
-`journal` dispatch, no commits.
+`journal` dispatch.
+
+**Committing is the one exception.** A dispatched subagent cannot reliably
+commit (constrained write access; gpg signing hangs non-interactive), so an
+interactive `research-ticker` run commits its own thesis but a sweep run does
+not. After the report, land one batch commit of the wave's `research/*.md`
+plus `verdicts.log`, with `--no-gpg-sign`:
+`research(sweep): <n> theses from the <date> sweep (<TICKERS>)`.
+Commit only what this wave produced — never sweep up unrelated dirty files.
 
 ## Guardrails
 
