@@ -89,6 +89,11 @@ xls files and parse with stdlib; the regional variants are Excel-only
 - **Sales-to-capital** (`New_Home_Page/datafile/capex.html`): the
   reinvestment denominator when modelling bookings × margin —
   reinvestment ≈ Δrevenue / sales-to-capital.
+- **Industry standard deviations** (`New_Home_Page/datafile/optvar.html`,
+  "Standard Deviations in Equity and Firm Value"): fallback vol legs for the
+  Phase 4 leverage gate's `tools.valuation.equity_option` run when a leg is
+  unobservable (untraded debt, thin equity history). Verified live
+  2026-08-20; static HTML table.
 
 ## Beyond the anchors: the rest of the site (indexed 2026-08-06)
 

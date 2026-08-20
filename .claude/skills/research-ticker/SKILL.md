@@ -352,6 +352,32 @@ Read the output honestly:
 - `refused` (exit 2) means the input was a category error — usually a
   loss-making base FCF. Go back to Phase 0.
 
+**The leverage gate: heavy debt changes the question.** When net debt runs
+above roughly half of enterprise value, or book equity is negative, or the
+filing carries going-concern language, a reverse DCF on the equity is
+answering the wrong question: limited liability makes that equity a **call
+option on the firm** (strike = the debt), and option arithmetic — not
+DCF-minus-debt — is what prices it. Run the lens and render its table in §4:
+
+```bash
+uv run python -m tools.valuation.equity_option \
+  --firm-value <EV-paired DCF of assets in place, or market EV> \
+  --debt-face <face incl. cumulated expected coupons, from the debt note> \
+  --duration <face-weighted maturity, years> --risk-free <rf> \
+  --equity-vol <sigma_e> --debt-vol <sigma_d> --debt-weight <D/(D+E)> \
+  [--market-cap <cap>]
+# exit 0 table · 2 refused. Debt face and maturities: the 10-K debt note.
+# Vol fallback when a leg is unobservable: the industry standard-deviation
+# page in references/damodaran-anchors.md (fetch live, cite as-of).
+```
+
+Read the table with the two inversions stated: here volatility is a
+shareholder asset (and a creditor cost), and a maturity extension is equity
+value. Equity trading far above DCF-minus-debt is not automatically
+mispriced — it may be time premium priced rationally, which is why bankrupt
+names keep positive equity value. The lens reframes; it never upgrades a
+verdict by itself, and §1 must say which frame governed the ownership call.
+
 **Check the precision of the implied return against the vol.** When the path-2
 ATM IV (or, on path 1, `iv30` — the tenor rule forbids treating one as the
 other, but either crossing the line is enough of a warning) exceeds 50%, quote

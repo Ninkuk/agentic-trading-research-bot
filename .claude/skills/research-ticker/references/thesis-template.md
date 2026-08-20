@@ -118,6 +118,11 @@ In order:
    brackets, followed by the liquidity-gate verdict (`FAILED → UNRELIABLE`
    where it fails) and the timing-check applicability line.
 
+6. Equity as option (levered names only — the Phase 4 leverage gate): the
+   `equity_option` table as a markdown table, the vol source named, and one
+   sentence saying which frame (DCF or option) governed §1's ownership
+   call. Omit the item entirely at normal leverage.
+
 When `reverse_dcf` refuses (exit 2), quote the refusal line and substitute
 the honest arithmetic (required-FCF inversion, capital structure, moneyness)
 — the section is never dropped. No listed options → say so; the table is
