@@ -157,3 +157,12 @@
 2026-08-19 CAAP UNPROVEN conditions=5 refuted=0 unknown=1 reopen=event:caap-aa2000-rebalancing-binding-terms
 2026-08-19 TEL SOUND conditions=6 refuted=0 unknown=1 reopen=2026-10-29:tel-fq4-fy27-guide-or-price-below-170
 2026-08-19 RL SOUND conditions=5 refuted=0 unknown=1 reopen=event:rl-price-below-300
+2026-08-19 BHF UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-12-06:bhf-outside-date-delaware-form-a-hearing-or-deal-termination
+2026-08-19 IEP UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-11-04:iep-q3-nav-per-unit-vs-price
+2026-08-19 JBGS SOUND conditions=3 refuted=0 unknown=1 reopen=2026-11-03:jbgs-q3-bond-collateral-and-post-trial-ruling
+2026-08-20 INTU SOUND conditions=7 refuted=0 unknown=0 reopen=2026-08-26:fy27-guide
+2026-08-20 ORI SOUND conditions=5 refuted=0 unknown=2 reopen=2026-10-22:ori-q3-reserve-development-and-ecm
+2026-08-20 PRI SOUND conditions=5 refuted=0 unknown=0 reopen=2026-11-05:pri-q3-sales-force-trend-and-adp-growth
+2026-08-20 OMAB SOUND conditions=6 refuted=0 unknown=1 reopen=2027-03-01:fy26-print-owner-fcf-traffic
+2026-08-20 BRC UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-09-04:brc-q4-fy27-first-pss-guide-or-price-below-80
+2026-08-20 WMT SOUND conditions=5 refuted=0 unknown=0 reopen=event:price-below-70-or-owner-fcf-25b
