@@ -135,18 +135,27 @@ def _iso(ddate: str | None) -> str:
 
 
 def parse_bulk(zip_bytes: bytes, tags) -> list:
-    """Optional --bulk: num.tsv joined to sub.tsv inside a quarterly ZIP,
-    filtered to curated tags, emitting the same fact-row shape. The 2009q1 ZIP is
-    a header-only placeholder (sub/num present but no fact rows) -> yields []."""
+    """Optional --bulk: num.txt joined to sub.txt inside a quarterly ZIP
+    (tab-delimited despite the .txt names — live-verified against 2026q2),
+    filtered to curated tags, emitting the same fact-row shape. Only
+    consolidated whole-company rows matching frames semantics are kept:
+    segments/coreg empty, qtrs 0 (instant) or 1 (quarterly duration) — a
+    qtrs=4 annual row shares (cik, tag, period_end, form) with the frames Q4
+    row and would clobber it. The 2009q1 ZIP is a header-only placeholder
+    (sub/num present but no fact rows) -> yields []."""
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
         subs = {}
-        with z.open("sub.tsv") as fh:
+        with z.open("sub.txt") as fh:
             for row in csv.DictReader(io.TextIOWrapper(fh, "utf-8"), delimiter="\t"):
                 subs[row["adsh"]] = row
         out = []
-        with z.open("num.tsv") as fh:
+        with z.open("num.txt") as fh:
             for row in csv.DictReader(io.TextIOWrapper(fh, "utf-8"), delimiter="\t"):
                 if row.get("tag") not in tags:
+                    continue
+                if row.get("segments") or row.get("coreg"):
+                    continue
+                if row.get("qtrs") not in ("0", "1"):
                     continue
                 sub = subs.get(row["adsh"])
                 if sub is None:

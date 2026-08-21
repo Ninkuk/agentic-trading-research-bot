@@ -131,19 +131,19 @@ def test_run_all_fail_writes_zero_snapshot(tmp_path, capsys):
 
 
 def _bulk_zip(cik, name, sic, value):
-    """A minimal quarterly financial-statement-data-set ZIP (sub.tsv ⋈ num.tsv)."""
+    """A minimal quarterly financial-statement-data-set ZIP (sub.txt ⋈ num.txt)."""
     sub = (
         "adsh\tcik\tname\tsic\tform\tperiod\tfy\tfp\tfiled\n"
         f"acc1\t{cik}\t{name}\t{sic}\t10-K\t20240928\t2024\tFY\t20241101\n"
     )
     num = (
-        "adsh\ttag\tversion\tddate\tqtrs\tuom\tvalue\n"
-        f"acc1\tNetIncomeLoss\tus-gaap/2024\t20240928\t4\tUSD\t{value}\n"
+        "adsh\ttag\tversion\tddate\tqtrs\tuom\tsegments\tcoreg\tvalue\tfootnote\n"
+        f"acc1\tNetIncomeLoss\tus-gaap/2024\t20240928\t1\tUSD\t\t\t{value}\t\n"
     )
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:
-        z.writestr("sub.tsv", sub)
-        z.writestr("num.tsv", num)
+        z.writestr("sub.txt", sub)
+        z.writestr("num.txt", num)
     return buf.getvalue()
 
 
@@ -175,7 +175,7 @@ def test_run_bulk_enumerates_quarters_skips_unpublished_labels_from_sub(tmp_path
     assert calls == [(2025, 4), (2026, 1), (2026, 2)]  # inclusive to current qtr
     assert (ncomp, nfact) == (1, 1)
     conn = sqlite3.connect(db_path)
-    # company labeled from sub.tsv even with an empty ticker map
+    # company labeled from sub.txt even with an empty ticker map
     assert conn.execute("SELECT name, sic FROM companies WHERE cik=320193").fetchone() == (
         "APPLE INC",
         "3571",
@@ -184,6 +184,33 @@ def test_run_bulk_enumerates_quarters_skips_unpublished_labels_from_sub(tmp_path
         "10-K",
         100.0,
     )
+
+
+def test_run_bulk_skips_malformed_zip_and_continues(tmp_path, capsys):
+    # 2025q4 serves a ZIP without sub/num members (the 2026-08-20 outage shape);
+    # its quarter is skipped with a warning and the next quarter still lands.
+    bad = io.BytesIO()
+    with zipfile.ZipFile(bad, "w") as z:
+        z.writestr("readme.htm", "<html/>")
+    zips = {
+        (2025, 4): bad.getvalue(),
+        (2026, 1): _bulk_zip(320193, "APPLE INC", "3571", 100),
+    }
+
+    def fetch_bulk(year, quarter, get=None):
+        return zips.get((year, quarter))
+
+    _, ncomp, nfact = runmod.run(
+        str(tmp_path / "f.db"),
+        only=["NetIncomeLoss"],
+        bulk=True,
+        bulk_start="2025q4",
+        fetch_bulk=fetch_bulk,
+        fetch_map=lambda: {},
+        now_iso=NOW,
+    )
+    assert (ncomp, nfact) == (1, 1)
+    assert "skipping bulk 2025q4: KeyError" in capsys.readouterr().err
 
 
 def test_run_bulk_default_start_is_latest_completed_quarter(tmp_path):

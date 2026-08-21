@@ -46,20 +46,20 @@ def _ingest_bulk(conn, fetch_bulk, tag_set, ticker_map, ciks_touched, now_iso, b
     bulk_start (default: the most recent completed quarter) through the current
     quarter, parse each into facts, and upsert them grouped by CIK. Unpublished
     quarters (404 -> None) and empty placeholders (parse_bulk -> []) are skipped.
-    Company labels (name/sic) come from the ZIP's sub.tsv; ticker from the map.
+    Company labels (name/sic) come from the ZIP's sub.txt; ticker from the map.
     Returns the number of fact rows written. Skip-and-continue per quarter."""
     start = _parse_quarter(bulk_start) if bulk_start else _parse_quarter(_default_period(now_iso))
     fact_total = 0
     for year, quarter in _quarters(start, _current_quarter(now_iso)):
         try:
             blob = fetch_bulk(year, quarter)
+            # None = unpublished (future) quarter; parse inside the try so one
+            # malformed ZIP skips its quarter instead of killing the run
+            rows = [] if blob is None else fetch.parse_bulk(blob, tag_set)
         except Exception as e:
             conn.rollback()
             print(f"warning: skipping bulk {year}q{quarter}: {type(e).__name__}", file=sys.stderr)
             continue
-        if blob is None:  # unpublished (future) quarter
-            continue
-        rows = fetch.parse_bulk(blob, tag_set)
         by_cik: dict[int, list] = {}
         for r in rows:
             by_cik.setdefault(r["cik"], []).append(r)

@@ -136,17 +136,25 @@ def test_parse_bulk_joins_num_and_sub_filters_tags_skips_empty():
         "adsh\tcik\tname\tsic\tform\tperiod\tfy\tfp\tfiled\n"
         "acc1\t320193\tAPPLE INC\t3571\t10-K\t20240928\t2024\tFY\t20241101\n"
     )
+    # only the consolidated quarterly row survives: annual (qtrs=4), segment,
+    # and co-registrant rows all collide with frames rows on the facts PK
     num = (
-        "adsh\ttag\tversion\tddate\tqtrs\tuom\tvalue\n"
-        "acc1\tNetIncomeLoss\tus-gaap/2024\t20240928\t4\tUSD\t93736000000\n"
-        "acc1\tIgnoredTag\tus-gaap/2024\t20240928\t4\tUSD\t1\n"
+        "adsh\ttag\tversion\tddate\tqtrs\tuom\tsegments\tcoreg\tvalue\tfootnote\n"
+        "acc1\tNetIncomeLoss\tus-gaap/2024\t20240928\t1\tUSD\t\t\t14736000000\t\n"
+        "acc1\tNetIncomeLoss\tus-gaap/2024\t20240928\t4\tUSD\t\t\t93736000000\t\n"
+        "acc1\tNetIncomeLoss\tus-gaap/2024\t20240928\t1\tUSD\tSegment=Americas;\t\t5000\t\n"
+        "acc1\tNetIncomeLoss\tus-gaap/2024\t20240928\t1\tUSD\t\tSubCo\t5000\t\n"
+        "acc1\tAssets\tus-gaap/2024\t20240928\t0\tUSD\t\t\t364980000000\t\n"
+        "acc1\tIgnoredTag\tus-gaap/2024\t20240928\t1\tUSD\t\t\t1\t\n"
     )
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:
-        z.writestr("sub.tsv", sub)
-        z.writestr("num.tsv", num)
-    rows = fetch.parse_bulk(buf.getvalue(), {"NetIncomeLoss"})
-    assert len(rows) == 1
+        z.writestr("sub.txt", sub)
+        z.writestr("num.txt", num)
+    rows = fetch.parse_bulk(buf.getvalue(), {"NetIncomeLoss", "Assets"})
+    assert [(r["tag"], r["value"]) for r in rows] == [
+        ("NetIncomeLoss", 14736000000.0),
+        ("Assets", 364980000000.0),  # instant tags carry qtrs=0
+    ]
     assert rows[0]["cik"] == 320193 and rows[0]["form"] == "10-K"
-    assert rows[0]["value"] == 93736000000.0
     assert rows[0]["period_end"] == "2024-09-28"  # ddate normalized to ISO
