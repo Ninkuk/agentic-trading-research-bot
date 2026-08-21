@@ -12,13 +12,15 @@ against scorer.db directly.
 
 ## Procedure
 
-1. Since-bound:
-
-   ```bash
-   uv run python main.py journal --db data/scorer.db --last-run
-   ```
-
-   Prints an ISO timestamp or `never` (→ use 7 days ago).
+1. Sync bound: a **fixed 72-hour lookback** — UTC now minus 72h, as full
+   ISO. Never derive the bound from `--last-run`: EVERY ingest advances it,
+   so a verdict-only or zero-fill ingest moves it past fills that were never
+   fetched and the next sync silently skips them (this stranded the ZTO/ORI/
+   PRI fills of 2026-08-19/20 until an interactive re-sync). The overlap is
+   safe — `order_ref` idempotency counts re-seen fills as duplicates — and
+   72h self-heals a weekend of wedged slots. If the journal has been down
+   longer than 72h (STALE lines in `logs/journal.log`, or a gap in
+   `journal_runs.ran_at`), widen the lookback to cover the whole gap.
 2. Fetch via the Robinhood MCP (read-only tools):
    - `get_accounts` → pin the **"Agentic" account (number ending 1936)**;
      if no account matches, stop and report — never fall back.
@@ -125,7 +127,7 @@ against scorer.db directly.
      **aggregate, bucketed TOTALS only, never individual trades** (its own
      schema says so), so it can answer "do the totals agree" and nothing
      finer.
-   - **Mind the three clocks.** The `--last-run` bound from step 1 is a UTC
+   - **Mind the three clocks.** The lookback bound from step 1 is a UTC
      ISO timestamp; `get_realized_pnl`'s `start_date`/`end_date` are
      `YYYY-MM-DD` interpreted at midnight **US/Eastern by default**; and this
      repo's calendar-date convention is **Phoenix** (a CLAUDE.md invariant —
