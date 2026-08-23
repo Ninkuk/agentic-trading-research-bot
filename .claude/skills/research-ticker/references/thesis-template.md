@@ -74,6 +74,13 @@ ownership call from here):
   evidence behind the tag. This list is mandatory — a count whose conditions
   are never enumerated is unauditable, and reopen runs need the list to
   sweep against.
+- Then the factor line, always present, this exact lead-in (overlap reads
+  grep it):
+  `**Dominant shared risk factor:** <factor> — shared by N of M held names
+  (<tickers>) · K unlabelled`. `<factor>` is factor grain, never a sector
+  label; `idiosyncratic` stands alone with no overlap clause. When holdings
+  cannot be read, the overlap clause is replaced by "holdings unavailable in
+  this session".
 
 ## §2 Business
 

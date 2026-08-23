@@ -199,6 +199,21 @@ Then, explicitly:
   whether it is a **break** (the story is over — sell) or a **shift** (an
   input moved — revalue); the reopen trigger inherits the classification.
 - **Mark every UNKNOWN.** Never fill a hole with a plausible number.
+- **Name the dominant shared risk factor, and read the book against it.**
+  One line: the single exogenous condition under which this name and other
+  held names fail *together* — factor grain ("SMB software spend", "AI capex
+  pace", "China supply chain"), never a sector label. `idiosyncratic` is an
+  admissible answer and an attackable claim like any other. Then the overlap:
+  list held symbols
+  (`sqlite3 "file:data/portfolio.db?mode=ro" "SELECT symbol FROM v_latest_positions"`),
+  grep each holding's newest `research/<TICKER>-*.md` for its
+  `**Dominant shared risk factor:**` line, and count the holdings whose
+  factor fails in the same scenario as this one — different wording or a
+  different grain does not break a match. Name the matches; count holdings with no
+  thesis or no factor line as unlabelled — visible, never silently dropped.
+  Unattended runs cannot read portfolio.db (the headless slot has no grant):
+  write "holdings unavailable in this session" — a stated refusal, not an
+  omitted line.
 
 ## Phase 4 — What return is already priced in?
 

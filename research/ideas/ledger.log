@@ -171,3 +171,14 @@
 2026-08-17 8EXF2YOei3U growth-persistence-base-rate DEAD gate=1:provenance
 2026-08-17 8EXF2YOei3U tangential-competence DEAD gate=7:priority
 2026-08-17 8EXF2YOei3U buffett-bought-google DEAD gate=1:provenance
+2026-08-23 SXky7-jHYBg goldman-hitrate-50pct DEAD gate=1:provenance
+2026-08-23 SXky7-jHYBg independent-bond-loss-quantiles DEAD gate=1:provenance
+2026-08-23 SXky7-jHYBg opportunity-persistence-weeks DEAD gate=1:provenance
+2026-08-23 SXky7-jHYBg investment-matching-principle DEAD gate=2:duplication
+2026-08-23 SXky7-jHYBg default-plus-riskfree-hurdle DEAD gate=2:duplication
+2026-08-23 SXky7-jHYBg sizing-conditional-on-book DEAD gate=2:duplication
+2026-08-23 SXky7-jHYBg outcome-blind-single-bets DEAD gate=2:duplication
+2026-08-23 SXky7-jHYBg binary-bet-wipeout-math DEAD gate=7:priority
+2026-08-23 SXky7-jHYBg reverse-dcf-scenario-grid DEAD gate=7:priority
+2026-08-23 SXky7-jHYBg shared-risk-factor-audit SALVAGED gate=5:architecture
+2026-08-23 SXky7-jHYBg shared-risk-factor-audit-salvaged SURVIVED
