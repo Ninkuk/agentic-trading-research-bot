@@ -52,7 +52,12 @@ its home regulator (SEDAR+, etc.), not SEC EDGAR. The live probe is then your
 the latest call (Phase 2).
 
 Then read `data/*.db` read-only, as the **point-in-time record** — what was
-known when, not what is true now:
+known when, not what is true now. Invoke sqlite3 via the read-only URI,
+written EXACTLY as `sqlite3 file:data/<name>.db?mode=ro "SELECT ..."` —
+unquoted URI, so the command matches the headless slot's allowlist pattern
+`Bash(sqlite3 file:data/<name>.db?mode=ro *)` (plain `sqlite3 data/<name>.db`
+or a quoted `"file:..."` would NOT match and dies headless on a permission
+prompt; a writable sqlite3 is deliberately not grantable):
 
 - `data/sec_fundamentals.db` — `v_screener` for `net_margin`, `roe`,
   `debt_to_equity`, revenue and income history; `companies` for ticker→CIK.

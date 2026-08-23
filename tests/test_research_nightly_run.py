@@ -29,13 +29,26 @@ def test_allowlist_bash_entries_are_enumerated_not_catchall():
     allowed_bash = {
         "Bash(uv run python -m sources.screeners.stock_analysis_screener.probe *)",
         "Bash(uv run python -m tools.valuation.reverse_dcf *)",
+        "Bash(uv run python -m tools.valuation.equity_option *)",
         "Bash(uv run python -m tools.options.implied_move *)",
         "Bash(uv run python main.py journal *)",
+        "Bash(sqlite3 file:data/sec_fundamentals.db?mode=ro *)",
+        "Bash(sqlite3 file:data/stocks.db?mode=ro *)",
+        "Bash(sqlite3 file:data/earnings.db?mode=ro *)",
+        "Bash(sqlite3 file:data/composite.db?mode=ro *)",
+        "Bash(sqlite3 file:data/options.db?mode=ro *)",
     }
     bash_entries = [e for e in entries if e.startswith("Bash(")]
     assert bash_entries
     for entry in bash_entries:
         assert entry in allowed_bash
+    for entry in bash_entries:
+        if entry.startswith("Bash(sqlite3"):
+            # sqlite is grantable only as a per-DB read-only URI — never a
+            # bare path (writable) and never scorer.db (dispatcher-only).
+            assert entry.startswith("Bash(sqlite3 file:data/")
+            assert "?mode=ro *)" in entry
+            assert "scorer.db" not in entry
 
 
 def test_build_command_shape():

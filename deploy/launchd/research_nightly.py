@@ -90,8 +90,18 @@ ALLOWED_TOOLS = ",".join(
         "WebSearch",
         "Bash(uv run python -m sources.screeners.stock_analysis_screener.probe *)",
         "Bash(uv run python -m tools.valuation.reverse_dcf *)",
+        "Bash(uv run python -m tools.valuation.equity_option *)",
         "Bash(uv run python -m tools.options.implied_move *)",
         "Bash(uv run python main.py journal *)",
+        # Point-in-time repo DBs the skill reads. URI form ONLY — the allowlist
+        # matches the literal command prefix, so plain `sqlite3 data/...` (and a
+        # quoted "file:...") stays denied; a writable sqlite3 is deliberately
+        # not grantable. The skill prose quotes the exact spelling.
+        "Bash(sqlite3 file:data/sec_fundamentals.db?mode=ro *)",
+        "Bash(sqlite3 file:data/stocks.db?mode=ro *)",
+        "Bash(sqlite3 file:data/earnings.db?mode=ro *)",
+        "Bash(sqlite3 file:data/composite.db?mode=ro *)",
+        "Bash(sqlite3 file:data/options.db?mode=ro *)",
         "mcp__claude_ai_Robinhood_MCP__get_equity_quotes",
         "mcp__claude_ai_Robinhood_MCP__get_equity_historicals",
         "mcp__claude_ai_Robinhood_MCP__get_equity_fundamentals",
