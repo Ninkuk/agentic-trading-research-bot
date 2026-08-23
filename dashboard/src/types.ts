@@ -82,7 +82,7 @@ export const KICKERS: readonly Kicker[] = [
 // verdict/tiles/columns/rows/text_lines depending on its exporter (see
 // data.py's per-section return shapes: tile sections like `regime`/
 // `book-heat`, table sections like `scorecard`/`signal-efficacy`, and the
-// text-only `plan-004-scorecard`).
+// text-only `trader-scorecard`).
 // One headed block of a section's long-form explainer, shown in the About
 // modal (data.py's SECTION_EXPORTERS `about` column).
 export interface AboutBlock {

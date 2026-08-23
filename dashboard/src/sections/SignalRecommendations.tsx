@@ -1,4 +1,4 @@
-// Track record (id "plan-001-report"): the verdict on each signal, graded
+// Track record (id "signal-recommendations"): the verdict on each signal, graded
 // against its own base rate. Same lab treatment as Signal efficacy — CI
 // columns fold into the stacked hit-rate cell, recommendation renders as a
 // tinted pill, signed excess as a tinted percent — all via the shared
@@ -20,7 +20,7 @@ export function SignalRecommendations({ sec, glossary }: SectionComponentProps) 
     <DataTable
       columns={visibleColumns(sec.columns ?? [])}
       rows={sec.rows ?? []}
-      storageKey="plan-001-report"
+      storageKey="signal-recommendations"
       glossary={glossary}
       renderCell={sectionCell}
     />

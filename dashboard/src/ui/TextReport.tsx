@@ -1,5 +1,5 @@
 // Structured rendering for text_lines report sections (today only the
-// Trader scorecard). The plan-004 report format is stable:
+// Trader scorecard). The scorecard report format is stable:
 //
 //   === <Title — period> ===
 //   <blank>

@@ -223,12 +223,12 @@ CAVEATS: dict[str, str] = {
         "have resolved violently or sat unchanged for months. No measured "
         "forward-return evidence yet."
     ),
-    "plan-001-report": (
+    "signal-recommendations": (
         "A backtest replay against ALFRED vintages, not live trading. Read "
         "excess and beats-baseline rather than hit-rate alone, and remember "
         "this is one history, not a distribution."
     ),
-    "plan-004-scorecard": (
+    "trader-scorecard": (
         "Grades the human's own decisions from the journal. Coverage is "
         "whatever got journaled, not a random sample of every flag shown."
     ),

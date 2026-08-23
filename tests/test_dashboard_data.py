@@ -283,14 +283,14 @@ def test_basis_breaks_exports_rows_and_no_caveat(populated_data_dir):
 
 
 def test_recommendation_section_verdict_counts(populated_data_dir):
-    sec = data.export_data(populated_data_dir, NOW)["sections"]["plan-001-report"]
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["signal-recommendations"]
     assert sec["verdict"] is None or sec["verdict"]["tone"] in ("on", "off", "mid")
     assert any(r["signal_id"] == "sig_test_a" for r in sec["rows"])
     assert sec["caveat"]
 
 
 def test_trader_scorecard_is_text(populated_data_dir):
-    sec = data.export_data(populated_data_dir, NOW)["sections"]["plan-004-scorecard"]
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["trader-scorecard"]
     assert "text_lines" in sec and isinstance(sec["text_lines"], list)
     assert any("Trader Decision-Quality Scorecard" in line for line in sec["text_lines"])
     assert any("acted" in line for line in sec["text_lines"])
@@ -409,7 +409,7 @@ def test_research_reopens_exports_relative_thesis_paths(tmp_path):
     )
 
 
-# --- Task 8: hero bullets + ticker drill-down -------------------------------
+# --- hero bullets + ticker drill-down -------------------------------
 
 
 def test_hero_bullets_present_on_populated(populated_data_dir):

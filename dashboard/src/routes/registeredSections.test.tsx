@@ -1,4 +1,4 @@
-// Parametrized smoke test for Task 14: every section id the fixture carries
+// Parametrized smoke test: every section id the fixture carries
 // (other than "candidates", covered separately by Main.test.tsx's error
 // case) must render through Main without throwing, and show one of the
 // forms SectionShell/its registered component can produce — a table, a
@@ -57,7 +57,7 @@ test.each(ids)('section "%s" renders via its registered component without throwi
       expect(region?.querySelectorAll(".tile").length).toBeGreaterThan(0);
       break;
     case "text":
-      // TextReport parses the plan-004 report into tables; its fallback for
+      // TextReport parses the scorecard report into tables; its fallback for
       // an unparseable format is the raw <pre> — accept either rendering.
       expect(region?.querySelector("table, pre")).not.toBeNull();
       break;

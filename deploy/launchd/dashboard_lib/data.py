@@ -875,7 +875,7 @@ def _signal_recommendation(conn: sqlite3.Connection, now_iso: str) -> dict[str, 
         "verdict": narrative.efficacy_verdict(keep, watch, anti),
         "columns": _SIGNAL_RECOMMENDATION_COLUMNS,
         "rows": [dict(r) for r in rows],
-        "caveat": narrative.CAVEATS.get("plan-001-report"),
+        "caveat": narrative.CAVEATS.get("signal-recommendations"),
         "empty": "insufficient evidence for every signal so far, which is"
         " expected of a young scorer; fills in once a signal's evidence"
         " crosses the reliability floor",
@@ -897,7 +897,7 @@ def _dff_series(data_dir: str) -> list[tuple[str, float]]:
 
 
 def _trader_scorecard(data_dir: str, now_iso: str) -> dict[str, Any]:
-    """Reuses the plan-004 report verbatim (single source of truth,
+    """Reuses the scorecard report verbatim (single source of truth,
     scorer/scorecard.py's own `build_report`) — a plain-text report, not a
     table, so the export is `text_lines` only: no `columns`/`rows`, no
     `empty` (the report always renders a full structure, even a thin one,
@@ -911,14 +911,14 @@ def _trader_scorecard(data_dir: str, now_iso: str) -> dict[str, Any]:
         conn.close()
     return {
         "text_lines": report.split("\n"),
-        "caveat": narrative.CAVEATS.get("plan-004-scorecard"),
+        "caveat": narrative.CAVEATS.get("trader-scorecard"),
     }
 
 
 def _equity_curve_body(conn: sqlite3.Connection, dff: list[tuple[str, float]]) -> dict[str, Any]:
     """Portfolio-vs-SPY growth-of-$100 chart data. Reuses the scorecard's own
     curve/trim/orphan functions (single source of truth) so this chart can
-    never disagree with the plan-004 text report. The anchor row's own leg is
+    never disagree with the scorecard text report. The anchor row's own leg is
     excluded (the scorecard's [1:] rule); interior weekend rows compound the
     portfolio index but export spy=None so the SPY line connects only across
     actual closes. Orphan transfers refuse with an explicit error body —
@@ -1618,7 +1618,7 @@ SECTION_EXPORTERS: list[
         ],
     ),
     (
-        "plan-001-report",
+        "signal-recommendations",
         "Signal recommendations",
         "scorer.db",
         _signal_recommendation,
@@ -1648,7 +1648,7 @@ SECTION_EXPORTERS: list[
         ],
     ),
     (
-        "plan-004-scorecard",
+        "trader-scorecard",
         "Trader scorecard",
         "scorer + fred DBs",
         _trader_scorecard,
@@ -2096,7 +2096,7 @@ def export_data(data_dir: str, now_iso: str, repo_root: str | None = None) -> di
 
 
 def export_json(data_dir: str, now_iso: str, repo_root: str | None = None) -> str:
-    """Compact-serialized `export_data(...)` — Task 9's entrypoint consumes
+    """Compact-serialized `export_data(...)` — dashboard.py consumes
     this exact name/signature so the CLI and tests never diverge on
     serialization (separators, key order via dict insertion order)."""
     return json.dumps(export_data(data_dir, now_iso, repo_root), separators=(",", ":"))

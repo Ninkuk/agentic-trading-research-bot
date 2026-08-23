@@ -5,7 +5,7 @@
 // raw-fraction columns, and the keep/watch/anti-signal verdict renders as
 // a tinted pill (text is always the primary channel — color never carries
 // meaning alone). Column dropping + per-key formatting both come from
-// ui/sectionCells.tsx so this table and plan-001's stay in lockstep.
+// ui/sectionCells.tsx so this table and signal-recommendations' stay in lockstep.
 
 import type { Glossary, Section } from "../types";
 import { DataTable } from "../ui/DataTable";

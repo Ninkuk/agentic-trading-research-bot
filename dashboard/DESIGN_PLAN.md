@@ -21,7 +21,7 @@ Lab preview verified in-browser before finalize; lab artifacts deleted on comple
   without it Recharts baselines areas at 0 and a series near 14 fills solid.
 - Trader scorecard: text_lines parsed client-side (`TextReport`) into titled
   subsections + tables, `<pre>` fallback on parse failure. Class fix (later,
-  Python side): the exporter should emit structured JSON for plan-004.
+  Python side): the exporter should emit structured JSON for the trader scorecard.
 - Designed degraded states: empty (dashed box + exporter's own message),
   error (red mono alert), both inside the normal card shell.
 

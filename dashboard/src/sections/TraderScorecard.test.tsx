@@ -5,9 +5,9 @@ import { TraderScorecard } from "./TraderScorecard";
 
 const doc = fixture as unknown as DashboardDoc;
 
-test("parses the plan-004 report into subsection tables (2026-07 redesign)", () => {
+test("parses the scorecard report into subsection tables", () => {
   const { container } = render(
-    <TraderScorecard sec={doc.sections["plan-004-scorecard"]} glossary={doc.glossary} />,
+    <TraderScorecard sec={doc.sections["trader-scorecard"]} glossary={doc.glossary} />,
   );
   // The report's stable format (=== title ===, pipe blocks) parses into
   // real tables — the block headings from scorer/scorecard.py's
@@ -23,7 +23,7 @@ test("parses the plan-004 report into subsection tables (2026-07 redesign)", () 
 
 test("an unparseable report falls back to the verbatim <pre>", () => {
   const sec = {
-    ...doc.sections["plan-004-scorecard"],
+    ...doc.sections["trader-scorecard"],
     text_lines: ["free-form line one", "free-form line two"],
   };
   const { container } = render(<TraderScorecard sec={sec} glossary={doc.glossary} />);

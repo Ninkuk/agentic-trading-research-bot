@@ -370,7 +370,7 @@
       "caveat": null,
       "empty": "no basis breaks detected — an empty table is the good outcome; fills only when a price move looks like a split or a bad tick"
     },
-    "plan-001-report": {
+    "signal-recommendations": {
       "title": "Signal recommendations",
       "kicker": "Track record",
       "note": "The verdict on each signal, graded against the base rate.",
@@ -393,7 +393,7 @@
       "caveat": "A backtest replay against ALFRED vintages, not live trading — read excess/beats-baseline, never hit-rate alone.",
       "empty": "insufficient evidence for every signal (young scorer) — expected; fills in once a signal's evidence crosses the reliability floor"
     },
-    "plan-004-scorecard": {
+    "trader-scorecard": {
       "title": "Trader scorecard",
       "kicker": "Track record",
       "note": "A plain-text report grading past decision quality.",

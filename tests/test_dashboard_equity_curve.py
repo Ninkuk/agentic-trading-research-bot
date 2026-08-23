@@ -163,6 +163,6 @@ def test_trader_scorecard_text_includes_cash(tmp_path):
         spy=[("2026-07-31", 630.0), ("2026-08-05", 640.0)],
     )
     _seed_fred(tmp_path, [("2026-07-31", 3.6)])
-    lines = data.export_data(str(tmp_path), NOW)["sections"]["plan-004-scorecard"]["text_lines"]
+    lines = data.export_data(str(tmp_path), NOW)["sections"]["trader-scorecard"]["text_lines"]
     inception = next(ln for ln in lines if ln.strip().startswith("inception"))
     assert inception.split("|")[4].strip() == "0.05%"  # (1.0001)^5 - 1

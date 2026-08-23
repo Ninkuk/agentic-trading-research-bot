@@ -1,4 +1,4 @@
-// Track record (id "plan-004-scorecard"): the plan-004 plain-text report
+// Track record (id "trader-scorecard"): the scorecard plain-text report
 // (scorer/scorecard.py's `build_report`), parsed into titled subsections +
 // tables by TextReport — data.py's `_trader_scorecard` docstring is
 // explicit that this is `text_lines` only, never columns/rows, and carries
