@@ -841,10 +841,9 @@ def _weekly_dates(n):
 
 
 def test_cftc_mm_tail_emits_only_markets_in_their_own_tail(tmp_path):
-    """The class-average signal hid sugar's June 2026 washout (softs averaged
-    33.4 while sugar sat at 11.6); this annotation reports each market sitting
-    in the tail of its OWN 3-year range, so a single-market extreme is
-    visible. Both tails emit; mid-range markets do not."""
+    """A class average cannot see one market's extreme; the annotation
+    reports each market against its own 3-year range. Both tails emit;
+    mid-range markets do not."""
     dates = _weekly_dates(60)
     # net ramps DOWN each week -> latest row is the range low (index 0)
     washout = [(d, 0, 100 + 10 * i) for i, d in enumerate(dates)]

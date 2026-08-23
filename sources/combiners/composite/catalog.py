@@ -401,17 +401,12 @@ SIGNALS: list[dict[str, Any]] = [
         """,
     },
     {
-        # Per-market positioning tails. The class-average signals above
-        # cannot see a single-market washout (2026-06-23: sugar at COT
-        # index 11.6, cocoa 4.7, yet softs averaged 33.4 -> score 0), so
-        # this row names each market sitting in the tail of its OWN 3-year
-        # managed-money range. ANNOTATION ONLY (score 0, market grain, in
-        # db.INFORMATIONAL_SIGNALS, not in REGIME_FIELDS): of the two June
-        # 2026 softs tails, sugar resolved into a +226k-contract fund flip
-        # and cocoa did nothing for nine weeks — a tail marks a market to
-        # WATCH, not a direction. 15/85 is a display filter (what is worth
-        # a line), not a calibrated threshold; the year-of-history floor
-        # keeps a young market from pinning its own range ends.
+        # Per-market positioning tails: the class-average signals above
+        # cannot see one market's extreme inside a mixed class. Annotation
+        # only (db.INFORMATIONAL_SIGNALS) — a tail marks a market to watch,
+        # not a direction. 15/85 is a display filter, not a calibrated
+        # threshold; the year-of-history floor keeps a young market from
+        # pinning its own range ends.
         "signal_id": "cftc_mm_tail",
         "db": "cftc.db",
         "grain": "market",
