@@ -209,6 +209,33 @@ def _build_composite_db(path, extra_tickers: list[dict] | None = None):
             )
         ],
     )
+    # Two COT positioning tails on the latest snapshot (the cot-tails
+    # section reads these; market grain never reaches ticker scoring, so
+    # every other section is unaffected).
+    composite_db.write_signal_values(
+        conn,
+        latest,
+        [
+            dict(
+                signal_id="cftc_mm_tail",
+                grain="market",
+                entity="SUGAR NO. 11 - ICE FUTURES U.S.",
+                raw_value=11.6,
+                score=0,
+                obs_date="2026-06-23",
+                staleness_days=14.0,
+            ),
+            dict(
+                signal_id="cftc_mm_tail",
+                grain="market",
+                entity="COTTON NO. 2 - ICE FUTURES U.S.",
+                raw_value=91.2,
+                score=0,
+                obs_date="2026-06-23",
+                staleness_days=14.0,
+            ),
+        ],
+    )
     # PLAIN1: one bullish signal -> score_sum 1, total 1 -> not flagged.
     composite_db.write_signal_values(
         conn,

@@ -218,6 +218,12 @@ CAVEATS: dict[str, str] = {
         "These flags haven't reached their grading horizon yet, so nothing "
         "here is a result; it's a worklist."
     ),
+    "cot-tails": (
+        "A tail marks a market to watch, not a trade: of June 2026's two "
+        "softs tails, sugar's resolved into a violent fund flip and cocoa's "
+        "deeper one sat unchanged for nine weeks. No measured forward-return "
+        "evidence yet."
+    ),
     "plan-001-report": (
         "A backtest replay against ALFRED vintages, not live trading. Read "
         "excess and beats-baseline rather than hit-rate alone, and remember "

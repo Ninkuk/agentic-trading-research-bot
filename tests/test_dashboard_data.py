@@ -263,6 +263,19 @@ def test_pending_cap_preserves_total_count(tmp_path):
     assert len(sec["rows"]) == 100
 
 
+def test_cot_tails_exports_tail_rows_washouts_first(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["cot-tails"]
+    assert [r["market"] for r in sec["rows"]] == [
+        "SUGAR NO. 11 - ICE FUTURES U.S.",
+        "COTTON NO. 2 - ICE FUTURES U.S.",
+    ]
+    sugar, cotton = sec["rows"]
+    assert sugar["cot_index"] == 11.6 and sugar["side"] == "washed-out short"
+    assert cotton["cot_index"] == 91.2 and cotton["side"] == "crowded long"
+    assert sugar["report_date"] == "2026-06-23"
+    assert sec["caveat"]  # uncalibrated watch signal — must carry its caveat
+
+
 def test_basis_breaks_exports_rows_and_no_caveat(populated_data_dir):
     sec = data.export_data(populated_data_dir, NOW)["sections"]["basis-breaks"]
     assert any(r["symbol"] == "ACME" for r in sec["rows"])

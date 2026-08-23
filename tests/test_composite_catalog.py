@@ -787,3 +787,109 @@ def test_ftd_persistent_still_emits_its_raw_value(tmp_path):
         c.close()
     assert isinstance(rows, list)
     assert "streak_days" in by_id["ftd_persistent"]["sql"]
+
+
+# --- cftc_mm_tail: per-market positioning tails -----------------------------
+
+
+def _cftc_tail_extract(tmp_path, markets):
+    """markets: list of (code, name, [(report_date, mm_long, mm_short), ...])."""
+    from sources.screeners.cftc_screener import catalog as cftc_catalog
+    from sources.screeners.cftc_screener import db as cftc_db
+
+    path = str(tmp_path / "cftc.db")
+    conn = cftc_db.connect(path)
+    cftc_db.ensure_schema(conn)
+    for code, name, series in markets:
+        cftc_db.upsert_markets(
+            conn,
+            [{"code": code, "name": name, "asset_class": "softs"}],
+            "2026-06-23T00:00:00+00:00",
+        )
+        cftc_db.write_family(
+            conn,
+            cftc_catalog.DISAGG,
+            code,
+            [
+                {
+                    "code": code,
+                    "report_date": d,
+                    "mm_long": lo,
+                    "mm_short": sh,
+                    "open_interest": 1000,
+                }
+                for d, lo, sh in series
+            ],
+        )
+    conn.commit()
+    conn.close()
+
+    by_id = {s["signal_id"]: s for s in catalog.SIGNALS}
+    c = sqlite3.connect(":memory:", uri=True)
+    try:
+        fetch.attach_ro(c, path)
+        return fetch.extract(c, by_id["cftc_mm_tail"], today="2026-06-24")
+    finally:
+        c.close()
+
+
+def _weekly_dates(n):
+    from datetime import date, timedelta
+
+    start = date(2025, 4, 1)
+    return [(start + timedelta(weeks=i)).isoformat() for i in range(n)]
+
+
+def test_cftc_mm_tail_emits_only_markets_in_their_own_tail(tmp_path):
+    """The class-average signal hid sugar's June 2026 washout (softs averaged
+    33.4 while sugar sat at 11.6); this annotation reports each market sitting
+    in the tail of its OWN 3-year range, so a single-market extreme is
+    visible. Both tails emit; mid-range markets do not."""
+    dates = _weekly_dates(60)
+    # net ramps DOWN each week -> latest row is the range low (index 0)
+    washout = [(d, 0, 100 + 10 * i) for i, d in enumerate(dates)]
+    # net ramps UP each week -> latest row is the range high (index 100)
+    crowded = [(d, 100 + 10 * i, 0) for i, d in enumerate(dates)]
+    # early extremes, latest row dead-centre (index ~50)
+    mid = [(dates[0], 0, 1000), (dates[1], 1000, 0)] + [(d, 500, 500) for d in dates[2:]]
+
+    rows = _cftc_tail_extract(
+        tmp_path,
+        [
+            ("SUG", "SUGAR NO. 11 - ICE FUTURES U.S.", washout),
+            ("CRWD", "CROWDED - TEST EXCHANGE", crowded),
+            ("MID", "MIDLING - TEST EXCHANGE", mid),
+        ],
+    )
+    by_entity = {r["entity"]: r for r in rows}
+    assert set(by_entity) == {
+        "SUGAR NO. 11 - ICE FUTURES U.S.",
+        "CROWDED - TEST EXCHANGE",
+    }
+    low = by_entity["SUGAR NO. 11 - ICE FUTURES U.S."]
+    assert low["score"] == 0 and low["grain"] == "market"
+    assert low["raw_value"] <= 15
+    assert low["obs_date"] == _weekly_dates(60)[-1]
+    assert by_entity["CROWDED - TEST EXCHANGE"]["raw_value"] >= 85
+
+
+def test_cftc_mm_tail_requires_a_year_of_history(tmp_path):
+    """A market with a thin report history pins its own range ends, so its
+    index reads 0 or 100 spuriously — under a year of weekly reports is
+    not evidence of a tail."""
+    dates = _weekly_dates(10)
+    thin = [(d, 0, 100 + 10 * i) for i, d in enumerate(dates)]
+    rows = _cftc_tail_extract(tmp_path, [("THIN", "THIN - TEST EXCHANGE", thin)])
+    assert rows == []
+
+
+def test_cftc_mm_tail_is_market_grain_informational():
+    """Never votes, never fans out through the asset-class crosswalk, never
+    feeds the regime row — annotation until a measured calibration pass."""
+    from sources.combiners.composite import db as composite_db
+
+    by_id = {s["signal_id"]: s for s in catalog.SIGNALS}
+    sig = by_id["cftc_mm_tail"]
+    assert sig["grain"] == "market"
+    assert "cftc_mm_tail" not in catalog.REGIME_FIELDS
+    assert "cftc_mm_tail" in composite_db.INFORMATIONAL_SIGNALS

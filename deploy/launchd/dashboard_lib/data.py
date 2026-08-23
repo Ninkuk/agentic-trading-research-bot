@@ -796,6 +796,37 @@ _BASIS_BREAKS_COLUMNS: list[dict[str, Any]] = [
 ]
 
 
+_COT_TAILS_COLUMNS: list[dict[str, Any]] = [
+    _track_col("market", "Market", numeric=False),
+    _track_col("side", "Side", numeric=False),
+    _track_col("cot_index", "COT index (3y)", term="COT / positioning"),
+    _track_col("report_date", "Report date", numeric=False),
+]
+
+
+def _cot_tails(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Per-market COT positioning tails from the latest composite snapshot
+    (the cftc_mm_tail annotation). Washouts sort first: a crowded short is
+    the side a forced unwind moves fastest from."""
+    rows = conn.execute(
+        "SELECT entity AS market, raw_value AS cot_index,"
+        " obs_date AS report_date FROM v_signal_detail"
+        " WHERE signal_id = 'cftc_mm_tail' ORDER BY raw_value ASC"
+    ).fetchall()
+    return {
+        "columns": _COT_TAILS_COLUMNS,
+        "rows": [
+            {
+                **dict(r),
+                "side": "washed-out short" if r["cot_index"] <= 50 else "crowded long",
+            }
+            for r in rows
+        ],
+        "caveat": narrative.CAVEATS.get("cot-tails"),
+        "empty": "no futures market sits in the tail of its own 3-year managed-money range tonight",
+    }
+
+
 def _basis_breaks(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     rows = conn.execute(
         "SELECT symbol, prev_date, prev_close, price_date, close, ratio"
@@ -1358,6 +1389,38 @@ SECTION_EXPORTERS: list[
                 " rejection, and by design the research step kills nearly"
                 " everything. Whether any single signal has proven edge is"
                 " graded under Track record; so far none has.",
+            ),
+        ],
+    ),
+    (
+        "cot-tails",
+        "COT positioning tails",
+        "composite.db",
+        _cot_tails,
+        "Signals",
+        "Futures markets where the professional crowd is all-in on one side"
+        " of its own 3-year range.",
+        [
+            (
+                "What this is",
+                "Weekly CFTC managed-money positioning, each futures market"
+                " measured against its own 3-year range. A row appears only"
+                " when a market sits in the bottom or top 15% of that range"
+                " with at least a year of report history behind it.",
+            ),
+            (
+                "Why per-market",
+                "The composite's class-average positioning signal cannot see"
+                " one market's extreme inside a mixed class: the week sugar"
+                " sat at the 12th percentile of its range, the softs class"
+                " averaged 33 and scored nothing.",
+            ),
+            (
+                "How to read it",
+                "A washed-out short is a coiled spring — any bullish"
+                " surprise forces funds to buy back at once; a crowded long"
+                " is the mirror. Neither is a direction call on its own:"
+                " it marks where a squeeze has fuel, not when it fires.",
             ),
         ],
     ),

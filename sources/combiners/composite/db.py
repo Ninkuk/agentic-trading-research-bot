@@ -139,6 +139,10 @@ INFORMATIONAL_SIGNALS = frozenset(
         "options_pcr",
         "sa_fscore",
         "sa_fcf_yield",
+        # Market-grain, so structurally voteless already — listed for the
+        # documented contract: a COT tail is a market to watch, not a
+        # direction (June 2026: sugar's tail resolved, cocoa's sat still).
+        "cftc_mm_tail",
         # Demoted on measured evidence, not deferred pending it:
         # -9.7pp against the universe base rate at 10 days. See the catalog
         # note. Kept as an annotation so it can be re-graded in another regime.

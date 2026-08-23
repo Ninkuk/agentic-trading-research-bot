@@ -401,6 +401,31 @@ SIGNALS: list[dict[str, Any]] = [
         """,
     },
     {
+        # Per-market positioning tails. The class-average signals above
+        # cannot see a single-market washout (2026-06-23: sugar at COT
+        # index 11.6, cocoa 4.7, yet softs averaged 33.4 -> score 0), so
+        # this row names each market sitting in the tail of its OWN 3-year
+        # managed-money range. ANNOTATION ONLY (score 0, market grain, in
+        # db.INFORMATIONAL_SIGNALS, not in REGIME_FIELDS): of the two June
+        # 2026 softs tails, sugar resolved into a +226k-contract fund flip
+        # and cocoa did nothing for nine weeks — a tail marks a market to
+        # WATCH, not a direction. 15/85 is a display filter (what is worth
+        # a line), not a calibrated threshold; the year-of-history floor
+        # keeps a young market from pinning its own range ends.
+        "signal_id": "cftc_mm_tail",
+        "db": "cftc.db",
+        "grain": "market",
+        "staleness_budget_days": 12,
+        "sql": """
+            SELECT m.name, c.cot_index, 0, c.report_date
+            FROM src.v_disagg_cot_index_latest c
+            JOIN src.markets m ON m.code = c.code
+            WHERE (c.cot_index <= 15 OR c.cot_index >= 85)
+              AND (SELECT COUNT(*) FROM src.cot_disagg d
+                   WHERE d.code = c.code) >= 52
+        """,
+    },
+    {
         # Crude build = bearish energy; draw = bullish.
         "signal_id": "eia_crude_stocks",
         "db": "eia.db",
