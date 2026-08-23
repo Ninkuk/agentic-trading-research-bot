@@ -532,9 +532,9 @@ SIGNALS: list[dict[str, Any]] = [
         # evidence for the flag layer is -19.6pp on the bull bucket.
         #
         # NOT deleted: the streak is still recorded so the claim can be
-        # re-graded once horizon=10 spans a non-risk_on regime. Every composite
-        # snapshot since 2026-07-06 has classified risk_on, so all of this rests
-        # on ~1.6 independent windows of ONE market state — enough to stop it
+        # re-graded once horizon=10 spans a non-risk_on regime. The graded
+        # sample (snapshots from 2026-07-06 on) was one unbroken risk_on
+        # regime, ~1.6 independent windows of ONE market state — enough to stop it
         # voting, not enough to call it settled. Promotion back requires a
         # measured pass over non-overlapping windows, same bar as any new signal.
         #

@@ -11,8 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "deploy" / "launchd
 from dashboard_lib import data  # noqa: E402
 
 # 9:13pm Phoenix on 2026-07-22 == 04:13 UTC on the 23rd -- deliberately
-# straddles the UTC rollover so a UTC-side date derivation (today would come
-# out as 2026-07-23) is caught by test_phoenix_date_not_utc_date below.
+# straddles the UTC rollover so a UTC-side date derivation would misread
+# today as 2026-07-23.
 NOW = "2026-07-23T04:13:00+00:00"
 TODAY = "2026-07-22"  # phx_date(NOW)
 # Window bounds for the fixture above: floor 2026-07-15, ceiling 2026-07-29.

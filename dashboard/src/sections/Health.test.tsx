@@ -27,8 +27,7 @@ test("healthy section (empty rows) shows the all-clear line, not a table", () =>
   expect(screen.queryByRole("table")).not.toBeInTheDocument();
 });
 
-// This is the exact bug class the task-6 brief's own code sample would have
-// shipped: data.py's `_health` sets `sec.empty` whenever `rows` is empty, and
+// Bug class this guards: data.py's `_health` sets `sec.empty` whenever `rows` is empty, and
 // SectionShell renders ITS OWN empty state instead of `children` whenever
 // `sec.empty !== undefined && !hasRows` (SectionShell.tsx's `showEmpty`) —
 // so a healthy night's tiles would silently vanish behind the shell's empty

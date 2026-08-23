@@ -133,9 +133,8 @@ summer open (6:30am Phoenix).
   *before* reaching its first `start:`/`step:` line. `hung_jobs` covers a
   job that started and is still running past its limit; a job that fails to
   even start has no coverage from either layer, and can go unreported
-  indefinitely if its log simply stops updating (see Task 8's bootout-order
-  note under Operations for the concrete case that motivated writing this
-  down).
+  indefinitely if its log simply stops updating (see the bootout-order
+  note under Operations for the concrete case).
 - **Nightly health section**: the 9:13pm `dashboard` job computes the
   pipeline health section (run counts, FAILED/STALE lines, non-zero exit
   codes, stale DBs vs expected cadence, possible hangs — see above) and
@@ -155,12 +154,12 @@ summer open (6:30am Phoenix).
   that's stuck. `StaleBanner`'s 36h mtime check on the client partially
   covers this, but only for a human who actually visits. Under the retired
   ntfy push this class of failure arrived unprompted; it does not now.
-- **Task 8's step order is load-bearing, not cosmetic**: unload
-  `com.tradingbot.daily-summary` (`launchctl bootout`) *before* re-rendering
-  the surviving plists. Re-render first (or skip the bootout) and the old
-  job stays loaded — it still fires at 9:15pm against the deleted
-  `daily_summary.sh`, launchd fails to spawn it, and nothing is ever
-  written to `logs/daily-summary.log`. `last_progress` on that log then
+- **Retiring a job: bootout order is load-bearing, not cosmetic**: unload
+  the retired label (`launchctl bootout`) *before* re-rendering the
+  surviving plists. Re-render first (or skip the bootout) and the old
+  job stays loaded — it still fires on schedule against its deleted
+  script, launchd fails to spawn it, and nothing is ever
+  written to its log. `last_progress` on that log then
   stays frozen at its pre-cutover timestamp forever, which the weekend-echo
   rule above reads as "didn't run recently" — permanently suppressing what
   would otherwise be a nightly-failing job, in the very section built to

@@ -57,7 +57,7 @@ grep for `/_api/`.
   (`/stocks/AAPL/metrics/not-a-metric/`) share this shape. An invalid metric
   slug returns HTTP 200, not 404 — check for `metric` in the keys.
 
-**Do not exist** (HTTP 404, verified 2026-07-09 — don't re-probe):
+**Do not exist** (HTTP 404 — don't re-probe):
 `/stocks/{T}/` + `short-interest`, `institutional`, `insider-trading`,
 `ownership`, `holders`, `peers`, `earnings`, `options`, `profile`,
 `sec-filings`, `valuation`, `chart`, `holdings`. Short interest lives in the
@@ -179,7 +179,7 @@ The per-ticker ETF routes are only these four (`/`, `holdings/`, `dividend/`,
 | `/tools/mutf-screener/` | **23,922 funds** | **83** |
 | `/ipos/screener/` | **450 IPOs** | own catalog |
 
-Row counts drift daily (the stock universe read 5,601 on 2026-07-09) — read them
+Row counts drift daily (the stock universe hovers around 5,600) — read them
 off an unfiltered dump rather than hard-coding, minding §4's `resultsCount` caveat.
 
 ### Market movers & discovery (see §5 for the query DSL)

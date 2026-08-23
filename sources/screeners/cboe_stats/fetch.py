@@ -18,11 +18,10 @@ _MAX_ATTEMPTS = 5
 _BASE_DELAY = 1.0
 _urlopen = http_client.make_opener(_UA)
 
-# Cboe discontinued the free put/call-ratio CSV (the old CDN route 403s), but
-# the daily market-statistics page server-renders the same ratios + volumes
-# into its Next.js RSC stream — that page IS the PCR feed now (live-verified
-# 2026-07; history back to 2019-10-07 via ?dt=YYYY-MM-DD). The VIX/VVIX CDN
-# CSV routes below are unchanged and live-confirmed.
+# Cboe serves no free put/call-ratio CSV (the old CDN route 403s); the daily
+# market-statistics page server-renders the same ratios + volumes into its
+# Next.js RSC stream — that page IS the PCR feed (history back to 2019-10-07
+# via ?dt=YYYY-MM-DD). The VIX/VVIX CDN routes below serve plain CSV directly.
 PCR_URL = "https://www.cboe.com/markets/us/options/market-statistics/daily/"
 _VIX_BASE = "https://cdn.cboe.com/api/global/us_indices/daily_prices"
 

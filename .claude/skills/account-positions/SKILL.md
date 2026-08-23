@@ -22,12 +22,11 @@ directly.
    - `get_equity_positions` → per-position symbol, quantity, average buy
      price. It carries **no market price** — see the next bullet.
    - `get_equity_quotes` on the held symbols → per-position `market_value`
-     is **derived**: price × quantity. The positions payload dropped
-     `market_value` upstream and its guide now says "No market price here"
-     (verified 2026-08-04). Omitting this getter from the wrapper's
-     allowlist is a silent weekday outage: headless, the denial has nobody
-     to approve it, so no snapshot lands and the slot exits 1 — which is
-     exactly how 2026-08-03/04 failed.
+     is **derived**: price × quantity. The positions payload carries no
+     `market_value` (its guide: "No market price here"). Omitting this
+     getter from the wrapper's allowlist is a silent weekday outage:
+     headless, the denial has nobody to approve it, so no snapshot lands
+     and the slot exits 1.
    - `get_option_positions` → per-contract legs (see the
      `option_positions` bullet below); zero open contracts is normal —
      emit an empty array, don't omit the key
