@@ -174,3 +174,4 @@
 2026-08-23 CAH UNPROVEN conditions=5 refuted=0 unknown=1 reopen=event:cah-cvs-distribution-renewal-or-expiry
 2026-08-23 NRDS UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-11-05:nrds-q3-guide-hold-and-card-smb-decay
 2026-08-24 SIFG UNPROVEN conditions=3 refuted=0 unknown=1 reopen=event:sifg-financing-or-190kt-fid
+2026-08-24 BE FLAWED conditions=6 refuted=1 unknown=1 reopen=2026-10-28:be-q3-fy27-guide-and-backlog-disclosure
