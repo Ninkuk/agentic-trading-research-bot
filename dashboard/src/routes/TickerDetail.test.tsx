@@ -161,3 +161,43 @@ test("thesis block is absent for a ticker with no thesis", () => {
   expect(screen.queryByRole("heading", { name: /^thesis$/i })).not.toBeInTheDocument();
   expect(fetch).not.toHaveBeenCalled();
 });
+
+// ---- About modals: the same AboutDialog convention as the main-page
+// sections — one-sentence note on the card, the explainer behind the
+// info icon as headed blocks. ----
+
+test("every rendered block carries an About trigger", () => {
+  stubThesisFetch();
+  render(<TickerDetail doc={doc} symbol="AAPL" />);
+  for (const name of [
+    "Screen",
+    "Score history",
+    "Signal breakdown",
+    "Research verdicts",
+    "Thesis",
+    "Journal fills",
+    "Your position",
+  ]) {
+    expect(screen.getByRole("button", { name: `About ${name}` })).toBeInTheDocument();
+  }
+});
+
+test("the Screen block's About modal explains the accruals sign and the research call", async () => {
+  stubThesisFetch();
+  const user = userEvent.setup();
+  render(<TickerDetail doc={doc} symbol="AAPL" />);
+  await user.click(screen.getByRole("button", { name: "About Screen" }));
+  const dialog = screen.getByRole("dialog");
+  expect(dialog).toHaveTextContent(/negative/i); // accruals sign convention
+  expect(dialog).toHaveTextContent(/pass/i); // what a pass beside a quality row means
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+test("the Thesis block's About modal says the ownership call is graded, not the prose", async () => {
+  stubThesisFetch();
+  const user = userEvent.setup();
+  render(<TickerDetail doc={doc} symbol="AAPL" />);
+  await user.click(screen.getByRole("button", { name: "About Thesis" }));
+  expect(screen.getByRole("dialog")).toHaveTextContent(/graded/i);
+});

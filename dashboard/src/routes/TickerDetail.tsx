@@ -14,7 +14,7 @@
 // `pinnedFirst` — toggling here and pinning a scorecard row both write the
 // same key, so the two views never disagree about what's pinned.
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Line, LineChart, ReferenceLine, XAxis, YAxis } from "recharts";
 import remarkGfm from "remark-gfm";
@@ -24,6 +24,7 @@ import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
 import { usePrefs } from "../hooks/usePrefs";
 import { tokens } from "../theme";
 import type {
+  AboutBlock,
   Column,
   DashboardDoc,
   Row,
@@ -38,6 +39,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "../components/ui/chart";
+import { AboutDialog } from "../ui/AboutDialog";
 import { DataTable } from "../ui/DataTable";
 import { Masthead } from "../ui/Masthead";
 import { researchVerdictPill } from "../ui/sectionCells";
@@ -137,6 +139,177 @@ function PositionCard({ position }: { position: TickerPosition }) {
         <div className="k">Heat %</div>
       </div>
     </div>
+  );
+}
+
+// Same convention as the main-page sections (SectionShell + AboutDialog):
+// the card carries a one-sentence note; everything longer — reading
+// mechanics, failure modes, trust caveats — lives behind the info icon as
+// headed blocks. Copy is static here because these blocks are fixed UI, not
+// data-driven sections; the shape is data.py's `about` column verbatim.
+const ABOUT: Record<string, AboutBlock[]> = {
+  screen: [
+    {
+      heading: "What this is",
+      body:
+        "Tonight's row from the quality-first candidates screen (stocks.db): returns on" +
+        " capital, free-cash-flow yield, Piotroski F-score, and the dislocation the name" +
+        " entered through (RSI washout or distance off the 52-week high).",
+    },
+    {
+      heading: "F-score entry → now and tenure",
+      body:
+        "The scorer ledgers every quality gate each night a name sits on the list. Entry is" +
+        " the first sighting of the current episode (a gap of more than a week starts a new" +
+        " one). A rising FCF yield beside a falling F-score or ROIC is a falling knife the" +
+        " level gates cannot see.",
+    },
+    {
+      heading: "Accruals / assets",
+      body:
+        "(net income − operating cash flow) ÷ total assets. Negative means cash is running" +
+        " ahead of reported earnings — the healthy sign; a large positive number means" +
+        " earnings the company has not collected, which historically mean-revert. It is an" +
+        " annotation, not a gate, until the track record shows it matters here.",
+    },
+    {
+      heading: "Research call",
+      body:
+        "The ownership call research-ticker recorded — buy or pass at that day's price. A" +
+        " pass beside a row that passes every quality gate is the interesting case: the" +
+        " screen says quality, deep research said no. Nothing on this card is a" +
+        " recommendation.",
+    },
+  ],
+  score: [
+    {
+      heading: "What this is",
+      body:
+        "The composite's nightly vote on this name over the last 90 observations: the" +
+        " summed score of every ticker-grain signal that fired, positive leaning bullish.",
+    },
+    {
+      heading: "How to read it",
+      body:
+        "Every signal here is market microstructure — short interest, fails-to-deliver," +
+        " RSI, short volume, message-board attention. Deeply oversold names vote bullish" +
+        " because those signals mean-revert, not because the business improved. Dots" +
+        " above zero lean bullish, below lean bearish; a flat line at zero is no opinion.",
+    },
+    {
+      heading: "How much to trust it",
+      body:
+        "It is a to-research feed. Most flags deserve rejection, which is what the" +
+        " research verdicts below usually show.",
+    },
+  ],
+  signals: [
+    {
+      heading: "What this is",
+      body:
+        "Tonight's individual votes behind the score: each signal's contribution and the" +
+        " raw value that triggered it.",
+    },
+    {
+      heading: "Score 0 rows",
+      body:
+        "A signal scored 0 is informational — fundamentals like F-score and FCF yield" +
+        " annotate the name but do not vote, because no forward-return evidence justifies" +
+        " letting them yet.",
+    },
+  ],
+  verdicts: [
+    {
+      heading: "What this is",
+      body:
+        "Every research-ticker run on this name, newest first, with the kill-thesis grade:" +
+        " SOUND, FLAWED, or UNPROVEN. Each links to the committed thesis document.",
+    },
+    {
+      heading: "Grade versus call",
+      body:
+        "The grade is about the argument (did the falsifiers survive?), not about owning" +
+        " the stock. The buy/pass ownership call sits on the Screen block and in the" +
+        " thesis text; an UNPROVEN grade with a pass is the common, honest outcome.",
+    },
+  ],
+  thesis: [
+    {
+      heading: "What this is",
+      body:
+        "The newest thesis for this name, rendered from the committed markdown. The" +
+        " header shows its date, grade, and any reopen trigger — the dated or event" +
+        " condition on which it gets re-researched.",
+    },
+    {
+      heading: "How to read it",
+      body:
+        "Jump to §1 for the ownership call and the load-bearing conditions, §5 for what" +
+        " would falsify it, and the Kill-thesis record for the attack that came closest." +
+        " Numbers inside are as of the thesis date, not tonight.",
+    },
+    {
+      heading: "What is graded",
+      body:
+        "Only the ownership call is graded, against forward returns versus SPY in the" +
+        " scorer. The prose is the reasoning behind that one call; older theses stay" +
+        " linked from Research verdicts.",
+    },
+  ],
+  fills: [
+    {
+      heading: "What this is",
+      body:
+        "Your own journaled trades in this name, matched to the composite opinion that" +
+        " was live when you acted (the opinion score column). Exit columns fill when the" +
+        " position is closed.",
+    },
+    {
+      heading: "Why it is here",
+      body:
+        "The scorer grades these decisions against paper outcomes: did acting on (or" +
+        " against) the flag beat doing nothing? That record is the Track record strand.",
+    },
+  ],
+  position: [
+    {
+      heading: "What this is",
+      body:
+        "The live holding from the last account snapshot: quantity, market value, and the" +
+        " advisor's heat — a volatility-scaled dollar-risk estimate and its share of the" +
+        " book.",
+    },
+    {
+      heading: "How much to trust it",
+      body:
+        "Decision support only. The advisor sizes and warns; it never places orders, and" +
+        " the snapshot can be a day old on weekends.",
+    },
+  ],
+};
+
+function TickerBlock({
+  title,
+  note,
+  about,
+  children,
+}: {
+  title: string;
+  note?: string;
+  about: AboutBlock[];
+  children: ReactNode;
+}) {
+  return (
+    <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
+      <div className="mb-3 flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <h2 className="m-0 mb-1 text-lg font-semibold">{title}</h2>
+          {note && <p className="text-muted-foreground m-0 max-w-[75ch] text-sm">{note}</p>}
+        </div>
+        <AboutDialog title={title} about={about} />
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -324,41 +497,40 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
       ) : (
         <>
           {detail.candidate && (
-            <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
-              <h2 className="m-0 mb-1 text-lg font-semibold">Screen</h2>
-              <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
-                Tonight's candidates-screen row, how the quality read moved while the name sat on
-                the list, and what deep research decided.
-              </p>
+            <TickerBlock
+              title="Screen"
+              note="Tonight's candidates-screen row, how the quality read moved while the name sat on the list, and what deep research decided."
+              about={ABOUT.screen}
+            >
               <ScreenBlock candidate={detail.candidate} />
-            </section>
+            </TickerBlock>
           )}
 
-          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
-            <h2 className="m-0 mb-1 text-lg font-semibold">Score history</h2>
-            <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
-              How the nightly vote on this name has moved; dots above zero lean bullish.
-            </p>
+          <TickerBlock
+            title="Score history"
+            note="How the nightly vote on this name has moved; dots above zero lean bullish."
+            about={ABOUT.score}
+          >
             <ScoreHistoryChart points={detail.score_history} />
-          </section>
+          </TickerBlock>
 
-          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
-            <h2 className="m-0 mb-1 text-lg font-semibold">Signal breakdown</h2>
-            <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
-              Tonight's individual votes behind the score.
-            </p>
+          <TickerBlock
+            title="Signal breakdown"
+            note="Tonight's individual votes behind the score."
+            about={ABOUT.signals}
+          >
             {signalRows.length > 0 ? (
               <DataTable columns={SIGNAL_COLUMNS} rows={signalRows} storageKey={`ticker:${symbol}:signals`} />
             ) : (
               <p className="empty">no signals scored tonight</p>
             )}
-          </section>
+          </TickerBlock>
 
-          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
-            <h2 className="m-0 mb-1 text-lg font-semibold">Research verdicts</h2>
-            <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
-              What deep research concluded about the business, with a link to each thesis.
-            </p>
+          <TickerBlock
+            title="Research verdicts"
+            note="What deep research concluded about the business, with a link to each thesis."
+            about={ABOUT.verdicts}
+          >
             {detail.verdicts.length > 0 ? (
               <ul className="verdict-list">
                 {detail.verdicts.map((v, i) => (
@@ -376,34 +548,32 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
             ) : (
               <p className="empty">no research verdicts yet</p>
             )}
-          </section>
+          </TickerBlock>
 
           {detail.thesis && (
-            <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
-              <h2 className="m-0 mb-1 text-lg font-semibold">Thesis</h2>
+            <TickerBlock title="Thesis" about={ABOUT.thesis}>
               <ThesisBlock thesis={detail.thesis} />
-            </section>
+            </TickerBlock>
           )}
 
-          <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
-            <h2 className="m-0 mb-1 text-lg font-semibold">Journal fills</h2>
-            <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
-              Your own recorded trades in this name, matched against the opinions they answered.
-            </p>
+          <TickerBlock
+            title="Journal fills"
+            note="Your own recorded trades in this name, matched against the opinions they answered."
+            about={ABOUT.fills}
+          >
             {fillRows.length > 0 ? (
               <DataTable columns={FILL_COLUMNS} rows={fillRows} storageKey={`ticker:${symbol}:fills`} />
             ) : (
               <p className="empty">no journal fills yet</p>
             )}
-          </section>
+          </TickerBlock>
 
           {/* Own heading, not a tail of Journal fills — unlabeled tiles right
               under that table read as the table's footer. */}
           {detail.position && (
-            <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
-              <h2 className="m-0 mb-3 text-lg font-semibold">Your position</h2>
+            <TickerBlock title="Your position" about={ABOUT.position}>
               <PositionCard position={detail.position} />
-            </section>
+            </TickerBlock>
           )}
         </>
       )}
