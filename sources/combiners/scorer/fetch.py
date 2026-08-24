@@ -31,6 +31,7 @@ def read_candidate_rows(conn):
             "rev_growth_3y": r["revenueGrowth3Y"],
             "net_debt_ebitda": r["netDebtEbitda"],
             "shares_yoy": r["sharesYoY"],
+            "accruals_pct_assets": r["accrualsPctAssets"],
             "via_rsi": int(r["rsi"] is not None and 0 < r["rsi"] < candidates.RSI_MAX),
             "via_drawdown": int(
                 r["high52ch"] is not None and r["high52ch"] <= candidates.HIGH52_DISLOCATION_MAX

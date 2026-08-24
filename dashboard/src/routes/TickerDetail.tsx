@@ -169,6 +169,10 @@ function ScreenBlock({ candidate }: { candidate: TickerCandidate }) {
         <div className="k">RSI · {pct(candidate.high52ch, 0)} off 52w</div>
       </div>
       <div className="tile">
+        <div className="v">{pct(candidate.accrualsPctAssets, 1)}</div>
+        <div className="k">accruals / assets (negative = cash ahead)</div>
+      </div>
+      <div className="tile">
         <div className="v">{researchVerdictPill(candidate.verdict)}</div>
         <div className="k">
           {candidate.verdictDate ? `research call · ${dateShort(candidate.verdictDate)}` : "not yet researched"}

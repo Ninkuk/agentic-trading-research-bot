@@ -1532,7 +1532,8 @@
         "verdictDate": "2026-06-15",
         "daysOnList": 12,
         "nSightings": 9,
-        "fScoreEntry": 8
+        "fScoreEntry": 8,
+        "accrualsPctAssets": -3.2
       },
       "thesis": {
         "path": "research/AAPL-2026-06-15.md",

@@ -604,3 +604,11 @@ def test_export_theses_ignores_non_thesis_files(populated_data_dir, tmp_path):
 def test_export_theses_survives_missing_research_dir(tmp_path):
     (tmp_path / "data").mkdir()
     assert data.export_theses(str(tmp_path / "data"), tmp_path / "reports") == 0
+
+
+def test_candidates_section_and_ticker_block_carry_accruals(populated_data_dir):
+    doc = data.export_data(populated_data_dir, NOW)
+    sec = doc["sections"]["candidates"]
+    assert "accrualsPctAssets" in {c["key"] for c in sec["columns"]}
+    assert "accrualsPctAssets" in sec["rows"][0]
+    assert "accrualsPctAssets" in doc["tickers"]["PEGA"]["candidate"]

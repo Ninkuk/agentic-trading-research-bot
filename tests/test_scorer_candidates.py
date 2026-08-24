@@ -253,6 +253,9 @@ _SCREEN_COLS = {
     "priceDate": "TEXT",
     "isin": "TEXT",
     "isPrimaryListing": "TEXT",
+    "netIncome": "REAL",
+    "operatingCF": "REAL",
+    "assets": "REAL",
 }
 
 
@@ -269,9 +272,10 @@ def _mini_stocks(path, captured_at="2026-07-02T11:00:00+00:00"):
         'INSERT INTO metrics (snapshot_id, symbol, sector, "marketCap", "dollarVolume",'
         ' roic, roic5y, "fcfYield", "revenueGrowth3Y", "netDebtEbitda", "sharesYoY",'
         ' "fScore", rsi, ch6m, high52ch, "zScore", "interestCoverage", "priceDate",'
-        " isin, \"isPrimaryListing\") VALUES (1, 'GOOD', 'Technology', 2e10, 5e7,"
+        ' isin, "isPrimaryListing", "netIncome", "operatingCF", assets)'
+        " VALUES (1, 'GOOD', 'Technology', 2e10, 5e7,"
         " 25.0, 20.0, 6.0, 9.0, 0.5, -1.0, 7.0, 38.0, -20.0, -20.0, 6.0, 12.0,"
-        " '2026-07-01', 'US1111111111', '1')"
+        " '2026-07-01', 'US1111111111', '1', 100.0, 150.0, 1000.0)"
     )
     conn.commit()
     conn.close()
@@ -349,7 +353,14 @@ def test_run_records_and_registers_candidates(tmp_path):
 # knife) is distinguishable from oversold quality — the case the screen's
 # LEVEL gates cannot see.
 
-_QUALITY_COLS = {"roic", "roic5y", "rev_growth_3y", "net_debt_ebitda", "shares_yoy"}
+_QUALITY_COLS = {
+    "roic",
+    "roic5y",
+    "rev_growth_3y",
+    "net_debt_ebitda",
+    "shares_yoy",
+    "accruals_pct_assets",
+}
 
 
 def test_appearances_ledger_every_quality_gate(tmp_path):
@@ -445,3 +456,22 @@ def test_quality_trend_single_sighting_has_zero_days(tmp_path):
     _appear(conn, "AAA", "2026-07-01", fscore=7.0)
     t = _trend(conn, "AAA")
     assert (t["days_on_list"], t["n_sightings"], t["fscore_now"]) == (0, 1, 7.0)
+
+
+def test_read_candidate_rows_carries_accruals(tmp_path):
+    conn = _conn(tmp_path)
+    _mini_stocks(tmp_path / "stocks.db")
+    fetch.attach_ro(conn, str(tmp_path / "stocks.db"))
+    try:
+        _, _, rows = fetch.read_candidate_rows(conn)
+    finally:
+        fetch.detach(conn)
+    assert rows[0]["accruals_pct_assets"] == -5.0
+
+
+def test_quality_trend_carries_accruals_entry_and_now(tmp_path):
+    conn = _conn(tmp_path)
+    _appear(conn, "AAA", "2026-07-01", accruals_pct_assets=-5.0)
+    _appear(conn, "AAA", "2026-07-03", accruals_pct_assets=8.0)
+    t = _trend(conn, "AAA")
+    assert (t["accruals_entry"], t["accruals_now"]) == (-5.0, 8.0)

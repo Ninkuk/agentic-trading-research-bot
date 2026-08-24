@@ -205,6 +205,8 @@ export interface TickerCandidate {
   fScore: number | null;
   rsi: number | null;
   high52ch: number | null;
+  // Sloan accruals, % of assets: negative = cash ahead of earnings.
+  accrualsPctAssets: number | null;
   verdict: string | null;
   verdictDate: string | null;
   daysOnList: number | null;

@@ -382,6 +382,14 @@ _CANDIDATES_COLUMNS: list[dict[str, Any]] = [
     },
     {"key": "rsi", "label": "RSI", "numeric": True, "direction": None, "term": None},
     {"key": "ch6m", "label": "6m change %", "numeric": True, "direction": None, "term": None},
+    # Sloan accruals, % of assets: negative = cash ahead of earnings (good).
+    {
+        "key": "accrualsPctAssets",
+        "label": "Accruals % assets",
+        "numeric": True,
+        "direction": "down-good",
+        "term": None,
+    },
     # scorer.db: the ownership call research-ticker recorded, and the
     # current on-list episode. A pass here is the screen-vs-research
     # disagreement set.
@@ -445,6 +453,7 @@ def _candidates(data_dir: str, now_iso: str) -> dict[str, Any]:
                 "fScore": r["fScore"],
                 "rsi": r["rsi"],
                 "ch6m": r["ch6m"],
+                "accrualsPctAssets": r["accrualsPctAssets"],
                 "verdict": r["verdict"],
                 "verdictDate": r["verdict_date"],
                 "daysOnList": r["days_on_list"],
@@ -1951,6 +1960,7 @@ def _fill_candidate_ticker_fields(
             "fScore": r["fScore"],
             "rsi": r["rsi"],
             "high52ch": r["high52ch"],
+            "accrualsPctAssets": r["accrualsPctAssets"],
             "verdict": r["verdict"],
             "verdictDate": r["verdict_date"],
             "daysOnList": r["days_on_list"],

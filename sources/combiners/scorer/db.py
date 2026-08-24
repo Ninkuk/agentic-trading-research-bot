@@ -372,6 +372,7 @@ CREATE TABLE IF NOT EXISTS candidate_appearances (
     rev_growth_3y  REAL,
     net_debt_ebitda REAL,
     shares_yoy     REAL,
+    accruals_pct_assets REAL,
     recorded_at    TEXT NOT NULL,
     UNIQUE (symbol, screen_date)
 );
@@ -398,7 +399,14 @@ CREATE TABLE IF NOT EXISTS candidate_outcomes (
 
 # Migrated onto pre-existing ledgers by ensure_schema; the CREATE above
 # carries them for fresh DBs.
-_APPEARANCE_QUALITY_COLS = ("roic", "roic5y", "rev_growth_3y", "net_debt_ebitda", "shares_yoy")
+_APPEARANCE_QUALITY_COLS = (
+    "roic",
+    "roic5y",
+    "rev_growth_3y",
+    "net_debt_ebitda",
+    "shares_yoy",
+    "accruals_pct_assets",
+)
 
 _VIEWS = f"""
 -- Bucketing lives in views (ELT): stored rows keep raw score_sum/total.
@@ -999,12 +1007,16 @@ SELECT e.symbol,
        MIN(CASE WHEN e.is_entry THEN e.fscore END) AS fscore_entry,
        MIN(CASE WHEN e.is_entry THEN e.roic END) AS roic_entry,
        MIN(CASE WHEN e.is_entry THEN e.fcf_yield END) AS fcf_yield_entry,
+       MIN(CASE WHEN e.is_entry THEN e.accruals_pct_assets END) AS accruals_entry,
        (SELECT fscore FROM episodes l WHERE l.symbol = e.symbol AND l.episode = e.episode
          ORDER BY l.screen_date DESC LIMIT 1) AS fscore_now,
        (SELECT roic FROM episodes l WHERE l.symbol = e.symbol AND l.episode = e.episode
          ORDER BY l.screen_date DESC LIMIT 1) AS roic_now,
        (SELECT fcf_yield FROM episodes l WHERE l.symbol = e.symbol AND l.episode = e.episode
-         ORDER BY l.screen_date DESC LIMIT 1) AS fcf_yield_now
+         ORDER BY l.screen_date DESC LIMIT 1) AS fcf_yield_now,
+       (SELECT accruals_pct_assets FROM episodes l
+         WHERE l.symbol = e.symbol AND l.episode = e.episode
+         ORDER BY l.screen_date DESC LIMIT 1) AS accruals_now
 FROM episodes e JOIN current c ON c.symbol = e.symbol AND c.episode = e.episode
 GROUP BY e.symbol, e.episode;
 
@@ -1369,8 +1381,8 @@ def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
             "INSERT OR IGNORE INTO candidate_appearances"
             " (symbol, screen_date, screen_version, fcf_yield, rsi, high52ch,"
             "  fscore, via_rsi, via_drawdown, roic, roic5y, rev_growth_3y,"
-            "  net_debt_ebitda, shares_yoy, recorded_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "  net_debt_ebitda, shares_yoy, accruals_pct_assets, recorded_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 r["symbol"],
                 screen_date,
@@ -1386,6 +1398,7 @@ def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
                 r.get("rev_growth_3y"),
                 r.get("net_debt_ebitda"),
                 r.get("shares_yoy"),
+                r.get("accruals_pct_assets"),
                 now_iso,
             ),
         )

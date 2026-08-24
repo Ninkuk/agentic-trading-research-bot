@@ -141,6 +141,9 @@ at 21/63 trading days vs SPY in `v_candidate_efficacy`, split by dislocation bra
 ledgers every quality gate (roic, roic5y, rev growth, leverage, dilution — stocks.db keeps
 only ~3 weeks), and `v_candidate_quality_trend` reads entry-vs-latest per on-list episode:
 a rising FCF yield beside a falling fScore/ROIC is a falling knife the level gates can't see.
+The screen also annotates Sloan accruals (`(netIncome − operatingCF) / assets`, negative =
+cash ahead of earnings) — annotation only, ledgered per sighting, never a gate until
+`v_candidate_efficacy` shows high-accrual entries underperform.
 The `advisor` combiner joins the latest scorecard against real holdings
 (portfolio.db read-only: `v_latest_*` views plus the `snapshots` header
 timestamp) plus stocks/etfs ATR and scorer

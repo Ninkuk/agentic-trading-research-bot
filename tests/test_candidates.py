@@ -17,7 +17,7 @@ _COLS = (
     " isin TEXT, sector TEXT, roic REAL, roic5y REAL, fcfYield REAL,"
     " revenueGrowth3Y REAL, netDebtEbitda REAL, sharesYoY REAL, fScore REAL,"
     " rsi REAL, ch6m REAL, high52ch REAL, zScore REAL, interestCoverage REAL,"
-    " priceDate TEXT"
+    " priceDate TEXT, netIncome REAL, operatingCF REAL, assets REAL"
 )
 
 # A name that passes every gate. Tests mutate one field at a time off this.
@@ -43,6 +43,9 @@ _CLEAN = dict(
     zScore=6.0,
     interestCoverage=12.0,
     priceDate="2026-07-24",
+    netIncome=1000.0,
+    operatingCF=1500.0,
+    assets=10000.0,
 )
 
 
@@ -629,3 +632,34 @@ def test_report_tolerates_scorer_db_without_the_trend_view(tmp_path):
     good = next(line for line in report.splitlines() if line.lstrip().startswith("GOOD"))
     assert "buy 07-20" in good
     assert "trend view absent" in report
+
+
+# ----------------------------------------------------- accruals annotation ----
+# (net income - operating cash flow) / total assets, in percent. Sloan (1996):
+# earnings running ahead of cash mean-revert. NEGATIVE is the healthy sign.
+# Annotation only until v_candidate_efficacy shows high-accrual entries
+# underperform; setting the bar before measuring it is the recorded mistake.
+
+
+def test_accruals_sign_convention_negative_means_cash_ahead_of_earnings(tmp_path):
+    conn = _stocks_db(tmp_path, {"netIncome": 100.0, "operatingCF": 150.0, "assets": 1000.0})
+    assert candidates.screen(conn)[0]["accrualsPctAssets"] == -5.0
+
+
+def test_accruals_is_null_without_assets_or_cash_flow(tmp_path):
+    conn = _stocks_db(tmp_path, {"assets": None})
+    assert candidates.screen(conn)[0]["accrualsPctAssets"] is None
+    conn = _stocks_db(tmp_path, {"assets": 0.0}, name="z.db")
+    assert candidates.screen(conn)[0]["accrualsPctAssets"] is None
+
+
+def test_accruals_is_an_annotation_not_a_gate(tmp_path):
+    conn = _stocks_db(tmp_path, {"netIncome": 5000.0, "operatingCF": 100.0, "assets": 10000.0})
+    assert _symbols(conn) == ["GOOD"]  # +49% of assets still passes
+
+
+def test_report_shows_accruals_column(tmp_path):
+    report = candidates.build_report(_stocks_db(tmp_path, {}), NOW)
+    assert "accr" in report
+    good = next(line for line in report.splitlines() if line.lstrip().startswith("GOOD"))
+    assert "-5.0" in good

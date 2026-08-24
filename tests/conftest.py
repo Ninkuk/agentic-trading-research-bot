@@ -546,6 +546,9 @@ _STOCKS_COLS = {
     "priceDate": "TEXT",
     "isin": "TEXT",
     "isPrimaryListing": "TEXT",
+    "netIncome": "REAL",
+    "operatingCF": "REAL",
+    "assets": "REAL",
 }
 
 
