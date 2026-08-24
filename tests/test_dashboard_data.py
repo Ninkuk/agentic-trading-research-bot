@@ -439,7 +439,9 @@ def test_ticker_detail_bounded_to_headline_held_journal(populated_data_dir):
     headline = {r["symbol"] for r in sec["rows"] if r["history"] is not None}
     held = {"AAPL", "XOM", "XLE"}  # fixture's advisor.db positions
     journal = {"FLAG1", "NVDA", "PRIV1"}  # fixture's scorer.db decisions symbols
-    assert set(doc["tickers"]) <= headline | held | journal
+    candidates = {"ADBE", "PEGA"}  # fixture's stocks.db names passing the screen
+    researched = {"STNE", "GNTX", "GFI", "OLD"}  # fixture's verdicts.log tickers
+    assert set(doc["tickers"]) <= headline | held | journal | candidates | researched
     assert set(doc["tickers"]), "populated fixture must export at least one detail"
     assert "XOM" in doc["tickers"]  # held, exercises position export
 
@@ -447,7 +449,15 @@ def test_ticker_detail_bounded_to_headline_held_journal(populated_data_dir):
 def test_ticker_detail_shapes(populated_data_dir):
     doc = data.export_data(populated_data_dir, NOW)
     t = doc["tickers"]["FLAG1"]
-    assert {"score_history", "signals", "verdicts", "fills", "position"} == set(t)
+    assert {
+        "score_history",
+        "signals",
+        "verdicts",
+        "fills",
+        "position",
+        "candidate",
+        "thesis",
+    } == set(t)
     assert t["score_history"], "FLAG1 has 2 snapshots of history"
     assert {"date", "score_sum"} == set(t["score_history"][0])
     assert t["signals"], "FLAG1 has 4 ticker-grain signals on the latest snapshot"
@@ -534,3 +544,63 @@ def test_candidates_section_survives_missing_scorer_db(populated_data_dir):
     sec = data.export_data(populated_data_dir, NOW)["sections"]["candidates"]
     assert "error" not in sec
     assert sec["rows"] and sec["rows"][0]["verdict"] is None
+
+
+# ------------------------------------------- ticker page: screen + thesis ----
+
+
+def _write_thesis(populated_data_dir, name, body="# T\n\n## 1. Verdict and thesis\n\nx\n"):
+    research = Path(populated_data_dir).parent / "research"
+    (research / name).write_text(body, encoding="utf-8")
+
+
+def test_candidate_symbols_join_the_ticker_universe(populated_data_dir):
+    """A screen name composite never flagged and nobody traded still gets a
+    page — the screen is the funnel's front door."""
+    doc = data.export_data(populated_data_dir, NOW)
+    assert "PEGA" in doc["tickers"]
+    cand = doc["tickers"]["PEGA"]["candidate"]
+    assert cand["fcfYield"] is not None and cand["fScore"] is not None
+    assert "verdict" in cand and "daysOnList" in cand
+
+
+def test_non_candidate_ticker_has_no_candidate_block(populated_data_dir):
+    doc = data.export_data(populated_data_dir, NOW)
+    assert doc["tickers"]["AAPL"]["candidate"] is None
+
+
+def test_ticker_thesis_meta_is_the_newest_thesis(populated_data_dir):
+    _write_thesis(populated_data_dir, "STNE-2026-06-01.md")
+    _write_thesis(populated_data_dir, "STNE-2026-07-01.md")
+    doc = data.export_data(populated_data_dir, NOW)
+    t = doc["tickers"]["STNE"]["thesis"]
+    assert t["path"] == "research/STNE-2026-07-01.md"
+    assert t["date"] == "2026-07-01"
+    assert t["verdict"] == "UNPROVEN"
+    assert t["reopen"] == "2026-07-07:q2-print"
+    assert t["file"] == "theses/STNE.md"
+    assert doc["tickers"]["AAPL"]["thesis"] is None
+
+
+def test_export_theses_writes_newest_per_ticker(populated_data_dir, tmp_path):
+    _write_thesis(populated_data_dir, "STNE-2026-06-01.md", "old")
+    _write_thesis(populated_data_dir, "STNE-2026-07-01.md", "new")
+    out = tmp_path / "reports"
+    n = data.export_theses(populated_data_dir, out)
+    assert n == 1
+    assert (out / "theses" / "STNE.md").read_text(encoding="utf-8") == "new"
+    assert not (out / "theses" / "AAPL.md").exists()
+
+
+def test_export_theses_ignores_non_thesis_files(populated_data_dir, tmp_path):
+    """verdicts.log and README.md live in research/ too; only
+    <TICKER>-<DATE>.md is ever copied out."""
+    (Path(populated_data_dir).parent / "research" / "README.md").write_text("r", encoding="utf-8")
+    out = tmp_path / "reports"
+    assert data.export_theses(populated_data_dir, out) == 0
+    assert not (out / "theses").exists() or not list((out / "theses").iterdir())
+
+
+def test_export_theses_survives_missing_research_dir(tmp_path):
+    (tmp_path / "data").mkdir()
+    assert data.export_theses(str(tmp_path / "data"), tmp_path / "reports") == 0

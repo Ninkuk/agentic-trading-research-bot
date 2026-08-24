@@ -355,3 +355,24 @@ def test_main_logs_exception_type_not_message_on_unexpected_error(monkeypatch, c
     out = capsys.readouterr().out
     assert "OSError" in out
     assert secret not in out
+
+
+def test_stage_copies_theses_dir_when_present(tmp_path):
+    dist = tmp_path / "dist"
+    _make_dist(dist)
+    theses = tmp_path / "reports" / "theses"
+    theses.mkdir(parents=True)
+    (theses / "STNE.md").write_text("# STNE", encoding="utf-8")
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    stage(dist, "{}", dest, theses_dir=theses)
+    assert (dest / "theses" / "STNE.md").read_text(encoding="utf-8") == "# STNE"
+
+
+def test_stage_without_theses_dir_is_unchanged(tmp_path):
+    dist = tmp_path / "dist"
+    _make_dist(dist)
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    stage(dist, "{}", dest, theses_dir=tmp_path / "nope")
+    assert not (dest / "theses").exists()

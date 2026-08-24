@@ -31,7 +31,12 @@ from dashboard_lib.glossary import load_glossary  # noqa: E402
 from sources.combiners.composite import candidates as candidates_mod  # noqa: E402
 from sources.combiners.scorer import scorecard as scorer_scorecard  # noqa: E402
 from sources.common.clock import PHOENIX_UTC_OFFSET, phx_date  # noqa: E402
-from tools.research.worklist import REOPEN_FIELD_RE, newest_verdict_lines  # noqa: E402
+from tools.research.worklist import (  # noqa: E402
+    REOPEN_FIELD_RE,
+    THESIS_RE,
+    list_theses,
+    newest_verdict_lines,
+)
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -399,13 +404,9 @@ _CANDIDATES_COLUMNS: list[dict[str, Any]] = [
 ]
 
 
-def _candidates(data_dir: str, now_iso: str) -> dict[str, Any]:
-    """Quality-first research candidates from stocks.db. Reads the screen
-    through `candidates.screen()` (never restates its gates) so this export
-    and the CLI (`main.py candidates`) can never disagree about what
-    qualifies. Takes data_dir, not a conn: scorer.db is OPTIONAL context
-    (research call, on-list tenure) and its absence must not blank the
-    screen."""
+def _annotated_candidates(data_dir: str) -> tuple[list[dict[str, Any]], str | None]:
+    """The screen (stocks.db) annotated from scorer.db when present — one
+    read shared by the candidates section and the ticker pages."""
     conn = _ro(data_dir, "stocks.db")
     try:
         screened = candidates_mod.screen(conn)
@@ -421,7 +422,17 @@ def _candidates(data_dir: str, now_iso: str) -> dict[str, Any]:
             trends = candidates_mod.quality_trends(sc)
         finally:
             sc.close()
-    rows = candidates_mod.annotate(screened, verdicts, trends or {})
+    return candidates_mod.annotate(screened, verdicts, trends or {}), snapshot_date
+
+
+def _candidates(data_dir: str, now_iso: str) -> dict[str, Any]:
+    """Quality-first research candidates from stocks.db. Reads the screen
+    through `candidates.screen()` (never restates its gates) so this export
+    and the CLI (`main.py candidates`) can never disagree about what
+    qualifies. Takes data_dir, not a conn: scorer.db is OPTIONAL context
+    (research call, on-list tenure) and its absence must not blank the
+    screen."""
+    rows, snapshot_date = _annotated_candidates(data_dir)
     return {
         "columns": _CANDIDATES_COLUMNS,
         "rows": [
@@ -1902,7 +1913,120 @@ def _ticker_universe(data_dir: str) -> set[str]:
 
 
 def _empty_ticker_detail() -> dict[str, Any]:
-    return {"score_history": [], "signals": [], "verdicts": [], "fills": [], "position": None}
+    return {
+        "score_history": [],
+        "signals": [],
+        "verdicts": [],
+        "fills": [],
+        "position": None,
+        "candidate": None,
+        "thesis": None,
+    }
+
+
+def _candidate_universe(data_dir: str) -> tuple[set[str], dict[str, dict[str, Any]]]:
+    """Screen symbols and their annotated rows; empty on any failure (a
+    missing stocks.db must not blank the composite/holdings pages)."""
+    try:
+        rows, _ = _annotated_candidates(data_dir)
+    except Exception:
+        return set(), {}
+    by = {r["symbol"]: r for r in rows}
+    return set(by), by
+
+
+def _fill_candidate_ticker_fields(
+    symbols: set[str], rows: dict[str, dict[str, Any]], tickers: dict[str, dict[str, Any]]
+) -> None:
+    """The screen row + on-list trend + research call, so the page shows
+    the number and the research opinion side by side."""
+    for s in symbols & set(rows):
+        r = rows[s]
+        tickers[s]["candidate"] = {
+            "roic": r["roic"],
+            "roic5y": r["roic5y"],
+            "fcfYield": r["fcfYield"],
+            "revenueGrowth3Y": r["revenueGrowth3Y"],
+            "netDebtEbitda": r["netDebtEbitda"],
+            "fScore": r["fScore"],
+            "rsi": r["rsi"],
+            "high52ch": r["high52ch"],
+            "verdict": r["verdict"],
+            "verdictDate": r["verdict_date"],
+            "daysOnList": r["days_on_list"],
+            "nSightings": r["n_sightings"],
+            "fScoreEntry": r["fscore_entry"],
+        }
+
+
+def _research_dir(data_dir: str) -> Path:
+    return Path(data_dir).parent / "research"
+
+
+def _researched_universe(data_dir: str) -> set[str]:
+    """Every ticker with a thesis on disk — a researched name gets a page
+    even when nothing else in the pipeline mentions it tonight."""
+    try:
+        return set(list_theses(_research_dir(data_dir)))
+    except OSError:
+        return set()
+
+
+def _fill_thesis_ticker_fields(
+    data_dir: str, symbols: set[str], tickers: dict[str, dict[str, Any]]
+) -> None:
+    """Newest thesis per ticker: repo path, date, the verdicts.log soundness
+    grade and reopen trigger, and the static file export_theses writes
+    (`theses/<SYM>.md`, fetched by the page on demand — embedding 130
+    theses would 6x data.json)."""
+    research = _research_dir(data_dir)
+    try:
+        newest = list_theses(research)
+    except OSError:
+        return
+    try:
+        lines = newest_verdict_lines(
+            (research / "verdicts.log").read_text(encoding="utf-8").splitlines()
+        )
+    except OSError:
+        lines = {}
+    for s in symbols & set(newest):
+        thesis_date = newest[s]
+        verdict = reopen = None
+        if s in lines:
+            fields = lines[s][1].split()
+            verdict = fields[2] if len(fields) > 2 and fields[2] in _REOPEN_VERDICTS else None
+            m = REOPEN_FIELD_RE.search(lines[s][1])
+            reopen = f"{m.group(1)}:{m.group(2)}" if m else None
+        tickers[s]["thesis"] = {
+            "path": f"research/{s}-{thesis_date}.md",
+            "date": thesis_date,
+            "verdict": verdict,
+            "reopen": reopen,
+            "file": f"theses/{s}.md",
+        }
+
+
+def export_theses(data_dir: str, out_dir: Path) -> int:
+    """Copy each ticker's NEWEST thesis to `<out_dir>/theses/<SYM>.md`.
+    Only names matching THESIS_RE are ever read (never verdicts.log, never
+    README), and the source must resolve inside research/. Returns the
+    count; 0 when research/ is absent."""
+    research = _research_dir(data_dir).resolve()
+    try:
+        newest = list_theses(research)
+    except OSError:
+        return 0
+    n = 0
+    for sym, thesis_date in newest.items():
+        src = (research / f"{sym}-{thesis_date}.md").resolve()
+        if not src.is_relative_to(research) or not THESIS_RE.match(src.name):
+            continue
+        dest = Path(out_dir) / "theses"
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / f"{sym}.md").write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+        n += 1
+    return n
 
 
 def _fill_composite_ticker_fields(
@@ -2038,13 +2162,16 @@ def _fill_scorer_ticker_fields(
 
 
 def _tickers(data_dir: str) -> dict[str, dict[str, Any]]:
-    symbols = _ticker_universe(data_dir)
+    cand_symbols, cand_rows = _candidate_universe(data_dir)
+    symbols = _ticker_universe(data_dir) | cand_symbols | _researched_universe(data_dir)
     tickers: dict[str, dict[str, Any]] = {s: _empty_ticker_detail() for s in symbols}
     if not symbols:
         return tickers
     _fill_composite_ticker_fields(data_dir, symbols, tickers)
     _fill_advisor_ticker_fields(data_dir, symbols, tickers)
     _fill_scorer_ticker_fields(data_dir, symbols, tickers)
+    _fill_candidate_ticker_fields(symbols, cand_rows, tickers)
+    _fill_thesis_ticker_fields(data_dir, symbols, tickers)
     return tickers
 
 

@@ -67,7 +67,7 @@ def is_fresh(mtime_epoch: float, now_iso: str) -> bool:
     return phx_date(file_dt) == phx_date(now_iso)
 
 
-def stage(dist_dir: Path, data_json: str, dest: Path) -> None:
+def stage(dist_dir: Path, data_json: str, dest: Path, theses_dir: Path | None = None) -> None:
     """Write the publishable tree into dest.
 
     Order matters: the dist tree is copied first, then data.json is written
@@ -78,6 +78,8 @@ def stage(dist_dir: Path, data_json: str, dest: Path) -> None:
     chance of mangling something.
     """
     shutil.copytree(dist_dir, dest, dirs_exist_ok=True)
+    if theses_dir is not None and theses_dir.is_dir():
+        shutil.copytree(theses_dir, dest / "theses", dirs_exist_ok=True)
     (dest / "data.json").write_text(data_json, encoding="utf-8")
     (dest / ".nojekyll").write_text("", encoding="utf-8")
     (dest / "robots.txt").write_text(ROBOTS_TXT, encoding="utf-8")
@@ -151,7 +153,9 @@ def publish(
         remote = _git(run, repo_root, "remote", "get-url", "origin").stdout.strip()
         with tempfile.TemporaryDirectory() as tmp:
             dest = Path(tmp)
-            stage(dist_dir, data_path.read_text(encoding="utf-8"), dest)
+            stage(
+                dist_dir, data_path.read_text(encoding="utf-8"), dest, data_path.parent / "theses"
+            )
             _git(run, dest, "init", "-q", "-b", BRANCH)
             _git(run, dest, "add", "-A")
             # --no-gpg-sign is mandatory: a signing config that prompts pinentry

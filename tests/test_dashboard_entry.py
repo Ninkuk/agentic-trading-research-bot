@@ -56,3 +56,13 @@ def test_size_warning_over_target(capsys, tmp_path, monkeypatch):
     assert rc == 0
     captured = capsys.readouterr()
     assert "WARNING" in captured.out
+
+
+def test_main_writes_theses_beside_data_json(tmp_path, monkeypatch, populated_data_dir):
+    research = Path(populated_data_dir).parent / "research"
+    (research / "STNE-2026-07-01.md").write_text("# STNE", encoding="utf-8")
+    out = tmp_path / "reports" / "data.json"
+    monkeypatch.setattr(dashboard, "DATA_DIR", populated_data_dir)
+    monkeypatch.setattr(dashboard, "OUTPUT_PATH", str(out))
+    assert dashboard.main() == 0
+    assert (tmp_path / "reports" / "theses" / "STNE.md").read_text(encoding="utf-8") == "# STNE"
