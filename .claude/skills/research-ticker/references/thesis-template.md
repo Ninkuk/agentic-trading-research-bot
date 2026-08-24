@@ -86,7 +86,10 @@ ownership call from here):
 
 Three bold lead-ins: `**Created:**` / `**Captured:**` / `**Protected:**` —
 capture unpacked into its distinct mechanisms, protection as a mechanism or
-an honest "no moat". End with the Phase 0 print, always here (not §1/§3/§4):
+an honest "no moat". Then a `**Control:**` line — share-class structure and
+controlling holder, and what it forecloses (a takeover, activist pressure);
+the null answer is written explicitly. End with the Phase 0 print, always
+here (not §1/§3/§4):
 `**Operating leverage (Phase 0): positive | flat | negative.**` plus the
 revenue/op-income figures behind it (table or sentence).
 Reopen runs may write "Unchanged from `<prior file>` §2" plus deltas.

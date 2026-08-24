@@ -121,6 +121,11 @@ Answer three questions, in this order:
    Ask it as a mechanism, never as a label. **If there is no good answer, that
    silence is itself the answer** — write it down.
 
+Also record, from the 10-K cover page, charter provisions, or proxy: **who
+controls the vote** — share classes, any controlling holder, and what the
+structure forecloses (an unsolicited takeover, an activist path). "One share,
+one vote, no controller" is the null answer and still gets written.
+
 ## Phase 2 — The frame problem, and pulling threads
 
 You cannot know in advance which facts are relevant. Nobody hands you the list.
