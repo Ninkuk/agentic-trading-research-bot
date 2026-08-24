@@ -27,13 +27,14 @@ def _ledger(conn, symbol, dates, start=100.0, step=1.0):
     db.insert_prices(conn, [(symbol, d, start + i * step) for i, d in enumerate(dates)])
 
 
-def _row(symbol="GOOD", rsi=38.0, high52ch=-20.0, fcf_yield=6.0, fscore=7.0):
+def _row(symbol="GOOD", rsi=38.0, high52ch=-20.0, fcf_yield=6.0, fscore=7.0, **quality):
     return {
         "symbol": symbol,
         "fcf_yield": fcf_yield,
         "rsi": rsi,
         "high52ch": high52ch,
         "fscore": fscore,
+        **quality,
         "via_rsi": int(rsi is not None and 0 < rsi < candidates.RSI_MAX),
         "via_drawdown": int(high52ch is not None and high52ch <= candidates.HIGH52_DISLOCATION_MAX),
     }
@@ -340,3 +341,107 @@ def test_run_records_and_registers_candidates(tmp_path):
     # GOOD has no post-screen-date ledger coverage yet -> outcomes defer;
     # the appearance row is the durable fact this run must leave behind.
     assert conn.execute("SELECT COUNT(*) FROM candidate_outcomes").fetchone()[0] == 0
+
+
+# ------------------------------------------------------ quality trend ----
+# Every gate value is ledgered per sighting, not just the timing fields, so
+# a name whose fcf yield rises BECAUSE roic/fScore are decaying (a falling
+# knife) is distinguishable from oversold quality — the case the screen's
+# LEVEL gates cannot see.
+
+_QUALITY_COLS = {"roic", "roic5y", "rev_growth_3y", "net_debt_ebitda", "shares_yoy"}
+
+
+def test_appearances_ledger_every_quality_gate(tmp_path):
+    conn = _conn(tmp_path)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(candidate_appearances)")}
+    assert cols >= _QUALITY_COLS
+
+
+def test_ensure_schema_migrates_a_pre_quality_ledger(tmp_path):
+    """A live scorer.db predates these columns; ensure_schema must ADD them
+    rather than leave the nightly INSERT failing on an unknown column."""
+    conn = db.connect(str(tmp_path / "old.db"))
+    conn.execute(
+        "CREATE TABLE candidate_appearances (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " symbol TEXT NOT NULL, screen_date TEXT NOT NULL, screen_version TEXT NOT NULL,"
+        " fcf_yield REAL, rsi REAL, high52ch REAL, fscore REAL,"
+        " via_rsi INTEGER NOT NULL DEFAULT 0, via_drawdown INTEGER NOT NULL DEFAULT 0,"
+        " recorded_at TEXT NOT NULL, UNIQUE (symbol, screen_date))"
+    )
+    conn.commit()
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(candidate_appearances)")}
+    assert cols >= _QUALITY_COLS
+    assert _appear(conn, "AAA", "2026-07-01", roic=30.0) == 1
+
+
+def test_appearance_stores_quality_gates(tmp_path):
+    conn = _conn(tmp_path)
+    _appear(
+        conn,
+        "AAA",
+        "2026-07-01",
+        roic=30.0,
+        roic5y=22.0,
+        rev_growth_3y=8.0,
+        net_debt_ebitda=None,
+        shares_yoy=-1.5,
+    )
+    row = conn.execute(
+        "SELECT roic, roic5y, rev_growth_3y, net_debt_ebitda, shares_yoy FROM candidate_appearances"
+    ).fetchone()
+    assert row == (30.0, 22.0, 8.0, None, -1.5)
+
+
+def test_read_candidate_rows_carries_quality_gates(tmp_path):
+    conn = _conn(tmp_path)
+    _mini_stocks(tmp_path / "stocks.db")
+    fetch.attach_ro(conn, str(tmp_path / "stocks.db"))
+    try:
+        _, _, rows = fetch.read_candidate_rows(conn)
+    finally:
+        fetch.detach(conn)
+    r = rows[0]
+    assert (r["roic"], r["roic5y"], r["rev_growth_3y"]) == (25.0, 20.0, 9.0)
+    assert (r["net_debt_ebitda"], r["shares_yoy"]) == (0.5, -1.0)
+
+
+def _trend(conn, symbol):
+    conn.row_factory = sqlite3.Row
+    row = conn.execute(
+        "SELECT * FROM v_candidate_quality_trend WHERE symbol = ?", (symbol,)
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def test_quality_trend_compares_episode_entry_to_latest_sighting(tmp_path):
+    conn = _conn(tmp_path)
+    _appear(conn, "AAA", "2026-07-01", fscore=7.0, roic=25.0, fcf_yield=6.0)
+    _appear(conn, "AAA", "2026-07-03", fscore=6.0, roic=22.0, fcf_yield=7.0)
+    _appear(conn, "AAA", "2026-07-08", fscore=6.0, roic=20.0, fcf_yield=8.0)
+    t = _trend(conn, "AAA")
+    assert (t["entry_date"], t["latest_date"]) == ("2026-07-01", "2026-07-08")
+    assert (t["days_on_list"], t["n_sightings"]) == (7, 3)
+    assert (t["fscore_entry"], t["fscore_now"]) == (7.0, 6.0)
+    assert (t["roic_entry"], t["roic_now"]) == (25.0, 20.0)
+    assert (t["fcf_yield_entry"], t["fcf_yield_now"]) == (6.0, 8.0)
+
+
+def test_quality_trend_is_the_current_episode_only(tmp_path):
+    """A sighting more than the entry gap before the next one belongs to an
+    older episode — the same split register_candidates uses — so its values
+    never pose as this episode's entry."""
+    conn = _conn(tmp_path)
+    _appear(conn, "AAA", "2026-06-01", fscore=9.0)
+    _appear(conn, "AAA", "2026-07-01", fscore=7.0)
+    _appear(conn, "AAA", "2026-07-02", fscore=6.0)
+    t = _trend(conn, "AAA")
+    assert (t["entry_date"], t["n_sightings"], t["fscore_entry"]) == ("2026-07-01", 2, 7.0)
+
+
+def test_quality_trend_single_sighting_has_zero_days(tmp_path):
+    conn = _conn(tmp_path)
+    _appear(conn, "AAA", "2026-07-01", fscore=7.0)
+    t = _trend(conn, "AAA")
+    assert (t["days_on_list"], t["n_sightings"], t["fscore_now"]) == (0, 1, 7.0)

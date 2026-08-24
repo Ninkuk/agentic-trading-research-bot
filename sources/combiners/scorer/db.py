@@ -14,6 +14,8 @@ price-prune window its symbols skip via the forward entry guard."""
 import sqlite3
 from datetime import datetime, timedelta
 
+from sources.combiners.scorer import catalog
+
 # Basis-break guard bounds: the ledger stores each day's close on that day's
 # price basis with no adjusted history to correct from, so a split shows up
 # as a consecutive-date ratio near 1/2, 1/3, 2, 5, ... — outside these
@@ -362,6 +364,14 @@ CREATE TABLE IF NOT EXISTS candidate_appearances (
     fscore         REAL,
     via_rsi        INTEGER NOT NULL DEFAULT 0,
     via_drawdown   INTEGER NOT NULL DEFAULT 0,
+    -- Every quality gate, not just the timing fields: a rising fcf yield
+    -- with falling roic/fScore is a falling knife, invisible to level gates
+    -- and readable only from this ledger (v_candidate_quality_trend).
+    roic           REAL,
+    roic5y         REAL,
+    rev_growth_3y  REAL,
+    net_debt_ebitda REAL,
+    shares_yoy     REAL,
     recorded_at    TEXT NOT NULL,
     UNIQUE (symbol, screen_date)
 );
@@ -385,6 +395,10 @@ CREATE TABLE IF NOT EXISTS candidate_outcomes (
     PRIMARY KEY (appearance_id, horizon)
 );
 """
+
+# Migrated onto pre-existing ledgers by ensure_schema; the CREATE above
+# carries them for fresh DBs.
+_APPEARANCE_QUALITY_COLS = ("roic", "roic5y", "rev_growth_3y", "net_debt_ebitda", "shares_yoy")
 
 _VIEWS = f"""
 -- Bucketing lives in views (ELT): stored rows keep raw score_sum/total.
@@ -952,6 +966,48 @@ FROM v_candidate_outcomes
 WHERE matured_at IS NOT NULL
 GROUP BY screen_version, branch, horizon;
 
+-- The current on-list episode per symbol, entry sighting vs latest. An
+-- episode breaks on the same calendar gap register_candidates uses, so the
+-- entry here is the sighting that was (or will be) graded. Trend WHILE on
+-- the list only — stocks.db keeps ~3 weeks, so no longer history exists.
+DROP VIEW IF EXISTS v_candidate_quality_trend;
+CREATE VIEW v_candidate_quality_trend AS
+WITH ordered AS (
+    SELECT *, LAG(screen_date) OVER (PARTITION BY symbol ORDER BY screen_date) AS prev_date
+    FROM candidate_appearances
+),
+marked AS (
+    SELECT *, CASE WHEN prev_date IS NULL
+                     OR julianday(screen_date) - julianday(prev_date)
+                        > {catalog.CANDIDATE_ENTRY_GAP_DAYS}
+                   THEN 1 ELSE 0 END AS is_entry
+    FROM ordered
+),
+episodes AS (
+    SELECT *, SUM(is_entry) OVER (PARTITION BY symbol ORDER BY screen_date) AS episode
+    FROM marked
+),
+current AS (
+    SELECT symbol, MAX(episode) AS episode FROM episodes GROUP BY symbol
+)
+SELECT e.symbol,
+       MIN(e.screen_date) AS entry_date,
+       MAX(e.screen_date) AS latest_date,
+       CAST(julianday(MAX(e.screen_date)) - julianday(MIN(e.screen_date)) AS INTEGER)
+           AS days_on_list,
+       COUNT(*) AS n_sightings,
+       MIN(CASE WHEN e.is_entry THEN e.fscore END) AS fscore_entry,
+       MIN(CASE WHEN e.is_entry THEN e.roic END) AS roic_entry,
+       MIN(CASE WHEN e.is_entry THEN e.fcf_yield END) AS fcf_yield_entry,
+       (SELECT fscore FROM episodes l WHERE l.symbol = e.symbol AND l.episode = e.episode
+         ORDER BY l.screen_date DESC LIMIT 1) AS fscore_now,
+       (SELECT roic FROM episodes l WHERE l.symbol = e.symbol AND l.episode = e.episode
+         ORDER BY l.screen_date DESC LIMIT 1) AS roic_now,
+       (SELECT fcf_yield FROM episodes l WHERE l.symbol = e.symbol AND l.episode = e.episode
+         ORDER BY l.screen_date DESC LIMIT 1) AS fcf_yield_now
+FROM episodes e JOIN current c ON c.symbol = e.symbol AND c.episode = e.episode
+GROUP BY e.symbol, e.episode;
+
 DROP VIEW IF EXISTS v_equity_curve;
 -- Daily time-weighted-return legs over LEDGER dates. flow is the date's
 -- summed external transfers; port_return = (E_t − flow_t)/E_{{t−1}} − 1, the
@@ -1018,6 +1074,10 @@ def ensure_schema(conn) -> None:
         )
     if "option_flows" not in cols:
         conn.execute("ALTER TABLE journal_runs ADD COLUMN option_flows INTEGER NOT NULL DEFAULT 0")
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(candidate_appearances)")}
+    for col in _APPEARANCE_QUALITY_COLS:
+        if col not in cols:
+            conn.execute(f"ALTER TABLE candidate_appearances ADD COLUMN {col} REAL")
     conn.executescript(_VIEWS)
     conn.commit()
 
@@ -1308,8 +1368,9 @@ def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
         cur = conn.execute(
             "INSERT OR IGNORE INTO candidate_appearances"
             " (symbol, screen_date, screen_version, fcf_yield, rsi, high52ch,"
-            "  fscore, via_rsi, via_drawdown, recorded_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "  fscore, via_rsi, via_drawdown, roic, roic5y, rev_growth_3y,"
+            "  net_debt_ebitda, shares_yoy, recorded_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 r["symbol"],
                 screen_date,
@@ -1320,6 +1381,11 @@ def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
                 r.get("fscore"),
                 r.get("via_rsi", 0),
                 r.get("via_drawdown", 0),
+                r.get("roic"),
+                r.get("roic5y"),
+                r.get("rev_growth_3y"),
+                r.get("net_debt_ebitda"),
+                r.get("shares_yoy"),
                 now_iso,
             ),
         )
