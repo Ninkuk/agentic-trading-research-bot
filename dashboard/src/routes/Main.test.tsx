@@ -70,7 +70,19 @@ test("no Other tab renders when every section's kicker matches a known strand", 
 });
 
 test("a section with an error shows the unavailable note instead of crashing", () => {
-  render(<Main doc={doc} />);
+  const errored = {
+    ...doc,
+    sections: {
+      ...doc.sections,
+      candidates: {
+        ...doc.sections.candidates,
+        columns: undefined,
+        rows: undefined,
+        error: "unavailable (stocks.db: OperationalError)",
+      },
+    },
+  } as DashboardDoc;
+  render(<Main doc={errored} />);
   expect(screen.getByText(/unavailable \(stocks\.db/i)).toBeInTheDocument();
 });
 
@@ -78,7 +90,10 @@ test("scorecard symbols link to the ticker route", () => {
   render(<Main doc={doc} />);
   // There is deliberately no masthead search box — symbol links are the
   // way into the drill-down.
-  expect(screen.getByRole("link", { name: "AAPL" })).toHaveAttribute("href", "#/ticker/AAPL");
+  // AAPL appears on the scorecard AND the candidates list; both link in.
+  const links = screen.getAllByRole("link", { name: "AAPL" });
+  expect(links.length).toBeGreaterThan(0);
+  for (const l of links) expect(l).toHaveAttribute("href", "#/ticker/AAPL");
 });
 
 test("an unregistered section id falls back to the generic DataTable renderer", () => {

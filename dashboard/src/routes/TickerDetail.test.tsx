@@ -26,7 +26,7 @@ test("renders all four blocks for a fixture ticker with signals, verdicts, fills
   expect(screen.getByText("RSI oversold")).toBeInTheDocument();
 
   // research verdicts
-  expect(screen.getByText(/SOUND/)).toBeInTheDocument();
+  expect(screen.getAllByText(/SOUND/).length).toBeGreaterThan(0);
   const thesisLink = screen.getByRole("link", { name: "thesis" });
   expect(thesisLink).toHaveAttribute(
     "href",
@@ -85,4 +85,79 @@ test("pinning one symbol does not pin another", async () => {
   render(<TickerDetail doc={doc} symbol="TSLA" />);
   expect(screen.getByRole("button", { name: "☆ pin to top" })).toBeInTheDocument();
   expect(localStorage.getItem("atrb:pins")).toBe('["AAPL"]');
+});
+
+// ---- screen + thesis blocks (deep500-style: the number and the research
+// opinion side by side, the thesis inline instead of a link-out) ----
+
+const THESIS_MD = `# AAPL — Apple — 2026-06-15
+
+## 1. Verdict and thesis
+
+**Ownership call: PASS at $190.**
+
+## 5. Falsifiers
+
+| falsifier | status |
+|---|---|
+| services decel | not fired |
+`;
+
+function stubThesisFetch(status = 200, body = THESIS_MD) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({ ok: status === 200, status, text: async () => body }),
+  );
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+test("screen block shows the candidate row, on-list trend, and the research call together", () => {
+  stubThesisFetch();
+  render(<TickerDetail doc={doc} symbol="AAPL" />);
+  expect(screen.getByRole("heading", { name: /screen/i })).toBeInTheDocument();
+  expect(screen.getByText("5.4%")).toBeInTheDocument(); // fcf yield
+  expect(screen.getByText(/8 → 7/)).toBeInTheDocument(); // fScore entry → now
+  expect(screen.getByText(/12d/)).toBeInTheDocument(); // days on list
+  expect(screen.getByText("pass")).toBeInTheDocument(); // research call pill
+});
+
+test("screen block is absent for a ticker that is not on the candidates screen", () => {
+  stubThesisFetch();
+  render(<TickerDetail doc={doc} symbol="TSLA" />);
+  expect(screen.queryByRole("heading", { name: /^screen$/i })).not.toBeInTheDocument();
+});
+
+test("thesis block fetches theses/<SYM>.md and renders markdown with GFM tables", async () => {
+  stubThesisFetch();
+  render(<TickerDetail doc={doc} symbol="AAPL" />);
+  expect(fetch).toHaveBeenCalledWith("./theses/AAPL.md");
+  expect(await screen.findByRole("heading", { name: /1\. Verdict and thesis/ })).toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: "services decel" })).toBeInTheDocument();
+  expect(screen.getByText("Ownership call: PASS at $190.")).toBeInTheDocument();
+});
+
+test("thesis block offers a jump-list built from the ## headings", async () => {
+  stubThesisFetch();
+  render(<TickerDetail doc={doc} symbol="AAPL" />);
+  const nav = await screen.findByRole("navigation", { name: /thesis sections/i });
+  expect(nav).toHaveTextContent("1. Verdict and thesis");
+  expect(nav).toHaveTextContent("5. Falsifiers");
+});
+
+test("thesis block degrades when the file is missing", async () => {
+  stubThesisFetch(404, "");
+  render(<TickerDetail doc={doc} symbol="AAPL" />);
+  expect(await screen.findByText(/thesis file not published/i)).toBeInTheDocument();
+  // the repo link still works as the fallback
+  expect(screen.getAllByRole("link", { name: /thesis/i }).length).toBeGreaterThan(0);
+});
+
+test("thesis block is absent for a ticker with no thesis", () => {
+  stubThesisFetch();
+  render(<TickerDetail doc={doc} symbol="TSLA" />);
+  expect(screen.queryByRole("heading", { name: /^thesis$/i })).not.toBeInTheDocument();
+  expect(fetch).not.toHaveBeenCalled();
 });

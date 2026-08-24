@@ -193,12 +193,43 @@ export interface TickerPosition {
   heat_pct: number | null;
 }
 
+// The candidates-screen row for this symbol plus its on-list trend and the
+// ownership call research-ticker recorded — null when the name is not on
+// tonight's screen.
+export interface TickerCandidate {
+  roic: number | null;
+  roic5y: number | null;
+  fcfYield: number | null;
+  revenueGrowth3Y: number | null;
+  netDebtEbitda: number | null;
+  fScore: number | null;
+  rsi: number | null;
+  high52ch: number | null;
+  verdict: string | null;
+  verdictDate: string | null;
+  daysOnList: number | null;
+  nSightings: number | null;
+  fScoreEntry: number | null;
+}
+
+// Newest thesis on disk: repo path, verdicts.log grade + reopen trigger, and
+// the static markdown file published beside data.json (fetched on demand).
+export interface TickerThesis {
+  path: string;
+  date: string;
+  verdict: string | null;
+  reopen: string | null;
+  file: string;
+}
+
 export interface TickerDetail {
   score_history: ScoreHistoryPoint[];
   signals: TickerSignal[];
   verdicts: TickerVerdict[];
   fills: TickerFill[];
   position: TickerPosition | null;
+  candidate: TickerCandidate | null;
+  thesis: TickerThesis | null;
 }
 
 export interface Hero {

@@ -331,3 +331,20 @@
     transition: none !important;
   }
 }
+
+/* Rendered thesis markdown (react-markdown). No typography plugin in the
+   project, so the few elements a thesis uses are styled here. */
+.thesis-md { max-width: 80ch; font-size: 0.9rem; line-height: 1.55; }
+.thesis-md h1 { font-size: 1.15rem; font-weight: 600; margin: 0 0 0.75rem; }
+.thesis-md h2 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; scroll-margin-top: 1rem; }
+.thesis-md h3 { font-size: 0.95rem; font-weight: 600; margin: 1rem 0 0.4rem; }
+.thesis-md p, .thesis-md ul, .thesis-md ol { margin: 0 0 0.75rem; }
+.thesis-md ul, .thesis-md ol { padding-left: 1.25rem; }
+.thesis-md blockquote { border-left: 2px solid var(--border); margin: 0 0 0.75rem; padding-left: 0.75rem; color: var(--muted-foreground); }
+.thesis-md code { font-family: var(--font-mono); font-size: 0.85em; }
+.thesis-md table { border-collapse: collapse; margin: 0 0 1rem; font-size: 0.85rem; display: block; overflow-x: auto; }
+.thesis-md th, .thesis-md td { border: 1px solid var(--border); padding: 0.3rem 0.5rem; vertical-align: top; text-align: left; }
+.thesis-md th { font-weight: 600; }
+.thesis-md a { text-decoration: underline; }
+.thesis-nav a { color: var(--muted-foreground); }
+.thesis-nav a:hover { color: var(--foreground); }

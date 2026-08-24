@@ -1,6 +1,8 @@
 // The per-ticker drill-down route (#/ticker/SYM): header (symbol, back
-// link, pin toggle) -> score-history chart -> signal breakdown table ->
-// research verdicts list -> journal fills table + position card when held.
+// link, pin toggle) -> screen row + research call (when on the candidates
+// screen) -> score-history chart -> signal breakdown table -> research
+// verdicts list -> thesis (newest, fetched from theses/<SYM>.md and rendered
+// inline) -> journal fills table + position card when held.
 // Each body block degrades independently when its backing array/object is
 // empty or missing — a ticker with signals but no fills still shows its
 // signals. A symbol absent from `doc.tickers` (not in tonight's scorecard,
@@ -12,13 +14,24 @@
 // `pinnedFirst` — toggling here and pinning a scorecard row both write the
 // same key, so the two views never disagree about what's pinned.
 
+import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { Line, LineChart, ReferenceLine, XAxis, YAxis } from "recharts";
+import remarkGfm from "remark-gfm";
 import { REPO_URL } from "../constants";
 import { dateShort, num, pct, signed, usd } from "../format";
 import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
 import { usePrefs } from "../hooks/usePrefs";
 import { tokens } from "../theme";
-import type { Column, DashboardDoc, Row, ScoreHistoryPoint, TickerPosition } from "../types";
+import type {
+  Column,
+  DashboardDoc,
+  Row,
+  ScoreHistoryPoint,
+  TickerCandidate,
+  TickerPosition,
+  TickerThesis,
+} from "../types";
 import {
   ChartContainer,
   ChartTooltip,
@@ -127,6 +140,128 @@ function PositionCard({ position }: { position: TickerPosition }) {
   );
 }
 
+// deep500's "does the opinion agree with the number" cell, on the page:
+// the screen's numbers, how they moved while the name sat on the list, and
+// the ownership call research-ticker recorded, in one block.
+function ScreenBlock({ candidate }: { candidate: TickerCandidate }) {
+  const trend =
+    candidate.fScoreEntry !== null && candidate.fScore !== null
+      ? `${num(candidate.fScoreEntry, 0)} → ${num(candidate.fScore, 0)}`
+      : num(candidate.fScore, 0);
+  const tenure =
+    candidate.daysOnList !== null ? `on list · ${candidate.nSightings ?? 0} sightings` : "first sighting";
+  return (
+    <div className="tiles screen-card">
+      <div className="tile">
+        <div className="v">{pct(candidate.roic, 1)}</div>
+        <div className="k">ROIC</div>
+      </div>
+      <div className="tile">
+        <div className="v">{pct(candidate.fcfYield, 1)}</div>
+        <div className="k">FCF yield</div>
+      </div>
+      <div className="tile">
+        <div className="v">{trend}</div>
+        <div className="k">F-score entry → now</div>
+      </div>
+      <div className="tile">
+        <div className="v">{num(candidate.rsi, 0)}</div>
+        <div className="k">RSI · {pct(candidate.high52ch, 0)} off 52w</div>
+      </div>
+      <div className="tile">
+        <div className="v">{researchVerdictPill(candidate.verdict)}</div>
+        <div className="k">
+          {candidate.verdictDate ? `research call · ${dateShort(candidate.verdictDate)}` : "not yet researched"}
+        </div>
+      </div>
+      <div className="tile">
+        <div className="v">{candidate.daysOnList !== null ? `${candidate.daysOnList}d` : "new"}</div>
+        <div className="k">{tenure}</div>
+      </div>
+    </div>
+  );
+}
+
+type ThesisState = { kind: "loading" } | { kind: "ready"; md: string } | { kind: "missing" };
+
+// Sections are the thesis template's `## ` headings; ids mirror what
+// react-markdown renders (see the `h2` component below) so the jump-list
+// anchors resolve.
+function headingId(text: string): string {
+  return `thesis-${text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`;
+}
+
+function ThesisBlock({ thesis }: { thesis: TickerThesis }) {
+  const [state, setState] = useState<ThesisState>({ kind: "loading" });
+  useEffect(() => {
+    let live = true;
+    setState({ kind: "loading" });
+    fetch(`./${thesis.file}`)
+      .then(async (r) => {
+        if (!live) return;
+        if (!r.ok) setState({ kind: "missing" });
+        else setState({ kind: "ready", md: await r.text() });
+      })
+      .catch(() => live && setState({ kind: "missing" }));
+    return () => {
+      live = false;
+    };
+  }, [thesis.file]);
+
+  const headings =
+    state.kind === "ready"
+      ? state.md
+          .split("\n")
+          .filter((l) => l.startsWith("## "))
+          .map((l) => l.slice(3).trim())
+      : [];
+
+  return (
+    <>
+      <p className="text-muted-foreground m-0 mb-3 flex flex-wrap items-baseline gap-2 text-sm">
+        <span>{dateShort(thesis.date)}</span>
+        {researchVerdictPill(thesis.verdict)}
+        {thesis.reopen && <span className="font-mono text-xs">reopen {thesis.reopen}</span>}
+        <a href={`${REPO_URL}/blob/main/${thesis.path}`} target="_blank" rel="noreferrer">
+          thesis on GitHub
+        </a>
+      </p>
+      {state.kind === "loading" && <p className="empty">loading thesis…</p>}
+      {state.kind === "missing" && (
+        <p className="empty">thesis file not published yet — use the GitHub link above.</p>
+      )}
+      {state.kind === "ready" && (
+        <>
+          {headings.length > 0 && (
+            <nav aria-label="thesis sections" className="thesis-nav mb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+              {headings.map((h) => (
+                <a key={h} href={`#${headingId(h)}`}>
+                  {h}
+                </a>
+              ))}
+            </nav>
+          )}
+          <div className="thesis-md">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h2: ({ children }) => <h2 id={headingId(String(children))}>{children}</h2>,
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noreferrer">
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {state.md}
+            </ReactMarkdown>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
 export function TickerDetail({ doc, symbol }: TickerDetailProps) {
   const [pins, setPins] = usePrefs<string[]>("pins", []);
   const pinned = pins.includes(symbol);
@@ -184,6 +319,17 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
         </p>
       ) : (
         <>
+          {detail.candidate && (
+            <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
+              <h2 className="m-0 mb-1 text-lg font-semibold">Screen</h2>
+              <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
+                Tonight's candidates-screen row, how the quality read moved while the name sat on
+                the list, and what deep research decided.
+              </p>
+              <ScreenBlock candidate={detail.candidate} />
+            </section>
+          )}
+
           <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
             <h2 className="m-0 mb-1 text-lg font-semibold">Score history</h2>
             <p className="text-muted-foreground m-0 mb-3 max-w-[75ch] text-sm">
@@ -227,6 +373,13 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
               <p className="empty">no research verdicts yet</p>
             )}
           </section>
+
+          {detail.thesis && (
+            <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
+              <h2 className="m-0 mb-1 text-lg font-semibold">Thesis</h2>
+              <ThesisBlock thesis={detail.thesis} />
+            </section>
+          )}
 
           <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
             <h2 className="m-0 mb-1 text-lg font-semibold">Journal fills</h2>
