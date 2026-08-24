@@ -322,7 +322,9 @@ function ScreenBlock({ candidate }: { candidate: TickerCandidate }) {
       ? `${num(candidate.fScoreEntry, 0)} → ${num(candidate.fScore, 0)}`
       : num(candidate.fScore, 0);
   const tenure =
-    candidate.daysOnList !== null ? `on list · ${candidate.nSightings ?? 0} sightings` : "first sighting";
+    candidate.daysOnList !== null
+      ? `${candidate.daysOnList}d on list · ${candidate.nSightings ?? 0} sightings`
+      : "first sighting";
   return (
     <div className="tiles screen-card">
       <div className="tile">
@@ -335,7 +337,7 @@ function ScreenBlock({ candidate }: { candidate: TickerCandidate }) {
       </div>
       <div className="tile">
         <div className="v">{trend}</div>
-        <div className="k">F-score entry → now</div>
+        <div className="k">F-score entry → now · {tenure}</div>
       </div>
       <div className="tile">
         <div className="v">{num(candidate.rsi, 0)}</div>
@@ -350,10 +352,6 @@ function ScreenBlock({ candidate }: { candidate: TickerCandidate }) {
         <div className="k">
           {candidate.verdictDate ? `research call · ${dateShort(candidate.verdictDate)}` : "not yet researched"}
         </div>
-      </div>
-      <div className="tile">
-        <div className="v">{candidate.daysOnList !== null ? `${candidate.daysOnList}d` : "new"}</div>
-        <div className="k">{tenure}</div>
       </div>
     </div>
   );
