@@ -1,13 +1,9 @@
 // Research strand: open revisit triggers from research/verdicts.log.
-// `renderCell` turns the "ticker" column into a link to the committed
-// thesis doc — REPO_URL + "/blob/main/" + thesis_path — falling back to
-// plain text when `thesis_path` is null (data.py's `_thesis_path` returns
-// None when the ticker/date don't look like a real filename; never trust a
-// free-text log column into a URL join without that guard already having
-// run server-side).
+// `renderCell` turns the "ticker" column into a link to the ticker page
+// (#/ticker/SYM) — every researched symbol has one, and the newest thesis
+// renders there inline with its own GitHub link for the history.
 
 import { type ReactNode } from "react";
-import { REPO_URL } from "../constants";
 import type { Column, Glossary, Row, Section } from "../types";
 import { DataTable } from "../ui/DataTable";
 import { sectionCell } from "../ui/sectionCells";
@@ -21,10 +17,8 @@ export interface SectionComponentProps {
 function renderReopensCell(row: Row, col: Column): ReactNode {
   if (col.key === "ticker") {
     const symbol = String(row.ticker ?? "");
-    const thesisPath = typeof row.thesis_path === "string" ? row.thesis_path : null;
-    if (!thesisPath) return symbol;
     return (
-      <a href={`${REPO_URL}/blob/main/${thesisPath}`} target="_blank" rel="noreferrer">
+      <a className="sym" href={`#/ticker/${symbol}`}>
         {symbol}
       </a>
     );

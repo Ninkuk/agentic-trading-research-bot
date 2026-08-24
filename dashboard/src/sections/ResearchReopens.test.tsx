@@ -1,21 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import fixture from "../fixtures/data.json";
-import { REPO_URL } from "../constants";
 import type { DashboardDoc } from "../types";
 import { ResearchReopens } from "./ResearchReopens";
 
 const doc = fixture as unknown as DashboardDoc;
 
-test("links a dated row's ticker to its thesis doc on GitHub", () => {
+test("links a dated row's ticker to its page, where the thesis renders inline", () => {
   render(<ResearchReopens sec={doc.sections["research-reopens"]} glossary={doc.glossary} />);
   const link = screen.getByRole("link", { name: "BLBD" });
   expect(link).toHaveAttribute(
     "href",
-    `${REPO_URL}/blob/main/research/BLBD-2026-07-28.md`,
+    "#/ticker/BLBD",
   );
 });
 
-test("an event-trigger row's ticker also links to its thesis doc", () => {
+test("an event-trigger row's ticker also links to its page", () => {
   // Built inline rather than pulled from the fixture: link rendering keys
   // off thesis_path only (see renderReopensCell), never `due` — an
   // event-shaped row (due: null) must link exactly like a dated one.
@@ -36,11 +35,11 @@ test("an event-trigger row's ticker also links to its thesis doc", () => {
   const link = screen.getByRole("link", { name: "GFI" });
   expect(link).toHaveAttribute(
     "href",
-    `${REPO_URL}/blob/main/research/GFI-2026-07-01.md`,
+    "#/ticker/GFI",
   );
 });
 
-test("a row with no resolvable thesis path renders plain text instead of a link", () => {
+test("a row with no resolvable thesis path still links to its page", () => {
   const sec = {
     ...doc.sections["research-reopens"],
     rows: [
@@ -56,7 +55,7 @@ test("a row with no resolvable thesis path renders plain text instead of a link"
   };
   render(<ResearchReopens sec={sec} glossary={doc.glossary} />);
   expect(screen.getByText("XYZ")).toBeInTheDocument();
-  expect(screen.queryByRole("link", { name: "XYZ" })).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "XYZ" })).toHaveAttribute("href", "#/ticker/XYZ");
 });
 
 test("held-ticker checkpoints render above the table, with a 'today' label for when_days: 0", () => {
