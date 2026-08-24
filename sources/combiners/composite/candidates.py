@@ -187,6 +187,11 @@ _LAYOUT = (
     # denominators), and an overflow misaligns the whole table.
     ("z", 6),
     ("intCov", 9),
+    # From scorer.db when read: the ownership call research-ticker recorded
+    # ("pass 07-20"), and days on the list / sightings / fScore at entry.
+    ("call", 10),
+    ("tenure", 7),
+    ("fS@in", 5),
 )
 
 
@@ -196,6 +201,58 @@ def connect_ro(path: str) -> sqlite3.Connection:
     if not os.path.exists(path):
         raise FileNotFoundError(path)
     return sqlite3.connect(f"file:{os.path.abspath(path)}?mode=ro", uri=True)
+
+
+# ---- research context (scorer.db, optional) ----------------------------
+# The screen never reads these. They annotate the list with what the
+# research layer already decided (research_verdicts: the ownership call
+# research-ticker records) and how the name's quality has moved WHILE on the
+# list (v_candidate_quality_trend). The pass rows are the disagreement set —
+# screen says quality, research said no — which is the reason to show them.
+
+
+def newest_verdicts(scorer_conn) -> dict[str, tuple[str, str]]:
+    """{symbol: (verdict, verdict_date)}, newest call per symbol. Corrections
+    UPDATE the row in place (scorer/db.py), so newest-row-wins is exact."""
+    rows = scorer_conn.execute(
+        "SELECT symbol, verdict, verdict_date FROM research_verdicts"
+        " ORDER BY symbol, verdict_date, id"
+    ).fetchall()
+    return {r[0]: (r[1], r[2]) for r in rows}
+
+
+_TREND_FIELDS = ("days_on_list", "n_sightings", "fscore_entry")
+
+
+def quality_trends(scorer_conn) -> dict[str, dict] | None:
+    """{symbol: {days_on_list, n_sightings, fscore_entry}} for the current
+    on-list episode, or None when the view does not exist yet: this reporter
+    is read-only, and only the nightly scorer run migrates scorer.db."""
+    try:
+        rows = scorer_conn.execute(
+            f"SELECT symbol, {', '.join(_TREND_FIELDS)} FROM v_candidate_quality_trend"
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return None
+    return {r[0]: dict(zip(_TREND_FIELDS, r[1:], strict=True)) for r in rows}
+
+
+def annotate(rows: list[dict], verdicts: dict, trends: dict) -> list[dict]:
+    """Rows plus verdict/verdict_date and the trend fields; None where the
+    name is un-researched or has no ledger episode. Pure; inputs untouched."""
+    out = []
+    for r in rows:
+        v = verdicts.get(r["symbol"])
+        t = trends.get(r["symbol"], {})
+        out.append(
+            {
+                **r,
+                "verdict": v[0] if v else None,
+                "verdict_date": v[1] if v else None,
+                **{k: t.get(k) for k in _TREND_FIELDS},
+            }
+        )
+    return out
 
 
 def screen(conn) -> list[dict]:
@@ -269,6 +326,9 @@ def _row_cells(r: dict) -> list[str]:
         _num(r["high52ch"]),
         _num(r["zScore"]),
         _num(r["interestCoverage"]),
+        f"{r['verdict']} {r['verdict_date'][5:]}" if r.get("verdict") else "—",
+        f"{r['days_on_list']}d/{r['n_sightings']}" if r.get("days_on_list") is not None else "—",
+        _num(r["fscore_entry"], 0) if r.get("fscore_entry") is not None else "—",
     ]
 
 
@@ -288,8 +348,30 @@ def _candidates_section(rows: list[dict]) -> str:
     )
 
 
-def build_report(conn, now_iso: str) -> str:
-    rows = screen(conn)
+def _agreement_line(rows: list[dict], read_scorer: bool, trends_present: bool) -> str:
+    if not read_scorer:
+        return "Research context: scorer.db not read (pass --scorer-db)."
+    buys = sum(r["verdict"] == "buy" for r in rows)
+    passes = sum(r["verdict"] == "pass" for r in rows)
+    new = sum(r["verdict"] is None for r in rows)
+    tenure = (
+        "tenure = days on list/sightings this episode; fS@in = fScore at entry."
+        if trends_present
+        else "trend view absent until the next scorer run."
+    )
+    return (
+        f"Research context: {buys + passes} researched: {buys} buy, {passes} pass;"
+        f" {new} un-researched. {tenure}"
+    )
+
+
+def build_report(conn, now_iso: str, scorer_conn=None) -> str:
+    trends = quality_trends(scorer_conn) if scorer_conn else None
+    rows = annotate(
+        screen(conn),
+        newest_verdicts(scorer_conn) if scorer_conn else {},
+        trends or {},
+    )
     # The run date and the DATA date are different facts and diverge every
     # weekend, when stocks.db has not refreshed since Friday.
     source = f"stocks.db snapshot {data_age_label(snapshot_date(conn), now_iso)}"
@@ -298,6 +380,7 @@ def build_report(conn, now_iso: str) -> str:
             f"=== Research Candidates — {phx_date(now_iso)} ===",
             "",
             f"Quality first, dislocation as timing. {len(rows)} name(s) pass.  [{source}]",
+            _agreement_line(rows, scorer_conn is not None, trends is not None),
             "",
             _candidates_section(rows),
             "",
@@ -321,13 +404,16 @@ def build_report(conn, now_iso: str) -> str:
     )
 
 
-def run(db_path: str, now_iso: str | None = None) -> str:
+def run(db_path: str, now_iso: str | None = None, scorer_db: str | None = None) -> str:
     now_iso = now_iso or datetime.now(UTC).isoformat()
     conn = connect_ro(db_path)
+    scorer_conn = connect_ro(scorer_db) if scorer_db else None
     try:
-        return build_report(conn, now_iso)
+        return build_report(conn, now_iso, scorer_conn)
     finally:
         conn.close()
+        if scorer_conn:
+            scorer_conn.close()
 
 
 def main(argv=None) -> None:
@@ -337,8 +423,13 @@ def main(argv=None) -> None:
         " stocks.db read-only; writes nothing, recommends nothing)",
     )
     p.add_argument("--db", default="stocks.db")
+    p.add_argument(
+        "--scorer-db",
+        default=None,
+        help="scorer.db (read-only) for the ownership-call and tenure columns",
+    )
     a = p.parse_args(argv)
-    print(run(a.db))
+    print(run(a.db, scorer_db=a.scorer_db))
 
 
 if __name__ == "__main__":

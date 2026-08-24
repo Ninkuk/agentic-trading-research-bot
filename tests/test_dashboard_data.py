@@ -506,3 +506,31 @@ def test_export_json_matches_export_data(populated_data_dir):
     blob = data.export_json(populated_data_dir, NOW)
     assert json.loads(blob) == doc
     assert blob == json.dumps(doc, separators=(",", ":"))  # compact separators, same call shape
+
+
+def test_candidates_section_carries_research_context(populated_data_dir):
+    """scorer.db's ownership call and on-list tenure annotate each row; the
+    screen itself still comes from stocks.db alone."""
+    import sqlite3
+
+    sc = sqlite3.connect(str(Path(populated_data_dir) / "scorer.db"))
+    sc.execute(
+        "INSERT INTO research_verdicts (symbol, verdict, verdict_date, recorded_at)"
+        " VALUES ('ADBE', 'pass', '2026-07-01', ?)",
+        (NOW,),
+    )
+    sc.commit()
+    sc.close()
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["candidates"]
+    by = {r["symbol"]: r for r in sec["rows"]}
+    assert by["ADBE"]["verdict"] == "pass" and by["ADBE"]["verdictDate"] == "2026-07-01"
+    assert by["PEGA"]["verdict"] is None
+    assert {"daysOnList", "fScoreEntry"} <= set(by["ADBE"])
+    assert {c["key"] for c in sec["columns"]} >= {"verdict", "daysOnList"}
+
+
+def test_candidates_section_survives_missing_scorer_db(populated_data_dir):
+    (Path(populated_data_dir) / "scorer.db").unlink()
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["candidates"]
+    assert "error" not in sec
+    assert sec["rows"] and sec["rows"][0]["verdict"] is None

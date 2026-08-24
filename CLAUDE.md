@@ -137,7 +137,10 @@ screen: it records each night's list from stocks.db (`candidate_appearances` —
 only point-in-time record; no vendor serves screener vintages) and grades list-**entry**
 episodes only (a name sits on the list for weeks; grading every sighting re-counts one call)
 at 21/63 trading days vs SPY in `v_candidate_efficacy`, split by dislocation branch and
-`SCREEN_VERSION` — calibration only, never feeding back into the gates.
+`SCREEN_VERSION` — calibration only, never feeding back into the gates. Each sighting also
+ledgers every quality gate (roic, roic5y, rev growth, leverage, dilution — stocks.db keeps
+only ~3 weeks), and `v_candidate_quality_trend` reads entry-vs-latest per on-list episode:
+a rising FCF yield beside a falling fScore/ROIC is a falling knife the level gates can't see.
 The `advisor` combiner joins the latest scorecard against real holdings
 (portfolio.db read-only: `v_latest_*` views plus the `snapshots` header
 timestamp) plus stocks/etfs ATR and scorer
@@ -157,7 +160,9 @@ the drift; `anti_signal` (CI entirely below) is its significantly-wrong mirror, 
 reporters ship alongside:
 `main.py scorecard` (grades the human's decisions from the journal views; SELECT-only),
 `main.py pricehistory` (manual one-shot ledger backfill — never scheduled), and
-`main.py candidates` (quality-first stock screen over `stocks.db`; SELECT-only, on demand).
+`main.py candidates` (quality-first stock screen over `stocks.db`; SELECT-only, on demand;
+`--scorer-db data/scorer.db` adds the ownership call research-ticker recorded and the
+on-list tenure — the `pass` rows are the screen-vs-research disagreement set).
 
 **Composite's ticker layer is a microcap dislocation scanner** — every ticker-grain signal is
 microstructure (short interest, FTDs, RSI, short volume, reddit), so `research-ticker`

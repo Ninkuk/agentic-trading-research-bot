@@ -377,15 +377,51 @@ _CANDIDATES_COLUMNS: list[dict[str, Any]] = [
     },
     {"key": "rsi", "label": "RSI", "numeric": True, "direction": None, "term": None},
     {"key": "ch6m", "label": "6m change %", "numeric": True, "direction": None, "term": None},
+    # scorer.db: the ownership call research-ticker recorded, and the
+    # current on-list episode. A pass here is the screen-vs-research
+    # disagreement set.
+    {"key": "verdict", "label": "Research call", "numeric": False, "direction": None, "term": None},
+    {"key": "verdictDate", "label": "Call date", "numeric": False, "direction": None, "term": None},
+    {
+        "key": "daysOnList",
+        "label": "Days on list",
+        "numeric": True,
+        "direction": None,
+        "term": None,
+    },
+    {
+        "key": "fScoreEntry",
+        "label": "F-score at entry",
+        "numeric": True,
+        "direction": None,
+        "term": "Piotroski score",
+    },
 ]
 
 
-def _candidates(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+def _candidates(data_dir: str, now_iso: str) -> dict[str, Any]:
     """Quality-first research candidates from stocks.db. Reads the screen
     through `candidates.screen()` (never restates its gates) so this export
     and the CLI (`main.py candidates`) can never disagree about what
-    qualifies."""
-    rows = candidates_mod.screen(conn)
+    qualifies. Takes data_dir, not a conn: scorer.db is OPTIONAL context
+    (research call, on-list tenure) and its absence must not blank the
+    screen."""
+    conn = _ro(data_dir, "stocks.db")
+    try:
+        screened = candidates_mod.screen(conn)
+        snapshot_date = candidates_mod.snapshot_date(conn)
+    finally:
+        conn.close()
+    verdicts: dict[str, tuple[str, str]] = {}
+    trends: dict[str, dict[str, Any]] | None = {}
+    if (Path(data_dir) / "scorer.db").exists():
+        sc = _ro(data_dir, "scorer.db")
+        try:
+            verdicts = candidates_mod.newest_verdicts(sc)
+            trends = candidates_mod.quality_trends(sc)
+        finally:
+            sc.close()
+    rows = candidates_mod.annotate(screened, verdicts, trends or {})
     return {
         "columns": _CANDIDATES_COLUMNS,
         "rows": [
@@ -398,10 +434,14 @@ def _candidates(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
                 "fScore": r["fScore"],
                 "rsi": r["rsi"],
                 "ch6m": r["ch6m"],
+                "verdict": r["verdict"],
+                "verdictDate": r["verdict_date"],
+                "daysOnList": r["days_on_list"],
+                "fScoreEntry": r["fscore_entry"],
             }
             for r in rows
         ],
-        "snapshot_date": candidates_mod.snapshot_date(conn),
+        "snapshot_date": snapshot_date,
     }
 
 
@@ -1305,7 +1345,7 @@ SECTION_EXPORTERS: list[
     (
         "candidates",
         "Research candidates",
-        "stocks.db",
+        "stocks + scorer DBs",
         _candidates,
         "Signals",
         "A reading queue of good companies whose shares are currently marked down; nothing on it is a recommendation.",

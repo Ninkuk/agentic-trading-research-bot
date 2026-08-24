@@ -518,3 +518,114 @@ def test_data_age_label_handles_a_missing_date(tmp_path):
 def test_data_age_label_degrades_on_an_unparseable_clock(tmp_path):
     """The bare date still informs; never raise inside the health-alert path."""
     assert "2026-07-24" in candidates.data_age_label("2026-07-24", "junk")
+
+
+# ------------------------------------------------ research context columns ----
+# scorer.db is optional input: the ownership call (research_verdicts) and the
+# on-list quality trend (v_candidate_quality_trend) annotate the list; the
+# screen itself never reads them.
+
+
+def _scorer_db(tmp_path, verdicts=(), appearances=()):
+    from sources.combiners.scorer import db as scorer_db
+
+    conn = scorer_db.connect(str(tmp_path / "scorer.db"))
+    scorer_db.ensure_schema(conn)
+    for symbol, verdict, date in verdicts:
+        conn.execute(
+            "INSERT INTO research_verdicts (symbol, verdict, verdict_date, recorded_at)"
+            " VALUES (?, ?, ?, ?)",
+            (symbol, verdict, date, NOW),
+        )
+    for symbol, date, fscore in appearances:
+        scorer_db.record_appearances(
+            conn, [{"symbol": symbol, "fscore": fscore}], date, candidates.SCREEN_VERSION, NOW
+        )
+    conn.commit()
+    return conn
+
+
+def test_newest_verdict_per_symbol_wins(tmp_path):
+    sc = _scorer_db(
+        tmp_path,
+        verdicts=[
+            ("GOOD", "pass", "2026-07-01"),
+            ("GOOD", "buy", "2026-07-20"),
+            ("X", "pass", "2026-07-05"),
+        ],
+    )
+    assert candidates.newest_verdicts(sc) == {
+        "GOOD": ("buy", "2026-07-20"),
+        "X": ("pass", "2026-07-05"),
+    }
+
+
+def test_annotate_marks_researched_and_unresearched_rows():
+    rows = [{"symbol": "GOOD"}, {"symbol": "NEW"}]
+    out = candidates.annotate(
+        rows,
+        {"GOOD": ("pass", "2026-07-20")},
+        {"GOOD": {"days_on_list": 12, "n_sightings": 9, "fscore_entry": 7.0}},
+    )
+    assert out[0]["verdict"] == "pass" and out[0]["verdict_date"] == "2026-07-20"
+    assert out[0]["days_on_list"] == 12 and out[0]["fscore_entry"] == 7.0
+    assert out[1]["verdict"] is None and out[1]["days_on_list"] is None
+    assert rows[0] == {"symbol": "GOOD"}  # input untouched
+
+
+def test_report_shows_call_and_tenure_columns(tmp_path):
+    conn = _stocks_db(tmp_path, {}, {"symbol": "NEW", "isin": "US2222222222"})
+    sc = _scorer_db(
+        tmp_path,
+        verdicts=[("GOOD", "pass", "2026-07-20")],
+        appearances=[("GOOD", "2026-07-10", 8.0), ("GOOD", "2026-07-16", 7.0)],
+    )
+    report = candidates.build_report(conn, NOW, scorer_conn=sc)
+    good = next(line for line in report.splitlines() if line.lstrip().startswith("GOOD"))
+    new = next(line for line in report.splitlines() if line.lstrip().startswith("NEW"))
+    assert "pass 07-20" in good and "6d/2" in good
+    assert "pass" not in new and "—" in new
+    assert "call" in report and "tenure" in report
+
+
+def test_report_summarises_agreement(tmp_path):
+    """The pass rows are the screen-says-yes/research-says-no set — the
+    disagreement count is the reason the column exists."""
+    conn = _stocks_db(
+        tmp_path,
+        {},
+        {"symbol": "B", "isin": "US2222222222"},
+        {"symbol": "N", "isin": "US3333333333"},
+    )
+    sc = _scorer_db(tmp_path, verdicts=[("GOOD", "pass", "2026-07-20"), ("B", "buy", "2026-07-21")])
+    report = candidates.build_report(conn, NOW, scorer_conn=sc)
+    assert "2 researched: 1 buy, 1 pass; 1 un-researched" in report
+
+
+def test_report_degrades_without_scorer_db(tmp_path):
+    conn = _stocks_db(tmp_path, {})
+    report = candidates.build_report(conn, NOW)
+    good = next(line for line in report.splitlines() if line.lstrip().startswith("GOOD"))
+    assert "—" in good
+    assert "scorer.db not read" in report
+
+
+def test_run_accepts_optional_scorer_db(tmp_path):
+    _stocks_db(tmp_path, {}).close()
+    _scorer_db(tmp_path, verdicts=[("GOOD", "buy", "2026-07-20")]).close()
+    report = candidates.run(str(tmp_path / "stocks.db"), NOW, scorer_db=str(tmp_path / "scorer.db"))
+    assert "buy 07-20" in report
+    assert "—" in candidates.run(str(tmp_path / "stocks.db"), NOW)
+
+
+def test_report_tolerates_scorer_db_without_the_trend_view(tmp_path):
+    """A scorer.db the nightly run has not migrated yet has research_verdicts
+    but no v_candidate_quality_trend; the reporter is read-only and cannot
+    create it, so the call column still renders and tenure degrades."""
+    conn = _stocks_db(tmp_path, {})
+    sc = _scorer_db(tmp_path, verdicts=[("GOOD", "buy", "2026-07-20")])
+    sc.execute("DROP VIEW v_candidate_quality_trend")
+    report = candidates.build_report(conn, NOW, scorer_conn=sc)
+    good = next(line for line in report.splitlines() if line.lstrip().startswith("GOOD"))
+    assert "buy 07-20" in good
+    assert "trend view absent" in report
