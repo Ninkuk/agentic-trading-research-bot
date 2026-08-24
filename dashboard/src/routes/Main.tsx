@@ -28,6 +28,7 @@
 import type { ComponentType, ReactNode } from "react";
 import { KpiSpark } from "../charts/KpiSpark";
 import { REPO_URL } from "../constants";
+import { ExtLink } from "../ui/ExtLink";
 import { signed } from "../format";
 import { BasisBreaks } from "../sections/BasisBreaks";
 import { BookHeat } from "../sections/BookHeat";
@@ -280,9 +281,7 @@ export function Main({ doc }: MainProps) {
           trading date, not the run time) + source link. */}
       <footer className="colophon text-muted-foreground mt-8 text-xs">
         Generated {formatGeneratedAt(doc.generated_at)} ·{" "}
-        <a href={REPO_URL} target="_blank" rel="noreferrer">
-          source
-        </a>
+        <ExtLink href={REPO_URL}>source</ExtLink>
       </footer>
     </div>
   );

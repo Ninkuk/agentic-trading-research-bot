@@ -201,3 +201,15 @@ test("the Thesis block's About modal says the ownership call is graded, not the 
   await user.click(screen.getByRole("button", { name: "About Thesis" }));
   expect(screen.getByRole("dialog")).toHaveTextContent(/graded/i);
 });
+
+test("every GitHub link on the page reads as an external link", async () => {
+  stubThesisFetch();
+  render(<TickerDetail doc={doc} symbol="AAPL" />);
+  await screen.findByRole("heading", { name: /1\. Verdict and thesis/ });
+  const outbound = screen.getAllByRole("link").filter((a) => a.getAttribute("href")?.startsWith("https://github.com/"));
+  expect(outbound.length).toBeGreaterThanOrEqual(2); // verdict list + thesis header
+  for (const a of outbound) {
+    expect(a).toHaveClass("ext-link");
+    expect(a.querySelector("svg")).toBeInTheDocument();
+  }
+});

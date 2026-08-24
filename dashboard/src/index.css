@@ -324,6 +324,25 @@
   a:hover {
     color: var(--muted-foreground);
   }
+  /* Outbound links (ExtLink): same quiet underline as a.sym, plus the out
+     arrow; the icon sits on the baseline so the pair reads as one word. */
+  a.ext-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+    text-underline-offset: 3px;
+  }
+  a.ext-link:hover {
+    text-decoration-color: currentColor;
+  }
+  .ext-link-icon {
+    width: 0.85em;
+    height: 0.85em;
+    flex: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

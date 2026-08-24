@@ -40,6 +40,7 @@ import {
   type ChartConfig,
 } from "../components/ui/chart";
 import { AboutDialog } from "../ui/AboutDialog";
+import { ExtLink } from "../ui/ExtLink";
 import { DataTable } from "../ui/DataTable";
 import { Masthead } from "../ui/Masthead";
 import { researchVerdictPill } from "../ui/sectionCells";
@@ -397,9 +398,7 @@ function ThesisBlock({ thesis }: { thesis: TickerThesis }) {
         <span>{dateShort(thesis.date)}</span>
         {researchVerdictPill(thesis.verdict)}
         {thesis.reopen && <span className="font-mono text-xs">reopen {thesis.reopen}</span>}
-        <a href={`${REPO_URL}/blob/main/${thesis.path}`} target="_blank" rel="noreferrer">
-          thesis on GitHub
-        </a>
+        <ExtLink href={`${REPO_URL}/blob/main/${thesis.path}`}>thesis on GitHub</ExtLink>
       </p>
       {state.kind === "loading" && <p className="empty">loading thesis…</p>}
       {state.kind === "missing" && (
@@ -536,9 +535,7 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
                     <span>{dateShort(v.date)}</span>
                     {researchVerdictPill(v.verdict)}
                     {v.thesis_path && (
-                      <a href={`${REPO_URL}/blob/main/${v.thesis_path}`} target="_blank" rel="noreferrer">
-                        thesis
-                      </a>
+                      <ExtLink href={`${REPO_URL}/blob/main/${v.thesis_path}`}>thesis</ExtLink>
                     )}
                   </li>
                 ))}
