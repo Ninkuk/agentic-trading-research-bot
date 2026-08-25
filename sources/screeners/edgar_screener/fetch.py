@@ -106,9 +106,16 @@ def _http_get(
 
 
 def fetch_ticker_map(url: str = TICKER_MAP_URL, get=_http_get) -> dict:
-    """Load company_tickers.json into {cik: {'ticker':..., 'title':...}}."""
+    """Load company_tickers.json into {cik: {'ticker':..., 'title':...}}.
+    One CIK lists every class it trades (HIG, HIG-PG, ...); keep the
+    shortest ticker so the common stock wins over a preferred series."""
     raw = json.loads(get(url))
-    return {int(v["cik_str"]): {"ticker": v["ticker"], "title": v["title"]} for v in raw.values()}
+    out: dict = {}
+    for v in raw.values():
+        cik = int(v["cik_str"])
+        if cik not in out or len(v["ticker"]) < len(out[cik]["ticker"]):
+            out[cik] = {"ticker": v["ticker"], "title": v["title"]}
+    return out
 
 
 def _is_missing_file_403(e: urllib.error.HTTPError) -> bool:

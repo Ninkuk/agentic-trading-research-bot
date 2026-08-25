@@ -70,6 +70,22 @@ def test_fetch_ticker_map_indexes_by_cik():
     assert tmap[1045810]["ticker"] == "NVDA"
 
 
+def test_fetch_ticker_map_prefers_common_stock_over_preferred_series():
+    # SEC lists HIG-PG after HIG under the same CIK; last-wins mis-tagged
+    # every Hartford filing as the preferred series.
+    raw = json.dumps(
+        {
+            "0": {"cik_str": 874766, "ticker": "HIG", "title": "HARTFORD INSURANCE GROUP, INC."},
+            "1": {"cik_str": 874766, "ticker": "HIG-PG", "title": "HARTFORD INSURANCE GROUP, INC."},
+            "2": {"cik_str": 1, "ticker": "BRK-B", "title": "B"},
+            "3": {"cik_str": 1, "ticker": "BRK-A", "title": "B"},
+        }
+    )
+    tmap = fetch_ticker_map(get=lambda url: raw)
+    assert tmap[874766]["ticker"] == "HIG"
+    assert tmap[1]["ticker"] == "BRK-B"  # equal length: first listed wins
+
+
 def test_fetch_daily_index_parses_when_present():
     def fake_get(url):
         assert url.endswith("/2025/QTR2/master.20250602.idx")
