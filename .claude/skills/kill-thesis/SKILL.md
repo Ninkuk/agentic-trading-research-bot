@@ -174,11 +174,14 @@ appendix, not a footer, not inside §1/§6/§7 — one fixed home.
 Finally, append one line to `research/verdicts.log` (create it if absent):
 `<YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n> [reopen=<YYYY-MM-DD|event>:<slug>]`
 — the ledger that makes verdict drift measurable (see the design note below).
-`reopen=` encodes the flip-evidence sentence above: a date when the deciding
-evidence lands (earnings print, ruling, PDUFA — surfaced on the dashboard's
-research-reopens section when due), or `event:` for undated triggers (a
-filing, a price level — grep-only). The slug is a pointer; the thesis holds
-the condition.
+`reopen=` encodes the flip-evidence sentence above and is **always dated**:
+the latest date by which the condition is verifiable from a filing — the
+print that discloses the number, the 10-Q that must mention the renewal,
+the quarter after a price level. A discrete event (a deal, a renewal) keeps
+its name in the slug; the date is the backstop that makes the sweep catch
+it even when nobody is watching the tape. `event:` (undated) is a legacy
+form the sweep can only list, never dispatch — do not write new ones.
+The slug is a pointer; the thesis holds the condition.
 Omit the field only when the thesis genuinely states no reopen condition.
 
 ## Design note: the one-way-check budget is frozen

@@ -139,7 +139,7 @@
 2026-08-13 ZTO UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-08-19:zto-q2-asp-margin
 2026-08-13 STNE FLAWED conditions=7 refuted=1 unknown=2 reopen=2026-11-05:stne-q3-cost-of-risk-vs-restated-guide-and-issuer-recovery
 2026-08-13 KPTI UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-09-11:kpti-sept10-payment-outcome-financing-or-default
-2026-08-13 HIG SOUND conditions=5 refuted=0 unknown=1 reopen=event:hig-casualty-pyd-net-unfavorable-or-bi-pricing-below-trend
+2026-08-13 HIG SOUND conditions=5 refuted=0 unknown=1 reopen=2026-11-02:hig-q3-casualty-pyd-and-bi-pricing-vs-trend
 2026-08-13 NCMI SOUND conditions=6 refuted=0 unknown=3 reopen=2026-10-29:ncmi-q3-per-attendee-pricing-and-captivate-close-pro-formas
 2026-08-16 YETI UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-11-06:yeti-q3-om-expansion-vs-280bp-guide-and-us-drinkware
 2026-08-16 IPAR SOUND conditions=5 refuted=0 unknown=0 reopen=event:ipar-price-below-80-or-fy27-guide-rev-ge-8pct-margin-ge-18pct
@@ -171,7 +171,7 @@
 2026-08-21 BTCT UNPROVEN conditions=5 refuted=0 unknown=1 reopen=event:btct-signed-ai-compute-contract
 2026-08-21 WB UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2027-03-17:wb-fy26-capture-dividend-and-buyback
 2026-08-23 KTB SOUND conditions=5 refuted=0 unknown=0 reopen=2026-11-02:ktb-q3-print-lee-close-and-helly-margin
-2026-08-23 CAH UNPROVEN conditions=5 refuted=0 unknown=1 reopen=event:cah-cvs-distribution-renewal-or-expiry
+2026-08-23 CAH UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-11-05:cah-fq1-cvs-renewal-status-or-8k
 2026-08-23 NRDS UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-11-05:nrds-q3-guide-hold-and-card-smb-decay
 2026-08-24 SIFG UNPROVEN conditions=3 refuted=0 unknown=1 reopen=event:sifg-financing-or-190kt-fid
 2026-08-24 BE FLAWED conditions=6 refuted=1 unknown=1 reopen=2026-10-28:be-q3-fy27-guide-and-backlog-disclosure

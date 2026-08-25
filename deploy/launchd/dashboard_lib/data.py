@@ -20,7 +20,7 @@ import json
 import re
 import sqlite3
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -490,6 +490,13 @@ _RESEARCH_REOPENS_COLUMNS: list[dict[str, Any]] = [
     {"key": "due", "label": "Due", "numeric": False, "direction": None, "term": None},
     {"key": "trigger", "label": "Trigger", "numeric": False, "direction": None, "term": None},
     {
+        "key": "filings_since",
+        "label": "8-Ks since thesis",
+        "numeric": True,
+        "direction": None,
+        "term": None,
+    },
+    {
         "key": "thesis_date",
         "label": "Thesis date",
         "numeric": False,
@@ -497,6 +504,34 @@ _RESEARCH_REOPENS_COLUMNS: list[dict[str, Any]] = [
         "term": None,
     },
 ]
+
+
+def _filings_since(data_dir: str, wanted: Mapping[str, str]) -> dict[str, int | None]:
+    """Distinct 8-K accessions per ticker filed after its thesis date, from
+    edgar.db. The event-trigger detector: a filing-shaped trigger (a
+    renewal, a deal) lands as an 8-K within four business days, so a
+    non-zero count is the cue to read `v_events`. Bounded by edgar's 90-day
+    retention, so 0 on an old thesis proves nothing. TOTAL: a missing or
+    unreadable edgar.db yields None for every ticker."""
+    if not wanted:
+        return {}
+    try:
+        conn = _ro(data_dir, "edgar.db")
+        try:
+            return {
+                ticker: int(
+                    conn.execute(
+                        "SELECT COUNT(DISTINCT accession) FROM filings"
+                        " WHERE bucket = 'event' AND ticker = ? AND filed_date > ?",
+                        (ticker, thesis_date),
+                    ).fetchone()[0]
+                )
+                for ticker, thesis_date in wanted.items()
+            }
+        finally:
+            conn.close()
+    except Exception:
+        return dict.fromkeys(wanted)
 
 
 def _thesis_path(ticker: str, thesis_date: str) -> str | None:
@@ -555,6 +590,10 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
     dated.sort(key=lambda t: (t[0], t[1]))
 
     held = _held_symbols(data_dir)
+    filings = _filings_since(
+        data_dir,
+        {t: d for _w, t, _s, d, _v in dated} | {t: d for t, _s, d, _v in events},
+    )
     today = phx_date(now_iso)
     now_dt = datetime.fromisoformat(now_iso)
     floor = phx_date(now_dt - timedelta(days=7))
@@ -567,6 +606,7 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
             "verdict": verdict,
             "due": when,
             "trigger": slug,
+            "filings_since": filings.get(ticker),
             "thesis_date": thesis_date,
             "thesis_path": _thesis_path(ticker, thesis_date),
         }
@@ -578,6 +618,7 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
             "verdict": verdict,
             "due": None,
             "trigger": slug,
+            "filings_since": filings.get(ticker),
             "thesis_date": thesis_date,
             "thesis_path": _thesis_path(ticker, thesis_date),
         }

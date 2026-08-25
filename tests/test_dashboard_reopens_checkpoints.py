@@ -191,3 +191,47 @@ def test_checkpoint_window_boundary_inclusive_both_ends(tmp_path):
     assert set(by_ticker) == {"LLL", "MMM"}
     assert by_ticker["LLL"]["when_days"] == -7
     assert by_ticker["MMM"]["when_days"] == 7
+
+
+def _write_edgar(data_dir: Path, *filings: tuple[str, str, str, str]) -> None:
+    """Fake edgar.db `filings` rows as (ticker, bucket, filed_date, accession)."""
+    data_dir.mkdir(exist_ok=True)
+    conn = sqlite3.connect(data_dir / "edgar.db")
+    conn.execute(
+        "CREATE TABLE filings (snapshot_id INTEGER, ticker TEXT, bucket TEXT,"
+        " filed_date TEXT, accession TEXT)"
+    )
+    for i, (ticker, bucket, filed, acc) in enumerate(filings):
+        conn.execute("INSERT INTO filings VALUES (?, ?, ?, ?, ?)", (i, ticker, bucket, filed, acc))
+    conn.commit()
+    conn.close()
+
+
+def test_filings_since_counts_distinct_8ks_after_thesis_date(tmp_path):
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 CAH UNPROVEN conditions=5 refuted=0 unknown=1 reopen=event:cvs-renewal",
+        "2026-07-01 DDD SOUND conditions=5 refuted=0 unknown=0 reopen=2026-09-01:q3-print",
+    )
+    _write_edgar(
+        tmp_path / "data",
+        ("CAH", "event", "2026-07-02", "acc-1"),
+        ("CAH", "event", "2026-07-02", "acc-1"),  # same accession, later snapshot
+        ("CAH", "event", "2026-07-10", "acc-2"),
+        ("CAH", "event", "2026-06-30", "acc-0"),  # before the thesis
+        ("CAH", "insider", "2026-07-11", "acc-3"),  # Form 4, not an 8-K
+        ("DDD", "event", "2026-07-05", "acc-4"),
+    )
+    rows = {r["ticker"]: r for r in data._research_reopens(str(tmp_path / "data"), NOW)["rows"]}
+    assert rows["CAH"]["filings_since"] == 2
+    assert rows["DDD"]["filings_since"] == 1  # dated rows carry it too
+
+
+def test_filings_since_is_none_without_edgar_db(tmp_path):
+    _write_vlog(
+        tmp_path / "research",
+        "2026-07-01 CAH UNPROVEN conditions=5 refuted=0 unknown=1 reopen=event:cvs-renewal",
+    )
+    (tmp_path / "data").mkdir()
+    rows = data._research_reopens(str(tmp_path / "data"), NOW)["rows"]
+    assert rows[0]["filings_since"] is None

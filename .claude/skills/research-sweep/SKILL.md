@@ -29,7 +29,8 @@ Phoenix). Not restricted to the candidates screen — a reopen is
 thesis-scoped, and held positions are frequently off-screen.
 
 **C — open event triggers:** every `reopen=event:` on a newest verdict line.
-Undated by design: the CLI can list them but never decide them. They are a
+Legacy form (new lines are always dated — see kill-thesis): the CLI can
+list them but never decide them. They are a
 verification worklist, not a dispatch list — see §1.5. Only run §1.5 when
 the human asked for it ("check the event triggers", "which reopens fired")
 or when A and B are empty and the human wants more; a routine sweep reports

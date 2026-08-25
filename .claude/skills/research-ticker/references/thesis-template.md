@@ -145,9 +145,10 @@ never enter) or `**Shift —**` (input moved: revalue). On a PASS, split the
 list: "For the pass (flip toward buy)" then "For an owner (sell)". Close the
 section with one line, always present:
 
-`**Reopen trigger:** 2026-11-04: <slug>` — or `event:<slug>`, or
-`none stated`. This is the same trigger the `verdicts.log` line carries;
-the thesis file (here) holds the actual condition.
+`**Reopen trigger:** 2026-11-04: <slug>` or `none stated` — always dated,
+even for a discrete event: the date is the latest filing that must settle
+it (the next 10-Q, the print). This is the same trigger the `verdicts.log`
+line carries; the thesis file (here) holds the actual condition.
 
 ## §6 UNKNOWNs
 
