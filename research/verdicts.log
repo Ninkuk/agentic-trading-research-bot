@@ -179,3 +179,5 @@
 2026-08-24 ADEA SOUND conditions=3 refuted=0 unknown=0 reopen=2026-11-03:adea-q3-semi-run-rate-and-h2-guide-hold
 2026-08-24 GRND SOUND conditions=5 refuted=0 unknown=0 reopen=2026-11-05:grnd-q3-print-h2-decel-and-zage-plan
 2026-08-24 SIEGY SOUND conditions=4 refuted=0 unknown=0 reopen=2026-11-12:siegy-q4-print-fy27-guide-and-shl-spin-terms
+2026-08-24 NWGL SOUND conditions=5 refuted=0 unknown=4 reopen=2026-11-02:nwgl-nasdaq-bid-deadline-and-warrant-supply
+2026-08-25 ECG SOUND conditions=4 refuted=0 unknown=1 reopen=2026-11-03:ecg-q3-print-h2-margin-and-fcf-conversion
