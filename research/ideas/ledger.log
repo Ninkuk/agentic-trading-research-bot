@@ -182,3 +182,24 @@
 2026-08-23 SXky7-jHYBg reverse-dcf-scenario-grid DEAD gate=7:priority
 2026-08-23 SXky7-jHYBg shared-risk-factor-audit SALVAGED gate=5:architecture
 2026-08-23 SXky7-jHYBg shared-risk-factor-audit-salvaged SURVIVED
+2026-08-25 UjsC2sk7vVg kelly-fraction-sizing SALVAGED gate=6:statistics
+2026-08-25 UjsC2sk7vVg kelly-fraction-sizing-salvaged DEFERRED gate=6:statistics reopen=signal_outcomes.distinct_composite_date@matured>=100
+2026-08-25 UjsC2sk7vVg half-kelly-cap DEAD gate=2:duplication
+2026-08-25 UjsC2sk7vVg coin-flip-bust-rate DEAD gate=1:provenance
+2026-08-25 UjsC2sk7vVg elite-fund-20pct-ceiling DEAD gate=1:provenance
+2026-08-25 UjsC2sk7vVg pfof-hidden-cost DEAD gate=2:duplication
+2026-08-25 UjsC2sk7vVg options-spread-cost DEAD gate=7:priority
+2026-08-25 UjsC2sk7vVg kelly-inapplicable-continuous DEAD gate=2:duplication
+2026-08-25 UjsC2sk7vVg day-trader-majority-lose DEAD gate=1:provenance
+2026-08-25 UjsC2sk7vVg leverage-implies-edge DEAD gate=7:priority
+2026-08-25 UjsC2sk7vVg daily-return-compounding-check DEAD gate=7:priority
+2026-08-25 lYmXOYbKHUI realized-corr-stress-gauge DEFERRED gate=5:architecture reopen=scorer.prices.symbols_with_ge126_rows>=500
+2026-08-25 lYmXOYbKHUI corr-vix-divergence DEAD gate=6:statistics
+2026-08-25 lYmXOYbKHUI stock-picking-value-inverse-corr SALVAGED gate=1:provenance
+2026-08-25 lYmXOYbKHUI stock-picking-value-inverse-corr-salvaged DEFERRED gate=6:statistics reopen=scorer.v_research_filter.rows>=100
+2026-08-25 lYmXOYbKHUI implied-vs-realized-corr SALVAGED gate=5:architecture
+2026-08-25 lYmXOYbKHUI implied-vs-realized-corr-salvaged SURVIVED
+2026-08-25 lYmXOYbKHUI index-vol-ratio-corr-proxy DEAD gate=7:priority
+2026-08-25 lYmXOYbKHUI corr-is-not-drift DEAD gate=7:priority
+2026-08-25 lYmXOYbKHUI index-funds-raise-corr DEAD gate=1:provenance
+2026-08-25 lYmXOYbKHUI levered-etf-decay DEAD gate=1:provenance
