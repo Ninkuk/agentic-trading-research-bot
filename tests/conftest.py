@@ -99,6 +99,7 @@ _REGIME_SIGNAL_VALUES = {
     "fred_hy_spread": 3.05,
     "cboe_vix_backwardation": 0,
     "cboe_equity_pcr": 96.4,  # already a 0-100 percentile, like production's raw_value
+    "cboe_implied_corr": 41.0,
     "fomc_blackout": 0,
     "econ_imminent": 0,
     "mcal_days_to_opex": 8,

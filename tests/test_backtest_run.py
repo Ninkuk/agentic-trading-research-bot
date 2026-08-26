@@ -26,10 +26,10 @@ def data_dir(tmp_path):
     # cboe_stats.db for the non-vintage market-grain signals (cboe_vix,
     # cboe_vix_backwardation both read vix_daily). High VIX every day.
     c = sqlite3.connect(tmp_path / "cboe_stats.db")
-    c.execute("CREATE TABLE vix_daily (date TEXT, close REAL, vix3m REAL)")
+    c.execute("CREATE TABLE vix_daily (date TEXT, close REAL, vix3m REAL, cor3m REAL)")
     c.executemany(
-        "INSERT INTO vix_daily VALUES (?, ?, ?)",
-        [(f"2025-01-{d:02d}", 26.0, 24.0) for d in range(1, 31)],
+        "INSERT INTO vix_daily VALUES (?, ?, ?, ?)",
+        [(f"2025-01-{d:02d}", 26.0, 24.0, 20.0 + d) for d in range(1, 31)],
     )
     # pcr_daily for the windowed cboe_equity_pcr signal (8 obs)
     c.execute("CREATE TABLE pcr_daily (date TEXT, equity_pcr REAL)")
@@ -97,9 +97,10 @@ def test_run_copies_and_reports(data_dir, tmp_path, capsys):
     conn.close()
     # benchmark_rows: 30 SP500 + 10 XLE = 40.
     # market_rows: 30 cboe_vix + 30 cboe_vix_backwardation + 8 cboe_equity_pcr
-    # + 5 nyfed_rrp + 5 tsy_tga + 3 eia_crude + 3 eia_natgas = 84.
+    # + 30 cboe_implied_corr + 5 nyfed_rrp + 5 tsy_tga + 3 eia_crude
+    # + 3 eia_natgas = 114.
     # all source DBs present -> 0 failures
-    assert row == (1, 40, 84, 0)
+    assert row == (1, 40, 114, 0)
 
 
 def test_run_writes_permutation_null(data_dir, tmp_path, capsys):

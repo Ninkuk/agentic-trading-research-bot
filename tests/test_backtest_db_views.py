@@ -599,3 +599,16 @@ def test_reliable_floor_now_counts_observations(tmp_path):
     ).fetchone()
     assert n_days >= 30, "the inflated day count would have cleared the floor"
     assert reliable == 0, "2 observations must not be called reliable"
+
+
+def test_implied_corr_pctile_scores_high_correlation_bearish(conn):
+    # ascending cor3m -> latest is the window max -> pctile 100 -> -2
+    # (high implied correlation = single-driver stress, the hypothesis graded)
+    spine(conn, [("2025-02-01", 100.0)])
+    for i in range(1, 11):
+        market_obs(conn, "cboe_implied_corr", f"2025-01-{i:02d}", float(i))
+    row = conn.execute(
+        "SELECT value, score FROM v_replay_flags"
+        " WHERE signal_id = 'cboe_implied_corr' AND asof_date = '2025-02-01'"
+    ).fetchone()
+    assert row[0] == pytest.approx(100.0) and row[1] == -2

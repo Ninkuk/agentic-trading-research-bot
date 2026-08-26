@@ -79,6 +79,7 @@ def test_publication_lags_are_pinned_to_the_real_release_schedules():
         "cboe_vix": 0,  # exchange close, same session
         "cboe_vix_backwardation": 0,  # exchange close, same session
         "cboe_equity_pcr": 0,  # daily stats for that session
+        "cboe_implied_corr": 0,  # exchange close, same session
         "nyfed_rrp": 0,  # operation results ~1:15pm ET on operation_date
         "tsy_tga": 1,  # DTS publishes the next business day
         "eia_crude_stocks": 6,  # week ends Fri -> released Wed (+1 holiday)

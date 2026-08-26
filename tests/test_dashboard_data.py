@@ -612,3 +612,9 @@ def test_candidates_section_and_ticker_block_carry_accruals(populated_data_dir):
     assert "accrualsPctAssets" in {c["key"] for c in sec["columns"]}
     assert "accrualsPctAssets" in sec["rows"][0]
     assert "accrualsPctAssets" in doc["tickers"]["PEGA"]["candidate"]
+
+
+def test_regime_drivers_include_implied_correlation_percentile(populated_data_dir):
+    rows = data.export_data(populated_data_dir, NOW)["sections"]["regime"]["rows"]
+    row = next(r for r in rows if r["input"] == "implied correlation percentile")
+    assert row["value"] == 41.0 and row["lean"] == "mid"

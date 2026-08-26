@@ -62,6 +62,16 @@ CBOE_EQUITY_PCR_SCORE = (
     "CASE WHEN pctile >= 90 THEN 2 WHEN pctile >= 75 THEN 1"
     " WHEN pctile <= 10 THEN -2 WHEN pctile <= 25 THEN -1 ELSE 0 END"
 )
+# Cboe 3-month implied correlation (COR3M), trailing-252 percentile like the
+# PCR. Hypothesis under test: high implied correlation = one macro driver
+# pricing every stock = stress, so top decile scores bearish and bottom decile
+# bullish; the replay's anti_signal is the mirror. NOT contrarian like the PCR.
+# Breakpoints copy the PCR's (structural, not fitted); the threshold sweep in
+# research/ideas/2026-08-25-implied-vs-realized-corr-salvaged.md comes first.
+CBOE_IMPLIED_CORR_SCORE = (
+    "CASE WHEN pctile >= 90 THEN -2 WHEN pctile >= 75 THEN -1"
+    " WHEN pctile <= 10 THEN 2 WHEN pctile <= 25 THEN 1 ELSE 0 END"
+)
 # EIA weekly inventory change: a draw (change_pct <= -2) is bullish energy, a
 # build (>= 2) bearish. change_pct is stable at its report period; the replay
 # harvests it keyed by period (shifted to the release date) and grades against
@@ -280,6 +290,30 @@ SIGNALS: list[dict[str, Any]] = [
                 FROM latest l)
             SELECT '*', pctile,
                    {CBOE_EQUITY_PCR_SCORE},
+                   date
+            FROM p
+        """,
+    },
+    {
+        "signal_id": "cboe_implied_corr",
+        "db": "cboe_stats.db",
+        "grain": "market",
+        "staleness_budget_days": 5,
+        "sql": f"""
+            WITH latest AS (
+                SELECT date, cor3m FROM src.vix_daily
+                WHERE cor3m IS NOT NULL ORDER BY date DESC LIMIT 1),
+            hist AS (
+                SELECT cor3m FROM src.vix_daily
+                WHERE cor3m IS NOT NULL ORDER BY date DESC LIMIT 252),
+            p AS (
+                SELECT l.date AS date,
+                       100.0 * (SELECT COUNT(*) FROM hist h
+                                WHERE h.cor3m <= l.cor3m)
+                             / (SELECT COUNT(*) FROM hist) AS pctile
+                FROM latest l)
+            SELECT '*', pctile,
+                   {CBOE_IMPLIED_CORR_SCORE},
                    date
             FROM p
         """,
@@ -746,6 +780,7 @@ REGIME_FIELDS = {
     "cboe_vix": "vix",
     "cboe_vix_backwardation": "vix_backwardation",
     "cboe_equity_pcr": "equity_pcr_pctile",
+    "cboe_implied_corr": "implied_corr_pctile",
     "fomc_blackout": "in_fomc_blackout",
     "econ_imminent": "imminent_high_impact",
     "mcal_days_to_opex": "days_to_opex",

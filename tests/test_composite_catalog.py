@@ -892,3 +892,43 @@ def test_cftc_mm_tail_is_market_grain_informational():
     assert sig["grain"] == "market"
     assert "cftc_mm_tail" not in catalog.REGIME_FIELDS
     assert "cftc_mm_tail" in composite_db.INFORMATIONAL_SIGNALS
+
+
+def test_cboe_implied_corr_is_a_percentile_market_signal_with_hoisted_case():
+    """COR3M enters like cboe_equity_pcr: a trailing-252 percentile the
+    replay recomputes as-of, scored by ONE hoisted CASE so composite and
+    backtest cannot drift. Direction is the hypothesis under test — high
+    implied correlation = single-driver stress = bearish; anti_signal in
+    v_replay_efficacy is its mirror."""
+    from sources.combiners.composite.catalog import (
+        CBOE_IMPLIED_CORR_SCORE,
+        REGIME_FIELDS,
+        SIGNALS,
+    )
+
+    by_id = {s["signal_id"]: s for s in SIGNALS}
+    sig = by_id["cboe_implied_corr"]
+    assert sig["grain"] == "market" and sig["db"] == "cboe_stats.db"
+    assert CBOE_IMPLIED_CORR_SCORE in sig["sql"]
+    assert "pctile >= 90 THEN -2" in CBOE_IMPLIED_CORR_SCORE
+    assert "pctile <= 10 THEN 2" in CBOE_IMPLIED_CORR_SCORE
+    assert REGIME_FIELDS["cboe_implied_corr"] == "implied_corr_pctile"
+
+
+def test_cboe_implied_corr_sql_ranks_latest_cor3m_within_trailing_window():
+    import sqlite3
+
+    from sources.combiners.composite.catalog import SIGNALS
+
+    sql = next(s["sql"] for s in SIGNALS if s["signal_id"] == "cboe_implied_corr")
+    conn = sqlite3.connect(":memory:")
+    conn.execute("ATTACH ':memory:' AS src")
+    conn.execute("CREATE TABLE src.vix_daily (date TEXT PRIMARY KEY, close REAL, cor3m REAL)")
+    # cor3m rises 1..10 over ten sessions; a NULL-cor3m VIX-only row must be ignored
+    conn.executemany(
+        "INSERT INTO src.vix_daily VALUES (?, ?, ?)",
+        [(f"2026-01-{d:02d}", 15.0, float(d)) for d in range(1, 11)] + [("2026-01-11", 15.0, None)],
+    )
+    entity, raw, score, obs = conn.execute(sql, {"today": "2026-01-12"}).fetchone()
+    assert (entity, obs) == ("*", "2026-01-10")
+    assert raw == 100.0 and score == -2

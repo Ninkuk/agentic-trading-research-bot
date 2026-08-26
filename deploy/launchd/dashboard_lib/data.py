@@ -123,8 +123,9 @@ def _regime(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     r = conn.execute(
         "SELECT regime, vix, inputs_present, inputs_expected,"
         " t10y2y, curve_inverted, hy_spread, vix_backwardation,"
-        " equity_pcr_pctile, in_fomc_blackout, imminent_high_impact,"
-        " days_to_opex, rrp_change, tga_change FROM v_latest_regime"
+        " equity_pcr_pctile, implied_corr_pctile, in_fomc_blackout,"
+        " imminent_high_impact, days_to_opex, rrp_change, tga_change"
+        " FROM v_latest_regime"
     ).fetchone()
     if r is None:
         return {

@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS market_regime (
     vix                  REAL,
     vix_backwardation    INTEGER,
     equity_pcr_pctile    REAL,
+    implied_corr_pctile  REAL,             -- recorded, not yet a regime input
     in_fomc_blackout     INTEGER,
     imminent_high_impact INTEGER,
     days_to_opex         INTEGER,
@@ -104,7 +105,12 @@ def connect(path: str) -> sqlite3.Connection:
 
 
 def ensure_schema(conn) -> None:
+    """Tables + views, then the idempotent column migration (CREATE IF NOT
+    EXISTS never widens an existing market_regime)."""
     conn.executescript(_SCHEMA)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(market_regime)")}
+    if "implied_corr_pctile" not in cols:
+        conn.execute("ALTER TABLE market_regime ADD COLUMN implied_corr_pctile REAL")
     conn.commit()
 
 
@@ -253,9 +259,10 @@ def write_market_regime(conn, sid: int, regime_fields: dict) -> None:
     conn.execute(
         "INSERT INTO market_regime (snapshot_id, t10y2y, curve_inverted,"
         " hy_spread, vix, vix_backwardation, equity_pcr_pctile,"
+        " implied_corr_pctile,"
         " in_fomc_blackout, imminent_high_impact, days_to_opex, rrp_change,"
         " tga_change, regime, inputs_expected, inputs_present)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             sid,
             t10y2y,
@@ -264,6 +271,7 @@ def write_market_regime(conn, sid: int, regime_fields: dict) -> None:
             vals.get("vix"),
             None if back is None else int(back > 0),
             vals.get("equity_pcr_pctile"),
+            vals.get("implied_corr_pctile"),
             _int_or_none(vals.get("in_fomc_blackout")),
             _int_or_none(vals.get("imminent_high_impact")),
             _int_or_none(vals.get("days_to_opex")),

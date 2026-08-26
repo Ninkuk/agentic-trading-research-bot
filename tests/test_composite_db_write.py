@@ -404,3 +404,46 @@ def test_options_annotations_are_informational(tmp_path):
     ).fetchone() == (1, 1), "options context must not widen `total`"
     assert conn.execute("SELECT COUNT(*) FROM v_flagged").fetchone()[0] == 0
     conn.close()
+
+
+def test_write_market_regime_records_implied_corr_pctile_without_classifying_on_it():
+    """The COR3M percentile lands in market_regime for the dashboard and the
+    record, but the regime label ignores it until a replay grades it."""
+    conn = db.connect(":memory:")
+    db.ensure_schema(conn)
+    sid = db.write_snapshot(conn, "2026-06-01T00:00:00+00:00", 0)
+    db.write_signal_values(
+        conn,
+        sid,
+        [
+            dict(
+                signal_id="cboe_implied_corr",
+                grain="market",
+                entity="*",
+                raw_value=93.5,
+                score=-2,
+                obs_date="2026-05-31",
+                staleness_days=1.0,
+            )
+        ],
+    )
+    db.write_market_regime(conn, sid, {"cboe_implied_corr": "implied_corr_pctile"})
+    row = conn.execute(
+        "SELECT implied_corr_pctile, regime, inputs_present FROM market_regime WHERE snapshot_id=?",
+        (sid,),
+    ).fetchone()
+    assert row == (93.5, "mixed", 1)
+
+
+def test_ensure_schema_migrates_implied_corr_pctile_onto_existing_market_regime():
+    conn = db.connect(":memory:")
+    conn.execute(
+        "CREATE TABLE market_regime (snapshot_id INTEGER PRIMARY KEY, t10y2y REAL,"
+        " curve_inverted INTEGER, hy_spread REAL, vix REAL, vix_backwardation INTEGER,"
+        " equity_pcr_pctile REAL, in_fomc_blackout INTEGER, imminent_high_impact INTEGER,"
+        " days_to_opex INTEGER, rrp_change REAL, tga_change REAL, regime TEXT,"
+        " inputs_expected INTEGER NOT NULL, inputs_present INTEGER NOT NULL)"
+    )
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(market_regime)")}
+    assert "implied_corr_pctile" in cols

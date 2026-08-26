@@ -6,6 +6,7 @@ from typing import Any
 
 from sources.combiners.composite.catalog import (
     CBOE_EQUITY_PCR_SCORE,
+    CBOE_IMPLIED_CORR_SCORE,
     CBOE_VIX_BACKWARDATION_SCORE,
     CBOE_VIX_SCORE,
     EIA_CRUDE_CHANGE_SCORE,
@@ -160,6 +161,16 @@ MARKET_OBS_SIGNALS: list[dict[str, Any]] = [
             "SELECT date, equity_pcr, NULL FROM src.pcr_daily WHERE equity_pcr IS NOT NULL"
         ),
         "score_case": CBOE_EQUITY_PCR_SCORE,
+    },
+    {
+        # Same windowed-percentile shape as the PCR; cor3m is Cboe's 3-month
+        # implied correlation index, CDN history from 2006.
+        "signal_id": "cboe_implied_corr",
+        "publication_lag_days": 0,  # exchange close, same session
+        "db": CBOE_DB,
+        "flag_mode": "pctile",
+        "harvest_sql": "SELECT date, cor3m, NULL FROM src.vix_daily WHERE cor3m IS NOT NULL",
+        "score_case": CBOE_IMPLIED_CORR_SCORE,
     },
     # ---- asset-class grain (graded vs a sector proxy, not SP500) ----
     # change_pct history is computed from eia_obs week-over-week (the source's
