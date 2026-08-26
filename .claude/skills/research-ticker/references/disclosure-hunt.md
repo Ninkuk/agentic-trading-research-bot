@@ -112,11 +112,11 @@ So:
   twelve calls since 2021 is nothing at all.
 
 Call `coverage(index, ipo_date)` and print it *before* any hit list. Read `ipo_date`
-with the read-only URI form (the only spelling the headless slot's allowlist
+with the `-readonly` flag form (the only spelling the headless slot's allowlist
 grants — see the SKILL.md DB-read rule); the skill never writes to `data/*.db`:
 
 ```
-sqlite3 file:data/stocks.db?mode=ro "SELECT ipoDate FROM v_latest WHERE symbol='VZ';"
+sqlite3 -readonly data/stocks.db "SELECT ipoDate FROM v_latest WHERE symbol='VZ';"
 -- 2000-07-03
 ```
 
@@ -125,7 +125,7 @@ section's own headline example** — because stockanalysis itself returns `ipoDa
 for those tickers. It is not a gap in this repo's screener:
 
 ```
-sqlite3 file:data/stocks.db?mode=ro "SELECT ipoDate FROM v_latest WHERE symbol='T';"
+sqlite3 -readonly data/stocks.db "SELECT ipoDate FROM v_latest WHERE symbol='T';"
 -- (empty)
 ```
 

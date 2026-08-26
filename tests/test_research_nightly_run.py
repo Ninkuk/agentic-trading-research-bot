@@ -32,11 +32,11 @@ def test_allowlist_bash_entries_are_enumerated_not_catchall():
         "Bash(uv run python -m tools.valuation.equity_option *)",
         "Bash(uv run python -m tools.options.implied_move *)",
         "Bash(uv run python main.py journal *)",
-        "Bash(sqlite3 file:data/sec_fundamentals.db?mode=ro *)",
-        "Bash(sqlite3 file:data/stocks.db?mode=ro *)",
-        "Bash(sqlite3 file:data/earnings.db?mode=ro *)",
-        "Bash(sqlite3 file:data/composite.db?mode=ro *)",
-        "Bash(sqlite3 file:data/options.db?mode=ro *)",
+        "Bash(sqlite3 -readonly data/sec_fundamentals.db *)",
+        "Bash(sqlite3 -readonly data/stocks.db *)",
+        "Bash(sqlite3 -readonly data/earnings.db *)",
+        "Bash(sqlite3 -readonly data/composite.db *)",
+        "Bash(sqlite3 -readonly data/options.db *)",
     }
     bash_entries = [e for e in entries if e.startswith("Bash(")]
     assert bash_entries
@@ -44,10 +44,11 @@ def test_allowlist_bash_entries_are_enumerated_not_catchall():
         assert entry in allowed_bash
     for entry in bash_entries:
         if entry.startswith("Bash(sqlite3"):
-            # sqlite is grantable only as a per-DB read-only URI — never a
-            # bare path (writable) and never scorer.db (dispatcher-only).
-            assert entry.startswith("Bash(sqlite3 file:data/")
-            assert "?mode=ro *)" in entry
+            # sqlite is grantable only as a per-DB `-readonly` path — never a
+            # bare path (writable), never the `file:...?mode=ro` URI (zsh
+            # globs the `?`), and never scorer.db (dispatcher-only).
+            assert entry.startswith("Bash(sqlite3 -readonly data/")
+            assert "?" not in entry
             assert "scorer.db" not in entry
 
 

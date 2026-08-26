@@ -52,12 +52,13 @@ its home regulator (SEDAR+, etc.), not SEC EDGAR. The live probe is then your
 the latest call (Phase 2).
 
 Then read `data/*.db` read-only, as the **point-in-time record** — what was
-known when, not what is true now. Invoke sqlite3 via the read-only URI,
-written EXACTLY as `sqlite3 file:data/<name>.db?mode=ro "SELECT ..."` —
-unquoted URI, so the command matches the headless slot's allowlist pattern
-`Bash(sqlite3 file:data/<name>.db?mode=ro *)` (plain `sqlite3 data/<name>.db`
-or a quoted `"file:..."` would NOT match and dies headless on a permission
-prompt; a writable sqlite3 is deliberately not grantable):
+known when, not what is true now. Invoke sqlite3 with the `-readonly` flag,
+written EXACTLY as `sqlite3 -readonly data/<name>.db "SELECT ..."` so the
+command matches the headless slot's allowlist pattern
+`Bash(sqlite3 -readonly data/<name>.db *)` (plain `sqlite3 data/<name>.db`
+would NOT match and dies headless on a permission prompt; the
+`file:...?mode=ro` URI is out because zsh globs the `?`; a writable sqlite3
+is deliberately not grantable):
 
 - `data/sec_fundamentals.db` — `v_screener` for `net_margin`, `roe`,
   `debt_to_equity`, revenue and income history; `companies` for ticker→CIK.
@@ -210,7 +211,7 @@ Then, explicitly:
   pace", "China supply chain"), never a sector label. `idiosyncratic` is an
   admissible answer and an attackable claim like any other. Then the overlap:
   list held symbols
-  (`sqlite3 "file:data/portfolio.db?mode=ro" "SELECT symbol FROM v_latest_positions"`),
+  (`sqlite3 -readonly data/portfolio.db "SELECT symbol FROM v_latest_positions"`),
   grep each holding's newest `research/<TICKER>-*.md` for its
   `**Dominant shared risk factor:**` line, and count the holdings whose
   factor fails in the same scenario as this one — different wording or a

@@ -65,14 +65,16 @@ against scorer.db directly.
    - **Queue attribution**: if the fill's order id appears in
      `data/orders.db` `placements` (a morning queue execution), copy that
      queue row's `note` into the fill's `note` — the rationale is what
-     scorer grades and must not die in orders.db. Read via the read-only
-     URI ONLY, written EXACTLY as below — unquoted URI, so the command
-     matches the wrapper's allowlist pattern
-     `Bash(sqlite3 file:data/orders.db?mode=ro *)` (a quoted `"file:..."`
-     would NOT match and dies headless on a permission prompt; a writable
-     sqlite3 against orders.db is deliberately not grantable):
-     `sqlite3 file:data/orders.db?mode=ro "SELECT q.note FROM placements p
+     scorer grades and must not die in orders.db. Read via the `-readonly`
+     flag ONLY, written EXACTLY as below so the command matches the
+     wrapper's allowlist pattern `Bash(sqlite3 -readonly data/orders.db *)`
+     (never the `file:...?mode=ro` URI — zsh globs the `?` and aborts the
+     command headless; a writable sqlite3 against orders.db is
+     deliberately not grantable):
+     `sqlite3 -readonly data/orders.db "SELECT q.note FROM placements p
      JOIN queue q ON q.id=p.queue_id WHERE p.order_id='<id>'"`.
+     A fill already journaled without its note cannot be backfilled by
+     re-ingest (`order_ref` dedupes) — get the note right on first sync.
      These are human decisions with machine hands: they keep `placed_agent`
      as the broker reports it and join the normal human buckets, no new
      actor.

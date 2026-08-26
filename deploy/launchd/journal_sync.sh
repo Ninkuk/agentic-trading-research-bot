@@ -19,7 +19,7 @@ job_start "journal sync"
 run_with_timeout_retry "${JOURNAL_TIMEOUT_SECS:-1200}" \
 claude -p "/journal-sync" \
     --model sonnet \
-    --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_equity_orders,mcp__claude_ai_Robinhood_MCP__get_option_orders,mcp__claude_ai_Robinhood_MCP__get_realized_pnl,mcp__claude_ai_Robinhood_MCP__get_pnl_trade_history,Write,Bash(uv run python main.py journal *),Bash(uv run python main.py orders reconcile *),Bash(sqlite3 file:data/orders.db?mode=ro *)" \
+    --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_equity_orders,mcp__claude_ai_Robinhood_MCP__get_option_orders,mcp__claude_ai_Robinhood_MCP__get_realized_pnl,mcp__claude_ai_Robinhood_MCP__get_pnl_trade_history,Write,Bash(uv run python main.py journal *),Bash(uv run python main.py orders reconcile *),Bash(sqlite3 -readonly data/orders.db *)" \
     --permission-mode default \
     --output-format json
 

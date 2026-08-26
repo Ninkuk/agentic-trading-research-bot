@@ -45,8 +45,8 @@ dollar-based GFD market order (notional rows).
      --note "<the user's rationale — this reaches the decision journal>"
    ```
 
-3. Read back `v_open_queue` (`sqlite3 file:data/orders.db?mode=ro "SELECT *
-   FROM v_open_queue"` — always the read-only URI; writes go through the
+3. Read back `v_open_queue` (`sqlite3 -readonly data/orders.db "SELECT *
+   FROM v_open_queue"` — always the `-readonly` flag; writes go through the
    dispatcher only) and confirm to the user exactly what will be considered,
    including the implied price ceiling (share rows) or exact spend and veto
    band (notional rows) per order.
