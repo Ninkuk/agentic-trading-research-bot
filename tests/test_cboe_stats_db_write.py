@@ -71,3 +71,17 @@ def test_prune_snapshots_not_facts():
     removed = db.prune(conn, keep_days=30, now_iso="2026-07-03T00:00:00+00:00")
     assert removed == 1
     assert conn.execute("SELECT COUNT(*) FROM pcr_daily").fetchone()[0] == 1
+
+
+def test_write_vix_cor3m_lands_in_its_own_column():
+    conn = _fresh()
+    db.write_vix(
+        conn, "VIX", [{"date": "2026-06-01", "open": 1, "high": 1, "low": 1, "close": 14.6}]
+    )
+    db.write_vix(
+        conn,
+        "COR3M",
+        [{"date": "2026-06-01", "open": 10.9, "high": 11.2, "low": 10.7, "close": 10.9}],
+    )
+    row = conn.execute("SELECT close, cor3m FROM vix_daily WHERE date='2026-06-01'").fetchone()
+    assert row == (14.6, 10.9)

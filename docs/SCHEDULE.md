@@ -31,7 +31,7 @@ summer open (6:30am Phoenix).
 | `options-close` | 2:45pm | Settled end-of-day chains (post-close both seasons) |
 | `treasury` | 4:30pm | FiscalData + yield-curve XML |
 | `fred` | 4:40pm | Daily rate series finalized ~4:15pm ET. Observations only (no `--vintages`); vintages run weekly (see `fred-vintages` below) |
-| `cboe-stats` | 6:00pm | VIX term-structure CSVs + daily put/call ratios (SSR stats page) |
+| `cboe-stats` | 6:00pm | VIX term-structure + COR3M implied-correlation CSVs, daily put/call ratios (SSR stats page) |
 | `short-volume` | 6:15pm | FINRA Reg SHO daily file |
 | `short-interest` | 6:30pm | Daily probe; FINRA disseminates twice-monthly on varying days, 404s are free |
 | `edgar` | 8:30pm (+retry 15min) | **Must stay in the evening**: the daily-index walk-back starts at *today* and stops at the first non-empty index, so a morning run (after EDGAR's 6am-ET filing window opens) stores a partial current-day sliver and permanently skips the prior day. Evening = same-day complete index. `--keep-days 90` — filings are snapshot-scoped and this bound IS `v_activity_history`'s lookback depth |

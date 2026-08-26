@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS pcr_daily (
 CREATE TABLE IF NOT EXISTS vix_daily (
     date  TEXT PRIMARY KEY,
     open  REAL, high REAL, low REAL, close REAL,
-    vix3m REAL, vix9d REAL, vvix REAL
+    vix3m REAL, vix9d REAL, vvix REAL,
+    cor3m REAL
 );
 """
 
@@ -31,12 +32,18 @@ _VIX_MAP = {
     "VIX3M": {"vix3m": "close"},
     "VIX9D": {"vix9d": "close"},
     "VVIX": {"vvix": "close"},
+    "COR3M": {"cor3m": "close"},
 }
 
 
 def ensure_schema(conn) -> None:
-    """Create tables + views. Idempotent."""
-    conn.executescript(_SCHEMA + _VIEWS)
+    """Create tables, widen a pre-COR3M vix_daily (CREATE IF NOT EXISTS never
+    adds a column), then views. Idempotent."""
+    conn.executescript(_SCHEMA)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(vix_daily)")}
+    if "cor3m" not in cols:
+        conn.execute("ALTER TABLE vix_daily ADD COLUMN cor3m REAL")
+    conn.executescript(_VIEWS)
     conn.commit()
 
 
@@ -136,6 +143,8 @@ SELECT
    ORDER BY date DESC LIMIT 1) AS vix_date,
   (SELECT close FROM vix_daily WHERE close IS NOT NULL
    ORDER BY date DESC LIMIT 1) AS vix_close,
+  (SELECT cor3m FROM vix_daily WHERE cor3m IS NOT NULL
+   ORDER BY date DESC LIMIT 1) AS cor3m,
   (SELECT date FROM pcr_daily ORDER BY date DESC LIMIT 1) AS pcr_date,
   (SELECT equity_pcr FROM pcr_daily ORDER BY date DESC LIMIT 1) AS equity_pcr,
   (SELECT total_pcr FROM pcr_daily ORDER BY date DESC LIMIT 1) AS total_pcr,

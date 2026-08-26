@@ -21,3 +21,13 @@ def test_select_ids_default_only_exclude_add():
     assert select_ids(ids, ["VIX", "VIX"], None) == ["VIX"]
     assert "VIX" not in select_ids(ids, None, ["VIX"])
     assert select_ids(ids, ["VIX"], None, add=["RVX", " RVX "]) == ["VIX", "RVX"]
+
+
+def test_cor3m_is_an_enabled_vix_kind_feed():
+    """COR3M (Cboe 3-month implied correlation) ships on the same CDN CSV
+    route as VIX and is enabled by default."""
+    from sources.screeners.cboe_stats import catalog
+
+    by_id = {f.feed_id: f for f in catalog.CATALOG}
+    assert by_id["COR3M"].kind == "vix"
+    assert "COR3M" in catalog.enabled_ids()

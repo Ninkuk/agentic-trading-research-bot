@@ -99,7 +99,7 @@ writes `.env` directly. Adding a new tunable? The `KNOBS` catalog in
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | **Macro / rates**      | `fred` (FRED + ALFRED vintages), `treasury` (auctions, yield curve), `nyfed` (RRP, SOFR), `econ_calendar`, `fomc` |
 | **Positioning / flow** | `cftc` (COT, three families), `short_interest`, `short_volume`, `ats` (FINRA dark-pool), `ftd` (fails-to-deliver) |
-| **Options / vol**      | `options` (CBOE chains, hourly), `cboe_stats` (VIX term structure, put/call)                                      |
+| **Options / vol**      | `options` (CBOE chains, hourly), `cboe_stats` (VIX term structure, COR3M implied correlation, put/call)                                      |
 | **Equities**           | `stocks`, `fundamentals` (SEC XBRL frames), `edgar` (filing activity), `earnings`                                 |
 | **Commodities**        | `eia` (petroleum, natural gas), `usda` (NASS, WASDE)                                                              |
 | **Sentiment**          | `reddit` (ApeWisdom)                                                                                              |

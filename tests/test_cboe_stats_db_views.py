@@ -61,3 +61,16 @@ def test_v_latest_sentiment_one_row():
     )
     rows = conn.execute("SELECT vix_close, equity_pcr FROM v_latest_sentiment").fetchall()
     assert rows == [(14.6, 0.7)]
+
+
+def test_latest_sentiment_carries_cor3m():
+    conn = db.connect(":memory:")
+    db.ensure_schema(conn)
+    db.write_vix(
+        conn, "VIX", [{"date": "2026-06-01", "open": 1, "high": 1, "low": 1, "close": 20.0}]
+    )
+    db.write_vix(
+        conn, "COR3M", [{"date": "2026-06-01", "open": 1, "high": 1, "low": 1, "close": 33.3}]
+    )
+    row = conn.execute("SELECT vix_close, cor3m FROM v_latest_sentiment").fetchone()
+    assert row == (20.0, 33.3)
