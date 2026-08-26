@@ -24,6 +24,19 @@ def test_marker_lines_become_counts(tmp_path):
     assert markers == {"FAILED": 2, "Error:": 1}
 
 
+def test_headless_json_result_lines_are_not_markers(tmp_path):
+    # The claude -p JSON envelope narrates freely; only real log lines count.
+    log = tmp_path / "journal.log"
+    log.write_text(
+        "[2026-07-22 18:00:01] start: journal sync\n"
+        '{"is_error":false,"result":"no STALE marker yet; Error: none; FAILED: 0"}\n'
+        "[2026-07-22 18:00:09] STALE: no journal run in the last 2h\n"
+    )
+    runs, markers = health.scan_log(log, SINCE)
+    assert runs == 1
+    assert markers == {"STALE": 1}
+
+
 def test_raw_log_content_never_appears_in_output(tmp_path):
     secret = "https://api.example.com/v1?api_key=SHOULD-NEVER-LEAK"
     log = tmp_path / "fred.log"

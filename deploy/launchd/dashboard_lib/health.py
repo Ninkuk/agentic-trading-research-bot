@@ -190,6 +190,11 @@ def scan_log(path: Path, since: dt.datetime) -> tuple[int, dict[str, int]]:
             in_window = ts >= since
         if not in_window:
             continue
+        # A headless `claude -p --output-format json` slot prints its whole
+        # session result as one `{...}` line; its narrative can quote any
+        # marker ("no STALE marker yet") without the job being unhealthy.
+        if line.startswith("{"):
+            continue
         if "start:" in line and m:
             runs += 1
         for marker in BAD_MARKERS:
