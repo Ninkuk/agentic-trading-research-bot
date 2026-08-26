@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
-from dashboard_lib import health, narrative  # noqa: E402
+from dashboard_lib import book, grades, health, narrative, sources_views  # noqa: E402
 from dashboard_lib.glossary import load_glossary  # noqa: E402
 from sources.combiners.composite import candidates as candidates_mod  # noqa: E402
 from sources.combiners.scorer import scorecard as scorer_scorecard  # noqa: E402
@@ -1844,6 +1844,9 @@ SECTION_EXPORTERS: list[
         ],
     ),
 ]
+# Track-record drill-downs, book/ops, and source cards live in their own
+# modules; a section ships only once it is in this combined list.
+SECTION_EXPORTERS += grades.SECTIONS + book.SECTIONS + sources_views.SECTIONS
 
 
 # --- Hero bullets -----------------------------------------------------------

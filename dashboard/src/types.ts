@@ -52,7 +52,7 @@ export interface Tile {
   history?: { date: string; value: number | null }[];
 }
 
-// The six strand groups a section's `kicker` sorts it into (Main.tsx's
+// The seven strand groups a section's `kicker` sorts it into (Main.tsx's
 // STRANDS, data.py's SECTION_EXPORTERS kicker column). Kept as a real union
 // — not a bare `string` — so a hand-authored Section (tests, fixtures the
 // Loosen<T> guard checks) gets a compile-time nudge toward a real strand
@@ -62,14 +62,23 @@ export interface Tile {
 // fixtures/data.test.ts is for, and why Main.tsx's strand grouping still
 // runs a defensive membership check and routes anything unrecognized into
 // a trailing "Other" group rather than ever silently dropping it.
-export type Kicker = "Macro" | "Signals" | "Research" | "Track record" | "Your book" | "Ops";
+export type Kicker =
+  | "Macro"
+  | "Signals"
+  | "Sources"
+  | "Research"
+  | "Track record"
+  | "Your book"
+  | "Ops";
 
 // Canonical strand order — the single source Main.tsx, StrandNav, and the
-// fixture drift test all read from, so the list can't fork. "Ops" is
-// appended last: pipeline health is plumbing, not signal.
+// fixture drift test all read from, so the list can't fork. "Sources" is
+// the raw feeds behind the Signals opinions (dark pools, COT, fails, …);
+// "Ops" is appended last: pipeline health is plumbing, not signal.
 export const KICKERS: readonly Kicker[] = [
   "Macro",
   "Signals",
+  "Sources",
   "Research",
   "Track record",
   "Your book",

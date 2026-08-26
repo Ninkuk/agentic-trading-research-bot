@@ -203,3 +203,13 @@
 2026-08-25 lYmXOYbKHUI corr-is-not-drift DEAD gate=7:priority
 2026-08-25 lYmXOYbKHUI index-funds-raise-corr DEAD gate=1:provenance
 2026-08-25 lYmXOYbKHUI levered-etf-decay DEAD gate=1:provenance
+2026-08-26 6_-Gr41Jehw multiple-implies-growth DEAD gate=2:duplication
+2026-08-26 6_-Gr41Jehw mature-margin-multiple DEAD gate=7:priority
+2026-08-26 6_-Gr41Jehw extend-horizon-until-gdp-growth DEAD gate=2:duplication
+2026-08-26 6_-Gr41Jehw reverse-dcf-output-return DEAD gate=2:duplication
+2026-08-26 6_-Gr41Jehw sensitivity-grid-returns DEAD gate=7:priority
+2026-08-26 6_-Gr41Jehw zero-growth-floor-scenario DEAD gate=2:duplication
+2026-08-26 6_-Gr41Jehw no-post-hoc-haircut DEAD gate=2:duplication
+2026-08-26 6_-Gr41Jehw firm-hurdle-rate DEAD gate=1:provenance
+2026-08-26 6_-Gr41Jehw beta-not-business-risk DEAD gate=1:provenance
+2026-08-26 6_-Gr41Jehw dcf-best-for-immature DEAD gate=1:provenance

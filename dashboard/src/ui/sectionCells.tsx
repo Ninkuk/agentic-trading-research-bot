@@ -15,9 +15,23 @@ import { pct, signed, usd } from "../format";
 import type { Column, Row } from "../types";
 import { Badge } from "../components/ui/badge";
 import { formatCell, humanizeId, isMachineId } from "./formatCell";
+import { Sparkline } from "./Sparkline";
 
 // Fractions of 1 → percent (0.58 → 58%).
-const PCT_FRACTION = new Set(["coverage", "hit_rate", "hit_ci_lo", "hit_ci_hi", "null_rate", "avg_excess"]);
+const PCT_FRACTION = new Set([
+  "coverage",
+  "hit_rate",
+  "hit_ci_lo",
+  "hit_ci_hi",
+  "null_rate",
+  "avg_excess",
+  "baseline",
+  "p_up",
+  "p_down",
+  "short_ratio",
+  "net_margin",
+  "roe",
+]);
 // Signed fractions → signed tinted percent (+1.8% / −0.6%).
 const PCT_SIGNED = new Set([
   "avg_dir_excess",
@@ -26,10 +40,43 @@ const PCT_SIGNED = new Set([
   "avg_bench_return",
   "min_bench_return",
   "max_bench_return",
+  "fwd_return",
+  "bench_fwd_return",
+  "excess",
+  "dir_excess",
+  "premium_return",
 ]);
-// Already expressed in percent units (advisor heat).
-const PCT_UNIT = new Set(["heat_pct", "weight_pct"]);
-const DOLLARS = new Set(["heat_dollars", "cap_dollars", "market_value", "price", "prev_close", "close"]);
+// Already expressed in percent units (advisor heat, exit advice).
+const PCT_UNIT = new Set(["heat_pct", "weight_pct", "unrealized_pct", "stop_distance_pct"]);
+const DOLLARS = new Set([
+  "heat_dollars",
+  "cap_dollars",
+  "market_value",
+  "price",
+  "prev_close",
+  "close",
+  "pnl_dollars",
+  "avg_cost",
+  "stop_price",
+  "limit_price",
+  "ref_price",
+  "entry_close",
+  "notional",
+]);
+// Boolean flags render as a tinted pill; the variant says whether `true`
+// is the good state (a beaten benchmark) or the bad one (a stale ATR) —
+// text stays the primary channel, the tint only agrees with it.
+const BOOL_GOOD = new Set(["verdict_correct", "beat_benchmark", "beats_baseline", "aligned"]);
+const BOOL_BAD = new Set([
+  "anti_signal",
+  "falling_knife",
+  "strong",
+  "atr_stale",
+  "uncovered",
+  "short_leg",
+  "extreme",
+  "inverted",
+]);
 // Symbols stay mono; signal ids and reopen triggers are no longer here —
 // they humanize into words (see the branches in sectionCell below), and
 // words are sans per the Mono-Numbers Rule.
@@ -121,9 +168,31 @@ export function machineIdCell(row: Row, key: string, v: unknown): ReactNode {
 }
 
 /** The generic per-cell dispatcher — the lab's buildRenderers, flattened. */
+export function boolCell(key: string, v: unknown): ReactNode {
+  if (typeof v !== "boolean") return "—";
+  if (BOOL_GOOD.has(key))
+    return (
+      <Badge variant={v ? "up" : "down"} className={`bool bool--${v ? "good" : "bad"}`}>
+        {v ? "yes" : "no"}
+      </Badge>
+    );
+  if (BOOL_BAD.has(key))
+    return v ? (
+      <Badge variant="down" className="bool bool--bad">
+        yes
+      </Badge>
+    ) : (
+      "no"
+    );
+  return v ? "yes" : "no";
+}
+
 export function sectionCell(row: Row, col: Column): ReactNode {
   const k = col.key;
   const v = row[k];
+  if (Array.isArray(v)) return <Sparkline values={v} label={col.label} />;
+  if (typeof v === "boolean" && k !== "in_portfolio" && k !== "exceeds_buying_power")
+    return boolCell(k, v);
   if (k === "signal_id" || k === "trigger") return machineIdCell(row, k, v);
   if (k === "verdict") return researchVerdictPill(v);
   if (k === "score_sum") return scoreCell(v);

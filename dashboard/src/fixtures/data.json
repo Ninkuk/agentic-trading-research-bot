@@ -19,7 +19,7 @@
     "regime": {
       "title": "Regime",
       "kicker": "Macro",
-      "note": "The market's mood. The label is decided by three inputs \u2014 the VIX, its term structure, and high-yield spreads; the other seven are tracked and shown but do not move it.",
+      "note": "The market's mood. The label is decided by three inputs — the VIX, its term structure, and high-yield spreads; the other seven are tracked and shown but do not move it.",
       "verdict": {
         "text": "Risk-on, 3rd night",
         "tone": "on"
@@ -74,7 +74,7 @@
           "lean": "on"
         },
         {
-          "input": "10y\u20132y spread",
+          "input": "10y–2y spread",
           "value": 0.35,
           "lean": "mid"
         },
@@ -128,7 +128,7 @@
       "note": "The regime's three deciding inputs with their recent history.",
       "tiles": [
         {
-          "label": "10y\u20132y spread",
+          "label": "10y–2y spread",
           "series_id": "T10Y2Y",
           "value": 0.35,
           "delta": 0.02,
@@ -183,11 +183,11 @@
     "scorecard": {
       "title": "Ticker scorecard",
       "kicker": "Signals",
-      "note": "Stocks doing something statistically odd right now \u2014 dislocation, not quality.",
+      "note": "Stocks doing something statistically odd right now — dislocation, not quality.",
       "about": [
         {
           "heading": "What this is",
-          "body": "Every signal here is market microstructure \u2014 short interest, days-to-cover, oversold RSI, FTD spikes, retail chatter. A high score means something unusual is happening to the stock, usually a small one, and says nothing about the business."
+          "body": "Every signal here is market microstructure — short interest, days-to-cover, oversold RSI, FTD spikes, retail chatter. A high score means something unusual is happening to the stock, usually a small one, and says nothing about the business."
         },
         {
           "heading": "How much to trust it",
@@ -428,8 +428,8 @@
           "recommendation": "watch"
         }
       ],
-      "caveat": "Nominal and uncorrected across ~48 comparisons \u2014 hold every verdict loosely.",
-      "empty": "no matured signal outcomes yet \u2014 appears once a signal's flagged calls reach their grading horizon"
+      "caveat": "Nominal and uncorrected across ~48 comparisons — hold every verdict loosely.",
+      "empty": "no matured signal outcomes yet — appears once a signal's flagged calls reach their grading horizon"
     },
     "book-heat": {
       "title": "Advisor book heat",
@@ -584,7 +584,7 @@
       ],
       "rows": [],
       "caveat": "Several signals are graded at once, so a few clear the bar by luck.",
-      "empty": "no matured buckets yet \u2014 appears once conviction-bucketed opinions reach their grading horizon"
+      "empty": "no matured buckets yet — appears once conviction-bucketed opinions reach their grading horizon"
     },
     "research-reopens": {
       "title": "Research reopens",
@@ -725,7 +725,7 @@
         }
       ],
       "caveat": "Compares acted-on vs. passed-on flags from a still-small decision journal. A handful of trades can swing the comparison either way.",
-      "empty": "no matured flagged opinions yet \u2014 appears once an acted-on or passed-on flag reaches its grading horizon"
+      "empty": "no matured flagged opinions yet — appears once an acted-on or passed-on flag reaches its grading horizon"
     },
     "regime-performance": {
       "title": "Regime edge",
@@ -794,7 +794,7 @@
         }
       ],
       "caveat": "Regime windows are contiguous stretches, not independent draws.",
-      "empty": "no matured regime outcomes yet \u2014 appears once a market-mood window reaches its grading horizon"
+      "empty": "no matured regime outcomes yet — appears once a market-mood window reaches its grading horizon"
     },
     "pending": {
       "title": "In-flight opinions",
@@ -854,8 +854,8 @@
         }
       ],
       "total": 4123,
-      "caveat": "These flags haven't reached their grading horizon yet, so nothing here is a result \u2014 it's a worklist.",
-      "empty": "nothing pending \u2014 everything registered so far has matured \u2014 fills once tonight's opinions are registered"
+      "caveat": "These flags haven't reached their grading horizon yet, so nothing here is a result — it's a worklist.",
+      "empty": "nothing pending — everything registered so far has matured — fills once tonight's opinions are registered"
     },
     "basis-breaks": {
       "title": "Data-integrity checks",
@@ -907,7 +907,7 @@
       ],
       "rows": [],
       "caveat": null,
-      "empty": "no basis breaks detected \u2014 an empty table is the good outcome; fills only when a price move looks like a split or a bad tick"
+      "empty": "no basis breaks detected — an empty table is the good outcome; fills only when a price move looks like a split or a bad tick"
     },
     "signal-recommendations": {
       "title": "Signal recommendations",
@@ -1006,15 +1006,15 @@
           "recommendation": "watch"
         }
       ],
-      "caveat": "A backtest replay against ALFRED vintages, not live trading \u2014 read excess/beats-baseline, never hit-rate alone.",
-      "empty": "insufficient evidence for every signal (young scorer) \u2014 expected; fills in once a signal's evidence crosses the reliability floor"
+      "caveat": "A backtest replay against ALFRED vintages, not live trading — read excess/beats-baseline, never hit-rate alone.",
+      "empty": "insufficient evidence for every signal (young scorer) — expected; fills in once a signal's evidence crosses the reliability floor"
     },
     "trader-scorecard": {
       "title": "Trader scorecard",
       "kicker": "Track record",
       "note": "A plain-text report grading past decision quality.",
       "text_lines": [
-        "=== Trader Decision-Quality Scorecard \u2014 2026-07 ===",
+        "=== Trader Decision-Quality Scorecard — 2026-07 ===",
         "",
         "Filter edge (acted vs passed, by horizon)",
         "  horizon | response         | n  | avg_dir_excess | avg_fwd_return",
@@ -1043,11 +1043,11 @@
       "about": [
         {
           "heading": "How to read it",
-          "body": "All lines start at $100 on the first charted date. Deposits and withdrawals are marked but excluded from the portfolio line \u2014 it moves only when the book's value moves, so a gap between the lines is skill (or its absence), never a transfer."
+          "body": "All lines start at $100 on the first charted date. Deposits and withdrawals are marked but excluded from the portfolio line — it moves only when the book's value moves, so a gap between the lines is skill (or its absence), never a transfer."
         },
         {
           "heading": "The cash line",
-          "body": "Daily fed funds (FRED's DFF) compounded over the same window \u2014 roughly what a T-bill fund or HYSA would have paid. SPY asks whether the picks beat the index; cash asks whether the money should be in the market at all."
+          "body": "Daily fed funds (FRED's DFF) compounded over the same window — roughly what a T-bill fund or HYSA would have paid. SPY asks whether the picks beat the index; cash asks whether the money should be in the market at all."
         }
       ],
       "curve": [
@@ -1146,7 +1146,7 @@
       ],
       "rows": [],
       "caveat": "Episodes are few and overlap early. The view carries plain averages with no confidence interval, so read n before believing any row.",
-      "empty": "no matured episodes yet \u2014 first grades appear ~21 trading days after the first screen night"
+      "empty": "no matured episodes yet — first grades appear ~21 trading days after the first screen night"
     },
     "group-heat": {
       "title": "Advisor group heat",
@@ -1198,7 +1198,7 @@
           "heat_pct": 0.25
         }
       ],
-      "empty": "no group heat yet \u2014 appears once the advisor computes tonight's book"
+      "empty": "no group heat yet — appears once the advisor computes tonight's book"
     },
     "position-heat": {
       "title": "Per-position heat",
@@ -1407,7 +1407,7 @@
     "health": {
       "title": "Pipeline health",
       "kicker": "Ops",
-      "note": "Launchd job exit codes, hung jobs, log FAILED/STALE counts, and stale or empty databases \u2014 everything the retired nightly ntfy push carried.",
+      "note": "Launchd job exit codes, hung jobs, log FAILED/STALE counts, and stale or empty databases — everything the retired nightly ntfy push carried.",
       "healthy": false,
       "tiles": [
         {
@@ -1464,6 +1464,3248 @@
           "detail": "2 FAILED lines in 24h"
         }
       ]
+    },
+    "cot-tails": {
+      "title": "COT positioning tails",
+      "kicker": "Signals",
+      "note": "Futures markets where the professional crowd is all-in on one side of its own 3-year range.",
+      "about": [
+        {
+          "heading": "What this is",
+          "body": "Weekly CFTC managed-money positioning, each futures market measured against its own 3-year range. A row appears only when a market sits in the bottom or top 15% of that range with at least a year of report history behind it."
+        },
+        {
+          "heading": "Why per-market",
+          "body": "The composite's class-average positioning signal cannot see one market's extreme inside a mixed class: the week sugar sat at the 12th percentile of its range, the softs class averaged 33 and scored nothing."
+        },
+        {
+          "heading": "How to read it",
+          "body": "A washed-out short is a coiled spring — any bullish surprise forces funds to buy back at once; a crowded long is the mirror. Neither is a direction call on its own: it marks where a squeeze has fuel, not when it fires."
+        }
+      ],
+      "columns": [
+        {
+          "key": "market",
+          "label": "Market",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "side",
+          "label": "Side",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "cot_index",
+          "label": "COT index (3y)",
+          "numeric": true,
+          "direction": null,
+          "term": "COT / positioning"
+        },
+        {
+          "key": "report_date",
+          "label": "Report date",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [
+        {
+          "market": "SUGAR NO. 11 - ICE FUTURES U.S.",
+          "cot_index": 11.6,
+          "report_date": "2026-06-23",
+          "side": "washed-out short"
+        },
+        {
+          "market": "COTTON NO. 2 - ICE FUTURES U.S.",
+          "cot_index": 91.2,
+          "report_date": "2026-06-23",
+          "side": "crowded long"
+        }
+      ],
+      "caveat": "A tail marks a market to watch, not a trade: identical washouts have resolved violently or sat unchanged for months. No measured forward-return evidence yet.",
+      "empty": "no futures market sits in the tail of its own 3-year managed-money range tonight"
+    },
+    "research-filter": {
+      "title": "Research call grade",
+      "kicker": "Track record",
+      "note": "When the research skill said buy or pass, how often was it right against SPY?",
+      "about": [
+        {
+          "heading": "How it is measured",
+          "body": "Every research-ticker verdict starts a stopwatch. A buy is right when the name beats SPY over the horizon; a pass is right when it lags. Hit rate is the share of calls that were right."
+        },
+        {
+          "heading": "Why it matters",
+          "body": "This is the grade for the whole funnel's last step — the decision a human actually makes. Below 50% at n>30 means the research is adding noise, not signal."
+        }
+      ],
+      "tiles": [],
+      "columns": [
+        {
+          "key": "verdict",
+          "label": "Research call",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "horizon",
+          "label": "Horizon",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "n",
+          "label": "N",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "hit_rate",
+          "label": "Hit rate",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "avg_excess",
+          "label": "Excess vs SPY",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "avg_fwd_return",
+          "label": "Fwd return",
+          "numeric": true,
+          "direction": null,
+          "term": "Forward return"
+        }
+      ],
+      "rows": [],
+      "caveat": "Hit rate is the safe headline; the excess column reads inversely on pass calls (a pass is right when the name lags), so compare it only within one call type.",
+      "empty": "no matured research verdicts yet; appears once a call's forward window closes"
+    },
+    "research-verdict-outcomes": {
+      "title": "Research calls, one by one",
+      "kicker": "Track record",
+      "note": "Every graded research call with what the stock and SPY did afterward.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "One row per call and horizon. Excess is the stock's return minus SPY's; 'Right?' applies the call's own direction (a pass is right when excess is negative)."
+        },
+        {
+          "heading": "Why it matters",
+          "body": "The grade above is an average; this is where you find the one call that dragged it, and whether the miss was a stock story or a market move."
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "verdict",
+          "label": "Call",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "verdict_date",
+          "label": "Call date",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "horizon",
+          "label": "Horizon",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "fwd_return",
+          "label": "Fwd return",
+          "numeric": true,
+          "direction": null,
+          "term": "Forward return"
+        },
+        {
+          "key": "bench_fwd_return",
+          "label": "SPY return",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "excess",
+          "label": "Excess vs SPY",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "verdict_correct",
+          "label": "Right?",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [
+        {
+          "symbol": "FLAG1",
+          "verdict": "buy",
+          "verdict_date": "2026-07-01",
+          "horizon": null,
+          "fwd_return": null,
+          "bench_fwd_return": null,
+          "excess": null,
+          "verdict_correct": null
+        }
+      ],
+      "total": 1,
+      "empty": "no graded research calls yet"
+    },
+    "flag-response": {
+      "title": "What you did with each flag",
+      "kicker": "Track record",
+      "note": "Each composite flag, whether you acted or passed, and how the name moved afterward.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "'acted' means a fill landed on the flagged name, 'passed' means you logged a deliberate no, 'inferred' means no record either way. Directional excess is the return in the flag's direction, minus SPY."
+        },
+        {
+          "heading": "Why it matters",
+          "body": "This is the row-level detail behind the 'Filter edge' tally: if the passes outperform the acted rows, your filter is subtracting value."
+        }
+      ],
+      "columns": [
+        {
+          "key": "composite_date",
+          "label": "Flag date",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "score_sum",
+          "label": "Score",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "total",
+          "label": "Signals",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "response",
+          "label": "You did",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "horizon",
+          "label": "Horizon",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "dir_excess",
+          "label": "Directional excess",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [
+        {
+          "composite_date": "2026-07-01",
+          "symbol": "FLAG1",
+          "score_sum": 4,
+          "total": 4,
+          "response": "acted",
+          "horizon": 5,
+          "dir_excess": 0.03
+        }
+      ],
+      "total": 1,
+      "empty": "no matured flags yet; appears once a flagged name reaches its grading horizon"
+    },
+    "signal-effective-n": {
+      "title": "How much evidence, really",
+      "kicker": "Track record",
+      "note": "The signal report cards count rows; this counts independent episodes, which is the honest sample size.",
+      "about": [
+        {
+          "heading": "The problem",
+          "body": "A signal that fires on ten consecutive days produces ten overlapping forward windows. They mostly share the same market weeks, so ten rows is closer to one observation."
+        },
+        {
+          "heading": "How to read it",
+          "body": "'Distinct dates' collapses same-day rows; 'independent episodes' also merges runs of consecutive dates whose windows overlap. The sparkline is the hit rate on each flag date — a grade earned on one hot week shows as a single spike."
+        }
+      ],
+      "verdict": {
+        "text": "1 of 1 signals rest on fewer than 3 independent episodes",
+        "tone": "off"
+      },
+      "columns": [
+        {
+          "key": "signal_id",
+          "label": "Signal",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "via_crosswalk",
+          "label": "Via crosswalk",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "horizon",
+          "label": "Horizon",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "n_matured",
+          "label": "Rows graded",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "n_dates",
+          "label": "Distinct dates",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "n_blocks",
+          "label": "Independent episodes",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "hit_rate",
+          "label": "Pooled hit rate",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "history",
+          "label": "Hit rate by date",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "latest_block",
+          "label": "Latest episode",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [
+        {
+          "signal_id": "sig_test_a",
+          "via_crosswalk": 0,
+          "horizon": 5,
+          "n_matured": 1,
+          "n_dates": 1,
+          "n_blocks": 1,
+          "hit_rate": 1.0,
+          "latest_block": "2026-07-01 → 2026-07-09",
+          "history": null
+        }
+      ],
+      "caveat": "A signal that fired on ten overlapping days is one observation, not ten. Trust the episode count over the row count.",
+      "empty": "no matured signal outcomes yet"
+    },
+    "candidate-outcomes": {
+      "title": "Candidates list, entry by entry",
+      "kicker": "Track record",
+      "note": "What each name did against SPY after it first appeared on the candidates list.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "One row per list entry and horizon. 'Door' is which dislocation test let the name onto the list — an oversold RSI, a drawdown from the high, or both."
+        },
+        {
+          "heading": "Why it matters",
+          "body": "The screen's edge is an average over these rows. A single large winner can carry it, so scan the distribution before trusting the summary."
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "screen_date",
+          "label": "Entered list",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "branch",
+          "label": "Door",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "screen_version",
+          "label": "Screen",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "horizon",
+          "label": "Horizon",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "entry_close",
+          "label": "Entry price",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "fwd_return",
+          "label": "Fwd return",
+          "numeric": true,
+          "direction": null,
+          "term": "Forward return"
+        },
+        {
+          "key": "bench_fwd_return",
+          "label": "SPY return",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "excess",
+          "label": "Excess vs SPY",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "beat_benchmark",
+          "label": "Beat SPY?",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [
+        {
+          "symbol": "CAND1",
+          "screen_date": "2026-07-01",
+          "branch": "rsi",
+          "screen_version": "v1",
+          "horizon": 21,
+          "entry_close": 100.0,
+          "fwd_return": 0.05,
+          "bench_fwd_return": 0.01,
+          "excess": 0.04,
+          "beat_benchmark": true
+        }
+      ],
+      "total": 1,
+      "empty": "no matured list entries yet; appears 21 trading days after a name first enters the candidates list"
+    },
+    "candidate-quality-trend": {
+      "title": "Falling-knife check",
+      "kicker": "Track record",
+      "note": "For every name still on the candidates list, whether the business has weakened since it first appeared.",
+      "about": [
+        {
+          "heading": "What a falling knife is",
+          "body": "A stock that looks cheaper every week because its price is falling faster than its earnings — the cash-flow yield rises while the F-score or return on capital drops. The level gates keep passing it; only the trend shows the problem."
+        },
+        {
+          "heading": "How to read it",
+          "body": "Each row compares the quality gates on the first sighting with the newest one. Flagged rows sort to the top; they are the names to re-research before buying more."
+        }
+      ],
+      "verdict": {
+        "text": "no falling knives on the list",
+        "tone": "on"
+      },
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "days_on_list",
+          "label": "Days on list",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "n_sightings",
+          "label": "Sightings",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "fscore_entry",
+          "label": "F-score at entry",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "fscore_now",
+          "label": "F-score now",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "roic_entry",
+          "label": "ROIC at entry",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "roic_now",
+          "label": "ROIC now",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "fcf_yield_entry",
+          "label": "FCF yield at entry",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "fcf_yield_now",
+          "label": "FCF yield now",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "accruals_now",
+          "label": "Accruals now",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "falling_knife",
+          "label": "Falling knife?",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [
+        {
+          "symbol": "CAND1",
+          "days_on_list": 0,
+          "n_sightings": 1,
+          "fscore_entry": 7.0,
+          "fscore_now": 7.0,
+          "roic_entry": null,
+          "roic_now": null,
+          "fcf_yield_entry": 10.0,
+          "fcf_yield_now": 10.0,
+          "accruals_now": null,
+          "falling_knife": false
+        }
+      ],
+      "empty": "no candidate has been on the list for two sightings yet"
+    },
+    "option-pnl": {
+      "title": "Option premium P&L",
+      "kicker": "Track record",
+      "note": "Dollar profit on single-leg option trades, kept separate from the stock grades.",
+      "about": [
+        {
+          "heading": "How it is measured",
+          "body": "Every option fill is a signed cash event in the premium ledger; a position's P&L is those events summed once it closes or expires. Premium return is P&L over the premium at risk."
+        },
+        {
+          "heading": "Why it is separate",
+          "body": "Options are graded on dollars, stocks on return versus SPY — the two never mix, so a lucky expiry cannot flatter the stock-picking grade."
+        }
+      ],
+      "tiles": [],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Underlying",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "direction",
+          "label": "Direction",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "expiration",
+          "label": "Expiry",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "fill_date",
+          "label": "Opened",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "contracts_opened",
+          "label": "Opened",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "contracts_closed",
+          "label": "Closed",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "contracts_outstanding",
+          "label": "Open",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "pnl_dollars",
+          "label": "P&L $",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "premium_return",
+          "label": "Premium return",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no option fills journaled yet; appears with the first single-leg option fill synced into the journal"
+    },
+    "replay-efficacy": {
+      "title": "Backtest replay",
+      "kicker": "Track record",
+      "note": "Would the macro signals have worked in the past, using only the data that existed at the time?",
+      "about": [
+        {
+          "heading": "How it is measured",
+          "body": "Each FRED series is replayed from its ALFRED vintages — the numbers as first published, before revisions — and each flag is graded on what SPY (or a sector ETF) did next. A report enters the replay only after its release date."
+        },
+        {
+          "heading": "How to read it",
+          "body": "Drift baseline is how often the benchmark simply rose over that horizon; excess is the flag's hit rate minus that. 'Beats drift' means the whole confidence interval sits above the baseline; 'anti-signal' means it sits entirely below — a signal reliably wrong is not a signal to flip."
+        }
+      ],
+      "verdict": null,
+      "columns": [
+        {
+          "key": "signal_id",
+          "label": "Signal",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "direction",
+          "label": "Flag",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "horizon",
+          "label": "Horizon",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "n_days",
+          "label": "Flag days",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "hit_rate",
+          "label": "Hit rate",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "hit_ci_lo",
+          "label": "CI low",
+          "numeric": true,
+          "direction": null,
+          "term": "CI"
+        },
+        {
+          "key": "hit_ci_hi",
+          "label": "CI high",
+          "numeric": true,
+          "direction": null,
+          "term": "CI"
+        },
+        {
+          "key": "baseline",
+          "label": "Drift baseline",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "excess",
+          "label": "Excess vs drift",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "perm_p",
+          "label": "Permutation p",
+          "numeric": true,
+          "direction": "down-good",
+          "term": null
+        },
+        {
+          "key": "beats_baseline",
+          "label": "Beats drift?",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "anti_signal",
+          "label": "Anti-signal?",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "caveat": "Nominal and uncorrected across ~48 comparisons; a lone 'beats drift' at p≈0.04 is what chance produces. Read excess against the baseline, never hit rate alone — the benchmarks drift up, so a bullish flag 'wins' by doing nothing.",
+      "empty": "no replay yet; runs Saturdays after the ALFRED vintage pull"
+    },
+    "replay-baseline": {
+      "title": "Benchmark drift",
+      "kicker": "Track record",
+      "note": "How often each benchmark simply went up over each horizon — the bar every replayed flag has to clear.",
+      "about": [
+        {
+          "heading": "Why it exists",
+          "body": "Stocks drift upward, so a bullish flag that does nothing still 'wins' most windows. Every replay grade is measured against this null, never against 50%."
+        }
+      ],
+      "columns": [
+        {
+          "key": "benchmark",
+          "label": "Benchmark",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "horizon",
+          "label": "Horizon",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "n_windows",
+          "label": "Windows",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "p_up",
+          "label": "P(up)",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "p_down",
+          "label": "P(down)",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no benchmark history loaded yet"
+    },
+    "replay-flags": {
+      "title": "Replay flags today",
+      "kicker": "Track record",
+      "note": "What each replayed signal is saying right now, with its score over the last 90 flag days.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Score is the flag's vote: positive bullish, negative bearish, zero quiet. The sparkline shows how long it has held that view."
+        },
+        {
+          "heading": "Why it matters",
+          "body": "This is the live edge of the backtest — the same signal definitions the replay graded, applied to the newest vintage."
+        }
+      ],
+      "columns": [
+        {
+          "key": "signal_id",
+          "label": "Signal",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "benchmark",
+          "label": "Benchmark",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "asof_date",
+          "label": "As of",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "value",
+          "label": "Value",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "score",
+          "label": "Score",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "history",
+          "label": "Score, last 90 flag days",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no replay flags yet"
+    },
+    "exit-advice": {
+      "title": "Exit suggestions",
+      "kicker": "Your book",
+      "note": "For each holding, where a stop would sit and whether the size has outgrown the signals behind it.",
+      "about": [
+        {
+          "heading": "How it is computed",
+          "body": "The stop is the price after a one-ATR adverse day from here; 'room to stop' is how far away that is. A trim appears when the position is larger than the advisor's cap for its current score."
+        },
+        {
+          "heading": "What to do with it",
+          "body": "Nothing automatic happens. Read a trim as 'the signals no longer support this size' and a tight stop as 'one bad day is close' — then decide."
+        }
+      ],
+      "verdict": null,
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "quantity",
+          "label": "Shares",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "price",
+          "label": "Price",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "avg_cost",
+          "label": "Avg cost",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "unrealized_pct",
+          "label": "Unrealized %",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "stop_price",
+          "label": "Suggested stop",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "stop_distance_pct",
+          "label": "Room to stop %",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "score_sum",
+          "label": "Score",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "strong",
+          "label": "Strong disagreement",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "trim_shares",
+          "label": "Trim shares",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "atr_stale",
+          "label": "ATR stale",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "caveat": "Decision support only. A stop here is a suggested distance from a one-ATR adverse day, not an order anywhere.",
+      "empty": "no positions in the latest snapshot"
+    },
+    "option-heat": {
+      "title": "Option legs",
+      "kicker": "Your book",
+      "note": "Each option position's share-equivalent exposure and what a one-ATR move would cost.",
+      "about": [
+        {
+          "heading": "How it is computed",
+          "body": "Delta × contracts × 100 is the share-equivalent; heat is that many shares moving one ATR. A protective put counts negative and offsets the shares it covers in the group view."
+        },
+        {
+          "heading": "Uncovered legs",
+          "body": "A leg with no delta input or a short leg is marked uncovered — its risk is unknown or open-ended, so the book heat number above it is a floor, not a total."
+        }
+      ],
+      "columns": [
+        {
+          "key": "underlying",
+          "label": "Underlying",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "type",
+          "label": "Type",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "expiration",
+          "label": "Expiry",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "quantity",
+          "label": "Contracts",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "delta",
+          "label": "Delta",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "share_equiv",
+          "label": "Share-equivalent",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "market_value",
+          "label": "Value",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "heat_dollars",
+          "label": "Heat $",
+          "numeric": true,
+          "direction": "down-good",
+          "term": null
+        },
+        {
+          "key": "heat_pct",
+          "label": "Heat %",
+          "numeric": true,
+          "direction": "down-good",
+          "term": null
+        },
+        {
+          "key": "short_leg",
+          "label": "Short leg",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "uncovered",
+          "label": "Uncovered",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no option legs held in the latest snapshot"
+    },
+    "order-queue": {
+      "title": "Order queue",
+      "kicker": "Ops",
+      "note": "Buys you have queued that have not yet been placed.",
+      "about": [
+        {
+          "heading": "How it works",
+          "body": "You queue a buy with a reference price and a maximum gap; the morning slot places it at the open only if the live quote is within that band, otherwise it vetoes and the row lands in the run results."
+        },
+        {
+          "heading": "Why it is on the page",
+          "body": "A queued order is a pending commitment of real money — it should never be a surprise the next morning."
+        }
+      ],
+      "tiles": [
+        {
+          "label": "queued buys",
+          "value": 0,
+          "band": null,
+          "tone": "on"
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "qty",
+          "label": "Shares",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "notional",
+          "label": "Dollars",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "ref_price",
+          "label": "Reference price",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "max_gap_pct",
+          "label": "Max gap %",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "expires_on",
+          "label": "Expires",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "queued_at",
+          "label": "Queued",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "the queue is empty; nothing will be placed at the next open"
+    },
+    "order-runs": {
+      "title": "Execution runs",
+      "kicker": "Ops",
+      "note": "Every queued order the executor has processed and what happened to it.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "'placed' means an order went to the broker under the limit ceiling; a veto names the gate that stopped it (price gap, cap, market closed). Outcome is the broker's final state where known."
+        }
+      ],
+      "tiles": [
+        {
+          "label": "orders processed",
+          "value": 0,
+          "band": null,
+          "tone": null
+        },
+        {
+          "label": "placed",
+          "value": 0,
+          "band": null,
+          "tone": null
+        },
+        {
+          "label": "vetoed or failed",
+          "value": 0,
+          "band": null,
+          "tone": null
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "qty",
+          "label": "Shares",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "notional",
+          "label": "Dollars",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "status",
+          "label": "Status",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "resolution_reason",
+          "label": "Reason",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "limit_price",
+          "label": "Limit",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "outcome",
+          "label": "Outcome",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no execution runs recorded yet"
+    },
+    "order-reconciliation": {
+      "title": "Unreconciled orders",
+      "kicker": "Ops",
+      "note": "Orders the executor placed that the journal has not yet seen a fill for.",
+      "about": [
+        {
+          "heading": "Why it matters",
+          "body": "The journal is what the grades run on. A placed order with no fill row means either the broker never filled it or the nightly journal sync missed it — both need a look."
+        }
+      ],
+      "verdict": {
+        "text": "every placed order has a journal fill",
+        "tone": "on"
+      },
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "status",
+          "label": "Status",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "resolution_reason",
+          "label": "Reason",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "every placed order has been matched to a journal fill"
+    },
+    "week-ahead": {
+      "title": "This week",
+      "kicker": "Macro",
+      "note": "Every scheduled release and earnings report this week, plus the Fed and expiry dates that shape it.",
+      "about": [
+        {
+          "heading": "What is in it",
+          "body": "Economic releases from the official calendar, confirmed earnings dates, the next FOMC meeting and whether the Fed is in its pre-meeting quiet period, the next monthly options expiry, and the next early market close."
+        },
+        {
+          "heading": "Why it matters",
+          "body": "A high-impact release or an FOMC day is the most common reason a signal moves for reasons that have nothing to do with the stock."
+        }
+      ],
+      "tiles": [
+        {
+          "label": "Fed blackout",
+          "value": "no",
+          "band": null,
+          "tone": "on"
+        }
+      ],
+      "columns": [
+        {
+          "key": "event_date",
+          "label": "Date",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "event_time",
+          "label": "Time",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "kind",
+          "label": "Kind",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "title",
+          "label": "Event",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "detail",
+          "label": "Detail",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "nothing scheduled this week"
+    },
+    "yield-curve": {
+      "title": "Treasury yield curve",
+      "kicker": "Sources",
+      "note": "Short and long Treasury yields and whether the curve is inverted, straight from the Treasury's daily table.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Normally the 10-year pays more than the 2-year. When it pays less the curve is 'inverted' — historically a recession warning, though the timing is loose."
+        }
+      ],
+      "tiles": [],
+      "empty": "no Treasury yield-curve row yet"
+    },
+    "federal-debt": {
+      "title": "Federal debt and the Treasury's cash",
+      "kicker": "Sources",
+      "note": "Total public debt and the government's checking-account balance over the last 90 days.",
+      "about": [
+        {
+          "heading": "Why it matters",
+          "body": "When the Treasury rebuilds its cash balance it drains reserves from the banking system; when it spends it down it adds them. Either way it is liquidity moving in the background of every price."
+        }
+      ],
+      "tiles": [],
+      "empty": "no debt or TGA rows yet"
+    },
+    "funding-markets": {
+      "title": "Funding markets",
+      "kicker": "Sources",
+      "note": "Overnight rates and the Fed's balance sheet — the plumbing that shows stress before prices do.",
+      "about": [
+        {
+          "heading": "What the numbers are",
+          "body": "SOFR is the overnight rate banks actually borrow at; IORB is what the Fed pays on reserves. SOFR trading above IORB means cash is scarce. SOMA is the Fed's bond portfolio; reverse repo is cash parked at the Fed overnight."
+        }
+      ],
+      "tiles": [],
+      "empty": "no NY Fed rows yet"
+    },
+    "fred-series": {
+      "title": "FRED series",
+      "kicker": "Sources",
+      "note": "Every tracked economic series with its year-over-year change and how unusual today's level is.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Z-score is how many standard deviations the latest value sits from the series' own history — beyond ±2 is rare. The tiles are the regime's raw inputs; the regime card above turns them into a verdict."
+        }
+      ],
+      "verdict": {
+        "text": "0 series more than 2σ from their own history",
+        "tone": "on"
+      },
+      "tiles": [
+        {
+          "label": "10y − 2y",
+          "value": 3.4,
+          "band": "normal",
+          "tone": "on"
+        },
+        {
+          "label": "high-yield spread",
+          "value": 3.4,
+          "band": "% over Treasuries",
+          "tone": null
+        },
+        {
+          "label": "fed funds",
+          "value": null,
+          "band": "%",
+          "tone": null
+        },
+        {
+          "label": "unemployment",
+          "value": null,
+          "band": "%",
+          "tone": null
+        }
+      ],
+      "columns": [
+        {
+          "key": "title",
+          "label": "Series",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "theme",
+          "label": "Theme",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "latest_date",
+          "label": "As of",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "latest",
+          "label": "Latest",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "year_ago",
+          "label": "A year ago",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "change_pct",
+          "label": "YoY %",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "zscore",
+          "label": "Z-score vs history",
+          "numeric": true,
+          "direction": null,
+          "term": "Z-score"
+        }
+      ],
+      "rows": [
+        {
+          "title": null,
+          "theme": null,
+          "latest_date": "2026-07-24",
+          "latest": 3.4,
+          "year_ago": null,
+          "change_pct": null,
+          "zscore": 1.6613247725836142
+        },
+        {
+          "title": null,
+          "theme": null,
+          "latest_date": "2026-07-24",
+          "latest": 3.4,
+          "year_ago": null,
+          "change_pct": null,
+          "zscore": 1.6613247725836142
+        },
+        {
+          "title": null,
+          "theme": null,
+          "latest_date": "2026-07-24",
+          "latest": 3.4,
+          "year_ago": null,
+          "change_pct": null,
+          "zscore": 1.6613247725836142
+        }
+      ],
+      "empty": "no FRED observations yet"
+    },
+    "cot-positioning": {
+      "title": "Futures positioning — legacy report",
+      "kicker": "Sources",
+      "note": "Where large speculators sit in each futures contract, and which contracts are at a positioning extreme.",
+      "about": [
+        {
+          "heading": "What the COT index is",
+          "body": "Speculators' net position, scaled 0–100 against its own three-year range: 100 means the most long they have been, 0 the most short. Extremes tend to precede reversals because there is nobody left to join the trade."
+        },
+        {
+          "heading": "The three reports",
+          "body": "The CFTC publishes the same data three ways: this legacy split (commercial vs speculator), a disaggregated split for commodities, and a financial-futures split. The other two have their own cards."
+        }
+      ],
+      "columns": [
+        {
+          "key": "name",
+          "label": "Contract",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "asset_class",
+          "label": "Class",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "report_date",
+          "label": "Report",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "net",
+          "label": "Net speculators",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "cot_index",
+          "label": "COT index (0–100)",
+          "numeric": true,
+          "direction": null,
+          "term": "COT index"
+        },
+        {
+          "key": "history",
+          "label": "Index, 26 weeks",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "pct_long",
+          "label": "% OI long",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "pct_short",
+          "label": "% OI short",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "chg_long",
+          "label": "Δ long",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "chg_short",
+          "label": "Δ short",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "chg_oi",
+          "label": "Δ open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "extreme",
+          "label": "Extreme?",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "verdict": null,
+      "rows": [],
+      "empty": "no legacy COT report loaded yet"
+    },
+    "cot-disaggregated": {
+      "title": "Futures positioning — commodities",
+      "kicker": "Sources",
+      "note": "Managed money versus the producers and merchants who actually handle each commodity.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Managed money is hedge funds; commercials are producers and processors hedging real supply. When the two indexes sit at opposite ends the commercials have usually been right."
+        }
+      ],
+      "columns": [
+        {
+          "key": "name",
+          "label": "Contract",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "asset_class",
+          "label": "Class",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "report_date",
+          "label": "Report",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "net",
+          "label": "Net managed money",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "cot_index",
+          "label": "COT index (0–100)",
+          "numeric": true,
+          "direction": null,
+          "term": "COT index"
+        },
+        {
+          "key": "history",
+          "label": "Index, 26 weeks",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "secondary_index",
+          "label": "Commercial index",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "pct_long",
+          "label": "% OI long",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "pct_short",
+          "label": "% OI short",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "chg_long",
+          "label": "Δ long",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "chg_short",
+          "label": "Δ short",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "chg_oi",
+          "label": "Δ open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "extreme",
+          "label": "Extreme?",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "verdict": null,
+      "rows": [],
+      "empty": "no disaggregated COT report loaded yet"
+    },
+    "cot-financial": {
+      "title": "Futures positioning — financials",
+      "kicker": "Sources",
+      "note": "Leveraged funds versus dealers in equity-index, rate and currency futures.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Leveraged funds are the fast money; dealers are the banks on the other side of their trades. A leveraged-fund index near 0 or 100 marks a crowded position."
+        }
+      ],
+      "columns": [
+        {
+          "key": "name",
+          "label": "Contract",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "asset_class",
+          "label": "Class",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "report_date",
+          "label": "Report",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "net",
+          "label": "Net leveraged funds",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "cot_index",
+          "label": "COT index (0–100)",
+          "numeric": true,
+          "direction": null,
+          "term": "COT index"
+        },
+        {
+          "key": "history",
+          "label": "Index, 26 weeks",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "secondary_index",
+          "label": "Dealer index",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "pct_long",
+          "label": "% OI long",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "pct_short",
+          "label": "% OI short",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "chg_long",
+          "label": "Δ long",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "chg_short",
+          "label": "Δ short",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "chg_oi",
+          "label": "Δ open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "extreme",
+          "label": "Extreme?",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "verdict": null,
+      "rows": [],
+      "empty": "no financial-futures COT report loaded yet"
+    },
+    "auction-demand": {
+      "title": "Treasury auction demand",
+      "kicker": "Sources",
+      "note": "How eagerly the last thirty Treasury auctions were bid, against each security's usual demand.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Bid-to-cover is dollars bid per dollar sold; below its typical level means buyers wanted a higher yield to show up. A run of weak auctions pushes long rates up."
+        }
+      ],
+      "verdict": null,
+      "columns": [
+        {
+          "key": "security_term",
+          "label": "Security",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "auction_date",
+          "label": "Auction",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "latest_btc",
+          "label": "Bid-to-cover",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "avg_btc",
+          "label": "Typical bid-to-cover",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "vs_avg",
+          "label": "Vs typical",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no auction results loaded yet"
+    },
+    "upcoming-auctions": {
+      "title": "Upcoming Treasury auctions",
+      "kicker": "Sources",
+      "note": "Announced auctions in the coming weeks — supply days that can move rates.",
+      "about": [
+        {
+          "heading": "Why it matters",
+          "body": "A large coupon auction on the same day as a data release is the classic set-up for a rates surprise."
+        }
+      ],
+      "columns": [
+        {
+          "key": "auction_date",
+          "label": "Auction",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "security_type",
+          "label": "Type",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "security_term",
+          "label": "Term",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "announcement_date",
+          "label": "Announced",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "issue_date",
+          "label": "Settles",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no auctions announced in the window"
+    },
+    "dark-pools": {
+      "title": "Dark pools",
+      "kicker": "Sources",
+      "note": "How much trading happened off the public exchanges last week, and on which venues.",
+      "about": [
+        {
+          "heading": "What a dark pool is",
+          "body": "A private venue where large orders trade without showing on the public order book. FINRA publishes each venue's weekly volume with a two-week delay."
+        }
+      ],
+      "tiles": [
+        {
+          "label": "venues reporting",
+          "value": 0,
+          "band": null,
+          "tone": null
+        },
+        {
+          "label": "symbols with off-exchange volume",
+          "value": 0,
+          "band": null,
+          "tone": null
+        },
+        {
+          "label": "off-exchange shares",
+          "value": null,
+          "band": null,
+          "tone": null
+        }
+      ],
+      "columns": [
+        {
+          "key": "ats_name",
+          "label": "Venue",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "mpid",
+          "label": "MPID",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "total_shares",
+          "label": "Shares",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "total_trades",
+          "label": "Trades",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no ATS weekly file loaded yet"
+    },
+    "off-exchange-leaders": {
+      "title": "Most-traded off exchange",
+      "kicker": "Sources",
+      "note": "The symbols with the most dark-pool volume last week, with their weekly trend.",
+      "about": [
+        {
+          "heading": "Why it matters",
+          "body": "Institutions work large orders in the dark. A symbol whose off-exchange share is climbing is being accumulated or distributed by someone big — the direction is not shown."
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "total_shares",
+          "label": "Off-exchange shares",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "total_trades",
+          "label": "Trades",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "venue_count",
+          "label": "Venues",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "history",
+          "label": "Weekly shares",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no ATS weekly file loaded yet"
+    },
+    "sec-revisions": {
+      "title": "Restated financials",
+      "kicker": "Sources",
+      "note": "The newest cases where a company's later filing changed a number it had already reported.",
+      "about": [
+        {
+          "heading": "Why it matters",
+          "body": "A restatement is a company correcting its own past. Small ones are routine; a large one on revenue or net income is a reason to read the filing."
+        }
+      ],
+      "columns": [
+        {
+          "key": "ticker",
+          "label": "Ticker",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "tag",
+          "label": "Line item",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "period_end",
+          "label": "Period",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "form",
+          "label": "Form",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "filed",
+          "label": "Filed",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "value",
+          "label": "Restated value",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "value_delta",
+          "label": "Change vs prior filing",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no restated XBRL facts yet"
+    },
+    "sec-screener": {
+      "title": "Largest filers",
+      "kicker": "Sources",
+      "note": "The biggest companies by reported revenue, straight from their XBRL filings.",
+      "about": [
+        {
+          "heading": "Where it comes from",
+          "body": "The SEC's company-facts feed — the audited numbers themselves, not a data vendor's copy. The candidates screen reads the same feed for its quality gates."
+        }
+      ],
+      "columns": [
+        {
+          "key": "ticker",
+          "label": "Ticker",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "name",
+          "label": "Company",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "revenues",
+          "label": "Revenue",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "net_income",
+          "label": "Net income",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "net_margin",
+          "label": "Net margin",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "roe",
+          "label": "ROE",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "debt_to_equity",
+          "label": "Debt / equity",
+          "numeric": true,
+          "direction": "down-good",
+          "term": null
+        },
+        {
+          "key": "eps_diluted",
+          "label": "Diluted EPS",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no XBRL company facts loaded yet"
+    },
+    "ftd-spikes": {
+      "title": "Fails-to-deliver spikes",
+      "kicker": "Sources",
+      "note": "Securities whose delivery failures jumped far above their own normal on the latest settlement date.",
+      "about": [
+        {
+          "heading": "What a fail is",
+          "body": "A trade where the seller did not deliver the shares on time. A spike often means shares are hard to borrow — a crowded short."
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "description",
+          "label": "Security",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "settlement_date",
+          "label": "Settled",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "quantity",
+          "label": "Fails",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "base",
+          "label": "Typical fails",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "spike_ratio",
+          "label": "× typical",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no fails-to-deliver spikes on the latest settlement date"
+    },
+    "ftd-largest": {
+      "title": "Largest fails by dollar value",
+      "kicker": "Sources",
+      "note": "The biggest delivery failures on the latest settlement date, in dollars.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Dollar value is fails × price. Large-cap names appear here on routine settlement noise; a small-cap here is the interesting case."
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "description",
+          "label": "Security",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "settlement_date",
+          "label": "Settled",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "quantity",
+          "label": "Fails",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "price",
+          "label": "Price",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "dollar_value",
+          "label": "Dollar value",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no fails-to-deliver file loaded yet"
+    },
+    "ftd-streaks": {
+      "title": "Persistent fails",
+      "kicker": "Sources",
+      "note": "Securities that have failed to deliver for the most consecutive days and are still failing.",
+      "about": [
+        {
+          "heading": "Why it matters",
+          "body": "A fail that persists past the regulatory close-out window means someone is being forced to buy in — a mechanical source of demand."
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "description",
+          "label": "Security",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "streak_days",
+          "label": "Days failing",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "streak_start",
+          "label": "Since",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "streak_end",
+          "label": "Last",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "peak_quantity",
+          "label": "Peak fails",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no active fail streaks"
+    },
+    "short-volume-ratio": {
+      "title": "Heaviest short selling today",
+      "kicker": "Sources",
+      "note": "Symbols where an unusually large share of today's volume was short sales.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "FINRA reports each day's short volume per symbol. A high ratio can mean bearish conviction — or market makers hedging heavy call buying. The sparkline shows whether it is new."
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "date",
+          "label": "Date",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "short_ratio",
+          "label": "Short share of volume",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "short_volume",
+          "label": "Short volume",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "total_volume",
+          "label": "Total volume",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "market",
+          "label": "Market",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "history",
+          "label": "Ratio, 30 days",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no symbol above the short-ratio threshold today"
+    },
+    "short-volume-streaks": {
+      "title": "Sustained short pressure",
+      "kicker": "Sources",
+      "note": "Symbols that have stayed above the short-ratio threshold for the most consecutive days.",
+      "about": [
+        {
+          "heading": "Why it matters",
+          "body": "One heavy day is noise; a streak is a campaign. These are the names where the short side has been leaning for weeks."
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "streak_days",
+          "label": "Days elevated",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "streak_start",
+          "label": "Since",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "streak_end",
+          "label": "Last",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "peak_ratio",
+          "label": "Peak ratio",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no active elevated-short-volume streaks"
+    },
+    "short-interest-crowded": {
+      "title": "Most crowded shorts",
+      "kicker": "Sources",
+      "note": "Symbols where it would take the longest to buy back every short share at normal volume.",
+      "about": [
+        {
+          "heading": "What days-to-cover means",
+          "body": "Shares short divided by average daily volume. Ten days means shorts need two weeks of the entire market's volume to exit — the fuel for a squeeze."
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "settlement_date",
+          "label": "Settled",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "days_to_cover",
+          "label": "Days to cover",
+          "numeric": true,
+          "direction": null,
+          "term": "SI days to cover"
+        },
+        {
+          "key": "current_short_qty",
+          "label": "Shares short",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "avg_daily_volume",
+          "label": "Avg daily volume",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "change_pct",
+          "label": "Change since prior %",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "market_class",
+          "label": "Market",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "history",
+          "label": "Days to cover, 12 reports",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no short-interest report loaded yet"
+    },
+    "unusual-options": {
+      "title": "Unusual option activity",
+      "kicker": "Sources",
+      "note": "Option contracts that traded far more today than exist in open interest.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Volume ÷ open interest above 1 means more contracts changed hands today than were outstanding — new positioning, not old positions closing. Whether it is a bet or a hedge is not visible."
+        }
+      ],
+      "columns": [
+        {
+          "key": "underlying",
+          "label": "Underlying",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "type",
+          "label": "Type",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "expiration",
+          "label": "Expiry",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "strike",
+          "label": "Strike",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "volume",
+          "label": "Volume today",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "open_interest",
+          "label": "Open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "vol_oi_ratio",
+          "label": "Volume ÷ OI",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "iv",
+          "label": "Implied vol",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no unusual option contracts on the latest snapshot"
+    },
+    "options-sentiment": {
+      "title": "Options-market mood",
+      "kicker": "Sources",
+      "note": "The fear gauge, the put/call ratios and the VIX term structure — the regime's raw Cboe inputs.",
+      "about": [
+        {
+          "heading": "What the numbers are",
+          "body": "The VIX is the market's expected 30-day swing; above 25 is fear, below 20 calm. Put/call above 1 means more hedging than betting. VIX above VIX3M ('backwardation') means the next month scares people more than the quarter."
+        },
+        {
+          "heading": "Why it matters",
+          "body": "These three are the regime card's voters, shown here raw so you can see how close the call was."
+        }
+      ],
+      "tiles": [
+        {
+          "label": "VIX",
+          "value": null,
+          "band": null,
+          "tone": null
+        },
+        {
+          "label": "equity put/call",
+          "value": null,
+          "band": null,
+          "tone": null
+        },
+        {
+          "label": "total put/call",
+          "value": null,
+          "band": null,
+          "tone": null
+        }
+      ]
+    },
+    "dealer-positioning": {
+      "title": "Primary dealer positions",
+      "kicker": "Sources",
+      "note": "What the Fed's primary dealers hold, from the NY Fed's weekly survey.",
+      "about": [
+        {
+          "heading": "Status",
+          "body": "The current fetch returns no rows for this domain; the card stays so the gap is visible rather than silent."
+        }
+      ],
+      "columns": [
+        {
+          "key": "series_key",
+          "label": "Series",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "as_of_date",
+          "label": "As of",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "value",
+          "label": "Value",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "the NY Fed primary-dealer feed returns no rows for this query — empty by design until the fetcher's series filter is revisited"
+    },
+    "earnings-confirmed": {
+      "title": "Confirmed earnings dates",
+      "kicker": "Sources",
+      "note": "Upcoming earnings reports whose dates the company has confirmed, not estimated.",
+      "about": [
+        {
+          "heading": "Why confirmed matters",
+          "body": "Estimated dates slip. A confirmed date is when the options market's implied move becomes a real deadline for any thesis on the name."
+        }
+      ],
+      "columns": [
+        {
+          "key": "event_date",
+          "label": "Date",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "event_time",
+          "label": "Time",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "ticker",
+          "label": "Ticker",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "title",
+          "label": "Company",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "mktcap",
+          "label": "Market cap",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "eps_est",
+          "label": "EPS estimate",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no confirmed earnings dates in the window"
+    },
+    "market-closures": {
+      "title": "Market holidays",
+      "kicker": "Ops",
+      "note": "Upcoming NYSE closures and early closes — days the executor must not expect an open.",
+      "about": [
+        {
+          "heading": "Why it is under Ops",
+          "body": "The order executor and every trading-day calculation key off this list. An early close ends the intraday window early."
+        }
+      ],
+      "columns": [
+        {
+          "key": "event_date",
+          "label": "Date",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "kind",
+          "label": "Kind",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "title",
+          "label": "Holiday",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "event_time",
+          "label": "Closes at",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no closures in the window"
+    },
+    "energy-inventories": {
+      "title": "Energy inventories",
+      "kicker": "Sources",
+      "note": "Weekly US crude, product and gas stocks with the change from last week and a year's trend.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "A draw (negative change) tightens supply and supports prices; a build does the opposite. The sparkline shows the seasonal pattern the weekly number sits inside."
+        }
+      ],
+      "columns": [
+        {
+          "key": "label",
+          "label": "Series",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "category",
+          "label": "Category",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "latest_period",
+          "label": "Week",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "latest",
+          "label": "Latest",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "prior",
+          "label": "Prior week",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "change_abs",
+          "label": "Change",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "change_pct",
+          "label": "Change %",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "history",
+          "label": "52 weeks",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no EIA weekly series yet"
+    },
+    "ag-balance": {
+      "title": "Grain balance sheets",
+      "kicker": "Sources",
+      "note": "For each major crop, how much will be left over at the end of the marketing year relative to use.",
+      "about": [
+        {
+          "heading": "What stocks-to-use means",
+          "body": "Ending stocks divided by total use — the cushion. A low ratio means any weather scare hits price hard; a high one means supply can absorb surprises."
+        }
+      ],
+      "tiles": [],
+      "columns": [
+        {
+          "key": "commodity",
+          "label": "Commodity",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "period",
+          "label": "Marketing year",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "ending_stocks",
+          "label": "Ending stocks",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "total_use",
+          "label": "Total use",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "stocks_to_use",
+          "label": "Stocks-to-use",
+          "numeric": true,
+          "direction": null,
+          "term": "Stocks-to-use"
+        },
+        {
+          "key": "history",
+          "label": "Stocks-to-use by year",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no USDA balance-sheet rows yet"
+    },
+    "wasde": {
+      "title": "WASDE world balance",
+      "kicker": "Sources",
+      "note": "The USDA's monthly world supply-and-demand estimates by commodity and region.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "The same stocks-to-use ratio as the card above, but from the monthly WASDE report and split by region — the number grain traders wait for each month."
+        }
+      ],
+      "columns": [
+        {
+          "key": "commodity",
+          "label": "Commodity",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "region",
+          "label": "Region",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "market_year",
+          "label": "Marketing year",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "ending_stocks",
+          "label": "Ending stocks",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "total_use",
+          "label": "Total use",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "stocks_to_use",
+          "label": "Stocks-to-use",
+          "numeric": true,
+          "direction": null,
+          "term": "Stocks-to-use"
+        },
+        {
+          "key": "unit",
+          "label": "Unit",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no WASDE report loaded yet"
+    },
+    "reddit-trending": {
+      "title": "Reddit attention",
+      "kicker": "Sources",
+      "note": "The tickers gaining the most mentions across stock subreddits in the last 24 hours.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Rank and mentions come from ApeWisdom's tally. Attention is a crowding measure: a name everyone is talking about has no one left to discover it."
+        }
+      ],
+      "columns": [
+        {
+          "key": "ticker",
+          "label": "Ticker",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "name",
+          "label": "Name",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "filter",
+          "label": "Community",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "rank",
+          "label": "Rank",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "mentions",
+          "label": "Mentions, 24h",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "mention_delta",
+          "label": "Δ mentions",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "mention_pct_change",
+          "label": "Δ mentions %",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "rank_delta",
+          "label": "Δ rank",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "upvotes",
+          "label": "Upvotes",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "history",
+          "label": "Mentions, recent captures",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "caveat": "Crowd attention, not information. A mention spike tells you a name is crowded — which cuts both ways.",
+      "empty": "no reddit capture yet"
+    },
+    "insider-activity": {
+      "title": "Insider filings",
+      "kicker": "Sources",
+      "note": "Companies with the most insider transaction filings in the retained window.",
+      "about": [
+        {
+          "heading": "What a Form 4 is",
+          "body": "Officers and directors must report their own trades within two days. Filing count alone does not say buy or sell — click through to EDGAR for the direction."
+        }
+      ],
+      "columns": [
+        {
+          "key": "ticker",
+          "label": "Ticker",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "company",
+          "label": "Company",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "insider_filings",
+          "label": "Insider filings",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "history",
+          "label": "Filings per index day",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no insider filings in the retained window"
+    },
+    "recent-filings": {
+      "title": "Recent event filings",
+      "kicker": "Sources",
+      "note": "The newest 8-K and other event filings from tracked companies — something happened and had to be disclosed.",
+      "about": [
+        {
+          "heading": "What an 8-K is",
+          "body": "A 'current report' a company must file within four days of a material event: an acquisition, a departure, a restatement, a covenant breach. The form code says which."
+        }
+      ],
+      "columns": [
+        {
+          "key": "filed_date",
+          "label": "Filed",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "ticker",
+          "label": "Ticker",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "company",
+          "label": "Company",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "form",
+          "label": "Form",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no event filings in the retained window"
+    },
+    "offerings": {
+      "title": "Share offerings",
+      "kicker": "Sources",
+      "note": "The newest registration statements and prospectuses — companies preparing to sell stock.",
+      "about": [
+        {
+          "heading": "Why it matters",
+          "body": "An offering adds supply and usually prices below market. A name on the candidates list that files one is about to dilute you."
+        }
+      ],
+      "columns": [
+        {
+          "key": "filed_date",
+          "label": "Filed",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "ticker",
+          "label": "Ticker",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "company",
+          "label": "Company",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "form",
+          "label": "Form",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no offering filings in the retained window"
+    },
+    "stakes": {
+      "title": "Activist and large-holder stakes",
+      "kicker": "Sources",
+      "note": "New 13D and 13G filings — someone crossed the 5% ownership line.",
+      "about": [
+        {
+          "heading": "13D vs 13G",
+          "body": "A 13D is an active holder who may push for change; a 13G is passive. Either is a large buyer revealing itself."
+        }
+      ],
+      "columns": [
+        {
+          "key": "filed_date",
+          "label": "Filed",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "ticker",
+          "label": "Ticker",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "company",
+          "label": "Company",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "form",
+          "label": "Form",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [],
+      "empty": "no 13D/13G stake filings in the retained window"
     }
   },
   "tickers": {
@@ -1594,11 +4836,11 @@
     }
   },
   "glossary": {
-    "VIX": "The CBOE Volatility Index \u2014 the market's expected 30-day volatility, derived from S&P 500 option prices. Higher means more fear.",
-    "Regime": "This page's one-word read on market mood \u2014 risk-on, risk-off, or mixed \u2014 decided by the VIX, its term structure, and high-yield credit spreads.",
+    "VIX": "The CBOE Volatility Index — the market's expected 30-day volatility, derived from S&P 500 option prices. Higher means more fear.",
+    "Regime": "This page's one-word read on market mood — risk-on, risk-off, or mixed — decided by the VIX, its term structure, and high-yield credit spreads.",
     "Coverage": "The fraction of catalog signals that actually produced a reading for a given ticker tonight, out of every signal that could apply.",
     "Piotroski score": "A 0-9 score of balance-sheet and profitability quality; higher generally means a financially healthier company.",
-    "Heat": "Quantity times ATR \u2014 the dollars at risk on a one-ATR adverse day for a position, book, or correlated group of positions.",
-    "Score sum": "The net vote across every independent signal that fired for a ticker tonight \u2014 positive leans bullish, negative leans bearish."
+    "Heat": "Quantity times ATR — the dollars at risk on a one-ATR adverse day for a position, book, or correlated group of positions.",
+    "Score sum": "The net vote across every independent signal that fired for a ticker tonight — positive leans bullish, negative leans bearish."
   }
 }

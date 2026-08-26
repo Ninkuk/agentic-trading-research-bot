@@ -66,3 +66,22 @@ named rules) for the impeccable skill; keep all three in sync.
 - `dist/` is gitignored; publish_dashboard.py force-pushes it to the
   gh-pages orphan branch nightly and requires the noindex meta in
   dist/index.html — keep that tag verbatim.
+
+## Coverage (2026-08-25)
+- Seven strands: "Sources" sits between Signals and Research and holds the
+  raw-feed cards (dark pools, COT, fails, short volume, EDGAR, …); Signals
+  stays composite's opinions, Macro is the verdict plus the week's calendar.
+- Every `v_*` view in every source DB is either read by a section
+  (`tests/test_dashboard_coverage.py` observes reads via SQLite's authorizer),
+  consumed by a combiner, or listed in `dashboard_lib/coverage.UNSURFACED`
+  with a reason. A new view fails the suite until one of those is true.
+- `GenericSection` renders tiles + table + text together, so an
+  exporter-only section (no React component) gets KPI tiles with sparklines
+  above its rows. Per-row number arrays render as an inline SVG `Sparkline`
+  (not recharts — thirty per leaderboard); tile `history` points use KpiSpark.
+- Booleans render as `bool--good` / `bool--bad` pills keyed by column
+  semantics (a beaten benchmark is good, a stale ATR is bad); unknown keys
+  stay plain yes/no.
+- `dashboard/make_fixture.py` merges any new section into
+  `src/fixtures/data.json` from synthetic DBs (never data/);
+  `test_fixture_carries_every_section` fails until it has been run.

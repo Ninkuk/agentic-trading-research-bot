@@ -82,3 +82,31 @@ test("visibleColumns drops the CI columns the hit-rate cell absorbs", () => {
   const cols = [col("signal_id", false), col("hit_ci_lo"), col("hit_ci_hi"), col("via_crosswalk"), col("hit_rate")];
   expect(visibleColumns(cols).map((c) => c.key)).toEqual(["signal_id", "hit_rate"]);
 });
+
+test("number-array cells render as a sparkline, booleans as tinted pills by key semantics", () => {
+  const row: Row = {
+    history: [1, 2, 3],
+    beat_benchmark: true,
+    atr_stale: true,
+    closed: true,
+    fwd_return: -0.012,
+    baseline: 0.55,
+  };
+  const { container } = render(
+    <>
+      <span>{sectionCell(row, col("history", false))}</span>
+      <span>{sectionCell(row, col("beat_benchmark", false))}</span>
+      <span>{sectionCell(row, col("atr_stale", false))}</span>
+      <span>{sectionCell(row, col("closed", false))}</span>
+      <span>{sectionCell(row, col("fwd_return"))}</span>
+      <span>{sectionCell(row, col("baseline"))}</span>
+    </>,
+  );
+  expect(container.querySelector("svg.sparkline")).not.toBeNull();
+  const yes = screen.getAllByText("yes");
+  expect(yes[0].className).toMatch(/bool--good/); // a beaten benchmark is good
+  expect(yes[1].className).toMatch(/bool--bad/); // a stale ATR is bad
+  expect(yes[2].className).not.toMatch(/bool/); // unknown key (`closed`): plain text
+  expect(screen.getByText("−1.2%")).toBeInTheDocument();
+  expect(screen.getByText("55%")).toBeInTheDocument();
+});

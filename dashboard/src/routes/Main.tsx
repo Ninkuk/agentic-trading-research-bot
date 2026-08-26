@@ -1,6 +1,6 @@
 // The main page: masthead -> combined summary card ("Tonight in plain
 // English" bullets + regime chip + macro-driver KPIs with sparklines) ->
-// the five strands as tabs, each section rendered in a SectionShell card.
+// the seven strands as tabs, each section rendered in a SectionShell card.
 //
 // `SECTION_COMPONENTS` maps a section id to the component that renders its
 // body; a section id with no entry falls back to `GenericSection` (columns+
@@ -12,7 +12,7 @@
 // Strand grouping comes from each section's own `kicker` field (already
 // "Macro"/"Signals"/.../"Your book" per data.py's SECTION_EXPORTERS), not a
 // hardcoded id list — a section moving strands in Python needs no frontend
-// change. The five strand tabs render unconditionally in a fixed order even
+// change. The seven strand tabs render unconditionally in a fixed order even
 // when a given night's document has no section for one. Any section whose
 // kicker isn't a known strand — a rename, a typo, a brand-new kicker the
 // frontend hasn't caught up to yet — still renders, in a trailing "Other"
@@ -58,7 +58,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { DataTable } from "../ui/DataTable";
 import { Masthead } from "../ui/Masthead";
 import { SectionShell } from "../ui/SectionShell";
-import { sectionCell } from "../ui/sectionCells";
+import { sectionCell, visibleColumns } from "../ui/sectionCells";
 import { StatTile } from "../ui/StatTile";
 import { TextReport } from "../ui/TextReport";
 import { VerdictChip } from "../ui/VerdictChip";
@@ -142,31 +142,49 @@ const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> =
   health: Health,
 };
 
+// Tiles, then the table, then any text report — all that are present, in
+// that order, so a section carrying a KPI row above its rows (a source
+// card's headline numbers, order-run counts) needs no dedicated component.
+// Tiles with `history` points get the same sparkline the summary card's
+// macro drivers use; CI columns fold into the hit-rate cell (visibleColumns)
+// exactly as the dedicated track-record tables do.
 function GenericSection({ sec, glossary, id }: SectionComponentProps) {
-  if (sec.columns && sec.rows) {
-    return (
-      <DataTable
-        columns={sec.columns}
-        rows={sec.rows}
-        storageKey={`generic:${id ?? slug(sec.title ?? "section")}`}
-        glossary={glossary}
-        renderCell={sectionCell}
-      />
-    );
-  }
-  if (sec.tiles && sec.tiles.length > 0) {
-    return (
-      <div className="tiles">
-        {sec.tiles.map((tile) => (
-          <StatTile key={tile.label} tile={tile} />
-        ))}
-      </div>
-    );
-  }
-  if (sec.text_lines && sec.text_lines.length > 0) {
-    return <TextReport lines={sec.text_lines} />;
-  }
-  return null;
+  const tiles = sec.tiles ?? [];
+  const hasTable = Boolean(sec.columns && sec.rows && sec.rows.length > 0);
+  const hasText = Boolean(sec.text_lines && sec.text_lines.length > 0);
+  if (tiles.length === 0 && !hasTable && !hasText) return null;
+  return (
+    <div className="space-y-4">
+      {tiles.length > 0 && (
+        <div className="tiles">
+          {tiles.map((tile) => (
+            <StatTile key={tile.label} tile={tile}>
+              {tile.history && tile.history.length >= 3 && (
+                <KpiSpark label={tile.label} points={tile.history} />
+              )}
+            </StatTile>
+          ))}
+        </div>
+      )}
+      {hasTable && (
+        <>
+          <DataTable
+            columns={visibleColumns(sec.columns ?? [])}
+            rows={sec.rows ?? []}
+            storageKey={`generic:${id ?? slug(sec.title ?? "section")}`}
+            glossary={glossary}
+            renderCell={sectionCell}
+          />
+          {typeof sec.total === "number" && sec.total > (sec.rows?.length ?? 0) && (
+            <p className="text-muted-foreground m-0 text-xs">
+              showing the newest {sec.rows?.length} of {sec.total}
+            </p>
+          )}
+        </>
+      )}
+      {hasText && <TextReport lines={sec.text_lines ?? []} />}
+    </div>
+  );
 }
 
 export interface MainProps {

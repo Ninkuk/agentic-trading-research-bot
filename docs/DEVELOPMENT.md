@@ -202,3 +202,14 @@ npm run build           # tsc -b && vite build -> dashboard/dist
 
 Contributor guidance — the invariants to preserve, the spec → plan → build
 workflow, and the data-source policy — lives in [CLAUDE.md](../CLAUDE.md).
+
+## Dashboard coverage gate
+
+Every `v_*` view in every source DB must reach the dashboard or say why not:
+`tests/test_dashboard_coverage.py` builds each DB from its `ensure_schema`,
+runs the export with SQLite's authorizer recording the views read, and
+fails on any view that no section reads, no combiner names, and
+`deploy/launchd/dashboard_lib/coverage.UNSURFACED` does not explain. Add a
+view → add a section (or an `UNSURFACED` reason), then run
+`uv run python dashboard/make_fixture.py` so `src/fixtures/data.json`
+carries the new section for the React smoke test.
