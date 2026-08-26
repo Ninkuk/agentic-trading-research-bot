@@ -166,6 +166,11 @@ def _regime(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
             "lean": _lean_backwardation(r["vix_backwardation"]),
         },
         {"input": "put / call percentile", "value": r["equity_pcr_pctile"], "lean": "mid"},
+        {
+            "input": "implied correlation percentile",
+            "value": r["implied_corr_pctile"],
+            "lean": "mid",
+        },
         {"input": "FOMC blackout", "value": r["in_fomc_blackout"], "lean": "mid"},
         {
             "input": "imminent high-impact event",
@@ -1760,8 +1765,9 @@ SECTION_EXPORTERS: list[
             (
                 "What this is",
                 "A plain-text report: did filtering the flags help, what"
-                " did execution cost, and how did unrecommended (freelance)"
-                " trades do?",
+                " did execution cost, and how did research-backed buys"
+                " (research-ticker verdict before the fill) and freelance"
+                " (unrecommended) trades do?",
             ),
         ],
     ),

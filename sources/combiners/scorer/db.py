@@ -197,8 +197,11 @@ CREATE TABLE IF NOT EXISTS regime_outcomes (
 -- Permanent evidence like the outcome tables; never pruned. order_ref /
 -- exit_order_ref are broker order UUIDs (random ids, not account
 -- identifiers) stored only for idempotent re-ingest; UNIQUE tolerates the
--- NULLs manual entries carry. composite_snapshot_id NULL = freelance trade
--- (nothing recommended it). opinion_score_sum/opinion_total are the MATCHED
+-- NULLs manual entries carry. composite_snapshot_id NULL = no composite
+-- opinion. A buy is research-backed when the symbol's latest research
+-- verdict on or before the fill is 'buy' (v_research_backed); no opinion
+-- and no research buy = freelance (v_freelance). opinion_score_sum/
+-- opinion_total are the MATCHED
 -- opinion's score captured at ingest: weekend reruns can flip sign vs the
 -- window owner's graded rows, alignment must judge the opinion the human
 -- actually saw, and composite.db prunes — so capture now or never.
@@ -238,6 +241,10 @@ CREATE TABLE IF NOT EXISTS decisions (
     expiration            TEXT,
     source                TEXT NOT NULL DEFAULT 'mcp'
                           CHECK (source IN ('mcp', 'manual')),
+    -- Human pin: 1 keeps a buy in v_freelance even though a research buy
+    -- verdict precedes the fill (a pipeline test flight is not a thesis
+    -- decision). Set by hand; nothing in sources/ writes it.
+    pinned_freelance      INTEGER NOT NULL DEFAULT 0,
     recorded_at           TEXT NOT NULL
 );
 
@@ -848,9 +855,34 @@ SELECT response, horizon, COUNT(*) AS n,
 FROM v_flag_response
 GROUP BY response, horizon;
 
--- Trades nothing recommended: acted decisions with no matched opinion.
--- Includes automatic fills (drip/recurring, never matched by design) —
--- filter on placed_agent to see only deliberate freelance trades.
+-- Buys the research skill recommended: the symbol's LATEST research verdict
+-- dated on or before the fill is 'buy' (a pass superseded by a later buy
+-- counts; a buy issued after the fill does not). Independent of composite:
+-- composite_matched = 1 means the journal also matched a flag, which is
+-- coincidence — the research call is what the human acted on. Sells and
+-- option legs are never research-backed (the verdict is a buy call only);
+-- pinned_freelance = 1 opts a row out.
+DROP VIEW IF EXISTS v_research_backed;
+CREATE VIEW v_research_backed AS
+SELECT d.id AS decision_id, d.symbol, d.side, d.fill_date, d.fill_price,
+       d.quantity, d.exit_fill_date, d.exit_fill_price,
+       CASE WHEN d.exit_fill_price IS NULL THEN NULL
+            ELSE d.exit_fill_price / d.fill_price - 1 END AS realized_return,
+       rv.id AS verdict_id, rv.verdict_date, rv.doc,
+       (d.composite_snapshot_id IS NOT NULL) AS composite_matched,
+       d.note, d.placed_agent, d.source, d.recorded_at
+FROM decisions d
+JOIN research_verdicts rv
+  ON rv.symbol = d.symbol
+ AND rv.verdict_date = (SELECT MAX(verdict_date) FROM research_verdicts
+                        WHERE symbol = d.symbol AND verdict_date <= d.fill_date)
+WHERE d.action = 'acted' AND d.side = 'buy' AND d.contract_ref IS NULL
+  AND rv.verdict = 'buy' AND d.pinned_freelance = 0;
+
+-- Trades nothing recommended: acted decisions with no matched opinion and
+-- no research buy behind them (v_research_backed). Includes automatic
+-- fills (drip/recurring, never matched by design) — filter on placed_agent
+-- to see only deliberate freelance trades.
 DROP VIEW IF EXISTS v_freelance;
 CREATE VIEW v_freelance AS
 SELECT id AS decision_id, symbol, side, contract_ref, fill_date, fill_price,
@@ -860,7 +892,8 @@ SELECT id AS decision_id, symbol, side, contract_ref, fill_date, fill_price,
             WHEN side = 'sell' THEN 1 - exit_fill_price / fill_price
             ELSE exit_fill_price / fill_price - 1 END AS realized_return,
        note, placed_agent, source, recorded_at
-FROM decisions WHERE action = 'acted' AND composite_snapshot_id IS NULL;
+FROM decisions WHERE action = 'acted' AND composite_snapshot_id IS NULL
+  AND id NOT IN (SELECT decision_id FROM v_research_backed);
 
 -- Option P&L, one row per option decision, from premium_flows only.
 -- direction is the open flow's sign; pnl_dollars is realized-to-date on
@@ -1072,6 +1105,7 @@ def ensure_schema(conn) -> None:
         "strategy_ref TEXT",
         "position_effect TEXT CHECK (position_effect IN ('open', 'close'))",
         "expiration TEXT",
+        "pinned_freelance INTEGER NOT NULL DEFAULT 0",
     ):
         if ddl.split()[0] not in cols:
             conn.execute(f"ALTER TABLE decisions ADD COLUMN {ddl}")

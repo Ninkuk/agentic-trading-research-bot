@@ -434,3 +434,49 @@ def test_option_rows_still_null_in_v_decision_outcomes(tmp_path):
         " WHERE contract_ref IS NOT NULL LIMIT 1"
     ).fetchone()
     assert row == (None, None)
+
+
+def _verdict(conn, symbol, verdict, verdict_date):
+    conn.execute(
+        "INSERT INTO research_verdicts (symbol, verdict, verdict_date, recorded_at)"
+        " VALUES (?, ?, ?, ?)",
+        (symbol, verdict, verdict_date, NOW),
+    )
+    conn.commit()
+
+
+def test_research_backed_split_from_freelance(tmp_path):
+    conn = _seeded(tmp_path)
+    # latest verdict on/before the fill decides: pass superseded by buy -> backed
+    _verdict(conn, "NVDA", "pass", "2026-07-01")
+    _verdict(conn, "NVDA", "buy", "2026-07-05")
+    _decide(conn, symbol="NVDA", composite_snapshot_id=None, composite_date=None)
+    # a buy verdict issued AFTER the fill does not back it
+    _verdict(conn, "AMD", "buy", "2026-07-09")
+    _decide(conn, symbol="AMD", composite_snapshot_id=None, composite_date=None, order_ref="amd")
+    # a buy then a later pass -> the pass is latest -> freelance
+    _verdict(conn, "KO", "buy", "2026-07-01")
+    _verdict(conn, "KO", "pass", "2026-07-05")
+    _decide(conn, symbol="KO", composite_snapshot_id=None, composite_date=None, order_ref="ko")
+    backed = conn.execute("SELECT symbol, verdict_date FROM v_research_backed").fetchall()
+    assert backed == [("NVDA", "2026-07-05")]
+    free = {r[0] for r in conn.execute("SELECT symbol FROM v_freelance")}
+    assert free == {"AMD", "KO"}
+
+
+def test_research_backed_buy_only_and_pinned(tmp_path):
+    conn = _seeded(tmp_path)
+    _verdict(conn, "NVDA", "buy", "2026-07-05")
+    # a sell is never backed by a buy verdict
+    _decide(conn, symbol="NVDA", composite_snapshot_id=None, composite_date=None, side="sell")
+    assert conn.execute("SELECT COUNT(*) FROM v_research_backed").fetchone() == (0,)
+    _decide(conn, symbol="NVDA", composite_snapshot_id=None, composite_date=None, order_ref="b")
+    assert conn.execute("SELECT COUNT(*) FROM v_research_backed").fetchone() == (1,)
+    conn.execute("UPDATE decisions SET pinned_freelance = 1 WHERE order_ref = 'b'")
+    assert conn.execute("SELECT COUNT(*) FROM v_research_backed").fetchone() == (0,)
+    # a composite-matched buy is still research-backed; the match is flagged
+    _decide(conn, symbol="NVDA", order_ref="c", pinned_freelance=0)
+    assert conn.execute("SELECT composite_matched FROM v_research_backed").fetchall() == [(1,)]
+    (cid,) = conn.execute("SELECT id FROM decisions WHERE order_ref = 'c'").fetchone()
+    freelance = {r[0] for r in conn.execute("SELECT decision_id FROM v_freelance")}
+    assert cid not in freelance and len(freelance) == 2  # the sell + the pinned buy

@@ -1,9 +1,9 @@
 """Trader decision-quality scorecard: a periodic, read-only report that
-grades the human's discretion, not the model. It reads the four decision-
-journal views in scorer.db (v_human_filter, v_decision_outcomes, v_freelance)
-and prints a text report — does acting on flagged opinions beat passing, what
+grades the human's discretion, not the model. It reads the decision-journal
+views in scorer.db (v_human_filter, v_decision_outcomes, v_research_backed,
+v_freelance) and prints a text report — does acting on flagged opinions beat passing, what
 execution costs, do acted trades agree with the opinion the human saw, and
-how deliberate freelance trades performed.
+how research-backed and deliberate freelance trades performed.
 
 Decision-support/reflection only: it computes nothing new, re-weights nothing,
 generates no orders, and never writes to scorer.db (SELECT-only; ensure_schema
@@ -84,6 +84,24 @@ def deliberate_freelance(conn) -> list[dict]:
             f" OR placed_agent NOT IN ({placeholders})"
             " ORDER BY decision_id",
             tuple(AUTOMATIC_AGENTS),
+        )
+    ]
+
+
+def research_backed(conn) -> list[dict]:
+    """v_research_backed rows — buys the research skill recommended."""
+    return [
+        dict(
+            decision_id=r[0],
+            symbol=r[1],
+            side=r[2],
+            realized_return=r[3],
+            placed_agent=r[4],
+            verdict_date=r[5],
+        )
+        for r in conn.execute(
+            "SELECT decision_id, symbol, side, realized_return, placed_agent, verdict_date"
+            " FROM v_research_backed ORDER BY decision_id"
         )
     ]
 
@@ -248,25 +266,36 @@ def _alignment_section(conn) -> str:
     return "\n".join(lines)
 
 
-def _freelance_section(conn) -> str:
-    rows = deliberate_freelance(conn)
+def _trade_list(rows, empty: str, extra=None) -> str:
     if not rows:
-        return "  no deliberate freelance trades"
-    lines = ["  decision_id | symbol | side | realized_return"]
+        return f"  {empty}"
+    header = "  decision_id | symbol | side | realized_return"
+    lines = [header + (f" | {extra}" if extra else "")]
     realized = [r["realized_return"] for r in rows if r["realized_return"] is not None]
     for r in rows:
-        lines.append(
+        line = (
             f"  {r['decision_id']:>11} | {r['symbol']:<6} | {r['side'] or '?':<4}"
             f" | {_frac(r['realized_return'])}"
         )
+        if extra:
+            line += f" | {r[extra]}"
+        lines.append(line)
     n = len(rows)
     avg = sum(realized) / len(realized) if realized else None
-    # realized_return is fills-only; unrealized freelance positions are counted
-    # and listed but excluded from the average (spec §3.4).
+    # realized_return is fills-only; open positions are counted and listed
+    # but excluded from the average.
     avg_txt = _avg_or_suppressed(n, _frac(avg)) if avg is not None else f"insufficient data (n={n})"
     trade_word = "trade" if n == 1 else "trades"
     lines.append(f"  {n} {trade_word}, average realized return {avg_txt}")
     return "\n".join(lines)
+
+
+def _freelance_section(conn) -> str:
+    return _trade_list(deliberate_freelance(conn), "no deliberate freelance trades")
+
+
+def _research_backed_section(conn) -> str:
+    return _trade_list(research_backed(conn), "no research-backed trades", extra="verdict_date")
 
 
 def _portfolio_section(conn, dff=()) -> str:
@@ -344,6 +373,9 @@ def build_report(conn, now_iso: str, dff=()) -> str:
         "",
         "Alignment (acted decisions, by horizon)",
         _alignment_section(conn),
+        "",
+        "Research-backed trades (research-ticker buy verdict before the fill)",
+        _research_backed_section(conn),
         "",
         "Freelance trades (deliberate only)",
         _freelance_section(conn),

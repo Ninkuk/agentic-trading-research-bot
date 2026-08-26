@@ -206,5 +206,5 @@ same fill is a counted duplicate, not a double-book.
   `orders reconcile` (step 6 — an audit write, never an order write).
   Everything else it touches is read-only.
 - Reading views (`v_decision_outcomes`, `v_flag_response`, `v_human_filter`,
-  `v_freelance`, `v_option_pnl`, `v_option_actor`) to answer questions is
+  `v_research_backed`, `v_freelance`, `v_option_pnl`, `v_option_actor`) to answer questions is
   fine — reading is not writing.

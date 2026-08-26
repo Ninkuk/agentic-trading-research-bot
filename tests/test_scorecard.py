@@ -293,3 +293,32 @@ def test_run_missing_fred_db_degrades_to_na(tmp_path):
     report = scorecard.run(str(tmp_path / "scorer.db"), NOW, fred_db_path=str(tmp_path / "nope.db"))
     inception = next(ln for ln in report.splitlines() if ln.strip().startswith("inception"))
     assert inception.split("|")[4].strip() == "n/a"
+
+
+def test_research_backed_section_lists_recommended_buys(tmp_path):
+    conn = _fresh(tmp_path)
+    conn.execute(
+        "INSERT INTO research_verdicts (symbol, verdict, verdict_date, recorded_at)"
+        " VALUES ('NVDA', 'buy', '2026-07-05', ?)",
+        (NOW,),
+    )
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, fill_date, fill_price,"
+        " exit_fill_date, exit_fill_price, order_ref, placed_agent, recorded_at)"
+        " VALUES ('NVDA', 'acted', 'buy', '2026-07-06', 800.0, '2026-07-20', 880.0,"
+        " 'f1', 'agentic', ?)",
+        (NOW,),
+    )
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, fill_date, fill_price,"
+        " order_ref, placed_agent, recorded_at)"
+        " VALUES ('XOM', 'acted', 'buy', '2026-07-06', 100.0, 'f2', NULL, ?)",
+        (NOW,),
+    )
+    conn.commit()
+    assert [r["symbol"] for r in scorecard.research_backed(conn)] == ["NVDA"]
+    assert [r["symbol"] for r in scorecard.deliberate_freelance(conn)] == ["XOM"]
+    report = scorecard.build_report(conn, NOW)
+    backed, free = report.split("Freelance trades")
+    assert "NVDA" in backed and "2026-07-05" in backed and "NVDA" not in free
+    assert "XOM" in free
