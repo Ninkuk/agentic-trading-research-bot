@@ -54,6 +54,19 @@ Every gate below encodes a defect measured in stocks.db (audits dated
     quality names) yet cannot surface a stabilized fall, because 14-day RSI
     mean-reverts in days while price stays dislocated for months (INTU:
     61% off its high, fcf yield 9.1, fScore 8, RSI 62).
+  * INFLECTION DOOR — rev3y is a backward gate, and a business inflecting
+    off a flat 3-year base fails it on exactly the day it is cheap: DELL,
+    January 2026, 3y CAGR −0.4% (the post-COVID PC hangover), trailing year
+    +19%, FY26 guided +17%, 34% off the high at a 5.5% FCF yield, every
+    other gate passed; by the time 3y cleared (May) the stock had 4×'d and
+    the yield/dislocation gates failed instead. The door admits rev3y < 5
+    when trailing-year growth AND consensus growth for BOTH the current and
+    next fiscal year clear their bars. The forward legs are load-bearing:
+    trailing growth alone is a cyclical-peak detector — dry run 2026-09-01,
+    7 of 12 entries were oil/refiners with +30–60% quarters and next-FY
+    consensus of −6…−13%; the next-FY leg dropped every one. Entries are
+    ledgered with via_inflection and graded separately (growth_door); a
+    reading list, never a signal.
   * rsi > 0 — 26 rows carry a non-positive RSI, out of domain for a 0-100
     oscillator; the guard covers BOTH dislocation branches, since an
     unguarded drawdown branch admits those junk rows (a $702B phantom
@@ -75,7 +88,7 @@ from sources.common.clock import phx_date
 
 # Stamped onto graded appearance rows (scorer.db candidate_appearances) so
 # efficacy samples never mix gate regimes. Bump on any threshold change.
-SCREEN_VERSION = "2026-07-29"
+SCREEN_VERSION = "2026-09-01"
 
 # Hand-set, documented judgment — not fitted against outcomes. The scorer
 # grades list-entry episodes (v_candidate_efficacy) for calibration only;
@@ -87,6 +100,10 @@ ROIC_MAX = 150.0  # above this for a >$2B company it is a denominator artifact
 ROIC5Y_MIN = 10.0
 FCF_YIELD_MIN = 4.0
 REV_GROWTH_3Y_MIN = 5.0
+# Inflection door: rev3y below its bar is admitted when all three hold.
+REV_GROWTH_TTM_MIN = 10.0  # trailing-year revenue growth
+CONS_REV_GROWTH_FY_MIN = 10.0  # consensus growth, current fiscal year
+CONS_REV_GROWTH_FY2_MIN = 5.0  # consensus growth, next fiscal year
 NET_DEBT_EBITDA_MAX = 3.0
 SHARES_YOY_MAX = 2.0  # percent; buybacks are negative
 FSCORE_MIN = 6.0
@@ -116,7 +133,8 @@ WITH eligible AS (
     SELECT symbol, sector, marketCap, dollarVolume, roic, roic5y, fcfYield,
            revenueGrowth3Y, netDebtEbitda, sharesYoY, fScore, rsi, ch6m,
            high52ch, zScore, interestCoverage,
-           priceDate, isin, isPrimaryListing, netIncome, operatingCF, assets
+           priceDate, isin, isPrimaryListing, netIncome, operatingCF, assets,
+           revenueGrowth, revenueThisYear, revenueNextYear
     FROM v_latest
     WHERE symbol NOT LIKE '%.PR%'                 -- preferreds are not common equity
       AND marketCap >= {MARKET_CAP_MIN}
@@ -124,7 +142,10 @@ WITH eligible AS (
       AND roic BETWEEN {ROIC_MIN} AND {ROIC_MAX}
       AND (roic5y IS NULL OR roic5y BETWEEN {ROIC5Y_MIN} AND {ROIC_MAX})
       AND fcfYield >= {FCF_YIELD_MIN}
-      AND revenueGrowth3Y >= {REV_GROWTH_3Y_MIN}
+      AND (revenueGrowth3Y >= {REV_GROWTH_3Y_MIN}
+           OR (revenueGrowth >= {REV_GROWTH_TTM_MIN}          -- inflection door: all three legs
+               AND revenueThisYear >= {CONS_REV_GROWTH_FY_MIN}
+               AND revenueNextYear >= {CONS_REV_GROWTH_FY2_MIN}))
       AND sharesYoY < {SHARES_YOY_MAX}
       AND fScore >= {FSCORE_MIN}
       AND rsi > 0                                 -- domain guard for BOTH branches
@@ -141,6 +162,7 @@ ranked AS (
 SELECT symbol, sector, marketCap, dollarVolume, roic, roic5y, fcfYield,
        revenueGrowth3Y, netDebtEbitda, sharesYoY, fScore, rsi, ch6m,
        high52ch, zScore, interestCoverage, priceDate,
+       revenueGrowth, revenueThisYear, revenueNextYear,
        -- Sloan accruals: earnings not backed by cash, as % of assets.
        -- NEGATIVE is healthy (cash ahead of earnings). Annotation, not a
        -- gate, until v_candidate_efficacy measures it.
@@ -169,8 +191,20 @@ _FIELDS = [
     "zScore",
     "interestCoverage",
     "priceDate",
+    "revenueGrowth",
+    "revenueThisYear",
+    "revenueNextYear",
     "accrualsPctAssets",
 ]
+
+
+def growth_door(row: dict) -> str:
+    """Which growth gate admitted the row: '3y' (rev3y cleared) or
+    'inflection'. The SQL above is the gate; this names the door for the
+    ledger (scorer via_inflection) and the report, so the two cannot drift."""
+    g3 = row.get("revenueGrowth3Y")
+    return "3y" if g3 is not None and g3 >= REV_GROWTH_3Y_MIN else "inflection"
+
 
 # One (label, width) per rendered column, so the header and every row are
 # built from the SAME widths and cannot drift apart.
@@ -182,6 +216,8 @@ _LAYOUT = (
     ("roic5y", 7),
     ("fcfy", 6),
     ("rev3y", 6),
+    ("rev1y", 6),
+    ("door", 4),
     ("nde", 6),
     ("fS", 2),
     ("rsi", 5),
@@ -325,6 +361,8 @@ def _row_cells(r: dict) -> list[str]:
         _num(r["roic5y"]),
         _num(r["fcfYield"]),
         _num(r["revenueGrowth3Y"]),
+        _num(r["revenueGrowth"]),
+        "infl" if growth_door(r) == "inflection" else "3y",
         _num(r["netDebtEbitda"], 2),
         _num(r["fScore"], 0),
         _num(r["rsi"]),
@@ -396,8 +434,11 @@ def build_report(conn, now_iso: str, scorer_conn=None) -> str:
             f"  roic within {ROIC_MIN:.0f}-{ROIC_MAX:.0f}%,"
             f" roic5y within {ROIC5Y_MIN:.0f}-{ROIC_MAX:.0f}% or absent,"
             f" fcf yield >= {FCF_YIELD_MIN:.0f}%,",
-            f"  3y revenue growth >= {REV_GROWTH_3Y_MIN:.0f}%,"
-            f" net debt/ebitda < {NET_DEBT_EBITDA_MAX:.0f} or absent,"
+            f"  3y revenue growth >= {REV_GROWTH_3Y_MIN:.0f}% (door 3y) or the inflection door:"
+            f" trailing-year growth >= {REV_GROWTH_TTM_MIN:.0f}% with consensus growth",
+            f"  >= {CONS_REV_GROWTH_FY_MIN:.0f}% this FY and >= {CONS_REV_GROWTH_FY2_MIN:.0f}%"
+            f" next FY (door infl; graded separately),",
+            f"  net debt/ebitda < {NET_DEBT_EBITDA_MAX:.0f} or absent,"
             f" dilution < {SHARES_YOY_MAX:.0f}%/yr,",
             f"  fScore >= {FSCORE_MIN:.0f}, dislocation: rsi < {RSI_MAX:.0f}"
             f" or >= {-HIGH52_DISLOCATION_MAX:.0f}% off the 52w high."

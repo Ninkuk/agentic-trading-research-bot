@@ -302,7 +302,15 @@ def test_candidate_efficacy_exports_branch_rows(populated_data_dir):
     assert sec["rows"], "fixture's matured candidate episode should grade"
     for r in sec["rows"]:
         assert r["branch"] in {"rsi", "drawdown", "both"}
+        assert r["growth_door"] in {"3y", "inflection"}
+    assert {c["key"] for c in sec["columns"]} >= {"branch", "growth_door"}
     assert sec["caveat"]
+
+
+def test_candidates_section_carries_the_growth_door(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["candidates"]
+    assert {c["key"] for c in sec["columns"]} >= {"growthDoor"}
+    assert all(r["growthDoor"] in {"3y", "inflection"} for r in sec["rows"])
 
 
 def test_book_heat_verdict_uses_percent_scale(populated_data_dir):

@@ -388,6 +388,15 @@ _CANDIDATES_COLUMNS: list[dict[str, Any]] = [
     },
     {"key": "rsi", "label": "RSI", "numeric": True, "direction": None, "term": None},
     {"key": "ch6m", "label": "6m change %", "numeric": True, "direction": None, "term": None},
+    # Which growth gate admitted the row: "3y" or "inflection" (rev3y failed;
+    # trailing-year + consensus growth admitted it — graded separately).
+    {
+        "key": "growthDoor",
+        "label": "Growth door",
+        "numeric": False,
+        "direction": None,
+        "term": None,
+    },
     # Sloan accruals, % of assets: negative = cash ahead of earnings (good).
     {
         "key": "accrualsPctAssets",
@@ -459,6 +468,7 @@ def _candidates(data_dir: str, now_iso: str) -> dict[str, Any]:
                 "fScore": r["fScore"],
                 "rsi": r["rsi"],
                 "ch6m": r["ch6m"],
+                "growthDoor": candidates_mod.growth_door(r),
                 "accrualsPctAssets": r["accrualsPctAssets"],
                 "verdict": r["verdict"],
                 "verdictDate": r["verdict_date"],
@@ -1117,6 +1127,7 @@ def _equity_curve(data_dir: str, now_iso: str) -> dict[str, Any]:
 
 _CANDIDATE_EFFICACY_COLUMNS: list[dict[str, Any]] = [
     _track_col("screen_version", "Screen version", numeric=False),
+    _track_col("growth_door", "Growth door", numeric=False),
     _track_col("branch", "Dislocation door", numeric=False),
     _track_col("horizon", "Horizon"),
     _track_col("n", "N"),
@@ -1129,12 +1140,13 @@ _CANDIDATE_EFFICACY_COLUMNS: list[dict[str, Any]] = [
 def _candidate_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     """No sections.py counterpart. Reads scorer.db's v_candidate_efficacy:
     a matured entry
-    episode's 21/63-trading-day return vs SPY, split by which dislocation
-    door admitted the name (oversold RSI / drawdown / both)."""
+    episode's 21/63-trading-day return vs SPY, split by which growth door
+    (3y / inflection) and which dislocation door (oversold RSI / drawdown /
+    both) admitted the name."""
     rows = conn.execute(
-        "SELECT screen_version, branch, horizon, n, hit_rate, avg_excess,"
+        "SELECT screen_version, growth_door, branch, horizon, n, hit_rate, avg_excess,"
         " avg_fwd_return FROM v_candidate_efficacy"
-        " ORDER BY screen_version, horizon, branch"
+        " ORDER BY screen_version, horizon, growth_door, branch"
     ).fetchall()
     return {
         "columns": _CANDIDATE_EFFICACY_COLUMNS,

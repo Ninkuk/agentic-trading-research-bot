@@ -356,7 +356,9 @@ CREATE TABLE IF NOT EXISTS verdict_outcomes (
 -- screen_date is the Phoenix date of the stocks.db snapshot behind v_latest
 -- (weekend runs re-see Friday's snapshot; OR IGNORE makes that free).
 -- Metrics are stored as-seen for later re-analysis; via_rsi/via_drawdown
--- name the dislocation branch(es) that admitted the name; screen_version
+-- name the dislocation branch(es) that admitted the name, via_inflection
+-- the growth door (rev3y failed; trailing-year + consensus growth
+-- admitted it — candidates.growth_door); screen_version
 -- stamps the gate set so efficacy never mixes gate regimes. Never pruned:
 -- this ledger is the screen's only point-in-time record (stocks.db keeps
 -- ~3 weeks of snapshots, and no vendor serves screener vintages).
@@ -371,6 +373,7 @@ CREATE TABLE IF NOT EXISTS candidate_appearances (
     fscore         REAL,
     via_rsi        INTEGER NOT NULL DEFAULT 0,
     via_drawdown   INTEGER NOT NULL DEFAULT 0,
+    via_inflection INTEGER NOT NULL DEFAULT 0,
     -- Every quality gate, not just the timing fields: a rising fcf yield
     -- with falling roic/fScore is a falling knife, invisible to level gates
     -- and readable only from this ledger (v_candidate_quality_trend).
@@ -380,6 +383,10 @@ CREATE TABLE IF NOT EXISTS candidate_appearances (
     net_debt_ebitda REAL,
     shares_yoy     REAL,
     accruals_pct_assets REAL,
+    -- the inflection door's three legs, so an entry can be re-read later
+    rev_growth_ttm REAL,
+    cons_rev_growth_fy REAL,
+    cons_rev_growth_fy2 REAL,
     recorded_at    TEXT NOT NULL,
     UNIQUE (symbol, screen_date)
 );
@@ -413,6 +420,9 @@ _APPEARANCE_QUALITY_COLS = (
     "net_debt_ebitda",
     "shares_yoy",
     "accruals_pct_assets",
+    "rev_growth_ttm",
+    "cons_rev_growth_fy",
+    "cons_rev_growth_fy2",
 )
 
 _VIEWS = f"""
@@ -983,6 +993,7 @@ CREATE VIEW v_candidate_outcomes AS
 SELECT ca.id AS appearance_id, ca.symbol, ca.screen_date, ca.screen_version,
        CASE WHEN ca.via_rsi AND ca.via_drawdown THEN 'both'
             WHEN ca.via_drawdown THEN 'drawdown' ELSE 'rsi' END AS branch,
+       CASE WHEN ca.via_inflection THEN 'inflection' ELSE '3y' END AS growth_door,
        co.horizon, co.entry_date, co.entry_close,
        co.fwd_return, co.bench_fwd_return, co.matured_at,
        co.fwd_return - co.bench_fwd_return AS excess,
@@ -992,20 +1003,23 @@ FROM candidate_appearances ca
 LEFT JOIN candidate_outcomes co ON co.appearance_id = ca.id;
 
 -- The screen's report card: does entering the candidates list carry timing
--- edge over SPY, and through WHICH dislocation door (rsi / drawdown / both)?
+-- edge over SPY, and through WHICH dislocation door (rsi / drawdown / both)
+-- and WHICH growth door (3y / inflection)? The inflection door ships as an
+-- annotation on the strength of one name (DELL); its rows must never pool
+-- with the 3y door's, or the split that would justify or kill it is lost.
 -- Grades TIMING at the configured horizons, never the multi-year quality
 -- thesis. Plain averages + n; every n here is entry-episodes (already
 -- deduplicated), read with the usual multiple-comparisons caveat. Human
 -- reading only — nothing feeds back into the screen's gates.
 DROP VIEW IF EXISTS v_candidate_efficacy;
 CREATE VIEW v_candidate_efficacy AS
-SELECT screen_version, branch, horizon, COUNT(*) AS n,
+SELECT screen_version, growth_door, branch, horizon, COUNT(*) AS n,
        AVG(beat_benchmark) AS hit_rate,
        AVG(excess) AS avg_excess,
        AVG(fwd_return) AS avg_fwd_return
 FROM v_candidate_outcomes
 WHERE matured_at IS NOT NULL
-GROUP BY screen_version, branch, horizon;
+GROUP BY screen_version, growth_door, branch, horizon;
 
 -- The current on-list episode per symbol, entry sighting vs latest. An
 -- episode breaks on the same calendar gap register_candidates uses, so the
@@ -1124,6 +1138,12 @@ def ensure_schema(conn) -> None:
     for col in _APPEARANCE_QUALITY_COLS:
         if col not in cols:
             conn.execute(f"ALTER TABLE candidate_appearances ADD COLUMN {col} REAL")
+    if "via_inflection" not in cols:
+        # DEFAULT 0 backfills every pre-door row as the 3y door, which is what
+        # they were; v_candidate_outcomes' CASE needs a 0, never a NULL.
+        conn.execute(
+            "ALTER TABLE candidate_appearances ADD COLUMN via_inflection INTEGER NOT NULL DEFAULT 0"
+        )
     conn.executescript(_VIEWS)
     conn.commit()
 
@@ -1414,9 +1434,10 @@ def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
         cur = conn.execute(
             "INSERT OR IGNORE INTO candidate_appearances"
             " (symbol, screen_date, screen_version, fcf_yield, rsi, high52ch,"
-            "  fscore, via_rsi, via_drawdown, roic, roic5y, rev_growth_3y,"
-            "  net_debt_ebitda, shares_yoy, accruals_pct_assets, recorded_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "  fscore, via_rsi, via_drawdown, via_inflection, roic, roic5y,"
+            "  rev_growth_3y, net_debt_ebitda, shares_yoy, accruals_pct_assets,"
+            "  rev_growth_ttm, cons_rev_growth_fy, cons_rev_growth_fy2, recorded_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 r["symbol"],
                 screen_date,
@@ -1427,12 +1448,16 @@ def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
                 r.get("fscore"),
                 r.get("via_rsi", 0),
                 r.get("via_drawdown", 0),
+                r.get("via_inflection", 0),
                 r.get("roic"),
                 r.get("roic5y"),
                 r.get("rev_growth_3y"),
                 r.get("net_debt_ebitda"),
                 r.get("shares_yoy"),
                 r.get("accruals_pct_assets"),
+                r.get("rev_growth_ttm"),
+                r.get("cons_rev_growth_fy"),
+                r.get("cons_rev_growth_fy2"),
                 now_iso,
             ),
         )

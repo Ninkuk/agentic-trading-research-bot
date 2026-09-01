@@ -32,10 +32,14 @@ def read_candidate_rows(conn):
             "net_debt_ebitda": r["netDebtEbitda"],
             "shares_yoy": r["sharesYoY"],
             "accruals_pct_assets": r["accrualsPctAssets"],
+            "rev_growth_ttm": r["revenueGrowth"],
+            "cons_rev_growth_fy": r["revenueThisYear"],
+            "cons_rev_growth_fy2": r["revenueNextYear"],
             "via_rsi": int(r["rsi"] is not None and 0 < r["rsi"] < candidates.RSI_MAX),
             "via_drawdown": int(
                 r["high52ch"] is not None and r["high52ch"] <= candidates.HIGH52_DISLOCATION_MAX
             ),
+            "via_inflection": int(candidates.growth_door(r) == "inflection"),
         }
         for r in candidates.screen(conn)
     ]

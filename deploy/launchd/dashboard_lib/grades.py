@@ -205,6 +205,7 @@ def signal_effective_n(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
 _CANDIDATE_OUTCOME_COLUMNS = [
     col("symbol", "Symbol", numeric=False),
     col("screen_date", "Entered list", numeric=False),
+    col("growth_door", "Growth door", numeric=False),
     col("branch", "Door", numeric=False),
     col("screen_version", "Screen", numeric=False),
     col("horizon", "Horizon"),
@@ -220,8 +221,9 @@ def candidate_outcomes(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
     total = scalar(conn, "SELECT COUNT(*) FROM v_candidate_outcomes")
     rows = fetch(
         conn,
-        "SELECT symbol, screen_date, branch, screen_version, horizon, entry_close,"
-        " fwd_return, bench_fwd_return, excess, beat_benchmark FROM v_candidate_outcomes"
+        "SELECT symbol, screen_date, growth_door, branch, screen_version, horizon,"
+        " entry_close, fwd_return, bench_fwd_return, excess, beat_benchmark"
+        " FROM v_candidate_outcomes"
         " ORDER BY screen_date DESC, symbol, horizon LIMIT ?",
         (_DRILL_LIMIT,),
     )

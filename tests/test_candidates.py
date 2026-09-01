@@ -17,7 +17,8 @@ _COLS = (
     " isin TEXT, sector TEXT, roic REAL, roic5y REAL, fcfYield REAL,"
     " revenueGrowth3Y REAL, netDebtEbitda REAL, sharesYoY REAL, fScore REAL,"
     " rsi REAL, ch6m REAL, high52ch REAL, zScore REAL, interestCoverage REAL,"
-    " priceDate TEXT, netIncome REAL, operatingCF REAL, assets REAL"
+    " priceDate TEXT, netIncome REAL, operatingCF REAL, assets REAL,"
+    " revenueGrowth REAL, revenueThisYear REAL, revenueNextYear REAL"
 )
 
 # A name that passes every gate. Tests mutate one field at a time off this.
@@ -46,6 +47,10 @@ _CLEAN = dict(
     netIncome=1000.0,
     operatingCF=1500.0,
     assets=10000.0,
+    # Inflection door OFF by default: every gate test above stays single-field.
+    revenueGrowth=4.0,
+    revenueThisYear=4.0,
+    revenueNextYear=2.0,
 )
 
 
@@ -225,7 +230,8 @@ def test_null_roic5y_is_admitted_like_null_leverage(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "field", ["marketCap", "dollarVolume", "roic", "fcfYield", "fScore", "rsi"]
+    "field",
+    ["marketCap", "dollarVolume", "roic", "fcfYield", "fScore", "rsi", "revenueGrowth3Y"],
 )
 def test_null_on_a_required_gate_drops_the_row(tmp_path, field):
     """Documents the deliberate asymmetry with netDebtEbitda above: these
@@ -663,3 +669,109 @@ def test_report_shows_accruals_column(tmp_path):
     assert "accr" in report
     good = next(line for line in report.splitlines() if line.lstrip().startswith("GOOD"))
     assert "-5.0" in good
+
+
+# ------------------------------------------------- the inflection door ----
+# DELL, January 2026: 3y revenue CAGR -0.4% (the post-COVID PC hangover),
+# trailing-year +19%, FY26 guided +17%, FY27 consensus double-digit, 34% off
+# the high at a 5.5% FCF yield. Every gate passed except rev3y; the stock
+# then quadrupled. The door is the shape, not the name.
+_DELL_JAN26 = dict(
+    symbol="DELL",
+    isin="US24703L2025",  # its own issuer; _CLEAN's isin would merge it into GOOD
+    revenueGrowth3Y=-0.4,
+    revenueGrowth=19.0,
+    revenueThisYear=17.0,
+    revenueNextYear=12.0,
+    fcfYield=5.5,
+    high52ch=-34.0,
+)
+
+
+def test_inflection_door_admits_flat_history_with_forward_growth(tmp_path):
+    conn = _stocks_db(tmp_path, _DELL_JAN26)
+    assert _symbols(conn) == ["DELL"]
+
+
+@pytest.mark.parametrize(
+    "field,bad_value",
+    [
+        ("revenueGrowth", 8.0),  # last year did not inflect
+        ("revenueThisYear", 8.0),  # the street does not see it this year
+        ("revenueNextYear", 3.0),  # ...or expects it to fade next year
+    ],
+)
+def test_inflection_door_needs_all_three_legs(tmp_path, field, bad_value):
+    conn = _stocks_db(tmp_path, {**_DELL_JAN26, field: bad_value})
+    assert _symbols(conn) == []
+
+
+@pytest.mark.parametrize(
+    "field,edge",
+    [
+        ("revenueGrowth", candidates.REV_GROWTH_TTM_MIN),
+        ("revenueThisYear", candidates.CONS_REV_GROWTH_FY_MIN),
+        ("revenueNextYear", candidates.CONS_REV_GROWTH_FY2_MIN),
+    ],
+)
+def test_inflection_door_boundaries_are_inclusive(tmp_path, field, edge):
+    conn = _stocks_db(tmp_path, {**_DELL_JAN26, field: edge})
+    assert _symbols(conn) == ["DELL"]
+
+
+def test_commodity_spike_with_fading_consensus_is_not_an_inflection(tmp_path):
+    """EOG, 2026-09-01: 3y +1.9%, trailing +17%, this FY +32% on an oil
+    spike -- and next FY -8.7%. Without the forward leg the door is a
+    cyclical-peak detector (7 of 12 dry-run entries were oil/refiners)."""
+    conn = _stocks_db(
+        tmp_path,
+        {
+            **_DELL_JAN26,
+            "symbol": "EOG",
+            "revenueGrowth3Y": 1.9,
+            "revenueGrowth": 17.2,
+            "revenueThisYear": 31.7,
+            "revenueNextYear": -8.7,
+        },
+    )
+    assert _symbols(conn) == []
+
+
+@pytest.mark.parametrize("field", ["revenueGrowth", "revenueThisYear", "revenueNextYear"])
+def test_null_inflection_leg_is_not_an_inflection(tmp_path, field):
+    """A missing consensus is missing evidence, never a pass."""
+    conn = _stocks_db(tmp_path, {**_DELL_JAN26, field: None})
+    assert _symbols(conn) == []
+
+
+def test_inflection_door_does_not_relax_the_other_gates(tmp_path):
+    conn = _stocks_db(tmp_path, {**_DELL_JAN26, "fcfYield": 2.0})
+    assert _symbols(conn) == []
+
+
+def test_growth_door_labels_each_row(tmp_path):
+    conn = _stocks_db(tmp_path, {"symbol": "GOOD"}, _DELL_JAN26)
+    doors = {r["symbol"]: candidates.growth_door(r) for r in candidates.screen(conn)}
+    assert doors == {"GOOD": "3y", "DELL": "inflection"}
+
+
+def test_report_marks_the_growth_door_per_row(tmp_path):
+    conn = _stocks_db(tmp_path, {"symbol": "GOOD"}, _DELL_JAN26)
+    lines = candidates.build_report(conn, NOW).splitlines()
+    header = next(ln for ln in lines if "symbol" in ln)
+    assert "door" in header and "rev1y" in header
+    dell = next(ln for ln in lines if ln.lstrip().startswith("DELL"))
+    good = next(ln for ln in lines if ln.lstrip().startswith("GOOD"))
+    assert "infl" in dell and "infl" not in good
+
+
+def test_report_explains_the_inflection_door(tmp_path):
+    conn = _stocks_db(tmp_path, {})
+    text = candidates.build_report(conn, NOW)
+    assert "inflection" in text and "consensus" in text
+
+
+def test_screen_version_dates_the_inflection_door():
+    """Appearance rows carry the gate-set version; efficacy must never mix
+    pre- and post-inflection regimes, so the door ships with a bump."""
+    assert candidates.SCREEN_VERSION >= "2026-09-01"

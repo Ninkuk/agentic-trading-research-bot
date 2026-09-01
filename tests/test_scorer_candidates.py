@@ -37,6 +37,7 @@ def _row(symbol="GOOD", rsi=38.0, high52ch=-20.0, fcf_yield=6.0, fscore=7.0, **q
         **quality,
         "via_rsi": int(rsi is not None and 0 < rsi < candidates.RSI_MAX),
         "via_drawdown": int(high52ch is not None and high52ch <= candidates.HIGH52_DISLOCATION_MAX),
+        "via_inflection": int(quality.get("via_inflection", 0)),
     }
 
 
@@ -69,7 +70,14 @@ def test_screen_version_is_pinned_in_candidates():
 def test_schema_has_candidate_tables(tmp_path):
     conn = _conn(tmp_path)
     a_cols = {r[1] for r in conn.execute("PRAGMA table_info(candidate_appearances)")}
-    assert {"symbol", "screen_date", "screen_version", "via_rsi", "via_drawdown"} <= a_cols
+    assert {
+        "symbol",
+        "screen_date",
+        "screen_version",
+        "via_rsi",
+        "via_drawdown",
+        "via_inflection",
+    } <= a_cols
     o_cols = {r[1] for r in conn.execute("PRAGMA table_info(candidate_outcomes)")}
     v_cols = {r[1] for r in conn.execute("PRAGMA table_info(verdict_outcomes)")}
     # Mirrors verdict_outcomes (modulo the FK name) so the generic
@@ -256,26 +264,34 @@ _SCREEN_COLS = {
     "netIncome": "REAL",
     "operatingCF": "REAL",
     "assets": "REAL",
+    "revenueGrowth": "REAL",
+    "revenueThisYear": "REAL",
+    "revenueNextYear": "REAL",
 }
 
 
-def _mini_stocks(path, captured_at="2026-07-02T11:00:00+00:00"):
+def _mini_stocks(path, captured_at="2026-07-02T11:00:00+00:00", inflection=False):
     """A stocks.db with one row that passes every screen gate, built through
-    the screener's own ensure_schema (no hand-rolled DDL)."""
+    the screener's own ensure_schema (no hand-rolled DDL). `inflection=True`
+    gives GOOD the DELL-January-2026 growth shape instead: flat 3y history,
+    trailing year and consensus both up."""
     conn = stocks_db.connect(str(path))
     stocks_db.ensure_schema(conn, _SCREEN_COLS)
     conn.execute(
         "INSERT INTO snapshots (captured_at, universe_count, source) VALUES (?, 1, 't')",
         (captured_at,),
     )
+    growth = (-0.4, 19.0, 17.0, 12.0) if inflection else (9.0, 4.0, 4.0, 2.0)
     conn.execute(
         'INSERT INTO metrics (snapshot_id, symbol, sector, "marketCap", "dollarVolume",'
         ' roic, roic5y, "fcfYield", "revenueGrowth3Y", "netDebtEbitda", "sharesYoY",'
         ' "fScore", rsi, ch6m, high52ch, "zScore", "interestCoverage", "priceDate",'
-        ' isin, "isPrimaryListing", "netIncome", "operatingCF", assets)'
+        ' isin, "isPrimaryListing", "netIncome", "operatingCF", assets,'
+        ' "revenueGrowth", "revenueThisYear", "revenueNextYear")'
         " VALUES (1, 'GOOD', 'Technology', 2e10, 5e7,"
-        " 25.0, 20.0, 6.0, 9.0, 0.5, -1.0, 7.0, 38.0, -20.0, -20.0, 6.0, 12.0,"
-        " '2026-07-01', 'US1111111111', '1', 100.0, 150.0, 1000.0)"
+        " 25.0, 20.0, 6.0, ?, 0.5, -1.0, 7.0, 38.0, -20.0, -20.0, 6.0, 12.0,"
+        " '2026-07-01', 'US1111111111', '1', 100.0, 150.0, 1000.0, ?, ?, ?)",
+        growth,
     )
     conn.commit()
     conn.close()
@@ -360,6 +376,11 @@ _QUALITY_COLS = {
     "net_debt_ebitda",
     "shares_yoy",
     "accruals_pct_assets",
+    # the inflection door's three legs, ledgered so its entries can be
+    # re-analysed (which leg was marginal?) once v_candidate_efficacy grades them
+    "rev_growth_ttm",
+    "cons_rev_growth_fy",
+    "cons_rev_growth_fy2",
 }
 
 
@@ -475,3 +496,109 @@ def test_quality_trend_carries_accruals_entry_and_now(tmp_path):
     _appear(conn, "AAA", "2026-07-03", accruals_pct_assets=8.0)
     t = _trend(conn, "AAA")
     assert (t["accruals_entry"], t["accruals_now"]) == (-5.0, 8.0)
+
+
+# ------------------------------------------------- the inflection door ----
+
+
+def test_appearance_stores_the_inflection_flag_and_legs(tmp_path):
+    conn = _conn(tmp_path)
+    _appear(
+        conn,
+        "DELL",
+        "2026-01-20",
+        via_inflection=1,
+        rev_growth_3y=-0.4,
+        rev_growth_ttm=19.0,
+        cons_rev_growth_fy=17.0,
+        cons_rev_growth_fy2=12.0,
+    )
+    row = conn.execute(
+        "SELECT via_inflection, rev_growth_ttm, cons_rev_growth_fy, cons_rev_growth_fy2"
+        " FROM candidate_appearances"
+    ).fetchone()
+    assert row == (1, 19.0, 17.0, 12.0)
+
+
+def test_ensure_schema_migrates_a_pre_inflection_ledger(tmp_path):
+    """The live scorer.db predates via_inflection; the nightly INSERT must
+    not fail on an unknown column."""
+    conn = db.connect(str(tmp_path / "old.db"))
+    conn.execute(
+        "CREATE TABLE candidate_appearances (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " symbol TEXT NOT NULL, screen_date TEXT NOT NULL, screen_version TEXT NOT NULL,"
+        " fcf_yield REAL, rsi REAL, high52ch REAL, fscore REAL,"
+        " via_rsi INTEGER NOT NULL DEFAULT 0, via_drawdown INTEGER NOT NULL DEFAULT 0,"
+        " roic REAL, roic5y REAL, rev_growth_3y REAL, net_debt_ebitda REAL,"
+        " shares_yoy REAL, accruals_pct_assets REAL,"
+        " recorded_at TEXT NOT NULL, UNIQUE (symbol, screen_date))"
+    )
+    conn.execute(
+        "INSERT INTO candidate_appearances (symbol, screen_date, screen_version, recorded_at)"
+        " VALUES ('OLD', '2026-07-01', 'v1', ?)",
+        (NOW,),
+    )
+    conn.commit()
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(candidate_appearances)")}
+    assert {"via_inflection"} | _QUALITY_COLS <= cols
+    # Pre-existing rows read as the 3y door, not NULL: the view's CASE needs a 0.
+    assert conn.execute("SELECT via_inflection FROM candidate_appearances").fetchone() == (0,)
+    assert _appear(conn, "DELL", "2026-07-01", via_inflection=1) == 1
+
+
+def test_read_candidate_rows_flags_an_inflection_entry(tmp_path):
+    conn = _conn(tmp_path)
+    _mini_stocks(tmp_path / "stocks.db", inflection=True)
+    fetch.attach_ro(conn, str(tmp_path / "stocks.db"))
+    try:
+        _, _, rows = fetch.read_candidate_rows(conn)
+    finally:
+        fetch.detach(conn)
+    r = rows[0]
+    assert r["via_inflection"] == 1
+    assert (r["rev_growth_3y"], r["rev_growth_ttm"]) == (-0.4, 19.0)
+    assert (r["cons_rev_growth_fy"], r["cons_rev_growth_fy2"]) == (17.0, 12.0)
+
+
+def test_read_candidate_rows_marks_a_3y_entry_as_not_inflection(tmp_path):
+    conn = _conn(tmp_path)
+    _mini_stocks(tmp_path / "stocks.db")
+    fetch.attach_ro(conn, str(tmp_path / "stocks.db"))
+    try:
+        _, _, rows = fetch.read_candidate_rows(conn)
+    finally:
+        fetch.detach(conn)
+    assert rows[0]["via_inflection"] == 0
+
+
+def _graded_pair(conn):
+    """One 3y entry and one inflection entry, both matured at a 2-day
+    horizon, so the views have something on each side of the growth door."""
+    dates = ["2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06"]
+    for sym, start in (("GOOD", 100.0), ("DELL", 100.0), ("SPY", 500.0)):
+        _ledger(conn, sym, dates, start=start)
+    _appear(conn, "GOOD", "2026-07-01")
+    _appear(conn, "DELL", "2026-07-01", via_inflection=1, high52ch=-34.0)
+    db.register_candidates(conn, (2,), "SPY", 7, 7)
+    db.mature(conn, NOW, "SPY")
+
+
+def test_candidate_outcomes_view_names_the_growth_door(tmp_path):
+    conn = _conn(tmp_path)
+    _graded_pair(conn)
+    doors = dict(
+        conn.execute("SELECT symbol, growth_door FROM v_candidate_outcomes GROUP BY symbol")
+    )
+    assert doors == {"GOOD": "3y", "DELL": "inflection"}
+
+
+def test_candidate_efficacy_splits_by_growth_door(tmp_path):
+    """Grading the inflection door separately is the whole point of shipping
+    it as an annotation: its entries must never pool with the 3y door's."""
+    conn = _conn(tmp_path)
+    _graded_pair(conn)
+    rows = conn.execute(
+        "SELECT growth_door, branch, horizon, n FROM v_candidate_efficacy ORDER BY growth_door"
+    ).fetchall()
+    assert rows == [("3y", "rsi", 2, 1), ("inflection", "both", 2, 1)]

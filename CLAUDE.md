@@ -136,8 +136,10 @@ The scorer also grades the `candidates`
 screen: it records each night's list from stocks.db (`candidate_appearances` — the screen's
 only point-in-time record; no vendor serves screener vintages) and grades list-**entry**
 episodes only (a name sits on the list for weeks; grading every sighting re-counts one call)
-at 21/63 trading days vs SPY in `v_candidate_efficacy`, split by dislocation branch and
-`SCREEN_VERSION` — calibration only, never feeding back into the gates. Each sighting also
+at 21/63 trading days vs SPY in `v_candidate_efficacy`, split by dislocation branch, growth
+door (`3y` / `inflection` — rev3y failed but trailing-year and consensus growth admitted it;
+an annotation graded on its own until it earns more) and `SCREEN_VERSION` — calibration
+only, never feeding back into the gates. Each sighting also
 ledgers every quality gate (roic, roic5y, rev growth, leverage, dilution — stocks.db keeps
 only ~3 weeks), and `v_candidate_quality_trend` reads entry-vs-latest per on-list episode:
 a rising FCF yield beside a falling fScore/ROIC is a falling knife the level gates can't see.
