@@ -190,3 +190,4 @@
 2026-08-27 GD UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-10-30:gd-q3-print-block-vi-contract-terms-and-marine-margin (PASS)
 2026-08-27 GOOG FLAWED conditions=5 refuted=1 unknown=1 reopen=2026-10-29:goog-q3-print-2027-capex-guide-and-owner-fcf (PASS)
 2026-08-31 SHOO FLAWED conditions=5 refuted=1 unknown=2 reopen=2026-11-05:shoo-q3-print-gross-margin-under-section-301-and-kg-h2 (PASS)
+2026-08-31 PYPL UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2027-02-04:pypl-q4-print-fy27-guide-op-income-and-adj-fcf-direction
