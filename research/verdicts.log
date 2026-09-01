@@ -186,6 +186,7 @@
 2026-08-25 EDRY UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-11-12:edry-q3-print-q4-charter-cover-and-newbuild-installments
 2026-08-26 BB UNPROVEN conditions=4 refuted=0 unknown=1 reopen=2026-09-24:bb-q2-print-alloy-kore-design-win-and-secomms-run-rate (PASS)
 2026-08-26 AXON FLAWED conditions=6 refuted=2 unknown=1 reopen=2027-02-25:axon-fy26-print-fcf-450-and-fy27-sbc-guide (PASS)
+2026-08-26 SMOX UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2027-01-31:smox-first-ncsr-overlay-turnover-and-benchmark (PASS)
 2026-08-27 HMY UNPROVEN conditions=5 refuted=0 unknown=4 reopen=2026-11-20:hmy-q1fy27-op-update-csa-ramp-and-eva-env-clearance (PASS)
 2026-08-27 GD UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-10-30:gd-q3-print-block-vi-contract-terms-and-marine-margin (PASS)
 2026-08-27 GOOG FLAWED conditions=5 refuted=1 unknown=1 reopen=2026-10-29:goog-q3-print-2027-capex-guide-and-owner-fcf (PASS)
@@ -194,3 +195,4 @@
 2026-09-01 TTWO FLAWED conditions=6 refuted=1 unknown=2 reopen=2027-02-04:ttwo-q3fy27-print-launch-quarter-bookings-and-ocf-conversion (PASS)
 2026-09-01 IREN FLAWED conditions=5 refuted=1 unknown=2 reopen=2027-02-04:iren-q2fy27-print-horizon-2-4-acceptance-and-owner-fcf-net-of-prepayments (PASS)
 2026-09-01 TPR SOUND conditions=6 refuted=0 unknown=0 reopen=2026-11-05:tpr-q1fy27-print-coach-hsd-units-up-ks-within-hsd-decline-or-price-below-116 (PASS)
+2026-09-01 VSXY SOUND conditions=5 refuted=0 unknown=0 reopen=2026-12-04:vsxy-q3fy26-print-price-at-or-below-62-with-fy26-adj-oi-guide-held-at-or-above-550m (PASS)
