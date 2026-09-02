@@ -1,19 +1,20 @@
 ---
 name: Trading Research Dashboard
-description: Calm plain-English nightly signal dashboard on shadcn/zinc
+description: Calm plain-English nightly signal dashboard on shadcn tokens in the Robinhood palette
 colors:
   paper-white: "oklch(1 0 0)"
-  ink-zinc: "oklch(0.141 0.005 285.823)"
+  ink: "oklch(0.22 0.003 285)"
   card-white: "oklch(1 0 0)"
-  quiet-zinc: "oklch(0.967 0.001 286.375)"
-  caption-zinc: "oklch(0.552 0.016 285.938)"
-  hairline-zinc: "oklch(0.92 0.004 286.32)"
-  alert-red: "oklch(0.577 0.245 27.325)"
-  tone-up: "#047857"
-  tone-down: "#b91c1c"
-  tone-hold: "#d97706"
-  tone-up-bg: "rgba(16, 185, 129, 0.14)"
-  tone-down-bg: "rgba(239, 68, 68, 0.13)"
+  quiet-gray: "oklch(0.965 0 0)"
+  caption-gray: "oklch(0.55 0 0)"
+  hairline-gray: "oklch(0.92 0 0)"
+  robinhood-green: "#00c805"
+  alert-red: "#d34101"
+  tone-up: "#008800"
+  tone-down: "#d34101"
+  tone-hold: "#b45309"
+  tone-up-bg: "rgba(0, 200, 5, 0.14)"
+  tone-down-bg: "rgba(255, 80, 0, 0.13)"
   tone-hold-bg: "rgba(245, 158, 11, 0.15)"
 typography:
   body:
@@ -27,10 +28,11 @@ typography:
     fontWeight: 600
     lineHeight: 1.3
   stat:
-    fontFamily: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
-    fontSize: "1.125rem"
-    fontWeight: 600
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1.375rem"
+    fontWeight: 500
     lineHeight: 1.2
+    fontFeature: "tabular-nums"
   label:
     fontFamily: "ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.75rem"
@@ -42,10 +44,11 @@ typography:
     fontWeight: 400
     fontFeature: "tabular-nums"
 rounded:
-  sm: "calc(0.625rem - 4px)"
-  md: "calc(0.625rem - 2px)"
-  lg: "0.625rem"
-  xl: "calc(0.625rem + 4px)"
+  sm: "calc(0.75rem - 4px)"
+  md: "calc(0.75rem - 2px)"
+  lg: "0.75rem"
+  xl: "calc(0.75rem + 4px)"
+  pill: "9999px"
 spacing:
   page-width: "72rem"
   page-pad-x: "1.25rem"
@@ -56,21 +59,21 @@ components:
   badge-up:
     backgroundColor: "{colors.tone-up-bg}"
     textColor: "{colors.tone-up}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.pill}"
     padding: "2px 8px"
   badge-down:
     backgroundColor: "{colors.tone-down-bg}"
     textColor: "{colors.tone-down}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.pill}"
     padding: "2px 8px"
   badge-hold:
     backgroundColor: "{colors.tone-hold-bg}"
     textColor: "{colors.tone-hold}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.pill}"
     padding: "2px 8px"
   section-card:
     backgroundColor: "{colors.card-white}"
-    textColor: "{colors.ink-zinc}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.xl}"
 ---
 
@@ -81,11 +84,13 @@ components:
 **Creative North Star: "The Plain-English Briefing"**
 
 A nightly report you read, not a terminal you watch. The system is
-shadcn/ui zinc on Tailwind v4: near-white paper, near-black ink, hairline
-borders, comfortable density. Every visual element defers to a sentence of
-plain English; color exists only to echo what the words already said. The
-palette carries exactly three semantic tones (up, down, hold) and one
-destructive red; everything else is tinted zinc neutral.
+shadcn/ui tokens on Tailwind v4 in the Robinhood palette: white paper or
+true-black ground, untinted neutral grays, hairline borders, comfortable
+density. Every visual element defers to a sentence of plain English; color
+exists only to echo what the words already said. The palette carries one
+brand accent (Robinhood green, the primary and the up tone), two more
+semantic tones (down, hold) and one destructive red-orange; everything else
+is neutral gray.
 
 This system explicitly rejects its own predecessor: the newspaper-ledger
 ornament (serif display, brass, margin gutters) was retired 2026-07-30 as
@@ -96,25 +101,29 @@ the OS chooses by default and a manual toggle overrides.
 **Key Characteristics:**
 - Borders over shadows; flat surfaces, hairline separation
 - Text is the primary channel; tones reinforce, never replace
-- Mono tabular numerals for every number, sans for every sentence
+- Mono tabular numerals in tables, sans tabular figures in stat tiles,
+  sans for every sentence
+- Pill-shaped buttons, badges and nav chips
 - One-sentence section notes; deep anatomy behind an About modal
-- Honest degraded states (dashed `empty`, red mono `unavailable`)
+- Honest degraded states (dashed `Empty`, destructive `Alert`)
 
 ## 2. Colors
 
-Tinted zinc neutrals with three data tones: a Restrained strategy where
-the accents are semantic, not decorative.
+Neutral grays with a green brand accent and three data tones: a Restrained
+strategy where the accents are semantic, not decorative.
 
 ### Primary
-- **Ink Zinc** (oklch(0.141 0.005 285.823)): body text, and inverted as
-  the primary button surface. In dark mode the pair flips (near-white ink
-  on zinc-9 paper). There is no brand accent color; the "primary" is ink.
+- **Robinhood Green** (#00c805): primary button surface with black ink
+  (8.7:1), focus ring, and the dark-mode up tone. On white it is 2.3:1, so
+  light-mode up TEXT steps to #008800 (4.6:1).
+- **Ink** (oklch(0.22 0.003 285)): body text. Dark mode flips to near-white
+  ink on a true-black page with cards at oklch(0.19 0 0).
 
 ### Neutral
 - **Paper White** (oklch(1 0 0)): page and card background in light mode.
-- **Quiet Zinc** (oklch(0.967 0.001 286.375)): secondary/muted/accent
+- **Quiet Gray** (oklch(0.965 0 0)): secondary/muted/accent
   fills — hover states, muted table headers, tab strips.
-- **Caption Zinc** (oklch(0.552 0.016 285.938)): captions, tile labels,
+- **Caption Gray** (oklch(0.55 0 0)): captions, tile labels,
   section notes' de-emphasized metadata.
 - **Hairline Zinc** (oklch(0.92 0.004 286.32)): every border, divider, and
   input stroke. Dark mode uses white at 10% alpha instead.
@@ -159,7 +168,7 @@ and ticker symbols are mono with tabular figures.
   75ch measure even inside page-wide cards.
 - **Numeric** (400, 0.8125rem mono, tabular-nums): table cells,
   right-aligned.
-- **Label** (400, 0.75rem, caption zinc): tile captions, caveat
+- **Label** (400, 0.75rem, caption gray): tile captions, caveat
   footnotes (italic), tooltip text, column direction hints.
 
 ### Named Rules
@@ -174,7 +183,7 @@ faint to pass AA is a hint that doesn't exist.
 
 ## 4. Elevation
 
-Flat, border-separated surfaces. Cards, tables, and tabs are delimited by
+Flat, border-separated surfaces. Cards, tables, and the sidebar rail are delimited by
 1px Hairline Zinc borders on same-color backgrounds; there are no resting
 shadows anywhere. Shadows exist only on floating layers — tooltips and
 popovers (`0 4px 12px` / `0 6px 18px` at ~15% black) — where they signal
@@ -187,21 +196,30 @@ casts one.
 
 ## 5. Components
 
+### App Shell (shadcn Sidebar)
+- **Anatomy:** left rail (Summary, then one item per strand, lucide icon +
+  label, active item tinted `sidebar-accent`), trigger in the masthead,
+  offcanvas collapse persisted in prefs, Sheet below `lg` (1024px)
+- **Routing:** `#/` Summary, `#/<strand>` a strand, `#/ticker/SYM`
+  drill-down; bare `#<section-id>` lands on its strand and scrolls
+- **Tokens:** `--sidebar*` neutral set, one step off the page ground
+
 ### Section Cards
-- **Corner Style:** rounded-xl (0.625rem + 4px, shadcn card default)
-- **Background:** Card White (zinc-9 surface in dark), 1px hairline border
+- **Corner Style:** rounded-xl (0.75rem + 4px)
+- **Background:** Card White (oklch(0.19 0 0) surface in dark), 1px hairline border
 - **Shadow Strategy:** none (see Elevation)
 - **Anatomy:** title + one-sentence note as description, verdict badge in
   the header action slot, info icon opening the About modal, optional
   italic bordered caveat footnote (`.cap`)
 
 ### Tone Badges (`Badge variant="up|down|hold"`)
-- **Style:** soft ~14%-alpha tone background, solid tone text, small
+- **Style:** soft ~14%-alpha tone background, solid tone text, pill
   radius, text label always present
 - **State:** static; badges are read-only verdicts, never interactive
 
 ### Stat Tiles
-- **Style:** unboxed — mono 600 value over a 0.75rem caption-zinc label,
+- **Style:** unboxed — sans 500 tabular 1.375rem value over a 0.75rem
+  caption-gray label,
   flex-wrapped with 1rem × 2.5rem gaps. Not cards; no border.
 - **Tone:** value may take a tone color via tag-on/off/hold classes
 
@@ -209,8 +227,10 @@ casts one.
 - **Style:** sortable headers with persisted sort, filter box at ≥4 rows,
   numeric cells mono/tabular/right-aligned, flagged rows get Tone Hold
   tint plus ★ on the symbol
-- **Rule:** confidence intervals stack under the hit-rate value in the
-  same cell, never inline suffixes
+- **Rule:** a hit rate with a confidence interval renders as a range mark
+  (dot at the rate, whisker over the CI, a tick at the null rate); the
+  digits live in the cell's title. Signed excess is a diverging bar from
+  zero; weight and heat are magnitude bars. Never inline suffixes.
 
 ### Charts & Sparklines
 - **Style:** shadcn ChartContainer/ChartTooltip on Recharts; tooltips
@@ -219,16 +239,19 @@ casts one.
   them into filled boxes); a series under ~3 points renders no chart
 
 ### Glossary Terms
-- **Style:** dotted underline, cursor: help, popover on hover/focus;
-  the popover portals to `document.body` (fixed-positioned from the
-  trigger rect) so table overflow containers can never clip it
+- **Style:** dotted underline, cursor: help; click or hover opens a
+  shadcn Popover (portals to `document.body`, so table overflow never
+  clips it; flips below on collision), Escape/outside click closes
 - **Focus:** 2px ring outline, offset 2px, 2px corner radius (a
   deliberate micro-radius for text-level focus outlines; the rounded
   scale applies to boxes, not text outlines)
 
 ### Degraded States
-- **Empty:** dashed hairline border, muted text ("no rows this run")
-- **Unavailable:** red-tinted border/background, mono red error text
+- **Empty:** shadcn `Empty` via `EmptyNote` — dashed hairline border,
+  icon tile (inbox; spinner while loading), muted sentence
+- **Unavailable:** shadcn `Alert variant="destructive"`, mono error text
+- **Page-level:** `Alert` too — destructive for a failed generation,
+  `warning` (amber, `role="status"`) for a stale edition
 
 ## 6. Do's and Don'ts
 
@@ -238,7 +261,7 @@ casts one.
 - **Do** read page width from `--page-width` (72rem) everywhere,
   including components outside `.page` like StaleBanner.
 - **Do** cap prose at 75ch even when the card is page-wide.
-- **Do** render partial data as `empty`/`unavailable` states; a missing
+- **Do** render partial data as `EmptyNote`/`Alert` states; a missing
   section must say so.
 - **Do** respect `prefers-reduced-motion` (global transition kill).
 
@@ -248,7 +271,7 @@ casts one.
   read".
 - **Don't** build trading-terminal maximalism: no dense blinking grids,
   no neon-on-black, no data density as identity.
-- **Don't** put counts in tab labels (user preference, 2026-07-30).
+- **Don't** put counts in strand nav labels (user preference, 2026-07-30).
 - **Don't** ship 2-point sparklines or zero-baseline sparkline domains.
 - **Don't** use color as the only signal; every tone needs a text twin.
 - **Don't** add resting shadows, side-stripe borders, or gradient text;

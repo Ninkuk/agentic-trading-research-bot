@@ -4,29 +4,29 @@
   "title": "Design System: Trading Research Dashboard",
   "extensions": {
     "colorMeta": {
-      "ink-zinc": {
+      "robinhood-green": {
         "role": "primary",
-        "displayName": "Ink Zinc",
-        "canonical": "oklch(0.141 0.005 285.823)",
-        "tonalRamp": ["oklch(0.15 0.005 286)", "oklch(0.25 0.005 286)", "oklch(0.35 0.005 286)", "oklch(0.45 0.005 286)", "oklch(0.55 0.005 286)", "oklch(0.7 0.005 286)", "oklch(0.85 0.005 286)", "oklch(0.95 0.005 286)"]
+        "displayName": "Robinhood Green",
+        "canonical": "#00c805",
+        "tonalRamp": ["oklch(0.25 0.1 143)", "oklch(0.35 0.13 143)", "oklch(0.45 0.16 143)", "oklch(0.54 0.185 143)", "oklch(0.65 0.22 143)", "oklch(0.72 0.245 143)", "oklch(0.85 0.15 143)", "oklch(0.95 0.06 143)"]
       },
-      "caption-zinc": {
+      "ink": {
         "role": "neutral",
-        "displayName": "Caption Zinc",
-        "canonical": "oklch(0.552 0.016 285.938)",
-        "tonalRamp": ["oklch(0.15 0.016 286)", "oklch(0.25 0.016 286)", "oklch(0.35 0.016 286)", "oklch(0.45 0.016 286)", "oklch(0.55 0.016 286)", "oklch(0.7 0.016 286)", "oklch(0.85 0.016 286)", "oklch(0.95 0.016 286)"]
+        "displayName": "Ink",
+        "canonical": "oklch(0.22 0.003 285)",
+        "tonalRamp": ["oklch(0 0 0)", "oklch(0.13 0 0)", "oklch(0.19 0 0)", "oklch(0.26 0 0)", "oklch(0.55 0 0)", "oklch(0.72 0 0)", "oklch(0.92 0 0)", "oklch(0.965 0 0)"]
       },
       "tone-up": {
         "role": "tertiary",
-        "displayName": "Tone Up (emerald)",
-        "canonical": "oklch(0.508 0.118 165)",
-        "tonalRamp": ["oklch(0.2 0.09 165)", "oklch(0.3 0.11 165)", "oklch(0.4 0.12 165)", "oklch(0.51 0.12 165)", "oklch(0.6 0.13 165)", "oklch(0.72 0.14 165)", "oklch(0.85 0.1 165)", "oklch(0.95 0.04 165)"]
+        "displayName": "Tone Up (Robinhood green, AA-stepped on light)",
+        "canonical": "#008800",
+        "tonalRamp": ["oklch(0.25 0.1 143)", "oklch(0.35 0.13 143)", "oklch(0.45 0.16 143)", "oklch(0.54 0.185 143)", "oklch(0.65 0.22 143)", "oklch(0.72 0.245 143)", "oklch(0.85 0.15 143)", "oklch(0.95 0.06 143)"]
       },
       "tone-down": {
         "role": "tertiary",
-        "displayName": "Tone Down (red)",
-        "canonical": "oklch(0.505 0.19 27)",
-        "tonalRamp": ["oklch(0.2 0.12 27)", "oklch(0.3 0.15 27)", "oklch(0.4 0.18 27)", "oklch(0.5 0.19 27)", "oklch(0.6 0.19 27)", "oklch(0.72 0.16 27)", "oklch(0.85 0.09 27)", "oklch(0.95 0.03 27)"]
+        "displayName": "Tone Down (Robinhood red-orange, AA-stepped on light)",
+        "canonical": "#d34101",
+        "tonalRamp": ["oklch(0.25 0.1 38)", "oklch(0.35 0.13 38)", "oklch(0.45 0.16 38)", "oklch(0.58 0.19 38)", "oklch(0.67 0.22 38)", "oklch(0.75 0.17 38)", "oklch(0.85 0.1 38)", "oklch(0.95 0.04 38)"]
       },
       "tone-hold": {
         "role": "tertiary",
@@ -104,13 +104,13 @@
   ],
   "narrative": {
     "northStar": "The Plain-English Briefing",
-    "overview": "A nightly report you read, not a terminal you watch. shadcn/ui zinc on Tailwind v4: near-white paper, near-black ink, hairline borders, comfortable density. Every visual element defers to a sentence of plain English; color exists only to echo what the words already said. The system rejects both its newspaper-ledger predecessor (retired 2026-07-30 as too stylized) and trading-terminal maximalism.",
+    "overview": "A nightly report you read, not a terminal you watch. shadcn/ui tokens on Tailwind v4 in the Robinhood palette: white paper or true-black ground, neutral grays, green brand accent, hairline borders, comfortable density. Every visual element defers to a sentence of plain English; color exists only to echo what the words already said. The system rejects both its newspaper-ledger predecessor (retired 2026-07-30 as too stylized) and trading-terminal maximalism.",
     "keyCharacteristics": [
       "Borders over shadows; flat surfaces, hairline separation",
       "Text is the primary channel; tones reinforce, never replace",
       "Mono tabular numerals for every number, sans for every sentence",
       "One-sentence section notes; deep anatomy behind an About modal",
-      "Honest degraded states (dashed empty, red mono unavailable)"
+      "Honest degraded states (dashed Empty, destructive Alert)"
     ],
     "rules": [
       { "name": "The Words-First Rule", "body": "Color never carries meaning alone. Every tone badge has a text label; every flagged row also gets a ★ suffix. If removing all color would lose information, the design is wrong.", "section": "colors" },
@@ -123,13 +123,13 @@
       "Do keep section notes to ONE sentence of meaning; move all widget anatomy to the About modal.",
       "Do read page width from --page-width (72rem) everywhere, including components outside .page like StaleBanner.",
       "Do cap prose at 75ch even when the card is page-wide.",
-      "Do render partial data as empty/unavailable states; a missing section must say so.",
+      "Do render partial data as EmptyNote/Alert states; a missing section must say so.",
       "Do respect prefers-reduced-motion (global transition kill)."
     ],
     "donts": [
       "Don't revive newspaper ornament: no serif display, no brass accents, no margin gutters.",
       "Don't build trading-terminal maximalism: no dense blinking grids, no neon-on-black, no data density as identity.",
-      "Don't put counts in tab labels.",
+      "Don't put counts in strand nav labels.",
       "Don't ship 2-point sparklines or zero-baseline sparkline domains.",
       "Don't use color as the only signal; every tone needs a text twin.",
       "Don't add resting shadows, side-stripe borders, or gradient text; separation is a 1px hairline, emphasis is weight."
