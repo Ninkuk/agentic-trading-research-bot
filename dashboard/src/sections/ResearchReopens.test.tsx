@@ -81,3 +81,19 @@ test("every checkpoint's ticker has a fixture row with a non-null due", () => {
     expect(rowsByTicker.get(c.ticker)?.due).not.toBeNull();
   }
 });
+
+const SUMMARY_ROWS = [
+  { ticker: "HMY", held: false, verdict: "UNPROVEN", due: "2026-08-27", trigger: "fy26-results", thesis_date: "2026-07-30", thesis_path: null },
+  { ticker: "INTU", held: true, verdict: "SOUND", due: "2026-09-02", trigger: "intu-investor-day", thesis_date: "2026-08-25", thesis_path: null },
+  { ticker: "CPRT", held: false, verdict: "FLAWED", due: "2026-09-26", trigger: "q4-print", thesis_date: "2026-07-26", thesis_path: null },
+  { ticker: "GFI", held: true, verdict: "UNPROVEN", due: null, trigger: "tarkwa-renewal", thesis_date: "2026-07-01", thesis_path: null },
+];
+
+test("KPI tiles count open theses, held, and due within 7 days of the injected today", () => {
+  const sec = { ...doc.sections["research-reopens"], rows: SUMMARY_ROWS, checkpoints: undefined };
+  render(<ResearchReopens sec={sec} glossary={doc.glossary} today="2026-08-27" />);
+  expect(screen.getByText("open theses").previousSibling).toHaveTextContent("4");
+  expect(screen.getByText("held").previousSibling).toHaveTextContent("2");
+  // HMY (day 0) and INTU (day 6); CPRT is day 30, GFI undated
+  expect(screen.getByText("due within 7 days").previousSibling).toHaveTextContent("2");
+});
