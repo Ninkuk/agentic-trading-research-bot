@@ -1,10 +1,9 @@
 // Chart-mark tokens as CSS variable references — SVG stroke/fill accept
 // var(), so Recharts marks follow the active light/dark theme without any
 // JS theme plumbing. The values live in index.css (`--tone-*`, shadcn
-// tokens): light emerald-700/red-700/amber-600, dark emerald-400/red-400/
-// amber-400 — both sides of each pair chosen for AA contrast on their
-// surface. `hold` is the amber midpoint; text remains the primary channel
-// (color is never the only signal).
+// tokens): Robinhood green/red-orange, stepped darker on light for AA text.
+// `hold` is the amber midpoint; text remains the primary channel (color is
+// never the only signal).
 export const tokens = {
   up: "var(--tone-up)",
   down: "var(--tone-down)",

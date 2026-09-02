@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "./utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none transition-[color,box-shadow] overflow-hidden",
+  "inline-flex items-center justify-center rounded-full border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none transition-[color,box-shadow] overflow-hidden",
   {
     variants: {
       variant: {
@@ -12,11 +12,11 @@ const badgeVariants = cva(
         secondary: "border-transparent bg-secondary text-secondary-foreground",
         destructive: "border-transparent bg-destructive text-white",
         outline: "text-foreground",
-        // Tone badges for on/off/mid verdicts — tinted like shadcn's
-        // "soft" recipes, readable in both themes.
-        up: "border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400",
-        down: "border-transparent bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-400",
-        hold: "border-transparent bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400",
+        // Tone badges for on/off/mid verdicts — soft tint from the --tone-*
+        // tokens, so both themes follow index.css.
+        up: "border-transparent bg-tone-up-bg text-tone-up",
+        down: "border-transparent bg-tone-down-bg text-tone-down",
+        hold: "border-transparent bg-tone-hold-bg text-tone-hold",
       },
     },
     defaultVariants: { variant: "default" },

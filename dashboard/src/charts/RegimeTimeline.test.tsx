@@ -16,14 +16,14 @@ test("VIX area renders through the chart's injected color variable", () => {
   expect(curve).toHaveAttribute("stroke", "var(--color-vix)");
 });
 
-test("per-night dots wear the lab regime palette, amber midpoint for anything else", () => {
+test("per-night dots wear the tone tokens so they re-step with the theme", () => {
   const { container } = render(<RegimeTimeline rows={ROWS} />);
   const dots = container.querySelectorAll(".regime-dot");
   // One dot per non-null VIX row (the null 07-05 row draws no dot).
   expect(dots).toHaveLength(4);
-  expect(dots[0]).toHaveAttribute("fill", "#10b981"); // risk_on
-  expect(dots[2]).toHaveAttribute("fill", "#ef4444"); // risk_off
-  expect(dots[3]).toHaveAttribute("fill", "#f59e0b"); // mixed
+  expect(dots[0]).toHaveAttribute("fill", "var(--tone-up)"); // risk_on
+  expect(dots[2]).toHaveAttribute("fill", "var(--tone-down)"); // risk_off
+  expect(dots[3]).toHaveAttribute("fill", "var(--tone-hold)"); // mixed
 });
 
 test("empty rows degrades to a no-data note instead of an empty chart", () => {

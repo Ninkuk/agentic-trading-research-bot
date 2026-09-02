@@ -1,15 +1,11 @@
-// The regime-timeline chart, verbatim from the design lab's
-// RegimeTimelineChart: a full-width VIX AreaChart inside ChartContainer
-// (which owns the grid/axis/cursor styling via its CSS hooks and injects
-// the per-chart --color-vix variable), per-night dots colored by that
-// night's regime verdict (the lab's exact hexes), the shadcn
-// ChartTooltipContent, and the dot-color caption below.
+// Regime timeline: a full-width VIX AreaChart inside ChartContainer (which
+// owns grid/axis/cursor styling and injects --color-vix), per-night dots
+// colored by that night's regime verdict via the --tone-* tokens (so they
+// re-step with the theme), the shadcn ChartTooltipContent, and a caption.
 //
-// The one deviation from the lab file: width. The lab used
-// ResponsiveContainer ("aspect-auto w-full"); jsdom measures that 0x0 and
-// every geometry assertion in tests silently blanks, so this measures the
-// container itself (ResizeObserver, explicit fallback) and passes
-// responsive={false} — pixel-identical in a real browser.
+// Width is measured from the container (ResizeObserver, explicit fallback)
+// and passed with responsive={false}: jsdom measures ResponsiveContainer
+// 0x0 and every geometry assertion in tests silently blanks.
 
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
@@ -31,11 +27,10 @@ export interface RegimeTimelineProps {
   height?: number;
 }
 
-// The lab's dot palette — fixed hexes, same in both themes.
 const REGIME_DOT: Record<string, string> = {
-  risk_on: "#10b981",
-  risk_off: "#ef4444",
-  mixed: "#f59e0b",
+  risk_on: "var(--tone-up)",
+  risk_off: "var(--tone-down)",
+  mixed: "var(--tone-hold)",
 };
 
 const vixConfig = { vix: { label: "VIX", color: "var(--chart-2)" } } satisfies ChartConfig;

@@ -104,9 +104,9 @@ function cell(value: string, header: string): ReactNode {
       <span
         className={
           v > 0
-            ? "text-emerald-700 dark:text-emerald-400"
+            ? "text-tone-up"
             : v < 0
-              ? "text-red-700 dark:text-red-400"
+              ? "text-tone-down"
               : undefined
         }
       >
