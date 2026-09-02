@@ -52,9 +52,9 @@ def _series_tile(
     """A tile whose value is the newest point of `sql` (date, value; oldest
     first) divided by `scale`, and whose history is the last `limit` points.
     None when the series is empty so the caller can skip it."""
-    pts = [{"date": d, "value": v} for d, v in conn.execute(sql).fetchall() if v is not None][
-        -limit:
-    ]
+    pts = [
+        {"date": d, "value": v / scale} for d, v in conn.execute(sql).fetchall() if v is not None
+    ][-limit:]
     if not pts:
         return None
     return tile(label, pts[-1]["value"], band or pts[-1]["date"], tone, pts)
@@ -942,12 +942,22 @@ _CLOSURE_COLUMNS = [
 
 
 def market_closures(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    # One row per date per market. v_upcoming_closures folds both markets'
+    # holidays AND early closes into one list, so reading it beside
+    # v_early_closes double-counts — query events by explicit type instead.
     rows = fetch(
         conn,
-        "SELECT event_date, 'closed' AS kind, title, NULL AS event_time FROM v_upcoming_closures"
-        " UNION ALL"
-        " SELECT event_date, 'early close', title, event_time FROM v_early_closes"
-        " ORDER BY event_date",
+        "SELECT e.event_date,"
+        " CASE e.event_type WHEN 'market_holiday' THEN 'closed'"
+        " WHEN 'early_close' THEN 'early close'"
+        " WHEN 'bond_holiday' THEN 'bond closed'"
+        " ELSE 'bond early close' END AS kind,"
+        " e.title, e.event_time"
+        " FROM events e, calendar_now p"
+        " WHERE e.event_date >= p.today"
+        " AND e.event_type IN ('market_holiday', 'early_close',"
+        " 'bond_holiday', 'bond_early_close')"
+        " ORDER BY e.event_date, e.event_type",
     )
     return {
         "columns": _CLOSURE_COLUMNS,
@@ -995,22 +1005,22 @@ _AG_COLUMNS = [
     col("commodity", "Commodity", numeric=False),
     col("period", "Marketing year", numeric=False),
     col("ending_stocks", "Ending stocks"),
-    col("total_use", "Total use"),
-    col("stocks_to_use", "Stocks-to-use", term="Stocks-to-use"),
-    spark_col("history", "Stocks-to-use by year"),
+    spark_col("history", "Ending stocks by year"),
 ]
 
 
 def ag_balance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     rows = fetch(
         conn,
-        "SELECT s.commodity, s.period, s.ending_stocks, s.total_use, s.stocks_to_use"
+        "SELECT s.commodity, s.period, s.ending_stocks"
         " FROM v_stocks_to_use s WHERE s.period = (SELECT MAX(period) FROM v_stocks_to_use s2"
         " WHERE s2.commodity = s.commodity) ORDER BY s.commodity",
     )
+    # NASS carries no total-use statistic (the catalog documents why), so
+    # stocks-to-use is structurally NULL here — the WASDE card owns that gauge.
     hist = histories(
         conn,
-        "SELECT commodity, stocks_to_use FROM v_stocks_to_use ORDER BY period",
+        "SELECT commodity, ending_stocks FROM v_stocks_to_use ORDER BY period",
         limit=20,
     )
     attach_history(rows, hist, "commodity")
@@ -1146,13 +1156,17 @@ _FILING_COLUMNS = [
     col("ticker", "Ticker", numeric=False),
     col("company", "Company", numeric=False),
     col("form", "Form", numeric=False),
+    col("filings", "Filings"),
 ]
 
 
 def _filings(conn: sqlite3.Connection, view: str, empty: str) -> dict[str, Any]:
+    # A serial filer (UBS files dozens of 424B2s a day) renders as identical
+    # rows without the accession; collapse to one row per day+form with a count.
     rows = fetch(
         conn,
-        f"SELECT filed_date, ticker, company, form FROM {view}"
+        f"SELECT filed_date, ticker, company, form, COUNT(*) AS filings FROM {view}"
+        " GROUP BY filed_date, ticker, company, form"
         " ORDER BY filed_date DESC, ticker LIMIT ?",
         (_TOP,),
     )
@@ -1587,13 +1601,15 @@ SECTIONS: list[Any] = [
         "market_calendar.db",
         market_closures,
         "Ops",
-        "Upcoming NYSE closures and early closes — days the executor must not expect an open.",
+        "Upcoming NYSE and bond-market closures and early closes — the NYSE rows are days the executor must not expect a normal open.",
         [
             (
                 "Why it is under Ops",
                 "The order executor and every trading-day calculation key"
-                " off this list. An early close ends the intraday window"
-                " early.",
+                " off the NYSE rows. An early close ends the intraday"
+                " window early. Bond rows are context for Treasury auction"
+                " timing — NYSE stays open on bond-only holidays like"
+                " Columbus and Veterans Day.",
             ),
         ],
     ),
@@ -1619,13 +1635,13 @@ SECTIONS: list[Any] = [
         "usda.db",
         ag_balance,
         "Signals",
-        "For each major crop, how much will be left over at the end of the marketing year relative to use.",
+        "For each major crop, the survey-based stockpile at the end of the marketing year.",
         [
             (
-                "What stocks-to-use means",
-                "Ending stocks divided by total use — the cushion. A low"
-                " ratio means any weather scare hits price hard; a high"
-                " one means supply can absorb surprises.",
+                "Where stocks-to-use lives",
+                "NASS surveys report stocks and production but no total-use"
+                " figure, so the cushion ratio (ending stocks / total use)"
+                " is in the WASDE world balance card instead.",
             ),
         ],
     ),

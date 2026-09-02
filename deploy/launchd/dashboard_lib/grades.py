@@ -98,7 +98,7 @@ def research_verdict_outcomes(conn: sqlite3.Connection, now_iso: str) -> dict[st
         conn,
         "SELECT symbol, verdict, verdict_date, horizon, fwd_return, bench_fwd_return,"
         " excess, verdict_correct FROM v_research_verdict_outcomes"
-        " ORDER BY verdict_date DESC, symbol, horizon LIMIT ?",
+        " ORDER BY (fwd_return IS NULL), verdict_date DESC, symbol, horizon LIMIT ?",
         (_DRILL_LIMIT,),
     )
     for r in rows:
@@ -224,7 +224,7 @@ def candidate_outcomes(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
         "SELECT symbol, screen_date, growth_door, branch, screen_version, horizon,"
         " entry_close, fwd_return, bench_fwd_return, excess, beat_benchmark"
         " FROM v_candidate_outcomes"
-        " ORDER BY screen_date DESC, symbol, horizon LIMIT ?",
+        " ORDER BY (fwd_return IS NULL), screen_date DESC, symbol, horizon LIMIT ?",
         (_DRILL_LIMIT,),
     )
     for r in rows:

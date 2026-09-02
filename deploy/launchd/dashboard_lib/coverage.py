@@ -111,6 +111,10 @@ DB_SCHEMAS: dict[str, Callable[[Any], None]] = {
 # nothing on the page touches belong here.
 UNSURFACED: dict[tuple[str, str], str] = {
     (
+        "market_calendar.db",
+        "v_upcoming_closures",
+    ): "folds both markets' holidays and early closes into one list; the holidays card queries events by type so kind can name the market",
+    (
         "composite.db",
         "v_score_history",
     ): "per-ticker score history; the ticker drill-down chart and the scorecard sparklines read it for headline symbols",

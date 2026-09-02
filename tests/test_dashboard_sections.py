@@ -372,6 +372,117 @@ def test_history_query_runs_with_no_symbols():
     assert sec["rows"] == []
 
 
+def test_series_tile_applies_scale_to_value_and_history():
+    """A tile captioned ($T) must not print raw dollars: scale divides both
+    the headline value and every history point."""
+    conn = _mem(
+        "CREATE TABLE t(d, v);\nINSERT INTO t VALUES ('2026-08-27', 39e12), ('2026-08-28', 40e12);"
+    )
+    t = sources_views._series_tile(
+        conn, "total public debt ($T)", "SELECT d, v FROM t ORDER BY d", limit=5, scale=1e12
+    )
+    assert t is not None
+    assert t["value"] == 40.0
+    assert [pt["value"] for pt in t["history"]] == [39.0, 40.0]
+
+
+def test_filings_collapse_same_day_same_form_into_one_counted_row():
+    """A serial filer's N same-day filings are one row with a count, not N
+    identical rows."""
+    conn = _mem(
+        _view(
+            "v_offerings",
+            ["ticker", "company", "form", "accession", "filed_date", "path"],
+            [
+                ("AMUB", "UBS AG", "424B2", "a1", "2026-08-31", "p1"),
+                ("AMUB", "UBS AG", "424B2", "a2", "2026-08-31", "p2"),
+                ("AMUB", "UBS AG", "424B2", "a3", "2026-08-31", "p3"),
+                ("AIIO", "ROBO.AI INC.", "424B3", "a4", "2026-08-31", "p4"),
+            ],
+        )
+    )
+    sec = sources_views.offerings(conn, NOW)
+    rows = {r["ticker"]: r["filings"] for r in sec["rows"]}
+    assert rows == {"AMUB": 3, "AIIO": 1}
+
+
+def test_ag_balance_trends_ending_stocks_and_ships_no_dead_columns():
+    """NASS has no total-use metric, so the card carries ending stocks only;
+    the stocks-to-use gauge lives in the WASDE card."""
+    conn = _mem(
+        _view(
+            "v_stocks_to_use",
+            ["commodity", "period", "ending_stocks", "total_use", "stocks_to_use"],
+            [
+                ("CORN", "2024", 12075407000.0, None, None),
+                ("CORN", "2025", 13305825000.0, None, None),
+                ("CORN", "2026", 5294828000.0, None, None),
+            ],
+        )
+        + _view("v_series_history", ["commodity", "metric", "period", "value"], [])
+        + _view("v_latest_balance", ["commodity", "metric", "period", "value", "unit"], [])
+    )
+    sec = sources_views.ag_balance(conn, NOW)
+    keys = [c["key"] for c in sec["columns"]]
+    assert "total_use" not in keys and "stocks_to_use" not in keys
+    (row,) = [r for r in sec["rows"] if r["period"] == "2026"]
+    assert row["history"] == [12075407000.0, 13305825000.0, 5294828000.0]
+
+
+def test_outcome_drilldowns_list_graded_rows_before_pending():
+    """Newest-first alone buried every graded row below the row cap; graded
+    rows sort first so the visible slice shows real outcomes."""
+    conn = _mem(
+        _view(
+            "v_research_verdict_outcomes",
+            [
+                "symbol",
+                "verdict",
+                "verdict_date",
+                "horizon",
+                "fwd_return",
+                "bench_fwd_return",
+                "excess",
+                "verdict_correct",
+            ],
+            [
+                ("NEWA", "pass", "2026-08-31", 5, None, None, None, None),
+                ("OLDG", "buy", "2026-07-01", 5, 0.02, 0.01, 0.01, 1),
+            ],
+        )
+    )
+    sec = grades.research_verdict_outcomes(conn, NOW)
+    assert [r["symbol"] for r in sec["rows"]] == ["OLDG", "NEWA"]
+    assert sec["rows"][0]["verdict_correct"] is True
+
+
+def test_market_closures_one_row_per_date_per_market():
+    """Shared holidays exist twice in events (NYSE + bond); the card keeps
+    both but the kind names the market, and early closes carry their time."""
+    conn = _mem(
+        "CREATE TABLE events(event_type, event_date, event_time, title);\n"
+        "CREATE TABLE calendar_now(today);\n"
+        "INSERT INTO calendar_now VALUES ('2026-09-01');\n"
+        "INSERT INTO events VALUES"
+        " ('market_holiday', '2026-09-07', NULL, 'Labor Day'),"
+        " ('bond_holiday', '2026-09-07', NULL, 'Labor Day'),"
+        " ('bond_holiday', '2026-10-12', NULL, 'Columbus Day'),"
+        " ('early_close', '2026-11-27', '13:00', NULL),"
+        " ('bond_early_close', '2026-11-27', '14:00', NULL),"
+        " ('opex', '2026-09-18', NULL, 'September Quad Witching'),"
+        " ('market_holiday', '2026-01-01', NULL, 'New Year (past)');"
+    )
+    sec = sources_views.market_closures(conn, NOW)
+    rows = [(r["event_date"], r["kind"], r["event_time"]) for r in sec["rows"]]
+    assert rows == [
+        ("2026-09-07", "bond closed", None),
+        ("2026-09-07", "closed", None),
+        ("2026-10-12", "bond closed", None),
+        ("2026-11-27", "bond early close", "14:00"),
+        ("2026-11-27", "early close", "13:00"),
+    ]
+
+
 def test_source_cards_live_in_the_sources_strand_except_calendar_and_holidays():
     kickers = {s[0]: s[4] for s in sources_views.SECTIONS}
     assert kickers["week-ahead"] == "Macro"
