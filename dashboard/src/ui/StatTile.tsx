@@ -3,7 +3,7 @@
 // slot passed as children (macro-drivers tiles carry history for this).
 
 import type { ReactNode } from "react";
-import { num, usd } from "../format";
+import { num, signed, usd } from "../format";
 import type { CellValue, Tile, Tone } from "../types";
 import { humanizeId, isMachineId } from "./formatCell";
 
@@ -40,7 +40,14 @@ export function StatTile({ tile, children }: StatTileProps) {
 
   return (
     <div className="tile">
-      <div className={["v", toneClass].filter(Boolean).join(" ")}>{display}</div>
+      <div className={["v", toneClass].filter(Boolean).join(" ")}>
+        {display}
+        {typeof tile.delta === "number" && (
+          <span className="text-muted-foreground ml-1.5 text-xs font-normal">
+            {signed(tile.delta)}
+          </span>
+        )}
+      </div>
       <div className="k">{caption}</div>
       {children}
     </div>

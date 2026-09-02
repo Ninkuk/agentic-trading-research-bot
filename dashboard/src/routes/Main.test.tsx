@@ -32,12 +32,54 @@ test("hero bullets link known tickers to their drill-down route", () => {
   expect(hero.queryByRole("link", { name: "VIX" })).not.toBeInTheDocument();
 });
 
-test("renders all five strand tabs in order", () => {
+function strandEl(slug: string): HTMLElement {
+  return document.getElementById(slug) as HTMLElement;
+}
+
+test("renders every strand as a force-mounted section in order; all inactive on the Summary route", () => {
   render(<Main doc={doc} />);
-  const tabs = screen.getAllByRole("tab").map((t) => t.textContent);
-  const indices = KICKERS.map((label) => tabs.indexOf(label));
-  for (const idx of indices) expect(idx).toBeGreaterThanOrEqual(0);
-  expect(indices).toEqual([...indices].sort((a, b) => a - b));
+  const strands = Array.from(document.querySelectorAll("section.strand")).map((s) => s.id);
+  expect(strands).toEqual(KICKERS.map((k) => k.toLowerCase().replace(/\s+/g, "-")));
+  for (const s of strands) expect(strandEl(s)).toHaveAttribute("data-state", "inactive");
+  expect(document.querySelector(".hero")).not.toBeNull();
+});
+
+test("a strand route activates that strand and hides the Summary", () => {
+  location.hash = "#/signals";
+  render(<Main doc={doc} />);
+  expect(strandEl("signals")).toHaveAttribute("data-state", "active");
+  expect(strandEl("macro")).toHaveAttribute("data-state", "inactive");
+  expect(document.querySelector(".hero")).toBeNull();
+});
+
+test("an unknown strand slug falls back to the Summary", () => {
+  location.hash = "#/nonsense";
+  render(<Main doc={doc} />);
+  expect(document.querySelector(".hero")).not.toBeNull();
+  for (const s of document.querySelectorAll("section.strand")) {
+    expect(s).toHaveAttribute("data-state", "inactive");
+  }
+});
+
+test("a bare section anchor activates the strand holding it and scrolls the section into view", () => {
+  const scrollIntoView = vi.fn();
+  Element.prototype.scrollIntoView = scrollIntoView;
+  location.hash = "#equity-curve";
+  render(<Main doc={doc} />);
+  expect(strandEl("track-record")).toHaveAttribute("data-state", "active");
+  expect(scrollIntoView).toHaveBeenCalled();
+  expect((scrollIntoView.mock.contexts[0] as HTMLElement).id).toBe("equity-curve");
+});
+
+test("the Summary indexes every strand with a link into it", () => {
+  render(<Main doc={doc} />);
+  const index = within(document.querySelector(".strand-index") as HTMLElement);
+  for (const label of KICKERS) {
+    expect(index.getByRole("link", { name: new RegExp(`^${label}`) })).toHaveAttribute(
+      "href",
+      `#/${label.toLowerCase().replace(/\s+/g, "-")}`,
+    );
+  }
 });
 
 test("a section with a kicker matching no known strand still renders, in a trailing Other group", () => {
@@ -57,16 +99,16 @@ test("a section with a kicker matching no known strand still renders, in a trail
     },
   };
   render(<Main doc={drifted} />);
-  expect(screen.getByRole("tab", { name: "Other" })).toBeInTheDocument();
-  // Tab contents are force-mounted (hidden when inactive), so the drifted
-  // section's content is in the DOM even though the Other tab isn't active.
+  expect(strandEl("other")).toHaveClass("strand");
+  // Strands are force-mounted (hidden when inactive), so the drifted
+  // section's content is in the DOM even though Other isn't the route.
   expect(screen.getByText("Renamed Strand Section")).toBeInTheDocument();
   expect(screen.getByText("hello")).toBeInTheDocument();
 });
 
-test("no Other tab renders when every section's kicker matches a known strand", () => {
+test("no Other strand renders when every section's kicker matches a known strand", () => {
   render(<Main doc={doc} />);
-  expect(screen.queryByRole("tab", { name: "Other" })).not.toBeInTheDocument();
+  expect(document.getElementById("other")).toBeNull();
 });
 
 test("a section with an error shows the unavailable note instead of crashing", () => {
@@ -160,4 +202,69 @@ test("regime section renders its tiles and drivers table", () => {
   // once again in the Macro strand's Regime section header.
   expect(screen.getAllByText("Risk-on, 3rd night").length).toBeGreaterThanOrEqual(2);
   expect(screen.getByText("VIX level")).toBeInTheDocument();
+});
+
+test("empty sections collapse into the strand's Quiet tonight list, ids intact", () => {
+  const withQuiet: DashboardDoc = {
+    ...doc,
+    sections: {
+      ...doc.sections,
+      "nothing-tonight": {
+        title: "Nothing Tonight",
+        kicker: "Ops",
+        columns: [{ key: "x", label: "X", numeric: false, direction: null, term: null }],
+        rows: [],
+        empty: "no rows this run",
+      },
+    },
+  };
+  render(<Main doc={withQuiet} />);
+  const row = document.getElementById("nothing-tonight") as HTMLElement;
+  expect(row.tagName).toBe("LI");
+  expect(within(row).getByText("no rows this run")).toBeInTheDocument();
+  expect(row.closest(".quiet-list")).not.toBeNull();
+});
+
+test("short row-only sections share a two-up grid; long ones stay full width", () => {
+  const columns = [{ key: "x", label: "X", numeric: false, direction: null, term: null }];
+  const shortRows = [{ x: "a" }, { x: "b" }];
+  const longRows = Array.from({ length: 12 }, (_, i) => ({ x: `r${i}` }));
+  const grid: DashboardDoc = {
+    ...doc,
+    sections: {
+      ...doc.sections,
+      "short-a": { title: "Short A", kicker: "Ops", columns, rows: shortRows },
+      "short-b": { title: "Short B", kicker: "Ops", columns, rows: shortRows },
+      "long-c": { title: "Long C", kicker: "Ops", columns, rows: longRows },
+    },
+  };
+  render(<Main doc={grid} />);
+  const a = document.getElementById("short-a") as HTMLElement;
+  const c = document.getElementById("long-c") as HTMLElement;
+  expect(a.parentElement?.className).toContain("md:grid-cols-2");
+  // Paired cards stretch to the same height: the grid pushes h-full down
+  // through the section wrapper to the Card.
+  expect(a.parentElement?.className).toContain("[&>section]:h-full");
+  expect(a.parentElement?.className).toContain("[&>section]:min-w-0");
+  expect(a.parentElement?.className).toContain("[&>section>div]:h-full");
+  expect(a.parentElement).toBe(document.getElementById("short-b")?.parentElement);
+  expect(c.parentElement?.className).not.toContain("md:grid-cols-2");
+});
+
+test("a lone short section renders full width, not half a grid", () => {
+  const columns = [{ key: "x", label: "X", numeric: false, direction: null, term: null }];
+  const longRows = Array.from({ length: 12 }, (_, i) => ({ x: `r${i}` }));
+  const lone: DashboardDoc = {
+    ...doc,
+    sections: {
+      ...doc.sections,
+      // The fixture's Ops strand carries one short card (pending); lengthen
+      // it so lone-short is the strand's only short section.
+      pending: { ...doc.sections["pending"], rows: longRows },
+      "lone-short": { title: "Lone Short", kicker: "Ops", columns, rows: [{ x: "a" }] },
+    },
+  };
+  render(<Main doc={lone} />);
+  const a = document.getElementById("lone-short") as HTMLElement;
+  expect(a.parentElement?.className).not.toContain("md:grid-cols-2");
 });

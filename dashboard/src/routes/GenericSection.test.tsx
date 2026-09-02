@@ -3,7 +3,7 @@
 // carries both, sparkline the number-array columns, fold CI columns into
 // the hit-rate cell, and say when the rows are a capped drill-down.
 
-import { render, screen, within } from "@testing-library/react";
+import { render, within } from "@testing-library/react";
 import fixture from "../fixtures/data.json";
 import type { DashboardDoc } from "../types";
 import { Main } from "./Main";
@@ -72,8 +72,8 @@ test("renders tiles above the table, sparklines arrays, and reports the cap", ()
   expect(scope.getByText("yes").className).toMatch(/bool--bad/);
   expect(scope.getByText("no").className).toMatch(/bool--bad/);
   expect(scope.getByText(/showing the newest 1 of 40/)).toBeInTheDocument();
-  // The card lands in its own strand tab.
-  expect(screen.getByRole("tab", { name: "Sources" })).toBeInTheDocument();
+  // The card lands in the Sources strand.
+  expect(document.getElementById("sources")?.contains(document.getElementById("probe-card"))).toBe(true);
 });
 
 test("tiles-only section renders its tiles and no table", () => {

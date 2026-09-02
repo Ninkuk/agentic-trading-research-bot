@@ -1,6 +1,10 @@
-// The main page: masthead -> combined summary card ("Tonight in plain
-// English" bullets + regime chip + macro-driver KPIs with sparklines) ->
-// the seven strands as tabs, each section rendered in a SectionShell card.
+// The main page: the Summary ("Tonight in plain English" bullets + regime
+// chip + an index of the strands) on `#/`, or one strand of sections on
+// `#/<strand>`; the sidebar (AppShell) does the switching. Every strand is
+// force-mounted and only the routed one is shown, exactly as the old tab
+// strip did, so anchor links to section ids and DOM-querying tests see the
+// whole document. A bare `#<section-id>` hash resolves to the strand that
+// holds the section and scrolls it into view.
 //
 // `SECTION_COMPONENTS` maps a section id to the component that renders its
 // body; a section id with no entry falls back to `GenericSection` (columns+
@@ -9,27 +13,19 @@
 // component ships never renders blank. Every registered/fallback component
 // takes exactly `{sec, glossary}`.
 //
-// Strand grouping comes from each section's own `kicker` field (already
-// "Macro"/"Signals"/.../"Your book" per data.py's SECTION_EXPORTERS), not a
-// hardcoded id list — a section moving strands in Python needs no frontend
-// change. The seven strand tabs render unconditionally in a fixed order even
-// when a given night's document has no section for one. Any section whose
-// kicker isn't a known strand — a rename, a typo, a brand-new kicker the
-// frontend hasn't caught up to yet — still renders, in a trailing "Other"
-// tab, rather than silently vanishing.
+// Strand grouping comes from each section's own `kicker` field (see
+// strands.ts), not a hardcoded id list — a section moving strands in Python
+// needs no frontend change. The seven strands render unconditionally in a
+// fixed order even when a given night's document has no section for one; a
+// kicker the frontend doesn't know lands in a trailing "Other" strand.
 //
-// Tab contents are force-mounted (hidden when inactive) so in-page find,
-// anchor links to section ids, and DOM-querying tests all see the whole
-// document; only visibility toggles.
-//
-// macro-drivers is the one section not repeated inside its strand: the
-// summary card at the top IS its rendering (tiles + sparklines).
 
-import type { ComponentType, ReactNode } from "react";
+import { useEffect, type ComponentType, type ReactNode } from "react";
+import { ChevronRight } from "lucide-react";
 import { KpiSpark } from "../charts/KpiSpark";
+import { useHashRoute, type HashRoute } from "../hooks/useHashRoute";
 import { REPO_URL } from "../constants";
 import { ExtLink } from "../ui/ExtLink";
-import { signed } from "../format";
 import { BasisBreaks } from "../sections/BasisBreaks";
 import { BookHeat } from "../sections/BookHeat";
 import { BucketPerformance } from "../sections/BucketPerformance";
@@ -50,15 +46,32 @@ import { Scorecard } from "../sections/Scorecard";
 import { SignalEfficacy } from "../sections/SignalEfficacy";
 import { SignalRecommendations } from "../sections/SignalRecommendations";
 import { SizeCaps } from "../sections/SizeCaps";
+import { YieldCurve } from "../sections/YieldCurve";
 import { TraderScorecard } from "../sections/TraderScorecard";
-import { KICKERS, type DashboardDoc, type Glossary, type Section, type Tone } from "../types";
+import {
+  STRAND_BLURBS,
+  strandId,
+  strandLabels,
+  strandOfSection,
+  strandSections,
+  type StrandLabel,
+} from "../strands";
+import type { DashboardDoc, Glossary, Section, Tone } from "../types";
 import { Card, CardContent } from "../components/ui/card";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "../components/ui/item";
 import { Separator } from "../components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { DataTable } from "../ui/DataTable";
-import { Masthead } from "../ui/Masthead";
 import { SectionShell } from "../ui/SectionShell";
-import { sectionCell, visibleColumns } from "../ui/sectionCells";
+import { makeSectionCell, visibleColumns } from "../ui/sectionCells";
+import { QuietList, isQuiet } from "../ui/QuietList";
+import { StrandNav } from "../ui/StrandNav";
 import { StatTile } from "../ui/StatTile";
 import { TextReport } from "../ui/TextReport";
 import { VerdictChip } from "../ui/VerdictChip";
@@ -69,20 +82,11 @@ interface SectionComponentProps {
   id?: string;
 }
 
-const STRAND_SET = new Set<string>(KICKERS);
-
-// Rendered in the summary card, not inside its strand tab.
-const HEADER_SECTIONS = new Set(["macro-drivers"]);
-
 const TONE_DOT: Record<Tone, string> = {
   on: "var(--tone-up)",
   off: "var(--tone-down)",
   mid: "var(--tone-hold)",
 };
-
-function strandId(label: string): string {
-  return label.toLowerCase().replace(/\s+/g, "-");
-}
 
 /** UTC export timestamp → the reader's local clock ("Jul 30, 2026, 10:31 AM").
  * Falls back to the raw string if the timestamp doesn't parse. */
@@ -115,9 +119,8 @@ function linkifyTickers(text: string, known: Set<string>): ReactNode[] {
   );
 }
 
-// macro-drivers has no entry: it renders in the summary card (see
-// HEADER_SECTIONS); if its kicker ever stops matching, GenericSection's
-// tiles path still covers it.
+// macro-drivers has no entry: GenericSection's tiles path renders its
+// value+delta tiles with their sparklines inside Macro.
 const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> = {
   regime: Regime,
   "regime-timeline": RegimeTimelineSection,
@@ -140,6 +143,7 @@ const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> =
   "equity-curve": PortfolioVsSpy,
   "candidate-efficacy": CandidateEfficacy,
   health: Health,
+  "yield-curve": YieldCurve,
 };
 
 // Tiles, then the table, then any text report — all that are present, in
@@ -173,7 +177,7 @@ function GenericSection({ sec, glossary, id }: SectionComponentProps) {
             rows={sec.rows ?? []}
             storageKey={`generic:${id ?? slug(sec.title ?? "section")}`}
             glossary={glossary}
-            renderCell={sectionCell}
+            renderCell={makeSectionCell(sec.rows ?? [])}
           />
           {typeof sec.total === "number" && sec.total > (sec.rows?.length ?? 0) && (
             <p className="text-muted-foreground m-0 text-xs">
@@ -187,41 +191,80 @@ function GenericSection({ sec, glossary, id }: SectionComponentProps) {
   );
 }
 
+// Cards under ~7 rows with no tiles, text, or chart carry a narrow table
+// and a wide empty right half; two of them share a row instead.
+const SHORT_ROWS = 6;
+function isShort(sec: Section): boolean {
+  const rows = sec.rows?.length ?? 0;
+  return (
+    rows > 0 &&
+    rows <= SHORT_ROWS &&
+    !(sec.tiles?.length) &&
+    !(sec.text_lines?.length) &&
+    !(sec.curve?.length) &&
+    !sec.columns?.some((c) => c.key === "history")
+  );
+}
+
+interface StrandBodyProps {
+  entries: [string, Section][];
+  renderSection: (entry: [string, Section]) => ReactNode;
+}
+
+// Full cards in exporter order, then the short ones two-up (a lone
+// short card renders full width — half a grid reads as a mistake; the
+// h-full chain stretches each Card to the row height so paired cards'
+// borders align, and min-w-0 stops a wide table from inflating its grid
+// track past the viewport), then
+// one "Quiet tonight" list for sections with only their empty sentence.
+function StrandBody({ entries, renderSection }: StrandBodyProps) {
+  const quiet = entries.filter(([, sec]) => isQuiet(sec));
+  const live = entries.filter(([, sec]) => !isQuiet(sec));
+  const short = live.filter(([, sec]) => isShort(sec));
+  const full = live.filter(([, sec]) => !isShort(sec));
+  return (
+    <>
+      <StrandNav entries={live} />
+      {full.map(renderSection)}
+      {short.length >= 2 ? (
+        <div className="grid gap-4 md:grid-cols-2 [&>section]:h-full [&>section]:min-w-0 [&>section>div]:h-full">
+          {short.map(renderSection)}
+        </div>
+      ) : (
+        short.map(renderSection)
+      )}
+      <QuietList entries={quiet} />
+    </>
+  );
+}
+
 export interface MainProps {
   doc: DashboardDoc;
 }
 
-export function Main({ doc }: MainProps) {
-  const glossary = doc.glossary ?? {};
+/** The strand slug the route shows, or "summary". An unknown strand slug
+ * and a section id no strand holds both fall back to the Summary. */
+function routedStrand(route: HashRoute, doc: DashboardDoc, labels: StrandLabel[]): string {
+  if (route.route === "strand") {
+    return labels.some((l) => strandId(l) === route.id) ? route.id : "summary";
+  }
+  if (route.route === "section") return strandOfSection(doc.sections, route.id) ?? "summary";
+  return "summary";
+}
+
+interface SummaryProps {
+  doc: DashboardDoc;
+  labels: StrandLabel[];
+}
+
+// Tonight's plain-English read + regime chip, then one row per strand so
+// the home page is also the map: what each strand holds, and the way in.
+function Summary({ doc, labels }: SummaryProps) {
   const knownTickers = new Set(Object.keys(doc.tickers ?? {}));
-  const entries = Object.entries(doc.sections);
   const regimeSec = doc.sections["regime"];
-  const macroSec = doc.sections["macro-drivers"];
-
-  function renderSection([id, sec]: [string, Section]) {
-    const Component = SECTION_COMPONENTS[id] ?? GenericSection;
-    return (
-      <SectionShell key={id} id={id} sec={sec}>
-        <Component sec={sec} glossary={glossary} id={id} />
-      </SectionShell>
-    );
-  }
-
-  const otherSections = entries.filter(([, sec]) => !sec.kicker || !STRAND_SET.has(sec.kicker));
-  const tabLabels: string[] = [...KICKERS, ...(otherSections.length > 0 ? ["Other"] : [])];
-
-  function strandSections(label: string): [string, Section][] {
-    if (label === "Other") return otherSections;
-    return entries.filter(([id, sec]) => sec.kicker === label && !HEADER_SECTIONS.has(id));
-  }
-
   return (
-    <div className="page">
-      <Masthead editionDate={doc.edition_date} snapshotNumber={doc.snapshot_number} />
-
-      {/* Summary card: tonight's plain-English read + regime chip + macro
-          KPIs — the hero and the old KPI row merged into one block. */}
-      <Card className="hero mb-5 gap-4 py-5">
+    <div className="space-y-5">
+      <Card className="hero gap-4 py-5">
         <CardContent className="space-y-4 px-5">
           <div className="space-y-1.5">
             {doc.hero.bullets.map((bullet, i) => (
@@ -235,64 +278,85 @@ export function Main({ doc }: MainProps) {
               </p>
             ))}
           </div>
-          {(regimeSec?.verdict || (macroSec?.tiles ?? []).length > 0) && (
+          {regimeSec?.verdict && (
             <>
               <Separator />
-              {/* id="macro-drivers": this row IS that section's rendering
-                  (see HEADER_SECTIONS) — the anchor stays addressable.
-                  Lab Variant C's KPI anatomy: label above a mono value with
-                  the delta inline, sparkline to the right. */}
-              <div id="macro-drivers" className="kpi-row flex flex-wrap items-center gap-x-8 gap-y-3">
-                {regimeSec?.verdict && (
-                  <VerdictChip verdict={regimeSec.verdict} className="text-sm" />
-                )}
-                {(macroSec?.tiles ?? []).map((tile) => (
-                  <div key={tile.label} className="tile flex items-center gap-3">
-                    <div>
-                      <div className="text-muted-foreground text-xs">{tile.label}</div>
-                      <div className="font-mono text-base leading-tight font-semibold tabular-nums">
-                        {typeof tile.value === "number" ? tile.value : String(tile.value ?? "—")}
-                        {typeof tile.delta === "number" && (
-                          <span className="text-muted-foreground ml-1.5 text-xs font-normal">
-                            {signed(tile.delta)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {tile.history && <KpiSpark label={tile.label} points={tile.history} />}
-                  </div>
-                ))}
-              </div>
+              {/* The regime chip alone: the deciding inputs render as the
+                  macro-drivers card in Macro, beside the table they explain. */}
+              <VerdictChip verdict={regimeSec.verdict} className="text-sm" />
             </>
           )}
         </CardContent>
       </Card>
 
-      <Tabs defaultValue={strandId(KICKERS[0])}>
-        {/* justify-start + overflow-x-auto: six triggers don't fit a phone
-            width, and TabsTrigger never shrinks below its label — without a
-            scroll container the strip widens the whole document (the
-            "Macro" → "cro" bug). Desktop is unaffected: flex-1 triggers
-            still fill the full width. */}
-        <TabsList className="w-full justify-start overflow-x-auto [scrollbar-width:none]">
-          {tabLabels.map((label) => (
-            <TabsTrigger key={label} value={strandId(label)}>
-              {label}
-            </TabsTrigger>
+      <nav aria-label="strand index" className="strand-index">
+        <ItemGroup className="grid gap-3 md:grid-cols-2">
+          {labels.map((label) => (
+            <Item key={label} asChild variant="outline" size="sm" className="no-underline">
+              <a href={`#/${strandId(label)}`}>
+                <ItemContent>
+                  <ItemTitle>{label}</ItemTitle>
+                  <ItemDescription>{STRAND_BLURBS[label]}</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <ChevronRight aria-hidden="true" className="text-muted-foreground size-4" />
+                </ItemActions>
+              </a>
+            </Item>
           ))}
-        </TabsList>
-        {tabLabels.map((label) => (
-          <TabsContent
+        </ItemGroup>
+      </nav>
+    </div>
+  );
+}
+
+export function Main({ doc }: MainProps) {
+  const glossary = doc.glossary ?? {};
+  const route = useHashRoute();
+  const labels = strandLabels(doc.sections);
+  const active = routedStrand(route, doc, labels);
+
+  // A section anchor lands after its strand is shown (the strand is hidden
+  // until this render, so the browser's own hash scroll found nothing).
+  // Strand switches start from the top — the hash changed but no element
+  // matches it, so the viewport would otherwise stay wherever it was.
+  useEffect(() => {
+    if (route.route === "section") {
+      document.getElementById(route.id)?.scrollIntoView?.({ block: "start" });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [route]);
+
+  function renderSection([id, sec]: [string, Section]) {
+    const Component = SECTION_COMPONENTS[id] ?? GenericSection;
+    return (
+      <SectionShell key={id} id={id} sec={sec}>
+        <Component sec={sec} glossary={glossary} id={id} />
+      </SectionShell>
+    );
+  }
+
+  return (
+    <div>
+      {active === "summary" && <Summary doc={doc} labels={labels} />}
+
+      {labels.map((label) => {
+        const slug = strandId(label);
+        const state = active === slug ? "active" : "inactive";
+        return (
+          <section
             key={label}
-            value={strandId(label)}
-            forceMount
-            className="strand space-y-4 pt-2 data-[state=inactive]:hidden"
-            id={strandId(label)}
+            id={slug}
+            aria-label={label}
+            data-state={state}
+            className="strand space-y-4 data-[state=inactive]:hidden"
           >
-            {strandSections(label).map(renderSection)}
-          </TabsContent>
-        ))}
-      </Tabs>
+            <h2 className="sr-only">{label}</h2>
+            <StrandBody entries={strandSections(doc.sections, label)} renderSection={renderSection} />
+          </section>
+        );
+      })}
 
       {/* Ledger colophon: generation timestamp in the READER's local time
           (the raw export is UTC; the masthead's edition date is the Phoenix

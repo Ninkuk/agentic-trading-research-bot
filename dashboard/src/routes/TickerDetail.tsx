@@ -46,7 +46,6 @@ import { AboutDialog } from "../ui/AboutDialog";
 import { EmptyNote } from "../ui/EmptyNote";
 import { ExtLink } from "../ui/ExtLink";
 import { DataTable } from "../ui/DataTable";
-import { Masthead } from "../ui/Masthead";
 import { researchVerdictPill } from "../ui/sectionCells";
 
 export interface TickerDetailProps {
@@ -471,8 +470,7 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
   }));
 
   return (
-    <div className="page ticker-detail">
-      <Masthead editionDate={doc.edition_date} snapshotNumber={doc.snapshot_number} />
+    <div className="ticker-detail">
       <header className="ticker-header mb-5 flex items-baseline gap-4 border-b pb-4">
         <a
           href="#/"

@@ -21,3 +21,22 @@ test("parses main route when the hash is empty", () => {
   const { result } = renderHook(() => useHashRoute());
   expect(result.current).toEqual({ route: "main" });
 });
+
+test("parses a strand route from a slash-prefixed slug", () => {
+  location.hash = "#/track-record";
+  const { result } = renderHook(() => useHashRoute());
+  expect(result.current).toEqual({ route: "strand", id: "track-record" });
+});
+
+test("parses a bare section anchor (no slash) as a section route", () => {
+  location.hash = "#scorecard";
+  const { result } = renderHook(() => useHashRoute());
+  expect(result.current).toEqual({ route: "section", id: "scorecard" });
+});
+
+test("a bare hash or trailing-slash strand slug still resolves", () => {
+  location.hash = "#";
+  expect(renderHook(() => useHashRoute()).result.current).toEqual({ route: "main" });
+  location.hash = "#/macro/";
+  expect(renderHook(() => useHashRoute()).result.current).toEqual({ route: "strand", id: "macro" });
+});
