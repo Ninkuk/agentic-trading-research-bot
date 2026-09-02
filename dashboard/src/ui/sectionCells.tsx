@@ -1,14 +1,12 @@
 // oxlint-disable react/only-export-components -- pure formatting helpers
 // that return JSX; there is no component here for fast refresh to preserve.
 //
-// The design-lab SectionBlock's column-key formatting heuristics, shipped
-// as the ONE default cell formatter: fraction columns → percents, signed
-// excess/return fractions → tinted signed percents, advisor dollar/percent
-// columns → usd()/pct(), score_sum → tinted signed, recommendation/verdict
-// → tinted pills, in_portfolio → a held pill, exceeds_buying_power → a
-// destructive pill, staleness → "Nd", symbol-ish columns → mono. Everything
-// else falls through to formatCell. A brand-new exporter section gets a
-// sane rendering with no frontend change.
+// The ONE default cell formatter, keyed on column name: hit_rate + CI →
+// RangeCell, excess keys → DivergingCell, weight/heat → BarCell (both
+// scaled to the column max, so `makeSectionCell(rows)` precomputes it;
+// bare `sectionCell` knows no max and keeps the digits), fractions →
+// percents, dollars → usd(), verdicts/recommendations → tinted pills,
+// booleans → pills by key semantics, symbols → mono, the rest → formatCell.
 
 import type { ReactNode } from "react";
 import { pct, signed, usd } from "../format";
@@ -16,6 +14,10 @@ import type { Column, Row } from "../types";
 import { Badge } from "../components/ui/badge";
 import { formatCell, humanizeId, isMachineId } from "./formatCell";
 import { Sparkline } from "./Sparkline";
+import { BarCell } from "./marks/BarCell";
+import { DivergingCell } from "./marks/DivergingCell";
+import { RangeCell } from "./marks/RangeCell";
+import { isFiniteNumber, maxAbs } from "./marks/geometry";
 
 // Fractions of 1 → percent (0.58 → 58%).
 const PCT_FRACTION = new Set([
@@ -81,6 +83,29 @@ const BOOL_BAD = new Set([
 // they humanize into words (see the branches in sectionCell below), and
 // words are sans per the Mono-Numbers Rule.
 const MONO = new Set(["symbol", "ticker", "symbols"]);
+// Column-scaled marks: a diverging bar needs the table's max |excess|, a
+// magnitude bar its max weight/heat. Without a scale the digits stand alone.
+const DIVERGING = new Set(["avg_directional_excess", "avg_dir_excess", "excess", "avg_excess", "dir_excess"]);
+const BAR_FORMAT: Record<string, (v: number) => string> = {
+  weight_pct: (v) => pct(v, 2),
+  heat_pct: (v) => pct(v, 2),
+  heat_dollars: usd,
+};
+
+export type ColumnScale = ReadonlyMap<string, number>;
+
+export function columnScale(rows: Row[]): ColumnScale {
+  const scale = new Map<string, number>();
+  for (const key of [...DIVERGING, ...Object.keys(BAR_FORMAT)]) {
+    const max = maxAbs(rows.map((r) => r[key]));
+    if (max !== null) scale.set(key, max);
+  }
+  return scale;
+}
+
+function firstNumber(...candidates: unknown[]): number | undefined {
+  return candidates.find(isFiniteNumber);
+}
 
 export function signedPctCell(v: unknown): ReactNode {
   if (typeof v !== "number") return "—";
@@ -125,21 +150,16 @@ export function recommendationPill(v: unknown): ReactNode {
   );
 }
 
-/** hit_rate with its CI folded in when the row carries ci columns — the CI
- * stacks in a muted line under the rate so the merged cell stays as narrow
- * as a plain percent and can't crowd its left neighbor (lab round 4). */
+/** hit_rate with its CI folded in as a whisker; the rate the signal must
+ * beat (null rate, else drift/plain baseline) draws as the dashed tick. */
 export function hitRateCell(row: Row): ReactNode {
-  const rate = typeof row.hit_rate === "number" ? pct(row.hit_rate * 100, 0) : "—";
-  const lo = row.hit_ci_lo;
-  const hi = row.hit_ci_hi;
-  if (typeof lo !== "number" || typeof hi !== "number") return rate;
   return (
-    <span className="inline-flex flex-col items-end leading-tight">
-      <span>{rate}</span>
-      <span className="text-muted-foreground text-xs">
-        CI {Math.round(lo * 100)}–{Math.round(hi * 100)}
-      </span>
-    </span>
+    <RangeCell
+      rate={row.hit_rate}
+      lo={row.hit_ci_lo}
+      hi={row.hit_ci_hi}
+      tick={firstNumber(row.null_rate, row.drift_baseline, row.baseline)}
+    />
   );
 }
 
@@ -187,7 +207,7 @@ export function boolCell(key: string, v: unknown): ReactNode {
   return v ? "yes" : "no";
 }
 
-export function sectionCell(row: Row, col: Column): ReactNode {
+function scaledCell(row: Row, col: Column, scale: ColumnScale): ReactNode {
   const k = col.key;
   const v = row[k];
   if (Array.isArray(v)) return <Sparkline values={v} label={col.label} />;
@@ -198,6 +218,9 @@ export function sectionCell(row: Row, col: Column): ReactNode {
   if (k === "score_sum") return scoreCell(v);
   if (k === "recommendation") return recommendationPill(v);
   if (k === "hit_rate") return hitRateCell(row);
+  const max = scale.get(k);
+  if (max !== undefined && DIVERGING.has(k)) return <DivergingCell value={v} max={max} />;
+  if (max !== undefined && k in BAR_FORMAT) return <BarCell value={v} max={max} format={BAR_FORMAT[k]} />;
   if (k === "in_portfolio") return v === true ? <Badge variant="outline">held</Badge> : null;
   if (k === "exceeds_buying_power")
     return v === true ? <Badge variant="destructive">over BP</Badge> : "—";
@@ -210,3 +233,13 @@ export function sectionCell(row: Row, col: Column): ReactNode {
   if (MONO.has(k)) return <span className="font-mono font-medium">{formatCell(v)}</span>;
   return formatCell(v);
 }
+
+/** Build the cell renderer for one table: the column maxima the diverging
+ * and magnitude bars scale against come from these rows. */
+export function makeSectionCell(rows: Row[]): (row: Row, col: Column) => ReactNode {
+  const scale = columnScale(rows);
+  return (row, col) => scaledCell(row, col, scale);
+}
+
+/** Scale-free renderer: every scaled key keeps its digits. */
+export const sectionCell = makeSectionCell([]);

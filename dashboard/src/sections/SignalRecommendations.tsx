@@ -7,7 +7,7 @@
 
 import type { Glossary, Section } from "../types";
 import { DataTable } from "../ui/DataTable";
-import { sectionCell, visibleColumns } from "../ui/sectionCells";
+import { makeSectionCell, visibleColumns } from "../ui/sectionCells";
 
 export interface SectionComponentProps {
   sec: Section;
@@ -22,7 +22,7 @@ export function SignalRecommendations({ sec, glossary }: SectionComponentProps) 
       rows={sec.rows ?? []}
       storageKey="signal-recommendations"
       glossary={glossary}
-      renderCell={sectionCell}
+      renderCell={makeSectionCell(sec.rows ?? [])}
     />
   );
 }

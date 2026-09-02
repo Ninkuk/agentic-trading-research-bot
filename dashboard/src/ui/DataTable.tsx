@@ -1,23 +1,41 @@
-// A sortable, filterable, expandable table on the shadcn table kit. Sort
-// order persists per `storageKey` via usePrefs — a reader who sorts
-// scorecard by score sees the same layout on the next visit. Expansion is
-// session-only on purpose (like filter text): sort is a stable preference,
-// "show all 1148" is a momentary act, and persisting it made every future
-// visit open as a full-length wall with no visible cause.
-// Tables with ≥4 rows get a text filter (matches any visible column,
-// case-insensitive). `pinnedFirst` (row identity = the first column's
-// value) keeps specific rows above the rest regardless of sort; the active
-// sort still applies within each group. `renderCell` lets a section inject
-// a chart or custom formatting into a cell; `rowClassName` lets a section
-// (Scorecard's flagged rows) apply a row-level CSS hook without owning row
-// markup itself.
+// A sortable, filterable, expandable table: TanStack Table (v9 feature API)
+// for row-model state, the shadcn table kit for markup — the layout the
+// shadcn "Data Table" guide prescribes. Sort order persists per `storageKey`
+// via usePrefs — a reader who sorts scorecard by score sees the same layout
+// on the next visit. Expansion is session-only on purpose (like filter
+// text): sort is a stable preference, "show all 1148" is a momentary act,
+// and persisting it made every future visit open as a full-length wall
+// with no visible cause.
+// Tables with ≥4 rows get a text filter (matches any column, including
+// auto-hidden ones, case-insensitive). `pinnedFirst` (row identity = the
+// first column's value) keeps specific rows above the rest regardless of
+// sort; the active sort still applies within each group. `renderCell` lets
+// a section inject a chart or custom formatting into a cell; `rowClassName`
+// lets a section (Scorecard's flagged rows) apply a row-level CSS hook
+// without owning row markup itself.
 
 import { useMemo, useState, type ReactNode } from "react";
+import {
+  columnFilteringFeature,
+  columnVisibilityFeature,
+  createFilteredRowModel,
+  createSortedRowModel,
+  globalFilteringFeature,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
+  type ColumnDef,
+  type ColumnVisibilityState,
+  type Row as TableRowModel,
+  type SortFn,
+  type SortingState,
+  type Updater,
+} from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { usePrefs } from "../hooks/usePrefs";
-import type { CellValue, Column, Glossary, Row } from "../types";
+import type { Column, Glossary, Row } from "../types";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../components/ui/input-group";
 import {
   Table,
   TableBody,
@@ -57,6 +75,18 @@ const DEFAULT_STATE: TableState = {
   sortKey: null,
   sortDir: null,
 };
+
+const features = tableFeatures({
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+  columnFilteringFeature,
+  globalFilteringFeature,
+  filteredRowModel: createFilteredRowModel(),
+  columnVisibilityFeature,
+});
+
+type Features = typeof features;
+type ModelRow = TableRowModel<Features, Row>;
 
 /** Lowercased, parenthetical-free, alphanumeric-only form for matching
  * column labels against glossary keys ("FCF yield %" → "fcfyield"). */
@@ -118,21 +148,14 @@ function rowKeyOf(row: Row, columns: Column[]): string {
   return v === null || v === undefined ? "" : String(v);
 }
 
-function compareValues(a: CellValue, b: CellValue, numeric: boolean, dir: SortDir): number {
-  const aBlank = a === null || a === undefined;
-  const bBlank = b === null || b === undefined;
-  if (aBlank || bBlank) {
-    if (aBlank && bBlank) return 0;
-    return aBlank ? 1 : -1; // blanks sort last regardless of direction
-  }
-  const cmp = numeric ? Number(a) - Number(b) : String(a).localeCompare(String(b));
-  return dir === "desc" ? -cmp : cmp;
-}
-
-function sortRows(rows: Row[], col: Column | undefined, dir: SortDir): Row[] {
-  if (!col || !dir) return rows;
-  return [...rows].sort((r1, r2) => compareValues(r1[col.key], r2[col.key], col.numeric, dir));
-}
+// Blank-last ordering is TanStack's `sortUndefined: "last"`, which it
+// applies before the direction flip — so blanks stay last in both
+// directions. It only recognises undefined, hence the null→undefined
+// accessor below; these comparators never see a blank.
+const sortNumeric: SortFn<Features, Row> = (a, b, id) =>
+  Number(a.getValue(id)) - Number(b.getValue(id));
+const sortText: SortFn<Features, Row> = (a, b, id) =>
+  String(a.getValue(id)).localeCompare(String(b.getValue(id)));
 
 function rowMatches(row: Row, columns: Column[], needle: string): boolean {
   return columns.some((col) => {
@@ -140,6 +163,19 @@ function rowMatches(row: Row, columns: Column[], needle: string): boolean {
     if (v === null || v === undefined) return false;
     return String(v).toLowerCase().includes(needle);
   });
+}
+
+function toSorting(state: TableState): SortingState {
+  return state.sortKey && state.sortDir
+    ? [{ id: state.sortKey, desc: state.sortDir === "desc" }]
+    : [];
+}
+
+function fromSorting(sorting: SortingState): TableState {
+  const first = sorting[0];
+  return first
+    ? { sortKey: first.id, sortDir: first.desc ? "desc" : "asc" }
+    : DEFAULT_STATE;
 }
 
 export function DataTable({
@@ -161,66 +197,87 @@ export function DataTable({
   const [expanded, setExpanded] = useState(false);
 
   const glossaryIndex = useMemo(() => buildGlossaryIndex(glossary), [glossary]);
+  const columnByKey = useMemo(() => new Map(columns.map((c) => [c.key, c])), [columns]);
+
+  const columnDefs = useMemo<ColumnDef<Features, Row>[]>(
+    () =>
+      columns.map((col) => ({
+        id: col.key,
+        accessorFn: (row: Row) => row[col.key] ?? undefined,
+        sortFn: col.numeric ? sortNumeric : sortText,
+        sortUndefined: "last",
+        sortDescFirst: true,
+        cell: ({ row }) => (renderCell ? renderCell(row.original, col) : formatCell(row.original[col.key])),
+      })),
+    [columns, renderCell],
+  );
 
   // A column whose every value is identical carries zero information —
   // "Held: no" × 27 rows is grid noise, not data. Hide it (identity column
   // exempt; small tables exempt, where a constant can still be worth
   // reading). Computed from the full row set, not the filtered one, so
   // filtering can't make columns pop in and out.
-  const visibleColumns = useMemo(() => {
-    if (rows.length < FILTER_MIN_ROWS) return columns;
-    return columns.filter((col, i) => {
-      if (i === 0) return true;
+  const columnVisibility = useMemo<ColumnVisibilityState>(() => {
+    const hidden: ColumnVisibilityState = {};
+    if (rows.length < FILTER_MIN_ROWS) return hidden;
+    columns.forEach((col, i) => {
+      if (i === 0) return;
       const first = rows[0]?.[col.key] ?? null;
-      if (Array.isArray(first)) return true;
-      return !rows.every((r) => (r[col.key] ?? null) === first);
+      if (Array.isArray(first)) return;
+      if (rows.every((r) => (r[col.key] ?? null) === first)) hidden[col.key] = false;
     });
+    return hidden;
   }, [columns, rows]);
 
-  const sortCol = columns.find((c) => c.key === state.sortKey);
-
+  const sorting = useMemo(() => toSorting(state), [state]);
   const needle = filter.trim().toLowerCase();
-  const filteredRows = needle ? rows.filter((r) => rowMatches(r, columns, needle)) : rows;
 
+  const table = useTable({
+    features,
+    columns: columnDefs,
+    data: rows,
+    state: { sorting, columnVisibility, globalFilter: needle },
+    onSortingChange: (updater: Updater<SortingState>) =>
+      setState(fromSorting(typeof updater === "function" ? updater(sorting) : updater)),
+    enableSortingRemoval: false,
+    enableMultiSort: false,
+    // The old-column check would otherwise decide filterability from the
+    // first row's value type, dropping a column whose first cell is blank.
+    getColumnCanGlobalFilter: () => true,
+    globalFilterFn: (row: ModelRow, _id: string, value: string) =>
+      rowMatches(row.original, columns, value),
+  });
+
+  const modelRows = table.getRowModel().rows;
   const pinnedSet = new Set(pinnedFirst ?? []);
-  const pinnedRows: Row[] = [];
-  const restRows: Row[] = [];
-  for (const row of filteredRows) {
-    if (pinnedSet.has(rowKeyOf(row, columns))) pinnedRows.push(row);
+  const pinnedRows: ModelRow[] = [];
+  const restRows: ModelRow[] = [];
+  for (const row of modelRows) {
+    if (pinnedSet.has(rowKeyOf(row.original, columns))) pinnedRows.push(row);
     else restRows.push(row);
   }
-  const processedRows = [
-    ...sortRows(pinnedRows, sortCol, state.sortDir),
-    ...sortRows(restRows, sortCol, state.sortDir),
-  ];
+  const processedRows = [...pinnedRows, ...restRows];
 
   const displayedRows = expanded ? processedRows : processedRows.slice(0, initialRows);
   const hasMore = processedRows.length > initialRows;
   const filterable = filterableProp && rows.length >= FILTER_MIN_ROWS;
-
-  function handleSort(col: Column): void {
-    setState(
-      state.sortKey === col.key
-        ? { ...state, sortDir: state.sortDir === "desc" ? "asc" : "desc" }
-        : { ...state, sortKey: col.key, sortDir: "desc" },
-    );
-  }
-
+  const visibleCount = table.getVisibleLeafColumns().length;
 
   return (
     <div className="datatable space-y-2.5">
       {filterable && (
         <div className="flex items-center justify-between gap-3">
-          <div className="relative w-full max-w-56">
-            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
-            <Input
+          <InputGroup className="w-full max-w-56">
+            <InputGroupInput
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Filter rows…"
               aria-label="Filter rows"
-              className="h-8 pl-8 text-sm"
             />
-          </div>
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+          </InputGroup>
           <span className="text-muted-foreground text-xs whitespace-nowrap tabular-nums">
             {processedRows.length} of {rows.length} rows
           </span>
@@ -228,95 +285,100 @@ export function DataTable({
       )}
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            {visibleColumns.map((col) => {
-              const sorted = state.sortKey === col.key;
-              const term = termForColumn(col, glossary, glossaryIndex);
-              return (
-                <TableHead
-                  key={col.key}
-                  role="columnheader"
-                  scope="col"
-                  className={`cursor-pointer whitespace-nowrap select-none ${col.numeric ? "num text-right" : ""}`}
-                  aria-sort={sorted ? (state.sortDir === "asc" ? "ascending" : "descending") : "none"}
-                  onClick={() => handleSort(col)}
-                >
-                  {/* The lab's header anatomy: a ghost Button holding the
-                      label + sort arrow. Term already renders its own
-                      <button> (see Term.tsx) — nesting it inside another
-                      <button> would be invalid HTML and would double-fire
-                      handleSort via bubbling, so term columns keep the
-                      label as a sibling and the button carries only the
-                      arrow. Either way every click funnels into th's
-                      onClick above via bubbling, exactly once. */}
-                  {term ? (
-                    // One aligned row, same height as the ghost-button
-                    // headers — Term keeps its own button (nesting it in
-                    // the sort Button would be invalid HTML), so the
-                    // arrow rides in a compact icon button beside it.
-                    <span
-                      className={`inline-flex h-8 items-center gap-1.5 text-xs font-medium ${
-                        col.numeric ? "justify-end" : ""
-                      }`}
-                    >
-                      <Term term={term} glossary={glossary}>
-                        {col.label}
-                      </Term>
-                      {col.direction === "up-good" && (
-                        <span className="dir-hint text-muted-foreground text-xs font-normal">↑ better</span>
-                      )}
-                      {col.direction === "down-good" && (
-                        <span className="dir-hint text-muted-foreground text-xs font-normal">↓ better</span>
-                      )}
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id} className="hover:bg-transparent">
+              {headerGroup.headers.map((header) => {
+                const col = columnByKey.get(header.column.id);
+                if (!col) return null;
+                const sortedDir = header.column.getIsSorted();
+                const sorted = sortedDir !== false;
+                const term = termForColumn(col, glossary, glossaryIndex);
+                return (
+                  <TableHead
+                    key={header.id}
+                    role="columnheader"
+                    scope="col"
+                    className={`cursor-pointer whitespace-nowrap select-none ${col.numeric ? "num text-right" : ""}`}
+                    aria-sort={sorted ? (sortedDir === "asc" ? "ascending" : "descending") : "none"}
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    {/* The lab's header anatomy: a ghost Button holding the
+                        label + sort arrow. Term already renders its own
+                        <button> (see Term.tsx) — nesting it inside another
+                        <button> would be invalid HTML and would double-fire
+                        the sort via bubbling, so term columns keep the
+                        label as a sibling and the button carries only the
+                        arrow. Either way every click funnels into th's
+                        onClick above via bubbling, exactly once. */}
+                    {term ? (
+                      <span
+                        className={`inline-flex h-8 items-center gap-1.5 text-xs font-medium ${
+                          col.numeric ? "justify-end" : ""
+                        }`}
+                      >
+                        <Term term={term} glossary={glossary}>
+                          {col.label}
+                        </Term>
+                        {col.direction === "up-good" && (
+                          <span className="dir-hint text-muted-foreground text-xs font-normal">↑ better</span>
+                        )}
+                        {col.direction === "down-good" && (
+                          <span className="dir-hint text-muted-foreground text-xs font-normal">↓ better</span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="sort-trigger size-6"
+                          aria-label={`Sort by ${col.label}`}
+                        >
+                          <SortIcon sorted={sorted} dir={sortedDir || null} />
+                        </Button>
+                      </span>
+                    ) : (
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="sort-trigger size-6"
+                        size="sm"
+                        className={`sort-trigger -ml-2 h-8 gap-1.5 px-2 text-xs font-medium ${
+                          col.numeric ? "-mr-2 ml-auto flex" : ""
+                        }`}
                         aria-label={`Sort by ${col.label}`}
                       >
-                        <SortIcon sorted={sorted} dir={state.sortDir} />
+                        <span className="col-label">{col.label}</span>
+                        {col.direction === "up-good" && (
+                          <span className="dir-hint text-muted-foreground text-xs font-normal">↑ better</span>
+                        )}
+                        {col.direction === "down-good" && (
+                          <span className="dir-hint text-muted-foreground text-xs font-normal">↓ better</span>
+                        )}
+                        <SortIcon sorted={sorted} dir={sortedDir || null} />
                       </Button>
-                    </span>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`sort-trigger -ml-2 h-8 gap-1.5 px-2 text-xs font-medium ${
-                        col.numeric ? "-mr-2 ml-auto flex" : ""
-                      }`}
-                      aria-label={`Sort by ${col.label}`}
-                    >
-                      <span className="col-label">{col.label}</span>
-                      {col.direction === "up-good" && (
-                        <span className="dir-hint text-muted-foreground text-xs font-normal">↑ better</span>
-                      )}
-                      {col.direction === "down-good" && (
-                        <span className="dir-hint text-muted-foreground text-xs font-normal">↓ better</span>
-                      )}
-                      <SortIcon sorted={sorted} dir={state.sortDir} />
-                    </Button>
-                  )}
-                </TableHead>
-              );
-            })}
-          </TableRow>
+                    )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
         </TableHeader>
         <TableBody>
           {needle && processedRows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={visibleColumns.length} className="text-muted-foreground h-14 text-center">
+              <TableCell colSpan={visibleCount} className="text-muted-foreground h-14 text-center">
                 No rows match "{filter}".
               </TableCell>
             </TableRow>
           ) : (
-            displayedRows.map((row, i) => (
-              <TableRow key={`${rowKeyOf(row, columns)}:${i}`} className={rowClassName?.(row)}>
-                {visibleColumns.map((col) => (
+            displayedRows.map((row) => (
+              <TableRow key={row.id} className={rowClassName?.(row.original)}>
+                {row.getVisibleCells().map((cell) => (
                   <TableCell
-                    key={col.key}
-                    className={col.numeric ? "num text-right font-mono tabular-nums" : undefined}
+                    key={cell.id}
+                    className={
+                      columnByKey.get(cell.column.id)?.numeric
+                        ? "num text-right font-mono tabular-nums"
+                        : undefined
+                    }
                   >
-                    {renderCell ? renderCell(row, col) : formatCell(row[col.key])}
+                    <table.FlexRender cell={cell} />
                   </TableCell>
                 ))}
               </TableRow>
@@ -325,13 +387,14 @@ export function DataTable({
         </TableBody>
       </Table>
       {(hasMore || expanded) && (
-        <button
-          type="button"
-          className="show-all text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0 pt-1 text-xs font-medium underline underline-offset-2"
+        <Button
+          variant="link"
+          size="sm"
+          className="show-all h-auto p-0 pt-1 text-xs"
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? "Show fewer" : `Show all ${processedRows.length}`}
-        </button>
+        </Button>
       )}
     </div>
   );

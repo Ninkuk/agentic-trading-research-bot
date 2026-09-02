@@ -162,3 +162,51 @@ test("negative numbers render with a typographic minus in default cells", () => 
   );
   expect(screen.getByText("−2")).toBeInTheDocument();
 });
+
+// Characterization tests written before the TanStack rewrite: they pin the
+// behaviors the earlier suite left implicit so the rewrite cannot drop them.
+
+test("blank cells sort last in both directions", async () => {
+  const rows: Row[] = [
+    { score: 5, symbol: "AAA" },
+    { score: null, symbol: "NUL" },
+    { score: 1, symbol: "BBB" },
+  ];
+  render(<DataTable columns={COLS} rows={rows} storageKey="t12" />);
+  await userEvent.click(screen.getByRole("columnheader", { name: /score/i }));
+  expect(cellTexts(1)).toEqual(["AAA", "BBB", "NUL"]); // desc: 5, 1, blank
+  await userEvent.click(screen.getByRole("columnheader", { name: /score/i }));
+  expect(cellTexts(1)).toEqual(["BBB", "AAA", "NUL"]); // asc: 1, 5, blank
+});
+
+test("the filter matches any column case-insensitively and reports the count", async () => {
+  render(<DataTable columns={COLS} rows={ROWS10} storageKey="t13" initialRows={3} />);
+  expect(screen.getByText("10 of 10 rows")).toBeInTheDocument();
+  await userEvent.type(screen.getByRole("textbox", { name: /filter rows/i }), "s7");
+  expect(cellTexts(1)).toEqual(["S7"]);
+  expect(screen.getByText("1 of 10 rows")).toBeInTheDocument();
+  await userEvent.clear(screen.getByRole("textbox", { name: /filter rows/i }));
+  await userEvent.type(screen.getByRole("textbox", { name: /filter rows/i }), "zzz");
+  expect(screen.getByText(/no rows match "zzz"/i)).toBeInTheDocument();
+});
+
+test("filterable=false renders no filter box even on a long table", () => {
+  render(<DataTable columns={COLS} rows={ROWS10} storageKey="t14" filterable={false} />);
+  expect(screen.queryByRole("textbox", { name: /filter rows/i })).not.toBeInTheDocument();
+});
+
+test("sort within pinned and unpinned groups follows the active sort", async () => {
+  const cols: Column[] = [
+    { key: "symbol", label: "Symbol", numeric: false, direction: null, term: null },
+    { key: "score", label: "Score", numeric: true, direction: null, term: null },
+  ];
+  const rows: Row[] = [
+    { symbol: "AAA", score: 3 },
+    { symbol: "PIN1", score: 1 },
+    { symbol: "BBB", score: 9 },
+    { symbol: "PIN2", score: 7 },
+  ];
+  render(<DataTable columns={cols} rows={rows} storageKey="t15" pinnedFirst={["PIN1", "PIN2"]} />);
+  await userEvent.click(screen.getByRole("columnheader", { name: /score/i }));
+  expect(cellTexts(0)).toEqual(["PIN2", "PIN1", "BBB", "AAA"]); // desc inside each group
+});

@@ -3,7 +3,7 @@
 // the dollar columns.
 
 import type { Glossary, Section } from "../types";
-import { sectionCell } from "../ui/sectionCells";
+import { makeSectionCell } from "../ui/sectionCells";
 import { DataTable } from "../ui/DataTable";
 
 export interface SectionComponentProps {
@@ -19,7 +19,7 @@ export function SizeCaps({ sec, glossary }: SectionComponentProps) {
       rows={sec.rows ?? []}
       storageKey="size-caps"
       glossary={glossary}
-      renderCell={sectionCell}
+      renderCell={makeSectionCell(sec.rows ?? [])}
     />
   );
 }

@@ -65,9 +65,9 @@ test("renders tiles above the table, sparklines arrays, and reports the cap", ()
   expect(region.querySelector("table")).not.toBeNull();
   // The array column became a sparkline.
   expect(scope.getByRole("img", { name: /Trend: 4 points/ })).toBeInTheDocument();
-  // CI folded into the hit-rate cell; no standalone CI headers.
+  // CI folded into the hit-rate range mark (digits in its title); no standalone CI headers.
   expect(scope.queryByText("CI low")).toBeNull();
-  expect(scope.getByText(/CI 50–70/)).toBeInTheDocument();
+  expect(scope.getByRole("img", { name: "60%, CI 50–70%" })).toBeInTheDocument();
   // Boolean pills read as text with the tint agreeing.
   expect(scope.getByText("yes").className).toMatch(/bool--bad/);
   expect(scope.getByText("no").className).toMatch(/bool--bad/);

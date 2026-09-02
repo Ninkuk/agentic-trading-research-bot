@@ -3,7 +3,7 @@
 // same way TickerDetail's position card does.
 
 import type { Glossary, Section } from "../types";
-import { sectionCell } from "../ui/sectionCells";
+import { makeSectionCell } from "../ui/sectionCells";
 import { DataTable } from "../ui/DataTable";
 
 export interface SectionComponentProps {
@@ -19,7 +19,7 @@ export function PositionHeat({ sec, glossary }: SectionComponentProps) {
       rows={sec.rows ?? []}
       storageKey="position-heat"
       glossary={glossary}
-      renderCell={sectionCell}
+      renderCell={makeSectionCell(sec.rows ?? [])}
     />
   );
 }
