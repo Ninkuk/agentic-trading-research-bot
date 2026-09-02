@@ -9,8 +9,10 @@
 // short-circuiting to the shell's own empty state (see SectionShell.tsx's
 // `showEmpty`). This component owns its own all-clear line instead.
 
+import { CircleCheck } from "lucide-react";
 import type { Column, Glossary, Row, Section } from "../types";
 import { DataTable } from "../ui/DataTable";
+import { EmptyNote } from "../ui/EmptyNote";
 import { StatTile } from "../ui/StatTile";
 import { formatCell } from "../ui/formatCell";
 
@@ -44,7 +46,9 @@ export function Health({ sec, glossary }: SectionComponentProps) {
           renderCell={healthCell}
         />
       ) : (
-        <p className="empty">All healthy — every job ran clean, every database is fresh.</p>
+        <EmptyNote icon={CircleCheck}>
+          All healthy — every job ran clean, every database is fresh.
+        </EmptyNote>
       )}
     </>
   );

@@ -9,11 +9,13 @@
 // the page rather than a broken hole in it.
 
 import type { ReactNode } from "react";
-import { CircleAlert, Inbox } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import type { Section, SectionId } from "../types";
+import { Alert, AlertDescription } from "../components/ui/alert";
 import { Card, CardAction, CardContent, CardHeader } from "../components/ui/card";
 import { AboutDialog } from "./AboutDialog";
 import { CaveatLine } from "./CaveatLine";
+import { EmptyNote } from "./EmptyNote";
 import { VerdictChip } from "./VerdictChip";
 
 export interface SectionShellProps {
@@ -50,15 +52,12 @@ export function SectionShell({ id, sec, children }: SectionShellProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {sec.error ? (
-            <p className="unavailable">
-              <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              <span>{sec.error}</span>
-            </p>
+            <Alert variant="destructive">
+              <CircleAlert />
+              <AlertDescription className="font-mono">{sec.error}</AlertDescription>
+            </Alert>
           ) : showEmpty ? (
-            <p className="empty">
-              <Inbox className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              <span>{sec.empty}</span>
-            </p>
+            <EmptyNote>{sec.empty}</EmptyNote>
           ) : (
             children
           )}

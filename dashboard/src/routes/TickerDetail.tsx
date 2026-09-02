@@ -39,7 +39,11 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "../components/ui/chart";
+import { Card, CardAction, CardContent, CardHeader } from "../components/ui/card";
+import { Toggle } from "../components/ui/toggle";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../components/ui/tooltip";
 import { AboutDialog } from "../ui/AboutDialog";
+import { EmptyNote } from "../ui/EmptyNote";
 import { ExtLink } from "../ui/ExtLink";
 import { DataTable } from "../ui/DataTable";
 import { Masthead } from "../ui/Masthead";
@@ -82,7 +86,7 @@ function ScoreHistoryChart({ points }: { points: ScoreHistoryPoint[] }) {
   const { ref, width } = useMeasuredWidth(560);
   const usable = points.filter((p) => p.score_sum !== null);
   if (usable.length < 2) {
-    return <p className="empty">no score history yet</p>;
+    return <EmptyNote>no score history yet</EmptyNote>;
   }
   return (
     <div ref={ref} className="w-full">
@@ -301,15 +305,19 @@ function TickerBlock({
   children: ReactNode;
 }) {
   return (
-    <section className="ticker-block bg-card text-card-foreground mb-4 overflow-x-auto rounded-xl border p-5">
-      <div className="mb-3 flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <h2 className="m-0 mb-1 text-lg font-semibold">{title}</h2>
+    // Same Card anatomy as SectionShell, so the drill-down's blocks and the
+    // strand cards read as one surface.
+    <section className="ticker-block mb-4">
+      <Card>
+        <CardHeader>
+          <h2 className="m-0 text-lg leading-none font-semibold">{title}</h2>
           {note && <p className="text-muted-foreground m-0 max-w-[75ch] text-sm">{note}</p>}
-        </div>
-        <AboutDialog title={title} about={about} />
-      </div>
-      {children}
+          <CardAction>
+            <AboutDialog title={title} about={about} />
+          </CardAction>
+        </CardHeader>
+        <CardContent>{children}</CardContent>
+      </Card>
     </section>
   );
 }
@@ -400,9 +408,9 @@ function ThesisBlock({ thesis }: { thesis: TickerThesis }) {
         {thesis.reopen && <span className="font-mono text-xs">reopen {thesis.reopen}</span>}
         <ExtLink href={`${REPO_URL}/blob/main/${thesis.path}`}>thesis on GitHub</ExtLink>
       </p>
-      {state.kind === "loading" && <p className="empty">loading thesis…</p>}
+      {state.kind === "loading" && <EmptyNote loading>loading thesis…</EmptyNote>}
       {state.kind === "missing" && (
-        <p className="empty">thesis file not published yet — use the GitHub link above.</p>
+        <EmptyNote>thesis file not published yet — use the GitHub link above.</EmptyNote>
       )}
       {state.kind === "ready" && (
         <>
@@ -464,9 +472,6 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
 
   return (
     <div className="page ticker-detail">
-      {/* Same masthead as the main page — the drill-down kept dropping the
-          theme toggle and edition context, which made it feel like a
-          different product. */}
       <Masthead editionDate={doc.edition_date} snapshotNumber={doc.snapshot_number} />
       <header className="ticker-header mb-5 flex items-baseline gap-4 border-b pb-4">
         <a
@@ -476,21 +481,26 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
           ← back
         </a>
         <h1 className="m-0 font-mono text-2xl font-semibold tracking-tight">{symbol}</h1>
-        <button
-          type="button"
-          className="pin-toggle text-muted-foreground hover:text-foreground hover:border-foreground/30 ml-auto cursor-pointer rounded-md border bg-transparent px-3 py-1 font-mono text-xs aria-pressed:border-amber-500/50 aria-pressed:bg-amber-500/10 aria-pressed:text-amber-700 dark:aria-pressed:text-amber-400"
-          aria-pressed={pinned}
-          onClick={togglePin}
-          title="Pinned tickers stay at the top of the ticker scorecard"
-        >
-          {pinned ? "★ pinned to top" : "☆ pin to top"}
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Toggle
+              variant="outline"
+              size="sm"
+              pressed={pinned}
+              onPressedChange={togglePin}
+              className="pin-toggle ml-auto font-mono text-xs"
+            >
+              {pinned ? "★ pinned to top" : "☆ pin to top"}
+            </Toggle>
+          </TooltipTrigger>
+          <TooltipContent>Pinned tickers stay at the top of the ticker scorecard</TooltipContent>
+        </Tooltip>
       </header>
 
       {!detail ? (
-        <p className="empty">
+        <EmptyNote>
           no detail exported for {symbol}; it was not in tonight's scorecard, holdings, or journal.
-        </p>
+        </EmptyNote>
       ) : (
         <>
           {detail.candidate && (
@@ -519,7 +529,7 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
             {signalRows.length > 0 ? (
               <DataTable columns={SIGNAL_COLUMNS} rows={signalRows} storageKey={`ticker:${symbol}:signals`} />
             ) : (
-              <p className="empty">no signals scored tonight</p>
+              <EmptyNote>no signals scored tonight</EmptyNote>
             )}
           </TickerBlock>
 
@@ -541,7 +551,7 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
                 ))}
               </ul>
             ) : (
-              <p className="empty">no research verdicts yet</p>
+              <EmptyNote>no research verdicts yet</EmptyNote>
             )}
           </TickerBlock>
 
@@ -559,7 +569,7 @@ export function TickerDetail({ doc, symbol }: TickerDetailProps) {
             {fillRows.length > 0 ? (
               <DataTable columns={FILL_COLUMNS} rows={fillRows} storageKey={`ticker:${symbol}:fills`} />
             ) : (
-              <p className="empty">no journal fills yet</p>
+              <EmptyNote>no journal fills yet</EmptyNote>
             )}
           </TickerBlock>
 

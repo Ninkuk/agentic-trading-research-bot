@@ -1,18 +1,21 @@
-// A dotted-underline glossary term: click or hover opens a positioned
-// popover with the definition. Terms missing from the glossary render as
-// plain text — never a dead-looking underline promising a definition that
-// isn't there (see the brief: "renders plain children when the term is
-// missing from the glossary").
+// A dotted-underline glossary term: click or hover opens a popover with
+// the definition. Terms missing from the glossary render as plain text —
+// never a dead-looking underline promising a definition that isn't there
+// (see the brief: "renders plain children when the term is missing from
+// the glossary").
 //
-// The popover portals to document.body: most triggers live inside the
-// shadcn table's `overflow-x: auto` wrapper, which clips an absolutely
-// positioned tooltip invisible. Fixed positioning from the trigger's
-// viewport rect escapes the clip; the popover flips below the trigger when
-// there isn't room above.
+// shadcn Popover: it portals to document.body (most triggers live inside
+// the table's `overflow-x: auto` wrapper, which clips an in-flow popover)
+// and flips below the trigger when there isn't room above. Open state is
+// controlled so hover drives it beside click; the click handler prevents
+// Radix's default toggle so a click always shows (Escape and an outside
+// click close), and auto-focus is off both ways so a hover-open never
+// moves keyboard focus. `role="tooltip"`: the content is a definition, not
+// a dialog to act in.
 
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { useState, type ReactNode } from "react";
 import type { Glossary } from "../types";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 
 export interface TermProps {
   term: string;
@@ -20,92 +23,42 @@ export interface TermProps {
   children: ReactNode;
 }
 
-/** Matches .jstip's max-width plus a little viewport margin. */
-const POPOVER_WIDTH = 270;
-/** Rough room needed above the trigger before flipping below. */
-const FLIP_THRESHOLD = 140;
-
-interface PopoverPos {
-  left: number;
-  top: number;
-  below: boolean;
-}
-
 export function Term({ term, glossary, children }: TermProps) {
   const definition = glossary[term];
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<PopoverPos | null>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const popoverId = useId();
-
-  useEffect(() => {
-    if (!open) return;
-    function onKeyDown(e: KeyboardEvent): void {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
 
   if (definition === undefined) {
     return <>{children}</>;
   }
 
-  function show(): void {
-    const rect = triggerRef.current?.getBoundingClientRect();
-    if (rect) {
-      const below = rect.top < FLIP_THRESHOLD;
-      setPos({
-        left: Math.max(8, Math.min(rect.left, window.innerWidth - POPOVER_WIDTH)),
-        top: below ? rect.bottom + 6 : rect.top - 6,
-        below,
-      });
-    } else {
-      setPos(null);
-    }
-    setOpen(true);
-  }
-
   return (
-    <span className="term">
-      <button
-        ref={triggerRef}
-        type="button"
-        className="term-trigger"
-        aria-expanded={open}
-        aria-describedby={open ? popoverId : undefined}
-        onClick={(e) => {
-          e.stopPropagation();
-          show();
-        }}
-        onMouseEnter={show}
-        onMouseLeave={() => setOpen(false)}
-        onBlur={() => setOpen(false)}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="term-trigger"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setOpen(true);
+          }}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+        >
+          {children}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        role="tooltip"
+        side="top"
+        align="start"
+        sideOffset={6}
+        className="term-popover w-auto max-w-[270px] px-2.5 py-1.5 text-xs leading-normal font-normal"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
-        {children}
-      </button>
-      {open &&
-        createPortal(
-          <span
-            id={popoverId}
-            role="tooltip"
-            className="jstip term-popover"
-            style={
-              pos
-                ? {
-                    position: "fixed",
-                    left: pos.left,
-                    top: pos.top,
-                    bottom: "auto",
-                    transform: pos.below ? undefined : "translateY(-100%)",
-                  }
-                : undefined
-            }
-          >
-            {definition}
-          </span>,
-          document.body,
-        )}
-    </span>
+        {definition}
+      </PopoverContent>
+    </Popover>
   );
 }

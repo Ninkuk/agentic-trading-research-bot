@@ -1,4 +1,4 @@
-// Two page-level banners App.tsx reaches for:
+// Two page-level banners App.tsx reaches for, both on the shadcn Alert:
 //   - GenerationFailedBanner: replaces the whole page. Fires either when
 //     `data.json` itself couldn't be fetched, or when it fetched fine but
 //     is the exporter's own total-failure error document
@@ -9,8 +9,13 @@
 //     is more than 36h behind the client clock. Dismissable for the
 //     session only (no persistence) — a stale run should keep nagging on
 //     the next visit rather than being silenced forever by one dismiss.
+//     role="status", not Alert's default "alert": stale is a notice, not
+//     an interruption.
 
+import { CircleAlert, TriangleAlert } from "lucide-react";
 import { dateShort } from "../format";
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
+import { Button } from "../components/ui/button";
 
 export interface GenerationFailedBannerProps {
   message: string;
@@ -20,22 +25,21 @@ export interface GenerationFailedBannerProps {
 export function GenerationFailedBanner({ message, generatedAt }: GenerationFailedBannerProps) {
   return (
     <div className="page">
-      <div
-        className="border-destructive/30 bg-destructive/5 space-y-2 rounded-lg border px-5 py-4"
-        role="alert"
-      >
-        <p className="m-0 font-medium">
-          Tonight's dashboard couldn't be generated, so there's nothing new to read yet.
-        </p>
-        <p className="mono text-destructive m-0">
-          {message}
-          {generatedAt && ` (last attempt ${dateShort(generatedAt)})`}
-        </p>
-        <p className="text-muted-foreground m-0 text-sm">
-          The nightly job will try again on its own this evening. To retry now, run the dashboard
-          export job (deploy/launchd/dashboard.sh) and reload this page.
-        </p>
-      </div>
+      <Alert variant="destructive">
+        <CircleAlert />
+        <AlertTitle>Tonight's dashboard couldn't be generated</AlertTitle>
+        <AlertDescription>
+          <p className="m-0 font-mono">
+            {message}
+            {generatedAt && ` (last attempt ${dateShort(generatedAt)})`}
+          </p>
+          <p className="m-0">
+            There's nothing new to read yet. The nightly job will try again on its own this
+            evening; to retry now, run the dashboard export job (deploy/launchd/dashboard.sh) and
+            reload this page.
+          </p>
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
@@ -47,20 +51,20 @@ export interface StaleBannerProps {
 
 export function StaleBanner({ generatedAt, onDismiss }: StaleBannerProps) {
   return (
-    <div
-      className="lab-banner mx-auto mt-4 flex max-w-(--page-width) items-baseline gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-700 dark:text-amber-400"
+    <Alert
+      variant="warning"
       role="status"
+      className="lab-banner mx-auto mt-4 max-w-(--page-width)"
     >
-      <span>
-        This edition is stale — generated {dateShort(generatedAt)}, more than 36 hours ago.
-      </span>
-      <button
-        type="button"
-        className="cursor-pointer font-medium underline underline-offset-2 hover:opacity-80"
-        onClick={onDismiss}
-      >
-        dismiss
-      </button>
-    </div>
+      <TriangleAlert />
+      <AlertDescription className="flex flex-wrap items-baseline gap-x-2">
+        <span>
+          This edition is stale — generated {dateShort(generatedAt)}, more than 36 hours ago.
+        </span>
+        <Button variant="link" size="sm" className="h-auto p-0" onClick={onDismiss}>
+          dismiss
+        </Button>
+      </AlertDescription>
+    </Alert>
   );
 }

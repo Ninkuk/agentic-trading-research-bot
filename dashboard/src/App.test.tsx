@@ -44,7 +44,8 @@ test("a stale document renders normally with a dismissable banner", async () => 
   const staleDoc = { ...fixture, generated_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() };
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => staleDoc }));
   render(<App />);
-  await waitFor(() => expect(screen.getByRole("status")).toBeInTheDocument());
+  // The loading spinner is also a status region, so wait for the banner text.
+  await screen.findByText(/this edition is stale/i);
   await userEvent.click(screen.getByRole("button", { name: /dismiss/i }));
   expect(screen.queryByRole("status")).not.toBeInTheDocument();
   expect(screen.getByText(/Risk-on: leaning into risky assets/)).toBeInTheDocument();

@@ -9,6 +9,7 @@
 
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
+import { EmptyNote } from "../ui/EmptyNote";
 import {
   ChartContainer,
   ChartTooltip,
@@ -39,7 +40,7 @@ export function RegimeTimeline({ rows, height = 208 }: RegimeTimelineProps) {
   const { ref, width } = useMeasuredWidth(640);
 
   if (rows.length === 0) {
-    return <p className="empty">no data</p>;
+    return <EmptyNote>no data</EmptyNote>;
   }
 
   return (

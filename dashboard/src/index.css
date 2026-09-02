@@ -184,35 +184,12 @@
 @layer components {
   /* page container */
   .page {
+    /* width 100%: inside the sidebar inset (a column flexbox) auto margins
+       would otherwise size this to its widest table instead of stretching. */
+    width: 100%;
     max-width: var(--page-width);
     margin: 0 auto;
     padding: 1.5rem 1.25rem 4rem;
-  }
-
-  /* degraded states (SectionShell, App loading, TickerDetail) */
-  .empty {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.625rem;
-    border: 1px dashed var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1rem 1.25rem;
-    color: var(--muted-foreground);
-    font-size: 0.875rem;
-    margin: 0;
-  }
-  .unavailable {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.625rem;
-    border: 1px solid color-mix(in oklab, var(--destructive) 30%, transparent);
-    background: color-mix(in oklab, var(--destructive) 5%, transparent);
-    border-radius: var(--radius-lg);
-    padding: 0.75rem 1rem;
-    color: var(--destructive);
-    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 0.875rem;
-    margin: 0;
   }
 
   /* caveat footnote */
@@ -300,11 +277,7 @@
     white-space: nowrap;
   }
 
-  /* glossary term popover */
-  .term {
-    position: relative;
-    display: inline-block;
-  }
+  /* glossary term trigger (Term.tsx; the popover itself is shadcn Popover) */
   .term-trigger {
     background: none;
     border: none;
@@ -325,29 +298,6 @@
     outline-offset: 2px;
     border-radius: 2px;
   }
-  .jstip {
-    position: absolute;
-    left: 0;
-    bottom: calc(100% + 6px);
-    display: block;
-    width: max-content;
-    max-width: 260px;
-    background: var(--popover);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 6px 10px;
-    font-size: 0.75rem;
-    line-height: 1.5;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    color: var(--popover-foreground);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-    z-index: 10;
-    text-align: left;
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: normal;
-  }
-
   /* ticker detail */
   .verdict-list {
     margin: 0;

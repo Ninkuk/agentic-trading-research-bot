@@ -14,7 +14,7 @@ import { type ReactNode } from "react";
 import { Search } from "lucide-react";
 import { usePrefs } from "../hooks/usePrefs";
 import type { Column, Glossary, Row, Section } from "../types";
-import { Input } from "../components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../components/ui/input-group";
 import { DataTable } from "../ui/DataTable";
 import { sectionCell } from "../ui/sectionCells";
 
@@ -58,18 +58,19 @@ export function Scorecard({ sec, glossary }: SectionComponentProps) {
           job read as two different products. Typed value still uppercases:
           tickers are uppercase. */}
       <div className="flex items-center justify-between gap-3">
-        <div className="relative w-full max-w-56">
-          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
-          <Input
+        <InputGroup className="w-full max-w-56">
+          <InputGroupInput
             id="tickfilter"
             type="search"
             placeholder="Filter tickers…"
             aria-label="Filter tickers"
-            className="h-8 pl-8 text-sm"
             value={filter}
             onChange={(e) => setFilter(e.target.value.toUpperCase())}
           />
-        </div>
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
         <span className="text-muted-foreground text-xs whitespace-nowrap tabular-nums">
           {rows.length} of {allRows.length} rows
         </span>

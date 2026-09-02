@@ -29,7 +29,8 @@ test("per-night dots wear the tone tokens so they re-step with the theme", () =>
 test("empty rows degrades to a no-data note instead of an empty chart", () => {
   const { container, getByText } = render(<RegimeTimeline rows={[]} />);
   expect(getByText("no data")).toBeInTheDocument();
-  expect(container.querySelector("svg")).toBeNull();
+  // The Empty note carries an icon SVG; the chart is the recharts surface.
+  expect(container.querySelector(".recharts-surface")).toBeNull();
 });
 
 test("the dot-color caption renders under the chart", () => {

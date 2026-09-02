@@ -16,6 +16,7 @@ import { useHashRoute } from "./hooks/useHashRoute";
 import { Main } from "./routes/Main";
 import { TickerDetail } from "./routes/TickerDetail";
 import { GenerationFailedBanner, StaleBanner } from "./ui/Banners";
+import { EmptyNote } from "./ui/EmptyNote";
 
 function App() {
   const { doc, error, generatedAt, stale } = useDashboardData();
@@ -25,7 +26,7 @@ function App() {
   if (!doc && !error) {
     return (
       <div className="page">
-        <p className="empty">Loading tonight's edition…</p>
+        <EmptyNote loading>Loading tonight's edition…</EmptyNote>
       </div>
     );
   }
