@@ -57,9 +57,10 @@ test.each(ids)('section "%s" renders via its registered component without throwi
       expect(region?.querySelectorAll(".tile").length).toBeGreaterThan(0);
       break;
     case "text":
-      // TextReport parses the scorecard report into tables; its fallback for
-      // an unparseable format is the raw <pre> — accept either rendering.
-      expect(region?.querySelector("table, pre")).not.toBeNull();
+      // TraderScorecard leads with headline tiles (sub-tables behind a closed
+      // toggle); TextReport's fallback for an unparseable format is the raw
+      // <pre> — accept any of the three.
+      expect(region?.querySelector(".tile, table, pre")).not.toBeNull();
       break;
     case "rows":
       // Most row-carrying sections render through DataTable (a <table>);
