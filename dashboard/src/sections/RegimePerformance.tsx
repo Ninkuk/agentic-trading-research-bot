@@ -1,4 +1,4 @@
-// Track record: does the regime call itself have forward edge — do risk-on
+// Signals: does the regime call itself have forward edge — do risk-on
 // nights actually precede better returns than risk-off nights? Plain
 // DataTable.
 

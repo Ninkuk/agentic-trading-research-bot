@@ -1,4 +1,4 @@
-// Track record (id "signal-recommendations"): the verdict on each signal, graded
+// Signals (id "signal-recommendations"): the verdict on each signal, graded
 // against its own base rate. Same lab treatment as Signal efficacy — CI
 // columns fold into the stacked hit-rate cell, recommendation renders as a
 // tinted pill, signed excess as a tinted percent — all via the shared

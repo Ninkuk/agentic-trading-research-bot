@@ -1,4 +1,4 @@
-// Track record: past opinions grouped by conviction bucket, graded against
+// Signals: past opinions grouped by conviction bucket, graded against
 // SPY. Plain DataTable — every column's up-good/down-good arrow already
 // comes from the export (data.py's `_track_col`), nothing to inject here.
 

@@ -448,7 +448,7 @@ SECTIONS: list[Any] = [
         "Research call grade",
         "scorer.db",
         research_filter,
-        "Track record",
+        "Research",
         "When the research skill said buy or pass, how often was it right against SPY?",
         [
             (
@@ -471,7 +471,7 @@ SECTIONS: list[Any] = [
         "Research calls, one by one",
         "scorer.db",
         research_verdict_outcomes,
-        "Track record",
+        "Research",
         "Every graded research call with what the stock and SPY did afterward.",
         [
             (
@@ -516,7 +516,7 @@ SECTIONS: list[Any] = [
         "How much evidence, really",
         "scorer.db",
         signal_effective_n,
-        "Track record",
+        "Signals",
         "The signal report cards count rows; this counts independent episodes, which is the honest sample size.",
         [
             (
@@ -540,7 +540,7 @@ SECTIONS: list[Any] = [
         "Candidates list, entry by entry",
         "scorer.db",
         candidate_outcomes,
-        "Track record",
+        "Research",
         "What each name did against SPY after it first appeared on the candidates list.",
         [
             (
@@ -562,7 +562,7 @@ SECTIONS: list[Any] = [
         "Falling-knife check",
         "scorer.db",
         candidate_quality_trend,
-        "Track record",
+        "Research",
         "For every name still on the candidates list, whether the business has weakened since it first appeared.",
         [
             (
@@ -608,7 +608,7 @@ SECTIONS: list[Any] = [
         "Backtest replay",
         "backtest.db",
         replay_efficacy,
-        "Track record",
+        "Signals",
         "Would the macro signals have worked in the past, using only the data that existed at the time?",
         [
             (
@@ -633,7 +633,7 @@ SECTIONS: list[Any] = [
         "Benchmark drift",
         "backtest.db",
         replay_baseline,
-        "Track record",
+        "Signals",
         "How often each benchmark simply went up over each horizon — the bar every replayed flag has to clear.",
         [
             (
@@ -649,7 +649,7 @@ SECTIONS: list[Any] = [
         "Replay flags today",
         "backtest.db",
         replay_flags,
-        "Track record",
+        "Signals",
         "What each replayed signal is saying right now, with its score over the last 90 flag days.",
         [
             (

@@ -1379,6 +1379,27 @@ SECTION_EXPORTERS: list[
         ],
     ),
     (
+        "macro-drivers",
+        "Macro drivers",
+        "fred.db",
+        _macro_drivers,
+        "Macro",
+        "The three inputs that actually decide the regime call, with their recent history.",
+        [
+            (
+                "What they are",
+                "The 10y–2y Treasury spread (the recession watcher), the"
+                " high-yield credit spread (are lenders scared?), and the"
+                " VIX (the equity fear gauge).",
+            ),
+            (
+                "How to read it",
+                "Each tile shows today's value, the one-day change, and the"
+                " last 90 observations' trend.",
+            ),
+        ],
+    ),
+    (
         "regime-timeline",
         "Regime timeline",
         "composite.db",
@@ -1397,27 +1418,6 @@ SECTION_EXPORTERS: list[
                 "A mood that just flipped is weaker evidence than one that"
                 " has held for weeks; watch the streak rather than any"
                 " single night.",
-            ),
-        ],
-    ),
-    (
-        "macro-drivers",
-        "Macro drivers",
-        "fred.db",
-        _macro_drivers,
-        "Macro",
-        "The three inputs that actually decide the regime call, with their recent history.",
-        [
-            (
-                "What they are",
-                "The 10y–2y Treasury spread (the recession watcher), the"
-                " high-yield credit spread (are lenders scared?), and the"
-                " VIX (the equity fear gauge).",
-            ),
-            (
-                "How to read it",
-                "Each tile shows today's value, the one-day change, and the"
-                " last 90 observations' trend.",
             ),
         ],
     ),
@@ -1507,7 +1507,7 @@ SECTION_EXPORTERS: list[
                 "Treat it as a to-research feed: most flags deserve"
                 " rejection, and by design the research step kills nearly"
                 " everything. Whether any single signal has proven edge is"
-                " graded under Track record; so far none has.",
+                " graded under Signals; so far none has.",
             ),
         ],
     ),
@@ -1544,11 +1544,41 @@ SECTION_EXPORTERS: list[
         ],
     ),
     (
+        "signal-recommendations",
+        "Signal recommendations",
+        "scorer.db",
+        _signal_recommendation,
+        "Signals",
+        "The verdict on each signal (keep, watch, or anti-signal), graded"
+        " against the real base rate.",
+        [
+            (
+                "Why the base rate matters",
+                "A randomly chosen scored ticker beat its benchmark only"
+                " ~40% of the time over these windows, so a 61% hit-rate"
+                " can still be worth nothing. Every verdict is measured"
+                " against that baseline, not a coin flip.",
+            ),
+            (
+                "The verdicts",
+                "“Keep” means the whole confidence range sits above the"
+                " baseline; “anti-signal” sits entirely below it"
+                " (significantly wrong, never a win); “watch” straddles.",
+            ),
+            (
+                "Hold it loosely",
+                "Several signals are graded at once, so a few clear the bar"
+                " by luck. Re-weighting the catalog is always a human"
+                " decision; nothing here feeds back automatically.",
+            ),
+        ],
+    ),
+    (
         "signal-efficacy",
         "Signal efficacy",
         "scorer.db",
         _signal_efficacy,
-        "Track record",
+        "Signals",
         "Every signal's raw report card against simply holding SPY.",
         [
             (
@@ -1570,7 +1600,7 @@ SECTION_EXPORTERS: list[
         "Bucket performance",
         "scorer.db",
         _bucket_performance,
-        "Track record",
+        "Signals",
         "Did stronger conviction actually produce better forward returns?",
         [
             (
@@ -1579,6 +1609,31 @@ SECTION_EXPORTERS: list[
                 " strong-bull down to strong-bear, each graded against SPY."
                 " If conviction means anything, stronger buckets should do"
                 " better; this checks that.",
+            ),
+        ],
+    ),
+    (
+        "equity-curve",
+        "Portfolio vs SPY",
+        "scorer + fred DBs",
+        _equity_curve,
+        "Track record",
+        "Your account's time-weighted growth of $100 against SPY's and overnight cash's.",
+        [
+            (
+                "How to read it",
+                "All lines start at $100 on the first charted date."
+                " Deposits and withdrawals are marked but excluded from the"
+                " portfolio line — it moves only when the book's value"
+                " moves, so a gap between the lines is skill (or its"
+                " absence), never a transfer.",
+            ),
+            (
+                "The cash line",
+                "Daily fed funds (FRED's DFF) compounded over the same"
+                " window — roughly what a T-bill fund or HYSA would have"
+                " paid. SPY asks whether the picks beat the index; cash asks"
+                " whether the money should be in the market at all.",
             ),
         ],
     ),
@@ -1603,47 +1658,13 @@ SECTION_EXPORTERS: list[
         "Regime edge",
         "scorer.db",
         _regime_performance,
-        "Track record",
+        "Signals",
         "Does the market-mood call itself predict forward returns?",
         [
             (
                 "How to read it",
                 "Each row is one mood at one horizon: did risk-on nights"
                 " actually precede better returns than risk-off nights?",
-            ),
-        ],
-    ),
-    (
-        "pending",
-        "In-flight opinions",
-        "scorer.db",
-        _pending,
-        "Track record",
-        "Opinions recorded but not yet old enough to grade.",
-        [
-            (
-                "What this is",
-                "Every graded table above includes only matured outcomes."
-                " This is the queue still being measured; these rows become"
-                " those grades once they age.",
-            ),
-        ],
-    ),
-    (
-        "basis-breaks",
-        "Data-integrity checks",
-        "scorer.db",
-        _basis_breaks,
-        "Track record",
-        "Price moves that look like data errors, caught before they can"
-        " poison the grades; an empty table is the good outcome.",
-        [
-            (
-                "What this is",
-                "Days where a price moved so far it looks like a stock"
-                " split or a bad tick rather than a real move. Surfaced so"
-                " a silent data problem cannot quietly skew every grade"
-                " above.",
             ),
         ],
     ),
@@ -1737,36 +1758,6 @@ SECTION_EXPORTERS: list[
         ],
     ),
     (
-        "signal-recommendations",
-        "Signal recommendations",
-        "scorer.db",
-        _signal_recommendation,
-        "Track record",
-        "The verdict on each signal (keep, watch, or anti-signal), graded"
-        " against the real base rate.",
-        [
-            (
-                "Why the base rate matters",
-                "A randomly chosen scored ticker beat its benchmark only"
-                " ~40% of the time over these windows, so a 61% hit-rate"
-                " can still be worth nothing. Every verdict is measured"
-                " against that baseline, not a coin flip.",
-            ),
-            (
-                "The verdicts",
-                "“Keep” means the whole confidence range sits above the"
-                " baseline; “anti-signal” sits entirely below it"
-                " (significantly wrong, never a win); “watch” straddles.",
-            ),
-            (
-                "Hold it loosely",
-                "Several signals are graded at once, so a few clear the bar"
-                " by luck. Re-weighting the catalog is always a human"
-                " decision; nothing here feeds back automatically.",
-            ),
-        ],
-    ),
-    (
         "trader-scorecard",
         "Trader scorecard",
         "scorer + fred DBs",
@@ -1784,36 +1775,11 @@ SECTION_EXPORTERS: list[
         ],
     ),
     (
-        "equity-curve",
-        "Portfolio vs SPY",
-        "scorer + fred DBs",
-        _equity_curve,
-        "Track record",
-        "Your account's time-weighted growth of $100 against SPY's and overnight cash's.",
-        [
-            (
-                "How to read it",
-                "All lines start at $100 on the first charted date."
-                " Deposits and withdrawals are marked but excluded from the"
-                " portfolio line — it moves only when the book's value"
-                " moves, so a gap between the lines is skill (or its"
-                " absence), never a transfer.",
-            ),
-            (
-                "The cash line",
-                "Daily fed funds (FRED's DFF) compounded over the same"
-                " window — roughly what a T-bill fund or HYSA would have"
-                " paid. SPY asks whether the picks beat the index; cash asks"
-                " whether the money should be in the market at all.",
-            ),
-        ],
-    ),
-    (
         "candidate-efficacy",
         "Candidates screen edge",
         "scorer.db",
         _candidate_efficacy,
-        "Track record",
+        "Research",
         "Does the candidates screen's timing beat SPY after a name first enters the list?",
         [
             (
@@ -1855,8 +1821,42 @@ SECTION_EXPORTERS: list[
             ),
         ],
     ),
+    (
+        "pending",
+        "In-flight opinions",
+        "scorer.db",
+        _pending,
+        "Ops",
+        "Opinions recorded but not yet old enough to grade.",
+        [
+            (
+                "What this is",
+                "Every graded table above includes only matured outcomes."
+                " This is the queue still being measured; these rows become"
+                " those grades once they age.",
+            ),
+        ],
+    ),
+    (
+        "basis-breaks",
+        "Data-integrity checks",
+        "scorer.db",
+        _basis_breaks,
+        "Ops",
+        "Price moves that look like data errors, caught before they can"
+        " poison the grades; an empty table is the good outcome.",
+        [
+            (
+                "What this is",
+                "Days where a price moved so far it looks like a stock"
+                " split or a bad tick rather than a real move. Surfaced so"
+                " a silent data problem cannot quietly skew every grade"
+                " above.",
+            ),
+        ],
+    ),
 ]
-# Track-record drill-downs, book/ops, and source cards live in their own
+# Grading drill-downs, book/ops, and source cards live in their own
 # modules; a section ships only once it is in this combined list.
 SECTION_EXPORTERS += grades.SECTIONS + book.SECTIONS + sources_views.SECTIONS
 

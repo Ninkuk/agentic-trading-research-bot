@@ -1744,9 +1744,9 @@ SECTIONS: list[Any] = [
 
 # Raw-source cards live in their own "Sources" strand so the Signals tab
 # stays composite's opinions and Macro stays the verdict plus the calendar.
-# Two cards are the exception: the week's calendar is Macro, and the
-# holiday list is Ops (the executor keys off it).
-_STRAND_OVERRIDES = {"week-ahead": "Macro", "market-closures": "Ops"}
+# Three cards are the exception: the week's calendar and the yield curve are
+# Macro, and the holiday list is Ops (the executor keys off it).
+_STRAND_OVERRIDES = {"week-ahead": "Macro", "yield-curve": "Macro", "market-closures": "Ops"}
 SECTIONS = [
     (sid, title, db, fn, _STRAND_OVERRIDES.get(sid, "Sources"), note, about)
     for sid, title, db, fn, _kicker, note, about in SECTIONS

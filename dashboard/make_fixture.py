@@ -4,8 +4,9 @@
 
 Builds the same synthetic DBs the Python tests use (tests/conftest.py's
 builders, plus a schema-only DB for every other source) — never data/ —
-exports the document, and merges any section id the fixture lacks. Existing
-sections and the hero/ticker/glossary blocks are left as they are, so the
+exports the document, merges any section id the fixture lacks, and syncs
+every existing section's `kicker` and list position to the exporter's.
+Bodies and the hero/ticker/glossary blocks are left as they are, so the
 hand-tuned rows the component tests rely on survive.
 `tests/test_dashboard_sections.py::test_fixture_carries_every_section`
 fails until this has been run for a newly added section.
@@ -61,6 +62,12 @@ def main() -> int:
         if sid not in fixture["sections"]:
             fixture["sections"][sid] = sec
             added.append(sid)
+        else:
+            fixture["sections"][sid]["kicker"] = sec["kicker"]
+    order = {sid: i for i, sid in enumerate(doc["sections"])}
+    fixture["sections"] = dict(
+        sorted(fixture["sections"].items(), key=lambda kv: order.get(kv[0], len(order)))
+    )
     FIXTURE.write_text(json.dumps(fixture, indent=2, ensure_ascii=False) + "\n")
     print(f"added {len(added)} section(s): {', '.join(added) or 'none'}")
     return 0

@@ -1,4 +1,4 @@
-// Track record: every signal's raw report card — how often it has been
+// Signals: every signal's raw report card — how often it has been
 // right, against the base rate it would need to beat to be worth anything.
 // The lab treatment: the CI columns fold INTO the hit-rate cell (a muted
 // "CI 49–67" stacked under "58%") instead of sitting beside it as three

@@ -1,4 +1,4 @@
-// Track record: opinions already recorded whose outcome hasn't matured yet.
+// Ops: opinions already recorded whose outcome hasn't matured yet.
 // `sec.total` is COUNT(*) over the full live view (~47K rows); `sec.rows` is
 // a LIMIT-100 port of it — the "showing N of TOTAL" line is the disclosure
 // the legacy `.cap` note made, so it must render even though DataTable's own

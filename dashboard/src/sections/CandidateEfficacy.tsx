@@ -1,4 +1,4 @@
-// Track record: grades the candidates screen's list-entry TIMING only
+// Research: grades the candidates screen's list-entry TIMING only
 // (21/63-day return vs. SPY, split by dislocation door) — never the
 // multi-year quality thesis, and nothing here feeds back into the screen's
 // gates. Plain DataTable; its `empty` state (rendered by SectionShell) is

@@ -483,10 +483,10 @@ def test_market_closures_one_row_per_date_per_market():
     ]
 
 
-def test_source_cards_live_in_the_sources_strand_except_calendar_and_holidays():
+def test_source_cards_live_in_the_sources_strand_except_calendar_curve_and_holidays():
     kickers = {s[0]: s[4] for s in sources_views.SECTIONS}
     assert kickers["week-ahead"] == "Macro"
+    assert kickers["yield-curve"] == "Macro"
     assert kickers["market-closures"] == "Ops"
-    assert {k for sid, k in kickers.items() if sid not in ("week-ahead", "market-closures")} == {
-        "Sources"
-    }
+    exceptions = ("week-ahead", "yield-curve", "market-closures")
+    assert {k for sid, k in kickers.items() if sid not in exceptions} == {"Sources"}

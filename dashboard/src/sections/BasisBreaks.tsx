@@ -1,4 +1,4 @@
-// Track record: data-integrity checks — price moves that look like a split
+// Ops: data-integrity checks — price moves that look like a split
 // or a bad tick. An empty table is the GOOD outcome here (see the export's
 // `empty` copy, rendered by SectionShell before this component mounts).
 // Plain DataTable.
