@@ -1,0 +1,204 @@
+# SAP — SAP SE (NYSE: SAP) — 2026-07-30
+
+Price $180.94 · market cap $207.19B · next earnings 2026-10-21 (from
+Robinhood)
+
+Entry path: not recorded (pre-template run).
+
+## 1. Verdict and thesis
+
+**BUY at $180.94 — own it at this price.** kill-thesis: **UNPROVEN** —
+conditions=5, refuted=0, unknown=2 (AI displacement is unverifiable by
+construction, and SAP does not disclose the ECC migration runway share).
+
+A defensible system-of-record business growing 11% cc with a
+26%-growing contractual backlog, net cash, and a ~9.4%/yr implied return on
+below-consensus assumptions — the "agentic AI kills SaaS" panic compressed the multiple
+~45% while fundamentals accelerated, and even a zero-terminal-growth AI-stress path
+returns ~5.4%/yr from this price.
+
+**Closest attack:** installed-base friction —
+the May 2026 AI/maintenance-gating backlash plus the EU maintenance-flexibility
+agreement, two independent signs customers resent the RISE funnel.
+
+Context: fell $313 (ATH, 2025-07-10) → $144.97 (52w low, set on earnings day
+2026-07-23), then +27% in 4 sessions after the Q2 print. The drawdown was multiple
+compression, not fundamentals: FY25 revenue +8%, op income +106% off the 2024
+restructuring year; TTM margin 27.3% and rising.
+
+Load-bearing conditions: not enumerated in the original run (pre-template);
+the original records only the counts above and references condition "C3" in
+passing (§6). Condition tiers not recorded in original run.
+
+## 2. Business
+
+- **Created:** runs the financial/operational truth (ERP) for the enterprises behind
+  most of global commerce; customers get process integrity, compliance across 130+
+  jurisdictions, and now governed AI agents grounded in their own master data (Q2 call).
+- **Captured:** three stacked streams — Cloud ERP Suite subscriptions (€5.5B/qtr, +27%
+  cc, 88% of cloud revenue), a declining 20%+-margin maintenance annuity (€2.4B/qtr,
+  −8%), and services (€1.0B/qtr). RISE conversions reprice on-prem maintenance to cloud
+  subscription at a multiple. Next: outcome-priced agents (Klein: "reset the price
+  level" vs 50 years of discount norms — ambition, not yet evidence).
+- **Protected:** replacing a core ERP is a multi-year re-implementation of every
+  process, integration, and control, with existential operational risk — verified by
+  decades of customers paying 20%+ maintenance rather than switching. ECC maintenance
+  ends ~2030 (CFO, Q2 call), making the migration contractually propelled.
+
+**Operating leverage (Phase 0):** not stated in the original run
+(pre-template) — no direction label was printed (the original's context
+line records FY25 revenue +8%, op income +106% off the 2024 restructuring
+year; TTM margin 27.3% and rising).
+
+## 3. Threads pulled
+
+- **Why the −54% derating:** sector-wide "SaaSpocalypse" (AI-agents-eat-seats) plus
+  SAP-specifics — Jan 2026 light CCB guide (−16% day), May 2026 backlash over gating
+  on-prem AI features behind ≥50% maintenance-to-cloud migration. Multiple went ~40x →
+  20.2x forward earnings while revenue grew. (News tier + stockanalysis.)
+- **Why the +27% reversal (Jul 23–29):** CCB re-accelerated to +26% cc (€22.9B) after
+  two quarters lagging cloud revenue — the forward indicator the shorts needed to break
+  broke the other way; guidance held on all top-line params and FCF. (6-K primary.)
+- **Q2 "miss" is a currency/definition artifact:** Robinhood's $1.85 vs $2.01 est is
+  USD non-IFRS; IFRS EPS was €1.89 +30%, non-IFRS €1.59 +6%. Cross-checked 6-K vs
+  Robinhood; sec_fundamentals.db has no SAP (20-F filer, not in facts collection).
+- **Q2 margin softness decomposes into one-timers** (CFO bridge): Q1's unusually low
+  SBC (SAP's SBC is largely cash/price-linked — a €60 share-price drop cut it),
+  Sapphire launch marketing, R&D token costs (+14% cost on +3% headcount), Reltio
+  dilution. H1 envelope held: op profit +16% cc vs revenue +11% cc.
+- **EU maintenance agreement** (new, from Q2 call Q&A): formalized flexibility for
+  maintenance customers. Bounded: support run-rate ~€9.8B/yr, each extra 1pp decline
+  ≈ €100M (~0.25% of revenue) vs cloud adding €4–5B/yr. Drag, not killer; CFO cites
+  returning third-party-maintenance defectors. Watch it.
+- **M&A content in growth:** Reltio <1pp of CCB cc growth (disclosed); Dremio + Prior
+  Labs "negligible" revenue/CCB, ~€100M+ H2 profit dilution (guide trimmed
+  accordingly). Growth is organic; 2026 M&A is data/AI infrastructure (lakehouse,
+  master data, tabular foundation models).
+- **Purchase obligations (asset-light check, 20-F Note D.8):** €8.64B total, declining
+  y/y (€9.59B), mostly hyperscaler cloud services; €2.57B due 2026. Backs an already
+  contracted €22.9B CCB — cost-of-revenue commitments, not hidden capex. Capex 2.2% of
+  revenue stands.
+- **Minority interest:** €141M TTM vs €7.96B net income (~1.8%) — no FCF haircut
+  needed (income-statement route).
+- **Options read (mandatory):** path 2 (Robinhood stopgap; SAP not in the
+  CBOE catalog) — see §4 table.
+- **Dead ends:** composite.db carries SAP only as informational annotations (sa_fscore
+  6, sa_fcf_yield 4.7–5.8%) — no dislocation flag, as expected for a mega cap.
+  `/stocks/SAP/transcripts/` is empty — the corpus lives under `/quote/etr/SAP/`;
+  no US-route transcript history to search. Insider Forms 3/4 don't exist (foreign
+  private issuer). earnings.db has no SAP row (US-universe monitor); next print from
+  Robinhood: 2026-10-21.
+
+## 4. Valuation
+
+Reverse DCF, **levered TTM FCF $10.07B (statistics route `fcf` hover, USD) paired with
+market cap $207.19B** (`marketcap` hover); `--net-debt` 0 — SAP is net cash €1.9B, so
+this understates the return slightly. FY26 guide ~€10B FCF (+21% y/y) makes the TTM
+base conservative.
+
+Hurdle: not computed in the original run (pre-template).
+
+| scenario | FCF growth | terminal | implied return |
+|---|---|---|---|
+| Base (below consensus: analysts 3y EPS +17.2%) | 12/12/10/8/8% | 2.5% | **9.4%/yr** |
+| Conservative | 8/8/6/6/5% | 2.0% | 8.1%/yr |
+| AI-stress | 6/4/2/0/0% | 0.0% | 5.4%/yr |
+
+Terminal-risk check (20-F Innovation risk factor): customers "may leverage AI to
+produce their own solutions" — AI build-vs-buy. The 2.5% terminal assumes the
+system-of-record survives as the governed substrate agents run on; the stress row is
+the honest bound if it doesn't. Not a margin-expansion story — no bookings×margin
+split needed; margins are already 28% and the envelope, not the margin level, is the
+lever.
+
+**Options-implied move** (path 2 — Robinhood stopgap; SAP not in the CBOE catalog).
+Dec 18 2026 expiry (141 DTE, brackets the Oct 21 print), ATM $180 legs, marks
+21.00/17.00:
+
+| metric | value |
+|---|---|
+| spot | 180.94 |
+| expected absolute move (MEAN, not a ceiling) | 21.00% |
+| 1-σ move | 26.50% |
+| ATM IV | 42.63% |
+| RV60 | 48.04% |
+| RV20 | 54.44% |
+| IV > RV60? | NO |
+| IV > RV20? | NO |
+
+IV below both realized windows — the trailing tape (crash + reversal) is noisier than
+what the market prices forward; not "elevated." No dated claim in the thesis, so the
+2-sigma valve has nothing to cut, and none of this is evidence *for* the thesis.
+Liquidity: spreads ~3% of mark (pass); same-day volume 0, OI 224/231 (thin —
+uncalibrated-constants caveat applies). ATM IV < 50%, so the implied-return figures
+above keep their decimals, but treat ±1pp as the honest width.
+
+## 5. Falsifiers
+
+Sell on:
+
+- CCB cc growth < 20% for two consecutive quarters, ex-M&A.
+- Cloud gross margin down ≥ 2pp y/y cc, sustained (tokens/sovereignty structural, not
+  one-time — contradicts the CFO's Q2 framing).
+- FY2027 opex growth > 90% of revenue growth (envelope broken).
+- Support revenue decline accelerating *without* matching cloud capture — i.e.
+  third-party-maintenance wins, visible in support cc decline outrunning the guided
+  "acceleration as customers transform."
+- 2027 total-revenue acceleration guide withdrawn.
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Agent displacement of the app layer (C3)** — unverifiable by construction; bounded
+   by Q2 revealed preference (Shell, Morgan Stanley, Eli Lilly multi-year RISE signings)
+   and the 5.4% stress floor. Absence does not kill the thesis; it caps conviction.
+2. **ECC migration runway share** — SAP no longer discloses % of installed base
+   migrated; would come from a capital markets day or DSAG surveys (low-confidence).
+   Determines how much of the 24–27% Cloud ERP growth survives past ~2030.
+3. **AI-specific revenue** — not disclosed ("embedded in >90% of top-50 deals" is deal
+   attach, not revenue). Outcome-based pricing economics unproven.
+4. **R&D "30% productivity" claim** — management assertion, no external check exists.
+
+## 7. Sources
+
+**Primary:** Q2 2026 quarterly statement, 6-K filed 2026-07-28 (EDGAR
+0001104659-26-087251, ex99-1); FY2025 20-F (0001104659-26-020058: Note D.8 purchase
+obligations, Innovation risk factor); Q2 2026 earnings call (full transcript via
+stockanalysis `/quote/etr/SAP/transcripts/546397-q2-2026/`, source Quartr —
+primary-transcribed).
+
+**stockanalysis.com (vetted exception):** `/stocks/SAP/statistics/` (market cap, FCF,
+ratios — hover-exact, pulled live 2026-07-30), `/financials/income-statement/`
+(EUR annual history, minorityInterest), symbol lookup.
+
+**Broker/market microstructure:** (Robinhood MCP, admissible — no integrated
+source covers these fields for SAP) earnings estimate-vs-actual pattern (5
+beats then the USD non-IFRS Q2 "miss"), next report 2026-10-21, option
+chain/ATM quotes, daily bars for RV.
+
+**Reference data:** none used.
+
+**Point-in-time repo DBs:** (read-only) stocks.db (2026-07-30 snapshot: price,
+drawdown shape, F-score 6, Z-score 6.5), composite.db (informational
+annotations only); sec_fundamentals.db has no SAP (20-F filer, not in facts
+collection); earnings.db has no SAP row (US-universe monitor).
+
+**Low-confidence:** news sweep for derating/rally narrative (Benzinga, Seeking
+Alpha, tradingkey, ad-hoc-news on the May AI-strategy backlash); analyst PT $242.92
+(16 analysts, via stockanalysis).
+
+## Kill-thesis record
+
+**Kill-thesis verdict: UNPROVEN** — 5 load-bearing conditions, 0 refuted, 2
+unknown (AI displacement is unverifiable by construction, and SAP does not
+disclose the ECC migration runway share).
+
+**Closest attack:** installed-base friction — the May 2026
+AI/maintenance-gating backlash plus the EU maintenance-flexibility
+agreement, two independent signs customers resent the RISE funnel.
+
+Per-condition adjudication: not recorded in the original run (pre-template).
+Standing/statistical/options-timing checks: not recorded in the original
+run (the §4 read notes no dated claim exists, so the 2-sigma valve has
+nothing to cut). **Flip evidence:** not recorded (pre-template run).

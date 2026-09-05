@@ -1,0 +1,272 @@
+# CPRT — Copart, Inc. — 2026-07-26
+
+Price ~$27.94 · market cap $25,867,172,807 · next earnings 2026-09-03 AMC
+
+Entry path: `candidates` screen (no composite flag or signal history).
+
+## 1. Verdict and thesis
+
+**PASS at ~$27.94.** kill-thesis: **FLAWED** — conditions=6, refuted=2,
+unknown=4.
+
+Copart is a genuinely good business — high ROIC (~30%), net-cash balance
+sheet, real (if industry-level, not Copart-specific) barriers to entry — but
+at today's price (~$27.94, $25.87B market cap) a reverse-DCF run under every
+assumption tested, from bullish to bearish, implies an annual return of
+6.2%–7.4%, which sits **below Copart's own ~9.8% WACC** (per
+stockanalysis.com's estimate). The 34% six-month drawdown has not produced a
+margin of safety; it has repriced a quality business from expensive to
+fully-priced.
+
+**Closest attack:** (and it did land) the margin-of-safety check — no
+scenario tested clears the company's own cost of capital.
+
+Load-bearing conditions: six counted; not individually enumerated in the
+original run (2 refuted, 4 unknown). Condition tiers not recorded in
+original run.
+
+## 2. Business
+
+**Created:** Copart is the intermediation layer between insurance companies
+(81% of vehicles processed, FY2025 10-K) that need to dispose of total-loss
+and recovered-theft vehicles, and a global buyer base (dismantlers,
+rebuilders, exporters, the public) that wants them. Value created: insurers
+get a faster, higher-recovery, lower-admin-cost disposal channel (Copart's
+own stated pitch: % return on salvage, service breadth, disaster response,
+geographic coverage); buyers get a single global virtual marketplace (VB3)
+instead of fragmented regional physical auctions. 69.8% of US units sold
+across state/national lines in FY2025 — the buyer-pool expansion is real, not
+decorative.
+
+**Captured:** Revenue is unbundled per-transaction fees (listing, selling,
+transportation, title processing, storage, bidding) charged mostly *as agent*
+(US, Canada, Ireland, Finland, UAE, Oman, Bahrain) plus a *principal* model
+in UK/Germany/Spain (Copart buys and resells for its own account, plus a
+parts business — Green Parts Specialist). This is at least two distinct
+revenue mechanisms, not one "auction commission."
+
+**Protected:** — mechanism, not label. The orchestrator's framing question
+was answered directly by the 10-K's own Competition section: "we face
+competition for long-term contractual commitments and various supply
+agreements with sellers, **in addition to competition for the acquisition of
+vehicle storage facilities**." Two concrete mechanisms: (a) land — yard
+capacity requires zoning approval and use permits that are slow and
+regionally scarce (10-K Risk Factors: "we may not be able to reach agreements
+to purchase independent storage facilities in markets where we have limited
+excess capacity, zoning restrictions or difficulties obtaining and
+maintaining use permits"); (b) switching costs — sellers integrate with
+Copart's G2 platform via B2B APIs to assign vehicles, approve charges, and
+make/receive payments, which is sticky per-account. **Neither mechanism is
+Copart-specific.** The named principal competitor, RB Global (owner of IAA),
+operates the same land-bank-plus-long-term-contract model at comparable
+scale. The 10-K moat explains why a new entrant can't just show up — it does
+not explain why Copart beats IAA. That is the load-bearing gap (see §3,
+condition 1).
+
+**Operating leverage (Phase 0): negative.** FY2021→FY2025: revenue
+$2.69B→$4.65B (+72.6%), operating income $1.14B→$1.70B (+49.3%). Operating
+margin compressed from 42.2% to 36.5% over the same window; gross margin fell
+49.9%→46.6%. SG&A nearly doubled ($207M→$403M) while revenue grew 73%. This
+is a business whose cost base is growing faster than its top line, not one
+riding operating leverage.
+
+## 3. Threads pulled
+
+- **The CEO transition (this is the thesis's center of gravity).** On
+  2026-06-29, Copart's board announced Jeffrey Liaw would step down as CEO
+  effective 2026-07-31, replaced by founder/Executive Chairman A. Jayson
+  Adair — who is the son-in-law of Chairman Willis J. Johnson (8-K, accession
+  0001193125-26-286982). Stock fell ~7% that day ("Copart Stock Plunges as
+  CEO Exits"). On 2026-07-06 Copart held an unscheduled call — read in full —
+  which management itself called "the first time Copart has ever done a call
+  between earnings releases in 30 years." Adair, live: "there is a unit loss.
+  There was an account that was lost... in some ways Copart chose not to do
+  business," directly responding to an analyst's observation that the
+  competitor's units are positive while Copart's insurance units have been
+  negative. He promises restructuring and reacceleration "in three to four
+  quarters." Separately, the severance terms for Liaw (10-year RSU holding
+  period waived, price hurdles on performance-vesting options *eliminated*
+  despite the stock cratering) are a governance yellow flag under
+  founder-family control. **Not a dead end** — this is live and unresolved.
+- **Is the FY2026 deceleration a real fundamental miss or noise?** Quarterly
+  revenue: Q1 FY26 (Oct'25) $1.155B, **Q2 FY26 (Jan'26) $1.122B vs Q2 FY25
+  $1.163B — an actual -3.6% YoY decline**, the quarter that triggered the
+  crash ("Copart Stock Is Crashing on Earnings Miss and Analyst Downgrades,"
+  2026-02-20). Q3 FY26 (Apr'26) recovered to $1.237B, +2.1% YoY. EPS pattern
+  (Robinhood, cross-checked directionally against the revenue print): mostly
+  small beats (Q3'25 in-line, Q4'25 +11%, Q1'26 +5%, Q3'26 +5%) except the
+  one real Q2'26 miss (-10%, $0.36 vs $0.40 est.). This is a genuine, not
+  merely sentiment-driven, deceleration — real enough that sell-side kept
+  cutting price targets *after* hearing Adair's rebuttal (Barclays $32→$26 on
+  2026-07-21, fifteen days after the reassurance call, with the new target
+  below spot). **Not resolved** — I could not independently verify unit-level
+  insurance volumes against RB Global's disclosed figures within this
+  session; the analyst's "losing share" framing and Adair's "one account"
+  rebuttal are both unverified against a common dataset.
+- **Capex intensity vs. the "asset-light" screen inputs (the orchestrator's
+  specific ask).** TTM capex is $346.2M (7.46% of TTM revenue) — but
+  FY2021–FY2025 capex ran $337M–$569M, averaging 12–13% of revenue every
+  single year. The TTM figure is the lowest in six years, well below the
+  5-year range. On the 2026-07-06 call, Adair confirmed this is real and
+  deliberate: "the last 10 years was just half a billion a year in buying
+  land... that's definitely going to slow down," and separately: "we're in a
+  good spot" on network capacity. **But** in the same call he says the new
+  growth plan means "material investments" across all three pillars and open
+  willingness to take on debt for M&A — so land-specific capex may fall while
+  total investment rises. Net effect on owner FCF is genuinely ambiguous, not
+  a clean tailwind. The 10-K Note 15 (Commitments and Contingencies)
+  discloses no multi-year land-purchase or capacity take-or-pay obligation —
+  capex here is discretionary, not contractually locked in, which cuts both
+  ways.
+- **The disclosed terminal risk.** 10-K Risk Factors, verbatim: "a material
+  reduction in accident rates, whether due to... vehicle-related
+  technological advances such as accident avoidance systems and, to the
+  extent widely adopted, the advent of autonomous vehicles, could have a
+  material impact on revenue growth. Similarly, a reduction in total loss
+  frequency rates, due to... sharp increases in used car prices... could
+  also have a material impact on revenue growth." This is the actual
+  structural long-horizon risk, self-disclosed, and it argues for the low
+  end of any terminal-growth assumption (1.5%, not 2.5%+).
+- **Options read (mandatory):** path 2 (Robinhood) ran unconditionally —
+  CPRT is not in the 24-symbol CBOE catalog, so path 1 (`v_iv_rank`) does
+  not apply. Dead end, informative only; see §4's table.
+- **Dead ends:** not separately recorded in original run beyond the options
+  read above.
+
+## 4. Valuation
+
+Live inputs, `/stocks/CPRT/statistics/` and `/financials/`, 2026-07-26:
+market cap $25,867,172,807 (`hover`), net cash $4.11B (net debt/EBITDA
+-2.14, matches the screen input exactly), TTM levered FCF (`fcf` =
+`ncfo`+`capex`) $1,339,233,000, TTM EBITDA $1,919,218,000, company's own WACC
+estimate 9.84%. FCF is levered (post-interest) → paired with market cap, net
+debt left at zero, per the skill's rule. No Damodaran hurdle was computed in
+the original run; the comparison benchmark used is the company's own ~9.8%
+WACC.
+
+| Scenario | Base FCF | Growth (3yr) | Terminal g | Implied annual return |
+|---|---|---|---|---|
+| A — reported TTM as-is | $1.339B | 3/3/3% | 2.0% | **7.43%** |
+| B — capex normalized to 5yr avg ($479M) | $1.206B | 3/3/3% | 2.0% | **6.89%** |
+| C — normalized capex, flat growth (matches actual TTM deceleration) | $1.206B | 1/1/1% | 1.5% | **6.17%** |
+| D — reported TTM, flat growth | $1.339B | 0/0/0% | 1.5% | **6.54%** |
+
+Every scenario, bull to bear, lands **below the company's own ~9.8% WACC**.
+Scenario A is the most optimistic combination tested (capex stays at its
+6-year low *and* growth resumes at 3%) and still only clears 7.43%.
+
+**Options-implied move** (path 2, Robinhood — dead end, informative only).
+ATM 27.5 strike, 2026-09-18 expiry, 54 DTE, bracketing the Sept 3 AMC
+earnings:
+
+| metric | value |
+|---|---|
+| ATM strike | 27.5 |
+| call mark | $1.825 |
+| put mark | $1.250 |
+| mean IV | 35.95% |
+| RV60 | 33.70% |
+| IV > RV60? | YES |
+| RV20 | 43.43% |
+| IV > RV20? | NO |
+
+The two windows *disagree*, so per the skill's rule this is not labeled
+"elevated." Read plainly: the options market is pricing *less* forward
+turbulence than the trailing 20 days actually delivered (which captured the
+CEO-transition shock) — it expects things to calm down, not extrapolate the
+recent chaos. No dated, thesis-specific catalyst existed to run a 2-sigma
+timing refutation against (next earnings, Sept 3, is routine, not the
+thesis's catalyst), so no refutation was attempted — this finding is context
+only, per the one-way-valve rule, and does not support or refute anything
+above. Liquidity-gate verdict: not recorded in original run.
+
+## 5. Falsifiers
+
+- **Would flip to buy:** price falls enough that Scenario A clears ~10%
+  (roughly requires the stock in the low-$20s at unchanged fundamentals), or
+  Q4 FY2026 (reports 2026-09-03 AMC) shows insurance-unit volumes
+  stabilizing with hard numbers, not just management assurance.
+- **Would confirm the pass / turn more bearish:** another quarter of YoY
+  revenue decline; capex reaccelerating toward the historical
+  12-13%-of-revenue range without a matching growth reacceleration (confirms
+  the capex thread's ambiguity resolved badly); further named account losses
+  to RB Global/IAA.
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Whether Copart is structurally losing share to RB Global/IAA**, or lost
+   one account in the ordinary course. Would need each company's disclosed
+   unit-volume series on a common basis — not obtained this session. Its
+   absence does not kill the PASS call (the valuation math is decisive on
+   its own) but it is the single biggest open question for anyone revisiting
+   this name.
+2. **Whether land capex specifically falls while total investment (M&A +
+   tech) rises** — net effect on owner FCF over the next 2-3 years. Would
+   resolve from FY2026 Q4/FY2027 Q1 capex prints and any M&A announcement.
+3. **International revenue mix** — approximated at roughly 15-20% of revenue
+   from stockanalysis.com's geography metric (a derived, not filing-line,
+   figure); not corroborated against the 10-K's own segment footnote in this
+   session.
+4. `data/sec_fundamentals.db` does not carry a row for CPRT (its `companies`
+   table is a 294-ticker curated subset that excludes it) — this write-up
+   relied on the live stockanalysis.com probe and direct EDGAR fetches
+   instead for all financial-statement figures.
+5. **DOJ money-laundering investigation** (10-K Note 15): ongoing since
+   October 2023, into Copart's anti-money-laundering controls for auction
+   platform members. Company states it cannot predict scope or exposure. Not
+   quantifiable; not load-bearing to the valuation call but a live legal
+   contingency.
+
+## 7. Sources
+
+- **Primary:** (SEC EDGAR, CIK 0000900075) FY2025 10-K (filed 2025-09-26,
+  accession 0001628280-25-042946) — Business, Risk Factors, Properties,
+  Competition, Note 15 Commitments and Contingencies. 8-K accession
+  0001193125-26-286982 (2026-07-08 filing, CEO Transition, dated
+  2026-06-23/29).
+- **stockanalysis.com (vetted exception):** live 2026-07-26 —
+  `/stocks/CPRT/statistics/`, `/financials/`,
+  `/financials/income-statement/` (annual + quarterly),
+  `/financials/cash-flow-statement/`, `/financials/balance-sheet/`,
+  `/metrics/revenue-by-geography/`, `/metrics/revenue-by-segment/`,
+  `/transcripts/` index and full text of the 2026-07-06 Investor Update call
+  and the 2026-05-21 Q3 FY2026 earnings-call listing (transcribed by
+  Quartr — primary, transcribed tier; numbers therein corroborated against
+  the filed statements above).
+- **Broker/market microstructure:** (Robinhood MCP, admissible — no
+  already-integrated source covers live quotes, option chains, or the
+  EPS-estimate-vs-actual series for CPRT) `get_earnings_results`,
+  `get_equity_quotes`, `get_equity_historicals`, `get_option_chains`,
+  `get_option_instruments`, `get_option_quotes` — all 2026-07-24/26.
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** `data/composite.db`, `data/options.db`,
+  `data/sec_fundamentals.db`, `data/stocks.db`, `data/earnings.db` —
+  read-only, checked; CPRT carries no composite flag or signal history (this
+  name entered via the `candidates` screen, not composite), is outside the
+  24-symbol CBOE options catalog, and has no row in
+  `sec_fundamentals.companies` (see UNKNOWNs). `stocks.db v_latest`
+  corroborated the screen's input figures (roic, roic5y, fScore, rsi, ch6m,
+  netDebtEbitda) against live data — all matched within normal staleness
+  tolerance.
+- **Low-confidence:** none relied upon; no Reddit/YouTube/expert-network
+  material was consulted for this name.
+
+## Kill-thesis record
+
+**Kill-thesis verdict: FLAWED.** conditions=6, refuted=2, unknown=4.
+
+Per-condition adjudication: not recorded in original run (the six conditions
+were not individually enumerated).
+
+Standing/statistical/options-timing checks: not recorded in original run,
+beyond §4's note that no dated, thesis-specific catalyst existed to run a
+2-sigma timing refutation against.
+
+**Closest attack:** the margin-of-safety check — no scenario tested clears
+the company's own cost of capital (it came closest to landing, and did
+land).
+
+**Flip evidence:** not recorded as a labelled pair in the original run; §5's
+two lists carry the directional evidence.

@@ -1,0 +1,395 @@
+# CI — The Cigna Group — 2026-08-05
+
+Price $270.49 (spot, 2026-08-05 Phoenix) · market cap $71.48B ·
+next earnings 2026-10-29 BMO (Q3 print)
+
+Entry path: candidates screen 2026-08-03 (via_rsi: FCF yield 12.36%, RSI 43.0,
+−11.5% off 52w high, F-score 6). Not composite-flagged (no `ticker_scores`
+row).
+
+## 1. Verdict and thesis
+
+**BUY at $270.49.** kill-thesis: **UNPROVEN** — conditions=5, refuted=0,
+unknown=1.
+
+The implied return clears a demanding hurdle even on the conservative run,
+and the dominant risk is dated, disclosed, and already carries a management
+answer whose early evidence (2027 selling season, retention) is supportive.
+Conviction is capped by the Signature-margin UNKNOWN below.
+
+At $270 the market prices roughly a 12–16%/yr equity return on assumptions
+management is
+currently beating: a scaled toll-road on US drug spend (Express Scripts +
+Accredo) plus a
+deliberately commercial-only insurer that is absent from every line (Medicare
+Advantage,
+Medicaid, ACA exchanges) that broke its peers in 2024–2026. The discount
+reflects a real,
+legislated repricing of the PBM model (Consolidated Appropriations Act, 2026);
+the bet is
+that Cigna converts rebate economics into fee economics (Signature) at the ~4%
+PBS margin
+management claims, while Specialty and Care Services — now the larger Evernorth
+earnings
+engine — keeps compounding on specialty-drug secular growth and biosimilar
+adoption.
+
+**Closest attack:** the short case's melting-lives read — pharmacy customers
+−4% YTD and PBS earnings −27% YoY; if that is trend rather than transition,
+the conservative run's flat FCF base is generous.
+
+Condition tiers not recorded in original run — the five load-bearing
+conditions were counted but not enumerated; the original names only condition
+2 (Signature's ~4% margin claim, the one unknown).
+
+## 2. Business
+
+**Created:** Two distinct value creations. Evernorth (86% of revenue): drug
+purchasing
+scale — negotiating price against manufacturers and pharmacies for 118M pharmacy
+lives —
+plus Accredo's clinically-intensive specialty dispensing (limited-distribution
+access to
+330+ medicines, nursing support for complex therapies). The customer (employer,
+health
+plan, government) gets lower net drug cost than it could negotiate alone; the
+patient gets
+handled logistics for drugs that cannot ship through a retail counter. Cigna
+Healthcare
+(16% of revenue, but 41% of segment adjusted earnings): underwriting and
+administering
+employer health benefits with integrated medical/pharmacy/behavioral data, plus
+the
+industry's largest stop-loss book (>$8B premium) for self-funded employers.
+
+**Captured:** Not "fees" — four distinct mechanisms: (1) spread and rebate
+retention on
+pharmacy volume (the piece the CAA 2026 rewrites); (2) dispensing economics in
+Accredo/Express Scripts Pharmacy — specialty dispensing is where biosimilar
+substitution
+is *margin-accretive* (Q2'26: specialty generics >80% penetration on newer
+products moved
+earnings from PBS into S&CS and grew the total); (3) fee-based services to
+hospitals
+(Shields management services, Verity 340B, CarepathRx); (4) insurance
+underwriting margin
+(Cigna Healthcare pre-tax margin 10.9% in Q2'26) where premiums reprice annually
+against
+cost trend. Segment mix in Q2'26 pre-tax adjusted earnings: S&CS $1,054M, PBS
+$609M,
+Cigna Healthcare $1,276M.
+
+**Protected:** Scale in drug purchasing is a real cost moat (three firms control
+~80% of
+US PBM volume; a new entrant cannot replicate the rebate/network position).
+Accredo's
+limited-distribution contracts are bilateral manufacturer relationships a
+competitor
+cannot copy quickly. Switching costs: PBS retention >97% in 2026, mid-90s
+indicated for
+2027; the three anchor clients (Centene, Prime Therapeutics, DoD TRICARE) are
+renewed
+"through the end of the decade" (FY2025 10-K). The stop-loss book rests on
+claims data
+depth. What is *not* protected: the political legitimacy of rebate economics —
+that
+protection failed in February 2026 when Congress legislated it away on a
+timetable. The
+moat survives as scale + clinical infrastructure; the *capture mechanism* is
+being
+forcibly swapped.
+
+**Operating leverage (Phase 0): negative.** FY21→FY25 revenue +58% ($174.1B →
+$274.9B), GAAP operating income +16% ($7.94B → $9.20B), operating margin 4.6%
+→ 3.3%. Pulled: this is mix, not decay — pharmacy pass-through revenue
+(Q2'26: $57.2B of $71.7B) grows with drug list prices at near-zero
+incremental margin. Per-share economics ran the other way: diluted shares
+−21% since 2021 (340M → 268M), diluted EPS $15.75 → $22.18. Not a dead end,
+but not the decay it resembles.
+
+## 3. Threads pulled
+
+- **The PBM endgame (the load-bearing thread).** FY2025 10-K: CAA 2026 (enacted
+  Feb 2026)
+  requires 100% remittance of rebates/fees to ERISA plan sponsors from Aug 2028,
+  delinks
+  Part D PBM compensation from list price from Jan 2028, any-willing-pharmacy in
+  Part D
+  from Jan 2029. Management's answer is Signature (rebate-free, fee-based):
+  Cigna's own
+  insured book converts 2027, broad launch 2028, claimed ~4% margins "similar to
+  what our
+  legacy pharmacy benefit solutions products were able to deliver" (Q2'26 call).
+  Early
+  evidence: 2027 new business "above the prior two selling seasons combined,"
+  retention
+  mid-90s+. Evidence against: PBS pre-tax earnings −27% YoY in Q2'26 ($609M vs
+  $833M) on
+  anchor-client renewal pricing and transition spend — the repricing is already
+  visible.
+- **The print vs the call.** The earnings release carries what the call omitted:
+  total
+  pharmacy customers **fell 4% YTD** (123.6M → 118.2M, "expected client
+  transitions and
+  lower membership from health plan clients"); total customer relationships −3%
+  YTD.
+  Evernorth Q2 pre-tax adjusted earnings *fell 2%* YoY in aggregate. The
+  headline
+  narrative (raise, beats) sits on Cigna Healthcare (+17%) and S&CS (+22%)
+  offsetting a
+  shrinking PBS.
+- **Stop-loss recapture (the Q4'24 wound).** Q4 2024 was a $1.18 miss (est
+  $7.82, actual
+  $6.64) on stop-loss medical costs. Q2'26 call: recapture "tracking in line,"
+  stable
+  high-cost-claimant frequency across attachment points, >$8B premium book. Six
+  consecutive modest beats since the miss (+$0.05..$0.40) — managed guidance
+  restored.
+  (Robinhood "actual" EPS is adjusted, not GAAP: Q2'26 adjusted $7.78 vs GAAP
+  diluted
+  $6.29 in the release and in `sec_fundamentals` — the gap is amortization of
+  acquired
+  intangibles $1.12, special items $0.59, investment gains −$0.21.)
+- **Peer-blowup exposure (why CI trades at 8.5× forward while peers melted).**
+  Checked
+  line by line: Medicare Advantage sold to HCSC (closed Q1 2025); Individual &
+  Family
+  Plans (ACA exchange) exit announced April 2026, effective Jan 1 2027 (margins
+  positive
+  but below target; modest capital release; some stranded overhead in 2027); no
+  Medicaid
+  risk book. Remaining medical risk is employer commercial + stop-loss, priced
+  annually.
+  Cost trend "high single digits, elevated but stable — no acceleration" (Q2'26
+  call).
+  MCR 84.5% in Q2, FY guide 83.7–84.7% unchanged.
+- **Recency sweep (post-call, through 2026-08-05).** Two downgrades after the
+  print:
+  Raymond James 8/3 (Strong Buy→Outperform), Jefferies 8/4 (Buy→Hold), amid five
+  PT
+  raises 7/31 (Baird $362, Guggenheim $361, Barclays $310, Wells Fargo $307, DB
+  $305).
+  Form 144 filed 8/4: proposed sale of 19,436 shares (~$5.37M) — seller name not
+  parsed
+  from the XML; small vs $71B cap but the only ownership filing since the print.
+  10-Q
+  filed 7/30. Stock −5.5% since the 7/29 close despite the raise — the market
+  read the
+  pharmacy-lives decline and PBS trajectory, not the EPS beat.
+- **IDR / surprise billing (bounded, open).** Management: industry-wide $15B
+  processed
+  through IDR in 2025, "clear abuses," settlements favoring providers — but
+  "manageable
+  within our planning and pricing assumptions." No company-specific
+  quantification.
+- **Commitments footnote (asset-light check).** FY2025 10-K: purchase
+  obligations total
+  $6.3B ($3.2B investment commitments, $3.1B IT/service contracts; $2.1B due in
+  2026) —
+  against ~$9B/yr FCF and $1.2B capex, no hidden capex wave. The low-capex base
+  survives.
+- **Insider alignment.** `sharesInsiders` 0.38%, institutions 92.4% —
+  professional
+  management, low skin in the game. New CEO Brian Evanko (internal, ex-CFO)
+  since 2026;
+  first two quarters under him beat and raised.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; CI is not in the
+  CBOE 24 and `data/options.db` has no history for it, so path 1 does not
+  apply). See §4 for the metric table.
+- **Dead ends:** GLP-1 ruled out — growth moderating; coverage down-ticks;
+  15–20% of Cigna Healthcare book covers weight-management. Modest PBS revenue
+  headwind, immaterial to medical costs. Doesn't carry the thesis either way.
+  Risk adjustment — final 2025 RA data confirmed positions; "not a driver"
+  (CFO). Rules out a hidden IFP true-up before the exchange exit. Transcript
+  corpus: not swept (74 calls back to 2018-05). No thread here turns on
+  multi-year management phrasing; the load-bearing claims are all current-state
+  (CAA dates, Signature margins, selling season). The corpus can only prove
+  presence, and nothing above needs it.
+
+## 4. Valuation
+
+Inputs live from `/stocks/CI/statistics/` (hover values, 2026-08-05): market cap
+$71,477,051,463; TTM levered FCF (`fcf` = ncfo $10.277B + capex −$1.164B) =
+$9,113M;
+paired with **market cap**, `--net-debt 0` (the flow is post-interest; EV $96.1B
+is the
+wrong denominator for it). Gross debt $31.88B, net debt $24.62B, debt/EBITDA
+2.51×,
+interest coverage 7.0× — serviced inside the levered flow. Minority interest:
+TTM NCI
+income ≈ $0.57B (netincCompany $6.98B vs common $6.42B), ~8% of consolidated
+income; the
+NCI *cash* claim was not separately pulled (UNKNOWN below), so one run haircuts
+FCF 8%.
+
+Hurdle: not computed in the original run.
+
+| scenario | base FCF | growth ×5 | terminal | implied return |
+|---|---|---|---|---|
+| base (TTM) | $9.113B | 4% | 2.0% | **16.04%/yr** |
+| NCI-haircut | $8.384B | 4% | 2.0% | **14.93%/yr** |
+| conservative | $7.800B | 2% | 1.0% | **12.47%/yr** |
+
+The conservative run uses FY26 guidance (OCF ~$9B minus ~$1.2B capex), growth
+below the
+company's 4.7% 3y consensus revenue growth and far below the 10–14% EPS
+algorithm, and a
+terminal rate cut to 1% specifically to price the disclosed terminal risk: **the
+CAA 2026
+rewrite of PBM compensation**. A 2% terminal rate survives that risk only if
+Signature's
+fee model actually replaces rebate economics at comparable margin — management's
+claim,
+not yet a demonstrated fact — so the honest terminal case is between the two
+rows. Even
+so, the floor of the range is ~12%/yr: a high implied return on conservative
+assumptions.
+For context: trailing P/E 11.19, forward 8.53, P/FCF 7.84, FCF yield 12.75%,
+dividend
+2.31% (all stockanalysis, 2026-08-05). The trailing 3.55% buyback yield is
+2025's pace,
+not today's: YTD through 7/29/2026 repurchases were only $250M / 0.9M shares (Q2
+release) — 2026 capital is going to deleveraging (debt/cap 42.8% → 40% target)
+plus the
+dividend, so quote ~2.3% current cash yield, not 5.9%.
+
+Margin trajectory note: this is not a mid-expansion margin story (Phase 4's Uber
+case) —
+consolidated margins are structurally thin and drifting with mix; the
+flat-growth model
+is the right shape. Upside torque, if any, comes from PBS margin *recovery*
+post-2028,
+which none of the runs price.
+
+**Options-implied move (path 2 — Robinhood stopgap; CI is not in the CBOE 24 and
+`data/options.db` has no history for it, so path 1 does not apply).** Expiry
+2026-12-18
+(135 DTE) — the nearest listed expiry bracketing the 2026-10-29 (before-open) Q3
+print;
+no November expiry is listed. ATM $270 straddle: call mark 20.85, put mark
+18.55, mean
+ATM IV 30.06%:
+
+| metric | value |
+|---|---|
+| spot | 270.49 |
+| expected absolute move (MEAN, not a ceiling) | 14.57% |
+| 1-σ move | 18.28% |
+| ATM IV | 30.06% |
+| RV60 | 30.66% |
+| RV20 | 35.55% |
+| IV > RV60? | NO |
+| IV > RV20? | NO |
+
+IV is **not elevated** — both windows agree — the market is pricing *less* vol
+ahead than
+it just realized, i.e. no catalyst premium and no crash pricing. The thesis
+makes no
+dated timing claim, so no `--required-move` refutation was run; the table is
+recorded as
+the mandatory options read. Liquidity is thin (call OI 72 / volume 1; put OI 455
+/
+volume 0; spreads 8.2% / 7.0% of mark — spread gate passes, volume floor fails
+its first
+leg, median-OI leg not computed) — treat the table as directional, and note the
+gate's
+four constants are uncalibrated.
+
+## 5. Falsifiers
+
+- **Break —** Pharmacy lives keep leaking: total pharmacy customers fell 4%
+  YTD to 118.2M. If the "strongest selling season" does not stabilize lives by
+  the Q2'27 print, the volume franchise is eroding under the model transition.
+  Sell.
+- **PBS fails to trough:** PBS pre-tax earnings −27% YoY in Q2'26; management
+  implies
+  stabilization into 2027 and growth as Signature scales 2028. A second year of
+  double-digit PBS earnings decline in 2027 falsifies the ~4%-margin conversion
+  claim.
+- **MCR breaks the band:** FY26 MCR above 84.7%, or stop-loss high-cost-claimant
+  frequency turning up (the exact Q4'24 failure mode recurring).
+- **Anchor client loss or mid-contract repricing:** Centene, Prime, or TRICARE.
+- **Capital pivot:** any large (>$10B) acquisition — the model needs the 5.9%
+  shareholder yield, not another integration.
+- **Regulatory expansion beyond CAA 2026:** federal action in the Arkansas-style
+  direction (PBM ownership of pharmacies) — that reaches Accredo, the crown
+  jewel, not
+  just the PBS rebate pool.
+- **Investor Day (September 2026):** a cut to the 10–14% EPS algorithm or to the
+  Evernorth long-term growth framing.
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Signature margins at scale.** The ~4% claim has no external verification
+   before the
+   2027 insured-book conversion prints; the first self-funded scale evidence is
+  2028.
+   Does not kill the thesis (the conservative run assumes no recovery), but caps
+   conviction and forces the wide 12–16% range.
+2. **NCI cash claim.** Whose interests make up the ~$0.57B TTM NCI income
+   (Evernorth
+   JVs/partnerships) and the actual cash distributed to them was not pulled; the
+  income
+   line can understate the cash claim. Resolution: FY2025 10-K equity/NCI note.
+   Bounded by the 8%-haircut run; absence does not kill.
+3. **IDR exposure size.** "Manageable" is management's word; no dollar
+   disclosure.
+   Would come from state filings or a bad quarter. Bounded by the MCR falsifier.
+4. **Form 144 seller identity** (~$5.37M, 8/4). Individual name did not parse
+   from the
+   filing XML; retrievable from EDGAR full text. Small enough not to move the
+  call.
+5. **Q2 Specialty over-earn.** Management says part of Q2's S&CS beat was early
+   biosimilar-adoption timing that will not repeat at the same magnitude in H2 —
+  the
+   degree of borrow-forward is not quantified.
+
+## 7. Sources
+
+- **Primary:** FY2025 10-K (filed 2026-02-26; CAA 2026 provisions, purchase
+  obligations, anchor-client renewals, segment structure); Q2'26 earnings
+  release, 8-K
+  Ex-99.1 (filed 2026-07-30; all Q2 segment figures, customer table, guidance,
+  GAAP↔adjusted reconciliation); Form 144 (2026-08-04); 10-Q (2026-07-30, not
+  read in
+  full); submissions index via EDGAR (Forms 3/4/144 sweep). Primary, transcribed
+  (Quartr via stockanalysis): Q2'26 earnings call 2026-07-30 — management
+  framing of
+  Signature, selling season, stop-loss, IDR, GLP-1, cost trend. Load-bearing
+  numbers
+  cross-checked against the release.
+- **stockanalysis.com (vetted exception):** `/stocks/CI/statistics/` (market
+  cap, FCF,
+  debt, ratios, short interest, F-score, hover precision),
+  `/financials/income-statement/`
+  (FY history, NCI line), `/financials/` overview (cash-flow history),
+  `/transcripts/`
+  index, news feed (analyst actions 7/31–8/4).
+- **Broker/market microstructure:** Robinhood MCP (admissible — no integrated
+  official
+  source covers these fields): `get_earnings_results` (estimate-vs-actual
+  pattern;
+  actuals are adjusted EPS, flagged), option chain/instruments/quotes (ATM IV,
+  marks,
+  OI), equity quote (spot), daily bars (closes for RV). Not primary; labelled.
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** `stocks.db` (price 274.05 on 8/4, next
+  earnings 2026-10-29), `scorer.db` `candidate_appearances` (screen entry
+  2026-08-03),
+  `sec_fundamentals.db` (GAAP Q2 cross-check), `composite.db` (no flag),
+  `earnings.db`
+  (no upcoming row inside its window).
+- **Low-confidence:** none used.
+
+## Kill-thesis record
+
+**UNPROVEN** — conditions=5, refuted=0, unknown=1. The unknown is condition
+2: Signature's ~4% margin claim has no verifiable existence before the 2027
+insured-book conversion prints. Per-condition adjudication otherwise not
+recorded in original run. Standing/statistical/options-timing checks not
+recorded in original run beyond §4's no-dated-timing-claim note.
+**Closest attack:** the short case's melting-lives read (detail in §1).
+**Flip evidence:** not recorded as such — §5's falsifier list is the nearest
+original equivalent.

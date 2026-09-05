@@ -1,0 +1,477 @@
+# UTHR — United Therapeutics — 2026-08-05 (reopen of 2026-07-27, trigger: q2-print-tyvaso-sequential)
+
+Price $519.01 (2026-08-05 close, +0.06% on the print) · market cap $22.03B ·
+net cash $3,803.4M, zero debt · next earnings 2026-10-28 BMO (unverified)
+
+**Reopen re-research of `research/UTHR-2026-07-27.md`** (prior verdict FLAWED,
+reopen=2026-08-05:q2-print-tyvaso-sequential; prior ownership call: pass at $527.94).
+The reopen question: did the Q2 2026 print (2026-08-05 BMO) show nebulized Tyvaso
+stabilizing sequentially, and did total Tyvaso return to YoY growth? Not
+composite-flagged, not on tonight's `candidates` screen (27 names, UTHR absent) — this
+is a pure reopen.
+
+## 0. The reopen question, answered first
+
+**Half fired, and the half that fired is the smaller half.** Nebulized Tyvaso did
+roughly stop falling sequentially — $127.2M (Q1) → **$126.0M** (Q2), **−0.9%**, the
+flattest quarter in five. But that is one quarter, not the two the prior thesis's
+falsifier required, and the second leg — **total Tyvaso returns to YoY growth** — went
+the wrong way: **−4% YoY** ($452.6M vs $469.6M), worse than Q1's −2%. Falsifier not met.
+
+| prior falsifier | actual | status |
+|---|---|---|
+| Nebulized Tyvaso stabilizes sequentially (two quarters required) | $127.2M (Q1) → $126.0M (Q2), −0.9% — the flattest quarter in five | Half fired — one quarter, not the two required |
+| Total Tyvaso returns to YoY growth | −4% YoY ($452.6M vs $469.6M), worse than Q1's −2% | Not met |
+| Sell trigger: a second quarter of Tyvaso DPI quantity decline (not just price-carried growth) | DPI −1.1% sequential (first sequential decline); growth flipped to price-carried (qty +$6.9M vs price +$9.4M) | One quarter from firing |
+| Sell trigger: another onerous-contract accrual | MannKind onerous-supply accrual recurred — $7.5M in Q2 ($34.3M H1) | Fired outright |
+
+**The deterioration did not stop; it moved up the franchise.** Three findings in one
+document, all new:
+
+| | Q1 2026 | Q2 2026 | read |
+|---|---|---|---|
+| Nebulized Tyvaso | $127.2M | $126.0M (−18% YoY) | −0.9% seq — the one stabilizing line |
+| Tyvaso DPI | $330.3M | **$326.6M** (+3.6% YoY) | **−1.1% seq — first sequential decline**; YoY growth halved from +9% |
+| DPI growth mix | qty +$16.0M, price "to a lesser extent" | **qty +$6.9M vs price +$9.4M** | growth is now **price-carried**, not volume — and the filing's own wording flipped |
+| Total Tyvaso | $457.5M | $452.6M | third consecutive sequential decline (478.0 → 464.3 → 457.5 → 452.6) |
+| MannKind onerous-supply accrual | $26.8M | **$7.5M** ($34.3M H1) | recurred — the prior thesis's stated sell trigger |
+
+And the company, for the first time, names DPI itself: "We believe the availability of
+competitive therapies negatively impacted sales of Nebulized Tyvaso, **Tyvaso DPI**, and
+Remodulin" (Q2 8-K/EX-99.1). Prior quarters confined that language to nebulized Tyvaso.
+The prior thesis's sell trigger was "a second quarter of Tyvaso DPI quantity decline (not
+just price-carried growth), **or** another onerous-contract accrual" — the second clause
+fired outright and the first is one quarter from firing.
+
+**Two things moved the other way, and one is material.**
+
+1. **The capex question is now scoped and dated — the prior run's second refuted
+   condition partly reverses.** The 10-Q's budgeted facility capex: **$400M** (FY2025
+   10-K, for 2026–2028) → **$290M** (Q1 10-Q) → **$180M for July 1 2026 through end-2028**
+   (Q2 10-Q). Each quarter drew ~$110M against actual capex of $100.8M and $108.0M — i.e.
+   this budget *is* essentially all of current capex, and $180M over ten quarters implies
+   ~$18M/quarter of construction ahead versus ~$105M/quarter today. That moves the central
+   implied return from ~6.4% to ~8.0–8.5% (§4). **Process miss:** the $290M sentence was in
+   the Q1 10-Q the 2026-07-27 run read; it concluded "capex is not winding down" without
+   the drawdown series. Logged.
+2. **Two NDAs submitted** (nebulized Tyvaso sNDA in IPF, late June; ralinepag NDA in PAH),
+   priority-review determination expected "shortly" — 6-month review if granted, 10 if not
+   [call]. ADVANCE OUTCOMES published in The Lancet 2026-07-29.
+
+**Two new negatives the prior run could not have known.**
+
+1. **Guidance withdrawn and the one hard forward number walked back.** COO Benkowitz:
+   results "were below our expectations"; "we are **not reaffirming or updating** any
+   prior revenue growth expectations for 2026 today." And on the $4B end-2027 run rate
+   that the Q1 call framed as achievable on the existing portfolio: "We still see a path
+   to achieve this, although **it has certainly narrowed**. Factoring in some of the
+   revenue from our anticipated IPF and ralinepag launches next year should get us there."
+   The claim now needs the launches. Asked directly whether the Street's $1.047B H2 Tyvaso
+   consensus is achievable, management declined to answer.
+2. **The bull case's destination market is already occupied.** Boehringer's **JASCAYD**
+   (nerandomilast) is FDA-approved for **both IPF and PPF** — the indication UTHR is filing
+   into and the one its H2-2027 TETON-PPF readout targets — with, per the covering analyst
+   on UTHR's own call, an "impressive" launch. Boehringer also owns OFEV. That is the
+   Yutrepia pattern repeating one market ahead of UTHR: win the trial, arrive second.
+
+**Net:** the valuation leg improved materially; the growth leg degraded further; the price
+is unchanged. The pass stands, and stands on different ground than it did nine days ago.
+
+## 1. Verdict and thesis
+
+**PASS at $519.01** (ownership call). kill-thesis: **FLAWED** — conditions=6,
+refuted=3, unknown=3, survived intact=0.
+
+A genuinely excellent business — 44.4% operating margin, 31.8% ROIC, $3.8B net cash, no
+debt — whose revenue is shrinking, whose operating margin has compressed three consecutive
+years, and whose 58%-of-revenue franchise is being substituted product by product. The
+newly-scoped capex takes the defensible implied return from ~6.4% to **~8.0–8.5%/yr on
+flat normalized FCF** (~9.5% at 5% growth), against a stockanalysis WACC of 7.35%. A
+65–115bp premium is not payment for a business that just withdrew its own growth framing.
+
+**Closest attack:** not labeled as such in the original run; the Kill-thesis record
+names condition 2 as the strongest refutation.
+
+Load-bearing conditions: enumerated and adjudicated in the Kill-thesis record.
+Condition tiers not recorded in original run.
+
+> Decision support only. No order, no size. `data/*.db` read-only. Today's figures are the
+> live stockanalysis probe, EDGAR, and Robinhood MCP (live-over-stale, Phase 0). Coverage
+> carried from 2026-07-27: `sec_fundamentals.db` has **no UTHR row** (EDGAR cross-checks
+> done by reading filings directly); `composite` has never flagged UTHR (bullish=0,
+> bearish=0, score_sum=0, snapshots 12 and 22; absent from the current snapshot 34).
+
+## 2. Business
+
+Unchanged from `UTHR-2026-07-27.md` §2 — treprostinil delivered four ways (infused
+Remodulin, nebulized Tyvaso, dry-powder Tyvaso DPI, oral Orenitram) for PAH and PH-ILD;
+~86% gross margin specialty-pharmacy capture; a **device-and-channel** moat, not a
+molecule moat, since the '793 composition patent was invalidated.
+
+**Q2 is the direct test of that moat, and it did not hold the line.** The prior thesis's
+framing was that the MannKind Crystal Carrier device IP insulated DPI while nebulized
+Tyvaso absorbed Yutrepia. One quarter later DPI declined sequentially, its growth is
+price rather than volume, and the company itself lists DPI among the products competition
+is hurting. The mechanism is real but it is a *speed bump*, not a wall.
+
+Additions this quarter: **Thymmune Therapeutics** acquired 2026-07-01 — $140.0M paid,
+**$160.0M contingent** ($60M first-patient-dosed, $100M BLA acceptance) [10-Q, subsequent
+event]. Sales force **roughly doubled**, in the field July 1 [call]. Neither the doubled
+force's cost nor its revenue contribution is disclosed anywhere.
+
+**Operating leverage (Phase 0): negative — and has been for three years.** Revenue /
+operating income / margin: FY2022 $1,936.3M / $979.7M / 50.6% → FY2023 $2,327.5M /
+$1,184.9M / 50.9% → FY2024 $2,877.4M / $1,377.0M / 47.9% → FY2025 $3,182.7M / $1,492.5M
+/ 46.9% → **TTM $3,154.5M / $1,401.8M / 44.4%**. Revenue up 36% since FY2023 against
+operating income up 18%; and the last leg is revenue *down* 0.9% with operating income
+down 6.1%. Q2 alone: operating income **$330.8M vs $364.5M, −9.2%**, margin 42.2% vs
+45.6%.
+
+## 3. Threads pulled
+
+- **The reopen thread** — resolved in §0; the sequential table is the finding.
+- **The EPS beat is a tax rate.** Q2 diluted EPS $7.27 vs $6.41 (+13%) on operating income
+  −9.2%. Effective tax rate **11% vs 24%**, "primarily due to increased excess tax benefits
+  from share-based compensation" [8-K/EX-99.1]. Robinhood's actual ($7.27 vs est $6.86,
+  `verified=true`) reconciles exactly to the filing — no discrepancy, but the beat is not
+  operating.
+- **The same tax benefit is inside operating cash flow.** H1 cash taxes paid **$102.5M vs
+  $253.9M** a year earlier — a $151.4M swing driven by option-exercise deductions, with
+  H1 proceeds from option exercises of $194.6M [10-Q cash flow]. The FCF the valuation
+  runs on is partly funded by the dilution the prior thesis flagged. Scenario H in §4
+  prices that haircut.
+- **The CEO's selling programme is now bounded — and it is 4.1% of the company.** The
+  2026-08-05 Form 4 discloses the plan's terms for the first time: a 10b5-1 adopted
+  2025-11-07 running "until the earlier of (a) the exercise of **1,734,410 stock options**,
+  all of which expire on **March 15, 2027**; or (b) **December 31, 2026**." At the observed
+  9,500/day cadence (exercise at $135.42, same-day sale at ~$512–520, ending each day at
+  exactly 324,443 trust shares), that is ~$900M of stock — **4.1% of shares outstanding**
+  — issued and sold inside fourteen months. Rothblatt filed 137 Forms 4 since the plan's
+  adoption (EDGAR count, CIK 0001106578), implying ~1.30M options exercised and **~0.3–0.45M
+  remaining, i.e. roughly 30–45 more trading days** — *estimate from filing counts, not a
+  disclosure*, so read it as a bound. Carries no view (the plan is pre-arranged and the
+  options expire), but it is the mechanism by which net share count falls only 3.2%/yr
+  despite $1.5B of accelerated buyback.
+- **Buyback capacity is nearly spent.** The 2026 ASRs completed (2,759,343 shares total;
+  final tranche settled August 2026). **$500M remains** of the $2.0B authorization,
+  expiring 2027-03-09 [8-K/EX-99.1]. The offset to the option issuance is running out
+  before the issuance does.
+- **Competitors named by the company itself.** The 10-Q's own forward-looking list:
+  generic Remodulin, Uptravi, **Merck's Winrevair**, **Liquidia's Yutrepia**, and
+  prospectively **Insmed's TPIP** (treprostinil palmitil inhalation powder). Five named
+  threats across every leg of the portfolio.
+- **Litigation status (dead end, but a live one).** The only patent left in the Delaware
+  case is the '327 (expires 2042, PH-ILD dosage method); trial was June 2025 and the
+  parties are **still awaiting the court's decision** more than a year later. A win would
+  force the PH-ILD indication off Yutrepia's label — the single largest possible reversal
+  available to this thesis, undated and unhandicappable. The May-2027 '782 case survived a
+  denied preliminary injunction. Marked UNKNOWN, not credited.
+- **Launch economics carry embedded costs.** Ralinepag DPI approval triggers a **$250.0M
+  milestone to Arena/Pfizer** plus a low-double-digit tiered royalty, and up to $35M of
+  MannKind development milestones plus a **10% royalty on ralinepag DPI net sales** [10-Q].
+  The "multi-billion-dollar catalyst" is not gross margin.
+- **Options read (mandatory):** path 2 only (Robinhood stopgap; path 1 N/A — UTHR not
+  in the 24-symbol CBOE catalog); liquidity gate FAILED — see §4's table.
+- **Dead ends:** (1) The June 18 volume spike (2.0M shares) from the prior run remains
+  unexplained — no filing, no dated news; still UNKNOWN. (2) Liquidia's Q2 does not report
+  until 2026-08-12, so the handoff arithmetic cannot be closed this run (Q1 2026 LQDA
+  revenue $132.87M; LQDA $89.24, near highs — broker/low-confidence tier). (3) The ticker
+  news feed shows nothing adverse dated after the print; the only post-7/27 items are the
+  Lancet publication (7/29) and a JPMorgan PT raise to $687 (7/23, low-confidence tier).
+  (4) Analyst consensus is unmoved and remote: price target $659.92, 15 analysts, Buy,
+  3-yr revenue forecast +9.98%/yr — against a company that just declined to forecast one
+  half-year. Recorded as a disagreement, not as evidence.
+
+## 4. Valuation
+
+Live inputs, `/stocks/UTHR/statistics/` `hover` fields, 2026-08-05 (Q2 ingested — TTM
+`ncfo` $1,685.2M and `capex` −$592.2M reconcile exactly to the four quarterly figures):
+market cap **$22,030,278,894**; TTM levered `fcf` **$1,093,000,000**; D&A $91.5M; net cash
+$3,803.4M; zero debt. Levered flow ↔ **market cap**, `--net-debt` 0 per the pairing rule.
+Interest income (~$126M/yr) already sits inside `ncfo`, so the net cash is in the flow —
+do not also discount it against EV. No minority interests.
+
+No hurdle computed this run; comparisons use the stockanalysis WACC (7.35%).
+
+**The capex question, which is the whole valuation.** TTM capex is $592.2M against $91.5M
+of D&A (6.5×). The 10-Q now scopes it: **$180M budgeted for July 1 2026 → end-2028**, down
+from $290M (Q1 10-Q) and $400M (FY2025 10-K), drawn down ~$110M per quarter against actual
+capex of $100.8M and $108.0M. Forward construction ≈ $18M/quarter. But pre-build baseline
+capex was already **$230.4M (FY2023) and $246.5M (FY2024)** — 2.5× D&A — so "capex
+converges to D&A" is still unsupported. I model **normalized capex ~$200M/yr**
+(ncfo − $200M = **$1,485.2M**), between the scoped build and the historical baseline.
+
+| # | scenario | base FCF | growth ×3 | terminal | implied return |
+|---|---|---|---|---|---|
+| A | TTM reported FCF, flat | $1,093.0M | 0% | 2% | **6.78%** |
+| B | TTM FCF, patent-cliff terminal | $1,093.0M | 0% | 0% | **4.96%** |
+| C | TTM FCF, 5% growth | $1,093.0M | 5% | 2% | **7.50%** |
+| D | TTM FCF, 10% growth | $1,093.0M | 10% | 3% | **9.16%** |
+| **E** | **normalized capex $200M, flat** | **$1,485.2M** | **0%** | **2%** | **8.50%** |
+| F | normalized capex, 5% growth | $1,485.2M | 5% | 2% | **9.46%** |
+| G | normalized capex, 10% growth | $1,485.2M | 10% | 3% | *11.34%* |
+| H | normalized capex **less** $200M tax-benefit haircut | $1,285.2M | 0% | 2% | **7.62%** |
+| I | E on the diluted claim (45.8M × $518.68 = $23.76B) | $1,485.2M | 0% | 2% | **8.03%** |
+| K | A on the diluted claim | $1,093.0M | 0% | 2% | **6.43%** |
+
+**Row E is the central case and row H is the honest stress on it.** H removes $200M of the
+$151.4M-per-half-year cash-tax benefit that excess SBC deductions are currently supplying —
+a benefit that is a function of the option exercises, i.e. of the dilution, i.e. not a
+durable operating flow. It prints **7.62% against a 7.35% WACC**: a 27bp premium.
+
+Row G (11.34%) is italicised because it requires 10%/yr FCF growth from a company whose
+TTM revenue is below FY2025, whose largest franchise is declining, and which declined to
+give a half-year outlook this morning. It is not a case; it is arithmetic.
+
+**Terminal-growth check against the disclosed endgame risk.** Unchanged and unresolved:
+Orange Book patents span 2027–2042, the '793 (May 2027) is invalidated, the '782 expires
+May 2027, PH-ILD exclusivity lapsed May 2025, and the '327 (2042) ruling has been pending
+since a June 2025 trial. The only thing that carries cash flows past the 2030s is either
+the IPF/PPF label — into a market Boehringer already holds — or xenotransplantation, whose
+own 10-Q language says success means *more* capital intensity: if xeno products are
+approved "we likely will need to continue building additional DPF facilities… very
+capital-intensive." **2% terminal is an assumption, not a finding**; row B (0% terminal)
+shows the cost of it failing — 4.96%.
+
+**Options-implied move — path 2 only (Robinhood stopgap).** Path 1 N/A: UTHR is not in the
+24-symbol CBOE catalog, so no `options.db` history exists for it. Expiry **2026-09-18**
+(**44 DTE**), chosen because it brackets the sNDA-acceptance / priority-review
+determination management said would come "shortly" — **and contains no earnings** (Q3 is
+2026-10-28), which is the one condition under which the trailing-RV comparison is not
+mechanically rigged. ATM strike 520 (spot 519.01); IV is the mean of call 36.89% / put
+36.35%.
+
+| metric | value |
+|---|---|
+| spot | 519.01 |
+| dte (calendar days) | 44 |
+| ATM IV | 36.62% |
+| expected absolute move (MEAN, not a ceiling) | 10.13% |
+| 1-σ move | 12.71% |
+| RV60 | 18.51% |
+| IV > RV60? | **YES** |
+| RV20 | 15.59% |
+| IV > RV20? | **YES** |
+
+Elevated on both windows — and unusually, not by the stopgap's normal failure mode, since
+no scheduled earnings sits inside this window while both RV windows contain the pre-print
+drift. The market is pricing something in the next six weeks at roughly twice trailing
+vol. **LIQUIDITY GATE FAILED → UNRELIABLE; no part of this verdict leans on it.** Call
+bid 25.10 / ask 29.10 (spread $4.00 = 14.8% of the $27.10 mark), put bid 22.90 / ask 28.00
+($5.10 = 20.0% of the $25.45 mark); call volume 7, put volume 0; OI 145 / 25. The thesis
+states no dated numeric move claim, so the 2-sigma refutation instrument is **NOT
+APPLICABLE**; recorded as the mandatory thread only.
+
+## 5. Falsifiers
+
+**What would flip this to a buy:**
+
+- **Q3 (2026-10-28) delivers the "H2 stronger than H1" claim** — total Tyvaso back to YoY
+  growth with DPI growth **volume-led** (quantity contribution exceeding price), in the
+  first full quarter with the doubled sales force deployed.
+- **No further MannKind onerous-supply accrual**, which would mean the six-year commitment
+  is finally at or below achievable demand.
+- **IPF sNDA accepted with priority review and a broad label**, plus the 7-year orphan
+  exclusivity — and a quantified peak-sales frame that survives JASCAYD's presence.
+- **Management restores a numeric 2026/2027 outlook.** The withdrawal is the single most
+  informative event in this print; its reversal would be the same in the other direction.
+- **A '327 ruling forcing PH-ILD off Yutrepia's label** — the largest single available
+  reversal, undated.
+- Price alone: flat normalized FCF (row E) implies 10%/yr at roughly **$375–400/share**, a
+  ~25% drawdown. The realistic flip is evidence, not price.
+
+**What would make me sell if I owned it:** a second consecutive sequential decline in
+Tyvaso DPI, or the disclosed cost of the doubled sales force landing without a
+corresponding revenue inflection, or capex re-guided upward on xeno approval before the
+$180M budget is spent.
+
+**Reopen trigger:** 2026-10-28: q3-h2-acceleration-and-dpi-volume — Q3 print: the first
+full quarter with the doubled sales force deployed, the direct test of "H2 stronger than
+H1," and the second reading on DPI's sequential line.
+
+## 6. UNKNOWNs
+
+1. **Peak sales for Tyvaso-in-IPF/PPF and ralinepag.** Deferred by management for the third
+   consecutive call. No disclosure supports or refutes "multi-billion." Absence does not
+   kill the thesis but it means conditions 4 cannot be sized, only believed — and JASCAYD's
+   prior occupancy makes the belief more expensive than it was.
+2. **Steady-state capex after 2028.** The scoped build is $180M; the deferred xeno build is
+   explicitly unbounded and explicitly conditioned on *success*. No capital plan beyond 2028
+   exists. This is the swing factor between a 6.8% and an 8.5% implied return.
+3. **The cost of the doubled sales force.** In the field since July 1; no dollar figure in
+   the release, the 10-Q, or the call. It lands on a shrinking revenue base and it is the
+   most likely source of the next margin step-down.
+4. **Which Tyvaso patent expires in 2027 and whether it blocks** (carried). The 10-K gives
+   only the 2027–2042 range; resolving it needs an Orange Book pull per patent number,
+   still not done. Load-bearing for terminal growth.
+5. **The '327 ruling.** Pending 13 months after a June 2025 trial. Timing and outcome both
+   unknowable.
+6. **DEF 14A compensation metrics** — unread for a second consecutive run. Should be read
+   at the next reopen.
+7. **Efficacy science I cannot evaluate** (carried). TETON-1/-2 and ADVANCE OUTCOMES are
+   statistically strong (ADVANCE OUTCOMES now peer-reviewed in The Lancet, 2026-07-29); I
+   cannot judge whether the FVC effect translates to the uptake management projects against
+   an approved oral competitor, nor handicap xenotransplantation at all. Marked UNKNOWN,
+   not credited.
+8. **The June 18 volume spike** (2.0M shares) — still unexplained (carried).
+
+## 7. Sources
+
+- **Primary:** (SEC EDGAR) Q2 2026 8-K + EX-99.1 (2026-08-05, acc. 0001082554-26-000028) —
+  revenue by product and geography, quantity-vs-price attribution, the $7.5M supply-agreement
+  loss, ETR 11% vs 24%, ASR completion and $500M remaining authorization, income statement
+  and selected balance sheet. Q2 2026 10-Q (2026-08-05, acc. 0001082554-26-000027) — cash
+  flow statement (H1 ncfo $776.9M, PP&E purchases $208.8M, non-cash PP&E additions $104.1M,
+  cash taxes $102.5M vs $253.9M, option-exercise proceeds $194.6M), **the $180M July-2026→2028
+  capex budget**, Thymmune asset-acquisition note ($140.0M + $160.0M contingent), Liquidia
+  litigation note ('327 ruling pending, '782 case), Arena/Pfizer $250M ralinepag-DPI milestone
+  and MannKind 10% royalty, named-competitor list including Insmed TPIP. Q1 2026 8-K/EX-99.1
+  (acc. 0001082554-26-000021) — Q1 DPI $330.3M for the sequential comparison. Q1 2026 10-Q
+  (acc. 0001082554-26-000020) — the $290M capex budget. FY2025 10-K (acc. 0001082554-26-000006)
+  — the $400M capex budget. Form 4 2026-08-05 (acc. 0001106578-26-000113) — 10b5-1 plan terms
+  (1,734,410 options, expiry 2027-03-15, plan end 2026-12-31); Form 144 2026-08-03
+  (acc. 0001950047-26-007555). EDGAR Form 4 filing counts, CIK 0001106578. Transcripts
+  (primary-transcribed, Quartr via stockanalysis): Q2 2026 earnings call
+  `/stocks/UTHR/transcripts/661418-q2-2026/`, read in full (51 turns) — the guidance
+  withdrawal, the $4B walk-back, the doubled sales force, the JASCAYD question, the sNDA
+  submission timing and priority-review mechanics, the declined H2-consensus question.
+- **stockanalysis.com (vetted exception):** live 2026-08-05:
+  `/stocks/UTHR/statistics/` (market cap `hover` 22,030,278,894; ncfo/capex/fcf; WACC 7.35%;
+  ROIC 31.76%; RSI 38.88; analyst forecasts), `/financials/income-statement/` (annual
+  operating-leverage series), `/financials/cash-flow-statement/` (annual + quarterly capex
+  history), `/metrics/revenue-by-segment/` (Tyvaso quarterly series through Q1 2026 — Q2 not
+  yet ingested; Q2 taken from the 8-K), `/stocks/UTHR/` news feed, `/transcripts/` index.
+- **Broker/market microstructure:** Robinhood MCP — admissible only where no integrated
+  official source covers this field for UTHR: `get_equity_quotes` (spot $519.01, prior
+  close $518.68; LQDA $89.24), `get_earnings_results` (Q2 actual $7.27 vs est $6.86,
+  `verified=true`; Q3 2026-10-28 BMO, unverified), `get_equity_historicals` (92 daily closes
+  for RV60/RV20), `get_option_chains`/`get_option_instruments`/`get_option_quotes` (Sep-18 520
+  pair). `get_financials` not used (banned).
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** `earnings.db` `calendar_now.today` = 2026-08-05;
+  `composite.db` — UTHR bullish=0/bearish=0/score_sum=0 in snapshots 12 and 22, absent from
+  the current snapshot 34, **never flagged**; `stocks.db` last capture price $518.68;
+  `candidates` screen 2026-08-05 (27 names) — **UTHR absent**; `sec_fundamentals.db` — no
+  UTHR row. `options.db` — path 1 unavailable (not in the CBOE catalog).
+- **Low-confidence:** Boehringer Ingelheim press releases and trade coverage of the
+  JASCAYD (nerandomilast) approvals in the US/EU/Japan/China for IPF and PPF — used for the
+  *existence and breadth* of the approval only; the uptake characterisation is the covering
+  analyst's word on UTHR's own call, not a measured figure. Liquidia Q1 2026 revenue
+  ($132.87M) via secondary coverage; LQDA's Q2 does not report until 2026-08-12. TheFly
+  analyst PT items (JPMorgan $687, BofA $613).
+
+## Kill-thesis record
+
+**FLAWED** — conditions=6, refuted=3 (1, 2, 6), unknown=3 (3, 4, 5), survived intact=0.
+Any refuted condition forces **FLAWED**.
+
+Six load-bearing conditions for owning at $519, attacked:
+
+1. **The decline is a trough — H2 accelerates and the existing portfolio grows again.** —
+   **REFUTED.** Not by absence of evidence but by the company's own downward revision:
+   guidance framing withdrawn ("not reaffirming or updating any prior revenue growth
+   expectations for 2026"), the $4B end-2027 run rate "certainly narrowed" and now
+   requiring launch revenue that the Q1 call did not need, and the direct H2-consensus
+   question declined. The only support offered is "record starts, referrals, commercial
+   patients and total patients" — a series with no dollar, no unit, no denominator, and no
+   appearance in any filing — introduced alongside "quarterly sales are not always the best
+   measure of underlying demand." That is the standard pivot from the reported metric to
+   the unreported one, and it cannot be credited.
+2. **The Tyvaso franchise stabilizes; DPI keeps growing on volume.** — **REFUTED**, three
+   independent ways in one document: DPI declined **sequentially** for the first time
+   (−1.1%), its growth flipped to **price-carried** (qty +$6.9M vs price +$9.4M), and the
+   company **named DPI** among products competition is hurting. Total Tyvaso is down
+   sequentially for a third straight quarter and −4% YoY. The MannKind onerous-supply
+   accrual recurred ($7.5M; $34.3M H1, inside $47.1M of DPI inventory reserves vs $10.8M a
+   year ago) — six years of committed purchases sitting above achievable demand.
+3. **Elevated capex is a finite build; normalized FCF is ~$1.45–1.5B.** — **UNKNOWN, and
+   this is the condition that improved.** The *budgeted* portion is now genuinely scoped
+   and dated ($400M → $290M → $180M through 2028, drawdown matching actual capex almost
+   exactly). But the pre-build baseline was $230–247M/yr, and the 10-Q's unchanged language
+   defers "the most significant capital expenditures until we achieve certain clinical
+   trial milestones" and says approval means *more* DPF construction. So steady-state capex
+   is bounded below by ~$72M/yr of scoped build and above by nothing. The disclosure that
+   would settle it — a post-2028 capital plan — does not exist. Uncertainty withholds
+   credit; it does not refute.
+4. **The 2027 launches are multi-billion and land into manageable competition.** —
+   **UNKNOWN.** Management declined to size peak sales or the ramp for the third
+   consecutive call ("more information… later this year, early 2027"). Against that,
+   JASCAYD is already approved in IPF **and PPF** in the US, EU, Japan and China, from the
+   company that also owns OFEV; management's own KOL read is that Tyvaso will be used *in
+   combination*, not as a displacement. Ralinepag meets Winrevair and Uptravi, and its DPI
+   form owes $250M to Pfizer on approval plus stacked royalties. The drugs may well be big;
+   nothing in any disclosure lets me bound how big, and the one observable base rate — this
+   company, this year, TETON/ADVANCE won the trial while Yutrepia took the market — points
+   the wrong way.
+5. **Terminal cash flows survive the patent and substitute endgame (2% terminal).** —
+   **UNKNOWN** (carried). Which 2027 expiry blocks remains unresolved; the '327 ruling has
+   been pending 13 months; the xeno program's probability I cannot assess at all, and its
+   success case is capital-intensive by the company's own words.
+6. **Today's price pays for all of the above.** — **REFUTED.** The conservative case (row
+   H, 7.62%) clears the 7.35% WACC by 27bp, and even the central case (8.50%) by 115bp —
+   and both *already assume* conditions 1 and 2 stop deteriorating, which the print says
+   they have not. Against that thin premium: three consecutive years of operating-margin
+   compression, an operating line down 9.2% YoY, a sales force just doubled with no
+   disclosed cost, $140M spent and $160M committed on Thymmune, $500M of buyback capacity
+   left against ~0.3–0.45M more options to be issued and sold, and an EPS "beat" produced
+   by an 11% tax rate.
+
+**Base rate.** After composition-of-matter invalidation, a legally-unblockable substitute
+does not stop at the first product in the franchise — it works through the portfolio in the
+order of switching friction. Q2 is that base rate running exactly on schedule: nebulized
+first, DPI next, Remodulin alongside (−6% YoY, US quantities −$12.3M). Separately, the base
+rate on an unquantified "H2 stronger than H1" from management that has just called its own
+quarter "below our expectations" and withdrawn its growth framing is poor.
+
+**The short case, strongest form.** Revenue is falling and the falling part is 58% of it.
+The substitute has now reached the product management called insulated. The company locked
+six years of DPI purchase commitments in January 2026 and has taken $34.3M of onerous
+losses against them in two quarters. Guidance was withdrawn and the only hard forward
+number was walked back one quarter after it was given. Operating margin has compressed
+three straight years while the cost base just doubled its sales force. GAAP EPS grew 13%
+on a tax rate, while operating income fell 9%. The CEO is a programmed seller of 1.73M
+newly-issued shares. And the entire bull case is two 2027 launches into indications
+Boehringer already occupies. At 18.6× trailing earnings and 20.3× trailing FCF, that is
+not cheap for a shrinking franchise. The counter is $3.8B of net cash, 44% operating
+margins, two genuinely strong Phase 3 datasets, and the newly-scoped capex — real, and not
+enough at this price.
+
+**Management incentives.** SBC $43.4M in Q2, +15% YoY on falling revenue; the 2026 Stock
+Incentive Plan drew 28% dissent at the June AGM (prior run). The DEF 14A comp metrics
+remain **unread** — carried UNKNOWN for a second run, and it is the one place a "grow
+revenue at any cost" or "hit an EPS number" incentive would be visible. The 10b5-1 selling
+itself carries no view: the options expire 2027-03-15, so the exercise is mechanical.
+
+**Disconfirming search.** Ran for evidence against and it returned: the JASCAYD approval,
+the $4B walk-back, the sequential DPI decline, the recurring onerous accrual, the tax-rate
+EPS beat. The search that produced this list was not a search for support.
+
+**Moat as mechanism.** Device IP (MannKind Crystal Carrier) + 30 years of PAH prescriber
+relationships + specialty distribution. A real mechanism — and Q2 is its first clean test,
+which it half-failed: it slowed the substitute in DPI relative to nebulized, but did not
+stop it.
+
+**Statistical checks.** No backtest or hit-rate claim in this thesis. The only quantitative
+claim resting on unaudited data is management's "record starts/referrals/patients," which
+has no disclosed denominator and cannot be checked at all.
+
+**Options timing check.** NOT APPLICABLE — the thesis makes no dated numeric move claim.
+Coverage disclosed: path 1 unavailable (not in the CBOE catalog); path-2 stopgap used;
+liquidity gate FAILED. No verdict leans on it.
+
+**Repairable, not dead.** Two quarters of volume-led DPI growth plus total Tyvaso back to
+YoY growth plus an IPF label would rebuild conditions 1 and 2, and with capex now scoped
+that combination puts the implied return near 9.5–11%. This thesis is wrong at $519, not
+wrong forever.
+
+**Closest attack (strongest refutation):** **condition 2** — the sequential DPI decline,
+the flip to price-carried growth, and the company naming DPI as competitively impacted
+are three independent confirmations in a single document, against a franchise that is 58%
+of revenue. Condition 6 is the refutation that most nearly reverses: the newly-scoped
+capex genuinely lifted the central implied return from ~6.4% to ~8.5%, and only the
+tax-benefit haircut (row H, 7.62% vs a 7.35% WACC) keeps the price from paying.
+
+**Flip evidence:** **(to SOUND)** two consecutive quarters of volume-led Tyvaso DPI
+growth with total Tyvaso back to YoY growth, no further MannKind accrual, and a restored
+numeric outlook; **(harder FLAWED)** a second sequential DPI decline, or the doubled
+sales force's cost landing without a revenue inflection.

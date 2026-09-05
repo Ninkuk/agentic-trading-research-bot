@@ -1,0 +1,321 @@
+# TIMB — TIM S.A. — 2026-07-27
+
+Price $20.88 (close, 2026-07-27, broker quote) · market cap $10.06B · next
+earnings Jul 29 AMC
+
+Entry: direct user request, not a screen — never flagged by `composite` (no
+`ticker_scores` rows). Decision support only. No order, no size. All
+`data/*.db` reads read-only.
+
+## 1. Verdict and thesis
+
+**PASS at $20.88 — narrowly, and on timing rather than quality.** kill-thesis:
+**UNPROVEN** — conditions=7, refuted=0, unknown=4, survived=3.
+
+TIM Brasil is the #3 operator in a rational three-player Brazilian mobile
+market, with five years of positive operating leverage (operating margin
+20.9%→24.2%, FY2021→FY2025), a balance sheet that is **net cash excluding
+IFRS-16 leases**, and a verified lease-adjusted owner FCF of ~R$5.6B (~$1.1B)
+against a $10.06B market cap — an ~11% true FCF yield, of which ~5.5% is paid
+out as dividends/IoC. The reverse DCF says today's price implies **~13%/yr in
+USD on conservative assumptions, and 10.9%/yr even at zero USD growth
+forever** — the rare case where the zero-growth bound alone is adequate. But
+the Q2'26 print lands in two days (Jul 29 AMC), it is the first quarter
+consolidating I-Systems, and control of the parent (Telecom Italia) is
+mid-tender to Poste Italiane until Sep 11 with undisclosed intentions for
+Brazil. Researching into a print and buying into a control-change window are
+both avoidable mistakes. Revisit after Jul 29 (and ideally after Sep 11); at
+this price the answer is closer to a buy than most passes in this ledger.
+
+**Closest attack:** the lease-indexation squeeze — lease *interest* paid grew
++12.7% in FY2025 and total lease cash grew +7.8% YoY in Q1'26 (vs revenue
++5.8%) — combined with the R$26.7B unprovisioned "possible" contingency tail.
+Detail in the Kill-thesis record.
+
+Load-bearing conditions: not enumerated in the original run (pre-template);
+the original records only the counts above and names the four conditions that
+could not be attacked (FX path, Poste's Brazil intent, I-Systems standalone
+economics, management's future FTTH appetite). Condition tiers not recorded
+in original run.
+
+## 2. Business
+
+**Created.** Mobile connectivity for 61.97M Brazilian subscribers (32.7M
+postpaid, +8.4% YoY; 29.2M prepaid, −8.3%) plus a small fixed/fiber arm (TIM
+Ultrafibra, 850k customers). The customer gets national 4G/5G coverage — TIM
+holds the largest 3.5GHz 5G position from the 2021 auction with coverage
+commitments across all municipalities — at three-player-oligopoly prices
+that still track inflation. B2B/IoT is the optionality layer: agro
+connectivity (10,000+ km of roads covered, +83% YoY), mining contracts,
+472k public-lighting points, 569k connected vehicles (all per the 4Q25
+release).
+
+**Captured.** Mobile service revenue R$24.5B of R$26.6B total (FY2025):
+recurring monthly ARPU, prepaid top-ups, B2B contracts, plus a monetized
+distribution partnership with C6 Bank that paid TIM R$520M cash in 2025
+(FY2025 cash flow statement). Pricing power is real but inflation-shaped:
+service revenue +5.2% vs IPCA ~5% — the growth is price/mix (postpaid
+migration), not subscriber count (base −0.1% YoY).
+
+**Protected.** The mechanism, not a label: spectrum is finite and
+auction-allocated (ANATEL), network build is capital-intensive (R$4.5B/yr
+capex), and the market consolidated 4→3 when TIM/Vivo/Claro carved up Oi
+Mobile in 2022. A new entrant needs spectrum that isn't for sale, billions
+in build, and a brand. The counterweight: the same regulator that protects
+the oligopoly constrains it (SMP significant-market-power obligations,
+coverage commitments, authorization renewals — 20-F risk factors).
+
+**Operating leverage (Phase 0): positive.** Operating margin 20.9%→24.2%,
+FY2021→FY2025 — five years of positive operating leverage.
+
+## 3. Threads pulled
+
+- **The IFRS-16 lease trap (load-bearing).** Statistics-page "FCF" of $1.77B
+  (P/FCF 5.7, 17.5% yield) is `ncfo + capex`, and under IFRS TIM's lease
+  principal AND lease interest are both paid in *financing* activities —
+  outside ncfo. FY2025 actuals: ncfo R$13.44B − capex R$4.54B = R$8.90B
+  (matches stockanalysis to the thousand), minus lease principal R$1.56B,
+  lease interest R$1.65B, loan interest R$0.11B → **true owner FCF ≈ R$5.6B
+  ≈ $1.09B**. Cross-check: TIM's own "EBITDA-AL − Capex" metric is R$6.03B
+  (+15.7% YoY) less ~R$0.3-0.5B cash taxes ≈ same place. The naive figure
+  overstates owner cash by ~60%.
+- **Lease trajectory.** FY2025 total lease cash R$3.21B vs R$3.30B FY2024
+  (−2.7%): principal −15% (post-Oi site decommissioning is real), interest
+  +12.7% (IPCA/Selic indexation). Q1'26: R$854M vs R$792M (+7.8%, faster
+  than revenue). One quarter, n=1 — but the interest line is the channel by
+  which Brazilian rates eat this thesis if they stay high.
+- **Balance sheet inversion.** Loans and financing R$2.83B vs cash +
+  securities R$5.86B (Mar 2026 ITR): **net cash ex-leases ≈ R$3.0B**. The
+  entire reported "net debt" ($2.08B) is R$13.9B of capitalized tower/site
+  leases. Debt covenants risk (20-F boilerplate) is a non-issue at this
+  leverage.
+- **I-Systems (closed May 6, 2026).** TIM paid IHS R$950M for the 51% it
+  didn't own of the neutral-fiber wholesaler (9M homes passed), taking it to
+  100% (Feb 11 material fact; May 7 closing 6-K). While an associate it ran
+  ~R$30M/quarter equity-method losses (Q1'26 ITR). Q2'26 is the first
+  consolidated quarter — its capex and debt will now appear in TIM's
+  consolidated numbers. Management frames it as positioning for "potential
+  future movements in the FTTH scenario" — appetite language worth watching.
+- **V8 Tech** (100%, closed Jan 30, 2026, ~R$90M net of cash in Q1
+  investing): B2B digital-transformation tuck-in. Small.
+- **Contingency tail.** Unprovisioned claims classified "possible": R$26.72B
+  at Dec 2025 (R$24.45B tax: R$12.96B state/ICMS, R$5.0B federal, R$4.5B
+  regulatory FUST/FUNTTEL, R$2.0B municipal), up from R$24.53B — ~51% of
+  market cap, growing faster than revenue. Provisioned: R$1.6B. Standard
+  Brazilian-telecom furniture, mostly decades-old ICMS/FUST disputes that
+  historically resolve small — but it is a fat tail and it caps the multiple
+  this deserves.
+- **Parent change of control (live).** Poste Italiane's €10.8B offer for
+  Telecom Italia: TI board backed it Jul 18, 2026; tender Jul 20–Sep 11,
+  completion expected end-2026 (CNBC, Poste releases). Press speculation
+  (Rio Times — low-confidence tier) frames TIM Brasil control as "in play."
+  Whether an indirect change of control at the Italian parent triggers any
+  Brazilian minority protections (tag-along/OPA) is UNKNOWN mechanics — not
+  assumed either way here.
+- **Earnings pattern** (Robinhood broker tier): after a Q4'24 miss ($0.37 vs
+  $0.47), five straight quarters at-or-above estimate (Q1'25→Q1'26). FY2025
+  actuals sum $1.61/ADS vs official BRL EPS R$1.79/share ×5 ≈ $1.65/ADS at
+  ~5.4 avg FX — consistent; the `sec_fundamentals.db` cross-check is
+  unavailable (no TIMB row), so the official side comes from the FY2025
+  financial statements 6-K directly.
+- **Q1'26 print quality.** Revenue +5.8%, operating income +17.1%, pretax
+  +41.9%; net +2.4% only because Q1'25 carried a positive tax one-off
+  (+R$104M credit vs −R$167M expense). The operating machine is fine.
+- **Data coverage.** TIMB is US-listed (NYSE, ADR = 5 common shares) so
+  `stocks.db` covers it (last capture 2026-07-27), but TIM files a 20-F/6-K
+  as a foreign private issuer and `sec_fundamentals.db` has no row for CIK
+  0001826168 — the usual DB cross-check is unavailable.
+- **Options read (mandatory):** path 2 (Robinhood chain) attempted; path 1
+  structurally unavailable (TIMB not in the CBOE catalog; `options.db`
+  n_days gate also unmet repo-wide). Liquidity gate FAILED → UNRELIABLE.
+  Detail in §4.
+- **Dead ends:** (a) The Jul 23 −4.4% day: mostly sector-wide (VIV −2.4%,
+  EWZ −1.2% same day) but TIMB's ~2pt residual found no filed cause — no 6-K,
+  no rating action that day; UNKNOWN, likely pre-earnings de-risking. (b)
+  stockanalysis transcripts/filings routes are unfed for TIMB (`{info}` only)
+  — no call transcript was readable this run; management framing came from
+  the 4Q25 release + Q1'26 ITR performance commentary instead. (c) The
+  "psForward 0.35" on the statistics page is a data artifact (inconsistent
+  with ps 1.94 and analyst revenue growth ~4.6%); ignored. (d) The
+  statistics-page 334.8% payout ratio divides per-ADS DPS ($1.156) by
+  per-common-share EPS ($0.345) — a 5× unit bug; true payout ≈ 67% of EPS.
+
+## 4. Valuation
+
+Reverse DCF (`tools.valuation.reverse_dcf`), levered flow paired with market
+cap per the skill, but **lease-adjusted** — the levered `fcf` on the
+statistics route does not serve TIM's leases, which are the company's real
+debt:
+
+- Market cap: $10,058,240,274 (statistics `hover`, 2026-07-27).
+- Base FCF: **$1.10B** = TTM `fcf` $1.765B − FY2025-actual lease cash
+  (R$3.21B ≈ $625M at the ~5.14 BRL/USD implied by stockanalysis's own
+  conversion) − loan interest (~$21M), rounded down.
+
+Hurdle: not computed in the original run (pre-template).
+
+| scenario | base FCF | growth ×5y | terminal | implied return |
+|---|---|---|---|---|
+| conservative growth | $1.10B | 3% | 1% | 12.96%/yr |
+| zero growth forever | $1.10B | 0% | 0% | 10.94%/yr |
+| naive (unadjusted) FCF, same growth path | $1.765B | 3% | 1% | 20.05%/yr |
+
+The 3% ×5yr growth reads BRL nominal ~5-6% less ~2-3% FX drift; the
+zero-growth row is the case where FX confiscates all nominal growth short of
+a crisis. The naive row shows the lease adjustment moves the answer by 7
+points and is the difference between "extraordinary" and "good."
+
+Terminal risk (20-F Item 3 sweep): Brazilian macro — FX, inflation,
+government influence — plus ANATEL authorization renewals. A 1% USD terminal
+rate survives both because it already concedes FX takes nominal BRL growth
+down to roughly zero real USD growth; the zero-growth run is the explicit
+stress. Minority interest: none post-May-2026 (I-Systems now 100%), so no
+NCI haircut applies to the FY2025 flow; I-Systems' own cash burn is the
+UNKNOWN that cuts the other way.
+
+Shareholder cash return today: 5.53% dividend yield + 0.57% buyback
+(statistics page; Dec 2025 board approved R$1.79B dividends + R$420M IoC;
+28.7M treasury shares cancelled).
+
+**Options-implied move: UNRELIABLE — path 2 attempted, liquidity gate
+FAILED.** TIMB is not in the CBOE catalog (path 1 structurally unavailable;
+`options.db` n_days gate also unmet repo-wide). Robinhood chain exists
+(monthlies: Aug 21 / Sep 18 / Nov 20 / Feb 19), but at the earnings-bracketing
+Aug 21 expiry (25 DTE) the ATM strike-20 call had **no bid** (0.00×1.60, OI
+8, volume 0, IV null) and the 22.5 strikes were also bidless. The mean-IV
+input to `implied_move` is undefined; no timing table is printed. Sole
+salvageable datum: strike-20 put IV 38.8% (delta −0.31) — treated as colour,
+not evidence.
+
+## 5. Falsifiers
+
+What would make this a sell (if owned):
+
+1. Mobile service revenue growth < IPCA for two consecutive quarters
+   (pricing discipline broken — condition 1/2 down).
+2. Total lease cash (principal + interest) growing faster than service
+   revenue for two consecutive quarters (the Q1'26 read becoming a trend).
+3. Capex guidance materially above ~R$5B/yr or a large FTTH/ISP acquisition
+   (the I-Systems "future movements" language cashing out badly).
+4. Annual shareholder remuneration cut below ~R$2.5B without a stated
+   higher-return use.
+5. Poste (or an onward buyer) signalling a sale/merger of TIM Brasil on
+   terms that bypass ADS holders' economics.
+6. Any single contingency reclassified probable at > R$2B.
+
+**Reopen trigger:** as stated in the original run — revisit after Jul 29
+(and ideally after Sep 11).
+
+## 6. UNKNOWNs
+
+1. **Poste Italiane's intent for TIM Brasil** — would come from Poste's
+   offer documents/strategy day; until then the control condition is
+   unattackable. Does not kill the thesis; it kills *timing*.
+2. **2026–2028 guidance numbers** — TIM presents them in strategic-plan
+   slides on its IR site, which this run did not fetch (stockanalysis filings
+   route unfed; slides not in 6-K text). The "all 2025 targets achieved"
+   claim in the 4Q25 release is the sourced stand-in.
+3. **I-Systems standalone capex/EBITDA/debt** — private-company financials
+   not in any reachable disclosure. Bounded: 51% cost R$950M ⇒ equity
+   ~R$1.9B; even R$0.5B/yr of consolidated capex cuts owner FCF ~9%, a dent
+   not a kill. Q2'26 (Jul 29) is the falsifiable moment.
+4. **Latest earnings-call transcript** — unavailable via stockanalysis for
+   TIMB; the ITR "performance comment" and 4Q25 release substituted. A
+   management-tone read is missing from this run.
+5. **Cause of the TIMB-specific residual in the Jul 23 −4.4%** — no filed
+   cause found.
+6. **C6 Bank stake economics** — R$520M received in 2025 under the agreement
+   is sourced; the stake's carrying/market value and future payment schedule
+   were not pulled.
+
+## 7. Sources
+
+**Primary:** (SEC filings, CIK 0001826168) FY2025 financial statements 6-K
+(acc. 0001292814-26-000307) — cash flow, lease payments, contingencies note;
+4Q25 earnings release 6-K (0001292814-26-000299) — FY2025 normalized
+figures, OpCF, customer base, V8/remuneration events; Q1'26 ITR 6-K
+(0001292814-26-002827) — Q1 P&L, balance sheet, lease/financing lines;
+I-Systems material fact 6-K (0001292814-26-000313) and closing notice
+(0001292814-26-002856); 2025 20-F (0001292814-26-001915) — risk factors,
+spectrum commitments, contingency detail; Feb 10 2026 board minutes 6-K.
+
+**stockanalysis.com (vetted exception):** `/stocks/TIMB/statistics/` (market
+cap, EV, ratios, dividend, shares — exact `hover` values, 2026-07-27);
+`/stocks/TIMB/financials/income-statement/` (FY2021–FY2025 BRL history);
+symbol lookup; news feed (analyst actions: Barclays PT $28→$24 Jul 10,
+Santander upgrade Jun 22, Scotiabank $28.50 May 27 — headlines only,
+low-confidence until checked against the notes themselves).
+
+**Broker/market microstructure:** (Robinhood MCP; admissible — no integrated
+official source covers these fields for TIMB) earnings dates/EPS
+estimate-vs-actual pattern; live quote ($20.88 close 2026-07-27); option
+chain/instruments/quotes (illiquidity finding); daily bars for TIMB, VIV,
+EWZ (drawdown and Jul 23 sector read).
+
+**Reference data:** none used.
+
+**Point-in-time repo DBs:** `stocks.db` covers TIMB (last capture
+2026-07-27); `composite` has no `ticker_scores` rows for it;
+`sec_fundamentals.db` has no row for CIK 0001826168 (the usual cross-check
+unavailable). All reads read-only.
+
+**Low-confidence:** CNBC / Poste Italiane releases / TelecomTV on the
+Poste–TI takeover timeline (consistent across three outlets); Rio Times "TIM
+Brasil control in play" headline; GuruFocus valuation articles (ignored for
+facts).
+
+## Kill-thesis record
+
+**Kill-thesis verdict: UNPROVEN.** Conditions=7, refuted=0, unknown=4,
+survived=3. Nothing was refuted; four load-bearing conditions could not be
+attacked because the needed evidence does not exist in any disclosure (FX
+path, Poste's Brazil intent, I-Systems standalone economics, management's
+future FTTH appetite).
+
+**Closest attack:** the lease-indexation squeeze — lease *interest* paid
+grew +12.7% in FY2025 and total lease cash grew +7.8% YoY in Q1'26 (vs
+revenue +5.8%) — combined with the R$26.7B unprovisioned "possible"
+contingency tail. The FY2025 evidence (total lease cash −2.7% YoY, principal
+−15% on site decommissioning) saved the condition this time; it is the
+metric to watch every quarter.
+
+Per-condition adjudication: not recorded in the original run (pre-template).
+Standing/statistical/options-timing checks: not recorded in the original
+run. **Flip evidence:** not recorded (pre-template run).
+
+## Reopened 2026-07-29 — Q2'26 print (landed early, Jul 27 AMC)
+
+**Verdict unchanged: UNPROVEN.** Conditions=7, refuted=0, unknown=3, survived=4.
+
+The print landed two days early — PR 6-K acc. 0001292814-26-003934 (accepted Jul 27
+18:45 ET, EDGAR filing date Jul 28), ITR ...-003938, call Jul 28. Operationally clean:
+net revenue R$6,965M +5.5%, normalized EBITDA R$3,586M +7.0% (margin 51.5%, +0.7pp),
+EBITDA-AL +7.8%, normalized net income R$1,036M +6.2% (EPS R$0.43), OpFCF R$1,242M
++10.1%. 2026 remuneration guided **R$5.3–5.5B** — falsifier 4 is dead at 2× the floor.
+The stock still fell 8.8% over two sessions to $19.05; Jul 28 was telecom-sector-wide
+(VIV −6.8% vs EWZ +0.5%, broker tier), so the TIMB-specific residual is small.
+
+**I-Systems UNKNOWN → RESOLVED-survived.** The IFRS-3 note (ITR 1.2.1) shows R$947.1M
+paid for the 51%, identifiable net assets R$986.1M, provisional goodwill R$871.0M, and
+R$568M of acquired debt at CDI+2.10–2.50% — now being prepaid via a board-approved
+≤R$600M capitalization (Jul 29 minutes 6-K), i.e. capital-structure cleanup, not
+expansion. Its revenue is "substantially generated with TIM and eliminated in
+consolidation": a captive fiber supplier, not an external wholesaler. Capex 13.4% of
+revenue, flat YoY; no FTTH M&A (Ultracombo is a commercial converged offer).
+
+**Two ambers opened.** (1) MSR +4.6% vs 12-month IPCA 4.64% — the first quarter at or
+below inflation, alongside net adds −108k, market share −0.9pp to 22.4%, and expected
+credit losses +38.1%. Falsifier 1's counter stands at 1 of 2. (2) Gross lease cash
+(principal R$400M + interest R$461M = R$861M) grew +8.9% vs revenue +5.7% — a second
+straight gross overshoot, interest paid +16.6% (6M +19.8%) on IPCA/Selic indexation.
+It survives only because R$39M of renegotiation incentives hold *disbursed* lease cash
+to +4.0%. Both need watching in 3Q26.
+
+Contingency "possible" tail R$27.49B (from R$26.72B at Dec), provision flat at R$1.60B
+— no reclassification, falsifier 6 survives. Poste's Brazil intent and the FX path
+remain the open UNKNOWNs. At the ~$9.2B market cap the same lease-adjusted $1.10B FCF
+now implies **14.1%/yr** (3% growth path) and **12.0%/yr** at zero growth forever — the
+discount widened while nothing was refuted.
+
+Reopen: 2026-09-12, after the Poste tender closes Sep 11 (the largest UNKNOWN); the
+3Q26 print (~Nov 2) then tests both amber counters.

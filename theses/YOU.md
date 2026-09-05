@@ -1,0 +1,312 @@
+# YOU — Clear Secure, Inc. — 2026-08-08
+
+Price $51.35 (Robinhood, 2026-08-07 close) · market cap $6,938,925,726 ·
+EV $6,089,423,726 · next earnings 2026-11-05 BMO
+
+Identity verified from stocks.db v_latest and stockanalysis symbol-lookup: Clear
+Secure, Inc., NYSE:YOU, CIK 0001856314, clearme.com — the airport biometric
+identity company, NOT any other "YOU". US listing, `/stocks/` route. Entered the
+candidates screen 2026-08-07 (via_rsi branch: RSI 44.9, −23.2% off high,
+F-score 6, FCF yield 7.1%); composite has it +1 bullish on one signal only
+(`si_days_to_cover` 10.3, coverage 0.09) — a microstructure flag, not a thesis.
+
+## 1. Verdict and thesis
+
+**BUY at $51.35.** kill-thesis: **UNPROVEN** — conditions=5, refuted=0,
+unknown=2.
+
+CLEAR is a prepaid-subscription toll booth
+on US air travel with a young B2B identity attach, net cash $849.5M, 25% GAAP
+operating margin on strongly positive operating leverage — and after a no-news
+25% collapse from its earnings-day all-time high, the price implies ~11%/yr on
+deliberately conservative assumptions vs a 9.2% hurdle (+171bp), ~13% on base
+(+331bp). The two UNKNOWNs that cap the verdict (current retention — disclosure
+discontinued mid-decline; Amex renewal economics — not yet disclosed) are both
+scheduled to become observable at the Q3 print (2026-11-05), which is the
+reopen trigger; neither refutes ownership at this spread on this balance sheet.
+
+**Closest attack:** retention opacity compounded by incentive alignment —
+refutes nothing; caps the verdict (detail in the Kill-thesis record).
+
+Load-bearing conditions (count: 5; on the conservative path C5 demotes to
+option value, leaving 4):
+
+1. **Retention holds near last-published levels** (GDR ~87%) — *plausible
+   only*: the metric was discontinued as of Q1'26 while declining (see §3,
+   the retention thread).
+2. **TSA's free Touchless ID does not commoditize the paid queue-jump within
+   the terminal horizon** — *plausible*; priced via 2.0–2.5% terminal growth
+   (excess returns fading), not assumed away.
+3. **Amex renewal preserves partner-funded economics** — *plausible*; renewal
+   exists and is in effect, terms undisclosed until "the appropriate time."
+4. **Bookings growth sustains double digits** — *probable*: Q3 guide +20.5%,
+   four straight quarters ≥17%, analyst 3y consensus 15.6%.
+5. **CLEAR1 compounds without gutting margins** — *plausible* (+50% q/q
+   net-new signings per CFO; revenue split undisclosed). Not needed for the
+   conservative valuation path → upside option, not load-bearing there.
+
+## 2. Business
+
+**Created:** sells *time and certainty on the day of travel*. A dedicated
+biometric identity lane (increasingly eGates, <5s verification, 50 airports and
+>70% of the network) puts a member at the front of the security queue at 62 US
+airports; the app adds wayfinding/concierge/coffee-pickup ("home to gate"). At
+$219/yr and last-published usage ~7x/yr, a frequent flyer buys queue-position
+certainty for ~$31/trip. CLEAR1 sells enterprises verified-human onboarding and
+fraud reduction (healthcare, workforce, government/CMS).
+
+**Captured:** (a) prepaid annual consumer subscriptions ($219 standard
+since 2026-07-01, $125 family; airline/Amex-subsidized tiers) collected
+upfront → deferred revenue $573.0M, a working-capital float; (b) partner-funded
+distribution — Amex/credit-card statement credits and airline tiers pay for
+members (accrued partnership liability $315M pays out each Q3); (c) TSA
+PreCheck enrollment fees (280 retail locations — CLEAR is a TSA-authorized
+enrollment provider); (d) CLEAR1 B2B contracts (subscription, growing
+seven-figure deals); out the other side it pays airports revenue share (~14%
+of revenue, Q2'26 cost of revenue share $39.3M).
+
+**Protected:** a mechanism, not a checkbox — (i) finite physical lane
+real estate at 62 airports under multi-year revenue-share contracts a
+competitor must win airport-by-airport; (ii) regulatory certification stack
+(TSA Registered Traveler, SAFETY Act qualified anti-terrorism technology,
+FISMA High — per management, Q2'26 call); (iii) a 43.5M-identity enrolled
+network reused across venues and CLEAR1 partners. The moat's known hole: the
+one competitor that needs no airport contract or certification is the
+government itself — TSA's free Touchless ID (§3, the TSA thread).
+
+**Operating leverage (Phase 0): strongly positive.** FY revenue/op income:
+2021 $254.0M/−$114.9M → 2023 $613.6M/+$20.1M → 2025 $900.8M/+$186.5M → TTM
+$1,000.7M/+$251.5M [stockanalysis income-statement route].
+
+## 3. Threads pulled
+
+- **The −25% no-news collapse (the entry thread).** Q2'26 (2026-08-05 bmo)
+  was a beat-and-raise: EPS $0.49 vs $0.47 est, Q3 revenue guided $284–287M vs
+  $274.7M consensus [TheFly via stockanalysis news feed], FY FCF guide raised
+  $465M→≥$480M. The stock opened +16% at $64.77, printed an all-time high
+  $69.07 intraday, closed +1.3% at $56.46, then fell to $51.29 by 8/7 — ~8%
+  below the pre-print close. Post-call sweep found no adverse 8-K, no
+  downgrade, one positive PR (Corporate Memberships, 8/6). Short interest is
+  13.7% of float, days-to-cover 10.3 and rising (12.5M vs 9.9M prior month).
+  Read: a squeeze blowoff and momentum unwind, not new information. Dead end
+  that ruled out an information story: news feed, 8-K list, and filings index
+  all clean.
+- **Retention disclosure discontinued mid-decline (the biggest knock).**
+  Published series (shareholder letters through Q1'25): Annual CLEAR+ Net
+  Member Retention 86.3% (Q4'23) → 81.4% (Q4'24); Gross Dollar Retention 89.3%
+  (Q1'24 peak 89.8%) → 88.5% (Q4'24) → 87.3% (Q2'25, +20bp — first sequential
+  increase since 2023, per CFO on the Q2'25 call); Annualized Usage 8.1x →
+  7.1x. On the Q4'25 call management announced: "Beginning in the first
+  quarter of 2026, we will discontinue 3 metrics: total cumulative platform
+  uses, annual CLEAR+ gross dollar retention, and annual CLEAR+ member usage."
+  The Q2'26 release KPI table now carries only Total Bookings, Total Members,
+  Active CLEAR+ Members. Current retention is therefore **UNKNOWN by design**;
+  management offers only qualitative "retention trends have remained healthy"
+  and "no impact to retention" from the July 1 price increase. A separate
+  "billing system transformation" recast removed lapsed accounts from the
+  Active CLEAR+ history (release, KPI definitions). Incentive read: founder
+  performance RSUs are stock-price-keyed (10-K/proxy); retiring a declining
+  metric aligns with that incentive. Not refuting — but this is why the
+  verdict is UNPROVEN.
+- **Amex/credit-card partnership.** New agreement now in effect; $315M
+  accrued partnership liability settles in Q3 (negative Q3 FCF, as in prior
+  years); "no other implications to this year from a free cash flow
+  perspective, and we can share more at the appropriate time" [CFO, Q2'26
+  call]. H1'26 OCF of $391.5M includes +$152.0M of accrued-liability build —
+  TTM FCF is timing-flattered by the partner float; the FY guide (≥$480M,
+  post-payout) is the honest annual number. Terms of the renewal: UNKNOWN
+  until the Q3 filing.
+- **TSA — partner and rival.** TSA's Touchless ID (free facial verification
+  for PreCheck enrollees) expanded to ~65 airports in early 2026 with 45+
+  more planned [AOL/travel press — low-confidence tier; the risk itself is
+  primary: Item 1A names "first-party identity verification solutions and
+  credential authentication solutions"]. It verifies identity; it does not
+  sell queue position, which is CLEAR's actual product. CLEAR is
+  simultaneously TSA's enrollment contractor (PreCheck at 280 locations;
+  visa-waiver international enrollment approval, per President Barkin, Q2'26
+  call). Retention survived Touchless ID's 2023–26 rollout as far as the
+  published series ran. Structural risk in perpetuity → handled in the
+  terminal rate, not the growth path.
+- **Operating leverage is real.** Direction: strongly positive — the Phase 0
+  print and FY series are in §2. Q2'26 direct salaries 17.3% of revenue
+  (−450bp y/y) as eGates replace staffed lanes; adj EBITDA margin 36.4%,
+  +900bp y/y, above the 35% IPO target; ~70% adj EBITDA flow-through
+  [release; call].
+- **Insider pattern.** Biweekly Form 4 cadence all year (CEO Seidman-Becker
+  / Alclear Investments LLC); on 8/5–8/6 she sold ~324k shares at
+  $60.52–68.45 (~$20M+) into the earnings spike [Form 4s filed 2026-08-07,
+  EDGAR]; a Form 144 was filed on earnings day. Meanwhile the company
+  repurchased ~$22M QTD at avg $52.73 [call]. Whether the sales ran under a
+  10b5-1 plan: not checked — UNKNOWN. FY2024's buyback was 13.8M shares at
+  avg $19.78 (excellent); H1'26 buybacks were de minimis ($1.2M).
+- **Sequential softness (attacked, survived).** Bookings +1.4% q/q
+  ($291.7M→$295.9M); Active CLEAR+ adds +162k q/q vs +551k in Q1.
+  Partner-billing accruals and seasonality make sequential reads noisy; y/y
+  bookings +32.8% and the Q3 guide (+20.5% on a +14% base quarter) stand.
+  Not a refutation; a watch item feeding the falsifiers.
+- **Options read (mandatory):** path 2 — Robinhood stopgap (YOU is not in
+  the CBOE catalog, so no path-1 IV percentile exists) — see §4's metric
+  table.
+- **Dead ends (work done, nothing found):** commitments footnote — airport
+  minimum annual fees total $86.3M through 2030+, stadium marketing $5.1M;
+  no take-or-pay or capacity obligations that threaten the asset-light base
+  (TTM capex $34.3M = 3.4% of revenue) [10-Q Note 16]. Robinhood EPS actuals
+  cross-check GAAP diluted EPS (Q2'26 $0.49 = filing) — agree. Earnings
+  pattern: four small misses through 2025, then two beats in 2026 —
+  consistent with the eGates cost inflection, no managed-guidance smell.
+  stockanalysis `sharesYoY −30.9%` / `buybackYield 30.9%` is a **data
+  artifact** — actual total shares: 136.9M (Feb 2025, letter) → 134.7M
+  (Jun 2026, 10-Q).
+
+## 4. Valuation
+
+All live inputs from `/stocks/YOU/statistics/` hover fields, 2026-08-08:
+market cap $6,938,925,726; EV $6,089,423,726; TTM levered FCF $508,393,000
+(= NCFO $542.6M + capex −$34.3M; post-interest → paired with market cap,
+never EV); TTM SBC $43.24M; consolidated TTM net income $230.7M
+(`netincCompany`); net cash $849.5M; beta 1.05 (in the 0.8–1.2 stable band).
+Up-C check: market cap prices all four share classes (135.29M shares ×
+$51.29 ✅), so consolidated FCF pairs with it — **no NCI haircut**, unlike the
+usual holdco trap. TRA payments to pre-IPO holders (~$28.5M/yr run-rate) and
+after-tax interest income (~$21.4M) are equity-claim/cash-pile distortions —
+both charged in the conservative run.
+
+Hurdle: rf 4.74% (10Y), implied ERP 4.28% (Damodaran, as of 2026-08-01) →
+**9.23%**. US median cost of capital ~7.8%; 80% band 5.3–9.9% (Data Update 5,
+2026).
+
+| scenario | market cap | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|---|
+| Conservative | $6.089B (net of $849.5M cash) | $415.2M (FCF − SBC − after-tax interest − TRA) | 10→6% fading | 2.0% | **~11%** | **+171bp** |
+| Base | $6.939B | $465.2M (FCF − SBC) | 15→8% fading | 2.5% | **~13%** | **+331bp** |
+| Optimistic | $6.939B | $508.4M (raw TTM) | 20→12% fading | 3.0% | **~16%** | **+626bp** |
+
+Quoted to the nearest whole percent because ATM IV is 56% — the range around
+any of these is wide (per the vol-precision rule). **The spread is the
+finding: the conservative stack — every haircut applied at once — still clears
+the hurdle.**
+
+Integrity checks: the solver's `growth without reinvestment` warning fired on
+all runs (FCF > earnings, terminal reinvestment negative). Answer: the wedge
+is structural float — members prepay a year (deferred revenue $573.0M and
+growing) and the partner accrual builds intra-year — not an accounting
+illusion; the honest response taken was cutting terminal growth to ≈inflation
+(2.0–2.5%), which needs little reinvestment (repricing, not new capital).
+Cash tax rate 21.3% ≈ marginal — no NOL flattery; the TRA claw on tax
+attributes is charged in the conservative run. Serial-acquirer check: n/a
+(organic growth; goodwill static at $62.7M). Market-share sentence: the base
+path compounds revenue to ~$1.75B by 2031 — vs 8.3M members growing 15%/yr,
+a $219+ price ladder, TSA PreCheck's 20M+ enrollee pool and CLEAR1 — a
+fraction of its addressable market, not a bigger-than-the-market forecast.
+Terminal-risk sweep (Item 1A): the dominant structural risk is government
+first-party identity verification (Touchless ID); the 2.0–2.5% terminal rate
+assumes CLEAR's *excess* returns fade toward zero, which is precisely the
+world where that risk partially lands — the terminal input survives it.
+
+**Options-implied move** (path 2 — Robinhood stopgap; YOU is not in the CBOE
+catalog, so no path-1 IV percentile exists; label: broker/microstructure
+tier). Expiry 2026-11-20 bracketing the 2026-11-05 bmo Q3 print; ATM strike
+50 (spot 51.35); call mark 7.00, put mark 5.15; IV = mean(0.5613, 0.5644):
+
+| metric | value |
+|---|---|
+| spot | 51.35 |
+| dte | 104 |
+| ATM IV | 56.28% |
+| expected absolute move (MEAN, not a ceiling) | 23.66% |
+| 1-sigma move | 30.04% |
+| RV60 | 48.52% |
+| RV20 | 57.06% |
+| IV > RV60? | YES |
+| IV > RV20? | NO |
+
+The two RV windows disagree — that disagreement is the finding (RV20 contains
+the ±15% earnings-day swing). **Liquidity gate FAILED** (call spread $1.00 on
+$7.00 mark = 14% > 10%; OI 160/55, volume 3/0) → the read is UNRELIABLE,
+context only; it moved no verdict. The thesis makes no dated claim, so no
+timing refutation applies.
+
+## 5. Falsifiers
+
+- **Break —** TSA/DHS gives non-members CLEAR-equivalent *lane position* free
+  (not mere verification), or CLEAR loses a major airport cluster or a
+  security authorization.
+- **Break —** the Q3'26 filing reveals Amex renewal terms materially worse
+  (lower partner-funded bookings or per-member economics).
+- **Shift —** Active CLEAR+ Members decline sequentially for two consecutive
+  quarters (still disclosed quarterly — observable), or bookings growth
+  <10% y/y.
+- **Shift —** FY FCF guidance walked back below $465M.
+- **Shift —** any re-disclosed or triangulated retention print materially
+  below ~85% GDR.
+- **Shift —** governance: founder selling escalates beyond the programmatic
+  biweekly cadence (block sales) while buybacks stall.
+
+**Reopen trigger:** 2026-11-05: Q3 print — Amex terms + sequential member
+trajectory (inherits shift classification; two of the three falsifier
+families resolve there).
+
+## 6. UNKNOWNs
+
+1. **Current retention (GDR/NMR/usage).** Discontinued as of Q1'26; not in
+   the release, 10-Q, or call. Would come from: management re-disclosure, or
+   triangulation if gross adds were ever disclosed (they are not). Absence
+   does not kill the thesis (bookings and active members still published)
+   but caps it at UNPROVEN and demotes condition 1 to plausible.
+2. **Amex renewal economics.** Resolves at the Q3'26 10-Q/call.
+3. **CLEAR1 revenue split.** Never disclosed; only signings/NRR color. Kept
+   out of the load-bearing set for the conservative path for this reason.
+4. **Whether the 8/5–8/6 founder sales ran under a 10b5-1 plan.** Form 4
+   footnotes not parsed; checkable at EDGAR.
+5. **True current ARPU by tier** (standard/airline/Amex mix) — only the
+   posted price ladder and "bookings per member" arithmetic exist.
+
+## 7. Sources
+
+- **Primary:** Q2'26 earnings release (8-K exhibit, 2026-08-05)
+  — KPI table, guidance, balance sheet, cash flow; 10-Q you-20260630.htm —
+  commitments (Note 16), share classes, TRA/financing detail; Q4'24
+  shareholder letter (2025-02-26) — retention/usage series, share counts,
+  buyback history; Form 4s (2026-08-07, Seidman-Becker / Alclear Investments
+  LLC) and Form 144 (2026-08-05), EDGAR CIK 0001856314; earnings-call
+  transcripts Q2'26, Q2'25, Q1'26, Q4'25 (Quartr via stockanalysis; call
+  transcripts are primary for management statements).
+- **stockanalysis.com (vetted exception):** `/stocks/YOU/statistics/`
+  (market cap, EV, FCF, cash, shares, short interest — hover precision),
+  `/financials/income-statement/` (annual operating-leverage series),
+  `/filings/`, `/transcripts/`, news feed, symbol-lookup.
+- **Broker/market microstructure:** Robinhood MCP; admissible where no
+  integrated official source covers the field: live quote ($51.35,
+  2026-08-07 close), option chain/marks/IV for the implied-move table, daily
+  bars for the RV windows and the Aug 5 intraday reversal, estimate-vs-actual
+  EPS pattern (actuals cross-checked against filings).
+- **Reference data:** Damodaran (pages.stern.nyu.edu/~adamodar): ERP 4.28% /
+  rf 4.74% as of 2026-08-01; cost-of-capital distribution and EVA base rate
+  (January 2026 vintage).
+- **Point-in-time repo DBs:** stocks.db v_latest (2026-08-06
+  snapshot), composite.db (si_days_to_cover flag), scorer.db
+  candidate_appearances (2026-08-07 entry), sec_fundamentals.db (EPS
+  cross-check). Read-only.
+- **Low-confidence:** AOL/travel-press pieces on TSA Touchless ID
+  expansion (the underlying risk is primary via Item 1A).
+
+## Kill-thesis record
+
+Ledger line: kill-thesis **UNPROVEN** — conditions=5, refuted=0, unknown=2;
+ownership call BUY at $51.35. The two UNKNOWNs that cap the verdict (current
+retention; Amex renewal economics) are both scheduled to become observable at
+the Q3 print (2026-11-05); neither refutes ownership at this spread on this
+balance sheet.
+
+**Closest attack:** retention opacity compounded by incentive alignment — the
+declining metric was retired exactly when most needed, and the founder sold
+~324k shares at $60.52–68.45 into the Aug 5–6 spike while the company
+repurchased at $52.73. Refutes nothing; caps the verdict.
+
+Per-condition adjudication (SURVIVED / REFUTED / UNKNOWN) was not recorded as
+a separate list in the original run; the condition tiers stand in §1 and the
+two UNKNOWNs are detailed in §6. Standing/statistical/options-timing checks:
+the options read ran path 2 and applied no timing refutation ("the thesis
+makes no dated claim" — §4); other checks not recorded in original run.
+
+**Flip evidence:** not recorded in original run.

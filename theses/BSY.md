@@ -1,0 +1,283 @@
+# BSY — Bentley Systems — 2026-08-06 (reopen of 2026-07-30, trigger: bsy-q2-print-nrr-and-api-monetization)
+
+Price $35.36 (2026-08-06 close, −1.9% on the print day) · market cap
+$11,071,456,271 · next earnings 2026-11-04 BMO (tentative)
+
+**Reopen re-research of `research/BSY-2026-07-30.md`** (prior verdict UNPROVEN,
+reopen=2026-08-06:bsy-q2-print-nrr-and-api-monetization; prior ownership call: pass at
+$35.19). The reopen question: did the Q2 2026 print (2026-08-06 BMO, confirmed reported:
+Robinhood `get_earnings_results` adj EPS actual $0.35 vs est $0.31, `verified=true`) show
+cc NRR ≥ 109 **with any disclosed API-consumption commercial terms** — the prior run's
+flip evidence — and what does that do to the thesis?
+
+## 0. The reopen question, answered first
+
+**Half fired.** The quality half fired cleanly: cc NRR **held at 109%** ("consistent with
+the same period last year" — press release), cc account retention **99%**, and cc ARR
+growth **accelerated to 12%** (from 11.5% in Q1; ARR $1,536.0M, +2.9% sequential, **all
+organic** — CFO). E365 floor/ceiling uplifts ran ~10%, "in line with previous quarters,"
+and Q2 renewals (the second-largest renewal quarter) were strong [call]. Zero observable
+seat-compression erosion, fourth consecutive quarter.
+
+**The monetization half did not fire.** No commercial terms, no pricing model, no revenue
+disclosed for agentic API consumption. What is new is a **date and a posture**: "We're not
+planning to monetize this year. We're planning to start monetizing **next year** [2027]…
+in a very reasonable way. What we don't want is a big price tag to become suddenly an
+obstacle" (CEO, Q2 call). Sequence restated as adoption → exploration → validation →
+monetization, with monetization "at the underlying level" (the engineering applications
+and Bentley Infrastructure Cloud, not the assistant layer). Six MCP servers now shipped
+(STAAD + five more Bentley Open apps; three more announced for PLS incl. PLS-GRID). All
+demand claims remain management-sourced ("game changer" is management quoting customers).
+
+**So the thesis stands where it stood, at roughly the same price.** The prior run's flip
+evidence required *both* halves (or ~$29–30); the stock closed $35.36, −1.9% on the print
+day (prior close $36.04), vs $35.19 at the 7/30 run. The crux condition is now dated
+(2027) but still unverifiable, and the implied return is still below the hurdle on honest
+SBC math (§4). **Pass again.**
+
+| prior falsifier | actual | status |
+|---|---|---|
+| cc NRR < 105% or account retention < 97% | NRR **109%**, retention **99%** | NOT triggered |
+| Per-account E365 consumption declining while seats hold | Uplifts ~10% in line; consumption growing; strong renewals [call] | NOT triggered |
+| Surface reauthorization dies by 2026-09-30 | H.R. 8870 still committee-approved only (62-2, 2026-05-22); **CEO's on-call "passed by the House" claim not corroborated** (congress.gov/GovTrack, fetched today); IIJA expiry <8 weeks out | NOT triggered; deciding weeks ahead |
+| Mining/Seequent downcycle with total cc ARR < ~9% | Resources again fastest-growing; cc ARR **12%**; CEO: 2026 "probably a record year" for mining capex, primarily brownfield, broad-based | NOT triggered — but the comp hardens |
+| Leverage re-levered > 3× EBITDA | Net debt leverage **1.9×**, consistent q/q; new $550M term loan A repaid revolver [CFO] | NOT triggered |
+| SBC accelerating above ~$90M/yr without offset | Operating SBC $21.8M Q2 / $39.8M H1 (~$80M run-rate); H1 buybacks $155M; fully diluted 319M shares, −1% CAGR [8-K; call] | NOT triggered |
+
+## 1. Verdict and thesis
+
+**PASS at $35.36** (unchanged ownership call). kill-thesis: **UNPROVEN** —
+conditions=5, refuted=0, unknown=1 (same shape as 7/30). This remains a
+genuinely high-quality, founder-controlled infrastructure-software business printing
+pristine quarters into an AI-narrative drawdown (−38% y/y), and the price still implies
+only ~7–9%/yr against an 8.93% hurdle: base **8.65%** (−27bp), SBC-burdened **6.94%**
+(−199bp), optimistic **9.75%** (+82bp). The crux upside (agentic API monetization) gained
+a start date (2027) and a "reasonable pricing" posture — which cuts both ways: nearer, but
+explicitly modest at introduction. Five weeks of evidence have moved the business forward
+and the price sideways; the math that flipped 7/30 to pass is intact. The watchlist
+trigger stands: disclosed API commercial terms, or ~$29–30.
+
+**Closest attack:** the SBC/buyback double-count — detail in the Kill-thesis record.
+
+Load-bearing conditions: enumerated and adjudicated in the Kill-thesis record.
+Condition tiers not recorded in original run.
+
+## 2. Business
+
+Unchanged from `BSY-2026-07-30.md` §2 (creates / captures / protected — E365 consumption
+subscriptions, Virtuoso SMB, asset analytics; standards/archives/physics-code switching
+costs). This print's structural additions: **top-owner penetration quantified** — 346 of
+the ex-China BI 500 top owners (>3/4 of them, >80% of their $15.5T net infrastructure
+assets) are BSY accounts spending >$330M/yr run-rate (~20% of the business, ~$1M avg;
+$21 per $1M of net assets — Greg's new "point of departure" metric, management-sourced);
+153 have adopted Bentley Infrastructure Cloud. PLS international revenue now equals the
+entire PLS business at 2022 acquisition. Open-assistant posture is explicit: MCP servers
+pair Bentley's deterministic engines with any assistant (Copilot, Claude, Gemini,
+ChatGPT); monetization to land on the application layer beneath them.
+
+**Operating leverage (Phase 0):** not recorded in original run.
+
+## 3. Threads pulled
+
+- **The reopen thread** — resolved in §0; the table is the finding. Single most
+  informative new fact: a dated monetization commitment (2027) paired with an explicitly
+  modest pricing posture.
+- **The CEO overstated the transportation bill.** Call: the surface bill "has been passed
+  by the House of Representatives." Corroboration (congress.gov search + GovTrack, fetched
+  today): H.R. 8870 was approved by the T&I **Committee** 62-2 on 2026-05-22; no floor
+  vote found. Likely conflation, and the bipartisan committee vote still supports funding
+  continuity — but a load-bearing-condition claim failed corroboration on the same call
+  everything else is sourced from. Weight adjusted accordingly; substance unchanged from
+  7/30 (one chamber, committee stage, extension the likelier bridge; IIJA expires
+  2026-09-30).
+- **Non-GAAP definition widened twice in two quarters.** Q1'26: acquisition-expense
+  adjustment expanded to acquired-company retention incentives (measure renamed AOI less
+  Operating SBC); Q2'26: integration costs ($1.8M this quarter) now also excluded [8-K
+  reconciliation footnotes]. Each small, both flattering, and the margin metric being
+  redefined is the one executive comp rides on (Greg: hitting the annual margin goal "is
+  a fundamental incentive requirement for our executives"). Not refuting — prior periods
+  were restated for comparability and the amounts are ~1% of AOI — but the direction gets
+  a falsifier line below.
+- **Margins fell y/y; management says timing.** Q2 GAAP op margin 21.6% vs 23.2%; AOI
+  less Op SBC margin 28.3% vs 29.3% (H1 30.8% vs 32.0%) — framed as deliberate H1
+  front-loading of investments plus the ERP/quote-to-cash go-live absorbed, not adjusted
+  out [CFO]. H1 FCF $251.7M vs $273.4M y/y = 47% of the FY midpoint, inside the guided
+  45–50%; **H2 must deliver 50–55%** and the FY26 guide ($500–570M) is reaffirmed, LTM
+  FCF $498M +15%. Deferred: if H2 doesn't reverse, the 100bp/yr margin cadence claim
+  breaks — watch item, on the falsifier list.
+- **Top of ARR range needs an acquisition.** "We will also need to do an acquisition,
+  potentially" (CEO); "each of those factors… all have to happen together" (Greg); "still
+  our expectation to be able to do that this year" (Greg, on a resources acquisition).
+  The organic path is the middle of the range, not the top — relevant to the growth path
+  a reverse DCF may honestly assume (§4).
+- **Insider filings since 7/30:** two Form 4s only — Greg Bentley 7/23 vesting + tax
+  withholding (A/F, 61,037/26,698 sh at $30.12), CLO 8/2 tax withholding (F, 1,040 sh).
+  No open-market buys or sells [EDGAR XMLs]. A 13G/A (7/27) — passive. Neutral; prior
+  run's read stands.
+- **Post-print sweep:** ticker news feed shows nothing adverse after the call; BMO cut
+  its PT $45→$41 on 7/24 (pre-print, low-confidence tier). The −1.9% print-day close
+  against an EPS beat reads as the +24% July run-up having pre-paid the quarter.
+- **Machine view:** composite has never flagged BSY (no `ticker_scores` rows); BSY absent
+  from `earnings.db` (`calendar_now.today` = 2026-08-06) and `sec_fundamentals.db` —
+  repo cross-checks unavailable, carried from prior run. Robinhood EPS actuals remain
+  uncross-checked against an official adjusted figure; this print's $0.35 matches the
+  8-K's Adjusted EPS exactly.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; path 1 N/A — BSY not in the
+  24-symbol CBOE catalog); UNRELIABLE by the liquidity gate — see §4's table.
+- **Dead ends:** not recorded as a distinct list in the original run (the post-print
+  sweep and machine-view bullets above record what was checked and ruled nothing out).
+
+## 4. Valuation
+
+Reverse DCF, levered `fcf` paired with **market cap $11,071,456,271** (`hover`, live
+probe 2026-08-06 post-print; spot $35.36). Base flow TTM FCF **$498,499,000** (ncfo
+$522.9M + capex −$24.4M — statistics page, post-Q2 ingest; matches CFO's "LTM $498M,
++15%"). SBC-burdened base **$426M** — management's own "truly free cash flow" metric
+(FCF less operating SBC, Greg's prepared remarks; consistent with the ~$80M/yr operating
+SBC run-rate). Minority interest −$16K [8-K balance sheet] — immaterial, no haircut.
+Net-debt 0 by construction (levered flow ↔ market cap). Hurdle: rf 4.74% + beta 0.978 ×
+ERP 4.28% = **8.93%** (Damodaran, as of 2026-08-01; beta inside the stable band).
+
+| scenario | base FCF | growth ×5yr | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| Base | $498.5M | 10/10/10/8/8% | 2.5% | **8.65%** | **−27bp** |
+| SBC-burdened (Greg's metric) | $426M | 8/8/8/6/6% | 2.0% | **6.94%** | **−199bp** |
+| Optimistic | $498.5M | 12%×5 | 3.0% | **9.75%** | +82bp |
+
+ATM IV is ~71% on stale zero-volume quotes (>50%), so per the precision rule these are
+whole-percent figures with a wide range. The honest central read is unchanged from 7/30:
+**~7–9%, below the hurdle on the SBC-consistent case** — reported FCF ignores ~$80M/yr of
+operating SBC while the flat share count is bought with that same FCF ($155M repurchased
+in H1, partly alongside a re-drawn credit facility at 1.9× leverage); Greg's own burdened
+metric concedes the point. The base path's 10% ≈ the organic ARR rate (12% cc) less
+nothing for the acquisitions management says the top of the range needs — FCF here
+excludes acquisition spend, so the growth is charged as organic only (serial-acquirer
+rule). Market-share sentence: 12%×5 compounds revenue to ~$2.8B by 2031, still ~$2K ARR
+per $1M of design billings against management's own penetration framing — not
+bigger-than-the-market. **Growth-without-reinvestment warning** (FCF $498M ≥ earnings
+$290M) answered, not ignored: ~$47M/yr acquired-intangible amortization [8-K: $23.6M in
+H1] understates cash earnings, and the subscription-prepayment float (Cloud Services
+deposits +$37.3M in H1) is genuinely growth-linked financing — but neither closes the gap
+fully, which is why the conservative case cuts terminal growth to 2.0% (~inflation).
+Base-year cash taxes ($28.2M H1 vs $39.8M provision) run below book — modest base
+flattering, noted. Terminal-risk check (10-K Item 1A, carried): dependence on government
+infrastructure spend; 2.0–2.5% survives it on multi-sovereign spread — the true terminal
+question remains AI seat compression, which is what the 2.0% case prices.
+
+**Options-implied move (path 2 — Robinhood stopgap; path 1 N/A, BSY not in the 24-symbol
+CBOE catalog, no `options.db` history). UNRELIABLE by the liquidity gate**, worse than
+7/30: Aug 21 $35 legs quoted at the close of print day with **zero volume on both**;
+call spread $1.35/$2.95 = $1.60 vs $0.215 allowed (OI 185); put spread $0.20/$3.50 =
+$3.30 vs $0.20 allowed (OI 81). As-labeled background only, DTE 15, spot $35.36:
+
+| metric | value |
+|---|---|
+| ATM IV (mean of 35C 69.15% / 35P 73.31%) | 71.23% |
+| expected absolute move (MEAN, not a ceiling) | 11.31% |
+| 1-sigma move | 14.44% |
+| RV60 | 44.71% |
+| RV20 | 52.84% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+"Elevated" on both windows, but from marks the gate rejects — a 71% post-print IV against
+a 63% pre-print read (7/30) is almost certainly stale-quote artifact, not an event
+premium that survived the print. No verdict leans on this table. The thesis makes no
+dated claim — the 2-sigma timing refutation is NOT APPLICABLE; recorded as the mandatory
+thread only.
+
+## 5. Falsifiers
+
+Sell / re-underwrite triggers:
+
+1. cc NRR < 105% or account retention < 97% in any quarter (carried).
+2. Per-account E365 consumption declining while seats hold; floor/ceiling uplifts
+   compressing below ~10% (carried, sharpened).
+3. H2'26 FCF misses the guided 50–55% share / FY26 FCF outside $500–570M — the
+   "timing, not trend" margin story failing in the prints.
+4. Monetization start slipping past 2027, or launching with no disclosed model — the
+   crux condition losing its new date.
+5. No surface reauthorization **and** no extension by 2026-09-30, or enacted funding
+   materially below IIJA (deciding window is now).
+6. Mining/Seequent downcycle with total cc ARR growth < ~9% unoffset (carried; 2026's
+   record-capex comp makes 2027 the test).
+7. A third non-GAAP definition widening, or leverage > 3× EBITDA for a platform
+   acquisition (new).
+
+**Reopen trigger:** 2026-11-04: bsy-q3-h2-fcf-backload-and-monetization-model —
+Q3 print, BMO (H2 FCF back-load lands or breaks; NRR/uplift lines; IIJA expiry resolved
+by then; any monetization-model disclosure).
+
+## 6. UNKNOWNs
+
+1. **Agentic API monetization economics** — still the crux. Now dated (2027) and located
+   (application layer), still zero revenue, no pricing model, every supporting claim
+   management-sourced. Resolves at the FY26 Q4 print / FY27 outlook at the earliest.
+   Absence does not kill the thesis at the right price; it blocks SOUND and caps
+   conviction, exactly as on 7/30.
+2. **Whether H2 margin/FCF back-loading lands** — structurally unverifiable until the
+   Q3/Q4 prints; management's comp incentive cuts both ways (motivates delivery, and
+   motivated the definition changes).
+3. **US federal-funding share of ARR** — still not disclosed at useful granularity
+   (carried; bounded by sector/region commentary only).
+4. **SEC cross-check unavailable** — BSY absent from `sec_fundamentals.db` (carried);
+   adjusted-EPS series rests on the company's 8-K reconciliation plus Robinhood estimates.
+5. **The 10-Q filed today** (0001031308-26-000023) was not parsed line-by-line this run —
+   press-release statements used instead; commitments table assumed unchanged from the
+   10-K's $53.7M (Note 18, prior run). Flagged.
+
+## 7. Sources
+
+- **Primary:** Q2 2026 earnings 8-K Ex-99.1 (accession 0001031308-26-000020,
+  filed 2026-08-06 — full financials, NRR/ARR, AOI-less-Operating-SBC reconciliation and
+  both definition-change footnotes, FCF reconciliation, balance sheet); 10-Q filed
+  2026-08-06 (0001031308-26-000023, not parsed — see §6); EDGAR submissions index CIK
+  1031308; Form 4 XMLs (2026-07-27 Bentley, 2026-08-04 Shaman); congress.gov/GovTrack
+  status check on H.R. 8870 (committee-approved 62-2, 2026-05-22; no floor vote found).
+  Transcripts (primary-transcribed, Quartr via stockanalysis): Q2 2026 earnings call
+  (`/stocks/BSY/transcripts/662348-q2-2026/`, 62 turns, 2026-08-06) — Greg's burdened-FCF
+  and top-owner framing, CEO's monetization timeline and MCP progress, CFO's guide
+  reaffirmation and FX detail, Q&A (uplifts ~10%, acquisition-needed-for-top-of-range,
+  mining brownfield character, "passed by the House" claim).
+- **stockanalysis.com (vetted exception):** live 2026-08-06 post-print:
+  `/stocks/BSY/statistics/` (market cap/FCF/beta/short-interest `hover` values, post-Q2
+  ingest), `/stocks/BSY/` news feed, `/transcripts/` index.
+- **Broker/market microstructure:** Robinhood MCP — no integrated official source covers
+  these fields for BSY: live quote ($35.36 close, prior close $36.04);
+  `get_earnings_results` ($0.35 vs $0.31, verified; next print 2026-11-04 BMO,
+  tentative); daily bars (90-close RV array); Aug 21 $35 option pair (marks, IV, OI,
+  spreads — zero volume).
+- **Reference data:** Damodaran, as-of 2026-08-01 — implied ERP 4.28%, rf 4.74%.
+- **Point-in-time repo DBs:** `composite.db` — no `ticker_scores` rows for BSY (never
+  flagged); `earnings.db` (`calendar_now.today` = 2026-08-06) and `sec_fundamentals.db`
+  — BSY absent (see §3 machine view).
+- **Low-confidence:** TheFly consensus item ($0.32 vs Robinhood's $0.31 estimate); BMO PT
+  cut item (7/24); management's customer-reaction quotes.
+
+## Kill-thesis record
+
+**UNPROVEN** — conditions=5, refuted=0, unknown=1 (agentic monetization). Conditions:
+(1) quality metrics hold — survived, strengthened (ARR accelerated to 12% cc organic, NRR
+109, retention 99, uplifts in line; the margin dip is guided front-loading, watched via
+falsifier 3); (2) moat mechanism — survived (no new evidence against; Prometheus-class
+entrants answered credibly on the call, though by management); (3) seat compression stays
+narrative — observable half survived a fourth consecutive quarter; forward half still
+rests on (4); (4) agentic monetization — **UNKNOWN**: dated (2027) and located
+(application layer) but zero revenue, no pricing model, all self-attested; uncertainty
+withholds credit → blocks SOUND; (5) funding continuity — survived with a corroboration
+demerit: the CEO's "passed by the House" fails against congress.gov/GovTrack (committee
+62-2 only), IIJA expiry <8 weeks, extension the likelier bridge. Standing checks: base
+rate for usage-model re-monetization stays mixed; excess-return persistence is a ~29%
+base-rate proposition and BSY's 13.6% ROIC vs ~8.8% WACC leans on the switching-cost
+mechanism to defend it; the short case (39× GAAP P/E, cyclical mining engine at a record
+capex year, AI answer unpriced and now promised at "reasonable" prices, margins down y/y
+while the exec-comp metric got redefined twice, H2 hockey-stick FCF, 46.6% family control
+blocking takeout) is respectable and remains mostly a price argument; management
+incentives — the margin goal drives comp AND the two definition changes; disconfirming
+search — the House-passage miss is the find. Statistical checks N/A. Options timing check
+skipped (no dated claim); path-2 read recorded, UNRELIABLE (zero volume both legs).
+**Closest attack:** the SBC/buyback double-count, again — now sharpened to
+−199bp vs hurdle on management's own burdened-FCF metric, with H1's $155M of buybacks
+running alongside a re-drawn credit facility. **Flip evidence:** (toward buy) disclosed
+API-consumption commercial terms with any initial revenue, or price ~$29–30 where the
+base case clears ~10%/yr; (toward FLAWED) falsifiers 1–3 firing at the Q3 print.

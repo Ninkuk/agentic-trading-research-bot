@@ -1,0 +1,307 @@
+# BR — Broadridge Financial Solutions — 2026-08-04 (reopen of 2026-07-30, trigger: fy27-guide)
+
+Price $169.21 (live quote, 2026-08-04, +7.5% on the print) · market cap
+$19,534,686,363 · next earnings 2026-11-03 BMO (unverified date)
+
+**Reopen re-research of `research/BR-2026-07-30.md`** (prior verdict
+UNPROVEN, reopen=2026-08-04:fy27-guide; prior ownership call: buy at
+$153.37). The reopen question: what did the FY26 Q4 print and FY27 guide
+(2026-08-04 BMO) show against the prior thesis's falsifier lines —
+recurring revenue growth <5% cc or adj EPS growth <8%?
+
+## 0. The reopen question, answered first
+
+The FY27 guide answered the reopen condition in the thesis's favor: **6–8%
+recurring cc (5–7% organic + 1pt M&A) and 8–12% adj EPS growth** — neither
+falsifier line hit.
+
+| prior falsifier | actual | status |
+|---|---|---|
+| FY27 recurring revenue growth guided <5% cc | **6–8% cc** (5–7% organic + 1pt acquisitions) | NOT TRIGGERED |
+| FY27 adj EPS growth guided <8% | **8–12%** (margin ~21%, up from 20.5%; tax 22%) | NOT TRIGGERED |
+| Closed sales (the prior run's "real wobble," guide cut to $240–290M) | **$305M FY26**, record $158M Q4 — beat the cut guide's top; backlog $470M (+$40M, 10% of recurring); pipeline up "more than a third" YoY [call] | RESOLVED favorably |
+| SEC proposal restructures processing fees, not just delivery default | **Reg E-Delivery** (proposed 2026-07-16, Fed. Reg. 2026-07-21, comments due 2026-09-21) is delivery-default scope; leaves fee arrangements intact [S&C memo; SEC release; mgmt] | NOT TRIGGERED at proposal stage; **final rule pending** |
+| FY26 10-K adds a fee-model risk factor (vs delivery-method wording) | New Item 1A wording is **delivery-volume risk**: physical volumes fall, "recurring revenue growth and distribution revenues will decrease… potential restructuring of our physical distribution operations"; plus a new tokenization **disintermediation** risk factor | NOT TRIGGERED — but the 10-K is franker than the call (see §3) |
+| Equity position growth <5% / retention <97% | Q4 equity positions **+17%** (14% revenue-generating), funds +7%; retention **98%**; H1-FY27 testing: high-single-digit equity, mid-single-digit funds | NOT TRIGGERED |
+
+Other print facts: FY26 recurring +8% cc (6% organic; Q4 +8% cc, 7pt
+organic), adj EPS **$9.60 (+12%)**; Q4 adj EPS $3.82 vs $3.75 consensus
+[broker tier]; FCF **$1,233.0M (+17%, 110% conversion)** = NCFO $1,345.6M −
+$112.6M capex+software [10-K MD&A]; dividend +12% to $4.36 (20th
+consecutive raise); buyback authorization raised to **$1.5B** (record $600M
+repurchased FY26, $250M in Q4); leverage 1.9× vs 2.5× target; $25M AI
+productivity saves embedded in FY27; FY27 closed-sales guide $290–330M;
+event-driven guided down to $250–300M (record FY26). Next print 2026-11-03
+BMO [broker tier].
+
+## 1. Verdict and thesis
+
+**BUY at $169.21, thinner than at $153.** kill-thesis: **UNPROVEN** —
+conditions=6, refuted=0, unknown=2.
+
+The FY27 guide answered the reopen condition in the thesis's favor (§0).
+FY26 closed the year above its own cut guidance ($305M closed sales vs the
+$240–290M guide, record $158M Q4), and both named risks resolved favorably
+*at the proposal stage*: Reg E-Delivery (proposed 2026-07-16) is
+delivery-default scope only — no fee-schedule restructuring — and
+tokenization entered the 10-K as a disclosed risk while BR signs deals to
+tax it (Ondo, Alpaca, Galaxy). The stock answered +7.5% today ($157.34 →
+$169.21), consuming ~100bp of implied return: ~9.0% conservative / ~9.6%
+central now vs 9.2–10.9% at $153. The final rule text and the "largely
+offset" e-delivery earnings math remain management assertions until the
+adopting release and the transition quarters exist.
+
+**Closest attack:** condition 6 — today's +7.5% consumed ~100bp of implied
+return *before* the deciding document (the final rule) exists; the buy now
+rests on an ~85bp conservative-case spread (detail in the kill-thesis
+record).
+
+Load-bearing conditions (tiers not recorded in original run; adjudication
+in the kill-thesis record):
+
+1. Fee schedule survives the modernization wave.
+2. FY27 guide achievable.
+3. E-delivery transition earnings-neutral-or-better.
+4. Tokenization slow/gated and taxed by BR.
+5. Position growth persists high-single-digit.
+6. Price still compensates.
+
+## 2. Business
+
+Unchanged from `BR-2026-07-30.md` §2 (creates / captures / protects) — the
+print extends it. The year's structural additions: **DLX** (multi-asset
+tokenization platform atop DLR, which processes $360B/day in tokenized repo
+[call, slide 7]); first provider supporting all three tokenized-equity
+models (synthetic — Ondo governance; custodial — Alpaca agreement; native —
+Galaxy on-chain voting, now integrating into ShareLink); Voting Choice at
+900+ funds / $8T AUM (from 600 / $4T); SVI at six clients. The moat's
+weakness is still its source — the rulebook that grants the toll can amend
+it — but the first amendment (Reg E-Delivery) landed on the delivery leg,
+not the fee leg.
+
+**Operating leverage (Phase 0):** not recorded in original run
+(pre-template); §4 notes margins are not mid-expansion (20.5% → ~21%
+guided).
+
+## 3. Threads pulled
+
+- **The reopen thread (the point of this run)** — resolved in §0; the guide
+  table is the finding. Single most informative row: closed sales $305M
+  against the $240–290M cut guide — the prior run's "classic pre-miss
+  excuse pattern" read was wrong in the favorable direction; the CFO's
+  "timing, not demand" explanation held.
+- **The prior run missed the proposal.** Reg E-Delivery was proposed
+  2026-07-16 and published in the Federal Register 2026-07-21 — *nine days
+  before* the 2026-07-30 run recorded it as "does not exist yet." The prior
+  UNKNOWN #1 was answerable at the time. The stock's June 29 trough
+  ($135.44) → July 30 ($153) recovery likely already carried part of the
+  benign-proposal read. Logged as a process miss; the substance resolved
+  favorably regardless.
+- **The 10-K is franker than the call.** CFO on the call: "modest headwind
+  to recurring revenue growth over a two- to three-year period… which we
+  expect to largely offset with new solutions… not anticipating a
+  significant impact on adjusted earnings growth." The 10-K risk factor:
+  recurring revenue growth and distribution revenues "**will decrease**,
+  which could result in a decrease in our earnings and the potential
+  restructuring of our physical distribution operations." Both can be true
+  (risk-factor drafting is conservative), but the offset math is disclosed
+  nowhere — no fee mix by communication type exists in any filing. That gap
+  is UNKNOWN #2, carried from the prior run and now load-bearing for the
+  transition years.
+- **Tokenization: taxed, not fled — still tiny.** Q4 digital-asset revenues
+  (Canton coin + DLR) contributed **one point** of GTO's 5% quarterly
+  growth [CFO]. The strategy is real (DLX, three-model coverage) and the
+  scale remains orders of magnitude from the franchise at risk — unchanged
+  from the prior run. New Item 1A disintermediation risk factor is
+  standard-form disclosure of the same tail.
+- **Q1 FY27 comp trap (watch item).** Q1 laps a record $114M event-driven
+  quarter (average is $60–70M) [CFO]; a "miss"-shaped Q1 headline is
+  pre-announced. Also a ~4-point Q1 license-renewal tailwind in GTO splits
+  across capital markets and wealth. Neither changes the year; both can
+  move the stock on 2026-11-03.
+- **AI saves are now in the bridge.** $25M of FY27 productivity gains,
+  primarily in the technology organization, fund investment and EPS growth
+  [CFO]. Small (~0.5% of costs) but it is the first time AI sits in the
+  guidance arithmetic — if it slips, the 8–12% EPS band absorbs it.
+- **Machine view:** composite 2026-08-04 snapshot — BR informational-only
+  (`sa_fscore` 7, `sa_fcf_yield` 7.40%, `earnings_imminent`),
+  **`in_portfolio`=1** (the 2026-07-31 notional flight). No voting signal
+  has ever flagged BR.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; path 1 N/A — BR
+  not in the 24-symbol CBOE catalog, no `options.db` history) — see the §4
+  table. UNRELIABLE by the liquidity gate.
+- **Dead ends:** post-print sweep — 10-K filed same day (2026-08-04,
+  accession 0001628280-26-052243); earnings 8-K (0001383312-26-000022); a
+  Form 3 on 2026-08-03 (new insider — routine); the 2026-07-06 Form 4
+  cluster remains annual director grants (prior run's dead end stands). No
+  adverse news in the ticker feed.
+
+## 4. Valuation
+
+Reverse DCF, levered FCF paired with **market cap $19,534,686,363**
+(`hover`, live probe 2026-08-04; spot $169.21, +7.5% on the print). Base
+flow is the company-defined FY26 FCF **$1,233.0M** (NCFO − capex −
+capitalized software, 10-K MD&A) — more conservative than stockanalysis TTM
+`fcf` $1,317.2M, which omits the ~$62M of capitalized software (and whose
+statistics page had not yet ingested Q4 at run time). No minority interest;
+no net-debt input by construction (levered flow ↔ market cap).
+
+Hurdle: not computed in the original run; the `vs hurdle` column is omitted
+(stockanalysis WACC 8.15% is cited in the kill-thesis record as context
+only).
+
+| scenario | base FCF | growth ×3yr | terminal | implied return |
+|---|---|---|---|---|
+| A (company-def FCF, growth ≈ organic guide) | $1,233.0M | 6% | 2.5% | **9.61%/yr** |
+| B (conservative) | $1,233.0M | 5% | 2.0% | **8.99%/yr** |
+| C (guide-high) | $1,233.0M | 8% | 2.5% | **9.99%/yr** |
+| D (prior-run-comparable: stockanalysis fcf) | $1,317.2M | 6% | 2.5% | **10.09%/yr** |
+
+Context: fwd P/E 15.1 (stockanalysis, pre-print estimates); 17.6× TTM
+adjusted $9.60; ~16.0× the FY27 guide midpoint (~$10.56). Prior run at
+$153: 9.17–10.86%. The +10.3% price move since 7/30 cost roughly one point
+of implied return; the FCF base rose 17% in partial offset. Margins are not
+mid-expansion (20.5% → ~21% guided) — a flat growth path remains fair.
+Terminal-risk check: the dominant disclosed structural risks are now *both*
+named in Item 1A (e-delivery volume decline; tokenization
+disintermediation); 2.0–2.5% terminal survives them only on the
+modernized-not-restructured fee outcome and BR taxing the tokenized rails —
+exactly the two UNKNOWNs, unchanged in kind.
+
+**Options-implied move** (path 2 — Robinhood stopgap; path 1 N/A, BR not in
+the 24-symbol CBOE catalog, no `options.db` history). Aug 21 $170 pair, DTE
+17, quoted ~1.5h after the BMO print; brackets no dated catalyst.
+**UNRELIABLE by the liquidity gate** (call spread $2.85/$4.70 = 49% of the
+$3.78 mark, OI 850/vol 36; put spread 14.4% of the $4.85 mark, OI 0/vol
+128). As-labeled context:
+
+| metric | value |
+|---|---|
+| spot | 169.21 |
+| dte (calendar days) | 17 |
+| ATM IV | 29.45% (call 27.10% / put 31.81%) |
+| expected absolute move (MEAN, not a ceiling) | 5.10% |
+| 1-sigma move | 6.36% |
+| RV60 | 32.04% |
+| RV20 | 35.41% |
+| IV > RV60? | NO |
+| IV > RV20? | NO |
+
+Post-print IV crush: NOT elevated on both windows (the RV windows contain
+the pre-print run-up and today's gap). The thesis makes no dated claim this
+run — the timing refutation instrument is NOT APPLICABLE; recorded as the
+mandatory thread only.
+
+## 5. Falsifiers
+
+Sell / re-underwrite triggers (original framing):
+
+1. **Final Reg E-Delivery rule** touches processing fees or intermediary
+   compensation (the proposal does not; the adopting release could) — read
+   it the day it adopts.
+2. FY27 guide cut below 5% recurring cc or below 8% adj EPS at any
+   quarterly update.
+3. E-delivery transition quarters show recurring (not just distribution)
+   revenue declining with **no** quantified offset — the "largely offset
+   with new solutions" claim failing in the prints.
+4. A Schwab/Fidelity-scale broker announces issuer-direct communications or
+   self-custody equity wallets (carried from prior run).
+5. Equity position growth <5% for two consecutive quarters, or retention
+   <97%.
+6. Tokenized-equity volume migrating to rails BR does not service (watch:
+   Ondo/Alpaca relationships going quiet while tokenized float grows).
+
+**Reopen trigger:** 2026-11-03: q1-fy27-print-final-rule-check — Q1 FY27
+print (event-driven comp, guide reaffirmation, first e-delivery commentary
+post-comment-period; read the final rule whenever it adopts).
+
+## 6. UNKNOWNs
+
+1. **The final rule.** The proposal resolved scope favorably; the adopting
+   release (comments close 2026-09-21; adoption likely months later) is the
+   deciding document. Absence caps conviction at UNPROVEN; does not kill
+   the thesis.
+2. **The e-delivery offset math.** No filing discloses fee mix by
+   communication type; "largely offset" and "no significant impact on
+   adjusted earnings" are management assertions. Precedents
+   (notice-and-access 2007, TSR 2024) resolved favorably — pattern, not
+   proof.
+3. **Management comp metrics** — proxy statement still unread (carried
+   twice now; the FY26 proxy lands ~Sept–Oct and should be read at the next
+   reopen).
+4. **Whether the "five consecutive three-year objective cycles delivered"
+   claim survives audit** — CFO statement, not independently recomputed
+   this run.
+
+## 7. Sources
+
+- **Primary:** FY26 10-K (filed 2026-08-04, accession 0001628280-26-052243
+  — Item 1A new Reg E-Delivery and tokenization risk factors; MD&A FCF
+  reconciliation $1,345.6M − $112.6M = $1,233.0M; segment recurring
+  growth); earnings 8-K (0001383312-26-000022, 2026-08-04); EDGAR
+  submissions index (CIK 1383312); SEC Reg E-Delivery proposal (S7-2026-25,
+  proposed 2026-07-16, Federal Register 2026-07-21, comments due
+  2026-09-21).
+- **stockanalysis.com (vetted exception):** `/stocks/BR/statistics/`
+  (market cap `hover` 19,534,686,363; TTM fcf 1,317.2M — pre-Q4-ingest at
+  run time; fwd P/E 15.1; short float 3.5%; RSI 70.1),
+  `/transcripts/658091-q4-2026/` (full Q4 FY26 call, 2026-08-04: Gokey and
+  Ghei prepared remarks + Q&A — FY27 guide, eDelivery impact framing,
+  tokenization slide 7, closed-sales detail, Q1 call-outs;
+  primary-transcribed).
+- **Broker/market microstructure:** Robinhood MCP (no integrated official
+  source covers these fields for BR): live quote ($169.21, prior close
+  $157.34); daily bars (RV60/RV20 closes array); Aug 21 $170 option pair
+  (marks, IV, OI, spreads); earnings estimate-vs-actual (Q4 $3.82 vs $3.75;
+  next print 2026-11-03 BMO, unverified date).
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** `composite.db` snapshot 33 (2026-08-04) — BR
+  informational-only, in_portfolio=1. BR absent from `sec_fundamentals.db`,
+  `earnings.db`, `stocks.db` metrics (unchanged).
+- **Low-confidence:** Sullivan & Cromwell client memo on Reg E-Delivery
+  scope (law-firm summary, corroborates the fee question); SEC press
+  release 2026-67 (blocked to the fetcher; scope taken from the Federal
+  Register entry and memos).
+
+## Kill-thesis record
+
+**UNPROVEN** — conditions=6, refuted=0, unknown=2 (final-rule fee
+treatment; e-delivery offset math).
+
+Per-condition adjudication: (1) fee schedule survives the modernization
+wave — supported at the proposal stage, UNKNOWN until adoption; (2) FY27
+guide achievable — supported ($470M backlog = 10% of recurring, position
+testing, 98% retention; guidance credibility is the CFO's
+five-delivered-cycles claim, small self-selected n); (3) e-delivery
+transition earnings-neutral-or-better — UNKNOWN (management assertion vs
+the 10-K's own franker wording; no disclosed offset math); (4) tokenization
+slow/gated and taxed by BR — SURVIVED (1pt of Q4 GTO growth today;
+DLX/Ondo/Alpaca/Galaxy position it on both sides; pace structurally
+unknowable but the condition needs "slow," and every current datum reads
+slow); (5) position growth persists high-single-digit — SURVIVED (Q4 +17%,
+H1 testing positive; market-participation cyclicality is the disclosed
+tail); (6) price still compensates — SURVIVED, barely: 8.99% conservative
+vs stockanalysis WACC 8.15% is an ~85bp spread, half the prior run's
+cushion.
+
+Attacks run: base rate (compelled-fee utilities with 98% retention don't
+die fast; regulators do amend — both precedents resolved favorably);
+strongest short case (**delivery first, fees next** — a deregulatory-fast
+SEC that just modernized delivery has demonstrated appetite to touch the
+proxy plumbing, and the paper-reimbursement shrink degrades the
+distribution-scale economics BR mutualizes; plus the Q1 event-driven comp
+sets up a headline miss into a stock that just paid itself the recovery);
+management incentives (comp metrics still unread — flagged, not credited);
+disconfirming search (the 10-K risk wording is the find);
+moat-as-mechanism (compelled distribution + payer/chooser split + ~1,000
+broker integrations — mechanism, survives). Options timing check: no dated
+claim this run — skipped per procedure; path-2 read recorded in §4,
+UNRELIABLE liquidity.
+
+**Closest attack:** condition 6 — today's +7.5% consumed ~100bp of implied
+return *before* the deciding document (the final rule) exists; the buy now
+rests on an ~85bp conservative-case spread.
+
+**Flip evidence:** (to SOUND) final rule adopted with fee schedule
+untouched + first FY27 prints on guide; (to FLAWED) final rule touching
+processing fees, or a guide cut.

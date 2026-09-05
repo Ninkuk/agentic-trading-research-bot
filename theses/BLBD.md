@@ -1,0 +1,179 @@
+# BLBD — Blue Bird Corporation — 2026-07-29
+
+Price ~$72.32 · market cap $2.29B · next earnings Aug 5 AMC
+
+Entry path: not recorded (pre-template run).
+
+## 1. Verdict and thesis
+
+**PASS at ~$72.32** ($2.29B market cap). kill-thesis: **UNPROVEN** —
+conditions=6, refuted=0, unknown=1 (the EPA 2026 Clean School Bus NOFO
+structure does not exist in any disclosure yet).
+
+The business is genuinely good — oligopoly, net cash, ROIC >100%,
+three years of ~14% adj-EBITDA margins — but the price already pays for it: ~8% implied on
+conservative assumptions, ~19–20× P/FCF on the go-forward (build-year) FCF guide, with the
+alt-power funding leg unresolved and earnings in one week at ~67% ATM IV.
+
+**Closest attack:** not recorded (pre-template run).
+
+Load-bearing conditions: not enumerated in the original run (pre-template);
+the original records only the counts above and names the one unknown
+condition (the unpublished EPA 2026 NOFO). Condition tiers not recorded in
+original run.
+
+## 2. Business
+
+- **Created:** school buses — non-discretionary, publicly funded student transport. Districts
+  buy safety, uptime, and a 20-year service life; the fleet must run regardless of the economy.
+- **Captured:** ~$151k average bus revenue/unit (Q2'26, +4.3% YoY), a higher-ASP/higher-margin
+  alt-power mix (41% of Q2 units; propane exclusive, EV leader), and a growing parts annuity
+  ($28M/qtr) off an aging installed fleet. FY26 guide: $1.725–1.775B rev, $245M adj EBITDA (~14%).
+- **Protected (mechanism, not label):** three-player oligopoly (Blue Bird, Thomas Built/Daimler,
+  IC Bus/Traton) entrenched by Buy America manufacturing, national dealer/parts/service
+  networks, and district procurement habits. Empirical test: Lion Electric — a funded EV
+  entrant — went insolvent trying to crack it (CCAA, Dec 2024).
+
+**Operating leverage (Phase 0): positive** ("strongly positive"). FY21→FY25
+revenue $684M→$1,480M (+116%), operating income $6.5M→$167M (~26×); gross
+margin ~10.5%→20.5% (10-K/income-statement route). This is a
+repriced-backlog + mix transformation, not the FY21 business at bigger
+scale.
+
+## 3. Threads pulled
+
+- **EPA restructuring (load-bearing, unresolved):** Feb 19, 2026 — EPA cancelled the 2024 CSB
+  rebate round (~$900M of applications) and opened an RFI (closed Apr 6) to restructure the 2026
+  round around propane/CNG/biofuels alongside EV. Plausibly *favorable* to BLBD (sole propane
+  OEM), but the NOFO is unpublished — the 912-unit EV backlog (25% of backlog, ~3× diesel ASP)
+  hangs on it. Management (Q2 call): rounds 2–3 funds still flowing.
+- **Micro Bird buyout (Apr 1, 2026):** $201.8M for the other 50% — $63M cash + 2,702,180 shares
+  at $51.35. Girardin family now holds 7.9% (13D, exchangeable shares non-transferable without
+  consent) — an aligned strategic seller paid in stock well below today's price. ~8× the unit's
+  ~$50M target EBITDA. Shuttle-bus ramp targets ($450M rev/$60M EBITDA mid-term) are management
+  projections only — contracts "on lists," no disclosed orders.
+- **New plant:** ~$300M+ Type C plant, 9,000 buses/yr on one shift, SOP Q4 CY2028; $80M DOE MESC
+  grant reconfirmed (Q2 call). Production currently at max capacity on one shift — the plant is
+  the growth unlock, and FY26–28 FCF carries the build ($25M extraordinary capex in FY26 guide).
+- **Demand check (disconfirming):** management's own words — H1 FY26 industry orders down ~4%
+  (BLBD order intake +7% against it). The 6% ACT CAGR is a third-party forecast; K-12 enrollment
+  decline is the terminal headwind. Possible diesel pre-buy ahead of 2027 EPA emissions rules
+  could pull demand into an FY28 air pocket.
+- **Earnings-guidance pattern (Robinhood, broker tier):** 6 straight adjusted-EPS beats, several
+  large (Q3'25 +28%, Q4'25 +32%, Q1'26 +27%) — guidance policy, not alpha. Q3'26 consensus $1.29
+  (Aug 5 AMC) already anticipates a beat vs the implied guide.
+- **Unexplained price action:** May 7 post-beat session reversed +25% intraday to +9%; May 19
+  −10.4% with no filing (a director bought 300 shares at $65.09 next day, Form 4); July 21 ATH
+  $83.39 then −11% into the print on no news (Barclays *raised* to $85 on Jul 20). Reads as
+  crowded positioning in an illiquid mid-cap. Cause: UNKNOWN.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; BLBD not in the
+  CBOE catalog — path 1 unavailable). Liquidity gate FAILED → UNRELIABLE.
+  See §4 table.
+- **Dead ends:** the May 18 8-K is a benign pension risk-transfer (Pacific Life group annuity);
+  "Blue Bird satellites" headlines are AST SpaceMobile's product name, not BLBD; purchase
+  commitments are $107M all short-cycle (no take-or-pay tail); Feb–Mar insider sales ~$0.5M,
+  trivial. BLBD is absent from `sec_fundamentals.db` (not in universe) — DB cross-checks dropped,
+  EDGAR + live probe carried the run.
+
+## 4. Valuation
+
+Reverse DCF, levered FCF paired with **market cap** $2,288,681,316 (statistics route `hover`);
+net cash $188M left out of the pairing (conservative direction). ATM IV ~67% ⇒ quote whole
+percents only.
+
+Hurdle: not computed in the original run (pre-template).
+
+| scenario | base FCF | growth | terminal | implied return |
+|---|---|---|---|---|
+| optimistic | $183.8M (TTM) | 6%×5 | 2.5% | **~12%** |
+| build-then-normalize | $112.5M (FY26 guide mid) | 18/15/12/6/5 | 2.5% | **~10%** |
+| conservative | $112.5M | 5%×5 | 2.0% | **~8%** |
+
+TTM FCF $183.8M overstates the go-forward base: capex was only $22.6M TTM while FY26–28 carry
+the plant build; the FY26 adj-FCF guide is $100–125M. The mid case's year-5 FCF (~$191M) is
+consistent with the long-term $325–375M EBITDA target at ~50% conversion. Terminal risk named:
+K-12 enrollment decline plus powertrain-transition uncertainty; 2.0–2.5% nominal terminal growth
+survives it only because demand is replacement-driven and publicly funded — a falling student
+count caps it, hence no case above 2.5%.
+
+**Options-implied move** (path 2 — Robinhood stopgap; BLBD not in the CBOE
+catalog): Aug 21 expiry (brackets Aug 5 AMC print), 23 DTE, strike 70
+straddle:
+
+| metric | value |
+|---|---|
+| expected absolute move (MEAN, not a ceiling) | 13.45% |
+| 1-sigma move | 16.89% |
+| ATM IV | 67.27% |
+| RV60 | 44.29% |
+| RV20 | 30.00% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Mechanically "elevated" across a scheduled print. **Liquidity gate FAILED**
+(OI 4/10, zero volume, spreads 50–80% of mark) ⇒ UNRELIABLE, context only.
+Timing-check applicability: not recorded in the original run.
+
+## 5. Falsifiers
+
+Sell/stay-away evidence:
+
+- Backlog below ~3,000 units (management's own sweet-spot floor) or order intake turning down
+  with the market.
+- Adj EBITDA margin below ~12% for two consecutive quarters — tariff pass-through or pricing
+  discipline failing.
+- EPA 2026 NOFO excluding school-bus alt-power, or EV backlog cancellations.
+- DOE MESC grant cancelled, or plant capex materially above ~$350M.
+- Girardin family exiting the 7.9% stake.
+- FY27 guidance cut revealing a diesel pre-buy air pocket.
+
+**Reopen trigger:** EPA 2026 NOFO published with school-bus alt-power
+funding intact, or price ≈ $55 (conservative implied ≈ 9.5%; $50.6 clears
+10%).
+
+## 6. UNKNOWNs
+
+1. **EPA 2026 NOFO structure** — does not exist yet; from epa.gov when published. Absence blocks
+   SOUND (it is the unverifiable load-bearing condition) but does not kill the thesis.
+2. **Pension termination cost** — annuity premium confidential (May 12 agreement, 8-K); 10-K
+   warns required funding "could be significant." Bounded by the $418M liquidity position; watch
+   the FY26 10-K settlement charge.
+3. **Cause of the May 19 and late-July selloffs** — no filing or news found; positioning inferred,
+   not established.
+4. **Competitor capacity posture** (Thomas Built, IC Bus) — not verifiable from BLBD disclosures;
+   this is the margin-mean-reversion stressor.
+5. **Management comp structure** — proxy not read this run; whether comp rewards the margin hold
+   or volume growth is unchecked.
+
+## 7. Sources
+
+**Primary:** (SEC EDGAR) FY25 10-K (2025-11-24; Item 1A, commitments, pension),
+8-K 2026-04-02 (Micro Bird terms), 13D 2026-04-08 (Girardin), Form 4 2026-05-20 (Thau buy),
+8-K 2026-05-18 (pension annuity). Q2 FY26 earnings call transcript (via stockanalysis
+transcripts route, Quartr-sourced — primary-transcribed).
+
+**stockanalysis.com (vetted exception):** (live probe 2026-07-29) statistics,
+income-statement, transcripts index, news feed.
+
+**Broker/market microstructure:** (Robinhood MCP; no integrated official
+source covers these fields for BLBD) earnings estimate-vs-actual pattern,
+live quote, daily bars, option chain and quotes.
+
+**Reference data:** none used.
+
+**Point-in-time repo DBs:** `sec_fundamentals.db` — BLBD absent (not in
+universe); DB cross-checks dropped, EDGAR + live probe carried the run.
+
+**Low-confidence:** EPA program restructuring details via web search (epa.gov press
+release, School Transportation News, trade press); GuruFocus/Yahoo on the May 19 drop.
+
+## Kill-thesis record
+
+**Kill-thesis verdict: UNPROVEN** — 6 load-bearing conditions, 0 refuted, 1
+unverifiable (the EPA 2026 Clean School Bus NOFO structure does not exist in
+any disclosure yet).
+
+Per-condition adjudication: not recorded in the original run (pre-template).
+Standing/statistical/options-timing checks: not recorded in the original
+run. **Closest attack:** not recorded (pre-template run). **Flip
+evidence:** not recorded (pre-template run).

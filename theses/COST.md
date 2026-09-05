@@ -1,0 +1,250 @@
+# COST — Costco Wholesale — 2026-08-18
+
+Price $961.35 (live quote, 2026-08-18) · market cap $426.338B · next
+earnings Sep 24, 2026 AMC (verified).
+
+Entry path not recorded in original run.
+
+## 1. Verdict and thesis
+
+**PASS at $961.** kill-thesis: **SOUND** — conditions=4, refuted=0,
+unknown=0.
+
+Costco is one of the best retail businesses in existence — a membership
+annuity (51% of FY25 operating income) renewing at 92.2% in its core market,
+with positive operating leverage and $11.8B net cash — but the price already
+implies a **4.8%/yr return on base assumptions against an 8.42%
+cost-of-equity hurdle (−365bp)**, and even 20%×5y FCF growth with 3% terminal
+growth implies only 7.35% (−107bp). This is the skill's own textbook read: a
+**low implied return on optimistic assumptions is a bad bet.** Quality was
+never the question; the price is.
+
+**Closest attack:** a maximally generous no-growth owner-earnings perpetuity
+— it still values the equity at ~$187B vs the actual $426B.
+
+Load-bearing conditions not enumerated in original run; condition tiers not
+recorded in original run.
+
+## 2. Business
+
+**Created:** members pay $65/$130 up front for access to ~4,000 SKUs sold at
+a gross margin Costco deliberately caps (11.04% reported in Q3 FY26 vs ~30%+
+for conventional grocers). The customer surplus is enormous and legible —
+Kirkland Signature items priced 15–20% under national-brand equivalents,
+gas deliberately priced below market ("first to lower prices, last to raise"
+— CEO Vachris, Q3 FY26 call). Members visibly get more than they pay for;
+renewal behaves accordingly.
+
+**Captured:** three distinct mechanisms, not one. (1) **Membership fees**:
+$5.323B in FY25 (10-K), 51% of the $10.383B operating income — a
+subscription with 92.2% US/Canada renewal (Q3 FY26 call), raised roughly
+every 5–6 years (last: Sep 2024, still rolling through — it accounted for ~¼
+of Q3 membership income growth). (2) **Merchandise spread at scale**:
+3.82% TTM operating margin on $293.6B revenue — thin by design, fat in
+dollars. (3) **Emerging monetization**: retail media (Google Commerce
+Media/YouTube partnership launched Q3) and e-commerce/pharmacy mix — but
+management states 80–90% of that value is reinvested into price, so it feeds
+the flywheel, not the margin.
+
+**Protected:** the moat is a mechanism, not a label: the fee-funded cost
+structure lets Costco run gross margins competitors cannot match without
+their own paid-membership base and equivalent volume per warehouse
+($860,959 revenue per employee; 13.45× inventory turns — statistics probe).
+A competitor cannot copy the price points without first having the member
+volume, and cannot get the member volume without the price points. The
+observable evidence the mechanism works: renewal 92.2% US/Canada, executive
+members (higher-fee tier) growing 9.6% vs 4.1% total members.
+
+**Operating leverage (Phase 0): positive**, slow and deliberate. Revenue
+FY21 $195.9B → FY25 $275.2B → TTM $293.6B; operating income $6.79B →
+$10.38B → $11.23B; margin 3.47% → 3.77% → 3.82%.
+
+## 3. Threads pulled
+
+- **Membership deceleration (the bear thread):** total paid members +4.1%
+  YoY, the lowest in some time (UBS pressed this on the call). Management's
+  answer: no major new-market entry recently; 4–5% is the normal ungoosed
+  rate; executive tier +9.6% and renewal +10bp q/q offset it. July monthly
+  sales (Aug 5, freshest disclosure) show comps ex-gas/FX +6.6% and traffic
+  +3.6% — no deterioration since. Thread closed: real but managed.
+- **Post-call sweep (call is May 28; today is Aug 18):** June/July monthly
+  sales updates show the 6.6–6.7% ex-gas/FX comp trend intact. EDGAR since
+  the call: routine Forms 4/144 (small executive sales), the June-sales 8-K,
+  a routine S-3ASR shelf, the Q3 10-Q, an 11-K. **No contradicting events.**
+- **Tariff refunds + lawsuit:** company is filing IEEPA refund claims and
+  says it will return the passed-on portion to members "in some form"; a
+  lawsuit exists over the return process (Q3 call, primary). Cash-flow
+  timing noise, not a thesis driver — but note the FY26 tariff refund inflow
+  could pad NCFO one-off; don't extrapolate it.
+- **Gas spike:** Middle East events drove record gas volumes (all three
+  fiscal periods of Q3 set records) and +2.2–2.9% comp contribution from gas
+  inflation. This flatters reported comps; the ex-gas figure is the real
+  trend, and management said penny profit was *higher* — gas is not being
+  used as a loss leader beyond normal.
+- **Earnings pattern (broker tier):** five consecutive hairline beats
+  (+$0.01 to +$0.07) after one small miss (Q2 FY25, −$0.08) — managed
+  guidance, execution steady. Next print Sep 24, 2026 AMC (verified).
+- **Options read (mandatory):** paths — **COST is not in the CBOE catalog →
+  path 2 (Robinhood stopgap) only.** Sep 25, 2026 expiry (brackets the
+  Sep 24 AMC print), ATM 960 strikes: table in §4. **Liquidity gate FAILED**
+  (call spread $4.95 on a $34.03 mark = 14.5% > 10%; call volume 0, OI 8) —
+  reading is UNRELIABLE per the gate and carries no weight in the verdict.
+- **Dead ends:** checked and ruled out —
+  - Insider selling: Forms 4/144 cadence is routine equity-comp liquidation,
+    no cluster, no size anomaly. Ruled out as signal.
+  - SEC fundamentals cross-check: `data/sec_fundamentals.db` `v_screener`
+    has no COST row (tag pivot misses Costco's XBRL tagging), so the EPS
+    cross-check ran against the 10-K directly instead: FY25 diluted EPS
+    $18.21 (10-K) matches the stockanalysis history; Robinhood actuals
+    (quarterly, split $4.28/$5.87/$4.34/$4.58/$4.93 for the last five
+    reported) are consistent with that annual figure. No disagreement.
+
+## 4. Valuation
+
+Reverse DCF, levered TTM FCF **$8.806B** (NCFO $15.000B + capex −$6.194B,
+cash-flow-statement route) against **market cap $426.338B** (statistics
+probe `hover`, 2026-08-18; spot $961.35). Net debt left at zero per the
+levered-flow pairing rule; Costco is net *cash* $11.76B (2.8% of market cap
+— biases implied return slightly low, i.e. flatters the stock; netting it
+out would only strengthen the pass). No minority interest on the income
+statement. SBC $911M TTM (~10% of FCF) — deducted in the conservative run.
+
+Hurdle: **rf 4.74% + beta 0.86 × ERP 4.28% = 8.42%** (Damodaran, as-of
+Aug 1, 2026; beta from statistics page, inside the 0.8–1.2 stable band).
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| conservative (SBC-cut) | $7.895B | 6.6% | 2.0% | **4.33%** | −409bp |
+| base | $8.806B | 8.0% | 2.0% | **4.77%** | −365bp |
+| optimistic | $8.806B | 11.0% | 2.5% | **5.59%** | −283bp |
+| heroic | $8.806B | 20.0% | 3.0% | **7.35%** | −107bp |
+
+- **Growth anchors / market-share sentence:** analyst 3y revenue
+  +8.33%/EPS +11.09% (stockanalysis); actual FCF CAGR FY21→TTM ≈ 10.4%. The
+  heroic row needs FCF growth Costco has never sustained — and 8%×5y already
+  puts revenue at ~$431B, roughly Walmart's current scale; market share is
+  not the binding constraint, margin doctrine is: management's stated model
+  is to *cap* margin ("we tend to be our own biggest competitor" — CFO
+  Millerchip), so a margin-lever (bookings×margin) model is deliberately
+  inapplicable here; the flat-rate path is the honest one for a company
+  whose management refuses margin expansion beyond a grind.
+- **Distribution clamp:** base and conservative implied returns (4.3–4.8%)
+  sit **below the 10th percentile of US cost of capital (5.26%; median
+  7.79%, Damodaran Data Update 5, 2026)** — a strong pass regardless of
+  story.
+- **Terminal integrity:** the tool prints implied_terminal_roe 5.52 on the
+  base run because FCF ≈ net income ($8.806B vs $8.838B), i.e. terminal
+  growth is claimed nearly without reinvestment. Answer, per the skill's own
+  options: terminal growth is held at **2% ≈ inflation** — repricing
+  existing warehouses' cash flows needs no reinvestment; all *real* growth
+  is confined to the explicit 5-year window. Pushing terminal growth higher
+  without charging reinvestment would be the exact error the warning exists
+  to catch. Costco's cash tax rate (25.4% in Q3) is at the marginal rate —
+  no NOL flattery in the base. Not a serial acquirer; growth is organic
+  warehouse openings already inside capex.
+- **Terminal risk (Item 1A, FY25 10-K):** the dominant structural risk is
+  *"failure to maintain membership growth, loyalty and brand recognition"* —
+  plus concentration ("highly dependent on the financial performance of our
+  U.S. and Canadian operations"). The 2% terminal rate survives both: it
+  assumes no real growth, only inflation pass-through on an existing member
+  base — it does NOT assume the excess return persists, which matters
+  because only ~29% of firms earn above their cost of capital in perpetuity
+  (Damodaran EVA base rate). Costco's 38.4% ROIC vs 8.84% WACC is exactly
+  the kind of gap that draws attack; the renewal-rate mechanism is the
+  defense, and the valuation above doesn't need it to hold forever.
+
+**Options-implied move** (path 2 — Robinhood stopgap; no path 1, COST not
+in CBOE catalog; Sep 25 expiry, 38 DTE, brackets Sep 24 AMC earnings):
+
+| metric | value |
+|---|---|
+| spot | 961.35 |
+| expected absolute move (MEAN, not a ceiling) | 6.25% |
+| 1-σ move | 7.84% |
+| ATM IV | 24.31% |
+| RV60 | 21.70% |
+| RV20 | 14.94% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Both windows read YES, but the expiry spans a scheduled earnings print the
+trailing windows don't contain — the mechanical stopgap artifact, not a
+discovery. **Liquidity gate FAILED** (spread 14.5% of mark on the call leg,
+volume 0) → UNRELIABLE; recorded, not load-bearing. IV < 50%, so the
+implied-return figures above may be quoted at stated precision.
+Timing-check applicability line not recorded in original run.
+
+## 5. Falsifiers
+
+The thesis is a **pass**, so falsifiers are re-entry triggers, not sell
+triggers (no position exists):
+
+- **Shift —** Price/FCF convergence: levered FCF yield ≥ ~4% (today 2.07%)
+  — roughly market cap ≤ ~$200B or FCF ≈ $17B at today's cap — puts base
+  assumptions within 60bp of the hurdle. Query-decidable from `stocks.db`
+  `metrics.fcfYield`.
+- **Break —** Renewal-rate break (for any future long): US/Canada renewal
+  below ~90% for two consecutive quarters would impair the annuity that
+  anchors the whole quality claim.
+- **Shift —** Membership-fee cadence: an off-cycle fee increase (next
+  expected ~2029–30 on the 5–6yr cadence) would raise the FCF path
+  materially — membership fees fall straight to operating income.
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Maintenance vs growth capex split** — Costco doesn't disclose it. The
+   kill-thesis attack bounded it generously (maintenance ≈ $3B ≥ D&A $2.57B
+   → no-growth owner FCF ≈ $12B): even that perpetuity at hurdle-minus-
+   inflation is worth ~$187B, 44% of the market cap. Absence does not change
+   the verdict; it can't close a 2.3× gap.
+2. **Tariff refund magnitude/timing** — company hasn't quantified claims or
+   the member-return split (lawsuit pending). One-off cash noise; flagged so
+   a future FY26 NCFO print isn't extrapolated.
+3. **Retail media revenue** — not disclosed; management says 80–90%
+   reinvested in price. Treated as flywheel fuel, not a margin lever.
+
+## 7. Sources
+
+- **Primary:** FY2025 10-K (filed 2025-10-08, CIK 909832) — membership fees
+  $5,323M/$4,828M/$4,580M FY25/24/23, Item 1A risk factors, warehouse count
+  914 at FYE; EDGAR submissions feed (filing cadence since the Q3 call).
+  Company disclosures via stockanalysis transcripts (Quartr;
+  primary-transcribed): Q3 FY2026 earnings call 2026-05-28 (all quarter
+  figures: EPS $4.93 +15%, comps +6.6% ex-gas/FX, MFI $1.373B +10.7%,
+  renewal 92.2%, execs 41.2M +9.6%, 928 warehouses, capex ~$6.5B FY26,
+  tariff refunds, special-dividend discussion); July 2026 monthly sales
+  update 2026-08-05 (comps +6.6% ex-gas/FX, traffic +3.6%).
+- **stockanalysis.com (vetted exception):** statistics probe 2026-08-18
+  (market cap, EV, FCF, margins, beta, ratios, short interest); income and
+  cash-flow statement routes (FY21–TTM history, SBC); analyst 3y estimates.
+- **Broker/market microstructure:** Robinhood MCP — earnings
+  estimate-vs-actual pattern (8 quarters; actuals cross-checked to 10-K
+  EPS); live quote $961.35; option chain/ATM quotes for the implied-move
+  table; daily closes for RV. Admissible: no integrated official source
+  carries live quotes, estimates, or option chains for COST.
+- **Reference data:** Damodaran — ERP 4.28% and rf 4.74% (as-of 2026-08-01),
+  cost-of-capital distribution (2026 Data Update 5), ~29% excess-return base
+  rate (EVA dataset).
+- **Point-in-time repo DBs:** composite has never flagged COST;
+  sec_fundamentals has no COST row (tag-pivot gap, noted); earnings.db next
+  print 2026-05-28→(now) 2026-09-24; stocks.db fcfYield 2.08 (2026-08-18
+  snapshot).
+- **Low-confidence:** none used.
+
+## Kill-thesis record
+
+Ledger line: PASS at $961 · SOUND — conditions=4, refuted=0, unknown=0.
+
+Per-condition adjudication not recorded in original run.
+Standing/statistical/options-timing checks not separately recorded in
+original run (the ~29% excess-return base rate and the distribution clamp
+are carried in §4).
+
+**Closest attack:** a maximally generous no-growth owner-earnings perpetuity
+— it still values the equity at ~$187B vs the actual $426B (the bounding
+arithmetic lives in §6: maintenance ≈ $3B ≥ D&A $2.57B → no-growth owner
+FCF ≈ $12B).
+
+**Flip evidence:** not recorded in original run.
