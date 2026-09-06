@@ -73,6 +73,24 @@ def _numeric(value) -> float | None:
     return float(value)
 
 
+def _probability(x):
+    """A stated probability in [0, 1], else None. bool is excluded: True
+    reads as 1.0 and would record certainty nobody stated."""
+    if isinstance(x, bool) or not isinstance(x, (int, float)):
+        return None
+    return float(x) if 0.0 <= x <= 1.0 else None
+
+
+def _positive_int(x):
+    if isinstance(x, bool) or not isinstance(x, int):
+        return None
+    return x if x > 0 else None
+
+
+def _text(x):
+    return x.strip() if isinstance(x, str) and x.strip() else None
+
+
 def parse_doc(doc) -> tuple:
     """Validate one input document into (fills, passes, verdicts, skipped_count).
     Rows missing/failing required fields are skipped and counted, never
@@ -202,6 +220,9 @@ def parse_doc(doc) -> tuple:
         # A non-string is dropped rather than skipping the row: the verdict is
         # still valid, it just does not authorise a correction.
         corrects = v.get("corrects")
+        # Calibration fields: a bad value drops the FIELD, never the verdict
+        # (the ownership call stands on its own; the forecast is optional
+        # at the parser and mandatory in the skill).
         verdicts.append(
             dict(
                 symbol=symbol,
@@ -210,6 +231,10 @@ def parse_doc(doc) -> tuple:
                 doc=v.get("doc"),
                 note=v.get("note"),
                 corrects=corrects if isinstance(corrects, str) and corrects.strip() else None,
+                p_win=_probability(v.get("p_win")),
+                p_win_kill=_probability(v.get("p_win_kill")),
+                horizon_days=_positive_int(v.get("horizon_days")),
+                expectation=_text(v.get("expectation")),
             )
         )
     fills.sort(key=lambda f: (f["filled_at"], 0 if f["side"] == "buy" else 1))
@@ -497,9 +522,21 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
         for v in verdicts:
             cur = conn.execute(
                 "INSERT OR IGNORE INTO research_verdicts"
-                " (symbol, verdict, verdict_date, doc, note, recorded_at)"
-                " VALUES (?, ?, ?, ?, ?, ?)",
-                (v["symbol"], v["verdict"], v["verdict_date"], v["doc"], v["note"], now_iso),
+                " (symbol, verdict, verdict_date, doc, note, recorded_at,"
+                "  p_win, p_win_kill, horizon_days, expectation)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    v["symbol"],
+                    v["verdict"],
+                    v["verdict_date"],
+                    v["doc"],
+                    v["note"],
+                    now_iso,
+                    v.get("p_win"),
+                    v.get("p_win_kill"),
+                    v.get("horizon_days"),
+                    v.get("expectation"),
+                ),
             )
             verdicts_n += cur.rowcount
             if cur.rowcount:
@@ -521,9 +558,21 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                 (v["symbol"], v["verdict_date"], prior[0], v["verdict"], reason, now_iso),
             )
             conn.execute(
-                "UPDATE research_verdicts SET verdict=?, doc=?, note=?, recorded_at=?"
+                "UPDATE research_verdicts SET verdict=?, doc=?, note=?, recorded_at=?,"
+                " p_win=?, p_win_kill=?, horizon_days=?, expectation=?"
                 " WHERE symbol=? AND verdict_date=?",
-                (v["verdict"], v["doc"], v["note"], now_iso, v["symbol"], v["verdict_date"]),
+                (
+                    v["verdict"],
+                    v["doc"],
+                    v["note"],
+                    now_iso,
+                    v.get("p_win"),
+                    v.get("p_win_kill"),
+                    v.get("horizon_days"),
+                    v.get("expectation"),
+                    v["symbol"],
+                    v["verdict_date"],
+                ),
             )
             corrected += 1
         cur = conn.execute(

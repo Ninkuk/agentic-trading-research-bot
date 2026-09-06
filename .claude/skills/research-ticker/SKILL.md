@@ -470,7 +470,11 @@ scratchpad:
                    "verdict": "buy" | "pass",
                    "verdict_date": "<Phoenix calendar date of the run, YYYY-MM-DD>",
                    "doc": "<TICKER>-<DATE>.md",
-                   "note": "<one line: the load-bearing reason>"}]}
+                   "note": "<one line: the load-bearing reason>",
+                   "p_win": 0.60,
+                   "p_win_kill": 0.45,
+                   "horizon_days": 63,
+                   "expectation": "<one line: what is priced, what revises it>"}]}
 
 `verdict` answers only the writeup's §1 OWNERSHIP call — would I own this at
 today's price? — `buy` if yes, `pass` otherwise. It is orthogonal to the
@@ -479,6 +483,17 @@ label grades the thesis's robustness, not its direction, so a FLAWED or
 UNPROVEN thesis can still log `buy` if §1 concludes ownership, and a SOUND
 one can log `pass`. Summarize the kill-thesis label in `note` if it's the
 load-bearing reason, but never let it decide `verdict` — §1 does.
+
+The calibration fields copy §1's second line and are mandatory here even
+though the parser tolerates their absence (legacy docs). `p_win` is the
+probability the name beats SPY over `horizon_days` trading days, one
+polarity for buy and pass alike — never 0 or 1, and never 0.5 as a hedge
+(state what you believe; the Brier score in `v_research_calibration` is
+how you find out whether to trust it). `horizon_days` is 63 unless the
+thesis argues a longer one — a quarter is the shortest window with one
+scheduled print inside it, and it is what the outcome ledger can grade
+soonest. `p_win_kill` is the Phase 5 pass's number, `expectation` the
+disputed-expectation line.
 
 then ingest:
 

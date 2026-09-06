@@ -135,3 +135,20 @@ def test_a_correction_is_visible_in_the_run_summary_line(capsys, tmp_path):
     p.write_text(json.dumps({"verdicts": [_verdict(verdict="pass", corrects="missed a filing")]}))
     journal.main(["--db", db_path, "--input", str(p)])
     assert "1 corrected" in capsys.readouterr().out
+
+
+def test_calibration_fields_are_stored_and_corrected(tmp_path):
+    conn = _fresh(tmp_path)
+    v = dict(_verdict(), p_win=0.7, p_win_kill=0.5, horizon_days=63, expectation="priced flat")
+    journal.ingest(conn, [], [], [v], NOW)
+    sql = "SELECT p_win, p_win_kill, horizon_days, expectation FROM research_verdicts"
+    assert _rows(conn, sql) == [(0.7, 0.5, 63, "priced flat")]
+    fixed = dict(
+        _verdict(verdict="pass", corrects="growth was one-off"),
+        p_win=0.35,
+        p_win_kill=0.3,
+        horizon_days=21,
+        expectation="priced 8%; one-off",
+    )
+    journal.ingest(conn, [], [], [fixed], LATER)
+    assert _rows(conn, sql) == [(0.35, 0.3, 21, "priced 8%; one-off")]

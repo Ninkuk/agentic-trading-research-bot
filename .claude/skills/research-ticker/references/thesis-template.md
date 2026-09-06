@@ -67,6 +67,13 @@ ownership call from here):
   kill-thesis label second. The ledger mirrors `verdicts.log` vocabulary:
   `conditions= refuted= unknown=` — write `unknown`, not "unverifiable".
   A scope parenthetical is allowed ("SOUND (on this pass)").
+- Second line, always: `**p(beat SPY, 63 td): 0.60** · kill-thesis: 0.45` —
+  the probability this name beats SPY over the stated horizon (trading
+  days), for BUY and PASS alike (a PASS at 0.35 is coherent), and the
+  kill-thesis pass's own number. Then `**Disputed expectation:**` — one line:
+  what the market is pricing (Phase 4's implied path) and what forces the
+  revision. The journal records all three (`p_win`, `p_win_kill`,
+  `horizon_days`, `expectation`) and `v_research_calibration` grades them.
 - Then the thesis in plain language, 2–5 sentences.
 - Then `**Closest attack:**` — the attack that came nearest to landing.
 - Then the load-bearing conditions, numbered, each tagged by evidence tier
@@ -176,4 +183,6 @@ Written by the Phase 5 kill-thesis pass; the one place its detail lives (not
 per-condition adjudication (`SURVIVED` / `REFUTED` / `UNKNOWN`) with the
 attack each faced; the standing/statistical/options-timing checks that ran
 (or why one was N/A); `**Closest attack:**`; `**Flip evidence:**` in both
-directions (what makes it SOUND, what makes it FLAWED).
+directions (what makes it SOUND, what makes it FLAWED); and
+`**p(beat SPY, N td):**` — the kill pass's own probability, written before
+re-reading §1's.

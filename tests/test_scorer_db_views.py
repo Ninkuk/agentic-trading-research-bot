@@ -875,3 +875,62 @@ def test_equity_curve_missing_spy_date_is_null_not_dropped(tmp_path):
         "SELECT obs_date, spy_close FROM v_equity_curve ORDER BY obs_date"
     ).fetchall()
     assert rows == [("2026-08-01", None), ("2026-08-04", None)]
+
+
+def _calibration_fixture(tmp_path):
+    conn = db.connect(str(tmp_path / "scorer.db"))
+    db.ensure_schema(conn)
+    # (symbol, verdict, date, p_win, p_win_kill, fwd, bench, matured)
+    rows = [
+        ("AAA", "buy", "2026-07-01", 0.8, 0.6, 0.10, 0.02, NOW),  # beat
+        ("BBB", "pass", "2026-07-01", 0.3, 0.3, -0.05, 0.02, NOW),  # not beat
+        ("CCC", "buy", "2026-07-02", 0.6, 0.2, 0.00, 0.02, NOW),  # not beat
+        ("DDD", "buy", "2026-07-02", None, None, 0.10, 0.02, NOW),  # legacy, no p
+        ("EEE", "buy", "2026-07-03", 0.7, 0.7, None, None, None),  # unmatured
+    ]
+    for sym, verdict, vdate, p, pk, fwd, bench, matured in rows:
+        cur = conn.execute(
+            "INSERT INTO research_verdicts (symbol, verdict, verdict_date, p_win,"
+            " p_win_kill, horizon_days, recorded_at) VALUES (?, ?, ?, ?, ?, 21, ?)",
+            (sym, verdict, vdate, p, pk, NOW),
+        )
+        for h in (5, 21):
+            conn.execute(
+                "INSERT INTO verdict_outcomes (verdict_id, symbol, horizon, entry_date,"
+                " entry_close, bench_entry_close, fwd_return, bench_fwd_return, matured_at)"
+                " VALUES (?, ?, ?, '2026-07-06', 1.0, 1.0, ?, ?, ?)",
+                (cur.lastrowid, sym, h, fwd, bench, matured),
+            )
+    conn.commit()
+    return conn
+
+
+def test_research_calibration_scores_stated_probabilities(tmp_path):
+    conn = _calibration_fixture(tmp_path)
+    row = conn.execute(
+        "SELECT n, n_dates, n_stated, avg_p, beat_rate, brier, brier_base_rate,"
+        " brier_kill, avg_disagreement FROM v_research_calibration WHERE horizon = 21"
+    ).fetchone()
+    n, n_dates, n_stated, avg_p, beat_rate, brier, base, brier_kill, disagree = row
+    assert (n, n_dates, n_stated) == (3, 2, 3)  # legacy NULL-p and unmatured rows excluded
+    assert abs(avg_p - (0.8 + 0.3 + 0.6) / 3) < 1e-9
+    assert abs(beat_rate - 1 / 3) < 1e-9
+    assert abs(brier - (0.04 + 0.09 + 0.36) / 3) < 1e-9
+    # Constant forecast at the realized base rate: the reference to beat.
+    assert abs(base - ((2 / 3) ** 2 + 2 * (1 / 3) ** 2) / 3) < 1e-9
+    assert abs(brier_kill - (0.16 + 0.09 + 0.04) / 3) < 1e-9
+    assert abs(disagree - (0.2 + 0.0 + 0.4) / 3) < 1e-9
+    stated = conn.execute(
+        "SELECT n_stated FROM v_research_calibration WHERE horizon = 5"
+    ).fetchone()[0]
+    assert stated == 0
+
+
+def test_research_calibration_bins_form_a_reliability_table(tmp_path):
+    conn = _calibration_fixture(tmp_path)
+    rows = conn.execute(
+        "SELECT p_bin, n, avg_p, beat_rate FROM v_research_calibration_bins"
+        " WHERE horizon = 21 ORDER BY p_bin"
+    ).fetchall()
+    assert [(r[0], r[1]) for r in rows] == [(0.3, 1), (0.6, 1), (0.8, 1)]
+    assert [r[3] for r in rows] == [0.0, 0.0, 1.0]

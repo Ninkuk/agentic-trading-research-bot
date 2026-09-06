@@ -164,6 +164,14 @@ Close with exactly one, matching the vocabulary this repo's plan reviewers use:
 
 Then state, in one sentence, what evidence would flip your verdict.
 
+Then state your own probability that the name beats SPY over the thesis's
+horizon, as a number, BEFORE re-reading the thesis's own `p(beat SPY, …)`
+line. It lands in the document's Kill-thesis record and in the journal as
+`p_win_kill`. The same session writes both numbers, so their gap measures
+anchoring, not independence — `v_research_calibration` reads it as
+`avg_disagreement` for exactly that reason. A verdict label is not a
+probability: FLAWED at 0.45 and FLAWED at 0.15 are different findings.
+
 When the thesis under attack is (or becomes) a `research/<TICKER>-<DATE>.md`
 document, the full detail — per-condition adjudication (SURVIVED / REFUTED /
 UNKNOWN), the checks that ran, closest attack, flip evidence both ways —

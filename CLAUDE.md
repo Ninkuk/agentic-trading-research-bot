@@ -121,7 +121,11 @@ other source: registered in `registry.py`, dispatched via `main.py composite ...
 re-weighting the catalog is a human decision made by reading `v_signal_efficacy`/
 `v_bucket_performance`. The scorer package also owns the decision journal (`main.py journal --input <file|->`, fed by the
 `.claude/skills/journal-sync` MCP skill like `portfolio`): human fills and passes land in scorer.db `decisions` (never pruned) and are compared to
-paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`. Single-leg option
+paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`. Research verdicts
+also carry a stated probability of beating SPY over a stated horizon (`p_win`/`horizon_days`,
+plus kill-thesis's own `p_win_kill`); the stated horizon registers as an extra outcome row and
+`v_research_calibration` scores the forecasts (Brier against the base-rate constant, distinct
+verdict dates as effective n) — calibration only, never feeding gates or sizing. Single-leg option
 fills journal with contract identity (`contract_ref`/`position_effect`) and land in
 `v_flag_response` as their own `acted_option` bucket; their dollar P&L lives in the
 `premium_flows` ledger (signed cash events, broker-side signs, fixed ×100 multiplier; partial

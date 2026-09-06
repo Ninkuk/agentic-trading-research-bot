@@ -676,3 +676,21 @@ def test_rebuild_prices_sweeps_unmatured_verdict_outcomes(tmp_path):
     _ledger(conn, "AAA", dates, start=100.0, step=1.0)
     _ledger(conn, "SPY", dates, start=500.0, step=1.0)
     assert db.register_verdicts(conn, (2,), "SPY", 7) == 1
+
+
+def test_register_verdicts_adds_the_stated_horizon(tmp_path):
+    conn = _conn(tmp_path)
+    _ledger(conn, "AAA", ["2026-07-02"], start=100.0)
+    _ledger(conn, "SPY", ["2026-07-02"], start=500.0)
+    _verdict(conn, "AAA", "2026-07-01")
+    _verdict(conn, "BBB", "2026-07-01")
+    _ledger(conn, "BBB", ["2026-07-02"], start=10.0)
+    conn.execute("UPDATE research_verdicts SET horizon_days = 63 WHERE symbol = 'AAA'")
+    conn.execute("UPDATE research_verdicts SET horizon_days = 2 WHERE symbol = 'BBB'")
+    conn.commit()
+    # AAA: fixed horizons plus its stated 63; BBB's stated 2 is already fixed.
+    assert db.register_verdicts(conn, (2, 5), "SPY", 7) == 5
+    rows = conn.execute(
+        "SELECT symbol, horizon FROM verdict_outcomes ORDER BY symbol, horizon"
+    ).fetchall()
+    assert rows == [("AAA", 2), ("AAA", 5), ("AAA", 63), ("BBB", 2), ("BBB", 5)]

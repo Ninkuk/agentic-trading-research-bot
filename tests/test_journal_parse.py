@@ -154,6 +154,11 @@ def test_parse_verdicts_validates_and_uppercases():
             # Absent unless the doc supplies a correction reason; only its
             # presence licenses overwriting an already-recorded verdict.
             "corrects": None,
+            # Calibration fields are optional at the parser (legacy docs).
+            "p_win": None,
+            "p_win_kill": None,
+            "horizon_days": None,
+            "expectation": None,
         }
     ]
 
@@ -313,3 +318,28 @@ def test_terminal_only_on_close_and_zeroes_price():
         _odoc(position_effect="close", side="sell", terminal="expired")
     )
     assert skipped == 1
+
+
+def test_parse_verdict_calibration_fields():
+    base = {"symbol": "ACN", "verdict": "buy", "verdict_date": "2026-09-01"}
+    good = dict(
+        base,
+        p_win=0.62,
+        p_win_kill=0.45,
+        horizon_days=63,
+        expectation="market prices 2% growth; FY27 guide says 8%",
+    )
+    bad = dict(base, symbol="XYZ", p_win=1.5, p_win_kill="high", horizon_days=0, expectation=7)
+    _, _, verdicts, skipped = journal.parse_doc({"verdicts": [good, bad, base]})
+    # A bad calibration field is dropped, never the verdict row itself.
+    assert skipped == 0 and len(verdicts) == 3
+    g, b, absent = verdicts
+    assert (g["p_win"], g["p_win_kill"], g["horizon_days"]) == (0.62, 0.45, 63)
+    assert g["expectation"] == "market prices 2% growth; FY27 guide says 8%"
+    assert (b["p_win"], b["p_win_kill"], b["horizon_days"], b["expectation"]) == (
+        None,
+        None,
+        None,
+        None,
+    )
+    assert (absent["p_win"], absent["horizon_days"], absent["expectation"]) == (None, None, None)

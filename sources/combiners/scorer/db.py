@@ -306,6 +306,16 @@ CREATE TABLE IF NOT EXISTS research_verdicts (
     doc          TEXT,
     note         TEXT,
     recorded_at  TEXT NOT NULL,
+    -- Calibration record, stated at decision time (ALTER-migrated; legacy
+    -- rows stay NULL and drop out of v_research_calibration only). p_win is
+    -- P(ticker beats the benchmark at horizon_days) for buy AND pass rows --
+    -- one polarity, so a pass at 0.35 is coherent and Brier needs no flip.
+    -- p_win_kill is kill-thesis's own number from the same session: it
+    -- measures anchoring, not independence.
+    p_win        REAL CHECK (p_win IS NULL OR p_win BETWEEN 0 AND 1),
+    p_win_kill   REAL CHECK (p_win_kill IS NULL OR p_win_kill BETWEEN 0 AND 1),
+    horizon_days INTEGER CHECK (horizon_days IS NULL OR horizon_days > 0),
+    expectation  TEXT,
     UNIQUE (symbol, verdict_date)
 );
 
@@ -413,6 +423,13 @@ CREATE TABLE IF NOT EXISTS candidate_outcomes (
 
 # Migrated onto pre-existing ledgers by ensure_schema; the CREATE above
 # carries them for fresh DBs.
+_VERDICT_CALIBRATION_COLS = (
+    "p_win REAL CHECK (p_win IS NULL OR p_win BETWEEN 0 AND 1)",
+    "p_win_kill REAL CHECK (p_win_kill IS NULL OR p_win_kill BETWEEN 0 AND 1)",
+    "horizon_days INTEGER CHECK (horizon_days IS NULL OR horizon_days > 0)",
+    "expectation TEXT",
+)
+
 _APPEARANCE_QUALITY_COLS = (
     "roic",
     "roic5y",
@@ -984,6 +1001,65 @@ FROM v_research_verdict_outcomes
 WHERE matured_at IS NOT NULL
 GROUP BY verdict, horizon;
 
+-- Calibration of the stated probabilities. One row per matured, p-bearing
+-- verdict x horizon; beat is one polarity (fwd > bench) for buy and pass
+-- alike because p_win is. stated marks the horizon the forecast was made
+-- at. Legacy rows (p_win NULL) and unmatured legs are absent, not NULL.
+DROP VIEW IF EXISTS v_research_calibration_outcomes;
+CREATE VIEW v_research_calibration_outcomes AS
+SELECT rv.id AS verdict_id, rv.symbol, rv.verdict, rv.verdict_date, vo.horizon,
+       (vo.horizon = rv.horizon_days) AS stated,
+       rv.p_win, rv.p_win_kill,
+       (vo.fwd_return > vo.bench_fwd_return) AS beat,
+       (rv.p_win - (vo.fwd_return > vo.bench_fwd_return))
+         * (rv.p_win - (vo.fwd_return > vo.bench_fwd_return)) AS brier,
+       (rv.p_win_kill - (vo.fwd_return > vo.bench_fwd_return))
+         * (rv.p_win_kill - (vo.fwd_return > vo.bench_fwd_return)) AS brier_kill
+FROM research_verdicts rv
+JOIN verdict_outcomes vo ON vo.verdict_id = rv.id
+WHERE rv.p_win IS NOT NULL
+  AND vo.matured_at IS NOT NULL
+  AND vo.bench_fwd_return IS NOT NULL;
+
+-- Per horizon: is the analyst calibrated? brier is the score; brier_base_rate
+-- is the constant forecast at the realized beat rate -- the reference a
+-- probability must beat to carry information (below it = skill, above it =
+-- worse than saying "I don't know"). n_dates is the effective n (distinct
+-- verdict dates: a sweep day's ten verdicts share one market). n_stated
+-- counts forecasts graded at their own horizon. brier_kill and
+-- avg_disagreement read the kill-thesis number against the thesis's.
+-- Human reading only; nothing feeds back into weights, gates, or sizing.
+DROP VIEW IF EXISTS v_research_calibration;
+CREATE VIEW v_research_calibration AS
+WITH o AS (SELECT * FROM v_research_calibration_outcomes),
+     base AS (SELECT horizon, AVG(beat) AS base_rate FROM o GROUP BY horizon)
+SELECT o.horizon, COUNT(*) AS n,
+       COUNT(DISTINCT o.verdict_date) AS n_dates,
+       SUM(o.stated) AS n_stated,
+       AVG(o.p_win) AS avg_p,
+       AVG(o.beat) AS beat_rate,
+       AVG(o.brier) AS brier,
+       AVG((base.base_rate - o.beat) * (base.base_rate - o.beat)) AS brier_base_rate,
+       AVG(o.brier_kill) AS brier_kill,
+       AVG(ABS(o.p_win - o.p_win_kill)) AS avg_disagreement
+FROM o JOIN base ON base.horizon = o.horizon
+GROUP BY o.horizon;
+
+-- The reliability table: within each 0.1-wide bin of stated p, did names
+-- beat the benchmark as often as claimed? Calibrated when beat_rate tracks
+-- avg_p down the bins. Bins are tiny for a long time -- read n first.
+DROP VIEW IF EXISTS v_research_calibration_bins;
+CREATE VIEW v_research_calibration_bins AS
+SELECT horizon,
+       CAST(ROUND(p_win * 10, 6) AS INTEGER) / 10.0 AS p_bin,
+       COUNT(*) AS n,
+       COUNT(DISTINCT verdict_date) AS n_dates,
+       AVG(p_win) AS avg_p,
+       AVG(beat) AS beat_rate,
+       AVG(brier) AS brier
+FROM v_research_calibration_outcomes
+GROUP BY horizon, p_bin;
+
 -- Candidate list-entry episodes with their forward legs. Every candidate is
 -- an implicit "attractive", so beat_benchmark has one polarity (fwd > bench)
 -- — no verdict flip. Unmatured and uncovered rows appear with NULL legs via
@@ -1134,6 +1210,10 @@ def ensure_schema(conn) -> None:
         )
     if "option_flows" not in cols:
         conn.execute("ALTER TABLE journal_runs ADD COLUMN option_flows INTEGER NOT NULL DEFAULT 0")
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(research_verdicts)")}
+    for ddl in _VERDICT_CALIBRATION_COLS:
+        if ddl.split()[0] not in cols:
+            conn.execute(f"ALTER TABLE research_verdicts ADD COLUMN {ddl}")
     cols = {r[1] for r in conn.execute("PRAGMA table_info(candidate_appearances)")}
     for col in _APPEARANCE_QUALITY_COLS:
         if col not in cols:
@@ -1399,21 +1479,24 @@ def register_verdicts(conn, horizons, benchmark, max_age_days) -> int:
     formed intraday cannot claim that day's close — same no-look-ahead rule
     as snapshots), within the forward guard. Uncovered symbols register
     nothing and are retried nightly; coverage arriving beyond the guard
-    window never registers (historically exact entry or nothing). All
-    horizons for all pending verdicts commit atomically."""
+    window never registers (historically exact entry or nothing). A verdict's
+    stated horizon_days registers alongside the fixed horizons. All horizons
+    for all pending verdicts commit atomically."""
     registered = 0
     pending = conn.execute(
-        "SELECT rv.id, rv.symbol, rv.verdict_date FROM research_verdicts rv"
+        "SELECT rv.id, rv.symbol, rv.verdict_date, rv.horizon_days FROM research_verdicts rv"
         " WHERE NOT EXISTS (SELECT 1 FROM verdict_outcomes vo"
         "                   WHERE vo.verdict_id = rv.id)"
     ).fetchall()
     with conn:
-        for vid, symbol, vdate in pending:
+        for vid, symbol, vdate, stated in pending:
             entry = entry_for(conn, symbol, vdate, max_age_days)
             if entry is None:
                 continue
             bench = _bench_close(conn, benchmark, entry[0])
-            for h in horizons:
+            # The stated horizon rides alongside the fixed ones so the
+            # calibration views can grade the forecast at its own term.
+            for h in sorted(set(horizons) | ({stated} if stated else set())):
                 cur = conn.execute(
                     "INSERT OR IGNORE INTO verdict_outcomes"
                     " (verdict_id, symbol, horizon, entry_date, entry_close,"

@@ -179,3 +179,28 @@ def test_prune_never_touches_equity_ledger_or_transfers(tmp_path):
     db.prune(conn, 1, "2026-08-07T04:00:00+00:00")  # positional, matching run.py's call
     assert conn.execute("SELECT COUNT(*) FROM equity_ledger").fetchone()[0] == 1
     assert conn.execute("SELECT COUNT(*) FROM transfers").fetchone()[0] == 1
+
+
+def test_calibration_columns_migrate_existing_db(tmp_path):
+    # research_verdicts created before the calibration fields gains them on
+    # the next ensure_schema; legacy rows read NULL, never a default guess.
+    path = str(tmp_path / "scorer.db")
+    conn = db.connect(path)
+    conn.execute(
+        "CREATE TABLE research_verdicts (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " symbol TEXT NOT NULL, verdict TEXT NOT NULL, verdict_date TEXT NOT NULL,"
+        " doc TEXT, note TEXT, recorded_at TEXT NOT NULL, UNIQUE (symbol, verdict_date))"
+    )
+    conn.execute(
+        "INSERT INTO research_verdicts (symbol, verdict, verdict_date, recorded_at)"
+        " VALUES ('OLD', 'pass', '2026-07-01', '2026-07-02T04:00:00+00:00')"
+    )
+    conn.commit()
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(research_verdicts)")}
+    assert {"p_win", "p_win_kill", "horizon_days", "expectation"} <= cols
+    row = conn.execute(
+        "SELECT p_win, p_win_kill, horizon_days, expectation FROM research_verdicts"
+    ).fetchone()
+    assert row == (None, None, None, None)
+    conn.close()
