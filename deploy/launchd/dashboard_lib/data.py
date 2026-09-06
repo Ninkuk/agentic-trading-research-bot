@@ -27,6 +27,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from dashboard_lib import book, grades, health, narrative, sources_views  # noqa: E402
+from dashboard_lib.common import col, round_or_none, tile, verdict  # noqa: E402
 from dashboard_lib.glossary import load_glossary  # noqa: E402
 from sources.combiners.composite import candidates as candidates_mod  # noqa: E402
 from sources.combiners.scorer import scorecard as scorer_scorecard  # noqa: E402
@@ -1013,53 +1014,187 @@ def _dff_series(data_dir: str) -> list[tuple[str, float]]:
         return []
 
 
-def _trader_scorecard(data_dir: str, now_iso: str) -> dict[str, Any]:
-    """Reuses the scorecard report verbatim (single source of truth,
-    scorer/scorecard.py's own `build_report`) — a plain-text report, not a
-    table, so the export is `text_lines` only: no `columns`/`rows`, no
-    `empty` (the report always renders a full structure, even a thin one,
-    so there is no legacy empty-state prose to port). Takes data_dir, not a
-    conn: the cash column needs fred.db alongside scorer.db."""
-    dff = _dff_series(data_dir)
-    conn = _ro(data_dir, "scorer.db")
-    try:
-        report = scorer_scorecard.build_report(conn, now_iso, dff)
-    finally:
-        conn.close()
+_YOUR_TRADES_COLUMNS: list[dict[str, Any]] = [
+    _track_col("symbol", "Symbol", numeric=False),
+    _track_col("side", "Side", numeric=False),
+    _track_col("fill_date", "Filled", numeric=False),
+    _track_col("backed_by", "Backed by", numeric=False),
+    _track_col("verdict_date", "Verdict date", numeric=False),
+    _track_col("status", "Status", numeric=False),
+    _track_col("realized_return", "Result"),
+    _track_col("decision_id", "Journal id"),
+]
+
+
+def _your_trades(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """The deliberate journal: research-backed buys (a buy verdict before the
+    fill) and freelance trades (nothing recommended them), one table. Automatic
+    fills (drip/recurring) never appear. The chip grades the average closed
+    return only at N_MIN closed trades — one exit is not a track record."""
+    trades = [{**r, "backed_by": "Research"} for r in scorer_scorecard.research_backed(conn)] + [
+        {**r, "backed_by": "Freelance", "verdict_date": None}
+        for r in scorer_scorecard.deliberate_freelance(conn)
+    ]
+    trades.sort(key=lambda r: (r["fill_date"] or "", r["decision_id"]), reverse=True)
+    rows = [
+        {
+            "symbol": r["symbol"],
+            "side": r["side"] or "?",
+            "fill_date": r["fill_date"],
+            "backed_by": r["backed_by"],
+            "verdict_date": r["verdict_date"],
+            "status": "closed" if r["realized_return"] is not None else "open",
+            "realized_return": round_or_none(r["realized_return"]),
+            "decision_id": r["decision_id"],
+        }
+        for r in trades
+    ]
+    closed = [r["realized_return"] for r in rows if r["realized_return"] is not None]
+    n_open = len(rows) - len(closed)
+    n_research = sum(1 for r in rows if r["backed_by"] == "Research")
+    tiles = []
+    chip = None
+    if rows:
+        tiles = [
+            tile("Trades journaled", len(rows), f"{n_open} open · {len(closed)} closed"),
+            tile(
+                "Backed by research",
+                f"{n_research} of {len(rows)}",
+                "a buy verdict before the fill",
+            ),
+        ]
+        if len(closed) < scorer_scorecard.N_MIN:
+            word = "trade" if len(closed) == 1 else "trades"
+            chip = verdict(f"{len(closed)} closed {word}, too few to grade", "mid")
+        else:
+            avg = sum(closed) / len(closed)
+            tone = "on" if avg > 0 else "off" if avg < 0 else "mid"
+            chip = verdict(f"Closed trades averaged {_signed_pct1(avg)}", tone)
     return {
-        "text_lines": report.split("\n"),
-        "caveat": narrative.CAVEATS.get("trader-scorecard"),
+        "verdict": chip,
+        "tiles": tiles,
+        "columns": _YOUR_TRADES_COLUMNS,
+        "rows": rows,
+        "caveat": narrative.CAVEATS.get("your-trades"),
+        "empty": "no deliberate trades journaled yet; appears with the first"
+        " journal-sync of a stock fill",
     }
 
 
+_TRADING_THE_SIGNALS_COLUMNS: list[dict[str, Any]] = [
+    _track_col("horizon", "Horizon"),
+    _track_col("n", "Trades graded"),
+    _track_col("agreed", "Sided with signal"),
+    _track_col("contrarian", "Went against it"),
+    _track_col("no_opinion", "No signal"),
+    _track_col("avg_entry_slippage", "Paid vs plan"),
+    _track_col("avg_fill_lag_days", "Days to fill"),
+]
+
+
+def _trading_the_signals(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Acted decisions against the flag the human saw, per horizon: did the
+    trade side with the signal, and what did the fill cost against the close
+    on the day the flag fired? Averages hold to the scorecard's N_MIN floor
+    (null below it), and the tiles read the shortest horizon — the one with
+    the most matured trades."""
+    cost = {r["horizon"]: r for r in scorer_scorecard.execution_cost(conn)}
+    rows = []
+    for a in scorer_scorecard.alignment(conn):
+        c = cost.get(a["horizon"], {})
+        n = c.get("n", 0)
+        thin = n < scorer_scorecard.N_MIN
+        rows.append(
+            {
+                "horizon": a["horizon"],
+                "n": n,
+                "agreed": a["yes"],
+                "contrarian": a["no"],
+                "no_opinion": a["null"],
+                "avg_entry_slippage": None if thin else round_or_none(c.get("avg_entry_slippage")),
+                "avg_fill_lag_days": None if thin else round_or_none(c.get("avg_fill_lag_days"), 2),
+            }
+        )
+    tiles = []
+    if rows:
+        r = rows[0]
+        with_opinion = r["agreed"] + r["contrarian"]
+        tiles.append(
+            tile(
+                "Sided with the signal",
+                f"{r['agreed']} of {with_opinion}",
+                f"{r['contrarian']} went against it · {r['no_opinion']} had no signal",
+            )
+        )
+        slip = r["avg_entry_slippage"]
+        if slip is None:
+            tiles.append(
+                tile(
+                    "Paid vs the plan",
+                    "too few trades",
+                    f"{r['n']} graded, {scorer_scorecard.N_MIN} needed",
+                )
+            )
+        else:
+            # entry_slippage is signed so positive is always cost.
+            word = "more" if slip > 0 else "less" if slip < 0 else "on the plan"
+            value = "on the plan" if slip == 0 else f"{abs(slip):.2%} {word}"
+            tone = "off" if slip > 0 else "on" if slip < 0 else None
+            tiles.append(tile("Paid vs the plan", value, "vs the close when the flag fired", tone))
+            tiles.append(
+                tile("Days to fill", f"{r['avg_fill_lag_days']:.1f}", "average, flag to fill")
+            )
+    return {
+        "tiles": tiles,
+        "columns": _TRADING_THE_SIGNALS_COLUMNS,
+        "rows": rows,
+        "caveat": narrative.CAVEATS.get("trading-the-signals"),
+        "empty": "no flagged trade has reached a grading horizon yet",
+    }
+
+
+def _signed_pct1(v: float) -> str:
+    """ "+4.0%" / "−1.2%" — one decimal, dashboard minus glyph."""
+    return f"{v:+.1%}".replace("-", "−")
+
+
+def _signed_pct(v: float) -> str:
+    """ "+8.62%" / "−1.20%" / "0.00%" — the dashboard's minus glyph, sign only
+    when nonzero."""
+    text = f"{v:+.2%}".replace("-", "−")
+    return text[1:] if v == 0 else text
+
+
+def _book_verdict(excess: float, since: str) -> dict[str, str]:
+    """The chip is plain subtraction in percentage points — "ahead by 4.8
+    points", never a ratio — dated from the chart's anchor day."""
+    d = date.fromisoformat(since)
+    when = f"since {d:%b} {d.day}"
+    pts = abs(excess) * 100.0
+    if round(pts, 1) == 0.0:
+        return verdict(f"Even with SPY {when}", "mid")
+    word = "Ahead of" if excess > 0 else "Behind"
+    return verdict(f"{word} SPY by {pts:.1f} points {when}", "on" if excess > 0 else "off")
+
+
 def _equity_curve_body(conn: sqlite3.Connection, dff: list[tuple[str, float]]) -> dict[str, Any]:
-    """Portfolio-vs-SPY growth-of-$100 chart data. Reuses the scorecard's own
-    curve/trim/orphan functions (single source of truth) so this chart can
-    never disagree with the scorecard text report. The anchor row's own leg is
-    excluded (the scorecard's [1:] rule); interior weekend rows compound the
-    portfolio index but export spy=None so the SPY line connects only across
-    actual closes. Orphan transfers refuse with an explicit error body —
-    refuse-to-chart mirrors the scorecard's refuse-to-chain."""
-    orphans = scorer_scorecard.orphan_transfer_dates(conn)
-    if orphans:
+    """Stock-book-vs-SPY growth-of-$100 chart data. Reuses the scorecard's own
+    curve/leg functions (single source of truth) so this chart can never
+    disagree with the scorecard text report. The anchor row's own leg is
+    excluded (the scorecard's [1:] rule) and so is every all-cash day: the
+    book has no leg there, and SPY's leg for that day is dropped with it, so
+    the chart shows only dates on which both lines were measured."""
+    all_rows = scorer_scorecard.book_curve(conn)
+    if len(all_rows) < 2:
         return {
-            "error": "cannot chart: transfer(s) on "
-            + ", ".join(orphans)
-            + " have no equity observation — backfill the ledger or fix the"
-            " transfer date"
+            "empty": "needs at least two trading days with a journaled position;"
+            " the nightly harvest adds one per market day"
         }
-    all_rows = scorer_scorecard.equity_curve(conn)
-    rows = scorer_scorecard._trim_to_spy_endpoints(all_rows)
-    chartable = [r for r in rows if r["spy_close"] is not None]
-    if len(chartable) < 2:
-        return {
-            "empty": "needs at least two SPY-measurable ledger dates; the"
-            " nightly harvest adds one per market day"
-        }
+    rows = [all_rows[0], *scorer_scorecard.measured_legs(all_rows[1:])]
     # Cash (DFF) index legs between consecutive charted dates. All-or-nothing:
     # if any leg is unmeasurable (no fred.db, no DFF on/before the anchor) the
     # whole line is null — a cash line that starts mid-window would read as a
-    # return, the same invented-excess trap the SPY trim exists to prevent.
+    # return, the same invented-excess trap the leg alignment exists to prevent.
     cash_levels: list[float | None] = [100.0]
     for prev, cur in zip(rows, rows[1:], strict=False):
         leg = scorer_scorecard.cash_endpoint_return(dff, prev["obs_date"], cur["obs_date"])
@@ -1070,45 +1205,41 @@ def _equity_curve_body(conn: sqlite3.Connection, dff: list[tuple[str, float]]) -
     curve: list[dict[str, Any]] = []
     port_idx = 100.0
     spy_idx = 100.0
-    prev_spy_close: float | None = None
     for i, r in enumerate(rows):
-        if i > 0 and r["port_return"] is not None:
+        if i > 0:
             port_idx *= 1.0 + r["port_return"]
-        spy_val: float | None = None
-        if r["spy_close"] is not None:
-            if prev_spy_close is not None:
-                spy_idx *= r["spy_close"] / prev_spy_close
-            prev_spy_close = r["spy_close"]
-            spy_val = round(spy_idx, 2)
+            spy_idx *= 1.0 + r["spy_return"]
         cash_level = cash_levels[i]
         curve.append(
             {
                 "date": r["obs_date"],
                 "portfolio": round(port_idx, 2),
-                "spy": spy_val,
+                "spy": round(spy_idx, 2),
                 "cash": None if cash_level is None else round(cash_level, 2),
-                "flow": r["flow"],
             }
         )
-    missing = conn.execute(
-        "SELECT COUNT(*) FROM prices p WHERE p.symbol='SPY'"
-        " AND p.price_date > ? AND p.price_date < ?"
-        " AND p.price_date NOT IN (SELECT obs_date FROM equity_ledger)",
-        # UNTRIMMED endpoints, exactly as scorecard.py binds them: coverage is
-        # a property of the ledger, not of the charted window, so an edge row
-        # the SPY trim drops must still have its gap counted.
-        (all_rows[0]["obs_date"], all_rows[-1]["obs_date"]),
-    ).fetchone()[0]
+    positions = conn.execute(
+        "SELECT COUNT(*) FROM v_book_fills WHERE symbol NOT IN"
+        " (SELECT symbol FROM v_book_excluded) GROUP BY symbol HAVING SUM(qty) > 1e-9"
+    ).fetchall()
     cash_end = cash_levels[-1]
+    twr = port_idx / 100.0 - 1.0
+    spy = spy_idx / 100.0 - 1.0
+    cash_ret = None if cash_end is None else cash_end / 100.0 - 1.0
+    tiles = [tile("Your picks", _signed_pct(twr)), tile("SPY", _signed_pct(spy))]
+    if cash_ret is not None:
+        tiles.append(tile("Cash", _signed_pct(cash_ret)))
     return {
+        "verdict": _book_verdict(twr - spy, rows[0]["obs_date"]),
+        "tiles": tiles,
         "curve": curve,
         "curve_summary": {
-            "twr": port_idx / 100.0 - 1.0,
-            "spy": spy_idx / 100.0 - 1.0,
-            "excess": port_idx / 100.0 - spy_idx / 100.0,
-            "cash": None if cash_end is None else cash_end / 100.0 - 1.0,
-            "ledger_dates": len(all_rows),
-            "missing_trading_days": missing,
+            "twr": twr,
+            "spy": spy,
+            "excess": twr - spy,
+            "cash": cash_ret,
+            "positions": len(positions),
+            "trading_days": len(all_rows),
         },
     }
 
@@ -1618,22 +1749,35 @@ SECTION_EXPORTERS: list[
         "scorer + fred DBs",
         _equity_curve,
         "Track record",
-        "Your account's time-weighted growth of $100 against SPY's and overnight cash's.",
+        "How $100 in your stock picks grew, next to $100 in SPY and $100 in cash.",
         [
             (
-                "How to read it",
-                "All lines start at $100 on the first charted date."
-                " Deposits and withdrawals are marked but excluded from the"
-                " portfolio line — it moves only when the book's value"
-                " moves, so a gap between the lines is skill (or its"
-                " absence), never a transfer.",
+                "The three numbers",
+                '"Your picks" is how $100 put into your stock book would have'
+                " grown. It is time-weighted: adding money never counts as a gain"
+                " and taking money out never counts as a loss; only price moves"
+                ' count. "SPY" is what the same $100 did in the index over the'
+                ' same days. "Cash" is what it would have earned sitting in a'
+                " savings account at the fed funds rate. The chip in the header"
+                " is simple subtraction, your picks minus SPY, in percentage"
+                " points.",
             ),
             (
-                "The cash line",
-                "Daily fed funds (FRED's DFF) compounded over the same"
-                " window — roughly what a T-bill fund or HYSA would have"
-                " paid. SPY asks whether the picks beat the index; cash asks"
-                " whether the money should be in the market at all.",
+                "How to read the chart",
+                "All lines start at $100 on the first charted date. The book is"
+                " every journaled stock position marked at each day's close, with"
+                " cash left out. A buy joins at its fill price and a sale leaves at"
+                " its fill price, so the line moves only when held positions move."
+                " Days with nothing held are dropped from both lines, and a holding"
+                " that predates the journal (sold on record but never bought) is"
+                " left out entirely.",
+            ),
+            (
+                "Why cash is a line",
+                "Daily fed funds (FRED's DFF) compounded over the same window,"
+                " roughly what a T-bill fund or HYSA would have paid. SPY asks"
+                " whether the picks beat the index; cash asks whether the money"
+                " should be in the market at all.",
             ),
         ],
     ),
@@ -1758,19 +1902,65 @@ SECTION_EXPORTERS: list[
         ],
     ),
     (
-        "trader-scorecard",
-        "Trader scorecard",
-        "scorer + fred DBs",
-        _trader_scorecard,
+        "your-trades",
+        "Your trades",
+        "scorer.db",
+        _your_trades,
         "Track record",
-        "A grade of your past decision quality.",
+        "Every stock you bought or sold on purpose, and whether research backed it.",
         [
             (
-                "What this is",
-                "A plain-text report: did filtering the flags help, what"
-                " did execution cost, and how did research-backed buys"
-                " (research-ticker verdict before the fill) and freelance"
-                " (unrecommended) trades do?",
+                "What counts as a trade",
+                "One journaled stock fill: a buy, or a sell that closed one."
+                " Automatic fills (dividend reinvestment, recurring buys)"
+                " are left out because nobody decided them. Options are"
+                " graded on their own premium ledger, not here.",
+            ),
+            (
+                "Research-backed or freelance",
+                "Research-backed means the research skill said buy on that"
+                " name before you filled, on the verdict date shown."
+                " Freelance means nothing recommended it: no research call"
+                " and no matching signal.",
+            ),
+            (
+                "Result and the chip",
+                "Result is the return from your fill price to your exit"
+                " price, so an open position shows a dash until you sell."
+                " The chip averages closed trades only, and refuses to grade"
+                " until five have closed: one good exit is not a track"
+                " record.",
+            ),
+        ],
+    ),
+    (
+        "trading-the-signals",
+        "Trading the signals",
+        "scorer.db",
+        _trading_the_signals,
+        "Track record",
+        "When you traded a flagged name, did you side with the signal, and what did the fill cost?",
+        [
+            (
+                "Sided or against",
+                "Only trades on names the signals had an opinion about."
+                " Sided with the signal means you bought a bullish flag or"
+                " sold a bearish one. Went against it means the opposite."
+                " No signal means the score was exactly neutral.",
+            ),
+            (
+                "Paid vs the plan",
+                "Your fill price against the closing price on the day the"
+                " flag fired, which is the price the paper grade uses."
+                " Less means you paid under that close; more means the"
+                " name had already moved by the time you filled. Days to"
+                " fill is how long that took.",
+            ),
+            (
+                "Why several rows",
+                "Every trade is graded at three horizons (5, 10 and 21"
+                " trading days), and the table shows each. Averages stay"
+                " blank until five trades have matured at that horizon.",
             ),
         ],
     ),

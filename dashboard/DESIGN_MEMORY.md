@@ -99,7 +99,9 @@ named rules) for the impeccable skill; keep all three in sync.
 
 ## Repo conventions
 - `src/components/ui/` = shadcn primitives; `src/ui/` = app components.
-- `text_lines` reports parse via TextReport with `<pre>` fallback.
+- `text_lines` reports parse via TextReport with `<pre>` fallback; no exporter
+  ships them today (the trader scorecard became the structured `your-trades`
+  and `trading-the-signals` cards).
 - `dist/` is gitignored; publish_dashboard.py force-pushes it to the
   gh-pages orphan branch nightly and requires the noindex meta in
   dist/index.html — keep that tag verbatim.

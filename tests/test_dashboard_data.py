@@ -289,12 +289,16 @@ def test_recommendation_section_verdict_counts(populated_data_dir):
     assert sec["caveat"]
 
 
-def test_trader_scorecard_is_text(populated_data_dir):
-    sec = data.export_data(populated_data_dir, NOW)["sections"]["trader-scorecard"]
-    assert "text_lines" in sec and isinstance(sec["text_lines"], list)
-    assert any("Trader Decision-Quality Scorecard" in line for line in sec["text_lines"])
-    assert any("acted" in line for line in sec["text_lines"])
-    assert sec["caveat"]
+def test_your_trades_and_trading_the_signals_export_structured_rows(populated_data_dir):
+    secs = data.export_data(populated_data_dir, NOW)["sections"]
+    trades = secs["your-trades"]
+    assert {r["symbol"] for r in trades["rows"]} >= {"FLAG1", "NVDA"}
+    by = {r["symbol"]: r for r in trades["rows"]}
+    assert by["FLAG1"]["backed_by"] == "Research" and by["NVDA"]["status"] == "closed"
+    assert trades["verdict"]["tone"] == "mid" and trades["caveat"]
+    signals = secs["trading-the-signals"]
+    assert signals["rows"] and signals["rows"][0]["agreed"] == 1
+    assert signals["caveat"]
 
 
 def test_candidate_efficacy_exports_branch_rows(populated_data_dir):

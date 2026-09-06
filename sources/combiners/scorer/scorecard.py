@@ -77,9 +77,16 @@ def deliberate_freelance(conn) -> list[dict]:
     recommended, that a human deliberately placed."""
     placeholders = ", ".join("?" for _ in AUTOMATIC_AGENTS)
     return [
-        dict(decision_id=r[0], symbol=r[1], side=r[2], realized_return=r[3], placed_agent=r[4])
+        dict(
+            decision_id=r[0],
+            symbol=r[1],
+            side=r[2],
+            realized_return=r[3],
+            placed_agent=r[4],
+            fill_date=r[5],
+        )
         for r in conn.execute(
-            "SELECT decision_id, symbol, side, realized_return, placed_agent"
+            "SELECT decision_id, symbol, side, realized_return, placed_agent, fill_date"
             f" FROM v_freelance WHERE placed_agent IS NULL"
             f" OR placed_agent NOT IN ({placeholders})"
             " ORDER BY decision_id",
@@ -98,81 +105,61 @@ def research_backed(conn) -> list[dict]:
             realized_return=r[3],
             placed_agent=r[4],
             verdict_date=r[5],
+            fill_date=r[6],
         )
         for r in conn.execute(
-            "SELECT decision_id, symbol, side, realized_return, placed_agent, verdict_date"
-            " FROM v_research_backed ORDER BY decision_id"
+            "SELECT decision_id, symbol, side, realized_return, placed_agent, verdict_date,"
+            " fill_date FROM v_research_backed ORDER BY decision_id"
         )
     ]
 
 
-def equity_curve(conn) -> list[dict]:
-    """v_equity_curve rows in date order — TWR legs plus same-date SPY close."""
+def book_curve(conn) -> list[dict]:
+    """v_book_curve rows in date order — the stock book's TWR legs with SPY's
+    matching leg."""
     return [
         dict(
             obs_date=r[0],
             equity=r[1],
-            flow=r[2],
-            prev_equity=r[3],
+            buys=r[2],
+            sells=r[3],
             port_return=r[4],
             spy_close=r[5],
+            spy_return=r[6],
         )
         for r in conn.execute(
-            "SELECT obs_date, equity, flow, prev_equity, port_return, spy_close"
-            " FROM v_equity_curve ORDER BY obs_date"
+            "SELECT obs_date, equity, buys, sells, port_return, spy_close, spy_return"
+            " FROM v_book_curve ORDER BY obs_date"
         )
     ]
 
 
-def orphan_transfer_dates(conn) -> list[str]:
-    """Transfers dated where no equity observation exists. Each one poisons
-    chaining across it — the single case where a bad/missing point does NOT
-    self-cancel — so the section refuses rather than guesses (the same
-    refuse-to-grade stance as the crosswalk rule in db.py)."""
+def book_excluded(conn) -> list[tuple[str, str]]:
+    """(symbol, reason) the book refuses to price — printed, never silently
+    dropped."""
     return [
-        r[0]
-        for r in conn.execute(
-            "SELECT DISTINCT t.obs_date FROM transfers t"
-            " LEFT JOIN equity_ledger e ON e.obs_date = t.obs_date"
-            " WHERE e.obs_date IS NULL ORDER BY t.obs_date"
-        )
+        (r[0], r[1])
+        for r in conn.execute("SELECT symbol, reason FROM v_book_excluded ORDER BY symbol")
     ]
 
 
-def _chain(rows) -> float | None:
+def measured_legs(rows) -> list[dict]:
+    """Rows whose leg the book can measure. A row with no prior value and no
+    buy (the anchor, or an all-cash day) has no book leg, and SPY's leg for
+    that day is dropped with it — the two sides always chain the same days."""
+    return [r for r in rows if r["port_return"] is not None]
+
+
+def _chain(rows, key="port_return") -> float | None:
     """Geometric linking of per-leg returns (None until a second observation
     creates the first leg)."""
-    legs = [r["port_return"] for r in rows if r["port_return"] is not None]
+    legs = [r[key] for r in rows if r[key] is not None]
     if not legs:
         return None
     total = 1.0
     for leg in legs:
         total *= 1.0 + leg
     return total - 1.0
-
-
-def _spy_endpoint_return(rows) -> float | None:
-    """SPY over the same window, from endpoint closes — per-day alignment is
-    unnecessary for a cumulative comparison and weekend ledger rows have no
-    SPY close to align with."""
-    closes = [r["spy_close"] for r in rows if r["spy_close"] is not None]
-    if len(closes) < 2:
-        return None
-    return closes[-1] / closes[0] - 1.0
-
-
-def _trim_to_spy_endpoints(rows):
-    """Rows from the first to the last one carrying a SPY close.
-
-    SPY's leg is measured from the window's endpoint closes, so a leading or
-    trailing ledger row without a same-date close (a Saturday first row, say)
-    hands the book a leg SPY's span never measures and invents excess.
-    Interior gaps are kept: they widen one leg on both sides equally and are
-    TWR-neutral. A window with no SPY close at all is returned untouched —
-    there is nothing to align against and the section already prints SPY and
-    excess as n/a."""
-    marked = [i for i, r in enumerate(rows) if r["spy_close"] is not None]
-    return rows if not marked else rows[marked[0] : marked[-1] + 1]
 
 
 def dff_series(fred_conn) -> list[tuple[str, float]]:
@@ -299,61 +286,45 @@ def _research_backed_section(conn) -> str:
 
 
 def _portfolio_section(conn, dff=()) -> str:
-    orphans = orphan_transfer_dates(conn)
-    if orphans:
-        return (
-            "  cannot chain: transfer(s) on "
-            + ", ".join(orphans)
-            + " have no equity observation — backfill the ledger for those"
-            " dates or correct the transfer date"
-        )
-    rows = equity_curve(conn)
+    rows = book_curve(conn)
     if len(rows) < 2:
-        return f"  insufficient data (n={len(rows)} ledger dates)"
-    trading = [r for r in rows if r["spy_close"] is not None]
+        return f"  insufficient data (n={len(rows)} trading days with a book)"
     lines = ["  window     | portfolio TWR | SPY      | excess   | cash (DFF)"]
 
     def _window(label, window_rows):
-        # Both endpoints first: SPY can only measure between rows that HAVE a
-        # close, so trim the window to that span before anything else.
-        window_rows = _trim_to_spy_endpoints(window_rows)
-        # The first remaining row is the window's ANCHOR: both sides measure
-        # forward from its close. Its own port_return is the leg INTO the anchor
-        # from the day before, which is outside the window — chaining it would
-        # give the book one more leg than SPY's endpoint span and invent excess
-        # for a book that merely tracked SPY. (Harmless for inception, whose
-        # first port_return is NULL by construction, but stated once and applied
-        # uniformly rather than left to that coincidence.)
-        twr = _chain(window_rows[1:])
-        spy = _spy_endpoint_return(window_rows)
-        if twr is None:
+        # The first row is the window's ANCHOR: both sides measure forward
+        # from its close, so its own leg (the one INTO the anchor) is dropped
+        # from both — chaining it would give the book one more leg than SPY.
+        legs = measured_legs(window_rows[1:])
+        twr = _chain(legs)
+        spy = _chain(legs, "spy_return")
+        if twr is None or spy is None:
             lines.append(f"  {label:<10} | insufficient data")
             return
         # Cash is a reference column, not a second excess: it spans the same
-        # trimmed endpoints as SPY, so all three columns measure one window.
+        # endpoints as the window, so all three columns measure one window.
         cash = cash_endpoint_return(dff, window_rows[0]["obs_date"], window_rows[-1]["obs_date"])
-        excess = _pct(twr - spy) if spy is not None else "n/a"
         lines.append(
-            f"  {label:<10} | {_pct(twr):>13} | {_pct(spy):>8} | {excess:>8} | {_pct(cash)}"
+            f"  {label:<10} | {_pct(twr):>13} | {_pct(spy):>8} | {_pct(twr - spy):>8} | {_pct(cash)}"
         )
 
     _window("inception", rows)
     for n in (21, 63):
-        if len(trading) >= n + 1:
-            start = trading[-(n + 1)]["obs_date"]
-            _window(f"{n}d", [r for r in rows if r["obs_date"] >= start])
+        if len(rows) >= n + 1:
+            _window(f"{n}d", rows[-(n + 1) :])
         else:
-            lines.append(f"  {n:>2}d        | insufficient data (n={len(trading)} trading days)")
-    gaps = conn.execute(
-        "SELECT COUNT(*) FROM prices p WHERE p.symbol='SPY'"
-        " AND p.price_date > ? AND p.price_date < ?"
-        " AND p.price_date NOT IN (SELECT obs_date FROM equity_ledger)",
-        (rows[0]["obs_date"], rows[-1]["obs_date"]),
-    ).fetchone()[0]
+            lines.append(f"  {n:>2}d        | insufficient data (n={len(rows)} trading days)")
+    positions = conn.execute(
+        "SELECT COUNT(*) FROM v_book_fills WHERE symbol NOT IN"
+        " (SELECT symbol FROM v_book_excluded) GROUP BY symbol HAVING SUM(qty) > 1e-9"
+    ).fetchall()
     lines.append(
-        f"  coverage: {len(rows)} ledger dates {rows[0]['obs_date']}..{rows[-1]['obs_date']},"
-        f" {gaps} trading days missing"
+        f"  book: {len(positions)} positions, {len(rows)} trading days"
+        f" {rows[0]['obs_date']}..{rows[-1]['obs_date']}"
     )
+    excluded = book_excluded(conn)
+    if excluded:
+        lines.append("  excluded: " + ", ".join(f"{s} ({why})" for s, why in excluded))
     return "\n".join(lines)
 
 
@@ -380,7 +351,7 @@ def build_report(conn, now_iso: str, dff=()) -> str:
         "Freelance trades (deliberate only)",
         _freelance_section(conn),
         "",
-        "Portfolio vs SPY and cash (time-weighted)",
+        "Portfolio vs SPY and cash (time-weighted, stock book only)",
         _portfolio_section(conn, dff),
     ]
     return "\n".join(parts)

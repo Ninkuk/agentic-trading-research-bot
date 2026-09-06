@@ -131,11 +131,14 @@ fills journal with contract identity (`contract_ref`/`position_effect`) and land
 `premium_flows` ledger (signed cash events, broker-side signs, fixed ×100 multiplier; partial
 closes and dictated exercise/assignment supported) read via `v_option_pnl`/`v_option_actor` —
 option numbers never join the equity grading views.
-The scorer also keeps the permanent `equity_ledger`/`transfers` pair
-(harvested nightly from portfolio.db before its prune; transfers recorded
-human-confirmed via `main.py journal --transfer`) and the scorecard chains
-them into a time-weighted portfolio-vs-SPY section — reporting only, and it
-refuses to chain across a transfer dated where no equity observation exists.
+The scorecard's portfolio-vs-SPY section is the **stock book only**: `v_book_curve` marks
+every journaled equity fill at each SPY trading day's close, a buy joins its leg at fill
+price and a sale leaves at fill price, and SPY is chained over the same legs (an all-cash
+day counts for neither side). Parked cash never enters the line; the cash (DFF) column is
+its benchmark. A symbol sold beyond its journaled buys or with no close in `prices` is
+named in `v_book_excluded`, never priced at zero. The permanent `equity_ledger`/`transfers`
+pair (account equity harvested nightly from portfolio.db before its prune; transfers via
+`main.py journal --transfer`) is still recorded but nothing reports it.
 The scorer also grades the `candidates`
 screen: it records each night's list from stocks.db (`candidate_appearances` — the screen's
 only point-in-time record; no vendor serves screener vintages) and grades list-**entry**

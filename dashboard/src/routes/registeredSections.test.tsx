@@ -57,9 +57,8 @@ test.each(ids)('section "%s" renders via its registered component without throwi
       expect(region?.querySelectorAll(".tile").length).toBeGreaterThan(0);
       break;
     case "text":
-      // TraderScorecard leads with headline tiles (sub-tables behind a closed
-      // toggle); TextReport's fallback for an unparseable format is the raw
-      // <pre> — accept any of the three.
+      // No exporter ships text_lines today; GenericSection still renders
+      // them through TextReport (tables, or a raw <pre> on parse failure).
       expect(region?.querySelector(".tile, table, pre")).not.toBeNull();
       break;
     case "rows":

@@ -65,7 +65,8 @@ def test_caveats_cover_every_track_record_section():
         "regime-performance",
         "pending",
         "signal-recommendations",
-        "trader-scorecard",
+        "your-trades",
+        "trading-the-signals",
         "candidate-efficacy",
     ):
         assert narrative.CAVEATS[sid].strip()

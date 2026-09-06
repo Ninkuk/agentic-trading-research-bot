@@ -7,11 +7,8 @@
 // dataviz rules applied: ONE axis (all series are indexed to the same $100
 // base, so they share it), 2px lines, an explicit legend because there are
 // multiple series, a crosshair tooltip through ChartTooltipContent, values
-// and labels in text tokens (never the series color), and transfer dates as
-// ring-outlined dots — a deposit is an event on the line, not a level. The
-// ring's hole (and its legend swatch) fills with --card, not --background:
-// the chart sits on a card, so --background punches a visibly darker hole in
-// dark mode (#09090b inside #18181b).
+// and labels in text tokens (never the series color). A fill is money
+// entering the book, not an event on the line, so nothing is marked.
 //
 // The series colors stay bare token references so a palette swap is a
 // one-line change: portfolio --chart-1, SPY --muted-foreground dashed,
@@ -20,7 +17,8 @@
 // point carries it or none does, so its line and legend render only when
 // present — a young fred.db must not leave a dangling legend entry.
 
-import { CartesianGrid, Line, LineChart, ReferenceDot, XAxis, YAxis } from "recharts";
+import type { ReactNode } from "react";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
 import {
   ChartContainer,
@@ -30,7 +28,7 @@ import {
 } from "../components/ui/chart";
 import type { EquityCurvePoint } from "../types";
 
-// The legend and the marker ring live OUTSIDE ChartContainer, where the
+// The legend lives OUTSIDE ChartContainer, where the
 // injected --color-portfolio / --color-spy variables are not in scope
 // (ChartStyle scopes them to [data-chart=…]) — so the raw tokens are named
 // once here and a palette swap stays a one-line change per series.
@@ -49,11 +47,17 @@ const money = (v: number) => `$${v.toFixed(2)}`;
 export interface EquityCurveProps {
   rows: EquityCurvePoint[];
   height?: number;
+  // Coverage note ("19 positions · 44 trading days") rendered at the right
+  // end of the legend row, at legend size — a footnote, never a headline stat.
+  footnote?: ReactNode;
 }
 
-export function EquityCurve({ rows, height = 260 }: EquityCurveProps) {
+export function EquityCurve({
+  rows,
+  height = 260,
+  footnote,
+}: EquityCurveProps) {
   const { ref, width } = useMeasuredWidth(640);
-  const flows = rows.filter((r) => r.flow !== 0);
   const hasCash = rows.some((r) => r.cash !== null);
 
   return (
@@ -110,7 +114,6 @@ export function EquityCurve({ rows, height = 260 }: EquityCurveProps) {
             strokeWidth={2}
             strokeDasharray="4 3"
             dot={false}
-            connectNulls
             isAnimationActive={false}
           />
           {hasCash && (
@@ -125,22 +128,14 @@ export function EquityCurve({ rows, height = 260 }: EquityCurveProps) {
               isAnimationActive={false}
             />
           )}
-          {flows.map((r) => (
-            <ReferenceDot
-              key={r.date}
-              x={r.date}
-              y={r.portfolio}
-              r={5}
-              fill="var(--card)"
-              stroke="var(--color-portfolio)"
-              strokeWidth={2}
-            />
-          ))}
         </LineChart>
       </ChartContainer>
-      <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+      <div className="equity-curve-legend text-muted-foreground mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-0.5 w-4 rounded" style={{ background: PORTFOLIO_COLOR }} />
+          <span
+            className="h-0.5 w-4 rounded"
+            style={{ background: PORTFOLIO_COLOR }}
+          />
           Portfolio
         </span>
         <span className="inline-flex items-center gap-1.5">
@@ -163,15 +158,7 @@ export function EquityCurve({ rows, height = 260 }: EquityCurveProps) {
             Cash (DFF)
           </span>
         )}
-        {flows.length > 0 && (
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="bg-card size-2.5 rounded-full border-2"
-              style={{ borderColor: PORTFOLIO_COLOR }}
-            />
-            deposit/withdrawal (excluded from the portfolio line)
-          </span>
-        )}
+        {footnote != null && <span className="ml-auto">{footnote}</span>}
       </div>
     </div>
   );

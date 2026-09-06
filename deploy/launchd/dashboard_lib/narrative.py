@@ -228,9 +228,13 @@ CAVEATS: dict[str, str] = {
         "excess and beats-baseline rather than hit-rate alone, and remember "
         "this is one history, not a distribution."
     ),
-    "trader-scorecard": (
-        "Grades the human's own decisions from the journal. Coverage is "
-        "whatever got journaled, not a random sample of every flag shown."
+    "your-trades": (
+        "Grades the human's own fills from the journal. Coverage is whatever "
+        "got journaled, and a result counts only once the position is closed."
+    ),
+    "trading-the-signals": (
+        "Only trades that answered a flagged opinion are graded here. "
+        "Freelance and research-backed buys with no matching signal stay out."
     ),
     "candidate-efficacy": (
         "Episodes are few and overlap early. The view carries plain averages "

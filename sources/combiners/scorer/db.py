@@ -103,10 +103,10 @@ CREATE TABLE IF NOT EXISTS prices (
 
 -- Permanent account-equity ledger, one row per Phoenix date, harvested out
 -- of portfolio.db's prunable snapshots before the cascade eats them (same
--- settled-ledger pattern as prices). NEVER pruned. transfers records
--- external cash flows (signed: + deposit, − withdrawal) so the scorecard's
--- time-weighted chaining can neutralize deposit timing; without it a
--- deposit reads as alpha. NEVER pruned.
+-- settled-ledger pattern as prices). transfers records external cash flows
+-- (signed: + deposit, − withdrawal). Both NEVER pruned: they are the only
+-- point-in-time record of account equity. Nothing reports them — the
+-- scorecard's portfolio line is v_book_curve (stock positions only).
 CREATE TABLE IF NOT EXISTS equity_ledger (
     obs_date    TEXT PRIMARY KEY,
     equity      REAL NOT NULL,
@@ -1143,29 +1143,99 @@ SELECT e.symbol,
 FROM episodes e JOIN current c ON c.symbol = e.symbol AND c.episode = e.episode
 GROUP BY e.symbol, e.episode;
 
-DROP VIEW IF EXISTS v_equity_curve;
--- Daily time-weighted-return legs over LEDGER dates. flow is the date's
--- summed external transfers; port_return = (E_t − flow_t)/E_{{t−1}} − 1, the
--- standard TWR convention that neutralizes deposit timing. Ledger gaps
--- simply widen one leg — harmless UNLESS a transfer hides inside the gap,
--- which is why the scorecard refuses to chain past an orphan transfer.
--- spy_close rides along where a same-date SPY row exists (weekend ledger
--- rows carry NULL); readers compute SPY's cumulative leg from window
--- ENDPOINT closes, never per-day here.
-CREATE VIEW v_equity_curve AS
-SELECT e.obs_date,
-       e.equity,
-       COALESCE(t.flow, 0.0) AS flow,
-       LAG(e.equity) OVER (ORDER BY e.obs_date) AS prev_equity,
-       (e.equity - COALESCE(t.flow, 0.0))
-           / NULLIF(LAG(e.equity) OVER (ORDER BY e.obs_date), 0) - 1
-           AS port_return,
-       p.close AS spy_close
-FROM equity_ledger e
-LEFT JOIN (
-    SELECT obs_date, SUM(amount) AS flow FROM transfers GROUP BY obs_date
-) t ON t.obs_date = e.obs_date
-LEFT JOIN prices p ON p.symbol = 'SPY' AND p.price_date = e.obs_date;
+DROP VIEW IF EXISTS v_book_fills;
+-- Every journaled equity fill as a signed share flow (buys +, sells and
+-- journaled exits −), with the running holding after it. Options and passes
+-- never enter. Same-day buys sort before sells so a round trip never dips
+-- below zero on its own day.
+CREATE VIEW v_book_fills AS
+WITH legs AS (
+    SELECT symbol, fill_date,
+           CASE WHEN side = 'sell' THEN -quantity ELSE quantity END AS qty,
+           fill_price AS price
+    FROM decisions
+    WHERE action = 'acted' AND contract_ref IS NULL
+      AND fill_date IS NOT NULL AND quantity IS NOT NULL AND fill_price IS NOT NULL
+    UNION ALL
+    SELECT symbol, exit_fill_date,
+           CASE WHEN side = 'sell' THEN quantity ELSE -quantity END,
+           exit_fill_price
+    FROM decisions
+    WHERE action = 'acted' AND contract_ref IS NULL
+      AND exit_fill_date IS NOT NULL AND quantity IS NOT NULL AND exit_fill_price IS NOT NULL
+)
+SELECT symbol, fill_date, qty, price,
+       SUM(qty) OVER (PARTITION BY symbol ORDER BY fill_date, qty DESC
+                      ROWS UNBOUNDED PRECEDING) AS held
+FROM legs;
+
+DROP VIEW IF EXISTS v_book_excluded;
+-- Symbols the book cannot price honestly. A sell beyond journaled buys means
+-- a pre-journal lot with an unknown basis; no close at all in prices would
+-- value the position at $0 and print a phantom loss. Either way the whole
+-- symbol is out and the scorecard names it.
+CREATE VIEW v_book_excluded AS
+SELECT symbol, 'sold_before_journal' AS reason
+FROM v_book_fills GROUP BY symbol HAVING MIN(held) < -1e-9
+UNION
+SELECT f.symbol, 'no_price_history'
+FROM v_book_fills f
+WHERE NOT EXISTS (SELECT 1 FROM prices p WHERE p.symbol = f.symbol)
+GROUP BY f.symbol;
+
+DROP VIEW IF EXISTS v_book_curve;
+-- Daily time-weighted legs of the STOCK BOOK: journaled positions marked at
+-- each SPY trading day's close (last close on or before the day). Cash never
+-- enters, so a parked balance neither dilutes nor cushions the line.
+-- port_return = (V_t + sells_t) / (V_{{t-1}} + buys_t) − 1: a buy joins at
+-- its fill price for the rest of the leg, sale proceeds are end-of-leg
+-- value. A fill dated off the spine (weekend, unharvested day) joins the
+-- next spine day's leg. The anchor day's own fill→close move is NULL, the
+-- leg INTO the window that readers already drop. spy_return is SPY's SAME
+-- leg: readers chain both over the legs where port_return exists, so an
+-- empty-book stretch (all cash) counts for neither side.
+CREATE VIEW v_book_curve AS
+WITH fills AS (
+    SELECT * FROM v_book_fills
+    WHERE symbol NOT IN (SELECT symbol FROM v_book_excluded)
+),
+spine AS (
+    SELECT price_date AS obs_date,
+           LAG(price_date) OVER (ORDER BY price_date) AS prev_date
+    FROM prices
+    WHERE symbol = 'SPY'
+      AND price_date >= (SELECT MIN(fill_date) FROM fills)
+),
+positions AS (
+    SELECT s.obs_date, f.symbol, SUM(f.qty) AS held
+    FROM spine s JOIN fills f ON f.fill_date <= s.obs_date
+    GROUP BY s.obs_date, f.symbol
+    HAVING SUM(f.qty) > 1e-9
+),
+daily AS (
+    SELECT s.obs_date,
+           COALESCE((SELECT SUM(p.held * (SELECT x.close FROM prices x
+                                          WHERE x.symbol = p.symbol
+                                            AND x.price_date <= p.obs_date
+                                          ORDER BY x.price_date DESC LIMIT 1))
+                     FROM positions p WHERE p.obs_date = s.obs_date), 0.0) AS equity,
+           COALESCE((SELECT SUM(f.qty * f.price) FROM fills f
+                     WHERE f.qty > 0 AND f.fill_date <= s.obs_date
+                       AND (s.prev_date IS NULL OR f.fill_date > s.prev_date)), 0.0) AS buys,
+           COALESCE((SELECT SUM(-f.qty * f.price) FROM fills f
+                     WHERE f.qty < 0 AND f.fill_date <= s.obs_date
+                       AND (s.prev_date IS NULL OR f.fill_date > s.prev_date)), 0.0) AS sells
+    FROM spine s
+)
+SELECT d.obs_date, d.equity, d.buys, d.sells,
+       LAG(d.equity) OVER (ORDER BY d.obs_date) AS prev_equity,
+       CASE WHEN LAG(d.equity) OVER (ORDER BY d.obs_date) + d.buys > 1e-9
+            THEN (d.equity + d.sells)
+                 / (LAG(d.equity) OVER (ORDER BY d.obs_date) + d.buys) - 1
+       END AS port_return,
+       s.close AS spy_close,
+       s.close / LAG(s.close) OVER (ORDER BY d.obs_date) - 1 AS spy_return
+FROM daily d JOIN prices s ON s.symbol = 'SPY' AND s.price_date = d.obs_date;
 """
 
 

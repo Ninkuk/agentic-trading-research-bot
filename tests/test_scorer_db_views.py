@@ -836,45 +836,176 @@ def test_verdict_correct_tie_boundary(tmp_path):
     assert rows == {"AAA": 1, "BBB": 0}
 
 
-def test_equity_curve_subtracts_flow_before_chaining(tmp_path):
-    conn = _conn(tmp_path)  # module's existing schema-backed connection helper
-    conn.executemany(
-        "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
-        " VALUES (?, ?, 0, '2026-08-06T04:00:00+00:00')",
-        [("2026-07-31", 197.0), ("2026-08-04", 303.0), ("2026-08-05", 306.0)],
+def _book_fill(conn, symbol, side, fill_date, qty, price, exit_date=None, exit_price=None):
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, fill_date, fill_price, quantity,"
+        " exit_fill_date, exit_fill_price, order_ref, recorded_at)"
+        " VALUES (?, 'acted', ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            symbol,
+            side,
+            fill_date,
+            price,
+            qty,
+            exit_date,
+            exit_price,
+            f"{symbol}-{fill_date}-{side}",
+            NOW,
+        ),
+    )
+
+
+def _book_prices(conn, rows):
+    conn.executemany("INSERT INTO prices (symbol, price_date, close) VALUES (?, ?, ?)", rows)
+
+
+def _book_curve(conn):
+    return conn.execute(
+        "SELECT obs_date, equity, buys, sells, prev_equity, port_return, spy_close"
+        " FROM v_book_curve ORDER BY obs_date"
+    ).fetchall()
+
+
+def test_book_curve_marks_journal_fills_at_daily_closes(tmp_path):
+    conn = _conn(tmp_path)
+    _book_fill(conn, "AAA", "buy", "2026-07-31", 2.0, 10.0)
+    _book_prices(conn, [("AAA", "2026-07-31", 11.0), ("AAA", "2026-08-04", 12.0)])
+    _book_prices(conn, [("SPY", "2026-07-31", 630.0), ("SPY", "2026-08-04", 640.0)])
+    conn.commit()
+    rows = _book_curve(conn)
+    # The spine is SPY's trading days from the first fill; the anchor day's
+    # fill→close move is the leg INTO the anchor and stays NULL, as the
+    # scorecard's [1:] rule expects.
+    assert rows[0] == ("2026-07-31", 22.0, 20.0, 0.0, None, None, 630.0)
+    assert rows[1][0:5] == ("2026-08-04", 24.0, 0.0, 0.0, 22.0)
+    assert abs(rows[1][5] - (24.0 / 22.0 - 1.0)) < 1e-9
+    assert rows[1][6] == 640.0
+
+
+def test_book_curve_buys_join_the_leg_at_fill_price(tmp_path):
+    conn = _conn(tmp_path)
+    _book_fill(conn, "AAA", "buy", "2026-07-31", 2.0, 10.0)
+    _book_fill(conn, "BBB", "buy", "2026-08-04", 1.0, 50.0)
+    _book_prices(conn, [("AAA", "2026-07-31", 11.0), ("AAA", "2026-08-04", 12.0)])
+    _book_prices(conn, [("BBB", "2026-08-04", 55.0)])
+    _book_prices(conn, [("SPY", "2026-07-31", 630.0), ("SPY", "2026-08-04", 640.0)])
+    conn.commit()
+    rows = _book_curve(conn)
+    # 08-04: book 24 + 55 = 79 against 22 carried + 50 bought — the $5 the
+    # new lot gained from fill to close is the book's, never a phantom flow.
+    assert rows[1][1:4] == (79.0, 50.0, 0.0)
+    assert abs(rows[1][5] - (79.0 / 72.0 - 1.0)) < 1e-9
+
+
+def test_book_curve_sells_leave_the_leg_at_fill_price(tmp_path):
+    conn = _conn(tmp_path)
+    # A buy with a journaled exit AND a standalone sell row: both are sells.
+    _book_fill(conn, "AAA", "buy", "2026-07-31", 2.0, 10.0, "2026-08-04", 12.5)
+    _book_fill(conn, "BBB", "buy", "2026-07-31", 1.0, 50.0)
+    _book_fill(conn, "BBB", "sell", "2026-08-04", 1.0, 60.0)
+    _book_prices(conn, [("AAA", "2026-07-31", 11.0), ("AAA", "2026-08-04", 12.0)])
+    _book_prices(conn, [("BBB", "2026-07-31", 55.0), ("BBB", "2026-08-04", 58.0)])
+    _book_prices(conn, [("SPY", "2026-07-31", 630.0), ("SPY", "2026-08-04", 640.0)])
+    conn.commit()
+    rows = _book_curve(conn)
+    # Everything sold: value 0, proceeds 25 + 60 = 85 against 77 held at the
+    # prior close. Proceeds are END-of-leg value — subtracting them from the
+    # denominator instead would read a full exit as a wipe-out.
+    assert rows[1][1:4] == (0.0, 0.0, 85.0)
+    assert abs(rows[1][5] - (85.0 / 77.0 - 1.0)) < 1e-9
+
+
+def test_book_curve_excludes_symbol_sold_before_the_journal(tmp_path):
+    conn = _conn(tmp_path)
+    _book_fill(conn, "AAA", "buy", "2026-07-31", 2.0, 10.0)
+    _book_fill(conn, "PRE", "buy", "2026-07-31", 0.001, 100.0)  # a DRIP crumb
+    _book_fill(conn, "PRE", "sell", "2026-08-04", 0.5, 100.0)  # shares never journaled as bought
+    _book_prices(conn, [("AAA", "2026-07-31", 11.0), ("AAA", "2026-08-04", 12.0)])
+    _book_prices(conn, [("PRE", "2026-07-31", 100.0), ("PRE", "2026-08-04", 100.0)])
+    _book_prices(conn, [("SPY", "2026-07-31", 630.0), ("SPY", "2026-08-04", 640.0)])
+    conn.commit()
+    assert conn.execute("SELECT symbol, reason FROM v_book_excluded").fetchall() == [
+        ("PRE", "sold_before_journal")
+    ]
+    rows = _book_curve(conn)
+    assert rows[0][1:4] == (22.0, 20.0, 0.0)
+    assert rows[1][1:4] == (24.0, 0.0, 0.0)
+
+
+def test_book_curve_excludes_symbol_without_price_history(tmp_path):
+    conn = _conn(tmp_path)
+    _book_fill(conn, "AAA", "buy", "2026-07-31", 2.0, 10.0)
+    _book_fill(conn, "NOPX", "buy", "2026-07-31", 1.0, 40.0)
+    _book_prices(conn, [("AAA", "2026-07-31", 11.0), ("AAA", "2026-08-04", 12.0)])
+    _book_prices(conn, [("SPY", "2026-07-31", 630.0), ("SPY", "2026-08-04", 640.0)])
+    conn.commit()
+    assert conn.execute("SELECT symbol, reason FROM v_book_excluded").fetchall() == [
+        ("NOPX", "no_price_history")
+    ]
+    # Silently valuing NOPX at 0 would print a −65% leg; it must not exist.
+    assert [r[1] for r in _book_curve(conn)] == [22.0, 24.0]
+
+
+def test_book_curve_fill_off_the_spine_joins_the_next_leg(tmp_path):
+    conn = _conn(tmp_path)
+    _book_fill(conn, "AAA", "buy", "2026-07-31", 2.0, 10.0)
+    _book_fill(conn, "BBB", "buy", "2026-08-01", 1.0, 50.0)  # Saturday-dated fill
+    _book_prices(conn, [("AAA", "2026-07-31", 11.0), ("AAA", "2026-08-04", 12.0)])
+    _book_prices(conn, [("BBB", "2026-08-04", 55.0)])
+    _book_prices(conn, [("SPY", "2026-07-31", 630.0), ("SPY", "2026-08-04", 640.0)])
+    conn.commit()
+    rows = _book_curve(conn)
+    assert [r[0] for r in rows] == ["2026-07-31", "2026-08-04"]
+    assert rows[1][1:4] == (79.0, 50.0, 0.0)
+    assert abs(rows[1][5] - (79.0 / 72.0 - 1.0)) < 1e-9
+
+
+def test_book_curve_carries_a_missing_close_forward(tmp_path):
+    conn = _conn(tmp_path)
+    _book_fill(conn, "AAA", "buy", "2026-07-31", 2.0, 10.0)
+    _book_prices(conn, [("AAA", "2026-07-31", 11.0)])  # no AAA close on 08-04
+    _book_prices(conn, [("SPY", "2026-07-31", 630.0), ("SPY", "2026-08-04", 640.0)])
+    conn.commit()
+    rows = _book_curve(conn)
+    assert rows[1][1] == 22.0 and rows[1][5] == 0.0
+
+
+def test_book_curve_ignores_option_legs_and_passes(tmp_path):
+    conn = _conn(tmp_path)
+    _book_fill(conn, "AAA", "buy", "2026-07-31", 2.0, 10.0)
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, fill_date, fill_price, quantity,"
+        " contract_ref, order_ref, recorded_at)"
+        " VALUES ('AAA', 'acted', 'buy', '2026-07-31', 1.5, 1.0, 'AAA260918C00012000', 'opt', ?)",
+        (NOW,),
     )
     conn.execute(
-        "INSERT INTO transfers (obs_date, amount, recorded_at)"
-        " VALUES ('2026-08-04', 100.0, '2026-08-06T04:00:00+00:00')"
+        "INSERT INTO decisions (symbol, action, composite_snapshot_id, recorded_at)"
+        " VALUES ('ZZZ', 'passed', 1, ?)",
+        (NOW,),
     )
-    conn.executemany(
-        "INSERT INTO prices (symbol, price_date, close) VALUES ('SPY', ?, ?)",
-        [("2026-07-31", 630.0), ("2026-08-04", 636.3), ("2026-08-05", 640.0)],
-    )
+    _book_prices(conn, [("AAA", "2026-07-31", 11.0), ("AAA", "2026-08-04", 12.0)])
+    _book_prices(conn, [("SPY", "2026-07-31", 630.0), ("SPY", "2026-08-04", 640.0)])
     conn.commit()
-    rows = conn.execute(
-        "SELECT obs_date, flow, prev_equity, port_return, spy_close"
-        " FROM v_equity_curve ORDER BY obs_date"
-    ).fetchall()
-    assert rows[0] == ("2026-07-31", 0.0, None, None, 630.0)
-    # deposit day: (303-100)/197 - 1 ≈ +3.05%, NOT +53.8%
-    assert rows[1][0:3] == ("2026-08-04", 100.0, 197.0)
-    assert abs(rows[1][3] - ((303.0 - 100.0) / 197.0 - 1.0)) < 1e-9
-    assert abs(rows[2][3] - (306.0 / 303.0 - 1.0)) < 1e-9
+    assert [r[1:4] for r in _book_curve(conn)] == [(22.0, 20.0, 0.0), (24.0, 0.0, 0.0)]
 
 
-def test_equity_curve_missing_spy_date_is_null_not_dropped(tmp_path):
+def test_book_curve_carries_spy_leg_return_for_same_leg_chaining(tmp_path):
     conn = _conn(tmp_path)
-    conn.executemany(
-        "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
-        " VALUES (?, ?, 0, '2026-08-06T04:00:00+00:00')",
-        [("2026-08-01", 200.0), ("2026-08-04", 202.0)],  # 08-01 is a Saturday
-    )
+    _book_fill(conn, "AAA", "buy", "2026-07-31", 2.0, 10.0)
+    _book_prices(conn, [("AAA", "2026-07-31", 11.0), ("AAA", "2026-08-04", 12.0)])
+    _book_prices(conn, [("SPY", "2026-07-31", 630.0), ("SPY", "2026-08-04", 640.0)])
     conn.commit()
-    rows = conn.execute(
-        "SELECT obs_date, spy_close FROM v_equity_curve ORDER BY obs_date"
-    ).fetchall()
-    assert rows == [("2026-08-01", None), ("2026-08-04", None)]
+    rows = conn.execute("SELECT spy_return FROM v_book_curve ORDER BY obs_date").fetchall()
+    assert rows[0] == (None,)
+    assert abs(rows[1][0] - (640.0 / 630.0 - 1.0)) < 1e-9
+
+
+def test_book_curve_empty_without_fills(tmp_path):
+    conn = _conn(tmp_path)
+    _book_prices(conn, [("SPY", "2026-07-31", 630.0)])
+    conn.commit()
+    assert _book_curve(conn) == []
 
 
 def _calibration_fixture(tmp_path):

@@ -47,7 +47,6 @@ import { SignalEfficacy } from "../sections/SignalEfficacy";
 import { SignalRecommendations } from "../sections/SignalRecommendations";
 import { SizeCaps } from "../sections/SizeCaps";
 import { YieldCurve } from "../sections/YieldCurve";
-import { TraderScorecard } from "../sections/TraderScorecard";
 import {
   STRAND_BLURBS,
   strandId,
@@ -139,7 +138,6 @@ const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> =
   disagreements: Disagreements,
   "size-caps": SizeCaps,
   "signal-recommendations": SignalRecommendations,
-  "trader-scorecard": TraderScorecard,
   "equity-curve": PortfolioVsSpy,
   "candidate-efficacy": CandidateEfficacy,
   health: Health,

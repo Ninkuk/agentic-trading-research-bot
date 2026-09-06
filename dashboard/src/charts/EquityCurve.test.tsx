@@ -8,18 +8,15 @@ import { EquityCurve } from "./EquityCurve";
 import type { EquityCurvePoint } from "../types";
 
 const ROWS: EquityCurvePoint[] = [
-  { date: "2026-07-31", portfolio: 100.0, spy: 100.0, cash: 100.0, flow: 0 },
-  { date: "2026-08-01", portfolio: 100.2, spy: null, cash: 100.01, flow: 0 },
-  { date: "2026-08-04", portfolio: 103.05, spy: 101.0, cash: 100.04, flow: 100 },
-  { date: "2026-08-05", portfolio: 104.07, spy: 101.59, cash: 100.05, flow: 0 },
+  { date: "2026-07-31", portfolio: 100.0, spy: 100.0, cash: 100.0 },
+  { date: "2026-08-04", portfolio: 109.72, spy: 101.0, cash: 100.04 },
+  { date: "2026-08-05", portfolio: 112.5, spy: 101.59, cash: 100.05 },
 ];
 
-test("renders all three series lines and a transfer marker", () => {
+test("renders all three series lines", () => {
   const { container } = render(<EquityCurve rows={ROWS} />);
   // three Line paths (recharts renders .recharts-line per series)
   expect(container.querySelectorAll(".recharts-line").length).toBe(3);
-  // the flow row renders a reference dot layer
-  expect(container.querySelector(".recharts-reference-dot")).not.toBeNull();
 });
 
 test("legend names all series in text tokens", () => {
@@ -36,4 +33,11 @@ test("omits the cash line and legend when cash is null throughout", () => {
   const { container } = render(<EquityCurve rows={noCash} />);
   expect(container.querySelectorAll(".recharts-line").length).toBe(2);
   expect(screen.queryByText("Cash (DFF)")).toBeNull();
+});
+
+test("renders an optional footnote at the end of the legend row", () => {
+  render(<EquityCurve rows={ROWS} footnote="19 positions · 44 trading days" />);
+  const note = screen.getByText("19 positions · 44 trading days");
+  expect(note.closest(".equity-curve-legend")).not.toBeNull();
+  expect(note.className).toContain("ml-auto");
 });

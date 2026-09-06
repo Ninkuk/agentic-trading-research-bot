@@ -90,8 +90,8 @@ export const KICKERS: readonly Kicker[] = [
 // field is therefore optional. A healthy section carries some subset of
 // verdict/tiles/columns/rows/text_lines depending on its exporter (see
 // data.py's per-section return shapes: tile sections like `regime`/
-// `book-heat`, table sections like `scorecard`/`signal-efficacy`, and the
-// text-only `trader-scorecard`).
+// `book-heat`, table sections like `scorecard`/`signal-efficacy`; no
+// exporter ships text_lines today, GenericSection still renders them).
 // One headed block of a section's long-form explainer, shown in the About
 // modal (data.py's SECTION_EXPORTERS `about` column).
 export interface AboutBlock {
@@ -128,17 +128,14 @@ export interface Section {
 
 // equity-curve-only: one charted date on the growth-of-$100 curve.
 // `portfolio`/`spy`/`cash` are 2dp-rounded index levels all starting at 100
-// on the first charted date; `spy` is null on a ledger date with no SPY close
-// (the line connects across it), while `cash` (chained daily fed funds, FRED
+// on the first charted date. Only dates on which the stock book was held are
+// charted, so `spy` is never null; `cash` (chained daily fed funds, FRED
 // DFF) is null on EVERY point or none — data.py refuses a partial cash line.
-// `flow` is that date's net transfer in dollars — marked on the chart but
-// deliberately absent from the portfolio index.
 export interface EquityCurvePoint {
   date: string;
   portfolio: number;
-  spy: number | null;
+  spy: number;
   cash: number | null;
-  flow: number;
 }
 
 // equity-curve-only: inception-to-date headline numbers. Derived in Python
@@ -151,8 +148,8 @@ export interface EquityCurveSummary {
   // chained daily fed funds (FRED DFF) over the same window; null when
   // fred.db is missing or DFF doesn't cover the window's start.
   cash: number | null;
-  ledger_dates: number;
-  missing_trading_days: number;
+  positions: number;
+  trading_days: number;
 }
 
 // research-reopens-only: held-ticker revisit checkpoints (data.py's

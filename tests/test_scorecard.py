@@ -119,68 +119,116 @@ def test_freelance_excludes_automatic_fills(tmp_path):
     assert "NVDA" in report and "KO" not in report
 
 
+def _fill(conn, symbol, fill_date, qty, price, exit_date=None, exit_price=None, side="buy"):
+    conn.execute(
+        "INSERT INTO decisions (symbol, action, side, fill_date, fill_price, quantity,"
+        " exit_fill_date, exit_fill_price, order_ref, recorded_at)"
+        " VALUES (?, 'acted', ?, ?, ?, ?, ?, ?, ?, ?)",
+        (symbol, side, fill_date, price, qty, exit_date, exit_price, f"{symbol}-{fill_date}", NOW),
+    )
+
+
+def _prices(conn, symbol, rows):
+    conn.executemany(
+        "INSERT INTO prices (symbol, price_date, close) VALUES (?, ?, ?)",
+        [(symbol, d, c) for d, c in rows],
+    )
+
+
 def _seed_curve(conn):
-    conn.executemany(
-        "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
-        " VALUES (?, ?, 0, '2026-08-06T04:00:00+00:00')",
-        [("2026-07-31", 197.0), ("2026-08-04", 303.0), ("2026-08-05", 306.0)],
-    )
-    conn.execute(
-        "INSERT INTO transfers (obs_date, amount, recorded_at)"
-        " VALUES ('2026-08-04', 100.0, '2026-08-06T04:00:00+00:00')"
-    )
-    conn.executemany(
-        "INSERT INTO prices (symbol, price_date, close) VALUES ('SPY', ?, ?)",
-        [("2026-07-31", 630.0), ("2026-08-04", 636.3), ("2026-08-05", 640.0)],
-    )
+    """AAA bought 07-31, BBB added 08-04; SPY 630 → 636.3 → 640 (+1.59%).
+    Book legs: 08-04 (24+55)/(22+50) = +9.72%, 08-05 (25+56)/79 = +2.53%
+    → 81/72 = +12.50% chained."""
+    _fill(conn, "AAA", "2026-07-31", 2.0, 10.0)
+    _fill(conn, "BBB", "2026-08-04", 1.0, 50.0)
+    _prices(conn, "AAA", [("2026-07-31", 11.0), ("2026-08-04", 12.0), ("2026-08-05", 12.5)])
+    _prices(conn, "BBB", [("2026-08-04", 55.0), ("2026-08-05", 56.0)])
+    _prices(conn, "SPY", [("2026-07-31", 630.0), ("2026-08-04", 636.3), ("2026-08-05", 640.0)])
     conn.commit()
 
 
-def test_portfolio_section_chains_around_deposit(tmp_path):
+def test_portfolio_section_chains_the_stock_book(tmp_path):
     conn = _fresh(tmp_path)
     _seed_curve(conn)
     text = scorecard._portfolio_section(conn)
-    # TWR ≈ 1.0305 × 1.0099 − 1 ≈ +4.07%; naive equity change is +55% —
-    # the section must print the former shape, never the latter.
-    assert "4.0" in text and "55" not in text
-    # SPY leg from endpoint closes: 640/630 − 1 ≈ +1.59%
-    assert "1.5" in text
+    inception = next(ln for ln in text.splitlines() if ln.strip().startswith("inception"))
+    cells = [c.strip() for c in inception.split("|")]
+    assert cells[1] == "12.50%" and cells[2] == "1.59%"
 
 
-def test_portfolio_section_refuses_orphan_transfer(tmp_path):
+def test_portfolio_section_skips_empty_book_legs_on_both_sides(tmp_path):
     conn = _fresh(tmp_path)
-    _seed_curve(conn)
-    conn.execute(
-        "INSERT INTO transfers (obs_date, amount, recorded_at)"
-        " VALUES ('2026-08-02', 25.0, '2026-08-06T04:00:00+00:00')"
+    # Sold out 08-04, empty through 08-06, back in 08-07. SPY's +11% on 08-05
+    # happened while nothing was held, so neither side may count it.
+    _fill(conn, "AAA", "2026-07-31", 2.0, 10.0, "2026-08-04", 11.0)
+    _fill(conn, "BBB", "2026-08-07", 1.0, 100.0)
+    _prices(conn, "AAA", [("2026-07-31", 11.0), ("2026-08-04", 11.0)])
+    _prices(conn, "BBB", [("2026-08-07", 100.0), ("2026-08-10", 100.0)])
+    _prices(
+        conn,
+        "SPY",
+        [
+            (d, c)
+            for d, c in (
+                ("2026-07-31", 630.0),
+                ("2026-08-04", 630.0),
+                ("2026-08-05", 700.0),
+                ("2026-08-06", 700.0),
+                ("2026-08-07", 700.0),
+                ("2026-08-10", 700.0),
+            )
+        ],
     )
     conn.commit()
     text = scorecard._portfolio_section(conn)
-    assert "cannot chain" in text and "2026-08-02" in text
+    inception = next(ln for ln in text.splitlines() if ln.strip().startswith("inception"))
+    cells = [c.strip() for c in inception.split("|")]
+    assert cells[1:4] == ["0.00%", "0.00%", "0.00%"]
 
 
-def test_portfolio_section_thin_ledger(tmp_path):
+def test_portfolio_section_thin_book(tmp_path):
     conn = _fresh(tmp_path)
     text = scorecard._portfolio_section(conn)
     assert "insufficient data" in text
 
 
+def test_portfolio_section_names_excluded_symbols(tmp_path):
+    conn = _fresh(tmp_path)
+    _seed_curve(conn)
+    _fill(conn, "PRE", "2026-08-04", 0.5, 100.0, side="sell")
+    _prices(conn, "PRE", [("2026-08-04", 100.0)])
+    _fill(conn, "NOPX", "2026-08-04", 1.0, 40.0)
+    conn.commit()
+    text = scorecard._portfolio_section(conn)
+    assert "excluded: NOPX (no_price_history), PRE (sold_before_journal)" in text
+    inception = next(ln for ln in text.splitlines() if ln.strip().startswith("inception"))
+    assert inception.split("|")[1].strip() == "12.50%"
+
+
+def test_portfolio_section_coverage_counts_positions_and_days(tmp_path):
+    conn = _fresh(tmp_path)
+    _seed_curve(conn)
+    text = scorecard._portfolio_section(conn)
+    assert "book: 2 positions, 3 trading days 2026-07-31..2026-08-05" in text
+
+
 def _seed_lockstep(conn, n_days=25, daily=0.01):
-    """n_days of consecutive SPY trading days where the book moves EXACTLY with
-    SPY and nothing is deposited — so true excess is zero in every window."""
-    equity, spy = 100.0, 500.0
+    """One share of BOOK bought at the first close, priced in EXACT lockstep
+    with SPY over n_days consecutive trading days — so true excess is zero in
+    every window."""
+    price, spy = 100.0, 500.0
+    _fill(conn, "BOOK", "2026-06-01", 1.0, price)
     for i in range(1, n_days + 1):
         obs_date = f"2026-06-{i:02d}"
         conn.execute(
-            "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
-            " VALUES (?, ?, 0, '2026-07-01T04:00:00+00:00')",
-            (obs_date, equity),
+            "INSERT INTO prices (symbol, price_date, close) VALUES ('BOOK', ?, ?)",
+            (obs_date, price),
         )
         conn.execute(
             "INSERT INTO prices (symbol, price_date, close) VALUES ('SPY', ?, ?)",
             (obs_date, spy),
         )
-        equity *= 1.0 + daily
+        price *= 1.0 + daily
         spy *= 1.0 + daily
     conn.commit()
 
@@ -190,28 +238,12 @@ def test_portfolio_section_window_excess_is_zero_in_lockstep(tmp_path):
     _seed_lockstep(conn)
     text = scorecard._portfolio_section(conn)
     line = next(ln for ln in text.splitlines() if ln.strip().startswith("21d"))
-    # The 21d window must measure the SAME 21 trading days on both sides. The
-    # anchor row's own port_return is the leg INTO the window from the day
-    # before it — chaining it gives the book 22 legs against SPY's 21 and
-    # invents excess (+1.23% here) for a book that tracked SPY exactly.
+    # The 21d window must measure the SAME 21 legs on both sides. The anchor
+    # row's own port_return is the leg INTO the window from the day before it
+    # — chaining it gives the book 22 legs against SPY's 21 and invents excess
+    # (+1.23% here) for a book that tracked SPY exactly.
     assert line.split("|")[1].strip() == line.split("|")[2].strip()
     assert line.split("|")[3].strip() == "0.00%"
-
-
-def test_portfolio_section_trims_leading_row_without_spy_close(tmp_path):
-    conn = _fresh(tmp_path)
-    # A weekend ledger row BEFORE the first SPY close, at a different equity.
-    # Its successor's leg (+11.1%) is one SPY's endpoint span never measures,
-    # so an untrimmed window invents that much excess for a lockstep book.
-    conn.execute(
-        "INSERT INTO equity_ledger (obs_date, equity, cash, captured_at)"
-        " VALUES ('2026-05-30', 90.0, 0, '2026-07-01T04:00:00+00:00')"
-    )
-    _seed_lockstep(conn)
-    text = scorecard._portfolio_section(conn)
-    for label in ("inception", "21d"):
-        line = next(ln for ln in text.splitlines() if ln.strip().startswith(label))
-        assert line.split("|")[3].strip() == "0.00%", line
 
 
 # --- Cash (DFF) benchmark leg -----------------------------------------------
