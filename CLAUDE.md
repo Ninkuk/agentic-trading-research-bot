@@ -219,7 +219,7 @@ solver behind the `research-ticker` skill; `tools/options/implied_move.py`, the
 options-implied-move arithmetic behind the research skills' options check (straddle/spot
 is a MEAN, never a ceiling); `tools/research/transcripts.py`, earnings-call attribution
 (keyed on `company`, never `role`); and `tools/research/youtube_captions.py`, the
-`json3`→timestamped-transcript decoder behind both `eval-research-ticker`'s YouTube benchmarks
+`json3`→timestamped-transcript decoder behind both `audit-thesis`'s YouTube benchmarks
 and `kill-video-concepts`' video ingestion (`json3` never `vtt` — vtt doubles every line of a
 rolling caption window). Apart from `worklist.py`, each pairs
 with a fetch that lives outside it — skill prose or `yt-dlp`. Not registered in
