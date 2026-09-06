@@ -8,8 +8,8 @@ const doc = fixture as unknown as DashboardDoc;
 
 test("unhealthy fixture section renders tiles and both problem rows", () => {
   render(<Health sec={doc.sections["health"]} glossary={doc.glossary} />);
-  expect(screen.getByText("runs (24h)")).toBeInTheDocument();
-  expect(screen.getByText("jobs loaded")).toBeInTheDocument();
+  expect(screen.getByText(/jobs that ran/i)).toBeInTheDocument();
+  expect(screen.getByText(/jobs on the schedule/i)).toBeInTheDocument();
   expect(screen.getByText("cftc.db")).toBeInTheDocument();
   expect(screen.getByText("cboe-stats")).toBeInTheDocument();
 });
@@ -44,8 +44,8 @@ test("healthy state still shows tiles when wrapped in SectionShell, as in produc
       <Health sec={sec} glossary={doc.glossary} />
     </SectionShell>,
   );
-  expect(screen.getByText("runs (24h)")).toBeInTheDocument();
-  expect(screen.getByText("jobs loaded")).toBeInTheDocument();
+  expect(screen.getByText(/jobs that ran/i)).toBeInTheDocument();
+  expect(screen.getByText(/jobs on the schedule/i)).toBeInTheDocument();
   expect(
     screen.getByText("All healthy — every job ran clean, every database is fresh."),
   ).toBeInTheDocument();

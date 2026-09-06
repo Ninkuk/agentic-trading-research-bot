@@ -19,27 +19,37 @@
     "regime": {
       "title": "Regime",
       "kicker": "Macro",
-      "note": "The market's mood. The label is decided by three inputs — the VIX, its term structure, and high-yield spreads; the other seven are tracked and shown but do not move it.",
+      "note": "Is money flowing toward risk or away from it? Tonight's read on the market's mood.",
+      "about": [
+        {
+          "heading": "What decides it",
+          "body": "Three inputs move the label: the VIX, its term structure, and high-yield credit spreads. The other seven inputs are tracked and shown but do not vote."
+        },
+        {
+          "heading": "How to read it",
+          "body": "“Risk-on” means money is flowing toward risk; the VIX is a fear gauge (lower is calmer). Open the drivers to see which inputs argued which way."
+        }
+      ],
       "verdict": {
         "text": "Risk-on, 3rd night",
         "tone": "on"
       },
       "tiles": [
         {
-          "label": "regime",
-          "value": "risk_on",
+          "label": "Tonight's mood",
+          "value": "risk-on",
           "band": null,
           "tone": "on"
         },
         {
-          "label": "VIX",
-          "value": 14.2,
-          "band": "calm",
+          "label": "Fear index (VIX)",
+          "value": 16.1,
+          "band": "normal",
           "tone": null
         },
         {
-          "label": "inputs",
-          "value": "11/11",
+          "label": "Inputs with data",
+          "value": "11 of 11",
           "band": null,
           "tone": null
         }
@@ -93,56 +103,330 @@
     "macro-drivers": {
       "title": "Macro drivers",
       "kicker": "Macro",
-      "note": "The regime's three deciding inputs with their recent history.",
+      "note": "The three inputs that actually decide the regime call, with their recent history.",
+      "about": [
+        {
+          "heading": "What they are",
+          "body": "The 10y–2y Treasury spread (the recession watcher), the high-yield credit spread (are lenders scared?), and the VIX (the equity fear gauge)."
+        },
+        {
+          "heading": "How to read it",
+          "body": "Each tile shows today's value, the one-day change, and the last 90 observations' trend."
+        }
+      ],
       "tiles": [
         {
-          "label": "10y–2y spread",
+          "label": "Long vs short Treasury yields",
           "series_id": "T10Y2Y",
-          "value": 0.35,
-          "delta": 0.02,
-          "band": null,
+          "value": 3.4,
+          "delta": 0.10000000000000009,
+          "band": "normal",
           "history": [
             {
-              "date": "2026-07-27",
-              "value": 0.33
+              "date": "2026-07-01",
+              "value": 1.1
             },
             {
-              "date": "2026-07-28",
-              "value": 0.35
-            }
-          ]
-        },
-        {
-          "label": "high-yield spread",
-          "series_id": "BAMLH0A0HYM2",
-          "value": 3.1,
-          "delta": -0.05,
-          "band": "calm",
-          "history": [
-            {
-              "date": "2026-07-27",
-              "value": 3.15
+              "date": "2026-07-02",
+              "value": 1.2
             },
             {
-              "date": "2026-07-28",
+              "date": "2026-07-03",
+              "value": 1.3
+            },
+            {
+              "date": "2026-07-04",
+              "value": 1.4
+            },
+            {
+              "date": "2026-07-05",
+              "value": 1.5
+            },
+            {
+              "date": "2026-07-06",
+              "value": 1.6
+            },
+            {
+              "date": "2026-07-07",
+              "value": 1.7
+            },
+            {
+              "date": "2026-07-08",
+              "value": 1.8
+            },
+            {
+              "date": "2026-07-09",
+              "value": 1.9
+            },
+            {
+              "date": "2026-07-10",
+              "value": 2.0
+            },
+            {
+              "date": "2026-07-11",
+              "value": 2.1
+            },
+            {
+              "date": "2026-07-12",
+              "value": 2.2
+            },
+            {
+              "date": "2026-07-13",
+              "value": 2.3
+            },
+            {
+              "date": "2026-07-14",
+              "value": 2.4
+            },
+            {
+              "date": "2026-07-15",
+              "value": 2.5
+            },
+            {
+              "date": "2026-07-16",
+              "value": 2.6
+            },
+            {
+              "date": "2026-07-17",
+              "value": 2.7
+            },
+            {
+              "date": "2026-07-18",
+              "value": 2.8
+            },
+            {
+              "date": "2026-07-19",
+              "value": 2.9
+            },
+            {
+              "date": "2026-07-20",
+              "value": 3.0
+            },
+            {
+              "date": "2026-07-21",
               "value": 3.1
+            },
+            {
+              "date": "2026-07-22",
+              "value": 3.2
+            },
+            {
+              "date": "2026-07-23",
+              "value": 3.3
+            },
+            {
+              "date": "2026-07-24",
+              "value": 3.4
             }
           ]
         },
         {
-          "label": "VIX",
-          "series_id": "VIXCLS",
-          "value": 14.2,
-          "delta": -0.4,
+          "label": "Junk-bond premium",
+          "series_id": "BAMLH0A0HYM2",
+          "value": 3.4,
+          "delta": 0.10000000000000009,
           "band": "calm",
           "history": [
             {
-              "date": "2026-07-27",
-              "value": 14.6
+              "date": "2026-07-01",
+              "value": 1.1
             },
             {
-              "date": "2026-07-28",
-              "value": 14.2
+              "date": "2026-07-02",
+              "value": 1.2
+            },
+            {
+              "date": "2026-07-03",
+              "value": 1.3
+            },
+            {
+              "date": "2026-07-04",
+              "value": 1.4
+            },
+            {
+              "date": "2026-07-05",
+              "value": 1.5
+            },
+            {
+              "date": "2026-07-06",
+              "value": 1.6
+            },
+            {
+              "date": "2026-07-07",
+              "value": 1.7
+            },
+            {
+              "date": "2026-07-08",
+              "value": 1.8
+            },
+            {
+              "date": "2026-07-09",
+              "value": 1.9
+            },
+            {
+              "date": "2026-07-10",
+              "value": 2.0
+            },
+            {
+              "date": "2026-07-11",
+              "value": 2.1
+            },
+            {
+              "date": "2026-07-12",
+              "value": 2.2
+            },
+            {
+              "date": "2026-07-13",
+              "value": 2.3
+            },
+            {
+              "date": "2026-07-14",
+              "value": 2.4
+            },
+            {
+              "date": "2026-07-15",
+              "value": 2.5
+            },
+            {
+              "date": "2026-07-16",
+              "value": 2.6
+            },
+            {
+              "date": "2026-07-17",
+              "value": 2.7
+            },
+            {
+              "date": "2026-07-18",
+              "value": 2.8
+            },
+            {
+              "date": "2026-07-19",
+              "value": 2.9
+            },
+            {
+              "date": "2026-07-20",
+              "value": 3.0
+            },
+            {
+              "date": "2026-07-21",
+              "value": 3.1
+            },
+            {
+              "date": "2026-07-22",
+              "value": 3.2
+            },
+            {
+              "date": "2026-07-23",
+              "value": 3.3
+            },
+            {
+              "date": "2026-07-24",
+              "value": 3.4
+            }
+          ]
+        },
+        {
+          "label": "Fear index (VIX)",
+          "series_id": "VIXCLS",
+          "value": 3.4,
+          "delta": 0.10000000000000009,
+          "band": "calm",
+          "history": [
+            {
+              "date": "2026-07-01",
+              "value": 1.1
+            },
+            {
+              "date": "2026-07-02",
+              "value": 1.2
+            },
+            {
+              "date": "2026-07-03",
+              "value": 1.3
+            },
+            {
+              "date": "2026-07-04",
+              "value": 1.4
+            },
+            {
+              "date": "2026-07-05",
+              "value": 1.5
+            },
+            {
+              "date": "2026-07-06",
+              "value": 1.6
+            },
+            {
+              "date": "2026-07-07",
+              "value": 1.7
+            },
+            {
+              "date": "2026-07-08",
+              "value": 1.8
+            },
+            {
+              "date": "2026-07-09",
+              "value": 1.9
+            },
+            {
+              "date": "2026-07-10",
+              "value": 2.0
+            },
+            {
+              "date": "2026-07-11",
+              "value": 2.1
+            },
+            {
+              "date": "2026-07-12",
+              "value": 2.2
+            },
+            {
+              "date": "2026-07-13",
+              "value": 2.3
+            },
+            {
+              "date": "2026-07-14",
+              "value": 2.4
+            },
+            {
+              "date": "2026-07-15",
+              "value": 2.5
+            },
+            {
+              "date": "2026-07-16",
+              "value": 2.6
+            },
+            {
+              "date": "2026-07-17",
+              "value": 2.7
+            },
+            {
+              "date": "2026-07-18",
+              "value": 2.8
+            },
+            {
+              "date": "2026-07-19",
+              "value": 2.9
+            },
+            {
+              "date": "2026-07-20",
+              "value": 3.0
+            },
+            {
+              "date": "2026-07-21",
+              "value": 3.1
+            },
+            {
+              "date": "2026-07-22",
+              "value": 3.2
+            },
+            {
+              "date": "2026-07-23",
+              "value": 3.3
+            },
+            {
+              "date": "2026-07-24",
+              "value": 3.4
             }
           ]
         }
@@ -183,7 +467,29 @@
     "candidates": {
       "title": "Research candidates",
       "kicker": "Signals",
-      "note": "Businesses worth reading about, screened quality-first.",
+      "note": "A reading queue of good companies whose shares are currently marked down; nothing on it is a recommendation.",
+      "about": [
+        {
+          "heading": "What this screens for",
+          "body": "Quality first: durable returns on capital, real free cash flow, a rising Piotroski score, and a share price currently well off its highs."
+        },
+        {
+          "heading": "How it differs from the scorecard",
+          "body": "The scorecard below finds stocks doing something odd right now; this finds good businesses that happen to be cheap. Quality enters the funnel here; dislocation is only the timing."
+        },
+        {
+          "heading": "What happens next",
+          "body": "Names go to deep research before any decision. List entries are graded for calibration only — see Candidates screen edge under Track record."
+        },
+        {
+          "heading": "The hidden columns",
+          "body": "ROIC is the profit earned on the money invested in the business; FCF yield is the cash it throws off as a share of its price; F-score counts nine signs of improving health out of nine; RSI measures how oversold the shares are; accruals is how far reported earnings run ahead of cash, where negative is the good sign."
+        }
+      ],
+      "verdict": {
+        "text": "2 names · 0 already researched",
+        "tone": "mid"
+      },
       "columns": [
         {
           "key": "symbol",
@@ -193,10 +499,31 @@
           "term": null
         },
         {
-          "key": "fcfYield",
-          "label": "FCF yield %",
+          "key": "sector",
+          "label": "Sector",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "marketCap",
+          "label": "Market cap",
           "numeric": true,
-          "direction": "up-good",
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "ch6m",
+          "label": "6-month change %",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "growthDoor",
+          "label": "Why it qualified",
+          "numeric": false,
+          "direction": null,
           "term": null
         },
         {
@@ -205,26 +532,125 @@
           "numeric": false,
           "direction": null,
           "term": null
+        },
+        {
+          "key": "daysOnList",
+          "label": "Days on list",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "roic",
+          "label": "ROIC %",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "fcfYield",
+          "label": "FCF yield %",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "fScore",
+          "label": "F-score",
+          "numeric": true,
+          "direction": "up-good",
+          "term": "Piotroski score",
+          "hidden": true
+        },
+        {
+          "key": "rsi",
+          "label": "RSI",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "accrualsPctAssets",
+          "label": "Accruals % assets",
+          "numeric": true,
+          "direction": "down-good",
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "verdictDate",
+          "label": "Call date",
+          "numeric": false,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "fScoreEntry",
+          "label": "F-score at entry",
+          "numeric": true,
+          "direction": null,
+          "term": "Piotroski score",
+          "hidden": true
         }
       ],
       "rows": [
         {
-          "symbol": "AAPL",
-          "fcfYield": 5.4,
-          "verdict": "pass"
+          "symbol": "ADBE",
+          "sector": "Technology",
+          "marketCap": 84000000000.0,
+          "roic": 60.7,
+          "fcfYield": 12.2,
+          "fScore": 7.0,
+          "rsi": 42.3,
+          "ch6m": -29.2,
+          "growthDoor": "3y",
+          "accrualsPctAssets": null,
+          "verdict": null,
+          "verdictDate": null,
+          "daysOnList": null,
+          "fScoreEntry": null
         },
         {
           "symbol": "PEGA",
-          "fcfYield": 9.1,
-          "verdict": null
+          "sector": "Technology",
+          "marketCap": 84000000000.0,
+          "roic": 68.4,
+          "fcfYield": 11.5,
+          "fScore": 7.0,
+          "rsi": 42.3,
+          "ch6m": -29.2,
+          "growthDoor": "3y",
+          "accrualsPctAssets": null,
+          "verdict": null,
+          "verdictDate": null,
+          "daysOnList": null,
+          "fScoreEntry": null
         }
       ],
-      "snapshot_date": "2026-07-07"
+      "snapshot_date": "2026-07-08"
     },
     "research-reopens": {
       "title": "Research reopens",
       "kicker": "Research",
-      "note": "Names already researched in depth and set aside, each with the stated evidence that would reopen the question.",
+      "note": "Researched names set aside, each with the evidence that would reopen the question.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "A dated trigger is usually an earnings report; “due” means that evidence now exists and the name deserves a fresh look. An event trigger waits on a filing or a price, with no date attached."
+        },
+        {
+          "heading": "Lifecycle",
+          "body": "A row retires when the name is re-researched; the ticker links to the full thesis. Due rows lead the table, and the chip counts triggers dated within a week of today."
+        }
+      ],
+      "verdict": {
+        "text": "nothing due this week",
+        "tone": "mid"
+      },
       "columns": [
         {
           "key": "ticker",
@@ -256,8 +682,15 @@
         },
         {
           "key": "trigger",
-          "label": "Trigger",
+          "label": "Waiting for",
           "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "filings_since",
+          "label": "8-Ks since thesis",
+          "numeric": true,
           "direction": null,
           "term": null
         },
@@ -305,18 +738,29 @@
     "scorecard": {
       "title": "Ticker scorecard",
       "kicker": "Signals",
-      "note": "Stocks doing something statistically odd right now — dislocation, not quality.",
+      "note": "Stocks doing something statistically odd right now, which says nothing about business quality.",
       "about": [
         {
           "heading": "What this is",
           "body": "Every signal here is market microstructure — short interest, days-to-cover, oversold RSI, FTD spikes, retail chatter. A high score means something unusual is happening to the stock, usually a small one, and says nothing about the business."
         },
         {
+          "heading": "Why a crashing stock flags bullish",
+          "body": "Deeply oversold RSI and crowded shorts vote bullish on a mean-reversion hunch. That hunch is worthless when the drop had a real cause: a stock down 40% on bad news will sit here flagged bullish every night until the price stabilizes."
+        },
+        {
+          "heading": "How to read it",
+          "body": "The bar is the summed vote, left of center bearish; Split is the raw bullish/bearish count; ★ marks strong agreement. Signals with data is the share of the signal set that had a reading for the name tonight. The chip counts the names that crossed the flag threshold and how many of those you already hold; it is a count, never a grade."
+        },
+        {
           "heading": "How much to trust it",
-          "body": "Treat it as a to-research feed: most flags deserve rejection, and by design the research step kills nearly everything."
+          "body": "Treat it as a to-research feed: most flags deserve rejection, and by design the research step kills nearly everything. Whether any single signal has proven edge is graded under Signals; so far none has."
         }
       ],
-      "verdict": null,
+      "verdict": {
+        "text": "1 flagged tonight · 1 held",
+        "tone": "mid"
+      },
       "columns": [
         {
           "key": "symbol",
@@ -355,7 +799,7 @@
         },
         {
           "key": "coverage",
-          "label": "Coverage",
+          "label": "Signals with data",
           "numeric": true,
           "direction": "up-good",
           "term": "Coverage"
@@ -437,10 +881,10 @@
           ]
         }
       ],
-      "total": 4
+      "total": 2
     },
     "cot-tails": {
-      "title": "COT positioning tails",
+      "title": "Crowded futures bets",
       "kicker": "Signals",
       "note": "Futures markets where the professional crowd is all-in on one side of its own 3-year range.",
       "about": [
@@ -474,7 +918,7 @@
         },
         {
           "key": "cot_index",
-          "label": "COT index (3y)",
+          "label": "How stretched (0–100)",
           "numeric": true,
           "direction": null,
           "term": "COT / positioning"
@@ -507,10 +951,24 @@
     "signal-recommendations": {
       "title": "Signal recommendations",
       "kicker": "Signals",
-      "note": "The verdict on each signal, graded against the base rate.",
+      "note": "The verdict on each signal (keep, watch, or anti-signal), graded against the real base rate.",
+      "about": [
+        {
+          "heading": "Why the base rate matters",
+          "body": "A randomly chosen scored ticker beat its benchmark only ~40% of the time over these windows, so a 61% hit-rate can still be worth nothing. Every verdict is measured against that baseline, not a coin flip."
+        },
+        {
+          "heading": "The verdicts",
+          "body": "“Keep” means the whole confidence range sits above the baseline; “anti-signal” sits entirely below it (significantly wrong, never a win); “watch” straddles. The chip counts each signal once, at its longest graded horizon; the confidence-range bounds sit behind “more columns”."
+        },
+        {
+          "heading": "Hold it loosely",
+          "body": "Several signals are graded at once, so a few clear the bar by luck. Re-weighting the catalog is always a human decision; nothing here feeds back automatically."
+        }
+      ],
       "verdict": {
-        "text": "1 keep / 1 watch / 0 anti-signal",
-        "tone": "on"
+        "text": "1 signal still unproven",
+        "tone": "mid"
       },
       "columns": [
         {
@@ -525,7 +983,8 @@
           "label": "Via crosswalk",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "horizon",
@@ -536,17 +995,17 @@
         },
         {
           "key": "n_blocks",
-          "label": "Independent windows",
+          "label": "Independent episodes",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "avg_directional_excess",
-          "label": "Directional excess",
+          "label": "Better than SPY by",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": "Directional excess"
         },
         {
           "key": "hit_rate",
@@ -560,18 +1019,20 @@
           "label": "Hit-rate CI low",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "CI",
+          "hidden": true
         },
         {
           "key": "hit_ci_hi",
           "label": "Hit-rate CI high",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "CI",
+          "hidden": true
         },
         {
           "key": "recommendation",
-          "label": "Recommendation",
+          "label": "Verdict",
           "numeric": false,
           "direction": null,
           "term": null
@@ -579,35 +1040,42 @@
       ],
       "rows": [
         {
-          "signal_id": "si_spike",
+          "signal_id": "sig_test_a",
           "via_crosswalk": 0,
-          "horizon": 21,
-          "n_blocks": 6,
-          "avg_directional_excess": 0.012,
-          "hit_rate": 0.58,
-          "hit_ci_lo": 0.49,
-          "hit_ci_hi": 0.67,
-          "recommendation": "keep"
-        },
-        {
-          "signal_id": "rsi_oversold",
-          "via_crosswalk": 0,
-          "horizon": 63,
-          "n_blocks": 4,
-          "avg_directional_excess": -0.004,
-          "hit_rate": 0.46,
-          "hit_ci_lo": 0.36,
-          "hit_ci_hi": 0.56,
-          "recommendation": "watch"
+          "horizon": 5,
+          "n_blocks": 1,
+          "avg_directional_excess": 0.03,
+          "hit_rate": 1.0,
+          "hit_ci_lo": 0.20654329147389294,
+          "hit_ci_hi": 1.0,
+          "recommendation": "insufficient evidence"
         }
       ],
-      "caveat": "A backtest replay against ALFRED vintages, not live trading — read excess/beats-baseline, never hit-rate alone.",
-      "empty": "insufficient evidence for every signal (young scorer) — expected; fills in once a signal's evidence crosses the reliability floor"
+      "caveat": "A backtest replay against ALFRED vintages, not live trading. Read excess and beats-baseline rather than hit-rate alone, and remember this is one history, not a distribution.",
+      "empty": "insufficient evidence for every signal so far, which is expected of a young scorer; fills in once a signal's evidence crosses the reliability floor"
     },
     "signal-efficacy": {
       "title": "Signal efficacy",
       "kicker": "Signals",
-      "note": "Every signal's raw report card: how often it has been right so far.",
+      "note": "Every signal's raw report card against simply holding SPY.",
+      "about": [
+        {
+          "heading": "What this is",
+          "body": "How often each signal has been right so far, and by how much it beat the SPY benchmark. Unfiltered: every signal appears, proven or not."
+        },
+        {
+          "heading": "The chip and the verdict column",
+          "body": "Keep means the signal beat chance with room to spare; watch means it is ahead but not yet clearly; anti-signal means it was reliably wrong; unproven means too few independent episodes to say. Each signal counts once, at its longest graded horizon."
+        },
+        {
+          "heading": "More columns",
+          "body": "The folded columns hold the confidence interval around the hit rate, the chance-alone rate it is measured against, the number of distinct dates, and whether the signal was matched through a proxy class rather than the ticker."
+        }
+      ],
+      "verdict": {
+        "text": "1 signal still unproven",
+        "tone": "mid"
+      },
       "columns": [
         {
           "key": "signal_id",
@@ -621,7 +1089,8 @@
           "label": "Via crosswalk",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "horizon",
@@ -632,7 +1101,7 @@
         },
         {
           "key": "n_bench",
-          "label": "N benchmarked",
+          "label": "Graded",
           "numeric": true,
           "direction": "up-good",
           "term": null
@@ -642,7 +1111,8 @@
           "label": "N dates",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "hit_rate",
@@ -656,32 +1126,35 @@
           "label": "Hit-rate CI low",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "CI",
+          "hidden": true
         },
         {
           "key": "hit_ci_hi",
           "label": "Hit-rate CI high",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "CI",
+          "hidden": true
         },
         {
           "key": "null_rate",
-          "label": "Base rate",
+          "label": "Chance alone",
           "numeric": true,
           "direction": "down-good",
-          "term": null
+          "term": "Base rate",
+          "hidden": true
         },
         {
           "key": "avg_directional_excess",
-          "label": "Directional excess",
+          "label": "Better than SPY by",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": "Directional excess"
         },
         {
           "key": "recommendation",
-          "label": "Recommendation",
+          "label": "Verdict",
           "numeric": false,
           "direction": null,
           "term": null
@@ -715,13 +1188,31 @@
           "recommendation": "watch"
         }
       ],
-      "caveat": "Nominal and uncorrected across ~48 comparisons — hold every verdict loosely.",
-      "empty": "no matured signal outcomes yet — appears once a signal's flagged calls reach their grading horizon"
+      "caveat": "Small sample; windows overlap, so one hot week can flatter several signals at once. Grades firm up as distinct composite dates accumulate.",
+      "empty": "no matured signal outcomes yet; appears once a signal's flagged calls reach their grading horizon"
     },
     "bucket-performance": {
       "title": "Bucket performance",
       "kicker": "Signals",
-      "note": "Grouping every past opinion by conviction bucket: did stronger scores actually produce better forward returns than SPY?",
+      "note": "Did stronger conviction actually produce better forward returns?",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Every past opinion grouped by conviction bucket, strong-bull down to strong-bear, each graded against SPY. If conviction means anything, stronger buckets should do better; this checks that."
+        },
+        {
+          "heading": "The chip",
+          "body": "Pools the strong buckets against the plain bull and bear buckets at the longest horizon, and compares how often each was right. It refuses to compare until each side holds five graded flags."
+        },
+        {
+          "heading": "Chance alone and better than chance",
+          "body": "Chance alone is how often a random pick would have been right over that window; better than chance by is the bucket's hit rate minus that. Reliable marks buckets with enough independent episodes to trust the gap."
+        }
+      ],
+      "verdict": {
+        "text": "Too few graded flags to compare buckets",
+        "tone": "mid"
+      },
       "columns": [
         {
           "key": "bucket",
@@ -739,24 +1230,24 @@
         },
         {
           "key": "n_bench",
-          "label": "N",
+          "label": "Graded",
           "numeric": true,
           "direction": "up-good",
           "term": null
         },
         {
           "key": "avg_fwd_return",
-          "label": "Fwd return",
+          "label": "Return",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": "Forward return"
         },
         {
           "key": "avg_excess",
-          "label": "Excess",
+          "label": "Vs SPY",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": "Excess"
         },
         {
           "key": "hit_rate",
@@ -767,42 +1258,93 @@
         },
         {
           "key": "null_rate",
-          "label": "Base rate",
+          "label": "Chance alone",
           "numeric": true,
           "direction": "down-good",
-          "term": null
+          "term": "Base rate"
         },
         {
           "key": "edge",
-          "label": "Edge",
+          "label": "Better than chance by",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "Edge"
         },
         {
           "key": "reliable",
           "label": "Reliable",
-          "numeric": false,
+          "numeric": true,
           "direction": null,
           "term": null
         }
       ],
-      "rows": [],
-      "caveat": "Several signals are graded at once, so a few clear the bar by luck.",
-      "empty": "no matured buckets yet — appears once conviction-bucketed opinions reach their grading horizon"
+      "rows": [
+        {
+          "bucket": "strong_bull",
+          "horizon": 5,
+          "n_bench": 1,
+          "avg_fwd_return": 0.04,
+          "avg_excess": 0.03,
+          "hit_rate": 1.0,
+          "null_rate": 1.0,
+          "edge": 0.0,
+          "reliable": false
+        },
+        {
+          "bucket": "thin",
+          "horizon": 5,
+          "n_bench": 1,
+          "avg_fwd_return": 0.02,
+          "avg_excess": 0.01,
+          "hit_rate": 1.0,
+          "null_rate": 1.0,
+          "edge": 0.0,
+          "reliable": false
+        }
+      ],
+      "caveat": "Buckets group flags by strength, not by independence; the same overlapping-episode caveat applies within each bucket. Read the count before trusting a bucket's average.",
+      "empty": "no matured buckets yet; appears once conviction-bucketed opinions reach their grading horizon"
     },
     "equity-curve": {
       "title": "Portfolio vs SPY",
       "kicker": "Track record",
-      "note": "Your account's time-weighted growth of $100 against SPY's and overnight cash's.",
+      "note": "How $100 in your stock picks grew, next to $100 in SPY and $100 in cash.",
       "about": [
         {
-          "heading": "How to read it",
-          "body": "All lines start at $100 on the first charted date. Deposits and withdrawals are marked but excluded from the portfolio line — it moves only when the book's value moves, so a gap between the lines is skill (or its absence), never a transfer."
+          "heading": "The three numbers",
+          "body": "\"Your picks\" is how $100 put into your stock book would have grown. It is time-weighted: adding money never counts as a gain and taking money out never counts as a loss; only price moves count. \"SPY\" is what the same $100 did in the index over the same days. \"Cash\" is what it would have earned sitting in a savings account at the fed funds rate. The chip in the header is simple subtraction, your picks minus SPY, in percentage points."
         },
         {
-          "heading": "The cash line",
-          "body": "Daily fed funds (FRED's DFF) compounded over the same window — roughly what a T-bill fund or HYSA would have paid. SPY asks whether the picks beat the index; cash asks whether the money should be in the market at all."
+          "heading": "How to read the chart",
+          "body": "All lines start at $100 on the first charted date. The book is every journaled stock position marked at each day's close, with cash left out. A buy joins at its fill price and a sale leaves at its fill price, so the line moves only when held positions move. Days with nothing held are dropped from both lines, and a holding that predates the journal (sold on record but never bought) is left out entirely."
+        },
+        {
+          "heading": "Why cash is a line",
+          "body": "Daily fed funds (FRED's DFF) compounded over the same window, roughly what a T-bill fund or HYSA would have paid. SPY asks whether the picks beat the index; cash asks whether the money should be in the market at all."
+        }
+      ],
+      "verdict": {
+        "text": "Ahead of SPY by 10.9 points since Jul 31",
+        "tone": "on"
+      },
+      "tiles": [
+        {
+          "label": "Your picks",
+          "value": "+12.50%",
+          "band": null,
+          "tone": null
+        },
+        {
+          "label": "SPY",
+          "value": "+1.59%",
+          "band": null,
+          "tone": null
+        },
+        {
+          "label": "Cash",
+          "value": "+0.05%",
+          "band": null,
+          "tone": null
         }
       ],
       "curve": [
@@ -810,48 +1352,64 @@
           "date": "2026-07-31",
           "portfolio": 100.0,
           "spy": 100.0,
-          "cash": 100.0,
-          "flow": 0
-        },
-        {
-          "date": "2026-08-01",
-          "portfolio": 100.2,
-          "spy": null,
-          "cash": 100.01,
-          "flow": 0
+          "cash": 100.0
         },
         {
           "date": "2026-08-04",
-          "portfolio": 103.05,
+          "portfolio": 109.72,
           "spy": 101.0,
-          "cash": 100.04,
-          "flow": 100
+          "cash": 100.04
         },
         {
           "date": "2026-08-05",
-          "portfolio": 104.07,
+          "portfolio": 112.5,
           "spy": 101.59,
-          "cash": 100.05,
-          "flow": 0
+          "cash": 100.05
         }
       ],
       "curve_summary": {
-        "twr": 0.0407,
+        "twr": 0.125,
         "spy": 0.0159,
-        "excess": 0.0248,
+        "excess": 0.1091,
         "cash": 0.0005,
-        "ledger_dates": 4,
-        "missing_trading_days": 1
+        "positions": 2,
+        "trading_days": 3
       }
     },
     "human-filter": {
       "title": "Human-filter tally",
       "kicker": "Track record",
-      "note": "Of the opinions this page flagged, you either acted or passed.",
+      "note": "When you chose which flags to act on and which to pass, did your judgment add anything?",
+      "about": [
+        {
+          "heading": "What a flag is",
+          "body": "A night when the signals leaned hard enough on one stock to be worth a look. Every flag is graded later on what the stock did against SPY over 5, 10 and 21 trading days."
+        },
+        {
+          "heading": "Acted, passed, skipped",
+          "body": "Acted means you traded in the flag's direction. Passed means you journaled a deliberate no. Skipped means the flag came and went with no journal entry, which is most of them."
+        },
+        {
+          "heading": "Gain had you followed it",
+          "body": "What a trade in the flag's direction would have made against SPY, averaged per row. A row with fewer than 5 flags shows its count but no average, in the table and the tiles alike: three flags is not a trend. If the flags you skipped kept gaining and the ones you acted on did not, the filter is costing you; the chip states that comparison once both sides hold five flags."
+        }
+      ],
+      "verdict": {
+        "text": "Too few graded flags to read yet",
+        "tone": "mid"
+      },
+      "tiles": [
+        {
+          "label": "Acted on",
+          "value": "too few",
+          "band": "1 flags · 5 days · 5 needed",
+          "tone": null
+        }
+      ],
       "columns": [
         {
           "key": "response",
-          "label": "Response",
+          "label": "You did",
           "numeric": false,
           "direction": null,
           "term": null
@@ -865,53 +1423,56 @@
         },
         {
           "key": "n",
-          "label": "N",
+          "label": "Flags",
           "numeric": true,
           "direction": "up-good",
           "term": null
         },
         {
           "key": "avg_dir_excess",
-          "label": "Directional excess",
+          "label": "Gain had you followed it",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "Directional excess"
         },
         {
           "key": "avg_fwd_return",
-          "label": "Fwd return",
+          "label": "Return",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": "Forward return"
         }
       ],
       "rows": [
         {
-          "response": "acted",
-          "horizon": 21,
-          "n": 12,
-          "avg_dir_excess": 0.018,
-          "avg_fwd_return": 0.021
-        },
-        {
-          "response": "passed",
-          "horizon": 21,
-          "n": 9,
-          "avg_dir_excess": -0.006,
-          "avg_fwd_return": 0.004
+          "response": "Acted",
+          "horizon": 5,
+          "n": 1,
+          "avg_dir_excess": null,
+          "avg_fwd_return": null
         }
       ],
       "caveat": "Compares acted-on vs. passed-on flags from a still-small decision journal. A handful of trades can swing the comparison either way.",
-      "empty": "no matured flagged opinions yet — appears once an acted-on or passed-on flag reaches its grading horizon"
+      "empty": "no matured flagged opinions yet; appears once an acted-on or passed-on flag reaches its grading horizon"
     },
     "regime-performance": {
       "title": "Regime edge",
       "kicker": "Signals",
-      "note": "Does the market-mood call itself have forward edge?",
+      "note": "Does the market-mood call itself predict forward returns?",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Each row is one mood at one horizon: did risk-on nights actually precede better returns than risk-off nights? The chip reads the risk-on row at the longest horizon, and waits for five graded nights before averaging."
+        }
+      ],
+      "verdict": {
+        "text": "Too few risk-on nights to grade yet",
+        "tone": "mid"
+      },
       "columns": [
         {
           "key": "regime",
-          "label": "Regime",
+          "label": "Mood",
           "numeric": false,
           "direction": null,
           "term": null
@@ -925,28 +1486,28 @@
         },
         {
           "key": "n_matured",
-          "label": "N",
+          "label": "Nights graded",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "avg_bench_return",
-          "label": "Avg return",
+          "label": "Average return",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "min_bench_return",
-          "label": "Min return",
+          "label": "Worst",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "max_bench_return",
-          "label": "Max return",
+          "label": "Best",
           "numeric": true,
           "direction": null,
           "term": null
@@ -954,70 +1515,82 @@
       ],
       "rows": [
         {
-          "regime": "risk_on",
-          "horizon": 21,
-          "n_matured": 34,
-          "avg_bench_return": 0.019,
-          "min_bench_return": -0.08,
-          "max_bench_return": 0.14
-        },
-        {
-          "regime": "risk_off",
-          "horizon": 21,
-          "n_matured": 11,
-          "avg_bench_return": -0.012,
-          "min_bench_return": -0.15,
-          "max_bench_return": 0.06
+          "regime": "Risk on",
+          "horizon": 5,
+          "n_matured": 1,
+          "avg_bench_return": 0.04,
+          "min_bench_return": 0.04,
+          "max_bench_return": 0.04
         }
       ],
-      "caveat": "Regime windows are contiguous stretches, not independent draws.",
+      "caveat": "Regime windows are contiguous stretches rather than independent draws; a single risk-on run dominates the sample until more regimes accumulate.",
       "empty": "no matured regime outcomes yet — appears once a market-mood window reaches its grading horizon"
     },
     "book-heat": {
       "title": "Advisor book heat",
       "kicker": "Your book",
       "note": "How much of your account is genuinely at risk right now.",
+      "about": [
+        {
+          "heading": "Money at risk on a bad day",
+          "body": "Add up, across every open position, what a normal bad day would cost: each holding's usual daily swing (its ATR) times the shares held. That total, as a share of the book, is the headline. Elsewhere on this page the same number is called heat."
+        },
+        {
+          "heading": "What it is not",
+          "body": "Not the stop-out loss: stops sit further out, so being stopped costs more. Positions counted says how much of the book the number actually accounts for; a holding missing its inputs is left out, and Feeds missing counts the data sources that did not report."
+        }
+      ],
       "verdict": {
         "text": "Book heat comfortable",
         "tone": "on"
       },
       "tiles": [
         {
-          "label": "positions",
-          "value": 5,
+          "label": "Positions",
+          "value": 3,
           "band": null,
           "tone": null
         },
         {
-          "label": "book heat %",
-          "value": 1.2,
-          "band": "comfortable",
+          "label": "Money at risk on a bad day",
+          "value": "0.45%",
+          "band": "of the book · comfortable",
           "tone": null
         },
         {
-          "label": "coverage",
-          "value": 0.9,
+          "label": "Positions counted",
+          "value": "100%",
+          "band": "positions with the inputs to price a bad day",
+          "tone": null
+        },
+        {
+          "label": "Book value",
+          "value": "$10,000",
           "band": null,
           "tone": null
         },
         {
-          "label": "equity",
-          "value": 84213.55,
-          "band": null,
-          "tone": null
-        },
-        {
-          "label": "sources failed",
+          "label": "Feeds missing",
           "value": 0,
-          "band": null,
+          "band": "of the inputs the advisor needs",
           "tone": null
         }
       ]
     },
     "group-heat": {
-      "title": "Advisor group heat",
+      "title": "Bets, not positions",
       "kicker": "Your book",
       "note": "Correlated positions collapsed into single bets.",
+      "about": [
+        {
+          "heading": "Why",
+          "body": "Two energy names are one energy bet: risk adds up within a group, and sizing that ignores this quietly doubles exposure. Hedges net out, so a protective put reduces what its bet has at risk."
+        },
+        {
+          "heading": "At risk",
+          "body": "The dollars a normal bad day would cost the whole bet, and that as a share of the book: the same money-at-risk number the book card totals."
+        }
+      ],
       "columns": [
         {
           "key": "bet",
@@ -1028,7 +1601,7 @@
         },
         {
           "key": "members",
-          "label": "Members",
+          "label": "Positions in it",
           "numeric": true,
           "direction": null,
           "term": null
@@ -1042,14 +1615,14 @@
         },
         {
           "key": "heat_dollars",
-          "label": "Heat $",
+          "label": "At risk $",
           "numeric": true,
           "direction": "down-good",
           "term": null
         },
         {
           "key": "heat_pct",
-          "label": "Heat %",
+          "label": "At risk %",
           "numeric": true,
           "direction": "down-good",
           "term": null
@@ -1057,19 +1630,32 @@
       ],
       "rows": [
         {
+          "bet": "AAPL",
+          "members": 1,
+          "symbols": "AAPL",
+          "heat_dollars": 30.0,
+          "heat_pct": 0.3
+        },
+        {
           "bet": "energy",
           "members": 2,
-          "symbols": "XOM, CVX",
-          "heat_dollars": 210.5,
-          "heat_pct": 0.25
+          "symbols": "XLE,XOM",
+          "heat_dollars": 14.5,
+          "heat_pct": 0.145
         }
       ],
-      "empty": "no group heat yet — appears once the advisor computes tonight's book"
+      "empty": "no group heat yet; appears once the advisor computes tonight's book"
     },
     "position-heat": {
       "title": "Per-position heat",
       "kicker": "Your book",
-      "note": "Risk contribution of each individual holding.",
+      "note": "Each holding's contribution to the risk totals above.",
+      "about": [
+        {
+          "heading": "At risk",
+          "body": "Shares held times the stock's usual daily swing (ATR): the dollars a normal bad day would cost, not the loss if the stop triggers. The detail behind the book and bet totals. Signal lean is tonight's composite vote on the name; Volatility data old means the swing input is stale. Bet and price sit behind “more columns”."
+        }
+      ],
       "columns": [
         {
           "key": "symbol",
@@ -1080,14 +1666,15 @@
         },
         {
           "key": "group_name",
-          "label": "Group",
+          "label": "Bet",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "quantity",
-          "label": "Qty",
+          "label": "Shares",
           "numeric": true,
           "direction": null,
           "term": null
@@ -1104,39 +1691,40 @@
           "label": "Price",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "heat_dollars",
-          "label": "Heat $",
+          "label": "At risk $",
           "numeric": true,
           "direction": "down-good",
           "term": null
         },
         {
           "key": "heat_pct",
-          "label": "Heat %",
+          "label": "At risk %",
           "numeric": true,
           "direction": "down-good",
           "term": null
         },
         {
           "key": "weight_pct",
-          "label": "Weight %",
+          "label": "Share of book %",
           "numeric": true,
           "direction": "down-good",
           "term": null
         },
         {
           "key": "score_sum",
-          "label": "Score",
+          "label": "Signal lean",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "atr_stale",
-          "label": "Stale?",
+          "label": "Volatility data old?",
           "numeric": false,
           "direction": null,
           "term": null
@@ -1145,15 +1733,39 @@
       "rows": [
         {
           "symbol": "AAPL",
-          "group_name": "tech",
-          "quantity": 10,
-          "market_value": 1980.5,
-          "price": 198.05,
-          "heat_dollars": 42.1,
-          "heat_pct": 0.5,
-          "weight_pct": 2.35,
-          "score_sum": 4,
+          "group_name": null,
+          "quantity": 10.0,
+          "market_value": 1500.0,
+          "price": 150.0,
+          "heat_dollars": 30.0,
+          "heat_pct": 0.3,
+          "weight_pct": 15.0,
+          "score_sum": 2,
           "atr_stale": false
+        },
+        {
+          "symbol": "XOM",
+          "group_name": "energy",
+          "quantity": 5.0,
+          "market_value": 500.0,
+          "price": 100.0,
+          "heat_dollars": 10.0,
+          "heat_pct": 0.1,
+          "weight_pct": 5.0,
+          "score_sum": -4,
+          "atr_stale": false
+        },
+        {
+          "symbol": "XLE",
+          "group_name": "energy",
+          "quantity": 3.0,
+          "market_value": 300.0,
+          "price": 100.0,
+          "heat_dollars": 4.5,
+          "heat_pct": 0.045,
+          "weight_pct": 3.0,
+          "score_sum": 1,
+          "atr_stale": true
         }
       ],
       "empty": "no positions with heat yet"
@@ -1161,7 +1773,13 @@
     "disagreements": {
       "title": "Disagreements",
       "kicker": "Your book",
-      "note": "Tickers where tonight's score points the opposite way from a position you already hold.",
+      "note": "Positions you hold that tonight's signals argue against.",
+      "about": [
+        {
+          "heading": "How to read it",
+          "body": "Tickers where the score points the opposite way from an open position. “Strong” means the score is far enough from neutral to be worth a look. Treat it as a prompt to re-check the thesis rather than an exit order."
+        }
+      ],
       "columns": [
         {
           "key": "symbol",
@@ -1172,21 +1790,21 @@
         },
         {
           "key": "score_sum",
-          "label": "Score",
+          "label": "Signal lean",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "Score"
         },
         {
           "key": "group_name",
-          "label": "Group",
+          "label": "Bet",
           "numeric": false,
           "direction": null,
           "term": null
         },
         {
           "key": "strong",
-          "label": "Strong",
+          "label": "Strong disagreement?",
           "numeric": false,
           "direction": null,
           "term": null
@@ -1194,10 +1812,10 @@
       ],
       "rows": [
         {
-          "symbol": "TSLA",
-          "score_sum": -2,
-          "group_name": "auto",
-          "strong": false
+          "symbol": "XOM",
+          "score_sum": -4,
+          "group_name": "energy",
+          "strong": true
         }
       ],
       "empty": "no disagreements"
@@ -1270,48 +1888,277 @@
       ],
       "empty": "no caps tonight"
     },
-    "trader-scorecard": {
-      "title": "Trader scorecard",
+    "your-trades": {
+      "title": "Your trades",
       "kicker": "Track record",
-      "note": "A plain-text report grading past decision quality.",
-      "text_lines": [
-        "=== Trader Decision-Quality Scorecard — 2026-07 ===",
-        "",
-        "Filter edge (acted vs passed, by horizon)",
-        "  horizon | response         | n  | avg_dir_excess | avg_fwd_return",
-        "       21 | acted            | 12 | 0.0180         | 0.0210",
-        "       21 | passed           |  9 | -0.0060        | 0.0040",
-        "",
-        "Execution cost (acted decisions, by horizon)",
-        "  horizon | n  | avg_entry_slippage | avg_fill_lag_days",
-        "       21 | 12 | 0.21%              | 0.40",
-        "",
-        "Alignment (acted decisions, by horizon)",
-        "  horizon | aligned=1 | aligned=0 | aligned=NULL",
-        "       21 |        10 |         2 |            0",
-        "",
-        "Freelance trades (deliberate only)",
-        "  decision_id | symbol | side | realized_return",
-        "          101 | DECK   | buy  | 0.0320",
-        "  n=1, avg_realized_return=insufficient data (n=1)"
+      "note": "Every stock you bought or sold on purpose, and whether research backed it.",
+      "about": [
+        {
+          "heading": "What counts as a trade",
+          "body": "One journaled stock fill: a buy, or a sell that closed one. Automatic fills (dividend reinvestment, recurring buys) are left out because nobody decided them. Options are graded on their own premium ledger, not here."
+        },
+        {
+          "heading": "Research-backed or freelance",
+          "body": "Research-backed means the research skill said buy on that name before you filled, on the verdict date shown. Freelance means nothing recommended it: no research call and no matching signal."
+        },
+        {
+          "heading": "Result and the chip",
+          "body": "Result is the return from your fill price to your exit price, so an open position shows a dash until you sell. The chip averages closed trades only, and refuses to grade until five have closed: one good exit is not a track record."
+        }
       ],
-      "caveat": "Grades the human's own decisions from the journal. Coverage is whatever got journaled, not a random sample of every flag shown."
+      "verdict": {
+        "text": "1 closed trade, too few to grade",
+        "tone": "mid"
+      },
+      "tiles": [
+        {
+          "label": "Trades journaled",
+          "value": 3,
+          "band": "2 open · 1 closed",
+          "tone": null
+        },
+        {
+          "label": "Backed by research",
+          "value": "1 of 3",
+          "band": "a buy verdict before the fill",
+          "tone": null
+        }
+      ],
+      "columns": [
+        {
+          "key": "symbol",
+          "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "side",
+          "label": "Side",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "fill_date",
+          "label": "Filled",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "backed_by",
+          "label": "Backed by",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "verdict_date",
+          "label": "Verdict date",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "status",
+          "label": "Status",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "realized_return",
+          "label": "Result",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "decision_id",
+          "label": "Journal id",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [
+        {
+          "symbol": "PRIV1",
+          "side": "buy",
+          "fill_date": "2026-07-03",
+          "backed_by": "Freelance",
+          "verdict_date": null,
+          "status": "open",
+          "realized_return": null,
+          "decision_id": 3
+        },
+        {
+          "symbol": "FLAG1",
+          "side": "buy",
+          "fill_date": "2026-07-02",
+          "backed_by": "Research",
+          "verdict_date": "2026-07-01",
+          "status": "open",
+          "realized_return": null,
+          "decision_id": 1
+        },
+        {
+          "symbol": "NVDA",
+          "side": "buy",
+          "fill_date": "2026-07-01",
+          "backed_by": "Freelance",
+          "verdict_date": null,
+          "status": "closed",
+          "realized_return": 0.1,
+          "decision_id": 2
+        }
+      ],
+      "caveat": "Grades the human's own fills from the journal. Coverage is whatever got journaled, and a result counts only once the position is closed.",
+      "empty": "no deliberate trades journaled yet; appears with the first journal-sync of a stock fill"
+    },
+    "trading-the-signals": {
+      "title": "Trading the signals",
+      "kicker": "Track record",
+      "note": "When you traded a flagged name, did you side with the signal, and what did the fill cost?",
+      "about": [
+        {
+          "heading": "Sided or against",
+          "body": "Only trades on names the signals had an opinion about. Sided with the signal means you bought a bullish flag or sold a bearish one. Went against it means the opposite. No signal means the score was exactly neutral."
+        },
+        {
+          "heading": "Paid vs the plan",
+          "body": "Your fill price against the closing price on the day the flag fired, which is the price the paper grade uses. Less means you paid under that close; more means the name had already moved by the time you filled. Days to fill is how long that took."
+        },
+        {
+          "heading": "Why several rows",
+          "body": "Every trade is graded at three horizons (5, 10 and 21 trading days), and the table shows each. Averages stay blank until five trades have matured at that horizon."
+        }
+      ],
+      "tiles": [
+        {
+          "label": "Sided with the signal",
+          "value": "1 of 1",
+          "band": "0 went against it · 0 had no signal",
+          "tone": null
+        },
+        {
+          "label": "Paid vs the plan",
+          "value": "too few trades",
+          "band": "1 graded, 5 needed",
+          "tone": null
+        }
+      ],
+      "columns": [
+        {
+          "key": "horizon",
+          "label": "Horizon",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "n",
+          "label": "Trades graded",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "agreed",
+          "label": "Sided with signal",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "contrarian",
+          "label": "Went against it",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "no_opinion",
+          "label": "No signal",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "avg_entry_slippage",
+          "label": "Paid vs plan",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "avg_fill_lag_days",
+          "label": "Days to fill",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        }
+      ],
+      "rows": [
+        {
+          "horizon": 5,
+          "n": 1,
+          "agreed": 1,
+          "contrarian": 0,
+          "no_opinion": 0,
+          "avg_entry_slippage": null,
+          "avg_fill_lag_days": null
+        }
+      ],
+      "caveat": "Only trades that answered a flagged opinion are graded here. Freelance and research-backed buys with no matching signal stay out.",
+      "empty": "no flagged trade has reached a grading horizon yet"
     },
     "candidate-efficacy": {
       "title": "Candidates screen edge",
       "kicker": "Research",
-      "note": "A name's first entry onto the candidates reading list starts a stopwatch.",
+      "note": "Does the candidates screen's timing beat SPY after a name first enters the list?",
+      "about": [
+        {
+          "heading": "The two doors",
+          "body": "Why it qualified is the growth test the name passed: 3y means three years of revenue growth, inflection means the last year and the forecast made up for a weak three-year record. What flagged it is the dislocation that timed the entry: an oversold RSI, a price drawdown, or both at once."
+        },
+        {
+          "heading": "How it is measured",
+          "body": "A name's first entry onto the reading list starts a stopwatch: its 21- and 63-trading-day return is measured against SPY, split by which dislocation door let it in (oversold RSI, a price drawdown, or both at once)."
+        },
+        {
+          "heading": "What it does not grade",
+          "body": "Timing only, never the multi-year quality thesis behind the pick, and none of it feeds back into the screen's own gates."
+        }
+      ],
+      "tiles": [
+        {
+          "label": "Beat SPY",
+          "value": "1 of 1",
+          "band": "21 trading days after joining the list",
+          "tone": null
+        }
+      ],
       "columns": [
         {
           "key": "screen_version",
           "label": "Screen version",
           "numeric": false,
           "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "growth_door",
+          "label": "Why it qualified",
+          "numeric": false,
+          "direction": null,
           "term": null
         },
         {
           "key": "branch",
-          "label": "Dislocation door",
+          "label": "What flagged it",
           "numeric": false,
           "direction": null,
           "term": null
@@ -1325,7 +2172,7 @@
         },
         {
           "key": "n",
-          "label": "N",
+          "label": "Entries",
           "numeric": true,
           "direction": "up-good",
           "term": null
@@ -1339,44 +2186,65 @@
         },
         {
           "key": "avg_excess",
-          "label": "Excess",
+          "label": "Vs SPY",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": "Excess"
         },
         {
           "key": "avg_fwd_return",
-          "label": "Fwd return",
+          "label": "Return",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": "Forward return"
         }
       ],
-      "rows": [],
+      "rows": [
+        {
+          "screen_version": "v1",
+          "growth_door": "3y",
+          "branch": "rsi",
+          "horizon": 21,
+          "n": 1,
+          "hit_rate": 1.0,
+          "avg_excess": 0.04,
+          "avg_fwd_return": 0.05
+        }
+      ],
       "caveat": "Episodes are few and overlap early. The view carries plain averages with no confidence interval, so read n before believing any row.",
-      "empty": "no matured episodes yet — first grades appear ~21 trading days after the first screen night"
+      "empty": "no matured episodes yet; first grades appear ~21 trading days after the first screen night"
     },
     "health": {
       "title": "Pipeline health",
       "kicker": "Ops",
-      "note": "Launchd job exit codes, hung jobs, log FAILED/STALE counts, and stale or empty databases — everything the retired nightly ntfy push carried.",
+      "note": "Did last night's machinery actually run, and is every database fresh?",
+      "about": [
+        {
+          "heading": "What it checks",
+          "body": "Three layers: every scheduled job's last exit code and whether any is hung mid-run, FAILED/STALE markers in the last 24h of logs (as counts; the log itself stays on the host), and each database's newest snapshot age against its expected cadence."
+        },
+        {
+          "heading": "How to read it",
+          "body": "Green with zero problems is the normal state. Any row here means a number elsewhere on this page may be stale, so check this section first when something looks off."
+        }
+      ],
       "healthy": false,
       "tiles": [
         {
-          "label": "runs (24h)",
-          "value": 14,
-          "band": null,
+          "label": "Jobs that ran",
+          "value": 0,
+          "band": "last 24 hours",
           "tone": null
         },
         {
-          "label": "jobs loaded",
-          "value": 22,
-          "band": null,
+          "label": "Jobs on the schedule",
+          "value": 36,
+          "band": "in launchd",
           "tone": null
         },
         {
-          "label": "problems",
-          "value": 2,
+          "label": "Need attention",
+          "value": 31,
           "band": null,
           "tone": "off"
         }
@@ -1420,7 +2288,21 @@
     "pending": {
       "title": "In-flight opinions",
       "kicker": "Ops",
-      "note": "Opinions already recorded whose outcome has not matured yet.",
+      "note": "Opinions recorded but not yet old enough to grade.",
+      "about": [
+        {
+          "heading": "What this is",
+          "body": "Every graded table above includes only matured outcomes. This is the queue still being measured; these rows become those grades once they age."
+        },
+        {
+          "heading": "Graded after",
+          "body": "Each opinion is graded 5, 10 and 21 trading days after its entry date, so one flag sits here as three rows until the last of them matures. The grading date itself is only known once the closes exist."
+        }
+      ],
+      "verdict": {
+        "text": "1 opinion waiting, the oldest entered 2026-07-08",
+        "tone": "mid"
+      },
       "columns": [
         {
           "key": "kind",
@@ -1431,21 +2313,21 @@
         },
         {
           "key": "composite_date",
-          "label": "Composite date",
+          "label": "Flag date",
           "numeric": false,
           "direction": null,
           "term": null
         },
         {
           "key": "symbol",
-          "label": "Entity",
+          "label": "Symbol",
           "numeric": false,
           "direction": null,
           "term": null
         },
         {
           "key": "horizon",
-          "label": "Horizon",
+          "label": "Graded after (trading days)",
           "numeric": true,
           "direction": null,
           "term": null
@@ -1461,27 +2343,30 @@
       "rows": [
         {
           "kind": "ticker",
-          "composite_date": "2026-07-28",
-          "symbol": "AAPL",
+          "composite_date": "2026-07-08",
+          "symbol": "PEND1",
           "horizon": 21,
           "entry_date": "2026-07-08"
-        },
-        {
-          "kind": "ticker",
-          "composite_date": "2026-07-28",
-          "symbol": "TSLA",
-          "horizon": 63,
-          "entry_date": "2026-06-10"
         }
       ],
-      "total": 4123,
-      "caveat": "These flags haven't reached their grading horizon yet, so nothing here is a result — it's a worklist.",
-      "empty": "nothing pending — everything registered so far has matured — fills once tonight's opinions are registered"
+      "total": 1,
+      "caveat": "These flags haven't reached their grading horizon yet, so nothing here is a result; it's a worklist.",
+      "empty": "nothing pending (everything registered so far has matured); fills once tonight's opinions are registered"
     },
     "basis-breaks": {
       "title": "Data-integrity checks",
       "kicker": "Ops",
-      "note": "Days where a price moved so far that it looks like a split or a bad tick.",
+      "note": "Price moves that look like data errors, caught before they can poison the grades; an empty table is the good outcome.",
+      "about": [
+        {
+          "heading": "What this is",
+          "body": "Days where a price moved so far it looks like a stock split or a bad tick rather than a real move. Surfaced so a silent data problem cannot quietly skew every grade above. Move is the day's close over the prior close, so 0.50× is a halving; the newest 100 are listed and the chip carries the full count."
+        }
+      ],
+      "verdict": {
+        "text": "1 suspect price move tonight",
+        "tone": "off"
+      },
       "columns": [
         {
           "key": "symbol",
@@ -1520,15 +2405,25 @@
         },
         {
           "key": "ratio",
-          "label": "Ratio",
+          "label": "Move (×)",
           "numeric": true,
           "direction": null,
           "term": null
         }
       ],
-      "rows": [],
+      "rows": [
+        {
+          "symbol": "ACME",
+          "prev_date": "2026-06-30",
+          "prev_close": 100.0,
+          "price_date": "2026-07-01",
+          "close": 48.0,
+          "ratio": 0.48
+        }
+      ],
+      "total": 1,
       "caveat": null,
-      "empty": "no basis breaks detected — an empty table is the good outcome; fills only when a price move looks like a split or a bad tick"
+      "empty": "no basis breaks detected, which is the good outcome; fills only when a price move looks like a split or a bad tick"
     },
     "research-filter": {
       "title": "Research call grade",
@@ -1607,6 +2502,7 @@
           "body": "The grade above is an average; this is where you find the one call that dragged it, and whether the miss was a stock story or a market move."
         }
       ],
+      "tiles": [],
       "columns": [
         {
           "key": "symbol",
@@ -1638,7 +2534,7 @@
         },
         {
           "key": "fwd_return",
-          "label": "Fwd return",
+          "label": "Return",
           "numeric": true,
           "direction": null,
           "term": "Forward return"
@@ -1648,14 +2544,15 @@
           "label": "SPY return",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "excess",
-          "label": "Excess vs SPY",
+          "label": "Vs SPY",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "Excess"
         },
         {
           "key": "verdict_correct",
@@ -1679,6 +2576,82 @@
       ],
       "total": 1,
       "empty": "no graded research calls yet"
+    },
+    "research-calibration": {
+      "title": "Research call calibration",
+      "kicker": "Research",
+      "note": "When the research said 70% it would beat SPY, did it beat SPY 70% of the time?",
+      "about": [
+        {
+          "heading": "The chip and the tiles",
+          "body": "Every research call states how likely it is to beat SPY over a horizon. The chip compares the average confidence with the share of calls that actually won, once five have matured. Forecast error scores each call by how far its confidence sat from what happened: 0 is perfect, 0.25 is a coin flip, and lower is better. The tile also shows what always guessing the average win rate would have scored, which is the number to beat."
+        },
+        {
+          "heading": "The table",
+          "body": "Calls are grouped by what they said, in ten-point bands. A well-calibrated forecaster's 60–70% band wins about 65% of the time. Distinct dates, behind the columns toggle, is how many separate days those calls were made: ten calls on one day are closer to one observation."
+        },
+        {
+          "heading": "Why it matters",
+          "body": "Hit rate cannot tell a calibrated forecaster from a lucky one. Sizing up on conviction is defensible only once the stated confidence is shown to track reality; nothing here feeds back into gates or sizing."
+        }
+      ],
+      "verdict": null,
+      "tiles": [],
+      "columns": [
+        {
+          "key": "horizon",
+          "label": "Horizon",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "p_bin",
+          "label": "Said it would win",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "n",
+          "label": "Calls",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "n_dates",
+          "label": "Distinct dates",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "avg_p",
+          "label": "Average confidence",
+          "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "beat_rate",
+          "label": "Actually won",
+          "numeric": true,
+          "direction": "up-good",
+          "term": null
+        },
+        {
+          "key": "brier",
+          "label": "Forecast error",
+          "numeric": true,
+          "direction": "down-good",
+          "term": null
+        }
+      ],
+      "rows": [],
+      "caveat": "Forecast error below the base-rate score means the stated confidence carries information; above it, always guessing the average would have done better. Bins stay tiny for months, so read Calls before the rates.",
+      "empty": "no matured verdicts carry a stated probability yet"
     },
     "flag-response": {
       "title": "What you did with each flag",
@@ -1739,10 +2712,10 @@
         },
         {
           "key": "dir_excess",
-          "label": "Directional excess",
+          "label": "Gain had you followed it",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "Directional excess"
         }
       ],
       "rows": [
@@ -1751,7 +2724,7 @@
           "symbol": "FLAG1",
           "score_sum": 4,
           "total": 4,
-          "response": "acted",
+          "response": "Acted",
           "horizon": 5,
           "dir_excess": 0.03
         }
@@ -1790,7 +2763,8 @@
           "label": "Via crosswalk",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "horizon",
@@ -1804,14 +2778,16 @@
           "label": "Rows graded",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "n_dates",
           "label": "Distinct dates",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "n_blocks",
@@ -1822,10 +2798,10 @@
         },
         {
           "key": "hit_rate",
-          "label": "Pooled hit rate",
+          "label": "Hit rate (all rows)",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "Hit rate"
         },
         {
           "key": "history",
@@ -1888,18 +2864,28 @@
           "term": null
         },
         {
-          "key": "branch",
-          "label": "Door",
+          "key": "growth_door",
+          "label": "Why it qualified",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "branch",
+          "label": "What flagged it",
+          "numeric": false,
+          "direction": null,
+          "term": null,
+          "hidden": true
         },
         {
           "key": "screen_version",
-          "label": "Screen",
+          "label": "Screen version",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "horizon",
@@ -1910,14 +2896,15 @@
         },
         {
           "key": "entry_close",
-          "label": "Entry price",
+          "label": "Price at entry",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "fwd_return",
-          "label": "Fwd return",
+          "label": "Return",
           "numeric": true,
           "direction": null,
           "term": "Forward return"
@@ -1931,10 +2918,10 @@
         },
         {
           "key": "excess",
-          "label": "Excess vs SPY",
+          "label": "Vs SPY",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "Excess"
         },
         {
           "key": "beat_benchmark",
@@ -1948,6 +2935,7 @@
         {
           "symbol": "CAND1",
           "screen_date": "2026-07-01",
+          "growth_door": "3y",
           "branch": "rsi",
           "screen_version": "v1",
           "horizon": 21,
@@ -1972,7 +2960,11 @@
         },
         {
           "heading": "How to read it",
-          "body": "Each row compares the quality gates on the first sighting with the newest one. Flagged rows sort to the top; they are the names to re-research before buying more."
+          "body": "'What weakened' names the gates that fell since the first sighting; the before-and-after numbers sit behind 'more columns'. Flagged rows sort to the top; they are the names to re-research before buying more."
+        },
+        {
+          "heading": "The gates",
+          "body": "F-score is a nine-point financial-health checklist; ROIC is the profit earned on the capital invested; FCF yield is spare cash as a share of the price; accruals are earnings that have not yet shown up as cash."
         }
       ],
       "verdict": {
@@ -1983,6 +2975,13 @@
         {
           "key": "symbol",
           "label": "Symbol",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "what_weakened",
+          "label": "What weakened",
           "numeric": false,
           "direction": null,
           "term": null
@@ -2006,49 +3005,56 @@
           "label": "F-score at entry",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "fscore_now",
           "label": "F-score now",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "roic_entry",
           "label": "ROIC at entry",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "roic_now",
           "label": "ROIC now",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "fcf_yield_entry",
           "label": "FCF yield at entry",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "fcf_yield_now",
           "label": "FCF yield now",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "accruals_now",
           "label": "Accruals now",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "falling_knife",
@@ -2070,7 +3076,8 @@
           "fcf_yield_entry": 10.0,
           "fcf_yield_now": 10.0,
           "accruals_now": null,
-          "falling_knife": false
+          "falling_knife": false,
+          "what_weakened": "nothing"
         }
       ],
       "empty": "no candidate has been on the list for two sightings yet"
@@ -2114,42 +3121,42 @@
         },
         {
           "key": "fill_date",
-          "label": "Opened",
+          "label": "Opened on",
           "numeric": false,
           "direction": null,
           "term": null
         },
         {
           "key": "contracts_opened",
-          "label": "Opened",
+          "label": "Contracts opened",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "contracts_closed",
-          "label": "Closed",
+          "label": "Contracts closed",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "contracts_outstanding",
-          "label": "Open",
+          "label": "Still open",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "pnl_dollars",
-          "label": "P&L $",
+          "label": "Profit $",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "premium_return",
-          "label": "Premium return",
+          "label": "Return on premium",
           "numeric": true,
           "direction": null,
           "term": null
@@ -2169,7 +3176,11 @@
         },
         {
           "heading": "How to read it",
-          "body": "Drift baseline is how often the benchmark simply rose over that horizon; excess is the flag's hit rate minus that. 'Beats drift' means the whole confidence interval sits above the baseline; 'anti-signal' means it sits entirely below — a signal reliably wrong is not a signal to flip."
+          "body": "Drift alone is how often the benchmark simply rose over that horizon; better than drift by is the flag's hit rate minus that. 'Beats drift' means the whole confidence interval sits above the drift; 'anti-signal' means it sits entirely below — a signal reliably wrong is not a signal to flip."
+        },
+        {
+          "heading": "The hidden columns",
+          "body": "Behind the columns toggle: how many days the flag was on, the confidence interval around the hit rate, the drift figure itself, and the chance of a fluke — how often shuffled data produced a hit rate this good, so 0.04 means about one time in twenty-five."
         }
       ],
       "verdict": null,
@@ -2197,10 +3208,11 @@
         },
         {
           "key": "n_days",
-          "label": "Flag days",
+          "label": "Days flagged",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "hit_rate",
@@ -2214,35 +3226,39 @@
           "label": "CI low",
           "numeric": true,
           "direction": null,
-          "term": "CI"
+          "term": "CI",
+          "hidden": true
         },
         {
           "key": "hit_ci_hi",
           "label": "CI high",
           "numeric": true,
           "direction": null,
-          "term": "CI"
+          "term": "CI",
+          "hidden": true
         },
         {
           "key": "baseline",
-          "label": "Drift baseline",
+          "label": "Drift alone",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "Base rate",
+          "hidden": true
         },
         {
           "key": "excess",
-          "label": "Excess vs drift",
+          "label": "Better than drift by",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": "Excess"
         },
         {
           "key": "perm_p",
-          "label": "Permutation p",
+          "label": "Chance of a fluke",
           "numeric": true,
           "direction": "down-good",
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "beats_baseline",
@@ -2270,9 +3286,14 @@
       "about": [
         {
           "heading": "Why it exists",
-          "body": "Stocks drift upward, so a bullish flag that does nothing still 'wins' most windows. Every replay grade is measured against this null, never against 50%."
+          "body": "Stocks drift upward, so a bullish flag that does nothing still 'wins' most windows. Every replay grade is measured against this drift, never against 50%."
+        },
+        {
+          "heading": "The columns",
+          "body": "Days measured is how many start dates were tested. Went up and went down are the share of those windows where the benchmark finished higher or lower; they need not sum to 100% because some windows end flat."
         }
       ],
+      "verdict": null,
       "columns": [
         {
           "key": "benchmark",
@@ -2290,21 +3311,21 @@
         },
         {
           "key": "n_windows",
-          "label": "Windows",
+          "label": "Days measured",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "p_up",
-          "label": "P(up)",
+          "label": "Went up",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "p_down",
-          "label": "P(down)",
+          "label": "Went down",
           "numeric": true,
           "direction": null,
           "term": null
@@ -2336,6 +3357,13 @@
           "term": null
         },
         {
+          "key": "lean",
+          "label": "Lean",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
           "key": "benchmark",
           "label": "Benchmark",
           "numeric": false,
@@ -2361,7 +3389,8 @@
           "label": "Score",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "history",
@@ -2402,7 +3431,8 @@
           "label": "Shares",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "price",
@@ -2416,14 +3446,16 @@
           "label": "Avg cost",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "unrealized_pct",
           "label": "Unrealized %",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "stop_price",
@@ -2441,17 +3473,18 @@
         },
         {
           "key": "score_sum",
-          "label": "Score",
+          "label": "Signal lean",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "Score"
         },
         {
           "key": "strong",
           "label": "Strong disagreement",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "trim_shares",
@@ -2462,10 +3495,11 @@
         },
         {
           "key": "atr_stale",
-          "label": "ATR stale",
+          "label": "Volatility data old?",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         }
       ],
       "rows": [],
@@ -2479,7 +3513,7 @@
       "about": [
         {
           "heading": "How it is computed",
-          "body": "Delta × contracts × 100 is the share-equivalent; heat is that many shares moving one ATR. A protective put counts negative and offsets the shares it covers in the group view."
+          "body": "Delta is how much the option moves for a $1 move in the stock, so delta × contracts × 100 is how many shares the leg acts like; 'at risk' is that many shares moving one ATR. A protective put counts negative and offsets the shares it covers in the group view."
         },
         {
           "heading": "Uncovered legs",
@@ -2524,7 +3558,7 @@
         },
         {
           "key": "share_equiv",
-          "label": "Share-equivalent",
+          "label": "Acts like N shares",
           "numeric": true,
           "direction": null,
           "term": null
@@ -2538,28 +3572,28 @@
         },
         {
           "key": "heat_dollars",
-          "label": "Heat $",
+          "label": "At risk $",
           "numeric": true,
           "direction": "down-good",
           "term": null
         },
         {
           "key": "heat_pct",
-          "label": "Heat %",
+          "label": "At risk %",
           "numeric": true,
           "direction": "down-good",
           "term": null
         },
         {
           "key": "short_leg",
-          "label": "Short leg",
+          "label": "Short?",
           "numeric": false,
           "direction": null,
           "term": null
         },
         {
           "key": "uncovered",
-          "label": "Uncovered",
+          "label": "Uncovered?",
           "numeric": false,
           "direction": null,
           "term": null
@@ -2614,14 +3648,14 @@
         },
         {
           "key": "ref_price",
-          "label": "Reference price",
+          "label": "Price you noted",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "max_gap_pct",
-          "label": "Max gap %",
+          "label": "Max above that price %",
           "numeric": true,
           "direction": null,
           "term": null
@@ -2784,7 +3818,7 @@
       ],
       "tiles": [
         {
-          "label": "Fed blackout",
+          "label": "Fed quiet period",
           "value": "no",
           "band": null,
           "tone": "on"
@@ -2862,8 +3896,28 @@
       "note": "Overnight rates and the Fed's balance sheet — the plumbing that shows stress before prices do.",
       "about": [
         {
-          "heading": "What the numbers are",
-          "body": "SOFR is the overnight rate banks actually borrow at; IORB is what the Fed pays on reserves. SOFR trading above IORB means cash is scarce. SOMA is the Fed's bond portfolio; reverse repo is cash parked at the Fed overnight."
+          "heading": "Overnight lending rate",
+          "body": "SOFR is the rate banks actually paid to borrow cash overnight against Treasuries."
+        },
+        {
+          "heading": "Rate the Fed pays banks",
+          "body": "IORB is what the Fed pays banks on the reserves they leave with it, the floor the overnight rate should sit near."
+        },
+        {
+          "heading": "Gap between them",
+          "body": "Overnight rate minus the Fed's rate: above 0.05 points means banks are paying up for cash, which is the first sign of funding stress."
+        },
+        {
+          "heading": "Overnight lending volume",
+          "body": "Billions of dollars borrowed overnight that day, the size of the market the rate is set in."
+        },
+        {
+          "heading": "Fed's holdings",
+          "body": "The Fed's own bond portfolio in trillions; falling means the Fed is draining money from the system."
+        },
+        {
+          "heading": "Reverse repo",
+          "body": "Cash that money funds parked at the Fed overnight because nothing else paid more, in billions."
         }
       ],
       "tiles": [],
@@ -2880,30 +3934,30 @@
         }
       ],
       "verdict": {
-        "text": "0 series more than 2σ from their own history",
+        "text": "0 series unusually far from their own history",
         "tone": "on"
       },
       "tiles": [
         {
-          "label": "10y − 2y",
+          "label": "Long vs short Treasury yields",
           "value": 3.4,
           "band": "normal",
           "tone": "on"
         },
         {
-          "label": "high-yield spread",
+          "label": "Junk-bond premium",
           "value": 3.4,
           "band": "% over Treasuries",
           "tone": null
         },
         {
-          "label": "fed funds",
+          "label": "Fed funds rate",
           "value": null,
           "band": "%",
           "tone": null
         },
         {
-          "label": "unemployment",
+          "label": "Unemployment rate",
           "value": null,
           "band": "%",
           "tone": null
@@ -2947,8 +4001,15 @@
         },
         {
           "key": "change_pct",
-          "label": "YoY %",
+          "label": "Change, 1 year %",
           "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "unusual",
+          "label": "How unusual",
+          "numeric": false,
           "direction": null,
           "term": null
         },
@@ -2957,7 +4018,8 @@
           "label": "Z-score vs history",
           "numeric": true,
           "direction": null,
-          "term": "Z-score"
+          "term": "Z-score",
+          "hidden": true
         }
       ],
       "rows": [
@@ -2968,7 +4030,8 @@
           "latest": 3.4,
           "year_ago": null,
           "change_pct": null,
-          "zscore": 1.6613247725836142
+          "zscore": 1.6613247725836142,
+          "unusual": "notable"
         },
         {
           "title": null,
@@ -2977,7 +4040,8 @@
           "latest": 3.4,
           "year_ago": null,
           "change_pct": null,
-          "zscore": 1.6613247725836142
+          "zscore": 1.6613247725836142,
+          "unusual": "notable"
         },
         {
           "title": null,
@@ -2986,13 +4050,14 @@
           "latest": 3.4,
           "year_ago": null,
           "change_pct": null,
-          "zscore": 1.6613247725836142
+          "zscore": 1.6613247725836142,
+          "unusual": "notable"
         }
       ],
       "empty": "no FRED observations yet"
     },
     "cot-positioning": {
-      "title": "Futures positioning — legacy report",
+      "title": "Futures positioning — all contracts",
       "kicker": "Sources",
       "note": "Where large speculators sit in each futures contract, and which contracts are at a positioning extreme.",
       "about": [
@@ -3002,7 +4067,11 @@
         },
         {
           "heading": "The three reports",
-          "body": "The CFTC publishes the same data three ways: this legacy split (commercial vs speculator), a disaggregated split for commodities, and a financial-futures split. The other two have their own cards."
+          "body": "The CFTC publishes the same data three ways: this split (commercial vs speculator, every contract), a disaggregated split for commodities, and a financial-futures split. The other two have their own cards."
+        },
+        {
+          "heading": "More columns",
+          "body": "The folded columns are the contract's class and report date, each side's share of open interest and the week's change in longs, shorts and open interest, for readers who want the raw report."
         }
       ],
       "columns": [
@@ -3018,14 +4087,16 @@
           "label": "Class",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "report_date",
           "label": "Report",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "net",
@@ -3036,50 +4107,15 @@
         },
         {
           "key": "cot_index",
-          "label": "COT index (0–100)",
+          "label": "How stretched (0–100)",
           "numeric": true,
           "direction": null,
           "term": "COT index"
         },
         {
           "key": "history",
-          "label": "Index, 26 weeks",
+          "label": "Stretch, 26 weeks",
           "numeric": false,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "pct_long",
-          "label": "% OI long",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "pct_short",
-          "label": "% OI short",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "chg_long",
-          "label": "Δ long",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "chg_short",
-          "label": "Δ short",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "chg_oi",
-          "label": "Δ open interest",
-          "numeric": true,
           "direction": null,
           "term": null
         },
@@ -3089,6 +4125,46 @@
           "numeric": false,
           "direction": null,
           "term": null
+        },
+        {
+          "key": "pct_long",
+          "label": "Long share of open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "pct_short",
+          "label": "Short share of open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "chg_long",
+          "label": "Change in longs",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "chg_short",
+          "label": "Change in shorts",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "chg_oi",
+          "label": "Change in open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
         }
       ],
       "verdict": null,
@@ -3118,14 +4194,16 @@
           "label": "Class",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "report_date",
           "label": "Report",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "net",
@@ -3136,57 +4214,15 @@
         },
         {
           "key": "cot_index",
-          "label": "COT index (0–100)",
+          "label": "How stretched (0–100)",
           "numeric": true,
           "direction": null,
           "term": "COT index"
         },
         {
           "key": "history",
-          "label": "Index, 26 weeks",
+          "label": "Stretch, 26 weeks",
           "numeric": false,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "secondary_index",
-          "label": "Commercial index",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "pct_long",
-          "label": "% OI long",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "pct_short",
-          "label": "% OI short",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "chg_long",
-          "label": "Δ long",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "chg_short",
-          "label": "Δ short",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "chg_oi",
-          "label": "Δ open interest",
-          "numeric": true,
           "direction": null,
           "term": null
         },
@@ -3196,6 +4232,54 @@
           "numeric": false,
           "direction": null,
           "term": null
+        },
+        {
+          "key": "secondary_index",
+          "label": "Commercials, how stretched",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "pct_long",
+          "label": "Long share of open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "pct_short",
+          "label": "Short share of open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "chg_long",
+          "label": "Change in longs",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "chg_short",
+          "label": "Change in shorts",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "chg_oi",
+          "label": "Change in open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
         }
       ],
       "verdict": null,
@@ -3225,14 +4309,16 @@
           "label": "Class",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "report_date",
           "label": "Report",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "net",
@@ -3243,57 +4329,15 @@
         },
         {
           "key": "cot_index",
-          "label": "COT index (0–100)",
+          "label": "How stretched (0–100)",
           "numeric": true,
           "direction": null,
           "term": "COT index"
         },
         {
           "key": "history",
-          "label": "Index, 26 weeks",
+          "label": "Stretch, 26 weeks",
           "numeric": false,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "secondary_index",
-          "label": "Dealer index",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "pct_long",
-          "label": "% OI long",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "pct_short",
-          "label": "% OI short",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "chg_long",
-          "label": "Δ long",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "chg_short",
-          "label": "Δ short",
-          "numeric": true,
-          "direction": null,
-          "term": null
-        },
-        {
-          "key": "chg_oi",
-          "label": "Δ open interest",
-          "numeric": true,
           "direction": null,
           "term": null
         },
@@ -3303,6 +4347,54 @@
           "numeric": false,
           "direction": null,
           "term": null
+        },
+        {
+          "key": "secondary_index",
+          "label": "Dealers, how stretched",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "pct_long",
+          "label": "Long share of open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "pct_short",
+          "label": "Short share of open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "chg_long",
+          "label": "Change in longs",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "chg_short",
+          "label": "Change in shorts",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "chg_oi",
+          "label": "Change in open interest",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
         }
       ],
       "verdict": null,
@@ -3337,17 +4429,17 @@
         },
         {
           "key": "latest_btc",
-          "label": "Bid-to-cover",
+          "label": "Bids per dollar sold",
           "numeric": true,
           "direction": "up-good",
-          "term": null
+          "term": "Bid-to-cover"
         },
         {
           "key": "avg_btc",
-          "label": "Typical bid-to-cover",
+          "label": "Typical bids per dollar",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "Bid-to-cover"
         },
         {
           "key": "vs_avg",
@@ -3422,21 +4514,21 @@
       ],
       "tiles": [
         {
-          "label": "venues reporting",
+          "label": "Venues reporting",
           "value": 0,
-          "band": null,
+          "band": "last week",
           "tone": null
         },
         {
-          "label": "symbols with off-exchange volume",
+          "label": "Symbols traded off exchange",
           "value": 0,
-          "band": null,
+          "band": "last week",
           "tone": null
         },
         {
-          "label": "off-exchange shares",
+          "label": "Shares traded off exchange",
           "value": null,
-          "band": null,
+          "band": "last week",
           "tone": null
         }
       ],
@@ -3450,10 +4542,11 @@
         },
         {
           "key": "mpid",
-          "label": "MPID",
+          "label": "Venue code",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "total_shares",
@@ -3560,6 +4653,14 @@
           "label": "Form",
           "numeric": false,
           "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "form_words",
+          "label": "What was filed",
+          "numeric": false,
+          "direction": null,
           "term": null
         },
         {
@@ -3628,31 +4729,31 @@
         },
         {
           "key": "net_margin",
-          "label": "Net margin",
+          "label": "Profit margin",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "roe",
-          "label": "ROE",
+          "label": "Return on equity",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "ROE"
         },
         {
           "key": "debt_to_equity",
-          "label": "Debt / equity",
+          "label": "Debt vs equity",
           "numeric": true,
           "direction": "down-good",
           "term": null
         },
         {
           "key": "eps_diluted",
-          "label": "Diluted EPS",
+          "label": "Earnings per share",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "EPS"
         }
       ],
       "rows": [],
@@ -4020,8 +5121,12 @@
       "note": "Option contracts that traded far more today than exist in open interest.",
       "about": [
         {
-          "heading": "How to read it",
-          "body": "Volume ÷ open interest above 1 means more contracts changed hands today than were outstanding — new positioning, not old positions closing. Whether it is a bet or a hedge is not visible."
+          "heading": "Today's volume vs contracts held",
+          "body": "How many times today's trading exceeded the contracts held (open interest). Above 1× means more changed hands than existed, so it is new positioning, not old positions closing. Whether it is a bet or a hedge is not visible."
+        },
+        {
+          "heading": "Implied volatility",
+          "body": "Implied volatility is the size of the move the option's price is betting on, as a yearly percentage: 84% means the market is pricing swings of roughly that much over a year."
         }
       ],
       "columns": [
@@ -4069,14 +5174,14 @@
         },
         {
           "key": "vol_oi_ratio",
-          "label": "Volume ÷ OI",
+          "label": "Today's volume vs contracts held",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "iv",
-          "label": "Implied vol",
+          "label": "Implied volatility",
           "numeric": true,
           "direction": null,
           "term": null
@@ -4204,10 +5309,10 @@
         },
         {
           "key": "eps_est",
-          "label": "EPS estimate",
+          "label": "Expected earnings per share",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": "EPS"
         }
       ],
       "rows": [],
@@ -4216,11 +5321,11 @@
     "market-closures": {
       "title": "Market holidays",
       "kicker": "Ops",
-      "note": "Upcoming NYSE closures and early closes — days the executor must not expect an open.",
+      "note": "Upcoming NYSE and bond-market closures and early closes, the days the order executor must not expect a normal open.",
       "about": [
         {
           "heading": "Why it is under Ops",
-          "body": "The order executor and every trading-day calculation key off this list. An early close ends the intraday window early."
+          "body": "The order executor and every trading-day calculation key off the NYSE rows. An early close ends the intraday window early. Bond rows are context for Treasury auction timing — NYSE stays open on bond-only holidays like Columbus and Veterans Day."
         }
       ],
       "columns": [
@@ -4269,7 +5374,7 @@
       "columns": [
         {
           "key": "label",
-          "label": "Series",
+          "label": "What",
           "numeric": false,
           "direction": null,
           "term": null
@@ -4279,7 +5384,8 @@
           "label": "Category",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "latest_period",
@@ -4292,6 +5398,13 @@
           "key": "latest",
           "label": "Latest",
           "numeric": true,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "unit",
+          "label": "Unit",
+          "numeric": false,
           "direction": null,
           "term": null
         },
@@ -4330,53 +5443,47 @@
     "ag-balance": {
       "title": "Grain balance sheets",
       "kicker": "Sources",
-      "note": "For each major crop, how much will be left over at the end of the marketing year relative to use.",
+      "note": "For each major crop, the survey-based stockpile at the end of the marketing year.",
       "about": [
         {
-          "heading": "What stocks-to-use means",
-          "body": "Ending stocks divided by total use — the cushion. A low ratio means any weather scare hits price hard; a high one means supply can absorb surprises."
+          "heading": "Where stocks-to-use lives",
+          "body": "NASS surveys report stocks and production but no total-use figure, so the cushion ratio (ending stocks / total use) is in the WASDE world balance card instead."
         }
       ],
+      "verdict": null,
       "tiles": [],
       "columns": [
         {
           "key": "commodity",
-          "label": "Commodity",
+          "label": "Crop",
           "numeric": false,
           "direction": null,
           "term": null
         },
         {
           "key": "period",
-          "label": "Marketing year",
+          "label": "Crop year",
           "numeric": false,
           "direction": null,
           "term": null
         },
         {
           "key": "ending_stocks",
-          "label": "Ending stocks",
+          "label": "Stockpile at year end",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
-          "key": "total_use",
-          "label": "Total use",
+          "key": "vs_last_year",
+          "label": "Vs last year",
           "numeric": true,
           "direction": null,
           "term": null
-        },
-        {
-          "key": "stocks_to_use",
-          "label": "Stocks-to-use",
-          "numeric": true,
-          "direction": null,
-          "term": "Stocks-to-use"
         },
         {
           "key": "history",
-          "label": "Stocks-to-use by year",
+          "label": "Stockpile by year",
           "numeric": false,
           "direction": null,
           "term": null
@@ -4386,13 +5493,17 @@
       "empty": "no USDA balance-sheet rows yet"
     },
     "wasde": {
-      "title": "WASDE world balance",
+      "title": "World grain supply",
       "kicker": "Sources",
       "note": "The USDA's monthly world supply-and-demand estimates by commodity and region.",
       "about": [
         {
-          "heading": "How to read it",
-          "body": "The same stocks-to-use ratio as the card above, but from the monthly WASDE report and split by region — the number grain traders wait for each month."
+          "heading": "In storage vs a year's use",
+          "body": "The share of a year's consumption sitting in storage at year end: 43% means about five months of use is on hand. Low means a thin cushion, so prices react hard to a bad harvest."
+        },
+        {
+          "heading": "Where it comes from",
+          "body": "The USDA's monthly WASDE report, split by commodity and region — the number grain traders wait for each month. The grain balance sheets card above is the survey view of the same US stockpiles."
         }
       ],
       "columns": [
@@ -4412,28 +5523,28 @@
         },
         {
           "key": "market_year",
-          "label": "Marketing year",
+          "label": "Crop year",
           "numeric": false,
           "direction": null,
           "term": null
         },
         {
           "key": "ending_stocks",
-          "label": "Ending stocks",
+          "label": "Left in storage",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "total_use",
-          "label": "Total use",
+          "label": "Used in the year",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "stocks_to_use",
-          "label": "Stocks-to-use",
+          "label": "In storage vs a year's use",
           "numeric": true,
           "direction": null,
           "term": "Stocks-to-use"
@@ -4479,7 +5590,8 @@
           "label": "Community",
           "numeric": false,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "rank",
@@ -4497,21 +5609,21 @@
         },
         {
           "key": "mention_delta",
-          "label": "Δ mentions",
+          "label": "Change in mentions",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "mention_pct_change",
-          "label": "Δ mentions %",
+          "label": "Change in mentions %",
           "numeric": true,
           "direction": null,
           "term": null
         },
         {
           "key": "rank_delta",
-          "label": "Δ rank",
+          "label": "Rank change",
           "numeric": true,
           "direction": null,
           "term": null
@@ -4521,7 +5633,8 @@
           "label": "Upvotes",
           "numeric": true,
           "direction": null,
-          "term": null
+          "term": null,
+          "hidden": true
         },
         {
           "key": "history",
@@ -4615,6 +5728,21 @@
           "label": "Form",
           "numeric": false,
           "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "form_words",
+          "label": "What was filed",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "filings",
+          "label": "Filings",
+          "numeric": true,
+          "direction": null,
           "term": null
         }
       ],
@@ -4658,6 +5786,21 @@
           "label": "Form",
           "numeric": false,
           "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "form_words",
+          "label": "What was filed",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "filings",
+          "label": "Filings",
+          "numeric": true,
+          "direction": null,
           "term": null
         }
       ],
@@ -4667,7 +5810,7 @@
     "stakes": {
       "title": "Activist and large-holder stakes",
       "kicker": "Sources",
-      "note": "New 13D and 13G filings — someone crossed the 5% ownership line.",
+      "note": "Someone just crossed 5% ownership, on purpose (13D) or passively (13G).",
       "about": [
         {
           "heading": "13D vs 13G",
@@ -4700,6 +5843,21 @@
           "key": "form",
           "label": "Form",
           "numeric": false,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
+          "key": "form_words",
+          "label": "What was filed",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
+          "key": "filings",
+          "label": "Filings",
+          "numeric": true,
           "direction": null,
           "term": null
         }

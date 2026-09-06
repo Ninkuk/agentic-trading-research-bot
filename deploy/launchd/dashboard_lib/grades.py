@@ -63,9 +63,9 @@ def research_filter(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         best = max((r for r in rows if r["verdict"] == v), key=lambda r: r["horizon"])
         tiles.append(
             tile(
-                f"{v} calls right",
+                f"{str(v).capitalize()} calls right",
                 _pct(best["hit_rate"]),
-                f"n={best['n']} · {best['horizon']}d",
+                f"{best['n']} calls · {best['horizon']} days out",
                 _rate_tone(best["hit_rate"]),
             )
         )
@@ -85,15 +85,35 @@ _VERDICT_OUTCOME_COLUMNS = [
     col("verdict", "Call", numeric=False),
     col("verdict_date", "Call date", numeric=False),
     col("horizon", "Horizon"),
-    col("fwd_return", "Fwd return", term="Forward return"),
-    col("bench_fwd_return", "SPY return"),
-    col("excess", "Excess vs SPY"),
+    col("fwd_return", "Return", term="Forward return"),
+    col("bench_fwd_return", "SPY return", hidden=True),
+    col("excess", "Vs SPY", term="Excess"),
     col("verdict_correct", "Right?", numeric=False),
 ]
 
 
 def research_verdict_outcomes(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     total = scalar(conn, "SELECT COUNT(*) FROM v_research_verdict_outcomes")
+    # One tile per call type at its longest matured horizon, counted over
+    # the whole view (the table below is a LIMITed drill-down).
+    tiles = []
+    seen: set[str] = set()
+    for g in fetch(
+        conn,
+        "SELECT verdict, horizon, COUNT(*) AS n, SUM(verdict_correct) AS n_right"
+        " FROM v_research_verdict_outcomes WHERE verdict_correct IS NOT NULL"
+        " GROUP BY verdict, horizon ORDER BY verdict, horizon DESC",
+    ):
+        if g["verdict"] in seen:
+            continue  # a longer horizon already made this call's tile
+        seen.add(g["verdict"])
+        tiles.append(
+            tile(
+                f"{str(g['verdict']).capitalize()} calls right",
+                f"{int(g['n_right'] or 0)} of {g['n']}",
+                f"at {g['horizon']}d",
+            )
+        )
     rows = fetch(
         conn,
         "SELECT symbol, verdict, verdict_date, horizon, fwd_return, bench_fwd_return,"
@@ -104,10 +124,109 @@ def research_verdict_outcomes(conn: sqlite3.Connection, now_iso: str) -> dict[st
     for r in rows:
         r["verdict_correct"] = None if r["verdict_correct"] is None else bool(r["verdict_correct"])
     return {
+        "tiles": tiles,
         "columns": _VERDICT_OUTCOME_COLUMNS,
         "rows": rows,
         "total": total,
         "empty": "no graded research calls yet",
+    }
+
+
+_CALIBRATION_BIN_COLUMNS = [
+    col("horizon", "Horizon"),
+    col("p_bin", "Said it would win", numeric=False),
+    col("n", "Calls", direction="up-good"),
+    col("n_dates", "Distinct dates", hidden=True),
+    col("avg_p", "Average confidence"),
+    col("beat_rate", "Actually won", direction="up-good"),
+    col("brier", "Forecast error", direction="down-good"),
+]
+
+# A bin is its lower edge (0.6 = the 60–70% calls); the table shows the band.
+_CALIBRATION_MATCH_TOLERANCE = 0.05
+
+
+def _p_band(edge: Any) -> Any:
+    if edge is None:
+        return None
+    lo = round(float(edge) * 100)
+    return f"{lo}–{lo + 10}%"
+
+
+def _calibration_chip(head: dict[str, Any]) -> dict[str, str] | None:
+    """Said-vs-won at the stated horizon, once five calls have matured."""
+    if head["n"] < 5 or head["avg_p"] is None or head["beat_rate"] is None:
+        return None
+    said, won = _pct(head["avg_p"]), _pct(head["beat_rate"])
+    gap = head["avg_p"] - head["beat_rate"]
+    if abs(gap) < _CALIBRATION_MATCH_TOLERANCE:
+        return verdict(f"Confidence matched results: said {said}, won {won}", "mid")
+    if gap > 0:
+        return verdict(f"Overconfident: said {said}, won {won}", "off")
+    return verdict(f"Underconfident: said {said}, won {won}", "on")
+
+
+def research_calibration(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Stated-probability calibration. The headline horizon is the one the
+    forecasts were STATED for (max n_stated), not the one with the most
+    matured rows -- the fixed short horizons mature first and would
+    otherwise grade a one-year call at five days."""
+    summary = fetch(
+        conn,
+        "SELECT horizon, n, n_dates, n_stated, avg_p, beat_rate, brier,"
+        " brier_base_rate, brier_kill, avg_disagreement"
+        " FROM v_research_calibration ORDER BY horizon",
+    )
+    rows = fetch(
+        conn,
+        "SELECT horizon, p_bin, n, n_dates, avg_p, beat_rate, brier"
+        " FROM v_research_calibration_bins ORDER BY horizon, p_bin",
+    )
+    for r in rows:
+        r["p_bin"] = _p_band(r["p_bin"])
+    tiles = []
+    chip = None
+    if summary:
+        head = max(summary, key=lambda r: (r["n_stated"], r["horizon"]))
+        h = head["horizon"]
+        beats = head["brier"] < head["brier_base_rate"]
+        calls = "call" if head["n"] == 1 else "calls"
+        tiles.append(
+            tile(
+                "Forecast error",
+                f"{head['brier']:.2f}",
+                f"{h} days out · guessing the base rate scores"
+                f" {head['brier_base_rate']:.2f} · {head['n']} {calls}",
+                "on" if beats else "off",
+            )
+        )
+        tiles.append(
+            tile(
+                "Said vs won",
+                f"{_pct(head['avg_p'])} vs {_pct(head['beat_rate'])}",
+                f"average confidence vs actual wins · {h} days out",
+            )
+        )
+        if head["brier_kill"] is not None:
+            tiles.append(
+                tile(
+                    "Kill-thesis forecast error",
+                    f"{head['brier_kill']:.2f}",
+                    f"disagrees with the thesis by {head['avg_disagreement']:.2f} on average",
+                    "on" if head["brier_kill"] < head["brier"] else None,
+                )
+            )
+        chip = _calibration_chip(head)
+    return {
+        "verdict": chip,
+        "tiles": tiles,
+        "columns": _CALIBRATION_BIN_COLUMNS,
+        "rows": rows,
+        "caveat": "Forecast error below the base-rate score means the stated"
+        " confidence carries information; above it, always guessing the"
+        " average would have done better. Bins stay tiny for months, so read"
+        " Calls before the rates.",
+        "empty": "no matured verdicts carry a stated probability yet",
     }
 
 
@@ -120,8 +239,16 @@ _FLAG_RESPONSE_COLUMNS = [
     col("total", "Signals"),
     col("response", "You did", numeric=False),
     col("horizon", "Horizon"),
-    col("dir_excess", "Directional excess"),
+    col("dir_excess", "Gain had you followed it", term="Directional excess"),
 ]
+
+# The view's response codes, in the words the human-filter card uses.
+_RESPONSE_WORDS = {
+    "acted": "Acted",
+    "acted_option": "Acted (options)",
+    "passed": "Passed",
+    "passed_inferred": "Skipped (no journal entry)",
+}
 
 
 def flag_response(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -132,6 +259,8 @@ def flag_response(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         " FROM v_flag_response ORDER BY composite_date DESC, symbol, horizon LIMIT ?",
         (_DRILL_LIMIT,),
     )
+    for r in rows:
+        r["response"] = _RESPONSE_WORDS.get(r["response"], r["response"])
     return {
         "columns": _FLAG_RESPONSE_COLUMNS,
         "rows": rows,
@@ -144,12 +273,12 @@ def flag_response(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 _EFFECTIVE_N_COLUMNS = [
     col("signal_id", "Signal", numeric=False),
-    col("via_crosswalk", "Via crosswalk"),
+    col("via_crosswalk", "Via crosswalk", hidden=True),
     col("horizon", "Horizon"),
-    col("n_matured", "Rows graded"),
-    col("n_dates", "Distinct dates", direction="up-good"),
+    col("n_matured", "Rows graded", hidden=True),
+    col("n_dates", "Distinct dates", direction="up-good", hidden=True),
     col("n_blocks", "Independent episodes", direction="up-good"),
-    col("hit_rate", "Pooled hit rate"),
+    col("hit_rate", "Hit rate (all rows)", term="Hit rate"),
     spark_col("history", "Hit rate by date"),
     col("latest_block", "Latest episode", numeric=False),
 ]
@@ -202,17 +331,18 @@ def signal_effective_n(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
 
 # --- candidates screen drill-downs ----------------------------------------
 
+# The screen's mechanics fold behind "more columns"; the outcome stays.
 _CANDIDATE_OUTCOME_COLUMNS = [
     col("symbol", "Symbol", numeric=False),
     col("screen_date", "Entered list", numeric=False),
-    col("growth_door", "Growth door", numeric=False),
-    col("branch", "Door", numeric=False),
-    col("screen_version", "Screen", numeric=False),
+    col("growth_door", "Why it qualified", numeric=False, hidden=True),
+    col("branch", "What flagged it", numeric=False, hidden=True),
+    col("screen_version", "Screen version", numeric=False, hidden=True),
     col("horizon", "Horizon"),
-    col("entry_close", "Entry price"),
-    col("fwd_return", "Fwd return", term="Forward return"),
+    col("entry_close", "Price at entry", hidden=True),
+    col("fwd_return", "Return", term="Forward return"),
     col("bench_fwd_return", "SPY return"),
-    col("excess", "Excess vs SPY"),
+    col("excess", "Vs SPY", term="Excess"),
     col("beat_benchmark", "Beat SPY?", numeric=False),
 ]
 
@@ -238,19 +368,37 @@ def candidate_outcomes(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
     }
 
 
+# The words column leads; the entry/now pairs behind it fold behind
+# "more columns".
 _QUALITY_TREND_COLUMNS = [
     col("symbol", "Symbol", numeric=False),
+    col("what_weakened", "What weakened", numeric=False),
     col("days_on_list", "Days on list"),
     col("n_sightings", "Sightings"),
-    col("fscore_entry", "F-score at entry"),
-    col("fscore_now", "F-score now", direction="up-good"),
-    col("roic_entry", "ROIC at entry"),
-    col("roic_now", "ROIC now", direction="up-good"),
-    col("fcf_yield_entry", "FCF yield at entry"),
-    col("fcf_yield_now", "FCF yield now"),
-    col("accruals_now", "Accruals now"),
+    col("fscore_entry", "F-score at entry", hidden=True),
+    col("fscore_now", "F-score now", direction="up-good", hidden=True),
+    col("roic_entry", "ROIC at entry", hidden=True),
+    col("roic_now", "ROIC now", direction="up-good", hidden=True),
+    col("fcf_yield_entry", "FCF yield at entry", hidden=True),
+    col("fcf_yield_now", "FCF yield now", hidden=True),
+    col("accruals_now", "Accruals now", hidden=True),
     col("falling_knife", "Falling knife?", numeric=False),
 ]
+
+_QUALITY_PAIRS = (("F-score", "fscore"), ("ROIC", "roic"))
+
+
+def _what_weakened(r: dict[str, Any]) -> str:
+    """The quality gates that fell between first sighting and now, as words;
+    a pair missing either side is not counted."""
+    fell = [
+        name
+        for name, k in _QUALITY_PAIRS
+        if r[f"{k}_entry"] is not None
+        and r[f"{k}_now"] is not None
+        and r[f"{k}_now"] < r[f"{k}_entry"]
+    ]
+    return ", ".join(fell) or "nothing"
 
 
 def _falling_knife(r: dict[str, Any]) -> bool | None:
@@ -276,6 +424,7 @@ def candidate_quality_trend(conn: sqlite3.Connection, now_iso: str) -> dict[str,
     )
     for r in rows:
         r["falling_knife"] = _falling_knife(r)
+        r["what_weakened"] = _what_weakened(r)
     rows.sort(key=lambda r: (not r["falling_knife"], -(r["days_on_list"] or 0), r["symbol"]))
     knives = sum(1 for r in rows if r["falling_knife"])
     return {
@@ -299,12 +448,12 @@ _OPTION_PNL_COLUMNS = [
     col("symbol", "Underlying", numeric=False),
     col("direction", "Direction", numeric=False),
     col("expiration", "Expiry", numeric=False),
-    col("fill_date", "Opened", numeric=False),
-    col("contracts_opened", "Opened"),
-    col("contracts_closed", "Closed"),
-    col("contracts_outstanding", "Open"),
-    col("pnl_dollars", "P&L $"),
-    col("premium_return", "Premium return"),
+    col("fill_date", "Opened on", numeric=False),
+    col("contracts_opened", "Contracts opened"),
+    col("contracts_closed", "Contracts closed"),
+    col("contracts_outstanding", "Still open"),
+    col("pnl_dollars", "Profit $"),
+    col("premium_return", "Return on premium"),
 ]
 
 
@@ -338,17 +487,20 @@ def option_pnl(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 # --- backtest replay (backtest.db) ----------------------------------------
 
+# The statistics behind the verdict fold behind the table's "more columns"
+# toggle; keys stay so the cell formatter still draws the CI mark and the
+# excess bar.
 _REPLAY_EFFICACY_COLUMNS = [
     col("signal_id", "Signal", numeric=False),
     col("direction", "Flag", numeric=False),
     col("horizon", "Horizon"),
-    col("n_days", "Flag days"),
+    col("n_days", "Days flagged", hidden=True),
     col("hit_rate", "Hit rate"),
-    col("hit_ci_lo", "CI low", term="CI"),
-    col("hit_ci_hi", "CI high", term="CI"),
-    col("baseline", "Drift baseline"),
-    col("excess", "Excess vs drift", direction="up-good"),
-    col("perm_p", "Permutation p", direction="down-good"),
+    col("hit_ci_lo", "CI low", term="CI", hidden=True),
+    col("hit_ci_hi", "CI high", term="CI", hidden=True),
+    col("baseline", "Drift alone", term="Base rate", hidden=True),
+    col("excess", "Better than drift by", term="Excess", direction="up-good"),
+    col("perm_p", "Chance of a fluke", direction="down-good", hidden=True),
     col("beats_baseline", "Beats drift?", numeric=False),
     col("anti_signal", "Anti-signal?", numeric=False),
 ]
@@ -386,10 +538,13 @@ def replay_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 _BASELINE_COLUMNS = [
     col("benchmark", "Benchmark", numeric=False),
     col("horizon", "Horizon"),
-    col("n_windows", "Windows"),
-    col("p_up", "P(up)"),
-    col("p_down", "P(down)"),
+    col("n_windows", "Days measured"),
+    col("p_up", "Went up"),
+    col("p_down", "Went down"),
 ]
+
+# The chip reads the broad-market benchmark when it is present.
+_HEADLINE_BENCHMARKS = ("SPY", "SP500")
 
 
 def replay_baseline(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -398,21 +553,39 @@ def replay_baseline(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         "SELECT benchmark, horizon, n_windows, p_up, p_down FROM v_benchmark_baseline"
         " ORDER BY benchmark, horizon",
     )
+    chip = None
+    if rows:
+        names = {r["benchmark"] for r in rows}
+        lead = next((b for b in _HEADLINE_BENCHMARKS if b in names), rows[0]["benchmark"])
+        head = max((r for r in rows if r["benchmark"] == lead), key=lambda r: r["horizon"])
+        chip = verdict(
+            f"{lead} rose on {_pct(head['p_up'])} of {head['horizon']}-day windows", "mid"
+        )
     return {
+        "verdict": chip,
         "columns": _BASELINE_COLUMNS,
         "rows": rows,
         "empty": "no benchmark history loaded yet",
     }
 
 
+# The score is a -1/0/+1 vote; the word is what a reader needs, so the
+# number folds. The catalog carries no unit per series, so Value stays bare.
 _REPLAY_FLAG_COLUMNS = [
     col("signal_id", "Signal", numeric=False),
+    col("lean", "Lean", numeric=False),
     col("benchmark", "Benchmark", numeric=False),
     col("asof_date", "As of", numeric=False),
     col("value", "Value"),
-    col("score", "Score"),
+    col("score", "Score", hidden=True),
     spark_col("history", "Score, last 90 flag days"),
 ]
+
+
+def _lean(score: Any) -> str | None:
+    if score is None:
+        return None
+    return "bullish" if score > 0 else "bearish" if score < 0 else "neutral"
 
 
 def replay_flags(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -432,6 +605,7 @@ def replay_flags(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
             hist.setdefault(k, []).append(float(r["score"]))
     rows = [latest[k] for k in sorted(latest)]
     for r in rows:
+        r["lean"] = _lean(r["score"])
         r["history"] = (hist.get(f"{r['signal_id']}|{r['benchmark']}") or [])[-90:] or None
         if r["history"] is not None and len(r["history"]) < 3:
             r["history"] = None
@@ -485,6 +659,42 @@ SECTIONS: list[Any] = [
                 "The grade above is an average; this is where you find the"
                 " one call that dragged it, and whether the miss was a stock"
                 " story or a market move.",
+            ),
+        ],
+    ),
+    (
+        "research-calibration",
+        "Research call calibration",
+        "scorer.db",
+        research_calibration,
+        "Research",
+        "When the research said 70% it would beat SPY, did it beat SPY 70% of the time?",
+        [
+            (
+                "The chip and the tiles",
+                "Every research call states how likely it is to beat SPY"
+                " over a horizon. The chip compares the average confidence"
+                " with the share of calls that actually won, once five have"
+                " matured. Forecast error scores each call by how far its"
+                " confidence sat from what happened: 0 is perfect, 0.25 is"
+                " a coin flip, and lower is better. The tile also shows what"
+                " always guessing the average win rate would have scored,"
+                " which is the number to beat.",
+            ),
+            (
+                "The table",
+                "Calls are grouped by what they said, in ten-point bands."
+                " A well-calibrated forecaster's 60–70% band wins about"
+                " 65% of the time. Distinct dates, behind the columns"
+                " toggle, is how many separate days those calls were made:"
+                " ten calls on one day are closer to one observation.",
+            ),
+            (
+                "Why it matters",
+                "Hit rate cannot tell a calibrated forecaster from a lucky"
+                " one. Sizing up on conviction is defensible only once the"
+                " stated confidence is shown to track reality; nothing here"
+                " feeds back into gates or sizing.",
             ),
         ],
     ),
@@ -574,9 +784,17 @@ SECTIONS: list[Any] = [
             ),
             (
                 "How to read it",
-                "Each row compares the quality gates on the first sighting"
-                " with the newest one. Flagged rows sort to the top; they"
-                " are the names to re-research before buying more.",
+                "'What weakened' names the gates that fell since the first"
+                " sighting; the before-and-after numbers sit behind 'more"
+                " columns'. Flagged rows sort to the top; they are the names"
+                " to re-research before buying more.",
+            ),
+            (
+                "The gates",
+                "F-score is a nine-point financial-health checklist; ROIC is"
+                " the profit earned on the capital invested; FCF yield is"
+                " spare cash as a share of the price; accruals are earnings"
+                " that have not yet shown up as cash.",
             ),
         ],
     ),
@@ -620,11 +838,20 @@ SECTIONS: list[Any] = [
             ),
             (
                 "How to read it",
-                "Drift baseline is how often the benchmark simply rose over"
-                " that horizon; excess is the flag's hit rate minus that."
-                " 'Beats drift' means the whole confidence interval sits"
-                " above the baseline; 'anti-signal' means it sits entirely"
-                " below — a signal reliably wrong is not a signal to flip.",
+                "Drift alone is how often the benchmark simply rose over"
+                " that horizon; better than drift by is the flag's hit rate"
+                " minus that. 'Beats drift' means the whole confidence"
+                " interval sits above the drift; 'anti-signal' means it sits"
+                " entirely below — a signal reliably wrong is not a signal"
+                " to flip.",
+            ),
+            (
+                "The hidden columns",
+                "Behind the columns toggle: how many days the flag was on,"
+                " the confidence interval around the hit rate, the drift"
+                " figure itself, and the chance of a fluke — how often"
+                " shuffled data produced a hit rate this good, so 0.04"
+                " means about one time in twenty-five.",
             ),
         ],
     ),
@@ -640,7 +867,14 @@ SECTIONS: list[Any] = [
                 "Why it exists",
                 "Stocks drift upward, so a bullish flag that does nothing"
                 " still 'wins' most windows. Every replay grade is measured"
-                " against this null, never against 50%.",
+                " against this drift, never against 50%.",
+            ),
+            (
+                "The columns",
+                "Days measured is how many start dates were tested. Went up"
+                " and went down are the share of those windows where the"
+                " benchmark finished higher or lower; they need not sum to"
+                " 100% because some windows end flat.",
             ),
         ],
     ),

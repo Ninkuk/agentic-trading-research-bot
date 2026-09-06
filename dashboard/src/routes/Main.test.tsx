@@ -160,7 +160,7 @@ test("an unregistered section id falls back to the generic DataTable renderer", 
   expect(region.getByText("ZZZZ")).toBeInTheDocument();
 });
 
-test("generic fallback sections with duplicate titles keep independent expand state (keyed by id, not title)", async () => {
+test("generic fallback sections with duplicate titles keep independent page state (keyed by id, not title)", async () => {
   const columns = [{ key: "x", label: "X", numeric: false, direction: null, term: null }];
   const manyRows = Array.from({ length: 10 }, (_, i) => ({ x: `row-${i}` }));
   const dup: DashboardDoc = {
@@ -172,14 +172,14 @@ test("generic fallback sections with duplicate titles keep independent expand st
     },
   };
   render(<Main doc={dup} />);
-  const showAllButtons = screen.getAllByText(/show all 10/i);
-  expect(showAllButtons).toHaveLength(2); // both start collapsed, independently
-  await userEvent.click(showAllButtons[0]);
-  // Expanding one duplicate-titled section must not touch the other —
-  // expansion is per-table component state now, but the sort prefs are
-  // still storageKey-scoped, so duplicate titles must not share a key.
-  expect(screen.queryAllByText(/show all 10/i)).toHaveLength(1);
-  expect(screen.getByText(/show fewer/i)).toBeInTheDocument();
+  const nextButtons = screen.getAllByRole("button", { name: /next page/i });
+  expect(nextButtons).toHaveLength(2); // both start on page one, independently
+  await userEvent.click(nextButtons[0]);
+  // Paging one duplicate-titled section must not touch the other — the page
+  // is per-table component state, but the sort prefs are still
+  // storageKey-scoped, so duplicate titles must not share a key.
+  expect(screen.getAllByText("9–10 of 10")).toHaveLength(1);
+  expect(screen.getAllByText("1–8 of 10")).toHaveLength(1);
 });
 
 test("a pinned ticker (shared pins pref) stays first in the scorecard despite an active score sort", () => {
@@ -258,9 +258,10 @@ test("a lone short section renders full width, not half a grid", () => {
     ...doc,
     sections: {
       ...doc.sections,
-      // The fixture's Ops strand carries one short card (pending); lengthen
-      // it so lone-short is the strand's only short section.
+      // The fixture's Ops strand carries short cards (pending, basis-breaks);
+      // lengthen them so lone-short is the strand's only short section.
       pending: { ...doc.sections["pending"], rows: longRows },
+      "basis-breaks": { ...doc.sections["basis-breaks"], rows: longRows },
       "lone-short": { title: "Lone Short", kicker: "Ops", columns, rows: [{ x: "a" }] },
     },
   };

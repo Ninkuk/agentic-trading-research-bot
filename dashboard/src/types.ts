@@ -26,6 +26,10 @@ export interface Column {
   numeric: boolean;
   direction?: ColumnDirection;
   term?: string | null;
+  // A detail column: exported with the rest but hidden until the reader
+  // asks for "more columns", so a wide table opens readable and loses
+  // nothing (data.py `col(..., hidden=True)`).
+  hidden?: boolean;
 }
 
 // A row's field values (columns), or a tile's own catch-all fields — plain

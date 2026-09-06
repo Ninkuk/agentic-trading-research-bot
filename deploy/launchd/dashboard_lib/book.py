@@ -13,18 +13,19 @@ from typing import Any
 
 from dashboard_lib.common import col, fetch, tile, verdict
 
+# The decision columns open; position bookkeeping folds behind "more columns".
 _EXIT_ADVICE_COLUMNS = [
     col("symbol", "Symbol", numeric=False),
-    col("quantity", "Shares"),
+    col("quantity", "Shares", hidden=True),
     col("price", "Price"),
-    col("avg_cost", "Avg cost"),
-    col("unrealized_pct", "Unrealized %", direction="up-good"),
+    col("avg_cost", "Avg cost", hidden=True),
+    col("unrealized_pct", "Unrealized %", direction="up-good", hidden=True),
     col("stop_price", "Suggested stop"),
     col("stop_distance_pct", "Room to stop %"),
-    col("score_sum", "Score"),
-    col("strong", "Strong disagreement", numeric=False),
+    col("score_sum", "Signal lean", term="Score"),
+    col("strong", "Strong disagreement", numeric=False, hidden=True),
     col("trim_shares", "Trim shares"),
-    col("atr_stale", "ATR stale", numeric=False),
+    col("atr_stale", "Volatility data old?", numeric=False, hidden=True),
 ]
 
 
@@ -63,12 +64,12 @@ _OPTION_HEAT_COLUMNS = [
     col("expiration", "Expiry", numeric=False),
     col("quantity", "Contracts"),
     col("delta", "Delta"),
-    col("share_equiv", "Share-equivalent"),
+    col("share_equiv", "Acts like N shares"),
     col("market_value", "Value"),
-    col("heat_dollars", "Heat $", direction="down-good"),
-    col("heat_pct", "Heat %", direction="down-good"),
-    col("short_leg", "Short leg", numeric=False),
-    col("uncovered", "Uncovered", numeric=False),
+    col("heat_dollars", "At risk $", direction="down-good"),
+    col("heat_pct", "At risk %", direction="down-good"),
+    col("short_leg", "Short?", numeric=False),
+    col("uncovered", "Uncovered?", numeric=False),
 ]
 
 
@@ -91,12 +92,25 @@ def option_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 # --- orders.db ---------------------------------------------------------------
 
+# The executor's own resolution words, in the reader's words; anything else
+# (veto reasons are already sentences) passes through.
+REASON_WORDS = {
+    "manual resolve": "resolved by hand",
+    "planned": "limit planned",
+    "placed": "placed with the broker",
+}
+
+
+def reason_words(reason: Any) -> Any:
+    return REASON_WORDS.get(reason, reason) if isinstance(reason, str) else reason
+
+
 _QUEUE_COLUMNS = [
     col("symbol", "Symbol", numeric=False),
     col("qty", "Shares"),
     col("notional", "Dollars"),
-    col("ref_price", "Reference price"),
-    col("max_gap_pct", "Max gap %"),
+    col("ref_price", "Price you noted"),
+    col("max_gap_pct", "Max above that price %"),
     col("expires_on", "Expires", numeric=False),
     col("queued_at", "Queued", numeric=False),
 ]
@@ -133,6 +147,8 @@ def run_results(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         "SELECT symbol, qty, notional, status, resolution_reason, limit_price, outcome"
         " FROM v_run_results ORDER BY id DESC",
     )
+    for r in rows:
+        r["resolution_reason"] = reason_words(r["resolution_reason"])
     placed = sum(1 for r in rows if r["status"] == "placed")
     return {
         "tiles": [
@@ -160,6 +176,8 @@ def unreconciled(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         conn,
         "SELECT symbol, status, resolution_reason FROM v_unreconciled ORDER BY id DESC",
     )
+    for r in rows:
+        r["resolution_reason"] = reason_words(r["resolution_reason"])
     return {
         "verdict": verdict(
             f"{len(rows)} placed order{'s' if len(rows) != 1 else ''} with no journal fill"
@@ -207,10 +225,11 @@ SECTIONS: list[Any] = [
         [
             (
                 "How it is computed",
-                "Delta × contracts × 100 is the share-equivalent; heat is"
-                " that many shares moving one ATR. A protective put counts"
-                " negative and offsets the shares it covers in the group"
-                " view.",
+                "Delta is how much the option moves for a $1 move in the"
+                " stock, so delta × contracts × 100 is how many shares the"
+                " leg acts like; 'at risk' is that many shares moving one"
+                " ATR. A protective put counts negative and offsets the"
+                " shares it covers in the group view.",
             ),
             (
                 "Uncovered legs",

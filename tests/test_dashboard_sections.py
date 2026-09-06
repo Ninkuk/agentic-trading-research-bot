@@ -157,7 +157,12 @@ def test_research_filter_tiles_take_longest_horizon_per_verdict():
     )
     sec = grades.research_filter(conn, NOW)
     (t,) = sec["tiles"]
-    assert t == {"label": "buy calls right", "value": "69%", "band": "n=13 · 10d", "tone": "on"}
+    assert t == {
+        "label": "Buy calls right",
+        "value": "69%",
+        "band": "13 calls · 10 days out",
+        "tone": "on",
+    }
 
 
 def test_drill_downs_cap_rows_but_report_total():
@@ -292,9 +297,9 @@ def test_week_ahead_partial_calendar_sets_caveat_and_all_missing_raises(tmp_path
     conn.close()
     sec = sources_views.week_ahead(str(d), NOW)
     labels = {t["label"]: t for t in sec["tiles"]}
-    assert labels["days to next FOMC"]["value"] == 6
-    assert labels["days to next FOMC"]["tone"] == "mid"
-    assert labels["Fed blackout"]["value"] == "yes"
+    assert labels["Days to the Fed meeting"]["value"] == 6
+    assert labels["Days to the Fed meeting"]["tone"] == "mid"
+    assert labels["Fed quiet period"]["value"] == "yes"
     assert sec["rows"] == []
     assert "econ_calendar.db" in sec["caveat"] and "fomc.db" not in sec["caveat"]
 
@@ -490,3 +495,44 @@ def test_source_cards_live_in_the_sources_strand_except_calendar_curve_and_holid
     assert kickers["market-closures"] == "Ops"
     exceptions = ("week-ahead", "yield-curve", "market-closures")
     assert {k for sid, k in kickers.items() if sid not in exceptions} == {"Sources"}
+
+
+def test_research_calibration_tiles_read_brier_against_base_rate():
+    cal_cols = [
+        "horizon",
+        "n",
+        "n_dates",
+        "n_stated",
+        "avg_p",
+        "beat_rate",
+        "brier",
+        "brier_base_rate",
+        "brier_kill",
+        "avg_disagreement",
+    ]
+    bin_cols = ["horizon", "p_bin", "n", "n_dates", "avg_p", "beat_rate", "brier"]
+    conn = _mem(
+        _view(
+            "v_research_calibration",
+            cal_cols,
+            [
+                (21, 12, 9, 0, 0.55, 0.5, 0.21, 0.25, 0.24, 0.12),
+                (63, 8, 6, 8, 0.6, 0.5, 0.31, 0.25, 0.22, 0.15),
+            ],
+        )
+        + _view(
+            "v_research_calibration_bins",
+            bin_cols,
+            [(63, 0.6, 5, 4, 0.62, 0.4, 0.3), (63, 0.3, 3, 3, 0.3, 0.67, 0.32)],
+        )
+    )
+    sec = grades.research_calibration(conn, NOW)
+    # Headline at the horizon most forecasts were stated for (63), never the
+    # one with the most rows.
+    labels = [t["label"] for t in sec["tiles"]]
+    assert labels[0] == "Forecast error"
+    assert sec["tiles"][0]["value"] == "0.31"
+    assert sec["tiles"][0]["band"] == "63 days out · guessing the base rate scores 0.25 · 8 calls"
+    assert sec["tiles"][0]["tone"] == "off"  # worse than the constant forecast
+    assert [r["p_bin"] for r in sec["rows"]] == ["30–40%", "60–70%"]  # ascending bands
+    assert sec["rows"][0]["horizon"] == 63

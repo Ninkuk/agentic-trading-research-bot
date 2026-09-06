@@ -58,14 +58,17 @@ named rules) for the impeccable skill; keep all three in sync.
 ## Tables & charts
 - Tables run on TanStack Table v9 (feature API: sorting, global filter, column
   visibility as controlled state) under the shadcn table kit; DataTable owns
-  pinned-first partitioning and the show-all slice outside the row model.
+  pinned-first partitioning and the page slice outside the row model, so a
+  pinned row leads page one rather than its sort-position page.
 - Tables: sortable headers with persistence, filter box at ≥4 rows, numeric
   right-aligned mono tabular-nums. Hit rate + CI renders as a RangeCell mark
   (dot, whisker, null-rate tick; digits in the title) — never a wide inline
   suffix, it smushes neighbors. Signed excess renders as a DivergingCell bar at
   zero, weight/heat as a BarCell; makeSectionCell(rows) supplies the column max.
-- Expansion ("Show all N") is a two-way toggle and session-only; persisting
-  it made every later visit open as a 44,000px wall (2026-08-06).
+- Long tables page at 8 rows (previous/next chevrons, "1–8 of N" count);
+  the page is session-only and returns to one on any filter or sort change.
+  Never persist it — the old "Show all N" toggle, once persisted, opened
+  every later visit as a 44,000px wall (2026-08-06).
 - Columns whose every value is identical auto-hide at ≥4 rows (DataTable);
   the identity column is exempt.
 - Machine ids never render raw: formatCell/StatTile humanize snake_case and

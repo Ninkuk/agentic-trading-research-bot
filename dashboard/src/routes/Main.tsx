@@ -28,13 +28,10 @@ import { REPO_URL } from "../constants";
 import { ExtLink } from "../ui/ExtLink";
 import { BasisBreaks } from "../sections/BasisBreaks";
 import { BookHeat } from "../sections/BookHeat";
-import { BucketPerformance } from "../sections/BucketPerformance";
-import { CandidateEfficacy } from "../sections/CandidateEfficacy";
 import { Candidates } from "../sections/Candidates";
 import { Disagreements } from "../sections/Disagreements";
 import { GroupHeat } from "../sections/GroupHeat";
 import { Health } from "../sections/Health";
-import { HumanFilter } from "../sections/HumanFilter";
 import { Pending } from "../sections/Pending";
 import { PortfolioVsSpy } from "../sections/PortfolioVsSpy";
 import { PositionHeat } from "../sections/PositionHeat";
@@ -127,8 +124,6 @@ const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> =
   "research-reopens": ResearchReopens,
   scorecard: Scorecard,
   "signal-efficacy": SignalEfficacy,
-  "bucket-performance": BucketPerformance,
-  "human-filter": HumanFilter,
   "regime-performance": RegimePerformance,
   pending: Pending,
   "basis-breaks": BasisBreaks,
@@ -139,7 +134,6 @@ const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> =
   "size-caps": SizeCaps,
   "signal-recommendations": SignalRecommendations,
   "equity-curve": PortfolioVsSpy,
-  "candidate-efficacy": CandidateEfficacy,
   health: Health,
   "yield-curve": YieldCurve,
 };

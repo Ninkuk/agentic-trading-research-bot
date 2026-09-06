@@ -114,5 +114,5 @@ def test_rollover_now_local(tmp_path, monkeypatch):
 
     body = data._health(str(data_dir), NOW)
 
-    runs_tile = next(t for t in body["tiles"] if t["label"] == "runs (24h)")
+    runs_tile = next(t for t in body["tiles"] if t["label"] == "Jobs that ran")
     assert runs_tile["value"] == 1

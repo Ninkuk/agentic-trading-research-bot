@@ -1,11 +1,12 @@
-// A sortable, filterable, expandable table: TanStack Table (v9 feature API)
+// A sortable, filterable, paged table: TanStack Table (v9 feature API)
 // for row-model state, the shadcn table kit for markup — the layout the
 // shadcn "Data Table" guide prescribes. Sort order persists per `storageKey`
 // via usePrefs — a reader who sorts scorecard by score sees the same layout
-// on the next visit. Expansion is session-only on purpose (like filter
-// text): sort is a stable preference, "show all 1148" is a momentary act,
-// and persisting it made every future visit open as a full-length wall
-// with no visible cause.
+// on the next visit. The page is session-only on purpose (like filter
+// text): sort is a stable preference, "page 40 of 144" is a momentary act.
+// Paging happens outside the row model, after pinned-first partitioning,
+// so a pinned row leads page one instead of being pinned within whatever
+// page its sort position lands on.
 // Tables with ≥4 rows get a text filter (matches any column, including
 // auto-hidden ones, case-insensitive). `pinnedFirst` (row identity = the
 // first column's value) keeps specific rows above the rest regardless of
@@ -31,7 +32,7 @@ import {
   type SortingState,
   type Updater,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { usePrefs } from "../hooks/usePrefs";
 import type { Column, Glossary, Row } from "../types";
 import { Button } from "../components/ui/button";
@@ -51,6 +52,7 @@ export interface DataTableProps {
   columns: Column[];
   rows: Row[];
   storageKey: string;
+  /** Rows per page. */
   initialRows?: number;
   renderCell?: (row: Row, col: Column) => ReactNode;
   pinnedFirst?: string[];
@@ -64,8 +66,8 @@ export interface DataTableProps {
 type SortDir = "asc" | "desc" | null;
 
 // Older persisted blobs also carried an `expanded` key; it parses fine and
-// is simply no longer read (see the header comment on session-only
-// expansion).
+// is simply no longer read (see the header comment on the session-only
+// page).
 interface TableState {
   sortKey: string | null;
   sortDir: SortDir;
@@ -190,11 +192,17 @@ export function DataTable({
   filterable: filterableProp = true,
 }: DataTableProps) {
   const [state, setState] = usePrefs<TableState>(storageKey, DEFAULT_STATE);
-  // Filter text and expansion are session-only on purpose — a persisted
-  // filter would make tomorrow's edition open mysteriously truncated, and a
-  // persisted expansion would make it open as a 1,000-row wall.
+  // Filter text and page are session-only on purpose — a persisted filter
+  // would make tomorrow's edition open mysteriously truncated, and a
+  // persisted page would open it mid-list.
   const [filter, setFilter] = useState("");
-  const [expanded, setExpanded] = useState(false);
+  // The page is stored with the filter+sort it was chosen under; a change
+  // to either reads as page one without an effect-driven reset.
+  const [paging, setPaging] = useState<{ index: number; under: string }>({ index: 0, under: "" });
+  // Detail columns (`col.hidden`) stay folded until asked for; session-only
+  // like the page, so a wide table never reopens as a wall.
+  const [showDetail, setShowDetail] = useState(false);
+  const detailCount = columns.filter((c) => c.hidden).length;
 
   const glossaryIndex = useMemo(() => buildGlossaryIndex(glossary), [glossary]);
   const columnByKey = useMemo(() => new Map(columns.map((c) => [c.key, c])), [columns]);
@@ -219,6 +227,7 @@ export function DataTable({
   // filtering can't make columns pop in and out.
   const columnVisibility = useMemo<ColumnVisibilityState>(() => {
     const hidden: ColumnVisibilityState = {};
+    if (!showDetail) columns.forEach((col) => col.hidden && (hidden[col.key] = false));
     if (rows.length < FILTER_MIN_ROWS) return hidden;
     columns.forEach((col, i) => {
       if (i === 0) return;
@@ -227,7 +236,7 @@ export function DataTable({
       if (rows.every((r) => (r[col.key] ?? null) === first)) hidden[col.key] = false;
     });
     return hidden;
-  }, [columns, rows]);
+  }, [columns, rows, showDetail]);
 
   const sorting = useMemo(() => toSorting(state), [state]);
   const needle = filter.trim().toLowerCase();
@@ -258,13 +267,31 @@ export function DataTable({
   }
   const processedRows = [...pinnedRows, ...restRows];
 
-  const displayedRows = expanded ? processedRows : processedRows.slice(0, initialRows);
-  const hasMore = processedRows.length > initialRows;
+  const pageSize = Math.max(1, initialRows);
+  const pageCount = Math.max(1, Math.ceil(processedRows.length / pageSize));
+  const pagingUnder = `${needle}\u0000${state.sortKey ?? ""}\u0000${state.sortDir ?? ""}`;
+  const pageIndex = Math.min(paging.under === pagingUnder ? paging.index : 0, pageCount - 1);
+  const goToPage = (index: number) => setPaging({ index, under: pagingUnder });
+  const pageStart = pageIndex * pageSize;
+  const displayedRows = processedRows.slice(pageStart, pageStart + pageSize);
+  const paged = processedRows.length > pageSize;
   const filterable = filterableProp && rows.length >= FILTER_MIN_ROWS;
   const visibleCount = table.getVisibleLeafColumns().length;
 
+  const detailToggle = detailCount > 0 && (
+    <Button
+      variant="ghost"
+      size="sm"
+      aria-pressed={showDetail}
+      onClick={() => setShowDetail((v) => !v)}
+    >
+      {showDetail ? "Fewer columns" : `${detailCount} more columns`}
+    </Button>
+  );
+
   return (
     <div className="datatable space-y-2.5">
+      {!filterable && detailToggle && <div className="flex justify-end">{detailToggle}</div>}
       {filterable && (
         <div className="flex items-center justify-between gap-3">
           <InputGroup className="w-full max-w-56">
@@ -278,9 +305,16 @@ export function DataTable({
               <Search />
             </InputGroupAddon>
           </InputGroup>
-          <span className="text-muted-foreground text-xs whitespace-nowrap tabular-nums">
-            {processedRows.length} of {rows.length} rows
-          </span>
+          {/* Match count only while filtering — unfiltered, the pager's
+              "1–8 of N" already carries the total. */}
+          <div className="flex items-center gap-3">
+            {needle && (
+              <span className="text-muted-foreground text-xs whitespace-nowrap tabular-nums">
+                {processedRows.length} of {rows.length} rows
+              </span>
+            )}
+            {detailToggle}
+          </div>
         </div>
       )}
       <Table>
@@ -386,15 +420,34 @@ export function DataTable({
           )}
         </TableBody>
       </Table>
-      {(hasMore || expanded) && (
-        <Button
-          variant="link"
-          size="sm"
-          className="show-all h-auto p-0 pt-1 text-xs"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? "Show fewer" : `Show all ${processedRows.length}`}
-        </Button>
+      {paged && (
+        <div className="pager flex items-center justify-between gap-3">
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {`${pageStart + 1}–${pageStart + displayedRows.length} of ${processedRows.length}`}
+          </span>
+          <span className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              aria-label="Previous page"
+              disabled={pageIndex === 0}
+              onClick={() => goToPage(pageIndex - 1)}
+            >
+              <ChevronLeft />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              aria-label="Next page"
+              disabled={pageIndex >= pageCount - 1}
+              onClick={() => goToPage(pageIndex + 1)}
+            >
+              <ChevronRight />
+            </Button>
+          </span>
+        </div>
       )}
     </div>
   );

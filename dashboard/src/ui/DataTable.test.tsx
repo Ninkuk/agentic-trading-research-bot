@@ -54,19 +54,54 @@ test("keyboard: focusing the sort button and pressing Enter applies the sort", a
   );
 });
 
-test("show-all is a two-way toggle and never persists", async () => {
-  const { unmount } = render(
-    <DataTable columns={COLS} rows={ROWS10} storageKey="t2" initialRows={3} />,
-  );
-  expect(screen.getAllByRole("row")).toHaveLength(1 + 3);
-  await userEvent.click(screen.getByText(/show all 10/i));
-  expect(screen.getAllByRole("row")).toHaveLength(1 + 10);
-  await userEvent.click(screen.getByText(/show fewer/i));
-  expect(screen.getAllByRole("row")).toHaveLength(1 + 3); // collapsible again
-  await userEvent.click(screen.getByText(/show all 10/i));
-  unmount();
+test("rows beyond the page size sit on later pages; next/previous walk them", async () => {
   render(<DataTable columns={COLS} rows={ROWS10} storageKey="t2" initialRows={3} />);
-  expect(screen.getAllByRole("row")).toHaveLength(1 + 3); // expansion is session-only
+  expect(screen.getAllByRole("row")).toHaveLength(1 + 3);
+  expect(screen.getByText("1–3 of 10")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /previous page/i })).toBeDisabled();
+  await userEvent.click(screen.getByRole("button", { name: /next page/i }));
+  expect(cellTexts(1)).toEqual(["S3", "S4", "S5"]);
+  expect(screen.getByText("4–6 of 10")).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: /previous page/i }));
+  expect(cellTexts(1)).toEqual(["S0", "S1", "S2"]);
+});
+
+test("the last page is short and disables next", async () => {
+  render(<DataTable columns={COLS} rows={ROWS10} storageKey="t2b" initialRows={3} />);
+  const next = screen.getByRole("button", { name: /next page/i });
+  await userEvent.click(next);
+  await userEvent.click(next);
+  await userEvent.click(next);
+  expect(cellTexts(1)).toEqual(["S9"]);
+  expect(screen.getByText("10–10 of 10")).toBeInTheDocument();
+  expect(next).toBeDisabled();
+});
+
+test("tables that fit on one page render no pager", () => {
+  render(<DataTable columns={COLS} rows={ROWS3} storageKey="t2c" initialRows={3} />);
+  expect(screen.queryByRole("button", { name: /next page/i })).not.toBeInTheDocument();
+  expect(screen.queryByText(/of 3/)).not.toBeInTheDocument();
+});
+
+test("typing a filter returns to the first page of the matches", async () => {
+  render(<DataTable columns={COLS} rows={ROWS10} storageKey="t2d" initialRows={3} />);
+  await userEvent.click(screen.getByRole("button", { name: /next page/i }));
+  await userEvent.click(screen.getByRole("button", { name: /next page/i }));
+  expect(cellTexts(1)).toEqual(["S6", "S7", "S8"]);
+  await userEvent.type(screen.getByLabelText(/filter rows/i), "S");
+  expect(cellTexts(1)).toEqual(["S0", "S1", "S2"]);
+  expect(screen.getByText("1–3 of 10")).toBeInTheDocument();
+});
+
+test("the page never persists across visits", async () => {
+  const { unmount } = render(
+    <DataTable columns={COLS} rows={ROWS10} storageKey="t2e" initialRows={3} />,
+  );
+  await userEvent.click(screen.getByRole("button", { name: /next page/i }));
+  expect(cellTexts(1)).toEqual(["S3", "S4", "S5"]);
+  unmount();
+  render(<DataTable columns={COLS} rows={ROWS10} storageKey="t2e" initialRows={3} />);
+  expect(cellTexts(1)).toEqual(["S0", "S1", "S2"]);
 });
 
 test("a legacy persisted expanded flag is ignored", () => {
@@ -181,7 +216,8 @@ test("blank cells sort last in both directions", async () => {
 
 test("the filter matches any column case-insensitively and reports the count", async () => {
   render(<DataTable columns={COLS} rows={ROWS10} storageKey="t13" initialRows={3} />);
-  expect(screen.getByText("10 of 10 rows")).toBeInTheDocument();
+  // Unfiltered, the pager already says how many rows there are.
+  expect(screen.queryByText("10 of 10 rows")).not.toBeInTheDocument();
   await userEvent.type(screen.getByRole("textbox", { name: /filter rows/i }), "s7");
   expect(cellTexts(1)).toEqual(["S7"]);
   expect(screen.getByText("1 of 10 rows")).toBeInTheDocument();
@@ -209,4 +245,30 @@ test("sort within pinned and unpinned groups follows the active sort", async () 
   render(<DataTable columns={cols} rows={rows} storageKey="t15" pinnedFirst={["PIN1", "PIN2"]} />);
   await userEvent.click(screen.getByRole("columnheader", { name: /score/i }));
   expect(cellTexts(0)).toEqual(["PIN2", "PIN1", "BBB", "AAA"]); // desc inside each group
+});
+
+test("exporter-declared detail columns start hidden and a toggle reveals them", async () => {
+  const cols: Column[] = [
+    { key: "symbol", label: "Symbol", numeric: false, direction: null, term: null },
+    { key: "net", label: "Net", numeric: true, direction: null, term: null },
+    { key: "chg_long", label: "Change in longs", numeric: true, direction: null, term: null, hidden: true },
+    { key: "chg_short", label: "Change in shorts", numeric: true, direction: null, term: null, hidden: true },
+  ];
+  const rows: Row[] = [
+    { symbol: "A", net: 1, chg_long: 5, chg_short: 6 },
+    { symbol: "B", net: 2, chg_long: 7, chg_short: 8 },
+  ];
+  render(<DataTable columns={cols} rows={rows} storageKey="t12" />);
+  expect(screen.queryByRole("columnheader", { name: /change in longs/i })).not.toBeInTheDocument();
+  const btn = screen.getByRole("button", { name: /2 more columns/i });
+  expect(btn).toHaveAttribute("aria-pressed", "false");
+  await userEvent.click(btn);
+  expect(screen.getByRole("columnheader", { name: /change in longs/i })).toBeInTheDocument();
+  expect(screen.getByRole("columnheader", { name: /change in shorts/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /fewer columns/i })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("no detail columns means no columns toggle", () => {
+  render(<DataTable columns={COLS} rows={ROWS3} storageKey="t13" />);
+  expect(screen.queryByRole("button", { name: /more columns/i })).not.toBeInTheDocument();
 });

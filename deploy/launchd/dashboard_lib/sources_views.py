@@ -13,6 +13,7 @@ section is as fresh as that run, never fresher.
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from typing import Any
 
@@ -64,10 +65,21 @@ def _series_tile(
 
 _DARK_POOL_COLUMNS = [
     col("ats_name", "Venue", numeric=False),
-    col("mpid", "MPID", numeric=False),
+    col("mpid", "Venue code", numeric=False, hidden=True),
     col("total_shares", "Shares"),
     col("total_trades", "Trades"),
 ]
+
+
+def _abbrev(n: float | None) -> str | None:
+    """438M / 1.2B / 950K — a count a reader can say out loud."""
+    if n is None:
+        return None
+    for div, suffix in ((1e9, "B"), (1e6, "M"), (1e3, "K")):
+        if abs(n) >= div:
+            v = n / div
+            return f"{v:.2f}{suffix}" if v < 10 else f"{v:.0f}{suffix}"
+    return f"{n:.0f}"
 
 
 def dark_pools(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -80,9 +92,9 @@ def dark_pools(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         "SELECT COUNT(*), SUM(total_shares), SUM(total_trades) FROM v_latest_off_exchange"
     ).fetchone()
     tiles = [
-        tile("venues reporting", len(rows)),
-        tile("symbols with off-exchange volume", agg[0]),
-        tile("off-exchange shares", agg[1]),
+        tile("Venues reporting", len(rows), "last week"),
+        tile("Symbols traded off exchange", agg[0], "last week"),
+        tile("Shares traded off exchange", _abbrev(agg[1]), "last week"),
     ]
     return {
         "tiles": tiles,
@@ -130,11 +142,64 @@ _REVISION_COLUMNS = [
     col("ticker", "Ticker", numeric=False),
     col("tag", "Line item", numeric=False),
     col("period_end", "Period", numeric=False),
-    col("form", "Form", numeric=False),
+    col("form", "Form", numeric=False, hidden=True),
+    col("form_words", "What was filed", numeric=False),
     col("filed", "Filed", numeric=False),
     col("value", "Restated value"),
     col("value_delta", "Change vs prior filing"),
 ]
+
+# XBRL tags a reader meets most; anything else splits its CamelCase.
+_TAG_WORDS = {
+    "Assets": "Total assets",
+    "Liabilities": "Total liabilities",
+    "Revenues": "Revenue",
+    "RevenueFromContractWithCustomerExcludingAssessedTax": "Revenue",
+    "NetIncomeLoss": "Net income",
+    "StockholdersEquity": "Shareholders' equity",
+    "EarningsPerShareDiluted": "Earnings per share (diluted)",
+    "CashAndCashEquivalentsAtCarryingValue": "Cash",
+    "LongTermDebt": "Long-term debt",
+}
+
+
+def _tag_words(tag: str | None) -> str | None:
+    if tag is None:
+        return None
+    if tag in _TAG_WORDS:
+        return _TAG_WORDS[tag]
+    words = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", tag).split()
+    return " ".join([words[0]] + [w.lower() for w in words[1:]]) if words else tag
+
+
+# SEC form codes → what the filing is. Suffixes (/A amendments, ASR, SC)
+# fall away before the lookup so "SC 13G/A" reads as a passive stake.
+_FORM_WORDS = {
+    "424B1": "prospectus",
+    "424B2": "prospectus supplement",
+    "424B3": "prospectus supplement",
+    "424B4": "prospectus",
+    "424B5": "prospectus supplement",
+    "424B7": "prospectus supplement",
+    "S-1": "registration statement",
+    "S-3": "registration statement",
+    "S-4": "merger registration",
+    "S-8": "employee stock plan",
+    "8-K": "event report",
+    "6-K": "foreign event report",
+    "10-Q": "quarterly report",
+    "10-K": "annual report",
+    "13D": "activist stake",
+    "13G": "passive stake",
+}
+
+
+def _form_words(form: str | None) -> str | None:
+    if form is None:
+        return None
+    code = form.upper().split("/")[0].strip()
+    code = code.removeprefix("SC ").removesuffix("ASR").removesuffix("MEF")
+    return _FORM_WORDS.get(code, form)
 
 
 def sec_revisions(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -144,6 +209,9 @@ def sec_revisions(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         " WHERE ticker IS NOT NULL ORDER BY filed DESC, ABS(value_delta) DESC LIMIT ?",
         (_TOP,),
     )
+    for r in rows:
+        r["tag"] = _tag_words(r["tag"])
+        r["form_words"] = _form_words(r["form"])
     return {
         "columns": _REVISION_COLUMNS,
         "rows": rows,
@@ -156,10 +224,10 @@ _SEC_SCREENER_COLUMNS = [
     col("name", "Company", numeric=False),
     col("revenues", "Revenue"),
     col("net_income", "Net income"),
-    col("net_margin", "Net margin"),
-    col("roe", "ROE"),
-    col("debt_to_equity", "Debt / equity", direction="down-good"),
-    col("eps_diluted", "Diluted EPS"),
+    col("net_margin", "Profit margin"),
+    col("roe", "Return on equity", term="ROE"),
+    col("debt_to_equity", "Debt vs equity", direction="down-good"),
+    col("eps_diluted", "Earnings per share", term="EPS"),
 ]
 
 
@@ -212,6 +280,7 @@ def _cot_section(
     extreme = {r[0] for r in conn.execute(f"SELECT code FROM {extremes_view}")}
     for r in rows:
         r["extreme"] = r["code"] in extreme
+        r["asset_class"] = _asset_class_words(r["asset_class"])
     hist = histories(
         conn,
         f"SELECT code, cot_index FROM {index_view} ORDER BY report_date",
@@ -234,24 +303,45 @@ def _cot_section(
     }
 
 
+_ASSET_CLASS_WORDS = {
+    "ags": "Agriculture",
+    "softs": "Softs",
+    "grains": "Grains",
+    "fx": "Currencies",
+    "equity_index": "Equity index",
+    "rates": "Rates",
+    "metals": "Metals",
+    "energy": "Energy",
+}
+
+
+def _asset_class_words(cls: str | None) -> str | None:
+    if cls is None:
+        return None
+    return _ASSET_CLASS_WORDS.get(cls, cls.replace("_", " ").capitalize())
+
+
 def _cot_columns(net_label: str, secondary_label: str | None) -> list[dict[str, Any]]:
+    """Five columns open so the table fits a laptop width; class, report
+    date, the open-interest shares, weekly changes and the other side's
+    index fold behind the table's "more columns" toggle."""
     cols = [
         col("name", "Contract", numeric=False),
-        col("asset_class", "Class", numeric=False),
-        col("report_date", "Report", numeric=False),
+        col("asset_class", "Class", numeric=False, hidden=True),
+        col("report_date", "Report", numeric=False, hidden=True),
         col("net", net_label),
-        col("cot_index", "COT index (0–100)", term="COT index"),
-        spark_col("history", "Index, 26 weeks"),
+        col("cot_index", "How stretched (0–100)", term="COT index"),
+        spark_col("history", "Stretch, 26 weeks"),
+        col("extreme", "Extreme?", numeric=False),
     ]
     if secondary_label:
-        cols.append(col("secondary_index", secondary_label))
+        cols.append(col("secondary_index", secondary_label, hidden=True))
     cols += [
-        col("pct_long", "% OI long"),
-        col("pct_short", "% OI short"),
-        col("chg_long", "Δ long"),
-        col("chg_short", "Δ short"),
-        col("chg_oi", "Δ open interest"),
-        col("extreme", "Extreme?", numeric=False),
+        col("pct_long", "Long share of open interest", hidden=True),
+        col("pct_short", "Short share of open interest", hidden=True),
+        col("chg_long", "Change in longs", hidden=True),
+        col("chg_short", "Change in shorts", hidden=True),
+        col("chg_oi", "Change in open interest", hidden=True),
     ]
     return cols
 
@@ -287,7 +377,7 @@ def cot_disaggregated(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         secondary=("v_disagg_cot_index_commercial_latest", "cot_index", "secondary_index"),
         empty="no disaggregated COT report loaded yet",
     )
-    return {"columns": _cot_columns("Net managed money", "Commercial index"), **body}
+    return {"columns": _cot_columns("Net managed money", "Commercials, how stretched"), **body}
 
 
 def cot_financial(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -304,7 +394,7 @@ def cot_financial(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         secondary=("v_tff_cot_index_dealer_latest", "cot_index", "secondary_index"),
         empty="no financial-futures COT report loaded yet",
     )
-    return {"columns": _cot_columns("Net leveraged funds", "Dealer index"), **body}
+    return {"columns": _cot_columns("Net leveraged funds", "Dealers, how stretched"), **body}
 
 
 # --- Treasury ---------------------------------------------------------------
@@ -318,21 +408,22 @@ def yield_curve(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     if row is None:
         return {"tiles": [], "empty": "no Treasury yield-curve row yet"}
     inv = bool(row["inverted"])
+    inv3m = row["spread_3m10y"] is not None and row["spread_3m10y"] < 0
     tiles = [
         tile("3-month", row["mo3"], row["record_date"]),
         tile("2-year", row["yr2"], row["record_date"]),
         tile("10-year", row["yr10"], row["record_date"]),
         tile(
-            "10y − 2y spread",
+            "10-year minus 2-year",
             row["spread_2s10s"],
             "inverted" if inv else "normal",
             "off" if inv else "on",
         ),
         tile(
-            "10y − 3m spread",
+            "10-year minus 3-month",
             row["spread_3m10y"],
-            None,
-            "off" if row["spread_3m10y"] is not None and row["spread_3m10y"] < 0 else "on",
+            "inverted" if inv3m else "normal",
+            "off" if inv3m else "on",
         ),
     ]
     return {
@@ -344,8 +435,8 @@ def yield_curve(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 _AUCTION_COLUMNS = [
     col("security_term", "Security", numeric=False),
     col("auction_date", "Auction", numeric=False),
-    col("latest_btc", "Bid-to-cover", direction="up-good"),
-    col("avg_btc", "Typical bid-to-cover"),
+    col("latest_btc", "Bids per dollar sold", direction="up-good", term="Bid-to-cover"),
+    col("avg_btc", "Typical bids per dollar", term="Bid-to-cover"),
     col("vs_avg", "Vs typical", direction="up-good"),
 ]
 
@@ -395,23 +486,38 @@ def upcoming_auctions(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     }
 
 
+def _dollar_tile(conn: sqlite3.Connection, label: str, sql: str, *, scale: float, suffix: str):
+    """A dollar series as words: value "$40.1T", band the 90-day change
+    (the as-of date when only one point exists), history for the sparkline."""
+    t = _series_tile(conn, label, sql, limit=_DAYS, scale=scale)
+    if t is None:
+        return None
+    pts = t["history"]
+    first, last = pts[0]["value"], pts[-1]["value"]
+    if len(pts) > 1 and first:
+        chg = last / first - 1
+        t["band"] = "90-day change " + f"{chg:+.1%}".replace("-", "−")
+    t["value"] = f"${last:,.1f}{suffix}" if last < 100 else f"${last:,.0f}{suffix}"
+    return t
+
+
 def federal_debt(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     tiles = [
         t
         for t in (
-            _series_tile(
+            _dollar_tile(
                 conn,
-                "total public debt ($T)",
+                "National debt",
                 "SELECT record_date, tot_pub_debt_out FROM v_debt_trend ORDER BY record_date",
-                limit=_DAYS,
                 scale=1e12,
+                suffix="T",
             ),
-            _series_tile(
+            _dollar_tile(
                 conn,
-                "Treasury cash balance ($B)",
+                "Treasury cash",
                 "SELECT record_date, close_balance FROM v_tga_trend ORDER BY record_date",
-                limit=_DAYS,
                 scale=1e3,
+                suffix="B",
             ),
         )
         if t
@@ -427,9 +533,22 @@ _FRED_COLUMNS = [
     col("latest_date", "As of", numeric=False),
     col("latest", "Latest"),
     col("year_ago", "A year ago"),
-    col("change_pct", "YoY %"),
-    col("zscore", "Z-score vs history", term="Z-score"),
+    col("change_pct", "Change, 1 year %"),
+    col("unusual", "How unusual", numeric=False),
+    col("zscore", "Z-score vs history", term="Z-score", hidden=True),
 ]
+
+# |z| in words: the table reads "extreme" where the chip counts "unusual".
+_UNUSUAL_BANDS = ((1.0, "normal"), (2.0, "notable"), (3.0, "unusual"))
+
+
+def _unusual_words(z: float | None) -> str | None:
+    if z is None:
+        return None
+    for edge, word in _UNUSUAL_BANDS:
+        if abs(z) < edge:
+            return word
+    return "extreme"
 
 
 def fred_series(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -448,16 +567,22 @@ def fred_series(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         inv = bool(sig["yield_curve_inverted"])
         tiles = [
             tile(
-                "10y − 2y", sig["t10y2y"], "inverted" if inv else "normal", "off" if inv else "on"
+                "Long vs short Treasury yields",
+                sig["t10y2y"],
+                "inverted" if inv else "normal",
+                "off" if inv else "on",
             ),
-            tile("high-yield spread", sig["hy_spread"], "% over Treasuries"),
-            tile("fed funds", sig["fed_funds"], "%"),
-            tile("unemployment", sig["unemployment"], "%"),
+            tile("Junk-bond premium", sig["hy_spread"], "% over Treasuries"),
+            tile("Fed funds rate", sig["fed_funds"], "%"),
+            tile("Unemployment rate", sig["unemployment"], "%"),
         ]
+    for r in rows:
+        r["unusual"] = _unusual_words(r["zscore"])
     stretched = sum(1 for r in rows if r["zscore"] is not None and abs(r["zscore"]) >= 2)
     return {
         "verdict": verdict(
-            f"{stretched} series more than 2σ from their own history", "mid" if stretched else "on"
+            f"{stretched} series unusually far from their own history",
+            "mid" if stretched else "on",
         )
         if rows
         else None,
@@ -668,8 +793,8 @@ _UNUSUAL_COLUMNS = [
     col("strike", "Strike"),
     col("volume", "Volume today"),
     col("open_interest", "Open interest"),
-    col("vol_oi_ratio", "Volume ÷ OI"),
-    col("iv", "Implied vol"),
+    col("vol_oi_ratio", "Today's volume vs contracts held"),
+    col("iv", "Implied volatility"),
 ]
 
 
@@ -718,7 +843,7 @@ def options_sentiment(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         back = bool(ts["backwardation"])
         tiles.append(
             tile(
-                "VIX ÷ VIX3M",
+                "Near vs 3-month fear",
                 ts["vix_vix3m_ratio"],
                 "backwardation — near-term fear" if back else "contango — calm",
                 "off" if back else "on",
@@ -729,7 +854,7 @@ def options_sentiment(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         flag = ex["equity_flag"]
         tiles.append(
             tile(
-                "equity put/call percentile",
+                "How rare today's put/call is",
                 None if ex["equity_pcr_pctile"] is None else round(ex["equity_pcr_pctile"] * 100),
                 flag or "inside the normal range",
                 "mid" if flag else "on",
@@ -742,41 +867,49 @@ def options_sentiment(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 def funding_markets(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """Six readouts named for what they are, not their acronyms. A tile
+    with no value is left out rather than shown as a dash — IORB is loaded
+    out-of-band and is often absent."""
     tiles: list[dict[str, Any]] = []
     sofr = conn.execute(
         "SELECT effective_date, percent_rate, volume_bn, iorb, sofr_iorb_spread FROM v_sofr_latest"
     ).fetchone()
     if sofr is not None:
+        day = sofr["effective_date"]
         spread = sofr["sofr_iorb_spread"]
+        stressed = spread is not None and spread > 0.05
         tiles += [
-            tile("SOFR %", sofr["percent_rate"], sofr["effective_date"]),
-            tile("IORB %", sofr["iorb"], sofr["effective_date"]),
+            tile("Overnight lending rate (SOFR)", sofr["percent_rate"], f"% · {day}"),
+            tile("Rate the Fed pays banks (IORB)", sofr["iorb"], f"% · {day}"),
             tile(
-                "SOFR − IORB",
+                "Gap between them",
                 spread,
-                None if spread is None else "funding stress" if spread > 0.05 else "calm",
-                None if spread is None else "off" if spread > 0.05 else "on",
+                "cash is scarce" if stressed else "calm",
+                "off" if stressed else "on",
             ),
-            tile("SOFR volume ($bn)", sofr["volume_bn"], sofr["effective_date"]),
+            tile("Overnight lending volume", sofr["volume_bn"], f"$bn · {day}"),
         ]
     for t in (
         _series_tile(
             conn,
-            "Fed balance sheet, SOMA par ($T)",
+            "Fed's holdings",
             "SELECT as_of_date, par_value FROM v_soma_runoff ORDER BY as_of_date",
             limit=52,
             scale=1e12,
         ),
         _series_tile(
             conn,
-            "reverse repo take-up ($B)",
+            "Reverse repo parked at the Fed",
             "SELECT operation_date, take_up FROM v_rrp_trend ORDER BY operation_date",
             limit=_DAYS,
             scale=1e9,
         ),
     ):
         if t:
+            unit = "$T" if t["label"] == "Fed's holdings" else "$B"
+            t["band"] = f"{unit} · {t['band']}"
             tiles.append(t)
+    tiles = [t for t in tiles if t["value"] is not None]
     return {"tiles": tiles, **({"empty": "no NY Fed rows yet"} if not tiles else {})}
 
 
@@ -869,7 +1002,7 @@ def week_ahead(data_dir: str, now_iso: str) -> dict[str, Any]:
             d = nxt["days_until"]
             tiles.append(
                 tile(
-                    "days to next FOMC",
+                    "Days to the Fed meeting",
                     d,
                     f"{nxt['event_date']}{' · with projections' if nxt['has_sep'] else ''}",
                     "mid" if d is not None and d <= 7 else None,
@@ -878,17 +1011,19 @@ def week_ahead(data_dir: str, now_iso: str) -> dict[str, Any]:
         bo = conn.execute("SELECT in_blackout FROM v_in_blackout").fetchone()
         if bo is not None:
             inb = bool(bo["in_blackout"])
-            tiles.append(tile("Fed blackout", "yes" if inb else "no", None, "mid" if inb else "on"))
+            tiles.append(
+                tile("Fed quiet period", "yes" if inb else "no", None, "mid" if inb else "on")
+            )
 
     def market(conn: sqlite3.Connection) -> None:
         opex = conn.execute("SELECT event_date FROM v_next_opex").fetchone()
         if opex is not None:
-            tiles.append(tile("next options expiry", opex["event_date"]))
+            tiles.append(tile("Next options expiry", opex["event_date"]))
         early = conn.execute(
             "SELECT event_date, title FROM v_early_closes ORDER BY event_date LIMIT 1"
         ).fetchone()
         if early is not None:
-            tiles.append(tile("next early close", early["event_date"], early["title"]))
+            tiles.append(tile("Next early close", early["event_date"], early["title"]))
 
     calendars = ("econ_calendar.db", "earnings.db", "fomc.db", "market_calendar.db")
     for db, fn in zip(calendars, (econ, earnings, fomc, market), strict=True):
@@ -914,7 +1049,7 @@ _EARNINGS_COLUMNS = [
     col("ticker", "Ticker", numeric=False),
     col("title", "Company", numeric=False),
     col("mktcap", "Market cap"),
-    col("eps_est", "EPS estimate"),
+    col("eps_est", "Expected earnings per share", term="EPS"),
 ]
 
 
@@ -969,10 +1104,11 @@ def market_closures(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 # --- EIA ----------------------------------------------------------------------------
 
 _EIA_COLUMNS = [
-    col("label", "Series", numeric=False),
-    col("category", "Category", numeric=False),
+    col("label", "What", numeric=False),
+    col("category", "Category", numeric=False, hidden=True),
     col("latest_period", "Week", numeric=False),
     col("latest", "Latest"),
+    col("unit", "Unit", numeric=False),
     col("prior", "Prior week"),
     col("change_abs", "Change"),
     col("change_pct", "Change %"),
@@ -990,7 +1126,11 @@ def energy_inventories(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
         conn, "SELECT series_id, value FROM v_series_history ORDER BY period", limit=52
     )
     attach_history(rows, hist, "series_id")
+    # Units differ per series (thousand barrels vs billion cubic feet), so
+    # the unit is a column beside the number, never a header.
+    units = dict(conn.execute("SELECT DISTINCT series_id, unit FROM v_series_history").fetchall())
     for r in rows:
+        r["unit"] = units.get(r["series_id"])
         del r["series_id"]
     return {
         "columns": _EIA_COLUMNS,
@@ -1002,11 +1142,32 @@ def energy_inventories(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
 # --- USDA ---------------------------------------------------------------------------
 
 _AG_COLUMNS = [
-    col("commodity", "Commodity", numeric=False),
-    col("period", "Marketing year", numeric=False),
-    col("ending_stocks", "Ending stocks"),
-    spark_col("history", "Ending stocks by year"),
+    col("commodity", "Crop", numeric=False),
+    col("period", "Crop year", numeric=False),
+    col("ending_stocks", "Stockpile at year end"),
+    col("vs_last_year", "Vs last year"),
+    spark_col("history", "Stockpile by year"),
 ]
+
+_AG_METRIC_WORDS = {"ENDING_STOCKS": "stockpile", "PRODUCTION": "harvest"}
+_AG_UNIT_WORDS = {"BU": "bushels"}
+
+
+def _crop(name: str) -> str:
+    return name.replace("_", " ").title()
+
+
+def _big(value: float, unit: str | None) -> str:
+    """5.29e9 BU → "5.29B bushels": three significant figures at the
+    nearest thousands step, the unit as a word."""
+    word = _AG_UNIT_WORDS.get(unit or "", (unit or "").lower())
+    mag = abs(value)
+    for div, suffix in ((1e9, "B"), (1e6, "M"), (1e3, "K")):
+        if mag >= div:
+            n = value / div
+            body = f"{n:.2f}" if n < 10 else f"{n:.1f}" if n < 100 else f"{n:.0f}"
+            return f"{body}{suffix} {word}".rstrip()
+    return f"{value:g} {word}".rstrip()
 
 
 def ag_balance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -1023,7 +1184,19 @@ def ag_balance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         "SELECT commodity, ending_stocks FROM v_stocks_to_use ORDER BY period",
         limit=20,
     )
+    ups = downs = 0
+    for r in rows:
+        # Read the prior year from the raw series: attach_history drops
+        # sparklines under three points, and two years is enough to compare.
+        h = hist.get(r["commodity"]) or []
+        prior = h[-2] if len(h) >= 2 else None
+        r["vs_last_year"] = None if not prior else r["ending_stocks"] / prior - 1
+        if r["vs_last_year"] is not None:
+            ups += r["vs_last_year"] > 0
+            downs += r["vs_last_year"] <= 0
     attach_history(rows, hist, "commodity")
+    for r in rows:
+        r["commodity"] = _crop(r["commodity"])
     series: dict[str, list[dict[str, Any]]] = {}
     for r in conn.execute(
         "SELECT commodity || ' ' || metric, period, value FROM v_series_history ORDER BY period"
@@ -1032,9 +1205,9 @@ def ag_balance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
             series.setdefault(r[0], []).append({"date": r[1], "value": r[2]})
     tiles = [
         tile(
-            f"{b['commodity']} {b['metric']}",
-            b["value"],
-            f"{b['period']} · {b['unit']}",
+            f"{_crop(b['commodity'])} {_AG_METRIC_WORDS.get(b['metric'], b['metric'].replace('_', ' ').lower())}",
+            _big(b["value"], b["unit"]),
+            f"{b['period']} crop year",
             None,
             series.get(f"{b['commodity']} {b['metric']}", [])[-20:],
         )
@@ -1044,7 +1217,18 @@ def ag_balance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
             " ORDER BY commodity, metric",
         )
     ]
+    compared = ups + downs
+    chip = (
+        verdict(
+            f"Stockpiles bigger than last year for {ups} of {compared}"
+            f" crop{'s' if compared != 1 else ''}",
+            "mid",
+        )
+        if compared
+        else None
+    )
     return {
+        "verdict": chip,
         "tiles": tiles,
         "columns": _AG_COLUMNS,
         "rows": rows,
@@ -1055,10 +1239,10 @@ def ag_balance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 _WASDE_COLUMNS = [
     col("commodity", "Commodity", numeric=False),
     col("region", "Region", numeric=False),
-    col("market_year", "Marketing year", numeric=False),
-    col("ending_stocks", "Ending stocks"),
-    col("total_use", "Total use"),
-    col("stocks_to_use", "Stocks-to-use", term="Stocks-to-use"),
+    col("market_year", "Crop year", numeric=False),
+    col("ending_stocks", "Left in storage"),
+    col("total_use", "Used in the year"),
+    col("stocks_to_use", "In storage vs a year's use", term="Stocks-to-use"),
     col("unit", "Unit", numeric=False),
 ]
 
@@ -1081,13 +1265,13 @@ def wasde(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 _REDDIT_COLUMNS = [
     col("ticker", "Ticker", numeric=False),
     col("name", "Name", numeric=False),
-    col("filter", "Community", numeric=False),
+    col("filter", "Community", numeric=False, hidden=True),
     col("rank", "Rank"),
     col("mentions", "Mentions, 24h"),
-    col("mention_delta", "Δ mentions"),
-    col("mention_pct_change", "Δ mentions %"),
-    col("rank_delta", "Δ rank"),
-    col("upvotes", "Upvotes"),
+    col("mention_delta", "Change in mentions"),
+    col("mention_pct_change", "Change in mentions %"),
+    col("rank_delta", "Rank change"),
+    col("upvotes", "Upvotes", hidden=True),
     spark_col("history", "Mentions, recent captures"),
 ]
 
@@ -1155,7 +1339,8 @@ _FILING_COLUMNS = [
     col("filed_date", "Filed", numeric=False),
     col("ticker", "Ticker", numeric=False),
     col("company", "Company", numeric=False),
-    col("form", "Form", numeric=False),
+    col("form", "Form", numeric=False, hidden=True),
+    col("form_words", "What was filed", numeric=False),
     col("filings", "Filings"),
 ]
 
@@ -1170,6 +1355,8 @@ def _filings(conn: sqlite3.Connection, view: str, empty: str) -> dict[str, Any]:
         " ORDER BY filed_date DESC, ticker LIMIT ?",
         (_TOP,),
     )
+    for r in rows:
+        r["form_words"] = _form_words(r["form"])
     return {"columns": _FILING_COLUMNS, "rows": rows, "empty": empty}
 
 
@@ -1251,11 +1438,34 @@ SECTIONS: list[Any] = [
         "Overnight rates and the Fed's balance sheet — the plumbing that shows stress before prices do.",
         [
             (
-                "What the numbers are",
-                "SOFR is the overnight rate banks actually borrow at; IORB"
-                " is what the Fed pays on reserves. SOFR trading above IORB"
-                " means cash is scarce. SOMA is the Fed's bond portfolio;"
-                " reverse repo is cash parked at the Fed overnight.",
+                "Overnight lending rate",
+                "SOFR is the rate banks actually paid to borrow cash overnight against Treasuries.",
+            ),
+            (
+                "Rate the Fed pays banks",
+                "IORB is what the Fed pays banks on the reserves they leave"
+                " with it, the floor the overnight rate should sit near.",
+            ),
+            (
+                "Gap between them",
+                "Overnight rate minus the Fed's rate: above 0.05 points"
+                " means banks are paying up for cash, which is the first"
+                " sign of funding stress.",
+            ),
+            (
+                "Overnight lending volume",
+                "Billions of dollars borrowed overnight that day, the size"
+                " of the market the rate is set in.",
+            ),
+            (
+                "Fed's holdings",
+                "The Fed's own bond portfolio in trillions; falling means"
+                " the Fed is draining money from the system.",
+            ),
+            (
+                "Reverse repo",
+                "Cash that money funds parked at the Fed overnight because"
+                " nothing else paid more, in billions.",
             ),
         ],
     ),
@@ -1278,7 +1488,7 @@ SECTIONS: list[Any] = [
     ),
     (
         "cot-positioning",
-        "Futures positioning — legacy report",
+        "Futures positioning — all contracts",
         "cftc.db",
         cot_positioning,
         "Signals",
@@ -1293,10 +1503,18 @@ SECTIONS: list[Any] = [
             ),
             (
                 "The three reports",
-                "The CFTC publishes the same data three ways: this legacy"
-                " split (commercial vs speculator), a disaggregated split"
-                " for commodities, and a financial-futures split. The other"
-                " two have their own cards.",
+                "The CFTC publishes the same data three ways: this split"
+                " (commercial vs speculator, every contract), a"
+                " disaggregated split for commodities, and a"
+                " financial-futures split. The other two have their own"
+                " cards.",
+            ),
+            (
+                "More columns",
+                "The folded columns are the contract's class and report"
+                " date, each side's share of open interest and the week's"
+                " change in longs, shorts and open interest, for readers"
+                " who want the raw report.",
             ),
         ],
     ),
@@ -1534,11 +1752,19 @@ SECTIONS: list[Any] = [
         "Option contracts that traded far more today than exist in open interest.",
         [
             (
-                "How to read it",
-                "Volume ÷ open interest above 1 means more contracts"
-                " changed hands today than were outstanding — new"
-                " positioning, not old positions closing. Whether it is"
-                " a bet or a hedge is not visible.",
+                "Today's volume vs contracts held",
+                "How many times today's trading exceeded the contracts held"
+                " (open interest). Above 1× means more changed hands than"
+                " existed, so it is new positioning,"
+                " not old positions closing. Whether it is a bet or a"
+                " hedge is not visible.",
+            ),
+            (
+                "Implied volatility",
+                "Implied volatility is the size of the move the option's"
+                " price is betting on, as a yearly percentage: 84% means"
+                " the market is pricing swings of roughly that much over a"
+                " year.",
             ),
         ],
     ),
@@ -1601,7 +1827,7 @@ SECTIONS: list[Any] = [
         "market_calendar.db",
         market_closures,
         "Ops",
-        "Upcoming NYSE and bond-market closures and early closes — the NYSE rows are days the executor must not expect a normal open.",
+        "Upcoming NYSE and bond-market closures and early closes, the days the order executor must not expect a normal open.",
         [
             (
                 "Why it is under Ops",
@@ -1647,17 +1873,25 @@ SECTIONS: list[Any] = [
     ),
     (
         "wasde",
-        "WASDE world balance",
+        "World grain supply",
         "usda.db",
         wasde,
         "Signals",
         "The USDA's monthly world supply-and-demand estimates by commodity and region.",
         [
             (
-                "How to read it",
-                "The same stocks-to-use ratio as the card above, but from"
-                " the monthly WASDE report and split by region — the"
-                " number grain traders wait for each month.",
+                "In storage vs a year's use",
+                "The share of a year's consumption sitting in storage at"
+                " year end: 43% means about five months of use is on"
+                " hand. Low means a thin cushion, so prices react hard to"
+                " a bad harvest.",
+            ),
+            (
+                "Where it comes from",
+                "The USDA's monthly WASDE report, split by commodity and"
+                " region — the number grain traders wait for each month."
+                " The grain balance sheets card above is the survey view"
+                " of the same US stockpiles.",
             ),
         ],
     ),
@@ -1731,7 +1965,7 @@ SECTIONS: list[Any] = [
         "edgar.db",
         stakes,
         "Signals",
-        "New 13D and 13G filings — someone crossed the 5% ownership line.",
+        "Someone just crossed 5% ownership, on purpose (13D) or passively (13G).",
         [
             (
                 "13D vs 13G",

@@ -3,7 +3,7 @@
 // structured findings only; raw log lines never reach this document.
 //
 // Unlike other sections, the tiles must stay visible on a healthy night —
-// "runs (24h)" and "jobs loaded" are the numbers worth seeing even when
+// "Jobs that ran" and "Jobs on the schedule" are the numbers worth seeing even when
 // `rows` is empty, so `data.py`'s `_health` never sets `sec.empty` and
 // SectionShell always hands this component its children instead of
 // short-circuiting to the shell's own empty state (see SectionShell.tsx's

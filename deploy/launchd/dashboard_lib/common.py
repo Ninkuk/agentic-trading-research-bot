@@ -24,8 +24,14 @@ def col(
     numeric: bool = True,
     direction: str | None = None,
     term: str | None = None,
+    hidden: bool = False,
 ) -> dict[str, Any]:
-    return {"key": key, "label": label, "numeric": numeric, "direction": direction, "term": term}
+    """hidden=True marks a detail column: exported, but folded behind the
+    table's "more columns" toggle until the reader asks."""
+    c = {"key": key, "label": label, "numeric": numeric, "direction": direction, "term": term}
+    if hidden:
+        c["hidden"] = True
+    return c
 
 
 def spark_col(key: str = "history", label: str = "Trend") -> dict[str, Any]:

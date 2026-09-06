@@ -143,11 +143,11 @@ def _regime(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     # id, "risk-on" is the glossary's own spelling of the same idea.
     regime_display = {"risk_on": "risk-on", "risk_off": "risk-off"}.get(r["regime"], r["regime"])
     tiles = [
-        {"label": "regime", "value": regime_display, "band": None, "tone": tone},
-        {"label": "VIX", "value": r["vix"], "band": vix_band, "tone": None},
+        {"label": "Tonight's mood", "value": regime_display, "band": None, "tone": tone},
+        {"label": "Fear index (VIX)", "value": r["vix"], "band": vix_band, "tone": None},
         {
-            "label": "inputs",
-            "value": f"{r['inputs_present']}/{r['inputs_expected']}",
+            "label": "Inputs with data",
+            "value": f"{r['inputs_present']} of {r['inputs_expected']}",
             "band": None,
             "tone": None,
         },
@@ -207,9 +207,9 @@ def _regime_timeline(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 # (series_id, tile label, qualitative_band metric) — the regime's three
 # deciding inputs, same trio as _regime's `note` prose.
 _FRED_DRIVER_SERIES = [
-    ("T10Y2Y", "10y–2y spread", "t10y2y"),
-    ("BAMLH0A0HYM2", "high-yield spread", "hy_spread"),
-    ("VIXCLS", "VIX", "vix"),
+    ("T10Y2Y", "Long vs short Treasury yields", "t10y2y"),
+    ("BAMLH0A0HYM2", "Junk-bond premium", "hy_spread"),
+    ("VIXCLS", "Fear index (VIX)", "vix"),
 ]
 
 
@@ -259,7 +259,7 @@ _SCORECARD_COLUMNS: list[dict[str, Any]] = [
     {"key": "total", "label": "Signals", "numeric": True, "direction": None, "term": None},
     {
         "key": "coverage",
-        "label": "Coverage",
+        "label": "Signals with data",
         "numeric": True,
         "direction": "up-good",
         "term": "Coverage",
@@ -357,11 +357,14 @@ def _scorecard(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         }
         for r in all_rows
     ]
+    held = sum(1 for r in rows if r["in_portfolio"])
     return {
-        # No single tone/text summarizes ~1,000 independent per-ticker
-        # tallies (unlike regime's one market-wide verdict) — always None,
-        # per the generic section schema's "verdict | None" contract.
-        "verdict": None,
+        # A count, never a grade: ~1,000 independent per-ticker tallies have
+        # no single tone, so the chip only says how many crossed the flag
+        # threshold tonight and how many of those you already hold.
+        "verdict": verdict(f"{len(flagged)} flagged tonight · {held} held", "mid")
+        if rows
+        else None,
         "columns": _SCORECARD_COLUMNS,
         "rows": rows,
         "total": len(all_rows),
@@ -369,62 +372,29 @@ def _scorecard(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _CANDIDATES_COLUMNS: list[dict[str, Any]] = [
-    {"key": "symbol", "label": "Symbol", "numeric": False, "direction": None, "term": None},
-    {"key": "sector", "label": "Sector", "numeric": False, "direction": None, "term": None},
-    {"key": "marketCap", "label": "Market cap", "numeric": True, "direction": None, "term": None},
-    {"key": "roic", "label": "ROIC %", "numeric": True, "direction": "up-good", "term": None},
-    {
-        "key": "fcfYield",
-        "label": "FCF yield %",
-        "numeric": True,
-        "direction": "up-good",
-        "term": None,
-    },
-    {
-        "key": "fScore",
-        "label": "F-score",
-        "numeric": True,
-        "direction": "up-good",
-        "term": "Piotroski score",
-    },
-    {"key": "rsi", "label": "RSI", "numeric": True, "direction": None, "term": None},
-    {"key": "ch6m", "label": "6m change %", "numeric": True, "direction": None, "term": None},
+    col("symbol", "Symbol", numeric=False),
+    col("sector", "Sector", numeric=False),
+    col("marketCap", "Market cap"),
+    col("ch6m", "6-month change %"),
     # Which growth gate admitted the row: "3y" or "inflection" (rev3y failed;
     # trailing-year + consensus growth admitted it — graded separately).
-    {
-        "key": "growthDoor",
-        "label": "Growth door",
-        "numeric": False,
-        "direction": None,
-        "term": None,
-    },
-    # Sloan accruals, % of assets: negative = cash ahead of earnings (good).
-    {
-        "key": "accrualsPctAssets",
-        "label": "Accruals % assets",
-        "numeric": True,
-        "direction": "down-good",
-        "term": None,
-    },
+    col("growthDoor", "Why it qualified", numeric=False),
     # scorer.db: the ownership call research-ticker recorded, and the
     # current on-list episode. A pass here is the screen-vs-research
     # disagreement set.
-    {"key": "verdict", "label": "Research call", "numeric": False, "direction": None, "term": None},
-    {"key": "verdictDate", "label": "Call date", "numeric": False, "direction": None, "term": None},
-    {
-        "key": "daysOnList",
-        "label": "Days on list",
-        "numeric": True,
-        "direction": None,
-        "term": None,
-    },
-    {
-        "key": "fScoreEntry",
-        "label": "F-score at entry",
-        "numeric": True,
-        "direction": None,
-        "term": "Piotroski score",
-    },
+    col("verdict", "Research call", numeric=False),
+    col("daysOnList", "Days on list"),
+    # The quality ratios fold behind "more columns": the screen already
+    # applied them as gates, so the default view names the business and
+    # what happened to it, not the arithmetic that admitted it.
+    col("roic", "ROIC %", direction="up-good", hidden=True),
+    col("fcfYield", "FCF yield %", direction="up-good", hidden=True),
+    col("fScore", "F-score", direction="up-good", term="Piotroski score", hidden=True),
+    col("rsi", "RSI", hidden=True),
+    # Sloan accruals, % of assets: negative = cash ahead of earnings (good).
+    col("accrualsPctAssets", "Accruals % assets", direction="down-good", hidden=True),
+    col("verdictDate", "Call date", numeric=False, hidden=True),
+    col("fScoreEntry", "F-score at entry", term="Piotroski score", hidden=True),
 ]
 
 
@@ -457,7 +427,12 @@ def _candidates(data_dir: str, now_iso: str) -> dict[str, Any]:
     (research call, on-list tenure) and its absence must not blank the
     screen."""
     rows, snapshot_date = _annotated_candidates(data_dir)
+    researched = sum(1 for r in rows if r["verdict"] is not None)
+    word = "name" if len(rows) == 1 else "names"
     return {
+        "verdict": verdict(f"{len(rows)} {word} · {researched} already researched", "mid")
+        if rows
+        else None,
         "columns": _CANDIDATES_COLUMNS,
         "rows": [
             {
@@ -505,7 +480,7 @@ _RESEARCH_REOPENS_COLUMNS: list[dict[str, Any]] = [
     {"key": "held", "label": "Held", "numeric": False, "direction": None, "term": None},
     {"key": "verdict", "label": "Verdict", "numeric": False, "direction": None, "term": None},
     {"key": "due", "label": "Due", "numeric": False, "direction": None, "term": None},
-    {"key": "trigger", "label": "Trigger", "numeric": False, "direction": None, "term": None},
+    {"key": "trigger", "label": "Waiting for", "numeric": False, "direction": None, "term": None},
     {
         "key": "filings_since",
         "label": "8-Ks since thesis",
@@ -599,11 +574,11 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
         # legacy parser (which reads only fields 0-1 and the reopen= regex):
         # validate against the allowed set, None for anything unrecognized.
         fields = line.split()
-        verdict = fields[2] if len(fields) > 2 and fields[2] in _REOPEN_VERDICTS else None
+        call = fields[2] if len(fields) > 2 and fields[2] in _REOPEN_VERDICTS else None
         if m.group(1) == "event":
-            events.append((ticker, m.group(2), thesis_date, verdict))
+            events.append((ticker, m.group(2), thesis_date, call))
         else:
-            dated.append((m.group(1), ticker, m.group(2), thesis_date, verdict))
+            dated.append((m.group(1), ticker, m.group(2), thesis_date, call))
     dated.sort(key=lambda t: (t[0], t[1]))
 
     held = _held_symbols(data_dir)
@@ -620,30 +595,42 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
         {
             "ticker": ticker,
             "held": ticker in held,
-            "verdict": verdict,
+            "verdict": call,
             "due": when,
             "trigger": slug,
             "filings_since": filings.get(ticker),
             "thesis_date": thesis_date,
             "thesis_path": _thesis_path(ticker, thesis_date),
         }
-        for when, ticker, slug, thesis_date, verdict in dated
+        for when, ticker, slug, thesis_date, call in dated
     ] + [
         {
             "ticker": ticker,
             "held": ticker in held,
-            "verdict": verdict,
+            "verdict": call,
             "due": None,
             "trigger": slug,
             "filings_since": filings.get(ticker),
             "thesis_date": thesis_date,
             "thesis_path": _thesis_path(ticker, thesis_date),
         }
-        for ticker, slug, thesis_date, verdict in events
+        for ticker, slug, thesis_date, call in events
     ]
+
+    # Due (trigger date on or before today) rows lead, oldest first; then
+    # upcoming dated rows; event-shaped triggers last. `dated` is already
+    # (date, ticker)-sorted, so a stable partition keeps that order.
+    def _rank(r: dict[str, Any]) -> int:
+        due = r["due"]
+        if not isinstance(due, str):
+            return 2
+        return 0 if due <= today else 1
+
+    rows.sort(key=_rank)
+    due_this_week = sum(1 for when, *_ in dated if floor <= when <= ceiling)
     today_date = date.fromisoformat(today)
     checkpoints = []
-    for when, ticker, slug, thesis_date, _verdict in dated:
+    for when, ticker, slug, thesis_date, _call in dated:
         if ticker not in held or not (floor <= when <= ceiling):
             continue
         try:
@@ -666,6 +653,9 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
             }
         )
     return {
+        "verdict": verdict(f"{due_this_week} due this week", "mid")
+        if due_this_week
+        else verdict("nothing due this week", "mid"),
         "columns": _RESEARCH_REOPENS_COLUMNS,
         "rows": rows,
         "dated": len(dated),
@@ -694,13 +684,20 @@ def _health(data_dir: str, now_iso: str) -> dict[str, Any]:
     body = health.build_health(base / "logs", Path(data_dir), now_local, now_utc)
     problems = body["problems"]
     tiles = [
-        {"label": "runs (24h)", "value": body["runs_24h"], "band": None, "tone": None},
-        {"label": "jobs loaded", "value": body["jobs_loaded"], "band": None, "tone": None},
         {
-            # Singular/plural at the source: the tile renders "1" over its
-            # label, and "1 problems" was the most conspicuous typo on the
-            # page (alert red, stat size).
-            "label": "problem" if len(problems) == 1 else "problems",
+            "label": "Jobs that ran",
+            "value": body["runs_24h"],
+            "band": "last 24 hours",
+            "tone": None,
+        },
+        {
+            "label": "Jobs on the schedule",
+            "value": body["jobs_loaded"],
+            "band": "in launchd",
+            "tone": None,
+        },
+        {
+            "label": "Need attention",
             "value": len(problems),
             "band": None,
             "tone": "on" if not problems else "off",
@@ -750,30 +747,62 @@ def _direction(key: str) -> str | None:
 # term= only when the label and the glossary key diverge ("Hit-rate CI low"
 # → "CI"); test_dashboard_glossary.py pins the keys both paths rely on.
 def _track_col(
-    key: str, label: str, numeric: bool = True, term: str | None = None
+    key: str, label: str, numeric: bool = True, term: str | None = None, hidden: bool = False
 ) -> dict[str, Any]:
-    return {
-        "key": key,
-        "label": label,
-        "numeric": numeric,
-        "direction": _direction(key),
-        "term": term,
-    }
+    return col(key, label, numeric=numeric, direction=_direction(key), term=term, hidden=hidden)
 
 
 _SIGNAL_EFFICACY_COLUMNS: list[dict[str, Any]] = [
     _track_col("signal_id", "Signal", numeric=False),
-    _track_col("via_crosswalk", "Via crosswalk"),
+    _track_col("via_crosswalk", "Via crosswalk", hidden=True),
     _track_col("horizon", "Horizon"),
-    _track_col("n_bench", "N benchmarked"),
-    _track_col("n_dates", "N dates"),
+    _track_col("n_bench", "Graded"),
+    _track_col("n_dates", "N dates", hidden=True),
     _track_col("hit_rate", "Hit rate"),
-    _track_col("hit_ci_lo", "Hit-rate CI low", term="CI"),
-    _track_col("hit_ci_hi", "Hit-rate CI high", term="CI"),
-    _track_col("null_rate", "Base rate"),
-    _track_col("avg_directional_excess", "Directional excess"),
-    _track_col("recommendation", "Recommendation", numeric=False),
+    _track_col("hit_ci_lo", "Hit-rate CI low", term="CI", hidden=True),
+    _track_col("hit_ci_hi", "Hit-rate CI high", term="CI", hidden=True),
+    _track_col("null_rate", "Chance alone", term="Base rate", hidden=True),
+    _track_col("avg_directional_excess", "Better than SPY by", term="Directional excess"),
+    _track_col("recommendation", "Verdict", numeric=False),
 ]
+
+# v_signal_recommendation's labels, in the order the chip lists them, with
+# the word a reader sees ("insufficient evidence" → "unproven").
+_VERDICT_WORDS = (
+    ("keep", "keep"),
+    ("watch", "watch"),
+    ("anti-signal", "anti-signal"),
+    ("insufficient evidence", "unproven"),
+)
+
+
+def _verdict_tally(rows: list[dict[str, Any]]) -> dict[str, str] | None:
+    """One count per signal (its longest graded horizon decides), so a
+    signal graded at three horizons is not three verdicts."""
+    if not rows:
+        return None
+    longest: dict[tuple[str, int], dict[str, Any]] = {}
+    for r in rows:
+        key = (r["signal_id"], r["via_crosswalk"])
+        if key not in longest or r["horizon"] > longest[key]["horizon"]:
+            longest[key] = r
+    counts = {label: 0 for label, _ in _VERDICT_WORDS}
+    for r in longest.values():
+        if r["recommendation"] in counts:
+            counts[r["recommendation"]] += 1
+    parts = []
+    for label, word in _VERDICT_WORDS:
+        n = counts[label]
+        if n == 0:
+            continue
+        if label == "insufficient evidence":
+            parts.append(f"{n} signal{'s' if n != 1 else ''} still unproven")
+        else:
+            parts.append(f"{n} {word}")
+    if not parts:
+        return None
+    tone = "off" if counts["anti-signal"] else "on" if counts["keep"] else "mid"
+    return verdict(" · ".join(parts), tone)
 
 
 def _signal_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -789,9 +818,11 @@ def _signal_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         " hit_ci_lo, hit_ci_hi, null_rate, avg_directional_excess, recommendation"
         " FROM v_signal_recommendation ORDER BY horizon, via_crosswalk, signal_id"
     ).fetchall()
+    body = [dict(r) for r in rows]
     return {
+        "verdict": _verdict_tally(body),
         "columns": _SIGNAL_EFFICACY_COLUMNS,
-        "rows": [dict(r) for r in rows],
+        "rows": body,
         "caveat": narrative.CAVEATS.get("signal-efficacy"),
         "empty": "no matured signal outcomes yet; appears once a signal's"
         " flagged calls reach their grading horizon",
@@ -801,14 +832,45 @@ def _signal_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 _BUCKET_PERFORMANCE_COLUMNS: list[dict[str, Any]] = [
     _track_col("bucket", "Bucket", numeric=False),
     _track_col("horizon", "Horizon"),
-    _track_col("n_bench", "N"),
-    _track_col("avg_fwd_return", "Fwd return", term="Forward return"),
-    _track_col("avg_excess", "Excess"),
+    _track_col("n_bench", "Graded"),
+    _track_col("avg_fwd_return", "Return", term="Forward return"),
+    _track_col("avg_excess", "Vs SPY", term="Excess"),
     _track_col("hit_rate", "Hit rate"),
-    _track_col("null_rate", "Base rate"),
-    _track_col("edge", "Edge"),
+    _track_col("null_rate", "Chance alone", term="Base rate"),
+    _track_col("edge", "Better than chance by", term="Edge"),
     _track_col("reliable", "Reliable"),
 ]
+
+_STRONG_BUCKETS = ("strong_bull", "strong_bear")
+_MODERATE_BUCKETS = ("bull", "bear")
+_BUCKET_MIN_N = 5
+
+
+def _bucket_verdict(rows: list[dict[str, Any]]) -> dict[str, str] | None:
+    """Strong buckets vs moderate ones at the longest horizon, hit rates
+    pooled by count. Either side thinner than _BUCKET_MIN_N is not a
+    comparison, so the chip says so instead of guessing."""
+    if not rows:
+        return None
+    longest = max(r["horizon"] for r in rows)
+
+    def pooled(names):
+        picked = [r for r in rows if r["horizon"] == longest and r["bucket"] in names]
+        n = sum(r["n_bench"] or 0 for r in picked)
+        if n < _BUCKET_MIN_N or any(r["hit_rate"] is None for r in picked):
+            return None, n
+        return sum(r["hit_rate"] * r["n_bench"] for r in picked) / n, n
+
+    strong, _ = pooled(_STRONG_BUCKETS)
+    moderate, _ = pooled(_MODERATE_BUCKETS)
+    if strong is None or moderate is None:
+        return verdict("Too few graded flags to compare buckets", "mid")
+    better = strong > moderate
+    word = "did better" if better else "did not do better"
+    return verdict(
+        f"Stronger flags {word}: {strong:.0%} right vs {moderate:.0%} at {longest} days",
+        "on" if better else "off",
+    )
 
 
 def _bucket_performance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
@@ -817,9 +879,12 @@ def _bucket_performance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any
         " hit_rate, null_rate, edge, reliable FROM v_bucket_performance"
         " ORDER BY horizon, bucket"
     ).fetchall()
+    # `reliable` is the view's 0/1; the table pills booleans, not integers.
+    body = [{**dict(r), "reliable": bool(r["reliable"])} for r in rows]
     return {
+        "verdict": _bucket_verdict(body),
         "columns": _BUCKET_PERFORMANCE_COLUMNS,
-        "rows": [dict(r) for r in rows],
+        "rows": body,
         "caveat": narrative.CAVEATS.get("bucket-performance"),
         "empty": "no matured buckets yet; appears once conviction-bucketed"
         " opinions reach their grading horizon",
@@ -827,22 +892,103 @@ def _bucket_performance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any
 
 
 _HUMAN_FILTER_COLUMNS: list[dict[str, Any]] = [
-    _track_col("response", "Response", numeric=False),
+    _track_col("response", "You did", numeric=False),
     _track_col("horizon", "Horizon"),
-    _track_col("n", "N"),
-    _track_col("avg_dir_excess", "Directional excess"),
-    _track_col("avg_fwd_return", "Fwd return", term="Forward return"),
+    _track_col("n", "Flags"),
+    _track_col("avg_dir_excess", "Gain had you followed it", term="Directional excess"),
+    _track_col("avg_fwd_return", "Return", term="Forward return"),
 ]
+
+# v_flag_response's labels → the words a reader sees. The tile label is the
+# noun form ("Acted on"), the table cell the verb ("Acted").
+_RESPONSE_WORDS: dict[str, tuple[str, str]] = {
+    "acted": ("Acted on", "Acted"),
+    "acted_option": ("Acted on (options)", "Acted (options)"),
+    "passed": ("Passed on", "Passed"),
+    "passed_inferred": ("Skipped (no journal entry)", "Skipped (no journal entry)"),
+}
+_FILTER_MIN_N = 5
+
+
+def _human_filter_headline(rows) -> tuple[dict[str, str] | None, list[dict[str, Any]]]:
+    """Chip + tiles at the horizon with the most graded flags. The chip
+    compares acted to skipped only when both sides reach _FILTER_MIN_N;
+    otherwise it reads whichever side is thick enough on its own."""
+    if not rows:
+        return None, []
+    by_h: dict[int, int] = {}
+    for r in rows:
+        by_h[r["horizon"]] = by_h.get(r["horizon"], 0) + (r["n"] or 0)
+    h = max(by_h, key=lambda k: (by_h[k], -k))
+    at_h = {r["response"]: r for r in rows if r["horizon"] == h}
+    tiles = []
+    for label, (tile_label, _) in _RESPONSE_WORDS.items():
+        r = at_h.get(label)
+        if r is None or r["avg_dir_excess"] is None:
+            continue
+        band = f"{r['n']} flags · {h} days"
+        if (r["n"] or 0) < _FILTER_MIN_N:
+            # The scorecard's small-n floor: three flags is not an average.
+            tiles.append(tile(tile_label, "too few", f"{band} · {_FILTER_MIN_N} needed"))
+        else:
+            tiles.append(tile(tile_label, _signed_pct1(r["avg_dir_excess"]), band))
+
+    def thick(label):
+        r = at_h.get(label)
+        return (
+            r if r and (r["n"] or 0) >= _FILTER_MIN_N and r["avg_dir_excess"] is not None else None
+        )
+
+    acted, skipped = thick("acted"), thick("passed_inferred")
+    if acted and skipped:
+        gap = (acted["avg_dir_excess"] - skipped["avg_dir_excess"]) * 100
+        word = "beat" if gap > 0 else "trailed"
+        return verdict(
+            f"Flags you acted on {word} the ones you skipped by {abs(gap):.1f} points at {h} days",
+            "on" if gap > 0 else "off",
+        ), tiles
+    for label, phrase in (
+        ("passed_inferred", "skipped"),
+        ("acted", "acted on"),
+        ("passed", "passed on"),
+    ):
+        r = thick(label)
+        if r is None:
+            continue
+        v = r["avg_dir_excess"]
+        word = "gain" if v >= 0 else "lose"
+        tone = "on" if v > 0 else "off" if v < 0 else "mid"
+        return verdict(
+            f"Flags you {phrase} went on to {word} {_signed_pct1(v)} at {h} days", tone
+        ), tiles
+    return verdict("Too few graded flags to read yet", "mid"), tiles
 
 
 def _human_filter(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
-    rows = conn.execute(
-        "SELECT response, horizon, n, avg_dir_excess, avg_fwd_return"
-        " FROM v_human_filter ORDER BY horizon, response"
-    ).fetchall()
+    rows = [
+        dict(r)
+        for r in conn.execute(
+            "SELECT response, horizon, n, avg_dir_excess, avg_fwd_return"
+            " FROM v_human_filter ORDER BY horizon, response"
+        ).fetchall()
+    ]
+    chip, tiles = _human_filter_headline(rows)
     return {
+        "verdict": chip,
+        "tiles": tiles,
         "columns": _HUMAN_FILTER_COLUMNS,
-        "rows": [dict(r) for r in rows],
+        # The table holds to the same small-n floor as the tiles: a row
+        # under _FILTER_MIN_N flags keeps its count and loses its averages.
+        "rows": [
+            {
+                **r,
+                "response": _RESPONSE_WORDS.get(r["response"], (r["response"],) * 2)[1],
+                "avg_dir_excess": r["avg_dir_excess"] if thick else None,
+                "avg_fwd_return": r["avg_fwd_return"] if thick else None,
+            }
+            for r in rows
+            for thick in [(r["n"] or 0) >= _FILTER_MIN_N]
+        ],
         "caveat": narrative.CAVEATS.get("human-filter"),
         "empty": "no matured flagged opinions yet; appears once an acted-on"
         " or passed-on flag reaches its grading horizon",
@@ -850,23 +996,46 @@ def _human_filter(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _REGIME_PERFORMANCE_COLUMNS: list[dict[str, Any]] = [
-    _track_col("regime", "Regime", numeric=False),
+    _track_col("regime", "Mood", numeric=False),
     _track_col("horizon", "Horizon"),
-    _track_col("n_matured", "N"),
-    _track_col("avg_bench_return", "Avg return"),
-    _track_col("min_bench_return", "Min return"),
-    _track_col("max_bench_return", "Max return"),
+    _track_col("n_matured", "Nights graded"),
+    _track_col("avg_bench_return", "Average return"),
+    _track_col("min_bench_return", "Worst"),
+    _track_col("max_bench_return", "Best"),
 ]
 
 
+_REGIME_WORDS = {"risk_on": "Risk on", "risk_off": "Risk off", "mixed": "Mixed"}
+_REGIME_MIN_N = 5
+
+
+def _regime_chip(rows: list[dict[str, Any]]) -> dict[str, str] | None:
+    """Risk-on at its longest horizon: the one mood a reader trades on.
+    Under _REGIME_MIN_N nights the chip says so rather than averaging one
+    contiguous run."""
+    risk_on = [r for r in rows if r["regime"] == "risk_on"]
+    if not risk_on:
+        return None
+    r = max(risk_on, key=lambda r: r["horizon"])
+    if (r["n_matured"] or 0) < _REGIME_MIN_N or r["avg_bench_return"] is None:
+        return verdict("Too few risk-on nights to grade yet", "mid")
+    v = r["avg_bench_return"]
+    tone = "on" if v > 0 else "off" if v < 0 else "mid"
+    return verdict(f"Risk-on nights averaged {_signed_pct1(v)} over {r['horizon']} days", tone)
+
+
 def _regime_performance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
-    rows = conn.execute(
-        "SELECT regime, horizon, n_matured, avg_bench_return, min_bench_return,"
-        " max_bench_return FROM v_regime_performance ORDER BY horizon, regime"
-    ).fetchall()
+    raw = [
+        dict(r)
+        for r in conn.execute(
+            "SELECT regime, horizon, n_matured, avg_bench_return, min_bench_return,"
+            " max_bench_return FROM v_regime_performance ORDER BY horizon, regime"
+        ).fetchall()
+    ]
     return {
+        "verdict": _regime_chip(raw),
         "columns": _REGIME_PERFORMANCE_COLUMNS,
-        "rows": [dict(r) for r in rows],
+        "rows": [{**r, "regime": _REGIME_WORDS.get(r["regime"], r["regime"])} for r in raw],
         "caveat": narrative.CAVEATS.get("regime-performance"),
         "empty": "no matured regime outcomes yet — appears once a market-mood"
         " window reaches its grading horizon",
@@ -875,9 +1044,11 @@ def _regime_performance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any
 
 _PENDING_COLUMNS: list[dict[str, Any]] = [
     _track_col("kind", "Kind", numeric=False),
-    _track_col("composite_date", "Composite date", numeric=False),
-    _track_col("symbol", "Entity", numeric=False),
-    _track_col("horizon", "Horizon"),
+    _track_col("composite_date", "Flag date", numeric=False),
+    _track_col("symbol", "Symbol", numeric=False),
+    # exit_date is written at maturity, so the grading date is not known
+    # for a pending row; the horizon is the honest column.
+    _track_col("horizon", "Graded after (trading days)"),
     _track_col("entry_date", "Entry date", numeric=False),
 ]
 
@@ -890,11 +1061,26 @@ def _pending(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     other section here — it is a ticker for `kind='ticker'` rows and a
     compound/label for `signal`/`regime` rows."""
     total = conn.execute("SELECT COUNT(*) FROM v_pending").fetchone()[0]
+    # One opinion waits at up to three horizons; the chip counts it once,
+    # the table (and `total`) still discloses every horizon row.
+    opinions, nights, oldest = conn.execute(
+        "SELECT COUNT(*), COUNT(DISTINCT composite_date), MIN(entry_date) FROM"
+        " (SELECT DISTINCT kind, composite_date, entity, entry_date FROM v_pending)"
+    ).fetchone()
     rows = conn.execute(
         "SELECT kind, composite_date, entity AS symbol, horizon, entry_date"
         " FROM v_pending ORDER BY composite_date DESC LIMIT 100"
     ).fetchall()
+    word = "opinion" if opinions == 1 else "opinions"
+    night = "night" if nights == 1 else "nights"
     return {
+        "verdict": verdict(
+            f"{opinions:,} {word} from {nights} {night} waiting to be graded,"
+            f" the oldest from {oldest}",
+            "mid",
+        )
+        if total
+        else None,
         "columns": _PENDING_COLUMNS,
         "rows": [dict(r) for r in rows],
         "total": total,
@@ -910,14 +1096,14 @@ _BASIS_BREAKS_COLUMNS: list[dict[str, Any]] = [
     _track_col("prev_close", "Prev close"),
     _track_col("price_date", "Price date", numeric=False),
     _track_col("close", "Close"),
-    _track_col("ratio", "Ratio"),
+    _track_col("ratio", "Move (×)"),
 ]
 
 
 _COT_TAILS_COLUMNS: list[dict[str, Any]] = [
     _track_col("market", "Market", numeric=False),
     _track_col("side", "Side", numeric=False),
-    _track_col("cot_index", "COT index (3y)", term="COT / positioning"),
+    _track_col("cot_index", "How stretched (0–100)", term="COT / positioning"),
     _track_col("report_date", "Report date", numeric=False),
 ]
 
@@ -946,13 +1132,21 @@ def _cot_tails(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 def _basis_breaks(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    """`total` is the full count; `rows` the newest 100 (the same cap and
+    disclosure as `_pending`) — a bad vendor day can break thousands."""
+    total = conn.execute("SELECT COUNT(*) FROM v_basis_breaks").fetchone()[0]
     rows = conn.execute(
         "SELECT symbol, prev_date, prev_close, price_date, close, ratio"
-        " FROM v_basis_breaks ORDER BY price_date DESC"
+        " FROM v_basis_breaks ORDER BY price_date DESC, symbol LIMIT 100"
     ).fetchall()
+    word = "move" if total == 1 else "moves"
     return {
+        "verdict": verdict(f"{total} suspect price {word} tonight", "off")
+        if total
+        else verdict("no suspect moves", "on"),
         "columns": _BASIS_BREAKS_COLUMNS,
         "rows": [dict(r) for r in rows],
+        "total": total,
         # No caveat: an integrity check, not a grade — a trust caveat here
         # would be noise (deliberate; narrative.CAVEATS has no entry for
         # "basis-breaks").
@@ -964,35 +1158,34 @@ def _basis_breaks(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 _SIGNAL_RECOMMENDATION_COLUMNS: list[dict[str, Any]] = [
     _track_col("signal_id", "Signal", numeric=False),
-    _track_col("via_crosswalk", "Via crosswalk"),
+    _track_col("via_crosswalk", "Via crosswalk", hidden=True),
     _track_col("horizon", "Horizon"),
-    _track_col("n_blocks", "Independent windows"),
-    _track_col("avg_directional_excess", "Directional excess"),
+    _track_col("n_blocks", "Independent episodes"),
+    _track_col("avg_directional_excess", "Better than SPY by", term="Directional excess"),
     _track_col("hit_rate", "Hit rate"),
-    _track_col("hit_ci_lo", "Hit-rate CI low", term="CI"),
-    _track_col("hit_ci_hi", "Hit-rate CI high", term="CI"),
-    _track_col("recommendation", "Recommendation", numeric=False),
+    _track_col("hit_ci_lo", "Hit-rate CI low", term="CI", hidden=True),
+    _track_col("hit_ci_hi", "Hit-rate CI high", term="CI", hidden=True),
+    _track_col("recommendation", "Verdict", numeric=False),
 ]
 
 
 def _signal_recommendation(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
-    """The verdict on each signal, graded against its own base rate. `verdict`
-    wires narrative.efficacy_verdict against a tally of this
-    section's own `recommendation` values — the helper would otherwise be
-    dead code. Rows with recommendation == "insufficient evidence" count
-    toward none of keep/watch/anti."""
-    rows = conn.execute(
-        "SELECT signal_id, via_crosswalk, horizon, n_blocks,"
-        " avg_directional_excess, hit_rate, hit_ci_lo, hit_ci_hi, recommendation"
-        " FROM v_signal_recommendation ORDER BY horizon, via_crosswalk, signal_id"
-    ).fetchall()
-    keep = sum(1 for r in rows if r["recommendation"] == "keep")
-    watch = sum(1 for r in rows if r["recommendation"] == "watch")
-    anti = sum(1 for r in rows if r["recommendation"] == "anti-signal")
+    """The verdict on each signal, graded against its own base rate. The
+    chip counts each signal once at its longest graded horizon (the same
+    `_verdict_tally` the efficacy card uses), so a signal graded at three
+    horizons is one verdict, not three."""
+    rows = [
+        dict(r)
+        for r in conn.execute(
+            "SELECT signal_id, via_crosswalk, horizon, n_blocks,"
+            " avg_directional_excess, hit_rate, hit_ci_lo, hit_ci_hi, recommendation"
+            " FROM v_signal_recommendation ORDER BY horizon, via_crosswalk, signal_id"
+        ).fetchall()
+    ]
     return {
-        "verdict": narrative.efficacy_verdict(keep, watch, anti),
+        "verdict": _verdict_tally(rows),
         "columns": _SIGNAL_RECOMMENDATION_COLUMNS,
-        "rows": [dict(r) for r in rows],
+        "rows": rows,
         "caveat": narrative.CAVEATS.get("signal-recommendations"),
         "empty": "insufficient evidence for every signal so far, which is"
         " expected of a young scorer; fills in once a signal's evidence"
@@ -1257,14 +1450,14 @@ def _equity_curve(data_dir: str, now_iso: str) -> dict[str, Any]:
 
 
 _CANDIDATE_EFFICACY_COLUMNS: list[dict[str, Any]] = [
-    _track_col("screen_version", "Screen version", numeric=False),
-    _track_col("growth_door", "Growth door", numeric=False),
-    _track_col("branch", "Dislocation door", numeric=False),
+    _track_col("screen_version", "Screen version", numeric=False, hidden=True),
+    _track_col("growth_door", "Why it qualified", numeric=False),
+    _track_col("branch", "What flagged it", numeric=False),
     _track_col("horizon", "Horizon"),
-    _track_col("n", "N"),
+    _track_col("n", "Entries"),
     _track_col("hit_rate", "Hit rate"),
-    _track_col("avg_excess", "Excess"),
-    _track_col("avg_fwd_return", "Fwd return", term="Forward return"),
+    _track_col("avg_excess", "Vs SPY", term="Excess"),
+    _track_col("avg_fwd_return", "Return", term="Forward return"),
 ]
 
 
@@ -1279,9 +1472,20 @@ def _candidate_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any
         " avg_fwd_return FROM v_candidate_efficacy"
         " ORDER BY screen_version, horizon, growth_door, branch"
     ).fetchall()
+    body = [dict(r) for r in rows]
+    tiles = []
+    if body:
+        longest = max(r["horizon"] for r in body)
+        at_h = [r for r in body if r["horizon"] == longest and r["hit_rate"] is not None]
+        n = sum(r["n"] for r in at_h)
+        beats = sum(round(r["hit_rate"] * r["n"]) for r in at_h)
+        tiles.append(
+            tile("Beat SPY", f"{beats} of {n}", f"{longest} trading days after joining the list")
+        )
     return {
+        "tiles": tiles,
         "columns": _CANDIDATE_EFFICACY_COLUMNS,
-        "rows": [dict(r) for r in rows],
+        "rows": body,
         "caveat": narrative.CAVEATS.get("candidate-efficacy"),
         "empty": "no matured episodes yet; first grades appear ~21 trading"
         " days after the first screen night",
@@ -1318,27 +1522,32 @@ def _book_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         if heat_pct_percent is None
         else narrative.qualitative_band("book_heat_pct", heat_pct_percent)
     )
+    # Pre-formatted strings: StatTile dollar-formats only a tile labelled
+    # "equity", and a bare 0.45 beside "$10,000" reads as a count.
     tiles = [
-        {"label": "positions", "value": r["positions"] or 0, "band": None, "tone": None},
-        {"label": "book heat %", "value": heat_pct_percent, "band": heat_band, "tone": None},
-        {"label": "coverage", "value": r["heat_coverage"], "band": None, "tone": None},
-        {"label": "equity", "value": r["equity"], "band": None, "tone": None},
-        {
-            "label": "sources failed",
-            "value": r["sources_failed"] or 0,
-            "band": None,
-            "tone": None,
-        },
+        tile("Positions", r["positions"] or 0),
+        tile(
+            "Money at risk on a bad day",
+            None if heat_pct_percent is None else f"{heat_pct_percent:.2f}%",
+            None if heat_band is None else f"of the book · {heat_band}",
+        ),
+        tile(
+            "Positions counted",
+            None if r["heat_coverage"] is None else f"{r['heat_coverage'] * 100:.0f}%",
+            "positions with the inputs to price a bad day",
+        ),
+        tile("Book value", None if r["equity"] is None else f"${r['equity']:,.0f}"),
+        tile("Feeds missing", r["sources_failed"] or 0, "of the inputs the advisor needs"),
     ]
     return {"verdict": narrative.book_verdict(heat_pct_percent), "tiles": tiles}
 
 
 _GROUP_HEAT_COLUMNS: list[dict[str, Any]] = [
     _track_col("bet", "Bet", numeric=False),
-    _track_col("members", "Members"),
+    _track_col("members", "Positions in it"),
     _track_col("symbols", "Symbols", numeric=False),
-    _track_col("heat_dollars", "Heat $"),
-    _track_col("heat_pct", "Heat %"),
+    _track_col("heat_dollars", "At risk $"),
+    _track_col("heat_pct", "At risk %"),
 ]
 
 
@@ -1367,15 +1576,15 @@ def _group_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 _POSITION_HEAT_COLUMNS: list[dict[str, Any]] = [
     _track_col("symbol", "Symbol", numeric=False),
-    _track_col("group_name", "Group", numeric=False),
-    _track_col("quantity", "Qty"),
+    _track_col("group_name", "Bet", numeric=False, hidden=True),
+    _track_col("quantity", "Shares"),
     _track_col("market_value", "Market value"),
-    _track_col("price", "Price"),
-    _track_col("heat_dollars", "Heat $"),
-    _track_col("heat_pct", "Heat %"),
-    _track_col("weight_pct", "Weight %"),
-    _track_col("score_sum", "Score"),
-    _track_col("atr_stale", "Stale?", numeric=False),
+    _track_col("price", "Price", hidden=True),
+    _track_col("heat_dollars", "At risk $"),
+    _track_col("heat_pct", "At risk %"),
+    _track_col("weight_pct", "Share of book %"),
+    _track_col("score_sum", "Signal lean"),
+    _track_col("atr_stale", "Volatility data old?", numeric=False),
 ]
 
 
@@ -1413,9 +1622,9 @@ def _position_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 _DISAGREEMENTS_COLUMNS: list[dict[str, Any]] = [
     _track_col("symbol", "Symbol", numeric=False),
-    _track_col("score_sum", "Score"),
-    _track_col("group_name", "Group", numeric=False),
-    _track_col("strong", "Strong", numeric=False),
+    _track_col("score_sum", "Signal lean", term="Score"),
+    _track_col("group_name", "Bet", numeric=False),
+    _track_col("strong", "Strong disagreement?", numeric=False),
 ]
 
 
@@ -1579,6 +1788,15 @@ SECTION_EXPORTERS: list[
                 " entries are graded for calibration only — see Candidates"
                 " screen edge under Track record.",
             ),
+            (
+                "The hidden columns",
+                "ROIC is the profit earned on the money invested in the"
+                " business; FCF yield is the cash it throws off as a share"
+                " of its price; F-score counts nine signs of improving"
+                " health out of nine; RSI measures how oversold the shares"
+                " are; accruals is how far reported earnings run ahead of"
+                " cash, where negative is the good sign.",
+            ),
         ],
     ),
     (
@@ -1599,7 +1817,8 @@ SECTION_EXPORTERS: list[
             (
                 "Lifecycle",
                 "A row retires when the name is re-researched; the ticker"
-                " links to the full thesis.",
+                " links to the full thesis. Due rows lead the table, and"
+                " the chip counts triggers dated within a week of today.",
             ),
         ],
     ),
@@ -1631,7 +1850,11 @@ SECTION_EXPORTERS: list[
                 "How to read it",
                 "The bar is the summed vote, left of center bearish; Split"
                 " is the raw bullish/bearish count; ★ marks strong"
-                " agreement.",
+                " agreement. Signals with data is the share of the"
+                " signal set that had a reading for the name tonight. The"
+                " chip counts the names that crossed the flag threshold"
+                " and how many of those you already hold; it is a count,"
+                " never a grade.",
             ),
             (
                 "How much to trust it",
@@ -1644,7 +1867,7 @@ SECTION_EXPORTERS: list[
     ),
     (
         "cot-tails",
-        "COT positioning tails",
+        "Crowded futures bets",
         "composite.db",
         _cot_tails,
         "Signals",
@@ -1694,7 +1917,10 @@ SECTION_EXPORTERS: list[
                 "The verdicts",
                 "“Keep” means the whole confidence range sits above the"
                 " baseline; “anti-signal” sits entirely below it"
-                " (significantly wrong, never a win); “watch” straddles.",
+                " (significantly wrong, never a win); “watch” straddles."
+                " The chip counts each signal once, at its longest graded"
+                " horizon; the confidence-range bounds sit behind “more"
+                " columns”.",
             ),
             (
                 "Hold it loosely",
@@ -1719,10 +1945,19 @@ SECTION_EXPORTERS: list[
                 " appears, proven or not.",
             ),
             (
-                "Where the verdict lives",
-                "Whether a signal is trustworthy yet is decided in Signal"
-                " recommendations below, which grades against the real base"
-                " rate instead of a coin flip.",
+                "The chip and the verdict column",
+                "Keep means the signal beat chance with room to spare;"
+                " watch means it is ahead but not yet clearly; anti-signal"
+                " means it was reliably wrong; unproven means too few"
+                " independent episodes to say. Each signal counts once, at"
+                " its longest graded horizon.",
+            ),
+            (
+                "More columns",
+                "The folded columns hold the confidence interval around the"
+                " hit rate, the chance-alone rate it is measured against,"
+                " the number of distinct dates, and whether the signal was"
+                " matched through a proxy class rather than the ticker.",
             ),
         ],
     ),
@@ -1740,6 +1975,20 @@ SECTION_EXPORTERS: list[
                 " strong-bull down to strong-bear, each graded against SPY."
                 " If conviction means anything, stronger buckets should do"
                 " better; this checks that.",
+            ),
+            (
+                "The chip",
+                "Pools the strong buckets against the plain bull and bear"
+                " buckets at the longest horizon, and compares how often"
+                " each was right. It refuses to compare until each side"
+                " holds five graded flags.",
+            ),
+            (
+                "Chance alone and better than chance",
+                "Chance alone is how often a random pick would have been"
+                " right over that window; better than chance by is the"
+                " bucket's hit rate minus that. Reliable marks buckets with"
+                " enough independent episodes to trust the gap.",
             ),
         ],
     ),
@@ -1790,10 +2039,27 @@ SECTION_EXPORTERS: list[
         "When you chose which flags to act on and which to pass, did your judgment add anything?",
         [
             (
-                "How to read it",
-                "Compares forward returns of the opinions you acted on"
-                " versus the ones you passed. The gap between the two is"
-                " the value of the human filter.",
+                "What a flag is",
+                "A night when the signals leaned hard enough on one stock"
+                " to be worth a look. Every flag is graded later on what"
+                " the stock did against SPY over 5, 10 and 21 trading days.",
+            ),
+            (
+                "Acted, passed, skipped",
+                "Acted means you traded in the flag's direction. Passed"
+                " means you journaled a deliberate no. Skipped means the"
+                " flag came and went with no journal entry, which is most"
+                " of them.",
+            ),
+            (
+                "Gain had you followed it",
+                "What a trade in the flag's direction would have made"
+                " against SPY, averaged per row. A row with fewer than 5"
+                " flags shows its count but no average, in the table and"
+                " the tiles alike: three flags is not a trend. If the flags"
+                " you skipped kept gaining and the ones you acted on did"
+                " not, the filter is costing you; the chip states that"
+                " comparison once both sides hold five flags.",
             ),
         ],
     ),
@@ -1808,7 +2074,9 @@ SECTION_EXPORTERS: list[
             (
                 "How to read it",
                 "Each row is one mood at one horizon: did risk-on nights"
-                " actually precede better returns than risk-off nights?",
+                " actually precede better returns than risk-off nights?"
+                " The chip reads the risk-on row at the longest horizon,"
+                " and waits for five graded nights before averaging.",
             ),
         ],
     ),
@@ -1821,22 +2089,26 @@ SECTION_EXPORTERS: list[
         "How much of your account is genuinely at risk right now.",
         [
             (
-                "What “heat” means",
-                "The dollars lost across every open position on a one-ATR"
-                " adverse day: a normal bad day, not a crash.",
+                "Money at risk on a bad day",
+                "Add up, across every open position, what a normal bad day"
+                " would cost: each holding's usual daily swing (its ATR)"
+                " times the shares held. That total, as a share of the"
+                " book, is the headline. Elsewhere on this page the same"
+                " number is called heat.",
             ),
             (
                 "What it is not",
                 "Not the stop-out loss: stops sit further out, so being"
-                " stopped costs more. Coverage says how much of the book"
-                " the number actually accounts for — positions missing"
-                " inputs count as uncovered.",
+                " stopped costs more. Positions counted says how much of"
+                " the book the number actually accounts for; a holding"
+                " missing its inputs is left out, and Feeds missing counts"
+                " the data sources that did not report.",
             ),
         ],
     ),
     (
         "group-heat",
-        "Advisor group heat",
+        "Bets, not positions",
         "advisor.db",
         _group_heat,
         "Your book",
@@ -1846,8 +2118,14 @@ SECTION_EXPORTERS: list[
                 "Why",
                 "Two energy names are one energy bet: risk adds up within"
                 " a group, and sizing that ignores this quietly doubles"
-                " exposure. Hedges net out, so a protective put reduces its"
-                " bet's heat.",
+                " exposure. Hedges net out, so a protective put reduces"
+                " what its bet has at risk.",
+            ),
+            (
+                "At risk",
+                "The dollars a normal bad day would cost the whole bet,"
+                " and that as a share of the book: the same money-at-risk"
+                " number the book card totals.",
             ),
         ],
     ),
@@ -1860,10 +2138,13 @@ SECTION_EXPORTERS: list[
         "Each holding's contribution to the risk totals above.",
         [
             (
-                "What “heat” means",
-                "Quantity × ATR: the dollars at risk on a one-ATR adverse"
-                " day, not the loss if the stop triggers. The detail behind"
-                " the book and group totals.",
+                "At risk",
+                "Shares held times the stock's usual daily swing (ATR):"
+                " the dollars a normal bad day would cost, not the loss if"
+                " the stop triggers. The detail behind the book and bet"
+                " totals. Signal lean is tonight's composite vote on the"
+                " name; Volatility data old means the swing input is stale."
+                " Bet and price sit behind “more columns”.",
             ),
         ],
     ),
@@ -1973,6 +2254,14 @@ SECTION_EXPORTERS: list[
         "Does the candidates screen's timing beat SPY after a name first enters the list?",
         [
             (
+                "The two doors",
+                "Why it qualified is the growth test the name passed: 3y"
+                " means three years of revenue growth, inflection means the"
+                " last year and the forecast made up for a weak three-year"
+                " record. What flagged it is the dislocation that timed the"
+                " entry: an oversold RSI, a price drawdown, or both at once.",
+            ),
+            (
                 "How it is measured",
                 "A name's first entry onto the reading list starts a"
                 " stopwatch: its 21- and 63-trading-day return is measured"
@@ -2025,6 +2314,13 @@ SECTION_EXPORTERS: list[
                 " This is the queue still being measured; these rows become"
                 " those grades once they age.",
             ),
+            (
+                "Graded after",
+                "Each opinion is graded 5, 10 and 21 trading days after its"
+                " entry date, so one flag sits here as three rows until the"
+                " last of them matures. The grading date itself is only"
+                " known once the closes exist.",
+            ),
         ],
     ),
     (
@@ -2041,7 +2337,9 @@ SECTION_EXPORTERS: list[
                 "Days where a price moved so far it looks like a stock"
                 " split or a bad tick rather than a real move. Surfaced so"
                 " a silent data problem cannot quietly skew every grade"
-                " above.",
+                " above. Move is the day's close over the prior close, so"
+                " 0.50× is a halving; the newest 100 are listed and the"
+                " chip carries the full count.",
             ),
         ],
     ),

@@ -161,3 +161,78 @@ test("number-array cells render as a sparkline, booleans as tinted pills by key 
   expect(screen.getByText("−1.2%")).toBeInTheDocument();
   expect(screen.getByText("55%")).toBeInTheDocument();
 });
+
+test("fill cost tints positive as bad: paying above the plan is the cost", () => {
+  const { container } = render(
+    <>
+      {sectionCell({ avg_entry_slippage: 0.014 }, col("avg_entry_slippage"))}
+      {sectionCell({ avg_entry_slippage: -0.014 }, col("avg_entry_slippage"))}
+      {sectionCell({ realized_return: 0.0458 }, col("realized_return"))}
+    </>,
+  );
+  const [paidMore, paidLess, gained] = Array.from(container.querySelectorAll("span"));
+  expect(paidMore).toHaveTextContent("+1.4%");
+  expect(paidMore).toHaveClass("tag-off");
+  expect(paidLess).toHaveTextContent("−1.4%");
+  expect(paidLess).toHaveClass("tag-on");
+  expect(gained).toHaveTextContent("+4.6%");
+  expect(gained).toHaveClass("tag-on");
+});
+
+test("unusual-options and WASDE ratios read as multiples and percents", () => {
+  const { container } = render(
+    <>
+      {sectionCell({ vol_oi_ratio: 20442.4, open_interest: 3 }, col("vol_oi_ratio"))}
+      {sectionCell({ vol_oi_ratio: 500, open_interest: 0 }, col("vol_oi_ratio"))}
+      {sectionCell({ iv: 0.8403 }, col("iv"))}
+      {sectionCell({ stocks_to_use: 0.4259 }, col("stocks_to_use"))}
+    </>,
+  );
+  expect(container.textContent).toBe("20,442×no open interest84%43%");
+});
+
+test("batch-1 keys: reliable pills, calibration fractions and grain change render as percents", () => {
+  const { container } = render(
+    <>
+      {sectionCell({ reliable: true }, col("reliable"))}
+      {sectionCell({ avg_p: 0.62 }, col("avg_p"))}
+      {sectionCell({ beat_rate: 0.5 }, col("beat_rate"))}
+      {sectionCell({ vs_last_year: -0.031 }, col("vs_last_year"))}
+    </>,
+  );
+  expect(container.textContent).toContain("yes");
+  expect(container.querySelector(".bool--good, [data-variant='up']") ?? container.querySelector("span")).not.toBeNull();
+  expect(container.textContent).toContain("62%");
+  expect(container.textContent).toContain("50%");
+  expect(container.textContent).toContain("−3.1%");
+});
+
+test("a score carries its lean in words beside the number", () => {
+  const { container } = render(
+    <>
+      {sectionCell({ score_sum: 3 }, col("score_sum"))}
+      {sectionCell({ score_sum: -2 }, col("score_sum"))}
+      {sectionCell({ score_sum: 0 }, col("score_sum"))}
+    </>,
+  );
+  expect(container.textContent).toContain("+3");
+  expect(container.textContent).toContain("bullish");
+  expect(container.textContent).toContain("−2");
+  expect(container.textContent).toContain("bearish");
+  expect(container.textContent).toContain("neutral");
+  // the number stays its own node so exact-text lookups keep working
+  expect(screen.getByText("+3")).toHaveClass("tag-on");
+});
+
+test("multiples render with a × and fractions of a normal read as percents", () => {
+  const { container } = render(
+    <>
+      {sectionCell({ ratio: 0.1998 }, col("ratio"))}
+      {sectionCell({ spike_ratio: 1354.8855 }, col("spike_ratio"))}
+      {sectionCell({ peak_ratio: 0.7486 }, col("peak_ratio"))}
+    </>,
+  );
+  expect(container.textContent).toContain("0.20×");
+  expect(container.textContent).toContain("1,355×");
+  expect(container.textContent).toContain("75%");
+});

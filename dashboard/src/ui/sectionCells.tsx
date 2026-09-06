@@ -9,7 +9,7 @@
 // booleans → pills by key semantics, symbols → mono, the rest → formatCell.
 
 import type { ReactNode } from "react";
-import { pct, signed, usd } from "../format";
+import { num, pct, signed, usd } from "../format";
 import type { Column, Row } from "../types";
 import { Badge } from "../components/ui/badge";
 import { formatCell, humanizeId, isMachineId } from "./formatCell";
@@ -33,6 +33,11 @@ const PCT_FRACTION = new Set([
   "short_ratio",
   "net_margin",
   "roe",
+  "peak_ratio",
+  "avg_p",
+  "beat_rate",
+  "iv",
+  "stocks_to_use",
 ]);
 // Signed fractions → signed tinted percent (+1.8% / −0.6%).
 const PCT_SIGNED = new Set([
@@ -47,7 +52,12 @@ const PCT_SIGNED = new Set([
   "excess",
   "dir_excess",
   "premium_return",
+  "realized_return",
+  "vs_last_year",
 ]);
+// Signed fractions where positive is the BAD direction (entry_slippage is
+// signed so positive is always cost): the tint flips, the digits do not.
+const PCT_COST = new Set(["avg_entry_slippage", "entry_slippage"]);
 // Already expressed in percent units (advisor heat, exit advice).
 const PCT_UNIT = new Set(["heat_pct", "weight_pct", "unrealized_pct", "stop_distance_pct"]);
 const DOLLARS = new Set([
@@ -68,7 +78,7 @@ const DOLLARS = new Set([
 // Boolean flags render as a tinted pill; the variant says whether `true`
 // is the good state (a beaten benchmark) or the bad one (a stale ATR) —
 // text stays the primary channel, the tint only agrees with it.
-const BOOL_GOOD = new Set(["verdict_correct", "beat_benchmark", "beats_baseline", "aligned"]);
+const BOOL_GOOD = new Set(["verdict_correct", "beat_benchmark", "beats_baseline", "aligned", "reliable"]);
 const BOOL_BAD = new Set([
   "anti_signal",
   "falling_knife",
@@ -107,15 +117,33 @@ function firstNumber(...candidates: unknown[]): number | undefined {
   return candidates.find(isFiniteNumber);
 }
 
-export function signedPctCell(v: unknown): ReactNode {
+export function signedPctCell(v: unknown, cost = false): ReactNode {
   if (typeof v !== "number") return "—";
-  const cls = v > 0 ? "tag-on" : v < 0 ? "tag-off" : undefined;
+  const good = cost ? v < 0 : v > 0;
+  const cls = v === 0 ? undefined : good ? "tag-on" : "tag-off";
   return <span className={cls}>{signed(v * 100, 1)}%</span>;
 }
 
+// A composite score is a signed vote count; the word beside it is what a
+// reader needs, the number stays its own node so the tone (and tests that
+// look the number up) survive.
 export function scoreCell(v: unknown): ReactNode {
   if (typeof v !== "number") return "—";
-  return <span className={`font-semibold ${v < 0 ? "tag-off" : "tag-on"}`}>{signed(v, 0)}</span>;
+  const lean = v > 0 ? "bullish" : v < 0 ? "bearish" : "neutral";
+  const cls = v > 0 ? "tag-on" : v < 0 ? "tag-off" : "text-muted-foreground";
+  return (
+    <>
+      <span className={`font-semibold ${cls}`}>{signed(v, 0)}</span>
+      <span className="text-muted-foreground ml-1 text-xs">{lean}</span>
+    </>
+  );
+}
+
+// "How many times the normal": a ratio of a value to its own baseline.
+const MULTIPLES = new Set(["ratio", "spike_ratio"]);
+export function multipleCell(v: unknown): ReactNode {
+  if (typeof v !== "number") return "—";
+  return `${v < 10 ? num(v, 2) : num(v, 0)}×`;
 }
 
 const REC_VARIANT: Record<string, "up" | "down" | "hold"> = {
@@ -216,6 +244,7 @@ function scaledCell(row: Row, col: Column, scale: ColumnScale): ReactNode {
   if (k === "signal_id" || k === "trigger") return machineIdCell(row, k, v);
   if (k === "verdict") return researchVerdictPill(v);
   if (k === "score_sum") return scoreCell(v);
+  if (MULTIPLES.has(k)) return multipleCell(v);
   if (k === "recommendation") return recommendationPill(v);
   if (k === "hit_rate") return hitRateCell(row);
   const max = scale.get(k);
@@ -226,8 +255,15 @@ function scaledCell(row: Row, col: Column, scale: ColumnScale): ReactNode {
     return v === true ? <Badge variant="destructive">over BP</Badge> : "—";
   if (k === "worst_staleness_days")
     return typeof v === "number" ? `${formatCell(v)}d` : formatCell(v);
+  // Volume against contracts held is a multiple; with nothing held the
+  // ratio is a division-by-zero placeholder, so say that instead.
+  if (k === "vol_oi_ratio") {
+    if (row.open_interest === 0) return "no open interest";
+    return typeof v === "number" ? `${num(v, 0)}×` : formatCell(v);
+  }
   if (PCT_FRACTION.has(k)) return typeof v === "number" ? pct(v * 100, 0) : formatCell(v);
   if (PCT_SIGNED.has(k)) return signedPctCell(v);
+  if (PCT_COST.has(k)) return signedPctCell(v, true);
   if (PCT_UNIT.has(k)) return typeof v === "number" ? pct(v, 2) : formatCell(v);
   if (DOLLARS.has(k)) return typeof v === "number" ? usd(v) : formatCell(v);
   if (MONO.has(k)) return <span className="font-mono font-medium">{formatCell(v)}</span>;

@@ -219,13 +219,13 @@ def test_bucket_performance_exports_matured_buckets(populated_data_dir):
 
 def test_human_filter_exports_response_rows(populated_data_dir):
     sec = data.export_data(populated_data_dir, NOW)["sections"]["human-filter"]
-    assert any(r["response"] == "acted" for r in sec["rows"])
+    assert any(r["response"] == "Acted" for r in sec["rows"])  # humanized for the table
     assert sec["caveat"]
 
 
 def test_regime_performance_exports_raw_fraction(populated_data_dir):
     sec = data.export_data(populated_data_dir, NOW)["sections"]["regime-performance"]
-    row = next(r for r in sec["rows"] if r["regime"] == "risk_on")
+    row = next(r for r in sec["rows"] if r["regime"] == "Risk on")  # humanized
     assert row["avg_bench_return"] == 0.04  # raw fraction, no _pct formatting
     assert sec["caveat"]
 
@@ -319,8 +319,8 @@ def test_candidates_section_carries_the_growth_door(populated_data_dir):
 
 def test_book_heat_verdict_uses_percent_scale(populated_data_dir):
     sec = data.export_data(populated_data_dir, NOW)["sections"]["book-heat"]
-    heat_tile = next(t for t in sec["tiles"] if "heat" in t["label"])
-    assert heat_tile["value"] > 0.1  # fixture heat is 0.21% — percent, not fraction
+    heat_tile = next(t for t in sec["tiles"] if t["label"] == "Money at risk on a bad day")
+    assert float(heat_tile["value"].rstrip("%")) > 0.1  # percent, not the view's fraction
     assert sec["verdict"]["tone"] in ("on", "off", "mid")
     assert heat_tile["band"] is not None
 
@@ -328,8 +328,8 @@ def test_book_heat_verdict_uses_percent_scale(populated_data_dir):
 def test_book_heat_tiles_cover_positions_coverage_equity_sources_failed(populated_data_dir):
     sec = data.export_data(populated_data_dir, NOW)["sections"]["book-heat"]
     labels = {t["label"] for t in sec["tiles"]}
-    assert {"positions", "coverage", "equity", "sources failed"} <= labels
-    positions_tile = next(t for t in sec["tiles"] if t["label"] == "positions")
+    assert {"Positions", "Positions counted", "Book value", "Feeds missing"} <= labels
+    positions_tile = next(t for t in sec["tiles"] if t["label"] == "Positions")
     assert positions_tile["value"] == 3  # fixture holds AAPL/XOM/XLE
 
 
