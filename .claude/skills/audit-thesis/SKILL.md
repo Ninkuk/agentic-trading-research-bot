@@ -89,24 +89,32 @@ figure or a negation heard in a caption is a lead to check, never evidence.
 
 ## Report — fixed shape
 
-```
-audit-thesis <TICKER> · thesis <thesis-date> · benchmark <title or file>, <date>, <range used>
+Rendered markdown, never inside a code fence — the reader is a terminal, so
+wide tables and long cells do not survive. Findings first, coverage last.
 
-| # | Claim (short) | Where | Tag | Material | Cause | Evidence |
-|---|---------------|-------|-----|----------|-------|----------|
-one row per inventoried claim; Material/Cause blank where the tag makes them moot
+    **audit-thesis <TICKER>** · thesis <thesis-date> · benchmark <title>, <date>, <range used>
+    Material misses: <n> · Post-thesis: <n> · Unconfirmed: <n> · Expert wrong: <n> · Covered/judgment: <n>/<n>
+    Ledger: <the lines appended to research/gaps.log, verbatim — or "none">
 
-Material misses: <n>   Post-thesis events: <n>   Unconfirmed: <n>
-Ledger: <the lines appended to research/gaps.log, verbatim — or "none">
+    **Findings** (every MISS, POST-THESIS, UNCONFIRMED, EXPERT-WRONG; material first)
+    - **MISS · material · <cause>** — <claim> (<timestamp>). <what the thesis lacks; the condition or input it touches>. <one-sentence primary-source evidence>.
+    - **MISS · minor** — <claim> (<ts>). <one sentence>.
+    - **POST-THESIS · material** — <claim> (<ts>). <dated source; the condition it touches>.
+    - **UNCONFIRMED** — <claim> (<ts>). <what document would settle it>.
+    - **EXPERT-WRONG** — <claim> (<ts>). <the primary-source figure>.
 
-## Routing (proposed — nothing below is done until the human says so)
-Thesis:      <kill-thesis re-run with the named attacks, or "none">
-Corrections: <thesis-side factual errors found on the way, for that run — or "none">
-Skill:       <a fix, only if the recurrence rule fires; else "no recurrence — none">
-```
+    **Covered** — <claim>; <claim>; … (one short phrase each, timestamps optional)
+    **Judgment** — <claim>; <claim>; … (the disagreements, one phrase each; name the one that matters most)
 
-Then stop. The ledger append is the skill's own record and needs no approval;
-everything under Routing waits for the human.
+    **Routing** (proposed — nothing below is done until the human says so)
+    - Thesis: <kill-thesis re-run with the named attacks, or "none">
+    - Corrections: <thesis-side factual errors found on the way, for that run — or "none">
+    - Skill: <a fix, only if the recurrence rule fires; else "no recurrence — none">
+
+One bullet per finding, two sentences at most. A benchmark with no findings
+still prints the header, the empty Findings line ("none"), and the two
+coverage lines. Then stop. The ledger append is the skill's own record and
+needs no approval; everything under Routing waits for the human.
 
 ## Routing rules
 
