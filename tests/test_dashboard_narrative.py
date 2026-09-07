@@ -19,6 +19,24 @@ def test_bands():
     assert narrative.qualitative_band("unknown_metric", 1.0) is None
 
 
+def test_band_edges_match_qualitative_band():
+    """Every edge is a boundary of qualitative_band: just below it lands in
+    `below`, exactly on it lands in `above` (lower bound inclusive)."""
+    for metric in ("vix", "hy_spread", "t10y2y", "book_heat_pct"):
+        edges = narrative.band_edges(metric)
+        assert edges, metric
+        for e in edges:
+            v = float(e["value"])
+            assert narrative.qualitative_band(metric, v - 1e-9) == e["below"]
+            assert narrative.qualitative_band(metric, v) == e["above"]
+    assert narrative.band_edges("vix") == [
+        {"value": 15.0, "below": "calm", "above": "normal"},
+        {"value": 20.0, "below": "normal", "above": "nervous"},
+        {"value": 30.0, "below": "nervous", "above": "stressed"},
+    ]
+    assert narrative.band_edges("unknown_metric") == []
+
+
 def test_regime_verdict_tones():
     assert narrative.regime_verdict("risk_on", 4) == {"text": "Risk-on, 4th night", "tone": "on"}
     assert narrative.regime_verdict("risk_off", 1) == {"text": "Risk-off, 1st night", "tone": "off"}

@@ -231,6 +231,7 @@ def _macro_drivers(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
                     "delta": None,
                     "band": None,
                     "history": [],
+                    "thresholds": narrative.band_edges(metric),
                 }
             )
             continue
@@ -244,6 +245,7 @@ def _macro_drivers(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
                 "delta": delta,
                 "band": narrative.qualitative_band(metric, latest),
                 "history": [{"date": row["date"], "value": row["value"]} for row in values],
+                "thresholds": narrative.band_edges(metric),
             }
         )
     return {"tiles": tiles}
@@ -2348,6 +2350,30 @@ SECTION_EXPORTERS: list[
 # modules; a section ships only once it is in this combined list.
 SECTION_EXPORTERS += grades.SECTIONS + book.SECTIONS + sources_views.SECTIONS
 
+# Publisher behind each source DB, exported as the section's `source`. The
+# Sources strand groups its ~30 cards under these (StrandNav chips and
+# body headings), so the key is the institution, not the feed: FINRA's
+# three feeds and the SEC's three land under one heading each. A DB with
+# no entry exports no `source` and its sections group singly.
+PUBLISHERS: dict[str, str] = {
+    "treasury.db": "Treasury",
+    "nyfed.db": "NY Fed",
+    "fred.db": "FRED",
+    "cftc.db": "CFTC",
+    "ats.db": "FINRA",
+    "short_volume.db": "FINRA",
+    "short_interest.db": "FINRA",
+    "sec_fundamentals.db": "SEC",
+    "ftd.db": "SEC",
+    "edgar.db": "SEC",
+    "options.db": "CBOE",
+    "cboe_stats.db": "CBOE",
+    "earnings.db": "Earnings",
+    "eia.db": "EIA",
+    "usda.db": "USDA",
+    "reddit.db": "Reddit",
+}
+
 
 # --- Hero bullets -----------------------------------------------------------
 # Ports sections.py:1184-1343's `_hero_*_clause` SQL into plain dicts for
@@ -2792,6 +2818,8 @@ def export_data(data_dir: str, now_iso: str, repo_root: str | None = None) -> di
             "note": note,
             "about": [{"heading": h, "body": b} for h, b in about],
         }
+        if db_name in PUBLISHERS:
+            header["source"] = PUBLISHERS[db_name]
         try:
             if db_name.endswith(".db"):
                 conn = _ro(data_dir, db_name)

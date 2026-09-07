@@ -76,6 +76,27 @@ def qualitative_band(metric: str, value: float) -> str | None:
     return None
 
 
+def band_edges(metric: str) -> list[dict[str, float | str]]:
+    """The cutoffs behind qualitative_band, oldest-band-first: each edge is
+    {"value", "below", "above"} — the band a value leaves and the one it
+    enters crossing upward. The dashboard draws these as reference lines so
+    a driver's chart shows its distance from the next regime band."""
+    if metric == "vix":
+        bands, top = _VIX_BANDS, _VIX_STRESSED
+    elif metric == "book_heat_pct":
+        bands, top = _BOOK_HEAT_BANDS, _BOOK_HEAT_ELEVATED
+    elif metric == "hy_spread":
+        bands, top = _HY_SPREAD_BANDS, _HY_SPREAD_STRESSED
+    elif metric == "t10y2y":
+        return [{"value": _T10Y2Y_INVERTED_BELOW, "below": "inverted", "above": "normal"}]
+    else:
+        return []
+    labels = [label for _, label in bands] + [top]
+    return [
+        {"value": hi, "below": labels[i], "above": labels[i + 1]} for i, (hi, _) in enumerate(bands)
+    ]
+
+
 def verdict(text: str, tone: Tone) -> dict:
     """The chip shape every verdict/bullet function below returns."""
     return {"text": text, "tone": tone}

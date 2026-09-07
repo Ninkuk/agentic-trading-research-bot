@@ -33,6 +33,27 @@ def test_empty_data_dir_degrades_not_crashes(tmp_path):
         assert body["title"] and body["kicker"] and body["note"]
 
 
+def test_every_sources_section_carries_a_publisher(tmp_path):
+    doc = data.export_data(str(tmp_path), NOW)
+    sources = {sid: b for sid, b in doc["sections"].items() if b["kicker"] == "Sources"}
+    assert sources
+    missing = [sid for sid, b in sources.items() if not b.get("source")]
+    assert missing == []
+    assert set(b["source"] for b in sources.values()) == {
+        "Treasury",
+        "NY Fed",
+        "FRED",
+        "CFTC",
+        "FINRA",
+        "SEC",
+        "CBOE",
+        "Earnings",
+        "EIA",
+        "USDA",
+        "Reddit",
+    }
+
+
 def test_edition_date_is_phoenix():
     doc = data.export_data(str(Path("/nonexistent")), ROLLOVER_NOW)
     assert doc["edition_date"] == "July 7, 2026"  # UTC July 8 04:13 = Phoenix July 7
@@ -80,6 +101,9 @@ def test_macro_drivers_history_bounded(populated_data_dir):
     for t in tiles:
         assert len(t["history"]) <= 90
         assert t["band"] is not None
+        # The chart's reference lines: the cutoffs behind `band`.
+        assert t["thresholds"], t["label"]
+        assert {"value", "below", "above"} <= set(t["thresholds"][0])
 
 
 def test_streak_nights_counts_leading_run_of_matching_regime(tmp_path):
