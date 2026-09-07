@@ -495,7 +495,9 @@ scheduled print inside it, and it is what the outcome ledger can grade
 soonest. `p_win_kill` is the Phase 5 pass's number, `expectation` the
 disputed-expectation line.
 
-then ingest:
+Write the file with the Write tool or a quoted heredoc (`cat <<'EOF'`): an
+unquoted heredoc shell-expands every `$1.2B` in `note`/`expectation` to
+`.2B`, and the journal has no text-only correction path. Then ingest:
 
     uv run python main.py journal --db data/scorer.db --input <scratchpad>/verdict.json
 
