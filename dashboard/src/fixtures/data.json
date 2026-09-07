@@ -218,6 +218,13 @@
               "date": "2026-07-24",
               "value": 3.4
             }
+          ],
+          "thresholds": [
+            {
+              "value": 0.0,
+              "below": "inverted",
+              "above": "normal"
+            }
           ]
         },
         {
@@ -322,6 +329,18 @@
             {
               "date": "2026-07-24",
               "value": 3.4
+            }
+          ],
+          "thresholds": [
+            {
+              "value": 4.0,
+              "below": "calm",
+              "above": "wide"
+            },
+            {
+              "value": 6.0,
+              "below": "wide",
+              "above": "stressed"
             }
           ]
         },
@@ -428,9 +447,27 @@
               "date": "2026-07-24",
               "value": 3.4
             }
+          ],
+          "thresholds": [
+            {
+              "value": 15.0,
+              "below": "calm",
+              "above": "normal"
+            },
+            {
+              "value": 20.0,
+              "below": "normal",
+              "above": "nervous"
+            },
+            {
+              "value": 30.0,
+              "below": "nervous",
+              "above": "stressed"
+            }
           ]
         }
-      ]
+      ],
+      "source": "FRED"
     },
     "regime-timeline": {
       "title": "Regime timeline",
@@ -3875,7 +3912,8 @@
         }
       ],
       "tiles": [],
-      "empty": "no Treasury yield-curve row yet"
+      "empty": "no Treasury yield-curve row yet",
+      "source": "Treasury"
     },
     "federal-debt": {
       "title": "Federal debt and the Treasury's cash",
@@ -3888,7 +3926,8 @@
         }
       ],
       "tiles": [],
-      "empty": "no debt or TGA rows yet"
+      "empty": "no debt or TGA rows yet",
+      "source": "Treasury"
     },
     "funding-markets": {
       "title": "Funding markets",
@@ -3921,7 +3960,8 @@
         }
       ],
       "tiles": [],
-      "empty": "no NY Fed rows yet"
+      "empty": "no NY Fed rows yet",
+      "source": "NY Fed"
     },
     "fred-series": {
       "title": "FRED series",
@@ -4054,7 +4094,8 @@
           "unusual": "notable"
         }
       ],
-      "empty": "no FRED observations yet"
+      "empty": "no FRED observations yet",
+      "source": "FRED"
     },
     "cot-positioning": {
       "title": "Futures positioning — all contracts",
@@ -4169,7 +4210,8 @@
       ],
       "verdict": null,
       "rows": [],
-      "empty": "no legacy COT report loaded yet"
+      "empty": "no legacy COT report loaded yet",
+      "source": "CFTC"
     },
     "cot-disaggregated": {
       "title": "Futures positioning — commodities",
@@ -4284,7 +4326,8 @@
       ],
       "verdict": null,
       "rows": [],
-      "empty": "no disaggregated COT report loaded yet"
+      "empty": "no disaggregated COT report loaded yet",
+      "source": "CFTC"
     },
     "cot-financial": {
       "title": "Futures positioning — financials",
@@ -4399,7 +4442,8 @@
       ],
       "verdict": null,
       "rows": [],
-      "empty": "no financial-futures COT report loaded yet"
+      "empty": "no financial-futures COT report loaded yet",
+      "source": "CFTC"
     },
     "auction-demand": {
       "title": "Treasury auction demand",
@@ -4450,7 +4494,8 @@
         }
       ],
       "rows": [],
-      "empty": "no auction results loaded yet"
+      "empty": "no auction results loaded yet",
+      "source": "Treasury"
     },
     "upcoming-auctions": {
       "title": "Upcoming Treasury auctions",
@@ -4500,7 +4545,8 @@
         }
       ],
       "rows": [],
-      "empty": "no auctions announced in the window"
+      "empty": "no auctions announced in the window",
+      "source": "Treasury"
     },
     "dark-pools": {
       "title": "Dark pools",
@@ -4564,7 +4610,8 @@
         }
       ],
       "rows": [],
-      "empty": "no ATS weekly file loaded yet"
+      "empty": "no ATS weekly file loaded yet",
+      "source": "FINRA"
     },
     "off-exchange-leaders": {
       "title": "Most-traded off exchange",
@@ -4614,7 +4661,8 @@
         }
       ],
       "rows": [],
-      "empty": "no ATS weekly file loaded yet"
+      "empty": "no ATS weekly file loaded yet",
+      "source": "FINRA"
     },
     "sec-revisions": {
       "title": "Restated financials",
@@ -4686,7 +4734,8 @@
         }
       ],
       "rows": [],
-      "empty": "no restated XBRL facts yet"
+      "empty": "no restated XBRL facts yet",
+      "source": "SEC"
     },
     "sec-screener": {
       "title": "Largest filers",
@@ -4757,7 +4806,8 @@
         }
       ],
       "rows": [],
-      "empty": "no XBRL company facts loaded yet"
+      "empty": "no XBRL company facts loaded yet",
+      "source": "SEC"
     },
     "ftd-spikes": {
       "title": "Fails-to-deliver spikes",
@@ -4814,7 +4864,8 @@
         }
       ],
       "rows": [],
-      "empty": "no fails-to-deliver spikes on the latest settlement date"
+      "empty": "no fails-to-deliver spikes on the latest settlement date",
+      "source": "SEC"
     },
     "ftd-largest": {
       "title": "Largest fails by dollar value",
@@ -4871,7 +4922,8 @@
         }
       ],
       "rows": [],
-      "empty": "no fails-to-deliver file loaded yet"
+      "empty": "no fails-to-deliver file loaded yet",
+      "source": "SEC"
     },
     "ftd-streaks": {
       "title": "Persistent fails",
@@ -4928,7 +4980,8 @@
         }
       ],
       "rows": [],
-      "empty": "no active fail streaks"
+      "empty": "no active fail streaks",
+      "source": "SEC"
     },
     "short-volume-ratio": {
       "title": "Heaviest short selling today",
@@ -4992,7 +5045,8 @@
         }
       ],
       "rows": [],
-      "empty": "no symbol above the short-ratio threshold today"
+      "empty": "no symbol above the short-ratio threshold today",
+      "source": "FINRA"
     },
     "short-volume-streaks": {
       "title": "Sustained short pressure",
@@ -5042,7 +5096,8 @@
         }
       ],
       "rows": [],
-      "empty": "no active elevated-short-volume streaks"
+      "empty": "no active elevated-short-volume streaks",
+      "source": "FINRA"
     },
     "short-interest-crowded": {
       "title": "Most crowded shorts",
@@ -5113,7 +5168,8 @@
         }
       ],
       "rows": [],
-      "empty": "no short-interest report loaded yet"
+      "empty": "no short-interest report loaded yet",
+      "source": "FINRA"
     },
     "unusual-options": {
       "title": "Unusual option activity",
@@ -5188,7 +5244,8 @@
         }
       ],
       "rows": [],
-      "empty": "no unusual option contracts on the latest snapshot"
+      "empty": "no unusual option contracts on the latest snapshot",
+      "source": "CBOE"
     },
     "options-sentiment": {
       "title": "Options-market mood",
@@ -5223,7 +5280,8 @@
           "band": null,
           "tone": null
         }
-      ]
+      ],
+      "source": "CBOE"
     },
     "dealer-positioning": {
       "title": "Primary dealer positions",
@@ -5259,7 +5317,8 @@
         }
       ],
       "rows": [],
-      "empty": "the NY Fed primary-dealer feed returns no rows for this query — empty by design until the fetcher's series filter is revisited"
+      "empty": "the NY Fed primary-dealer feed returns no rows for this query — empty by design until the fetcher's series filter is revisited",
+      "source": "NY Fed"
     },
     "earnings-confirmed": {
       "title": "Confirmed earnings dates",
@@ -5316,7 +5375,8 @@
         }
       ],
       "rows": [],
-      "empty": "no confirmed earnings dates in the window"
+      "empty": "no confirmed earnings dates in the window",
+      "source": "Earnings"
     },
     "market-closures": {
       "title": "Market holidays",
@@ -5438,7 +5498,8 @@
         }
       ],
       "rows": [],
-      "empty": "no EIA weekly series yet"
+      "empty": "no EIA weekly series yet",
+      "source": "EIA"
     },
     "ag-balance": {
       "title": "Grain balance sheets",
@@ -5490,7 +5551,8 @@
         }
       ],
       "rows": [],
-      "empty": "no USDA balance-sheet rows yet"
+      "empty": "no USDA balance-sheet rows yet",
+      "source": "USDA"
     },
     "wasde": {
       "title": "World grain supply",
@@ -5558,7 +5620,8 @@
         }
       ],
       "rows": [],
-      "empty": "no WASDE report loaded yet"
+      "empty": "no WASDE report loaded yet",
+      "source": "USDA"
     },
     "reddit-trending": {
       "title": "Reddit attention",
@@ -5646,7 +5709,8 @@
       ],
       "rows": [],
       "caveat": "Crowd attention, not information. A mention spike tells you a name is crowded — which cuts both ways.",
-      "empty": "no reddit capture yet"
+      "empty": "no reddit capture yet",
+      "source": "Reddit"
     },
     "insider-activity": {
       "title": "Insider filings",
@@ -5689,7 +5753,8 @@
         }
       ],
       "rows": [],
-      "empty": "no insider filings in the retained window"
+      "empty": "no insider filings in the retained window",
+      "source": "SEC"
     },
     "recent-filings": {
       "title": "Recent event filings",
@@ -5747,7 +5812,8 @@
         }
       ],
       "rows": [],
-      "empty": "no event filings in the retained window"
+      "empty": "no event filings in the retained window",
+      "source": "SEC"
     },
     "offerings": {
       "title": "Share offerings",
@@ -5805,7 +5871,8 @@
         }
       ],
       "rows": [],
-      "empty": "no offering filings in the retained window"
+      "empty": "no offering filings in the retained window",
+      "source": "SEC"
     },
     "stakes": {
       "title": "Activist and large-holder stakes",
@@ -5863,7 +5930,8 @@
         }
       ],
       "rows": [],
-      "empty": "no 13D/13G stake filings in the retained window"
+      "empty": "no 13D/13G stake filings in the retained window",
+      "source": "SEC"
     }
   },
   "tickers": {

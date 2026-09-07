@@ -22,7 +22,6 @@
 
 import { useEffect, type ComponentType, type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
-import { KpiSpark } from "../charts/KpiSpark";
 import { useHashRoute, type HashRoute } from "../hooks/useHashRoute";
 import { REPO_URL } from "../constants";
 import { ExtLink } from "../ui/ExtLink";
@@ -46,10 +45,15 @@ import { SizeCaps } from "../sections/SizeCaps";
 import { YieldCurve } from "../sections/YieldCurve";
 import {
   STRAND_BLURBS,
+  groupBySource,
+  isQuiet,
+  showsGroups,
   strandId,
   strandLabels,
+  strandOfAnchor,
   strandOfSection,
   strandSections,
+  type SectionGroup,
   type StrandLabel,
 } from "../strands";
 import type { DashboardDoc, Glossary, Section, Tone } from "../types";
@@ -66,9 +70,11 @@ import { Separator } from "../components/ui/separator";
 import { DataTable } from "../ui/DataTable";
 import { SectionShell } from "../ui/SectionShell";
 import { makeSectionCell, visibleColumns } from "../ui/sectionCells";
-import { QuietList, isQuiet } from "../ui/QuietList";
+import { QuietList } from "../ui/QuietList";
 import { StrandNav } from "../ui/StrandNav";
 import { StatTile } from "../ui/StatTile";
+import { TileCharts } from "../ui/TileCharts";
+import { hasChart } from "../ui/tileHistory";
 import { TextReport } from "../ui/TextReport";
 import { VerdictChip } from "../ui/VerdictChip";
 
@@ -89,7 +95,10 @@ const TONE_DOT: Record<Tone, string> = {
 function formatGeneratedAt(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  return d.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 function slug(s: string): string {
@@ -115,9 +124,10 @@ function linkifyTickers(text: string, known: Set<string>): ReactNode[] {
   );
 }
 
-// macro-drivers has no entry: GenericSection's tiles path renders its
-// value+delta tiles with their sparklines inside Macro.
-const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> = {
+const SECTION_COMPONENTS: Record<
+  string,
+  ComponentType<SectionComponentProps>
+> = {
   regime: Regime,
   "regime-timeline": RegimeTimelineSection,
   candidates: Candidates,
@@ -141,9 +151,10 @@ const SECTION_COMPONENTS: Record<string, ComponentType<SectionComponentProps>> =
 // Tiles, then the table, then any text report — all that are present, in
 // that order, so a section carrying a KPI row above its rows (a source
 // card's headline numbers, order-run counts) needs no dedicated component.
-// Tiles with `history` points get the same sparkline the summary card's
-// macro drivers use; CI columns fold into the hit-rate cell (visibleColumns)
-// exactly as the dedicated track-record tables do.
+// Tiles with `history` points (macro drivers, federal debt, funding
+// markets, grain balance) render through TileCharts; CI columns fold into
+// the hit-rate cell (visibleColumns) exactly as the dedicated track-record
+// tables do.
 function GenericSection({ sec, glossary, id }: SectionComponentProps) {
   const tiles = sec.tiles ?? [];
   const hasTable = Boolean(sec.columns && sec.rows && sec.rows.length > 0);
@@ -151,17 +162,16 @@ function GenericSection({ sec, glossary, id }: SectionComponentProps) {
   if (tiles.length === 0 && !hasTable && !hasText) return null;
   return (
     <div className="space-y-4">
-      {tiles.length > 0 && (
-        <div className="tiles">
-          {tiles.map((tile) => (
-            <StatTile key={tile.label} tile={tile}>
-              {tile.history && tile.history.length >= 3 && (
-                <KpiSpark label={tile.label} points={tile.history} />
-              )}
-            </StatTile>
-          ))}
-        </div>
-      )}
+      {tiles.length > 0 &&
+        (tiles.some(hasChart) ? (
+          <TileCharts tiles={tiles} />
+        ) : (
+          <div className="tiles">
+            {tiles.map((tile) => (
+              <StatTile key={tile.label} tile={tile} />
+            ))}
+          </div>
+        ))}
       {hasTable && (
         <>
           <DataTable
@@ -171,11 +181,12 @@ function GenericSection({ sec, glossary, id }: SectionComponentProps) {
             glossary={glossary}
             renderCell={makeSectionCell(sec.rows ?? [])}
           />
-          {typeof sec.total === "number" && sec.total > (sec.rows?.length ?? 0) && (
-            <p className="text-muted-foreground m-0 text-xs">
-              showing the newest {sec.rows?.length} of {sec.total}
-            </p>
-          )}
+          {typeof sec.total === "number" &&
+            sec.total > (sec.rows?.length ?? 0) && (
+              <p className="text-muted-foreground m-0 text-xs">
+                showing the newest {sec.rows?.length} of {sec.total}
+              </p>
+            )}
         </>
       )}
       {hasText && <TextReport lines={sec.text_lines ?? []} />}
@@ -191,32 +202,30 @@ function isShort(sec: Section): boolean {
   return (
     rows > 0 &&
     rows <= SHORT_ROWS &&
-    !(sec.tiles?.length) &&
-    !(sec.text_lines?.length) &&
-    !(sec.curve?.length) &&
+    !sec.tiles?.length &&
+    !sec.text_lines?.length &&
+    !sec.curve?.length &&
     !sec.columns?.some((c) => c.key === "history")
   );
 }
 
-interface StrandBodyProps {
+type RenderSection = (entry: [string, Section]) => ReactNode;
+
+interface CardRunProps {
   entries: [string, Section][];
-  renderSection: (entry: [string, Section]) => ReactNode;
+  renderSection: RenderSection;
 }
 
 // Full cards in exporter order, then the short ones two-up (a lone
 // short card renders full width — half a grid reads as a mistake; the
 // h-full chain stretches each Card to the row height so paired cards'
 // borders align, and min-w-0 stops a wide table from inflating its grid
-// track past the viewport), then
-// one "Quiet tonight" list for sections with only their empty sentence.
-function StrandBody({ entries, renderSection }: StrandBodyProps) {
-  const quiet = entries.filter(([, sec]) => isQuiet(sec));
-  const live = entries.filter(([, sec]) => !isQuiet(sec));
-  const short = live.filter(([, sec]) => isShort(sec));
-  const full = live.filter(([, sec]) => !isShort(sec));
+// track past the viewport).
+function CardRun({ entries, renderSection }: CardRunProps) {
+  const short = entries.filter(([, sec]) => isShort(sec));
+  const full = entries.filter(([, sec]) => !isShort(sec));
   return (
     <>
-      <StrandNav entries={live} />
       {full.map(renderSection)}
       {short.length >= 2 ? (
         <div className="grid gap-4 md:grid-cols-2 [&>section]:h-full [&>section]:min-w-0 [&>section>div]:h-full">
@@ -224,6 +233,60 @@ function StrandBody({ entries, renderSection }: StrandBodyProps) {
         </div>
       ) : (
         short.map(renderSection)
+      )}
+    </>
+  );
+}
+
+interface StrandBodyProps {
+  slug: string;
+  entries: [string, Section][];
+  renderSection: RenderSection;
+}
+
+// The live cards, then one "Quiet tonight" list for sections with only
+// their empty sentence. A long strand (Sources) gets the sticky chip row
+// and its cards regrouped under publisher headings, each heading the
+// anchor its chip links to; the card run inside a group keeps the
+// full-then-short layout.
+function StrandBody({ slug, entries, renderSection }: StrandBodyProps) {
+  const quiet = entries.filter(([, sec]) => isQuiet(sec));
+  const live = entries.filter(([, sec]) => !isQuiet(sec));
+  const groups: SectionGroup[] = groupBySource(slug, live);
+  if (!showsGroups(live, groups)) {
+    return (
+      <>
+        <CardRun entries={live} renderSection={renderSection} />
+        <QuietList entries={quiet} />
+      </>
+    );
+  }
+  return (
+    <>
+      <StrandNav groups={groups} />
+      {groups.map((g) =>
+        g.source ? (
+          <div
+            key={g.anchor}
+            role="group"
+            aria-labelledby={g.anchor}
+            className="space-y-4"
+          >
+            <h2
+              id={g.anchor}
+              className="text-muted-foreground m-0 scroll-mt-16 pt-2 text-xs font-medium tracking-wide uppercase lg:scroll-mt-4"
+            >
+              {g.label}
+            </h2>
+            <CardRun entries={g.entries} renderSection={renderSection} />
+          </div>
+        ) : (
+          <CardRun
+            key={g.anchor}
+            entries={g.entries}
+            renderSection={renderSection}
+          />
+        ),
       )}
       <QuietList entries={quiet} />
     </>
@@ -236,11 +299,21 @@ export interface MainProps {
 
 /** The strand slug the route shows, or "summary". An unknown strand slug
  * and a section id no strand holds both fall back to the Summary. */
-function routedStrand(route: HashRoute, doc: DashboardDoc, labels: StrandLabel[]): string {
+function routedStrand(
+  route: HashRoute,
+  doc: DashboardDoc,
+  labels: StrandLabel[],
+): string {
   if (route.route === "strand") {
     return labels.some((l) => strandId(l) === route.id) ? route.id : "summary";
   }
-  if (route.route === "section") return strandOfSection(doc.sections, route.id) ?? "summary";
+  if (route.route === "section") {
+    return (
+      strandOfSection(doc.sections, route.id) ??
+      strandOfAnchor(labels, route.id) ??
+      "summary"
+    );
+  }
   return "summary";
 }
 
@@ -260,7 +333,10 @@ function Summary({ doc, labels }: SummaryProps) {
         <CardContent className="space-y-4 px-5">
           <div className="space-y-1.5">
             {doc.hero.bullets.map((bullet, i) => (
-              <p className="read m-0 flex items-start gap-2.5 text-base" key={i}>
+              <p
+                className="read m-0 flex items-start gap-2.5 text-base"
+                key={i}
+              >
                 <span
                   aria-hidden="true"
                   className="mt-1.5 size-2.5 shrink-0 rounded-full"
@@ -284,14 +360,23 @@ function Summary({ doc, labels }: SummaryProps) {
       <nav aria-label="strand index" className="strand-index">
         <ItemGroup className="grid gap-3 md:grid-cols-2">
           {labels.map((label) => (
-            <Item key={label} asChild variant="outline" size="sm" className="no-underline">
+            <Item
+              key={label}
+              asChild
+              variant="outline"
+              size="sm"
+              className="no-underline"
+            >
               <a href={`#/${strandId(label)}`}>
                 <ItemContent>
                   <ItemTitle>{label}</ItemTitle>
                   <ItemDescription>{STRAND_BLURBS[label]}</ItemDescription>
                 </ItemContent>
                 <ItemActions>
-                  <ChevronRight aria-hidden="true" className="text-muted-foreground size-4" />
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="text-muted-foreground size-4"
+                  />
                 </ItemActions>
               </a>
             </Item>
@@ -345,7 +430,11 @@ export function Main({ doc }: MainProps) {
             className="strand space-y-4 data-[state=inactive]:hidden"
           >
             <h2 className="sr-only">{label}</h2>
-            <StrandBody entries={strandSections(doc.sections, label)} renderSection={renderSection} />
+            <StrandBody
+              slug={slug}
+              entries={strandSections(doc.sections, label)}
+              renderSection={renderSection}
+            />
           </section>
         );
       })}

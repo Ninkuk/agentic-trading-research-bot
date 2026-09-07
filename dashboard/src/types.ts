@@ -53,6 +53,10 @@ export interface Tile {
   // macro-drivers tiles only:
   series_id?: string;
   delta?: number | null;
+  // Band cutoffs (narrative.band_edges): the value at which the driver
+  // leaves `below` and enters `above` crossing upward.
+  thresholds?: { value: number; below: string; above: string }[];
+  // `date` is ISO daily for most sources, a bare crop year for grain tiles.
   history?: { date: string; value: number | null }[];
 }
 
@@ -106,6 +110,9 @@ export interface AboutBlock {
 export interface Section {
   title?: string;
   kicker?: Kicker;
+  // Publisher behind the section's DB (data.py's PUBLISHERS); the Sources
+  // strand groups its cards under it. Absent for un-mapped DBs.
+  source?: string;
   note?: string;
   about?: AboutBlock[];
   verdict?: Verdict | null;

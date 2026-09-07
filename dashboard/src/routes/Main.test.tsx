@@ -21,7 +21,11 @@ test("renders every hero bullet", () => {
 test("hero bullets link known tickers to their drill-down route", () => {
   const withFlag: DashboardDoc = {
     ...doc,
-    hero: { bullets: [{ text: "AAPL is flagged tonight and worth a look.", tone: "mid" }] },
+    hero: {
+      bullets: [
+        { text: "AAPL is flagged tonight and worth a look.", tone: "mid" },
+      ],
+    },
   };
   render(<Main doc={withFlag} />);
   // Scope to the hero: the scorecard below also links AAPL by design.
@@ -38,9 +42,14 @@ function strandEl(slug: string): HTMLElement {
 
 test("renders every strand as a force-mounted section in order; all inactive on the Summary route", () => {
   render(<Main doc={doc} />);
-  const strands = Array.from(document.querySelectorAll("section.strand")).map((s) => s.id);
-  expect(strands).toEqual(KICKERS.map((k) => k.toLowerCase().replace(/\s+/g, "-")));
-  for (const s of strands) expect(strandEl(s)).toHaveAttribute("data-state", "inactive");
+  const strands = Array.from(document.querySelectorAll("section.strand")).map(
+    (s) => s.id,
+  );
+  expect(strands).toEqual(
+    KICKERS.map((k) => k.toLowerCase().replace(/\s+/g, "-")),
+  );
+  for (const s of strands)
+    expect(strandEl(s)).toHaveAttribute("data-state", "inactive");
   expect(document.querySelector(".hero")).not.toBeNull();
 });
 
@@ -68,17 +77,101 @@ test("a bare section anchor activates the strand holding it and scrolls the sect
   render(<Main doc={doc} />);
   expect(strandEl("track-record")).toHaveAttribute("data-state", "active");
   expect(scrollIntoView).toHaveBeenCalled();
-  expect((scrollIntoView.mock.contexts[0] as HTMLElement).id).toBe("equity-curve");
+  expect((scrollIntoView.mock.contexts[0] as HTMLElement).id).toBe(
+    "equity-curve",
+  );
+});
+
+// The fixture's Sources strand is mostly quiet (3 live cards), so the
+// grouped layout needs a synthetic strand: nine live cards over three
+// publishers plus one card with no publisher at all.
+function groupedSourcesDoc(): DashboardDoc {
+  const columns = [
+    { key: "x", label: "X", numeric: false, direction: null, term: null },
+  ];
+  const rows = Array.from({ length: 8 }, (_, i) => ({ x: `r${i}` }));
+  const others = Object.fromEntries(
+    Object.entries(doc.sections).filter(([, sec]) => sec.kicker !== "Sources"),
+  );
+  const card = (title: string, source?: string) => ({
+    title,
+    kicker: "Sources" as const,
+    source,
+    columns,
+    rows,
+  });
+  return {
+    ...doc,
+    sections: {
+      ...others,
+      "t-debt": card("Federal debt", "Treasury"),
+      "f-rates": card("Funding markets", "NY Fed"),
+      "s-rev": card("Restated financials", "SEC"),
+      "t-auct": card("Auction demand", "Treasury"),
+      "s-ftd": card("Fails spikes", "SEC"),
+      "s-ins": card("Insider filings", "SEC"),
+      "f-deal": card("Dealer positions", "NY Fed"),
+      lone: card("Lone card"),
+      "t-up": card("Upcoming auctions", "Treasury"),
+    },
+  };
+}
+
+test("a long multi-publisher strand groups its cards under headings, and a group anchor routes to it", () => {
+  const scrollIntoView = vi.fn();
+  Element.prototype.scrollIntoView = scrollIntoView;
+  location.hash = "#sources-sec";
+  render(<Main doc={groupedSourcesDoc()} />);
+  expect(strandEl("sources")).toHaveAttribute("data-state", "active");
+  expect((scrollIntoView.mock.contexts[0] as HTMLElement).id).toBe(
+    "sources-sec",
+  );
+  const sources = within(strandEl("sources"));
+  const nav = sources.getByRole("navigation", {
+    name: "sections in this strand",
+  });
+  expect(
+    Array.from(nav.querySelectorAll("a")).map((a) => a.textContent),
+  ).toEqual(["Treasury", "NY Fed", "SEC", "Lone card"]);
+  const group = sources.getByRole("group", { name: "SEC" });
+  expect(within(group).getByRole("heading", { name: "SEC" })).toHaveAttribute(
+    "id",
+    "sources-sec",
+  );
+  for (const id of ["s-rev", "s-ftd", "s-ins"])
+    expect(group.querySelector(`#${id}`)).not.toBeNull();
+  // Treasury's third card sat last in exporter order; grouping pulls it up beside its siblings.
+  const treasury = sources.getByRole("group", { name: "Treasury" });
+  expect(
+    Array.from(treasury.querySelectorAll("section")).map((s) => s.id),
+  ).toEqual(["t-debt", "t-auct", "t-up"]);
+  // A source-less card renders bare: one element with its id, no heading, its chip links straight to it.
+  expect(document.querySelectorAll("#lone").length).toBe(1);
+  expect(sources.queryByRole("group", { name: "Lone card" })).toBeNull();
+  expect(sources.getByRole("link", { name: "Lone card" })).toHaveAttribute(
+    "href",
+    "#lone",
+  );
+});
+
+test("shorter or single-publisher strands stay ungrouped: no headings, no chip row", () => {
+  render(<Main doc={doc} />);
+  for (const slug of ["macro", "signals", "sources"]) {
+    expect(within(strandEl(slug)).queryByRole("navigation")).toBeNull();
+    // Only publisher groups label themselves by a heading; toggle groups don't.
+    expect(
+      strandEl(slug).querySelector("[role=group][aria-labelledby]"),
+    ).toBeNull();
+  }
 });
 
 test("the Summary indexes every strand with a link into it", () => {
   render(<Main doc={doc} />);
   const index = within(document.querySelector(".strand-index") as HTMLElement);
   for (const label of KICKERS) {
-    expect(index.getByRole("link", { name: new RegExp(`^${label}`) })).toHaveAttribute(
-      "href",
-      `#/${label.toLowerCase().replace(/\s+/g, "-")}`,
-    );
+    expect(
+      index.getByRole("link", { name: new RegExp(`^${label}`) }),
+    ).toHaveAttribute("href", `#/${label.toLowerCase().replace(/\s+/g, "-")}`);
   }
 });
 
@@ -93,7 +186,9 @@ test("a section with a kicker matching no known strand still renders, in a trail
         // caught up to — TypeScript can't catch this (it's live JSON), so
         // this is the runtime case the "Other" fallback exists for.
         kicker: "Vibes" as unknown as Kicker,
-        columns: [{ key: "x", label: "X", numeric: false, direction: null, term: null }],
+        columns: [
+          { key: "x", label: "X", numeric: false, direction: null, term: null },
+        ],
         rows: [{ x: "hello" }],
       },
     },
@@ -149,26 +244,50 @@ test("an unregistered section id falls back to the generic DataTable renderer", 
       "totally-new-section": {
         title: "Totally New Section",
         kicker: "Signals",
-        columns: [{ key: "symbol", label: "Symbol", numeric: false, direction: null, term: null }],
+        columns: [
+          {
+            key: "symbol",
+            label: "Symbol",
+            numeric: false,
+            direction: null,
+            term: null,
+          },
+        ],
         rows: [{ symbol: "ZZZZ" }],
       },
     },
   };
   render(<Main doc={withUnregistered} />);
-  const region = within(document.getElementById("totally-new-section") as HTMLElement);
-  expect(region.getByRole("columnheader", { name: /symbol/i })).toBeInTheDocument();
+  const region = within(
+    document.getElementById("totally-new-section") as HTMLElement,
+  );
+  expect(
+    region.getByRole("columnheader", { name: /symbol/i }),
+  ).toBeInTheDocument();
   expect(region.getByText("ZZZZ")).toBeInTheDocument();
 });
 
 test("generic fallback sections with duplicate titles keep independent page state (keyed by id, not title)", async () => {
-  const columns = [{ key: "x", label: "X", numeric: false, direction: null, term: null }];
+  const columns = [
+    { key: "x", label: "X", numeric: false, direction: null, term: null },
+  ];
   const manyRows = Array.from({ length: 10 }, (_, i) => ({ x: `row-${i}` }));
   const dup: DashboardDoc = {
     ...doc,
     sections: {
       ...doc.sections,
-      "dup-one": { title: "Duplicate Title", kicker: "Research", columns, rows: manyRows },
-      "dup-two": { title: "Duplicate Title", kicker: "Research", columns, rows: manyRows },
+      "dup-one": {
+        title: "Duplicate Title",
+        kicker: "Research",
+        columns,
+        rows: manyRows,
+      },
+      "dup-two": {
+        title: "Duplicate Title",
+        kicker: "Research",
+        columns,
+        rows: manyRows,
+      },
     },
   };
   render(<Main doc={dup} />);
@@ -186,7 +305,12 @@ test("a pinned ticker (shared pins pref) stays first in the scorecard despite an
   localStorage.setItem("atrb:pins", JSON.stringify(["MSFT"]));
   localStorage.setItem(
     "atrb:scorecard",
-    JSON.stringify({ sortKey: "score_sum", sortDir: "desc", expanded: false, hiddenCols: [] }),
+    JSON.stringify({
+      sortKey: "score_sum",
+      sortDir: "desc",
+      expanded: false,
+      hiddenCols: [],
+    }),
   );
   render(<Main doc={doc} />);
   const scorecard = within(document.getElementById("scorecard") as HTMLElement);
@@ -200,7 +324,9 @@ test("regime section renders its tiles and drivers table", () => {
   render(<Main doc={doc} />);
   // The regime verdict shows twice by design: once compact in the KPI row,
   // once again in the Macro strand's Regime section header.
-  expect(screen.getAllByText("Risk-on, 3rd night").length).toBeGreaterThanOrEqual(2);
+  expect(
+    screen.getAllByText("Risk-on, 3rd night").length,
+  ).toBeGreaterThanOrEqual(2);
   expect(screen.getByText("VIX level")).toBeInTheDocument();
 });
 
@@ -212,7 +338,9 @@ test("empty sections collapse into the strand's Quiet tonight list, ids intact",
       "nothing-tonight": {
         title: "Nothing Tonight",
         kicker: "Ops",
-        columns: [{ key: "x", label: "X", numeric: false, direction: null, term: null }],
+        columns: [
+          { key: "x", label: "X", numeric: false, direction: null, term: null },
+        ],
         rows: [],
         empty: "no rows this run",
       },
@@ -226,7 +354,9 @@ test("empty sections collapse into the strand's Quiet tonight list, ids intact",
 });
 
 test("short row-only sections share a two-up grid; long ones stay full width", () => {
-  const columns = [{ key: "x", label: "X", numeric: false, direction: null, term: null }];
+  const columns = [
+    { key: "x", label: "X", numeric: false, direction: null, term: null },
+  ];
   const shortRows = [{ x: "a" }, { x: "b" }];
   const longRows = Array.from({ length: 12 }, (_, i) => ({ x: `r${i}` }));
   const grid: DashboardDoc = {
@@ -247,12 +377,16 @@ test("short row-only sections share a two-up grid; long ones stay full width", (
   expect(a.parentElement?.className).toContain("[&>section]:h-full");
   expect(a.parentElement?.className).toContain("[&>section]:min-w-0");
   expect(a.parentElement?.className).toContain("[&>section>div]:h-full");
-  expect(a.parentElement).toBe(document.getElementById("short-b")?.parentElement);
+  expect(a.parentElement).toBe(
+    document.getElementById("short-b")?.parentElement,
+  );
   expect(c.parentElement?.className).not.toContain("md:grid-cols-2");
 });
 
 test("a lone short section renders full width, not half a grid", () => {
-  const columns = [{ key: "x", label: "X", numeric: false, direction: null, term: null }];
+  const columns = [
+    { key: "x", label: "X", numeric: false, direction: null, term: null },
+  ];
   const longRows = Array.from({ length: 12 }, (_, i) => ({ x: `r${i}` }));
   const lone: DashboardDoc = {
     ...doc,
@@ -262,7 +396,12 @@ test("a lone short section renders full width, not half a grid", () => {
       // lengthen them so lone-short is the strand's only short section.
       pending: { ...doc.sections["pending"], rows: longRows },
       "basis-breaks": { ...doc.sections["basis-breaks"], rows: longRows },
-      "lone-short": { title: "Lone Short", kicker: "Ops", columns, rows: [{ x: "a" }] },
+      "lone-short": {
+        title: "Lone Short",
+        kicker: "Ops",
+        columns,
+        rows: [{ x: "a" }],
+      },
     },
   };
   render(<Main doc={lone} />);

@@ -1,5 +1,3 @@
-// oxlint-disable react/only-export-components -- isQuiet is the strand
-// partition rule that Main.tsx applies before choosing this list.
 // The strand's "Quiet tonight" card: sections whose body is only their
 // `empty` sentence collapse to one row each (a shadcn Item) instead of a
 // full card, so a strand's height reflects what it has to say. Each row
@@ -23,23 +21,14 @@ export interface QuietListProps {
   entries: [SectionId, Section][];
 }
 
-/** A section belongs in the quiet list when it has no rows, no tiles, no
- * text, no chart data, and no error — just its empty sentence. */
-export function isQuiet(sec: Section): boolean {
-  if (sec.error || sec.empty === undefined) return false;
-  const hasRows = Array.isArray(sec.rows) && sec.rows.length > 0;
-  const hasTiles = Array.isArray(sec.tiles) && sec.tiles.length > 0;
-  const hasText = Array.isArray(sec.text_lines) && sec.text_lines.length > 0;
-  const hasCurve = Array.isArray(sec.curve) && sec.curve.length > 0;
-  return !hasRows && !hasTiles && !hasText && !hasCurve;
-}
-
 export function QuietList({ entries }: QuietListProps) {
   if (entries.length === 0) return null;
   return (
     <Card className="quiet-list">
       <CardHeader>
-        <h2 className="m-0 text-lg leading-none font-semibold">Quiet tonight</h2>
+        <h2 className="m-0 text-lg leading-none font-semibold">
+          Quiet tonight
+        </h2>
         <p className="text-muted-foreground m-0 max-w-[75ch] text-sm">
           Sections with nothing to show this run.
         </p>
@@ -47,7 +36,12 @@ export function QuietList({ entries }: QuietListProps) {
       <CardContent>
         <ul className="m-0 list-none divide-y p-0">
           {entries.map(([id, sec]) => (
-            <Item key={id} asChild size="sm" className="ledger scroll-mt-16 rounded-none px-0">
+            <Item
+              key={id}
+              asChild
+              size="sm"
+              className="ledger scroll-mt-16 rounded-none px-0 lg:scroll-mt-4"
+            >
               <li id={id}>
                 <ItemMedia variant="icon">
                   <Inbox aria-hidden="true" />
@@ -57,7 +51,10 @@ export function QuietList({ entries }: QuietListProps) {
                   <ItemDescription>{sec.empty}</ItemDescription>
                 </ItemContent>
                 <ItemActions>
-                  <AboutDialog title={sec.title ?? "About this section"} about={sec.about} />
+                  <AboutDialog
+                    title={sec.title ?? "About this section"}
+                    about={sec.about}
+                  />
                 </ItemActions>
               </li>
             </Item>

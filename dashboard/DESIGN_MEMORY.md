@@ -41,7 +41,19 @@ named rules) for the impeccable skill; keep all three in sync.
 - Within a strand: full cards in exporter order, then row-only cards of ≤6
   rows two-up (`md:grid-cols-2`), then one "Quiet tonight" card listing
   empty sections (title, empty sentence, About) — ids stay addressable.
-  Strands of ≥8 cards get a sticky StrandNav pill row (Sources).
+- A strand of ≥8 live cards spread over ≥2 publishers (Sources) regroups
+  them under publisher headings (`source` from data.py's PUBLISHERS, keyed
+  on the DB: SEC, FINRA, Treasury, NY Fed, …). Group anchors are
+  `<strand>-<publisher>`; the hash router resolves them after section ids.
+- The rail is the table of contents: each strand is a Collapsible of
+  its sub-items (publishers for Sources, live section titles elsewhere,
+  truncated with the title in a tooltip), the chevron toggling it, and
+  `useScrollSpy` marks the one in view with `aria-current="location"`.
+  Landing on a strand opens it; the open set is session state, never a
+  pref (a persisted set drifts from where the reader is). Below `lg` the sidebar is a sheet
+  that closes on navigation, so the one-line StrandNav chip row (same
+  items, same scroll-spy) shows there only. Scroll offsets are
+  `scroll-mt-16 lg:scroll-mt-4`: the sticky row exists only below `lg`.
 - shadcn Sidebar shell (`src/ui/AppShell.tsx`, since 2026-09-01; replaced
   the strand tab strip): Summary + one item per strand, offcanvas-collapsible
   with the trigger in the masthead, open state in prefs, a Sheet under `lg`
@@ -85,10 +97,9 @@ named rules) for the impeccable skill; keep all three in sync.
   (the 12px Floor Rule; 10px dir-hints failed AA in light mode).
 - No resting shadows (cards, sidebar rail); shadows only on floating layers
   (dialog shadow-lg, tooltips).
-- Charts: shadcn ChartContainer/ChartTooltip. Sparklines need hidden
-  auto-domain YAxis (zero-baseline turns them into filled boxes) and
-  tooltips positioned above the chart. No tiny 2-point sparklines — if the
-  series is short, drop the chart. `--chart-1..5` run green, blue, gold,
+- Charts: shadcn ChartContainer/ChartTooltip. Small multiples need a hidden
+  padded-domain YAxis (zero-baseline turns them into filled boxes). No tiny
+  2-point sparklines — if the series is short, drop the chart. `--chart-1..5` run green, blue, gold,
   violet, red-orange in that order (adjacent pairs validated: all dataviz
   checks pass in both modes, worst adjacent CVD ΔE 27); dark is the same
   order re-stepped into L 0.48–0.67 for the `#141414` card. Regime dots use
@@ -121,7 +132,18 @@ named rules) for the impeccable skill; keep all three in sync.
 - `GenericSection` renders tiles + table + text together, so an
   exporter-only section (no React component) gets KPI tiles with sparklines
   above its rows. Per-row number arrays render as an inline SVG `Sparkline`
-  (not recharts — thirty per leaderboard); tile `history` points use KpiSpark.
+  (not recharts — thirty per leaderboard); tile `history` points use
+  TileCharts/DriverChart (below).
+- Tiles with history are small multiples, not KPI tiles: `TileCharts` lays
+  them out one column each (`md:grid-cols-{n}` up to four, six wrap as 3×2)
+  and each gets a measured-width `DriverChart` (~110px tall, first/middle/
+  last date ticks, tooltip inside the plot) — 90 daily points in a 96px
+  sparkline left half the card empty and the tooltip on the neighbour's
+  headline. Macro drivers also ship `thresholds` (narrative.band_edges, the
+  cutoffs behind the tile's band word), drawn as dashed reference lines
+  labelled with the band above; `driverDomain` draws a cutoff outside the
+  data only when within half the 90-day range, nearest per side, so a far
+  cutoff never flattens the series into a ribbon.
 - Booleans render as `bool--good` / `bool--bad` pills keyed by column
   semantics (a beaten benchmark is good, a stale ATR is bad); unknown keys
   stay plain yes/no.
