@@ -878,16 +878,33 @@ def funding_markets(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         day = sofr["effective_date"]
         spread = sofr["sofr_iorb_spread"]
         stressed = spread is not None and spread > 0.05
+        # The rate, volume and IORB tiles carry the same 90-day history the
+        # balance-sheet tiles do (the view only serves the latest day).
+        sofr_rows = conn.execute(
+            "SELECT effective_date, percent_rate, volume_bn FROM reference_rates"
+            " WHERE rate_type = 'SOFR' ORDER BY effective_date"
+        ).fetchall()[-_DAYS:]
+        rate_hist = [{"date": r[0], "value": r[1]} for r in sofr_rows if r[1] is not None]
+        vol_hist = [{"date": r[0], "value": r[2]} for r in sofr_rows if r[2] is not None]
+        iorb_hist = [
+            {"date": d, "value": v}
+            for d, v in conn.execute(
+                "SELECT effective_date, percent_rate FROM iorb ORDER BY effective_date"
+            ).fetchall()[-_DAYS:]
+            if v is not None
+        ]
         tiles += [
-            tile("Overnight lending rate (SOFR)", sofr["percent_rate"], f"% · {day}"),
-            tile("Rate the Fed pays banks (IORB)", sofr["iorb"], f"% · {day}"),
+            tile(
+                "Overnight lending rate (SOFR)", sofr["percent_rate"], f"% · {day}", None, rate_hist
+            ),
+            tile("Rate the Fed pays banks (IORB)", sofr["iorb"], f"% · {day}", None, iorb_hist),
             tile(
                 "Gap between them",
                 spread,
                 "cash is scarce" if stressed else "calm",
                 "off" if stressed else "on",
             ),
-            tile("Overnight lending volume", sofr["volume_bn"], f"$bn · {day}"),
+            tile("Overnight lending volume", sofr["volume_bn"], f"$bn · {day}", None, vol_hist),
         ]
     for t in (
         _series_tile(

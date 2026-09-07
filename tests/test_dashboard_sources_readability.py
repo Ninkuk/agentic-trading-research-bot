@@ -100,6 +100,17 @@ def _funding_conn(iorb=None, spread=None):
             ["effective_date", "percent_rate", "volume_bn", "iorb", "sofr_iorb_spread"],
             [("2026-07-08", 3.66, 2949.0, iorb, spread)],
         )
+        + _view(
+            "reference_rates",
+            ["rate_type", "effective_date", "percent_rate", "volume_bn"],
+            [
+                ("SOFR", "2026-07-06", 3.64, 2900.0),
+                ("SOFR", "2026-07-07", 3.65, 2920.0),
+                ("SOFR", "2026-07-08", 3.66, 2949.0),
+                ("EFFR", "2026-07-08", 3.58, 100.0),
+            ],
+        )
+        + _view("iorb", ["effective_date", "percent_rate"], [("2026-07-08", iorb)])
         + _view("v_soma_runoff", ["as_of_date", "par_value"], [("2026-07-07", 6.36e12)])
         + _view("v_rrp_trend", ["operation_date", "take_up"], [("2026-07-08", 0.675e9)])
     )
@@ -121,6 +132,26 @@ def test_funding_markets_tiles_are_named_in_words():
     assert tiles["Overnight lending volume"]["band"] == "$bn · 2026-07-08"
     assert tiles["Fed's holdings"]["band"] == "$T · 2026-07-07"
     assert tiles["Reverse repo parked at the Fed"]["band"] == "$B · 2026-07-08"
+
+
+def test_funding_markets_rate_and_volume_tiles_carry_sofr_history():
+    """The rate and volume tiles chart the SOFR rows only (EFFR shares the
+    table); IORB's lone row is too short for a chart and ships no history."""
+    sec = sources_views.funding_markets(_funding_conn(iorb=3.65, spread=0.01), NOW)
+    tiles = {t["label"]: t for t in sec["tiles"]}
+    assert [p["value"] for p in tiles["Overnight lending rate (SOFR)"]["history"]] == [
+        3.64,
+        3.65,
+        3.66,
+    ]
+    assert [p["value"] for p in tiles["Overnight lending volume"]["history"]] == [
+        2900.0,
+        2920.0,
+        2949.0,
+    ]
+    assert tiles["Overnight lending rate (SOFR)"]["history"][-1]["date"] == "2026-07-08"
+    assert "history" in tiles["Rate the Fed pays banks (IORB)"]
+    assert len(tiles["Rate the Fed pays banks (IORB)"]["history"]) == 1
 
 
 def test_funding_markets_omits_tiles_with_no_value():
