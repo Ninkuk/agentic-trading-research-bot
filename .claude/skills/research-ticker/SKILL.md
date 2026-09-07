@@ -229,8 +229,8 @@ hold the assumptions fixed and solve for the return the market already implies.
 **Pull the inputs live** from `page_data("/stocks/<TICKER>/statistics/")` — its
 `valuation`, `cashFlow`, and `balanceSheet` blocks carry market cap, enterprise
 value, `fcf`, `capex`, and `debt` in one request. Read each row's **`hover`**
-field, not `value`: `hover` is the exact figure (`'4,644,435,714,320'`), while
-`value` is a rounded display string (`'4.64T'`). The market-cap row's id is
+field, not `value`: `hover` is the exact figure (`'4,669,699,774,600'`), while
+`value` is a rounded display string (`'4.67T'`). The market-cap row's id is
 `marketcap` — lowercased, unlike the `marketCap` used everywhere else.
 
 **`fcf` on this route is a levered (equity) flow, so pair it with market cap.**
@@ -243,8 +243,9 @@ Unlevered (firm) cash flow is what pairs with enterprise value; only then pass
 `--net-debt`. The solver never guesses which flow it was handed, so nothing
 downstream will catch a mismatch — it just returns a confident wrong number.
 
-`fcf` is also **not** stockanalysis's own `leveredFCF`. On AAPL TTM all three
-disagree: `fcf` 129.17B, `leveredFCF` 97.69B, `unleveredFCF` 119.20B. If you
+`fcf` is also **not** stockanalysis's own `leveredFCF`. On VZ TTM all three
+disagree: `fcf` 21.53B, `leveredFCF` 17.47B, `unleveredFCF` 22.06B (on AAPL the
+last two coincide, so it cannot show you the gap). If you
 take a flow from `financials/cash-flow-statement/` instead, pair it by the name
 it actually carries, and mind that route's own traps.
 
