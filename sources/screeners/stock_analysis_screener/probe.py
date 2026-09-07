@@ -96,11 +96,45 @@ def data_url(path):
     return (path if path.startswith("http") else BASE + path) + "__data.json" + q
 
 
-def fetch_data_json(path, timeout=60):
-    """Fetch and JSON-parse the ``__data.json`` for a page route."""
-    req = urllib.request.Request(data_url(path), headers=_UA)
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.load(resp)
+def resolve_data_json(path, timeout=60, *, urlopen=urllib.request.urlopen, max_redirects=3):
+    """Fetch the ``__data.json`` for a page route, following SvelteKit's JSON
+    redirect envelope, and return ``(final_path, raw)``.
+
+    A moved route (``/stocks/{T}/filings/`` -> ``/filings/{T}/``), a lowercase
+    symbol, or a changed ticker (``/stocks/CSU/`` -> ``/stocks/snda/``) answers
+    HTTP 200 with ``{"type": "redirect", "location": ...}`` and no ``nodes`` --
+    urllib never sees a 3xx, so a raw fetch decodes to zero nodes.
+    """
+    hops = 0
+    while True:
+        req = urllib.request.Request(data_url(path), headers=_UA)
+        with urlopen(req, timeout=timeout) as resp:
+            raw = json.load(resp)
+        if not (isinstance(raw, dict) and raw.get("type") == "redirect"):
+            return path, raw
+        hops += 1
+        if hops > max_redirects:
+            raise RuntimeError(f"too many __data.json redirects from {path}")
+        path = raw["location"]
+
+
+def fetch_data_json(path, timeout=60, **kw):
+    """Fetch and JSON-parse the ``__data.json`` for a page route (redirects followed)."""
+    return resolve_data_json(path, timeout, **kw)[1]
+
+
+def page_error(raw):
+    """The trailing ``{"type": "error", "status": ...}`` node, or ``None``.
+
+    Pro-gated pages, bogus slugs and tickers a route has no data for all end in
+    this node inside an HTTP 200; ``decode_nodes`` drops it, so ``page_data``
+    silently hands back the preceding layout node instead.
+    """
+    nodes = raw.get("nodes") or []
+    last = nodes[-1] if nodes else None
+    if isinstance(last, dict) and last.get("type") == "error":
+        return {"status": last.get("status"), "message": (last.get("error") or {}).get("message")}
+    return None
 
 
 def decode_nodes(raw):
@@ -147,13 +181,18 @@ def main(argv=None):
     keys_only = "--keys" in argv
     for path in (a for a in argv if not a.startswith("--")):
         try:
-            raw = fetch_data_json(path)
+            final, raw = resolve_data_json(path)
         except Exception as exc:  # noqa: BLE001 - CLI diagnostic
             print(json.dumps({"path": path, "error": str(exc)[:120]}))
             continue
         nodes = [n for n in decode_nodes(raw) if n is not None]
         last = nodes[-1] if nodes else None
         report = {"path": path, "n_data_nodes": len(nodes)}
+        if final != path:
+            report["redirected_to"] = final
+        err = page_error(raw)
+        if err:
+            report["page_error"] = err  # keys below are the layout fallback, not page data
         if isinstance(last, dict):
             report["keys"] = sorted(last)
             if not keys_only:

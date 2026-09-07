@@ -45,17 +45,35 @@ curl -sL --compressed "https://stockanalysis.com/$ENTRY" \
 ```
 
 The same crawl over `_app/immutable/**` chunks finds the `_api` surface (§4) —
-grep for `/_api/`.
+grep for `/_api/`. An entry in the table is not proof the route still serves
+data: `/stocks/[symbol]/filings/[[id]]` is still listed but only as a redirect
+shim to the top-level `/filings/[symbol]/[[id]]` — check for the redirect
+envelope below.
 
-**Two payload signatures mean "nothing here":**
+**Three payload signatures mean "nothing here":**
 
+- **JSON redirect envelope** — `{"type":"redirect","location":"/filings/AAPL/"}`,
+  HTTP 200, no `nodes`. SvelteKit answers with it for lowercase→canonical
+  (`/filings/cvna/` → `/filings/CVNA/`), **ticker changes** (`/stocks/CSU/` →
+  `/stocks/snda/` — CSU is Sonida now, so a redirect can land on a different
+  company than the one you asked for), and **moved routes** (`/stocks/{T}/filings/`
+  → `/filings/{T}/`). urllib never sees a 3xx; a raw fetch decodes to zero nodes
+  and `page_data` returns `None`. `probe.fetch_data_json` follows up to three
+  hops and `resolve_data_json` returns the final path beside the payload.
 - **Layout node only** (keys `ab`, `cookies`, `session`, `theme`, `user`, …) —
   the route has no server `load()`. E.g. `/tools/`, `/changelog/`, and
   `/quote/{T}/` *without* an exchange segment.
-- **`{info: …}` alone** — gated or invalid. Pro-gated pages
-  (`financials/segments/`, `financials/full/`) and bogus slugs
-  (`/stocks/AAPL/metrics/not-a-metric/`) share this shape. An invalid metric
-  slug returns HTTP 200, not 404 — check for `metric` in the keys.
+- **Page node is `{"type":"error","status":404,"error":{"message":"not found"}}`**
+  inside an HTTP 200. Pro-gated pages (`financials/segments/`,
+  `financials/full/`), bogus slugs (`/stocks/AAPL/metrics/not-a-metric/`) and
+  **tickers the route has no data for** (`/stocks/CVNA/metrics/`) all return
+  this identical node. `decode_nodes` drops it, so `page_data` hands back the
+  node before it — the per-ticker layout `{info: …}` under `/stocks/{T}/…`,
+  the bare root layout under a top-level route such as `/filings/…`. `{info}`
+  alone therefore means "the page node errored", never "gated" specifically;
+  `probe.page_error(raw)` reads the node, and the CLI prints it as `page_error`.
+  Gated and absent carry the same 404 status on the wire — the catalog's own
+  route notes are the only way to tell them apart.
 
 **Do not exist** (HTTP 404 — don't re-probe):
 `/stocks/{T}/` + `short-interest`, `institutional`, `insider-trading`,
@@ -65,7 +83,7 @@ screener data-points (`shortFloat`, `shortShares`, `shortRatio`, §6); ownership
 in `sharesInsiders`/`sharesInstitutions`.
 
 > ⚠️ **A 404 on one slug says nothing about the sibling.** `sec-filings` 404s but
-> `/stocks/{T}/filings/` is real and carries direct PDF links (below); `chart` 404s
+> `/filings/{T}/` is real and carries direct PDF links (below); `chart` 404s
 > under a ticker but exists at `/chart/{T}/`; `holdings` 404s under `/stocks/` but
 > exists under `/quote/`.
 
@@ -96,7 +114,9 @@ The `exchange` segment is optional in the route (`/quote/[[exchange]]/[symbol]`)
 but **omitting it yields a layout-only payload** — always pass it. The two
 families are not identical: `/stocks/` has `metrics/` and `/quote/` does not;
 `/quote/` has `holdings/` and `/stocks/` does not (both 404 the other way). On
-non-US listings `holdings/` and `filings/` return `{info}` — present but unfed.
+non-US listings `holdings/` returns `{info}` — present but unfed. Filings left
+both families for the top-level `/filings/{SYMBOL}/` route (table below), where
+non-US names **are** fed.
 
 ### Per-ticker (stocks & international quotes)
 
@@ -110,10 +130,10 @@ non-US listings `holdings/` and `filings/` return `{info}` — present but unfed
 | `…/financials/ratios/` | Ratios |
 | `…/financials/segments/` | **Pro-gated** — `info` placeholder only |
 | `…/financials/full/` | **Pro-gated** — `info` placeholder only |
-| `/stocks/{T}/metrics/` | **Operating metrics & breakdowns.** `annualMetrics`/`quarterlyMetrics`/`trailingMetrics`, each `{name, type, count, values:[{x: date, y: number}]}` — **raw numbers**. Groups: Revenue by Segment, Revenue by Geography, Gross Profit/Margin by Type, Operating Expense Breakdown, plus company-specific operating metrics (AAPL: Global Active Devices). **Not** Pro-gated, unlike `financials/segments/` — this is the free path to segment and geography splits. Carries `sourceLastUpdated`, `groups`, `navigationItems` |
-| `/stocks/{T}/metrics/{metric}/` | One breakdown in isolation (`{data, metric}`). Slug = the `navigationItems` title kebab-cased: `revenue-by-segment`, `revenue-by-geography`, `gross-profit-by-type`, `gross-margin-by-type`, `operating-expense-breakdown`. An unknown slug returns **200 with `{info}`**, not 404. Stocks only — `/quote/…/metrics/` 404s |
-| `/stocks/{T}/filings/` | **IR document index with direct PDF URLs.** `events` = fiscal events `{eventId, title, eventDate, fiscalYear, fiscalPeriod, filings:[{id, type, title, fileUrl}]}`. AAPL: 87 events, 2011→2026. `type` ∈ `earnings_release`, `quarterly_report`, `annual_report`, `proxy`, `slides`, `press_release`. `fileUrl` is a **Quartr**-hosted PDF, *not* SEC EDGAR — for EDGAR use this repo's `edgar` screener. Also on `/quote/…/filings/` (but unfed for non-US) |
-| `/stocks/{T}/filings/{id}/` | **Same payload**, only `selectedId` differs — the id selects a PDF client-side. Don't fetch per-id; the index already has every `fileUrl` |
+| `/stocks/{T}/metrics/` | **Operating metrics & breakdowns.** `annualMetrics`/`quarterlyMetrics`/`trailingMetrics`, each `{name, type, count, values:[{x: date, y: number}]}` — **raw numbers**. Groups: Revenue by Segment, Revenue by Geography, Gross Profit/Margin by Type, Operating Expense Breakdown, plus company-specific operating metrics (AAPL: Global Active Devices). **Not** Pro-gated, unlike `financials/segments/` — this is the free path to segment and geography splits. Carries `sourceLastUpdated`, `groups`, `navigationItems`. ⚠️ **Per-ticker coverage, not a gate:** a ticker with no breakdowns returns the 404 error node (§1) and `page_data` shows the layout `{info}`, identical to Pro-gating. 2026-09-06: AAPL, MSFT, VZ, IBM, TGT, LULU fed; CVNA, BBAI, GIII, FRNM, TJGC not. Absence says nothing about the 10-K's segment note (GIII reports segments and still errors) |
+| `/stocks/{T}/metrics/{metric}/` | One breakdown in isolation (`{data, metric}`). Slug = the `navigationItems` title kebab-cased: `revenue-by-segment`, `revenue-by-geography`, `gross-profit-by-type`, `gross-margin-by-type`, `operating-expense-breakdown`. An unknown slug returns **200 with the error node** (`page_data` shows `{info}`), not 404. Stocks only — `/quote/…/metrics/` 404s (HTML) |
+| `/filings/{SYMBOL}/` | **IR document index with direct PDF URLs** — moved here from `/stocks/{T}/filings/` and `/quote/…/filings/`, both of which now JSON-redirect (§1). Keys `events`, `filingsSymbol`, `filingsMeta`, `metaInputs`, `info`, `selectedId`. `events` = fiscal events `{eventId, title, eventDate, fiscalYear, fiscalPeriod, filings:[{id, type, title, fileUrl}]}`; filing-level `title` is **null** — the event `title` ("Q3 2026", "J.P. Morgan Automotive Conference") names it. AAPL 88 events 2011→2026; CVNA 86, 2017→2026. `type` ∈ `earnings_release`, `quarterly_report`, `annual_report`, `proxy`, `slides`, `press_release`, `registration`, `shareholder_letter`. `fileUrl` is a **Quartr**-hosted PDF, *not* SEC EDGAR — for EDGAR use this repo's `edgar` screener. **The symbol form is the whole trick:** US names take the bare ticker (`/filings/AAPL/`); non-US names take `EXCHANGE:TICKER` (`/filings/TSX:CSU/` — 83 events back to 2007, so non-US filings *are* fed here). The wrong form (`/filings/NASDAQ:AAPL/`) returns the 404 error node, and because this is a top-level route the fallback node is the bare root layout, which reads like "no server `load()`" |
+| `/filings/{SYMBOL}/{id}/` | **Same payload**, only `selectedId` differs — the id selects a PDF client-side. Don't fetch per-id; the index already has every `fileUrl`. An unknown id returns the error node |
 | `/stocks/{T}/revenue/` | `stats` (revenue, revenue_growth, employees, ps_ratio, revenue_per_employee, last_reported) + `data.annual`/`.quarterly` series — **raw integers**, no suffix strings. Also `peers`, `news` |
 | `/stocks/{T}/transcripts/` | Index under key `transcripts` (AAPL **74**, back ~18 years; VZ **76**, only back to 2019 — depth varies sharply by ticker). Each `{id, quartrEventId, fiscalYear, quarterLabel, detailSlug, eventDate, eventTitle, files}`. ⚠️ **Not only earnings calls** — conference presentations are interleaved (`eventTitle` "J.P. Morgan 54th Annual…", `quarterLabel` "FY 2026"). Filter on `eventTitle`/`quarterLabel` if you want the quarterly calls alone |
 | `/stocks/{T}/transcripts/{detailSlug}/` | **Full transcript** (~35k chars ≈ 8.6k tokens each; a 76-call corpus is ~2.6M chars ≈ 650k tokens, but fetches in ~25s at 0.33s/call). `transcriptQuarter.transcriptTurns` = list of `{speakerName, role, company, paragraphs}`. ⚠️ **`paragraphs` is `list[list[dict]]`** — a list of paragraphs, each a list of *sentences* `{text, startSec, endSec}` (audio-aligned). Two levels, not one: `[s['text'] for p in turn['paragraphs'] for s in p]`. Plus `summaryShort`, `summaryLongHtml` (AI-generated — tier low-confidence), `audioUrl`, `files`. Source: Quartr |
