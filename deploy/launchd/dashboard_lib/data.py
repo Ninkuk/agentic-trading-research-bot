@@ -251,6 +251,60 @@ def _macro_drivers(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     return {"tiles": tiles}
 
 
+# (series_id, tile label, qualitative_band metric, transform) — informational
+# only; nothing here votes in the regime. `yoy` turns a monthly price index
+# into its percent change over the same month a year earlier (first-of-month
+# dates, so the self-join is exact), rounded to the 0.01pp the series are
+# quoted at so a float tail never lands a value on the wrong side of a band
+# cutoff; `level` ships a breakeven as-is.
+_INFLATION_SERIES = [
+    ("PCEPILFE", "Core PCE inflation", "inflation_yoy", "yoy"),
+    ("CPIAUCSL", "Headline CPI inflation", "inflation_yoy", "yoy"),
+    ("T10YIE", "10-year expected inflation", "breakeven", "level"),
+    ("T5YIE", "5-year expected inflation", "breakeven", "level"),
+]
+# Monthly YoY keeps three years; daily breakevens keep the drivers' 90 points.
+_INFLATION_HISTORY = {"yoy": 36, "level": 90}
+
+_INFLATION_SQL = {
+    "yoy": (
+        "SELECT o.date, ROUND((o.value / p.value - 1.0) * 100.0, 2) AS value"
+        " FROM observations o JOIN observations p"
+        "   ON p.series_id = o.series_id AND p.date = date(o.date, '-1 year')"
+        " WHERE o.series_id = ? AND o.value IS NOT NULL AND p.value IS NOT NULL AND p.value != 0"
+        " ORDER BY o.date DESC LIMIT ?"
+    ),
+    "level": (
+        "SELECT date, value FROM observations WHERE series_id = ?"
+        " AND value IS NOT NULL ORDER BY date DESC LIMIT ?"
+    ),
+}
+
+
+def _inflation(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
+    tiles: list[dict[str, Any]] = []
+    for sid, label, metric, transform in _INFLATION_SERIES:
+        rows = conn.execute(
+            _INFLATION_SQL[transform], (sid, _INFLATION_HISTORY[transform])
+        ).fetchall()
+        values = list(reversed(rows))  # oldest-first
+        latest: float | None = values[-1]["value"] if values else None
+        tiles.append(
+            {
+                "label": label,
+                "series_id": sid,
+                "value": latest,
+                "delta": latest - values[-2]["value"]
+                if latest is not None and len(values) > 1
+                else None,
+                "band": narrative.qualitative_band(metric, latest) if latest is not None else None,
+                "history": [{"date": row["date"], "value": row["value"]} for row in values],
+                "thresholds": narrative.band_edges(metric),
+            }
+        )
+    return {"tiles": tiles}
+
+
 _SCORECARD_COLUMNS: list[dict[str, Any]] = [
     {"key": "symbol", "label": "Symbol", "numeric": False, "direction": None, "term": None},
     # Diverging: a large negative score_sum is just as strong a signal as a
@@ -1741,6 +1795,30 @@ SECTION_EXPORTERS: list[
                 "How to read it",
                 "Each tile shows today's value, the one-day change, and the"
                 " last 90 observations' trend.",
+            ),
+        ],
+    ),
+    (
+        "inflation",
+        "Inflation",
+        "fred.db",
+        _inflation,
+        "Macro",
+        "Is inflation near the Fed's 2% target, and does the bond market expect it to stay there?",
+        [
+            (
+                "What they are",
+                "Core PCE (the Fed's preferred gauge) and headline CPI, each as"
+                " the percent change over the same month a year earlier; and"
+                " the 10- and 5-year breakevens, the inflation the Treasury"
+                " market is pricing in.",
+            ),
+            (
+                "How to read it",
+                "The 2% line is the target. A breakeven near it says"
+                " expectations are anchored; the research skills use the 10-year"
+                " breakeven as the ceiling on a thesis's terminal growth rate."
+                " Informational only: nothing here votes in the regime call.",
             ),
         ],
     ),

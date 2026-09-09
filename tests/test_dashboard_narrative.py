@@ -19,10 +19,23 @@ def test_bands():
     assert narrative.qualitative_band("unknown_metric", 1.0) is None
 
 
+def test_inflation_bands_anchor_on_two_percent_target():
+    # YoY inflation (percent): the Fed's 2% target is the floor of "near target".
+    assert narrative.qualitative_band("inflation_yoy", 1.4) == "below target"
+    assert narrative.qualitative_band("inflation_yoy", 2.0) == "near target"
+    assert narrative.qualitative_band("inflation_yoy", 3.3) == "above target"
+    assert narrative.qualitative_band("inflation_yoy", 4.0) == "hot"
+    # Breakevens (percent): the market's expected-inflation read.
+    assert narrative.qualitative_band("breakeven", 1.2) == "low"
+    assert narrative.qualitative_band("breakeven", 2.35) == "anchored"
+    assert narrative.qualitative_band("breakeven", 2.5) == "elevated"
+    assert narrative.qualitative_band("breakeven", 3.0) == "unanchored"
+
+
 def test_band_edges_match_qualitative_band():
     """Every edge is a boundary of qualitative_band: just below it lands in
     `below`, exactly on it lands in `above` (lower bound inclusive)."""
-    for metric in ("vix", "hy_spread", "t10y2y", "book_heat_pct"):
+    for metric in ("vix", "hy_spread", "t10y2y", "book_heat_pct", "inflation_yoy", "breakeven"):
         edges = narrative.band_edges(metric)
         assert edges, metric
         for e in edges:

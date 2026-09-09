@@ -103,6 +103,7 @@ ALLOWED_TOOLS = ",".join(
         "Bash(sqlite3 -readonly data/earnings.db *)",
         "Bash(sqlite3 -readonly data/composite.db *)",
         "Bash(sqlite3 -readonly data/options.db *)",
+        "Bash(sqlite3 -readonly data/fred.db *)",
         "mcp__claude_ai_Robinhood_MCP__get_equity_quotes",
         "mcp__claude_ai_Robinhood_MCP__get_equity_historicals",
         "mcp__claude_ai_Robinhood_MCP__get_equity_fundamentals",

@@ -21,8 +21,9 @@ Four standing rules govern everything below:
 
 ## The hurdle: risk-free + beta × ERP
 
-**Risk-free and implied ERP** (monthly, first of the month) sit in the first
-screen of his home page — one fetch gets both:
+**Risk-free** is `DGS10` in `data/fred.db` (daily; the query is in the skill's
+DB list). **Implied ERP** (monthly, first of the month) sits in the first
+screen of his home page:
 
 ```bash
 curl -s https://pages.stern.nyu.edu/~adamodar/New_Home_Page/home.htm \
@@ -30,15 +31,24 @@ curl -s https://pages.stern.nyu.edu/~adamodar/New_Home_Page/home.htm \
 ```
 
 Use the headline trailing-12-month ERP, not the alternates listed beside it.
-Shape (as of Aug 1, 2026): ERP **4.28%**, risk-free (10Y T-bond) **4.74%**.
+Shape (as of Aug 1, 2026): ERP **4.28%** against his T-bond rate of 4.74%.
+His ERP is solved against that month-start rate, so pairing it with today's
+DGS10 mixes vintages by up to a month; the mix is small next to the ERP's own
+month-to-month drift, and the page's rate is the fallback when `fred.db` has no
+`DGS10` row. Quote the rate's date beside the ERP's.
 
 **Beta** comes from the stockanalysis statistics page Phase 4 already probes —
 no extra fetch — but it enters the hurdle only after two sanity checks:
 
 - **The stable band, 0.8–1.2.** A regression beta far outside it needs a
   reason; in particular, a thin-float or family-controlled name prints an
-  artificially low beta that would hand the hurdle read a free pass. Floor
-  it into the band and say so.
+  artificially low beta that would hand the hurdle read a free pass. Read
+  the ownership numbers rather than guessing: `sharesInsiders` and
+  `float`/`sharesOut` from the `stocks.db` query in the skill's DB list.
+  Insiders above roughly a fifth of the company, or a float under
+  four-fifths of shares out, is the thin-float case — floor a sub-band beta
+  into the band and say which number triggered it. (`sharesInsiders` is a
+  percent: AAPL prints 0.06, MSTR 5.3.)
 - **The absolute companion: a mature company's cost of capital ≈ risk-free
   + 4.5%** (his terminal checker's default block). A hurdle far below that
   for a stable name deserves a sentence.

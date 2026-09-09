@@ -37,9 +37,12 @@ def test_allowlist_bash_entries_are_enumerated_not_catchall():
         "Bash(sqlite3 -readonly data/earnings.db *)",
         "Bash(sqlite3 -readonly data/composite.db *)",
         "Bash(sqlite3 -readonly data/options.db *)",
+        "Bash(sqlite3 -readonly data/fred.db *)",
     }
     bash_entries = [e for e in entries if e.startswith("Bash(")]
     assert bash_entries
+    # The valuation step reads the 10y breakeven (terminal-growth ceiling).
+    assert "Bash(sqlite3 -readonly data/fred.db *)" in bash_entries
     for entry in bash_entries:
         assert entry in allowed_bash
     for entry in bash_entries:

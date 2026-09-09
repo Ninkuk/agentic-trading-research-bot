@@ -8,6 +8,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "deploy" / "launchd"))
 from dashboard_lib import data  # noqa: E402
 
@@ -104,6 +106,48 @@ def test_macro_drivers_history_bounded(populated_data_dir):
         # The chart's reference lines: the cutoffs behind `band`.
         assert t["thresholds"], t["label"]
         assert {"value", "below", "above"} <= set(t["thresholds"][0])
+
+
+def test_inflation_tiles_yoy_for_price_indexes_and_levels_for_breakevens(populated_data_dir):
+    """The fixture's CPI/PCE index compounds at exactly 3%/yr (conftest), so
+    every YoY point is 3.0; breakevens are already a percent and ship as
+    levels. Monthly tiles keep 36 points (three years), daily ones 90."""
+    tiles = data.export_data(populated_data_dir, NOW)["sections"]["inflation"]["tiles"]
+    by_id = {t["series_id"]: t for t in tiles}
+    assert [t["series_id"] for t in tiles] == ["PCEPILFE", "CPIAUCSL", "T10YIE", "T5YIE"]
+    for sid in ("PCEPILFE", "CPIAUCSL"):
+        t = by_id[sid]
+        assert t["value"] == pytest.approx(3.0)
+        assert t["band"] == "above target"
+        assert t["delta"] == pytest.approx(0.0)
+        assert 12 < len(t["history"]) <= 36
+        assert all(p["value"] == pytest.approx(3.0) for p in t["history"])
+        assert t["thresholds"][0] == {"value": 2.0, "below": "below target", "above": "near target"}
+    for sid in ("T10YIE", "T5YIE"):
+        t = by_id[sid]
+        assert t["value"] == pytest.approx(2.24)
+        assert t["band"] == "anchored"
+        assert t["delta"] == pytest.approx(0.01)
+        assert 3 <= len(t["history"]) <= 90
+        assert t["thresholds"], sid
+
+
+def test_inflation_tiles_empty_series_keep_their_place(tmp_path):
+    """A partial fred run (no inflation rows) yields four valueless tiles,
+    never a missing section or a crash on the YoY self-join."""
+    from sources.screeners.fred_screener import db as fred_db
+
+    d = tmp_path / "data"
+    d.mkdir()
+    conn = fred_db.connect(str(d / "fred.db"))
+    fred_db.ensure_schema(conn)
+    conn.commit()
+    conn.close()
+    from dashboard_lib.common import ro
+
+    tiles = data._inflation(ro(str(d), "fred.db"), NOW)["tiles"]
+    assert len(tiles) == 4
+    assert all(t["value"] is None and t["history"] == [] for t in tiles)
 
 
 def test_streak_nights_counts_leading_run_of_matching_regime(tmp_path):

@@ -90,6 +90,24 @@ def _make_fred_db(path):
         fred_db.write_observations(
             conn, sid, [{"date": f"2026-07-{d:02d}", "value": 1.0 + d / 10} for d in range(1, 25)]
         )
+    # Inflation card: two monthly price indexes compounding at exactly 3%/yr
+    # (so every YoY point is 3.0) over 25 months, and two daily breakevens.
+    for sid in ("CPIAUCSL", "PCEPILFE"):
+        conn.execute("INSERT OR IGNORE INTO series (series_id) VALUES (?)", (sid,))
+        months = [(2024 + (6 + i) // 12, (6 + i) % 12 + 1) for i in range(25)]  # 2024-07 .. 2026-07
+        fred_db.write_observations(
+            conn,
+            sid,
+            [
+                {"date": f"{y:04d}-{m:02d}-01", "value": 100.0 * 1.03 ** (i / 12)}
+                for i, (y, m) in enumerate(months)
+            ],
+        )
+    for sid in ("T10YIE", "T5YIE"):
+        conn.execute("INSERT OR IGNORE INTO series (series_id) VALUES (?)", (sid,))
+        fred_db.write_observations(
+            conn, sid, [{"date": f"2026-07-{d:02d}", "value": 2.0 + d / 100} for d in range(1, 25)]
+        )
     conn.commit()
     conn.close()
 

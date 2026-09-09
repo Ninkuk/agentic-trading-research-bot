@@ -62,7 +62,12 @@ is deliberately not grantable):
 
 - `data/sec_fundamentals.db` — `v_screener` for `net_margin`, `roe`,
   `debt_to_equity`, revenue and income history; `companies` for ticker→CIK.
-- `data/stocks.db` — the last captured price and market-cap metrics.
+- `data/stocks.db` — the last captured price and market-cap metrics, plus
+  the three Phase 4 inputs the skill reads by number rather than by eye:
+  `sqlite3 -readonly data/stocks.db "SELECT beta, sharesInsiders, sharesInstitutions, float, sharesOut, shareBasedComp, sbcByRevenue, analystCount FROM v_latest WHERE symbol='<TICKER>'"`
+  — `sharesInsiders`/`sharesInstitutions`/`sbcByRevenue` are PERCENTS
+  (`5.31` = 5.31%, not 531%); `float`/`sharesOut` are share counts;
+  `shareBasedComp` is the TTM dollar run-rate.
 - `data/earnings.db` — next report date (do not research into an earnings print
   and pretend the timing is irrelevant).
 - **Robinhood MCP `get_earnings_results`** — the trailing 8 quarters of
@@ -78,6 +83,11 @@ is deliberately not grantable):
   name; its dispatcher is `earnings` and its DB is `data/earnings.db`.)
 - `data/composite.db` — if the name was flagged, read `ticker_scores` and
   `signal_values` so you know what the machine already thinks and why.
+- `data/fred.db` — the risk-free rate (`DGS10`, the 10-year Treasury) and the
+  10-year breakeven (`T10YIE`, the terminal-growth ceiling), both for Phase 4,
+  in one query:
+  `sqlite3 -readonly data/fred.db "SELECT series_id, date, value FROM observations o WHERE series_id IN ('DGS10','T10YIE') AND value IS NOT NULL AND date = (SELECT MAX(date) FROM observations WHERE series_id = o.series_id AND value IS NOT NULL)"`
+  (percent: `4.77` → `--risk-free 0.0477`, `2.35` → `--terminal-growth 0.0235`).
 
 Where the live probe and the DB disagree, the probe wins for *today's* numbers
 and the DB tells you *when the machine last looked*. Say which you used.
@@ -313,10 +323,11 @@ the write-up, and say why the chosen `--terminal-growth` survives it, or cut
 the rate. A terminal rate that never met the company's own disclosed endgame
 risk is arithmetic, not knowledge.
 
-**Read the implied return against a hurdle, not against feelings.** Fetch the
-current risk-free rate and implied equity risk premium (one `curl` — recipe in
-`references/damodaran-anchors.md`), take beta from the statistics page, and add
-`--risk-free --beta --erp` to the run. The tool prints the hurdle
+**Read the implied return against a hurdle, not against feelings.** Take the
+risk-free rate from `data/fred.db` (`DGS10`, query in the DB list above — daily,
+where Damodaran's page restates it monthly), the implied equity risk premium
+from his page (one `curl` — recipe in `references/damodaran-anchors.md`), beta
+from the statistics page, and add `--risk-free --beta --erp` to the run. The tool prints the hurdle
 (`rf + beta × ERP` — a cost of equity, so levered-FCF ↔ market-cap runs only;
 it refuses the combination with `--net-debt`) and the spread against it. **The
 spread is the finding**, not the raw rate: +50bp over the hurdle on
@@ -332,12 +343,23 @@ economy forever. Separately, pass `--base-earnings` (trailing net income, same
 period as the FCF) and read the reinvestment lines: the terminal value's
 growth silently claims a return of `g / reinvestment rate` on retained
 earnings, and when FCF ≥ earnings the tool prints its `growth without
-reinvestment` warning. Two honest responses: cut terminal growth to ~inflation
+reinvestment` warning. Two honest responses: cut terminal growth to the 10-year breakeven
 (repricing existing assets needs no reinvestment; real growth beyond that
 does), or show the earnings base is understated — heavy acquired-intangible
 amortization does exactly this (BR: FCF > net income for that reason) — and
 rerun with cash earnings (net income + acquired-intangible amortization),
 saying so. Never leave the warning unanswered in the write-up.
+
+**The 10-year breakeven (`T10YIE` in `data/fred.db`) is the default
+terminal-growth ceiling.** It is the inflation the Treasury market is pricing
+over the horizon the terminal value spans, and nominal FCF grows at nominal
+expected inflation with zero reinvestment — so a `--terminal-growth` above
+it claims perpetual real growth, which retained earnings must pay for (the
+reinvestment line above). The tool's risk-free cap is the outer bound; the
+breakeven is the working one. Read it once (query in the DB list above),
+pass it as `--terminal-growth` unless the write-up states the real-growth
+case and its reinvestment, and name the breakeven and its date beside the
+risk-free/ERP in the valuation section either way.
 
 **Base-and-terminal integrity checks** (from Damodaran's own terminal-value
 checker and his 25-DCF-questions page — pointers in the anchors reference):
@@ -356,8 +378,10 @@ checker and his 25-DCF-questions page — pointers in the anchors reference):
   acquisition spend against the base FCF — say which.
 - **High-SBC names overstate levered FCF.** NCFO adds stock compensation
   back, but SBC is compensation, not cash the owner keeps. Deduct the SBC
-  run-rate from the base before solving, and note any large option/RSU
-  overhang the share count hides.
+  run-rate (`shareBasedComp` from the `stocks.db` query above; `sbcByRevenue`
+  says how much of the margin it is — INTU runs near 10% of revenue, BR near
+  1%) from the base before solving, state the deducted figure, and note any
+  large option/RSU overhang the share count hides.
 - **Cash-heavy names bias the implied return low.** Market cap includes a
   cash pile the levered FCF barely earns on; on a large net-cash balance,
   solve against market cap net of excess cash and say so.
@@ -442,7 +466,8 @@ source-tier names are all fixed there. Then commit it. The skeleton:
 3. **Threads pulled** — including the mandatory options-read bullet and the
    dead ends, and what they ruled out.
 4. **Valuation** — inputs and pairing, the hurdle (with the risk-free/ERP
-   as-of date), the scenario table with spreads, the integrity checks, and
+   as-of date), the 10-year breakeven and its date as the terminal-growth
+   ceiling, the scenario table with spreads, the integrity checks, and
    the options-implied-move table: name the path used (path 1 — CBOE `iv30`
    percentile from `data/options.db`; path 2 — the Robinhood stopgap) and
    the DTE, or state explicitly "no listed options."

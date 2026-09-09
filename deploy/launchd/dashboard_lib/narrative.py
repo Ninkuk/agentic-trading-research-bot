@@ -52,27 +52,46 @@ _HY_SPREAD_BANDS: tuple[tuple[float, str], ...] = (
 )
 _HY_SPREAD_STRESSED = "stressed"
 
+# inflation_yoy: PERCENT-scale YoY of a price index (CPI, core PCE). The
+# Fed's 2% target is the floor of "near target"; a full point above it is
+# where "above" becomes "hot".
+_INFLATION_YOY_BANDS: tuple[tuple[float, str], ...] = (
+    (2.0, "below target"),
+    (3.0, "near target"),
+    (4.0, "above target"),
+)
+_INFLATION_YOY_HOT = "hot"
+
+# breakeven: PERCENT-scale market-implied inflation (T5YIE/T10YIE). Anchored
+# expectations sit within half a point of the 2% target.
+_BREAKEVEN_BANDS: tuple[tuple[float, str], ...] = (
+    (1.5, "low"),
+    (2.5, "anchored"),
+    (3.0, "elevated"),
+)
+_BREAKEVEN_UNANCHORED = "unanchored"
+
+# The stepped bands qualitative_band/band_edges share: metric -> (cutoffs, top band).
+_STEPPED_BANDS: dict[str, tuple[tuple[tuple[float, str], ...], str]] = {
+    "vix": (_VIX_BANDS, _VIX_STRESSED),
+    "book_heat_pct": (_BOOK_HEAT_BANDS, _BOOK_HEAT_ELEVATED),
+    "hy_spread": (_HY_SPREAD_BANDS, _HY_SPREAD_STRESSED),
+    "inflation_yoy": (_INFLATION_YOY_BANDS, _INFLATION_YOY_HOT),
+    "breakeven": (_BREAKEVEN_BANDS, _BREAKEVEN_UNANCHORED),
+}
+
 
 def qualitative_band(metric: str, value: float) -> str | None:
     """Map a raw metric value to its plain-English band. Unknown metric ->
     None (never raises, never guesses a band for a metric we don't know)."""
-    if metric == "vix":
-        for hi, label in _VIX_BANDS:
-            if value < hi:
-                return label
-        return _VIX_STRESSED
-    if metric == "book_heat_pct":
-        for hi, label in _BOOK_HEAT_BANDS:
-            if value < hi:
-                return label
-        return _BOOK_HEAT_ELEVATED
     if metric == "t10y2y":
         return "inverted" if value < _T10Y2Y_INVERTED_BELOW else "normal"
-    if metric == "hy_spread":
-        for hi, label in _HY_SPREAD_BANDS:
+    if metric in _STEPPED_BANDS:
+        bands, top = _STEPPED_BANDS[metric]
+        for hi, label in bands:
             if value < hi:
                 return label
-        return _HY_SPREAD_STRESSED
+        return top
     return None
 
 
@@ -81,16 +100,11 @@ def band_edges(metric: str) -> list[dict[str, float | str]]:
     {"value", "below", "above"} — the band a value leaves and the one it
     enters crossing upward. The dashboard draws these as reference lines so
     a driver's chart shows its distance from the next regime band."""
-    if metric == "vix":
-        bands, top = _VIX_BANDS, _VIX_STRESSED
-    elif metric == "book_heat_pct":
-        bands, top = _BOOK_HEAT_BANDS, _BOOK_HEAT_ELEVATED
-    elif metric == "hy_spread":
-        bands, top = _HY_SPREAD_BANDS, _HY_SPREAD_STRESSED
-    elif metric == "t10y2y":
+    if metric == "t10y2y":
         return [{"value": _T10Y2Y_INVERTED_BELOW, "below": "inverted", "above": "normal"}]
-    else:
+    if metric not in _STEPPED_BANDS:
         return []
+    bands, top = _STEPPED_BANDS[metric]
     labels = [label for _, label in bands] + [top]
     return [
         {"value": hi, "below": labels[i], "above": labels[i + 1]} for i, (hi, _) in enumerate(bands)
