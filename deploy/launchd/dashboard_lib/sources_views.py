@@ -837,7 +837,8 @@ def options_sentiment(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
         tiles.append(tile("equity put/call", sent["equity_pcr"], sent["pcr_date"]))
         tiles.append(tile("total put/call", sent["total_pcr"], sent["pcr_date"]))
     ts = conn.execute(
-        "SELECT date, close, vix3m, vix_vix3m_ratio, backwardation FROM v_vix_term_structure"
+        "SELECT date, close, vix3m, vix_vix3m_ratio, backwardation,"
+        " vix9d, vvix, vix9d_vix_ratio, short_end_inverted FROM v_vix_term_structure"
     ).fetchone()
     if ts is not None:
         back = bool(ts["backwardation"])
@@ -849,6 +850,20 @@ def options_sentiment(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
                 "off" if back else "on",
             )
         )
+        # The short end: VIX9D above VIX means a scheduled item inside nine
+        # days (CPI, FOMC, a mega-cap print) is priced, not broad stress.
+        if ts["vix9d_vix_ratio"] is not None:
+            kink = bool(ts["short_end_inverted"])
+            tiles.append(
+                tile(
+                    "9-day vs 30-day fear",
+                    ts["vix9d_vix_ratio"],
+                    "event inside nine days" if kink else "no near-term event priced",
+                    "off" if kink else "on",
+                )
+            )
+        if ts["vvix"] is not None:
+            tiles.append(tile("Vol of vol (VVIX)", ts["vvix"], ts["date"]))
     ex = conn.execute("SELECT date, equity_pcr_pctile, equity_flag FROM v_pcr_extremes").fetchone()
     if ex is not None:
         flag = ex["equity_flag"]

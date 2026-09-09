@@ -40,6 +40,37 @@ def test_v_vix_term_structure_backwardation_flag():
     assert row[0] == 1  # close 20 > vix3m 18 -> stress
 
 
+def test_v_vix_term_structure_carries_short_end_and_vol_of_vol():
+    """VIX9D above VIX is the event-week kink; VVIX rides along as vol-of-vol.
+    Both were fetched daily and touched by no view."""
+    conn = _fresh()
+    for sym, close in (("VIX", 20.0), ("VIX3M", 18.0), ("VIX9D", 22.0), ("VVIX", 100.0)):
+        db.write_vix(
+            conn,
+            sym,
+            [{"date": "2026-06-01", "open": None, "high": None, "low": None, "close": close}],
+        )
+    row = conn.execute(
+        "SELECT vix9d, vvix, vix9d_vix_ratio, short_end_inverted FROM v_vix_term_structure"
+    ).fetchone()
+    assert row[0] == 22.0 and row[1] == 100.0
+    assert abs(row[2] - 1.1) < 1e-9
+    assert row[3] == 1
+
+
+def test_v_vix_term_structure_short_end_null_without_vix9d():
+    conn = _fresh()
+    db.write_vix(
+        conn,
+        "VIX",
+        [{"date": "2026-06-01", "open": None, "high": None, "low": None, "close": 20.0}],
+    )
+    row = conn.execute(
+        "SELECT vix9d_vix_ratio, short_end_inverted FROM v_vix_term_structure"
+    ).fetchone()
+    assert row == (None, None)
+
+
 def test_v_latest_sentiment_one_row():
     conn = _fresh()
     db.write_pcr(

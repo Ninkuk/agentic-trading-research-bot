@@ -38,11 +38,16 @@ _VIX_MAP = {
 
 def ensure_schema(conn) -> None:
     """Create tables, widen a pre-COR3M vix_daily (CREATE IF NOT EXISTS never
-    adds a column), then views. Idempotent."""
+    adds a column), then views. Views are dropped first so a definition
+    change lands on a live DB (CREATE VIEW IF NOT EXISTS keeps the stale
+    one; v_latest_sentiment is built on v_vix_term_structure). Idempotent."""
     conn.executescript(_SCHEMA)
     cols = {r[1] for r in conn.execute("PRAGMA table_info(vix_daily)")}
     if "cor3m" not in cols:
         conn.execute("ALTER TABLE vix_daily ADD COLUMN cor3m REAL")
+    conn.executescript(
+        "DROP VIEW IF EXISTS v_latest_sentiment; DROP VIEW IF EXISTS v_vix_term_structure;"
+    )
     conn.executescript(_VIEWS)
     conn.commit()
 
@@ -124,16 +129,22 @@ SELECT l.date, l.total_pcr, l.equity_pcr,
          ELSE 'neutral' END AS equity_flag
 FROM latest l;
 
--- Latest VIX vs VIX3M term structure (backwardation = stress).
+-- Latest VIX term structure. VIX3M below VIX (backwardation) is stress;
+-- VIX9D above VIX (short_end_inverted) is the event-week kink, a scheduled
+-- item inside nine days; VVIX is vol-of-vol, context only.
 CREATE VIEW IF NOT EXISTS v_vix_term_structure AS
 WITH latest AS (
     SELECT * FROM vix_daily WHERE close IS NOT NULL ORDER BY date DESC LIMIT 1
 )
-SELECT date, close, vix3m,
+SELECT date, close, vix3m, vix9d, vvix,
        CASE WHEN vix3m IS NOT NULL AND vix3m <> 0 THEN close / vix3m END
          AS vix_vix3m_ratio,
        CASE WHEN vix3m IS NULL THEN NULL WHEN close > vix3m THEN 1 ELSE 0 END
-         AS backwardation
+         AS backwardation,
+       CASE WHEN vix9d IS NOT NULL AND close <> 0 THEN vix9d / close END
+         AS vix9d_vix_ratio,
+       CASE WHEN vix9d IS NULL THEN NULL WHEN vix9d > close THEN 1 ELSE 0 END
+         AS short_end_inverted
 FROM latest;
 
 -- One-row at-a-glance sentiment readout.

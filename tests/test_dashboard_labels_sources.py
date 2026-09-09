@@ -258,8 +258,18 @@ def test_options_sentiment_tiles_are_named_in_words():
         )
         + _view(
             "v_vix_term_structure",
-            ["date", "close", "vix3m", "vix_vix3m_ratio", "backwardation"],
-            [("2026-09-04", 14.53, 17.6, 0.825, 0)],
+            [
+                "date",
+                "close",
+                "vix3m",
+                "vix_vix3m_ratio",
+                "backwardation",
+                "vix9d",
+                "vvix",
+                "vix9d_vix_ratio",
+                "short_end_inverted",
+            ],
+            [("2026-09-04", 14.53, 17.6, 0.825, 0, 16.1, 92.0, 1.108, 1)],
         )
         + _view(
             "v_pcr_extremes",
@@ -270,6 +280,10 @@ def test_options_sentiment_tiles_are_named_in_words():
     sec = sources_views.options_sentiment(conn, NOW)
     tiles = {t["label"]: t for t in sec["tiles"]}
     assert tiles["Near vs 3-month fear"]["band"] == "contango — calm"
+    assert tiles["9-day vs 30-day fear"]["value"] == 1.108
+    assert tiles["9-day vs 30-day fear"]["band"] == "event inside nine days"
+    assert tiles["9-day vs 30-day fear"]["tone"] == "off"
+    assert tiles["Vol of vol (VVIX)"]["value"] == 92.0
     assert tiles["How rare today's put/call is"]["value"] == 8
     assert tiles["How rare today's put/call is"]["band"] == "complacency"
     assert "VIX ÷ VIX3M" not in tiles and "equity put/call percentile" not in tiles
