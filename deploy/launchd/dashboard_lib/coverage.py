@@ -147,4 +147,8 @@ UNSURFACED: dict[tuple[str, str], str] = {
     ("short_interest.db", "v_latest"): "unfiltered report grain under v_high_days_to_cover",
     ("short_volume.db", "v_latest"): "unfiltered daily grain under v_high_short_ratio",
     ("etfs.db", "v_latest"): "ETF universe; advisor reads ATR from it",
+    (
+        "options.db",
+        "v_skew_term",
+    ): "per-name 25-delta skew and 30/90-day term structure; the research skills' options read (shared/options-read.md) queries it by ticker",
 }

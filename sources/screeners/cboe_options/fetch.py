@@ -1,6 +1,7 @@
 import json
 import time
 import urllib.error
+from datetime import date as _date
 
 import sources.common.http_client as http_client
 
@@ -127,6 +128,74 @@ def parse_chain(payload: dict, underlying: str):
         "put_call_oi_ratio": (put_oi / call_oi) if call_oi else None,
     }
     return daily, contracts
+
+
+SKEW_TERM_KEYS = frozenset(
+    {
+        "front_expiration",
+        "back_expiration",
+        "atm_iv_front",
+        "atm_iv_back",
+        "term_spread",
+        "put25_iv",
+        "call25_iv",
+        "skew25",
+    }
+)
+
+# Front = the listed expiry nearest 30 calendar days out but at least 7 (a
+# same-week expiry's ATM is the event, not the month); back = nearest 90, at
+# least 45. Falling on the same expiry yields None, never a flat 0.
+_FRONT_TARGET, _FRONT_MIN = 30, 7
+_BACK_TARGET, _BACK_MIN = 90, 45
+
+
+def _nearest_expiry(dtes: dict, target: int, floor: int):
+    ok = [(abs(d - target), e) for e, d in dtes.items() if d >= floor]
+    return min(ok)[1] if ok else None
+
+
+def _iv_nearest_delta(rows, expiration: str, target: float, typ=None):
+    pool = [r for r in rows if r["expiration"] == expiration and (typ is None or r["type"] == typ)]
+    if not pool:
+        return None
+    # Tie-break on type so a call/put pair straddling 0.50 picks the same leg
+    # every run (deterministic across snapshots).
+    return min(pool, key=lambda r: (abs(abs(r["delta"]) - target), r["type"]))["iv"]
+
+
+def skew_term(contracts: list, snapshot_date: str) -> dict:
+    """Skew and term-structure rollup for one underlying-day, from its
+    contract rows (`expiration`, `type`, `delta`, `iv`). ATM is the contract
+    with |delta| nearest 0.50 in an expiry; the 25-delta legs the put and
+    call nearest |delta| 0.25. skew25 = put − call IV in vol points (positive
+    = puts bid); term_spread = front − back ATM IV (positive = an event
+    priced into the front month). Pure — no I/O. Every key is present, None
+    where nothing usable exists."""
+    out = dict.fromkeys(SKEW_TERM_KEYS)
+    rows = [r for r in contracts if r.get("iv") and r.get("iv") > 0 and r.get("delta") is not None]
+    if not rows:
+        return out
+    today = _date.fromisoformat(snapshot_date)
+    dtes = {e: (_date.fromisoformat(e) - today).days for e in {r["expiration"] for r in rows}}
+    front = _nearest_expiry(dtes, _FRONT_TARGET, _FRONT_MIN)
+    if front is None:
+        return out
+    back = _nearest_expiry(dtes, _BACK_TARGET, _BACK_MIN)
+    if back == front:
+        back = None
+    out["front_expiration"] = front
+    out["back_expiration"] = back
+    out["atm_iv_front"] = _iv_nearest_delta(rows, front, 0.5)
+    out["put25_iv"] = _iv_nearest_delta(rows, front, 0.25, "put")
+    out["call25_iv"] = _iv_nearest_delta(rows, front, 0.25, "call")
+    if out["put25_iv"] is not None and out["call25_iv"] is not None:
+        out["skew25"] = out["put25_iv"] - out["call25_iv"]
+    if back is not None:
+        out["atm_iv_back"] = _iv_nearest_delta(rows, back, 0.5)
+        if out["atm_iv_front"] is not None and out["atm_iv_back"] is not None:
+            out["term_spread"] = out["atm_iv_front"] - out["atm_iv_back"]
+    return out
 
 
 def _http_get(

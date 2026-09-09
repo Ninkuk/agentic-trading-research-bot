@@ -212,3 +212,67 @@ def test_http_get_retries_then_raises_non_retryable():
 
     with pytest.raises(urllib.error.HTTPError):
         fetch._http_get("u", opener=opener403, attempts=3, sleep=slept.append)
+
+
+# --- skew / term structure rollup ------------------------------------------------
+
+
+def _leg(expiration, typ, delta, iv):
+    return {"expiration": expiration, "type": typ, "delta": delta, "iv": iv}
+
+
+def _skew_chain():
+    """Snapshot 2026-07-03. Front = 2026-08-01 (29 dte, nearest 30); back =
+    2026-10-02 (91 dte, nearest 90); 2026-07-05 (2 dte) sits below the 7-day
+    floor and its event-distorted ATM must never stand in for the month."""
+    return [
+        # front: ATM 0.30 both legs; 25-delta put 0.33 vs call 0.27 -> skew +0.06
+        _leg("2026-08-01", "call", 0.52, 0.30),
+        _leg("2026-08-01", "put", -0.48, 0.30),
+        _leg("2026-08-01", "call", 0.24, 0.27),
+        _leg("2026-08-01", "put", -0.26, 0.33),
+        _leg("2026-08-01", "call", 0.05, 0.40),
+        _leg("2026-08-01", "put", -0.05, 0.45),
+        # back: ATM 0.25 -> term spread front - back = +0.05
+        _leg("2026-10-02", "call", 0.50, 0.25),
+        _leg("2026-10-02", "put", -0.50, 0.25),
+        _leg("2026-10-02", "call", 0.25, 0.23),
+        _leg("2026-10-02", "put", -0.25, 0.28),
+        # 2-dte expiry with a wild ATM IV
+        _leg("2026-07-05", "call", 0.50, 0.90),
+        _leg("2026-07-05", "put", -0.50, 0.90),
+        # unusable rows: no iv / zero iv / no delta
+        _leg("2026-08-01", "call", 0.50, None),
+        _leg("2026-08-01", "put", -0.50, 0.0),
+        {"expiration": "2026-08-01", "type": "call", "delta": None, "iv": 0.5},
+    ]
+
+
+def test_skew_term_picks_30_and_90_day_expiries_and_25_delta_legs():
+    got = fetch.skew_term(_skew_chain(), "2026-07-03")
+    assert got["front_expiration"] == "2026-08-01"
+    assert got["back_expiration"] == "2026-10-02"
+    assert got["atm_iv_front"] == 0.30 and got["atm_iv_back"] == 0.25
+    assert abs(got["term_spread"] - 0.05) < 1e-12
+    assert got["put25_iv"] == 0.33 and got["call25_iv"] == 0.27
+    assert abs(got["skew25"] - 0.06) < 1e-12
+
+
+def test_skew_term_back_is_none_without_a_45_day_expiry():
+    """Only a 29-dte expiry: front resolves, back and the term spread are
+    None — never a zero that reads as a flat curve."""
+    rows = [r for r in _skew_chain() if r["expiration"] == "2026-08-01"]
+    got = fetch.skew_term(rows, "2026-07-03")
+    assert got["front_expiration"] == "2026-08-01"
+    assert got["back_expiration"] is None and got["atm_iv_back"] is None
+    assert got["term_spread"] is None
+    assert abs(got["skew25"] - 0.06) < 1e-12
+
+
+def test_skew_term_all_none_when_nothing_usable():
+    got = fetch.skew_term([], "2026-07-03")
+    assert set(got) == fetch.SKEW_TERM_KEYS
+    assert all(v is None for v in got.values())
+    # same-week-only chain: nothing clears the 7-day floor
+    rows = [r for r in _skew_chain() if r["expiration"] == "2026-07-05"]
+    assert all(v is None for v in fetch.skew_term(rows, "2026-07-03").values())

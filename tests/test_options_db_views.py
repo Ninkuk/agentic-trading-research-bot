@@ -95,3 +95,28 @@ def test_v_iv_rank_includes_both_underlyings_own_latest_day():
     assert rows["AAA"][3] == 100.0
     assert rows["BBB"][1] == "2026-07-03"
     assert rows["BBB"][2] == 30.0
+
+
+def test_v_skew_term_reads_the_daily_rollup_and_skips_days_without_a_front():
+    conn = db.connect(":memory:")
+    db.ensure_schema(conn)
+    for sym in ("AAPL", "MSFT"):
+        db.upsert_underlying(conn, sym, False, "2026-07-03")
+    rolled = {
+        **_daily_row("AAPL", 28.0),
+        "front_expiration": "2026-08-01",
+        "back_expiration": "2026-10-02",
+        "atm_iv_front": 0.30,
+        "atm_iv_back": 0.25,
+        "term_spread": 0.05,
+        "put25_iv": 0.33,
+        "call25_iv": 0.27,
+        "skew25": 0.06,
+    }
+    db.upsert_underlying_daily(conn, "2026-07-03", rolled)
+    db.upsert_underlying_daily(conn, "2026-07-03", _daily_row("MSFT", 30.0))  # no chain rollup
+    rows = conn.execute(
+        "SELECT underlying, snapshot_date, front_expiration, back_expiration, term_spread, skew25"
+        " FROM v_skew_term"
+    ).fetchall()
+    assert rows == [("AAPL", "2026-07-03", "2026-08-01", "2026-10-02", 0.05, 0.06)]

@@ -52,7 +52,27 @@ _DAILY_COLS = [
     "total_call_oi",
     "total_put_oi",
     "put_call_oi_ratio",
+    # skew / term rollup (fetch.skew_term); added after first ship, so
+    # ensure_schema ALTERs them into a live table.
+    "front_expiration",
+    "back_expiration",
+    "atm_iv_front",
+    "atm_iv_back",
+    "term_spread",
+    "put25_iv",
+    "call25_iv",
+    "skew25",
 ]
+_SKEW_TERM_COLS = {
+    "front_expiration": "TEXT",
+    "back_expiration": "TEXT",
+    "atm_iv_front": "REAL",
+    "atm_iv_back": "REAL",
+    "term_spread": "REAL",
+    "put25_iv": "REAL",
+    "call25_iv": "REAL",
+    "skew25": "REAL",
+}
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS underlyings (
@@ -101,6 +121,14 @@ CREATE TABLE IF NOT EXISTS underlying_daily (
     total_call_oi         INTEGER,
     total_put_oi          INTEGER,
     put_call_oi_ratio     REAL,
+    front_expiration      TEXT,
+    back_expiration       TEXT,
+    atm_iv_front          REAL,
+    atm_iv_back           REAL,
+    term_spread           REAL,
+    put25_iv              REAL,
+    call25_iv             REAL,
+    skew25                REAL,
     PRIMARY KEY (snapshot_date, underlying)
 );
 CREATE TABLE IF NOT EXISTS days (
@@ -153,6 +181,19 @@ SELECT t.underlying, t.snapshot_date, t.iv30, b.iv_min, b.iv_max, b.n_days,
          WHERE h.underlying = t.underlying AND h.iv30 < t.iv30) AS iv_percentile
 FROM today t JOIN bounds b USING (underlying);
 
+-- (4) skew and term structure per (underlying, snapshot_date), read from the
+-- write-time rollup in underlying_daily (fetch.skew_term): front = expiry
+-- nearest 30 calendar days (>= 7), back = nearest 90 (>= 45); ATM = |delta|
+-- nearest 0.50; skew25 = 25-delta put − call IV (positive = puts bid);
+-- term_spread = front − back ATM IV (positive = event in the front month).
+-- Rolled up at write time because ranking 5M+ contract rows in a view took
+-- half a minute per name; iv30 sits in the same rollup for the same reason.
+CREATE VIEW IF NOT EXISTS v_skew_term AS
+SELECT underlying, snapshot_date, front_expiration, back_expiration,
+       atm_iv_front, atm_iv_back, term_spread, put25_iv, call25_iv, skew25
+FROM underlying_daily
+WHERE front_expiration IS NOT NULL;
+
 -- (3) per-underlying latest-day sentiment snapshot.
 CREATE VIEW IF NOT EXISTS v_latest_sentiment AS
 SELECT underlying, snapshot_date, underlying_price, iv30,
@@ -167,6 +208,10 @@ WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM underlying_daily u2
 def ensure_schema(conn) -> None:
     """Create tables, indexes, and screener views. Idempotent."""
     conn.executescript(_SCHEMA)
+    have = {r[1] for r in conn.execute("PRAGMA table_info(underlying_daily)")}
+    for col, affinity in _SKEW_TERM_COLS.items():
+        if col not in have:
+            conn.execute(f"ALTER TABLE underlying_daily ADD COLUMN {col} {affinity}")
     conn.executescript(_VIEWS)
     conn.commit()
 

@@ -13,8 +13,9 @@ either/or once that gate clears. Which paths apply is a fact about the
 ticker and the DB's history, not a judgment call.
 
 1. **Ticker in the CBOE catalog AND `data/options.db` has usable history** →
-   read `v_iv_rank` (`iv30`, `iv_rank`, `iv_percentile`, `n_days`) and
-   `v_latest_sentiment` (put/call volume and OI ratios). Own-history
+   read `v_iv_rank` (`iv30`, `iv_rank`, `iv_percentile`, `n_days`),
+   `v_latest_sentiment` (put/call volume and OI ratios), and `v_skew_term`
+   (the surface's shape — §1a). Own-history
    percentile is the preferred baseline — it answers "is IV high *for this
    name*" without picking a realized-vol window at all.
 
@@ -51,6 +52,47 @@ with path 2 alone and **say which paths were used** in the write-up.
 gains at most one day per trading day, so on a young table path 1 is
 unreachable for every symbol. Check `n_days` each run; never assume depth has
 accrued.
+
+## 1a. Skew and term structure (path 1 only)
+
+`v_skew_term` holds one row per underlying-day, rolled up at write time from
+the full chain: `skew25` is the 25-delta put IV minus the 25-delta call IV in
+the expiry nearest 30 days (positive = puts bid), and `term_spread` is that
+expiry's ATM IV minus the ATM IV of the expiry nearest 90 days (positive =
+the front month carries an event the back does not). Read the latest row
+against the name's own history, never against another name — index skew
+runs steeper than single-stock skew by construction:
+
+```bash
+sqlite3 -readonly data/options.db "SELECT snapshot_date, front_expiration, back_expiration,
+  ROUND(skew25,4) AS skew25, ROUND(term_spread,4) AS term_spread,
+  (SELECT COUNT(*) FROM v_skew_term h WHERE h.underlying = t.underlying
+     AND h.skew25 < t.skew25) * 100 / (SELECT COUNT(*) FROM v_skew_term h
+     WHERE h.underlying = t.underlying) AS skew_pctile
+  FROM v_skew_term t WHERE underlying = '<TICKER>' ORDER BY snapshot_date DESC LIMIT 1"
+```
+
+Two readings, both under the one-way valve (they cut, never confirm):
+
+- **A thesis that calls the market complacent about the downside** is
+  contradicted when `skew25` sits in the top quartile of the name's own
+  history: the downside is already bid. Say so and drop the "unpriced"
+  framing; the thesis may still be right about the destination.
+- **A positive `term_spread`** means the front month prices a dated event
+  the back does not — the same thing path 2's ATM-vs-realized comparison
+  detects, read from the surface instead of a trailing window. A thesis whose
+  catalyst falls inside the front expiry is being priced; one whose catalyst
+  falls beyond the back expiry is not, and a flat or negative spread there
+  is not evidence either way.
+
+Neither number feeds `implied_move.py` — the 2-sigma timing check still runs
+on path 2's ATM IV alone. Quote both with their dates and the percentile
+depth (`n_days` from `v_iv_rank` governs here too: below 60 rows the
+percentile is unreadable, and the level alone is context, not evidence).
+The front expiry is chosen by calendar distance, not by the thesis's
+catalyst, so it can straddle an earnings date the thesis never mentions;
+check `front_expiration` against `data/earnings.db` before reading a fat
+`term_spread` as news.
 
 ## 2. The tenor warning
 

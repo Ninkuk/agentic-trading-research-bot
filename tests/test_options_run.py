@@ -110,3 +110,45 @@ def test_run_keep_days_prunes_headers(tmp_path):
         "SELECT COUNT(*) FROM snapshots WHERE captured_at < '2020-01-01'"
     ).fetchone()[0]
     assert old == 0
+
+
+def _two_expiry_payload(underlying):
+    """2026-07-02 session; 260731 = 29 dte (front), 261002 = 92 dte (back)."""
+
+    def opt(occ, delta, iv):
+        return {
+            "option": occ,
+            "bid": 1.0,
+            "ask": 1.2,
+            "iv": iv,
+            "delta": delta,
+            "gamma": 0.01,
+            "theta": -0.1,
+            "vega": 0.2,
+            "rho": 0.05,
+            "open_interest": 100.0,
+            "volume": 10.0,
+        }
+
+    p = _payload(underlying)
+    p["data"]["options"] = [
+        opt(f"{underlying}260731C00100000", 0.50, 0.30),
+        opt(f"{underlying}260731P00100000", -0.50, 0.30),
+        opt(f"{underlying}260731C00110000", 0.25, 0.27),
+        opt(f"{underlying}260731P00090000", -0.25, 0.33),
+        opt(f"{underlying}261002C00100000", 0.50, 0.25),
+        opt(f"{underlying}261002P00100000", -0.50, 0.25),
+    ]
+    return p
+
+
+def test_run_writes_skew_term_rollup_beside_iv30(tmp_path):
+    dbp = str(tmp_path / "opt.db")
+    run_mod.run(dbp, symbols=["AAPL"], now_iso=NOW, fetch_chain=lambda s, i: _two_expiry_payload(s))
+    conn = db.connect(dbp)
+    row = conn.execute(
+        "SELECT front_expiration, back_expiration, term_spread, skew25 FROM v_skew_term"
+        " WHERE underlying = 'AAPL'"
+    ).fetchone()
+    assert row[0] == "2026-07-31" and row[1] == "2026-10-02"
+    assert abs(row[2] - 0.05) < 1e-12 and abs(row[3] - 0.06) < 1e-12

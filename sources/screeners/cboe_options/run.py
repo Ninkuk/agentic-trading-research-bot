@@ -39,6 +39,7 @@ def run(
                 snapshot_date = fetch.session_date(payload) or now_iso[:10]
                 db.upsert_underlying(conn, symbol, is_index, snapshot_date)
                 written = db.replace_day(conn, snapshot_date, symbol, contracts, now_iso)
+                daily.update(fetch.skew_term(contracts, snapshot_date))
                 db.upsert_underlying_daily(conn, snapshot_date, daily)
                 db.record_day(conn, snapshot_date, symbol, now_iso, written)
                 total_rows += written
