@@ -469,6 +469,424 @@
       ],
       "source": "FRED"
     },
+    "inflation": {
+      "title": "Inflation",
+      "kicker": "Macro",
+      "note": "Is inflation near the Fed's 2% target, and does the bond market expect it to stay there?",
+      "about": [
+        {
+          "heading": "What they are",
+          "body": "Core PCE (the Fed's preferred gauge) and headline CPI, each as the percent change over the same month a year earlier; and the 10- and 5-year breakevens, the inflation the Treasury market is pricing in."
+        },
+        {
+          "heading": "How to read it",
+          "body": "The 2% line is the target. A breakeven near it says expectations are anchored; the research skills use the 10-year breakeven as the ceiling on a thesis's terminal growth rate. Informational only: nothing here votes in the regime call."
+        }
+      ],
+      "source": "FRED",
+      "tiles": [
+        {
+          "label": "Core PCE inflation",
+          "series_id": "PCEPILFE",
+          "value": 3.0,
+          "delta": 0.0,
+          "band": "above target",
+          "history": [
+            {
+              "date": "2025-07-01",
+              "value": 3.0
+            },
+            {
+              "date": "2025-08-01",
+              "value": 3.0
+            },
+            {
+              "date": "2025-09-01",
+              "value": 3.0
+            },
+            {
+              "date": "2025-10-01",
+              "value": 3.0
+            },
+            {
+              "date": "2025-11-01",
+              "value": 3.0
+            },
+            {
+              "date": "2025-12-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-01-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-02-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-03-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-04-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-05-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-06-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-07-01",
+              "value": 3.0
+            }
+          ],
+          "thresholds": [
+            {
+              "value": 2.0,
+              "below": "below target",
+              "above": "near target"
+            },
+            {
+              "value": 3.0,
+              "below": "near target",
+              "above": "above target"
+            },
+            {
+              "value": 4.0,
+              "below": "above target",
+              "above": "hot"
+            }
+          ]
+        },
+        {
+          "label": "Headline CPI inflation",
+          "series_id": "CPIAUCSL",
+          "value": 3.0,
+          "delta": 0.0,
+          "band": "above target",
+          "history": [
+            {
+              "date": "2025-07-01",
+              "value": 3.0
+            },
+            {
+              "date": "2025-08-01",
+              "value": 3.0
+            },
+            {
+              "date": "2025-09-01",
+              "value": 3.0
+            },
+            {
+              "date": "2025-10-01",
+              "value": 3.0
+            },
+            {
+              "date": "2025-11-01",
+              "value": 3.0
+            },
+            {
+              "date": "2025-12-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-01-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-02-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-03-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-04-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-05-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-06-01",
+              "value": 3.0
+            },
+            {
+              "date": "2026-07-01",
+              "value": 3.0
+            }
+          ],
+          "thresholds": [
+            {
+              "value": 2.0,
+              "below": "below target",
+              "above": "near target"
+            },
+            {
+              "value": 3.0,
+              "below": "near target",
+              "above": "above target"
+            },
+            {
+              "value": 4.0,
+              "below": "above target",
+              "above": "hot"
+            }
+          ]
+        },
+        {
+          "label": "10-year expected inflation",
+          "series_id": "T10YIE",
+          "value": 2.24,
+          "delta": 0.010000000000000231,
+          "band": "anchored",
+          "history": [
+            {
+              "date": "2026-07-01",
+              "value": 2.01
+            },
+            {
+              "date": "2026-07-02",
+              "value": 2.02
+            },
+            {
+              "date": "2026-07-03",
+              "value": 2.03
+            },
+            {
+              "date": "2026-07-04",
+              "value": 2.04
+            },
+            {
+              "date": "2026-07-05",
+              "value": 2.05
+            },
+            {
+              "date": "2026-07-06",
+              "value": 2.06
+            },
+            {
+              "date": "2026-07-07",
+              "value": 2.07
+            },
+            {
+              "date": "2026-07-08",
+              "value": 2.08
+            },
+            {
+              "date": "2026-07-09",
+              "value": 2.09
+            },
+            {
+              "date": "2026-07-10",
+              "value": 2.1
+            },
+            {
+              "date": "2026-07-11",
+              "value": 2.11
+            },
+            {
+              "date": "2026-07-12",
+              "value": 2.12
+            },
+            {
+              "date": "2026-07-13",
+              "value": 2.13
+            },
+            {
+              "date": "2026-07-14",
+              "value": 2.14
+            },
+            {
+              "date": "2026-07-15",
+              "value": 2.15
+            },
+            {
+              "date": "2026-07-16",
+              "value": 2.16
+            },
+            {
+              "date": "2026-07-17",
+              "value": 2.17
+            },
+            {
+              "date": "2026-07-18",
+              "value": 2.18
+            },
+            {
+              "date": "2026-07-19",
+              "value": 2.19
+            },
+            {
+              "date": "2026-07-20",
+              "value": 2.2
+            },
+            {
+              "date": "2026-07-21",
+              "value": 2.21
+            },
+            {
+              "date": "2026-07-22",
+              "value": 2.22
+            },
+            {
+              "date": "2026-07-23",
+              "value": 2.23
+            },
+            {
+              "date": "2026-07-24",
+              "value": 2.24
+            }
+          ],
+          "thresholds": [
+            {
+              "value": 1.5,
+              "below": "low",
+              "above": "anchored"
+            },
+            {
+              "value": 2.5,
+              "below": "anchored",
+              "above": "elevated"
+            },
+            {
+              "value": 3.0,
+              "below": "elevated",
+              "above": "unanchored"
+            }
+          ]
+        },
+        {
+          "label": "5-year expected inflation",
+          "series_id": "T5YIE",
+          "value": 2.24,
+          "delta": 0.010000000000000231,
+          "band": "anchored",
+          "history": [
+            {
+              "date": "2026-07-01",
+              "value": 2.01
+            },
+            {
+              "date": "2026-07-02",
+              "value": 2.02
+            },
+            {
+              "date": "2026-07-03",
+              "value": 2.03
+            },
+            {
+              "date": "2026-07-04",
+              "value": 2.04
+            },
+            {
+              "date": "2026-07-05",
+              "value": 2.05
+            },
+            {
+              "date": "2026-07-06",
+              "value": 2.06
+            },
+            {
+              "date": "2026-07-07",
+              "value": 2.07
+            },
+            {
+              "date": "2026-07-08",
+              "value": 2.08
+            },
+            {
+              "date": "2026-07-09",
+              "value": 2.09
+            },
+            {
+              "date": "2026-07-10",
+              "value": 2.1
+            },
+            {
+              "date": "2026-07-11",
+              "value": 2.11
+            },
+            {
+              "date": "2026-07-12",
+              "value": 2.12
+            },
+            {
+              "date": "2026-07-13",
+              "value": 2.13
+            },
+            {
+              "date": "2026-07-14",
+              "value": 2.14
+            },
+            {
+              "date": "2026-07-15",
+              "value": 2.15
+            },
+            {
+              "date": "2026-07-16",
+              "value": 2.16
+            },
+            {
+              "date": "2026-07-17",
+              "value": 2.17
+            },
+            {
+              "date": "2026-07-18",
+              "value": 2.18
+            },
+            {
+              "date": "2026-07-19",
+              "value": 2.19
+            },
+            {
+              "date": "2026-07-20",
+              "value": 2.2
+            },
+            {
+              "date": "2026-07-21",
+              "value": 2.21
+            },
+            {
+              "date": "2026-07-22",
+              "value": 2.22
+            },
+            {
+              "date": "2026-07-23",
+              "value": 2.23
+            },
+            {
+              "date": "2026-07-24",
+              "value": 2.24
+            }
+          ],
+          "thresholds": [
+            {
+              "value": 1.5,
+              "below": "low",
+              "above": "anchored"
+            },
+            {
+              "value": 2.5,
+              "below": "anchored",
+              "above": "elevated"
+            },
+            {
+              "value": 3.0,
+              "below": "elevated",
+              "above": "unanchored"
+            }
+          ]
+        }
+      ]
+    },
     "regime-timeline": {
       "title": "Regime timeline",
       "kicker": "Macro",
@@ -618,6 +1036,14 @@
           "hidden": true
         },
         {
+          "key": "analystCount",
+          "label": "Analysts covering",
+          "numeric": true,
+          "direction": null,
+          "term": null,
+          "hidden": true
+        },
+        {
           "key": "verdictDate",
           "label": "Call date",
           "numeric": false,
@@ -649,7 +1075,8 @@
           "verdict": null,
           "verdictDate": null,
           "daysOnList": null,
-          "fScoreEntry": null
+          "fScoreEntry": null,
+          "analystCount": 9.0
         },
         {
           "symbol": "PEGA",
@@ -665,7 +1092,8 @@
           "verdict": null,
           "verdictDate": null,
           "daysOnList": null,
-          "fScoreEntry": null
+          "fScoreEntry": null,
+          "analystCount": 9.0
         }
       ],
       "snapshot_date": "2026-07-08"
@@ -6001,7 +6429,8 @@
         "daysOnList": 12,
         "nSightings": 9,
         "fScoreEntry": 8,
-        "accrualsPctAssets": -3.2
+        "accrualsPctAssets": -3.2,
+        "analystCount": 9.0
       },
       "thesis": {
         "path": "research/AAPL-2026-06-15.md",
