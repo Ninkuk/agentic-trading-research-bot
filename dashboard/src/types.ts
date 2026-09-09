@@ -224,6 +224,8 @@ export interface TickerCandidate {
   high52ch: number | null;
   // Sloan accruals, % of assets: negative = cash ahead of earnings.
   accrualsPctAssets: number | null;
+  // Sell-side analysts covering the name (annotation, thin-coverage hypothesis).
+  analystCount?: number | null;
   verdict: string | null;
   verdictDate: string | null;
   daysOnList: number | null;

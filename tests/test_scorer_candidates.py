@@ -243,6 +243,7 @@ def test_unmatured_rows_are_visible_but_not_counted(tmp_path):
 # ------------------------------------------------- fetch from stocks.db ----
 
 _SCREEN_COLS = {
+    "analystCount": "REAL",
     "sector": "TEXT",
     "marketCap": "REAL",
     "dollarVolume": "REAL",
@@ -287,10 +288,10 @@ def _mini_stocks(path, captured_at="2026-07-02T11:00:00+00:00", inflection=False
         ' roic, roic5y, "fcfYield", "revenueGrowth3Y", "netDebtEbitda", "sharesYoY",'
         ' "fScore", rsi, ch6m, high52ch, "zScore", "interestCoverage", "priceDate",'
         ' isin, "isPrimaryListing", "netIncome", "operatingCF", assets,'
-        ' "revenueGrowth", "revenueThisYear", "revenueNextYear")'
+        ' "revenueGrowth", "revenueThisYear", "revenueNextYear", "analystCount")'
         " VALUES (1, 'GOOD', 'Technology', 2e10, 5e7,"
         " 25.0, 20.0, 6.0, ?, 0.5, -1.0, 7.0, 38.0, -20.0, -20.0, 6.0, 12.0,"
-        " '2026-07-01', 'US1111111111', '1', 100.0, 150.0, 1000.0, ?, ?, ?)",
+        " '2026-07-01', 'US1111111111', '1', 100.0, 150.0, 1000.0, ?, ?, ?, 3.0)",
         growth,
     )
     conn.commit()
@@ -488,6 +489,29 @@ def test_read_candidate_rows_carries_accruals(tmp_path):
     finally:
         fetch.detach(conn)
     assert rows[0]["accruals_pct_assets"] == -5.0
+
+
+def test_read_candidate_rows_carries_analyst_count(tmp_path):
+    conn = _conn(tmp_path)
+    _mini_stocks(tmp_path / "stocks.db")
+    fetch.attach_ro(conn, str(tmp_path / "stocks.db"))
+    try:
+        _, _, rows = fetch.read_candidate_rows(conn)
+    finally:
+        fetch.detach(conn)
+    assert rows[0]["analyst_count"] == 3.0
+
+
+def test_appearance_ledgers_analyst_count_and_migrates_it_onto_an_old_table(tmp_path):
+    """Coverage is ledgered per sighting so a later calibration can split
+    entries by it; a live scorer.db predates the column, so ensure_schema
+    must ALTER it in."""
+    conn = _conn(tmp_path)
+    conn.execute("ALTER TABLE candidate_appearances DROP COLUMN analyst_count")
+    db.ensure_schema(conn)
+    _appear(conn, "AAA", "2026-07-01", analyst_count=3.0)
+    got = conn.execute("SELECT analyst_count FROM candidate_appearances").fetchone()
+    assert got[0] == 3.0
 
 
 def test_quality_trend_carries_accruals_entry_and_now(tmp_path):

@@ -395,6 +395,8 @@ _CANDIDATES_COLUMNS: list[dict[str, Any]] = [
     col("rsi", "RSI", hidden=True),
     # Sloan accruals, % of assets: negative = cash ahead of earnings (good).
     col("accrualsPctAssets", "Accruals % assets", direction="down-good", hidden=True),
+    # Sell-side coverage; annotation on the thin-coverage hypothesis.
+    col("analystCount", "Analysts covering", hidden=True),
     col("verdictDate", "Call date", numeric=False, hidden=True),
     col("fScoreEntry", "F-score at entry", term="Piotroski score", hidden=True),
 ]
@@ -448,6 +450,7 @@ def _candidates(data_dir: str, now_iso: str) -> dict[str, Any]:
                 "ch6m": r["ch6m"],
                 "growthDoor": candidates_mod.growth_door(r),
                 "accrualsPctAssets": r["accrualsPctAssets"],
+                "analystCount": r["analystCount"],
                 "verdict": r["verdict"],
                 "verdictDate": r["verdict_date"],
                 "daysOnList": r["days_on_list"],
@@ -2538,6 +2541,7 @@ def _fill_candidate_ticker_fields(
             "rsi": r["rsi"],
             "high52ch": r["high52ch"],
             "accrualsPctAssets": r["accrualsPctAssets"],
+            "analystCount": r["analystCount"],
             "verdict": r["verdict"],
             "verdictDate": r["verdict_date"],
             "daysOnList": r["days_on_list"],

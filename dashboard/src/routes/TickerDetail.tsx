@@ -354,6 +354,8 @@ function ScreenBlock({ candidate }: { candidate: TickerCandidate }) {
       <div className="tile">
         <div className="v">{pct(candidate.accrualsPctAssets, 1)}</div>
         <div className="k">accruals / assets (negative = cash ahead)</div>
+        <div className="v">{candidate.analystCount ?? "—"}</div>
+        <div className="k">analysts covering</div>
       </div>
       <div className="tile">
         <div className="v">{researchVerdictPill(candidate.verdict)}</div>

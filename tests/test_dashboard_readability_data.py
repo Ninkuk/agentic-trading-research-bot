@@ -296,6 +296,7 @@ def test_candidates_hides_the_ratio_columns_and_counts_research(tmp_path):
         "fScore",
         "rsi",
         "accrualsPctAssets",
+        "analystCount",
         "verdictDate",
         "fScoreEntry",
     }

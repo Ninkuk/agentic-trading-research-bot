@@ -32,6 +32,7 @@ def read_candidate_rows(conn):
             "net_debt_ebitda": r["netDebtEbitda"],
             "shares_yoy": r["sharesYoY"],
             "accruals_pct_assets": r["accrualsPctAssets"],
+            "analyst_count": r["analystCount"],
             "rev_growth_ttm": r["revenueGrowth"],
             "cons_rev_growth_fy": r["revenueThisYear"],
             "cons_rev_growth_fy2": r["revenueNextYear"],

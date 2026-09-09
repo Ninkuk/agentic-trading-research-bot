@@ -71,6 +71,7 @@ _STOCKS_COLS = {
     "operatingCF": "REAL",
     "assets": "REAL",
     "atr": "REAL",
+    "analystCount": "REAL",
 }
 
 # data/<file> -> the ensure_schema that owns it. The launchd installer names

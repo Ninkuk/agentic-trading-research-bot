@@ -553,6 +553,7 @@ _STOCKS_COLS = {
     "netIncome": "REAL",
     "operatingCF": "REAL",
     "assets": "REAL",
+    "analystCount": "REAL",
 }
 
 
@@ -575,9 +576,9 @@ def _build_stocks_db(path):
         conn.execute(
             'INSERT INTO metrics (snapshot_id, symbol, sector, "marketCap", "dollarVolume",'
             ' roic, roic5y, "fcfYield", "revenueGrowth3Y", "netDebtEbitda", "sharesYoY",'
-            ' "fScore", rsi, ch6m, "priceDate", isin, "isPrimaryListing")'
+            ' "fScore", rsi, ch6m, "priceDate", isin, "isPrimaryListing", "analystCount")'
             " VALUES (1, ?, 'Technology', 8.4e10, 5e8, ?, 20.0, ?, 11.0, 0.2, -5.0,"
-            " 7.0, 42.3, -29.2, '2026-07-08', ?, '1')",
+            " 7.0, 42.3, -29.2, '2026-07-08', ?, '1', 9.0)",
             (sym, roic, fcfy, isin),
         )
     conn.commit()

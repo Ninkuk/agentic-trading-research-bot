@@ -134,7 +134,7 @@ WITH eligible AS (
            revenueGrowth3Y, netDebtEbitda, sharesYoY, fScore, rsi, ch6m,
            high52ch, zScore, interestCoverage,
            priceDate, isin, isPrimaryListing, netIncome, operatingCF, assets,
-           revenueGrowth, revenueThisYear, revenueNextYear
+           revenueGrowth, revenueThisYear, revenueNextYear, analystCount
     FROM v_latest
     WHERE symbol NOT LIKE '%.PR%'                 -- preferreds are not common equity
       AND marketCap >= {MARKET_CAP_MIN}
@@ -166,7 +166,11 @@ SELECT symbol, sector, marketCap, dollarVolume, roic, roic5y, fcfYield,
        -- Sloan accruals: earnings not backed by cash, as % of assets.
        -- NEGATIVE is healthy (cash ahead of earnings). Annotation, not a
        -- gate, until v_candidate_efficacy measures it.
-       (netIncome - operatingCF) / NULLIF(assets, 0) * 100 AS accrualsPctAssets
+       (netIncome - operatingCF) / NULLIF(assets, 0) * 100 AS accrualsPctAssets,
+       -- Sell-side coverage. Annotation, ledgered per sighting, on the
+       -- hypothesis that mispricing lives where coverage is thin;
+       -- v_candidate_efficacy decides whether that holds.
+       analystCount
 FROM ranked WHERE rn = 1
 ORDER BY fcfYield DESC, roic DESC, symbol
 """
@@ -195,6 +199,7 @@ _FIELDS = [
     "revenueThisYear",
     "revenueNextYear",
     "accrualsPctAssets",
+    "analystCount",
 ]
 
 
@@ -229,6 +234,7 @@ _LAYOUT = (
     ("z", 6),
     ("intCov", 9),
     ("accr", 6),
+    ("cov", 4),
     # From scorer.db when read: the ownership call research-ticker recorded
     # ("pass 07-20"), and days on the list / sightings / fScore at entry.
     ("call", 10),
@@ -371,6 +377,7 @@ def _row_cells(r: dict) -> list[str]:
         _num(r["zScore"]),
         _num(r["interestCoverage"]),
         _num(r["accrualsPctAssets"]),
+        _num(r["analystCount"], 0),
         f"{r['verdict']} {r['verdict_date'][5:]}" if r.get("verdict") else "—",
         f"{r['days_on_list']}d/{r['n_sightings']}" if r.get("days_on_list") is not None else "—",
         _num(r["fscore_entry"], 0) if r.get("fscore_entry") is not None else "—",
@@ -442,8 +449,8 @@ def build_report(conn, now_iso: str, scorer_conn=None) -> str:
             f" dilution < {SHARES_YOY_MAX:.0f}%/yr,",
             f"  fScore >= {FSCORE_MIN:.0f}, dislocation: rsi < {RSI_MAX:.0f}"
             f" or >= {-HIGH52_DISLOCATION_MAX:.0f}% off the 52w high."
-            " z, intCov and accr (accruals % of assets; negative = cash ahead of",
-            "  earnings) are annotations, not gates.",
+            " z, intCov, accr (accruals % of assets; negative = cash ahead of",
+            "  earnings) and cov (analysts covering) are annotations, not gates.",
             "",
             "NOT A RECOMMENDATION. List entries are graded for calibration only",
             "(scorer.db v_candidate_efficacy); nothing feeds back into the gates.",

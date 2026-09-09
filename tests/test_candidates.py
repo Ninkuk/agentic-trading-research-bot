@@ -18,7 +18,8 @@ _COLS = (
     " revenueGrowth3Y REAL, netDebtEbitda REAL, sharesYoY REAL, fScore REAL,"
     " rsi REAL, ch6m REAL, high52ch REAL, zScore REAL, interestCoverage REAL,"
     " priceDate TEXT, netIncome REAL, operatingCF REAL, assets REAL,"
-    " revenueGrowth REAL, revenueThisYear REAL, revenueNextYear REAL"
+    " revenueGrowth REAL, revenueThisYear REAL, revenueNextYear REAL,"
+    " analystCount REAL"
 )
 
 # A name that passes every gate. Tests mutate one field at a time off this.
@@ -47,6 +48,7 @@ _CLEAN = dict(
     netIncome=1000.0,
     operatingCF=1500.0,
     assets=10000.0,
+    analystCount=7.0,
     # Inflection door OFF by default: every gate test above stays single-field.
     revenueGrowth=4.0,
     revenueThisYear=4.0,
@@ -669,6 +671,30 @@ def test_report_shows_accruals_column(tmp_path):
     assert "accr" in report
     good = next(line for line in report.splitlines() if line.lstrip().startswith("GOOD"))
     assert "-5.0" in good
+
+
+# ------------------------------------------------ coverage annotation ----
+# analystCount: how many sell-side analysts cover the name. Annotation only,
+# ledgered per sighting, on the hypothesis that mispricing lives where
+# coverage is thin — v_candidate_efficacy decides whether that holds.
+
+
+def test_analyst_count_is_carried_as_an_annotation(tmp_path):
+    conn = _stocks_db(tmp_path, {"analystCount": 3.0})
+    assert candidates.screen(conn)[0]["analystCount"] == 3.0
+
+
+def test_analyst_count_is_an_annotation_not_a_gate(tmp_path):
+    for i, n in enumerate((None, 0.0, 60.0)):
+        conn = _stocks_db(tmp_path, {"symbol": "GOOD", "analystCount": n}, name=f"s{i}.db")
+        assert _symbols(conn) == ["GOOD"], n
+
+
+def test_report_shows_coverage_column(tmp_path):
+    report = candidates.build_report(_stocks_db(tmp_path, {"analystCount": 3.0}), NOW)
+    assert "cov" in report
+    good = next(line for line in report.splitlines() if line.lstrip().startswith("GOOD"))
+    assert " 3 " in good or good.endswith(" 3")
 
 
 # ------------------------------------------------- the inflection door ----

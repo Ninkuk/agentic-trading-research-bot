@@ -393,6 +393,7 @@ CREATE TABLE IF NOT EXISTS candidate_appearances (
     net_debt_ebitda REAL,
     shares_yoy     REAL,
     accruals_pct_assets REAL,
+    analyst_count  REAL,
     -- the inflection door's three legs, so an entry can be re-read later
     rev_growth_ttm REAL,
     cons_rev_growth_fy REAL,
@@ -437,6 +438,7 @@ _APPEARANCE_QUALITY_COLS = (
     "net_debt_ebitda",
     "shares_yoy",
     "accruals_pct_assets",
+    "analyst_count",
     "rev_growth_ttm",
     "cons_rev_growth_fy",
     "cons_rev_growth_fy2",
@@ -1589,8 +1591,9 @@ def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
             " (symbol, screen_date, screen_version, fcf_yield, rsi, high52ch,"
             "  fscore, via_rsi, via_drawdown, via_inflection, roic, roic5y,"
             "  rev_growth_3y, net_debt_ebitda, shares_yoy, accruals_pct_assets,"
-            "  rev_growth_ttm, cons_rev_growth_fy, cons_rev_growth_fy2, recorded_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "  analyst_count, rev_growth_ttm, cons_rev_growth_fy, cons_rev_growth_fy2,"
+            "  recorded_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 r["symbol"],
                 screen_date,
@@ -1608,6 +1611,7 @@ def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
                 r.get("net_debt_ebitda"),
                 r.get("shares_yoy"),
                 r.get("accruals_pct_assets"),
+                r.get("analyst_count"),
                 r.get("rev_growth_ttm"),
                 r.get("cons_rev_growth_fy"),
                 r.get("cons_rev_growth_fy2"),
