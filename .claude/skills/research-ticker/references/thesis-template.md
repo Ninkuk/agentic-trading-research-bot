@@ -60,13 +60,15 @@ Status vocabulary: `NOT TRIGGERED` / `GRAZED` / `HALF-TRIGGERED` / `FIRED`.
 First line, bold, always this shape (research-sweep and the journal read the
 ownership call from here):
 
-> **BUY at $X.** kill-thesis: **SOUND** — conditions=5 (4 probable,
-> 1 plausible), refuted=0, unknown=1.
+> **BUY at $X.** kill-thesis: **SOUND** — conditions=4 (3 probable,
+> 1 plausible), refuted=0, unknown=0, pending=1, not_obtained=0.
 
 - Ownership call first (`BUY` / `PASS`, caps, with the price and its basis),
   kill-thesis label second. The ledger mirrors `verdicts.log` vocabulary:
-  `conditions= refuted= unknown=` — write `unknown`, not "unverifiable".
-  A scope parenthetical is allowed ("SOUND (on this pass)").
+  `conditions= refuted= unknown= pending= not_obtained=` — write `unknown`,
+  not "unverifiable"; `unknown=` counts load-bearing UNKNOWNs only. The
+  count is whatever the bull case needs, not a house number. A scope
+  parenthetical is allowed ("SOUND (on this pass)").
 - Second line, always: `**p(beat SPY, 63 td): 0.60** · kill-thesis: 0.45` —
   the probability this name beats SPY over the stated horizon (trading
   days), for BUY and PASS alike (a PASS at 0.35 is coherent), and the
@@ -76,11 +78,13 @@ ownership call from here):
   `horizon_days`, `expectation`) and `v_research_calibration` grades them.
 - Then the thesis in plain language, 2–5 sentences.
 - Then `**Closest attack:**` — the attack that came nearest to landing.
-- Then the load-bearing conditions, numbered, each tagged by evidence tier
-  in italics (*probable* / *plausible* / *possible*) with one line of the
-  evidence behind the tag. This list is mandatory — a count whose conditions
-  are never enumerated is unauditable, and reopen runs need the list to
-  sweep against.
+- Then the load-bearing conditions of the bull case (on a PASS too — the
+  list never carries the pass's own claims), numbered, each tagged in
+  italics *probable* or *plausible* with one line of the evidence behind
+  the tag; a *plausible* tag names the disclosure and date that settles it.
+  *possible* is not a tier a numbered condition can carry. This list is
+  mandatory — a count whose conditions are never enumerated is unauditable,
+  and reopen runs need the list to sweep against.
 - Then the factor line, always present, this exact lead-in (overlap reads
   grep it):
   `**Dominant shared risk factor:** <factor> — shared by N of M held names
@@ -159,8 +163,11 @@ line carries; the thesis file (here) holds the actual condition.
 
 ## §6 UNKNOWNs
 
-Numbered. Each entry: what is missing, where it would have to come from,
-and whether its absence kills the thesis.
+Numbered. Each entry opens with its kind — `UNKNOWN` (no filing carries
+it), `PENDING <date>` (a dated filing will), or `NOT OBTAINED` (it exists;
+this run did not get it — name the document) — then what is missing, where
+it would have to come from, and whether its absence kills the thesis.
+Option-value claims (*possible* tier) live here, unnumbered in §1.
 
 ## §7 Sources
 
@@ -180,9 +187,11 @@ Fixed tier names, fixed order, bold lead-ins; a tier with nothing in it says
 
 Written by the Phase 5 kill-thesis pass; the one place its detail lives (not
 §1, not an appendix, not a footer). Contents: the ledger line restated;
-per-condition adjudication (`SURVIVED` / `REFUTED` / `UNKNOWN`) with the
-attack each faced; the standing/statistical/options-timing checks that ran
-(or why one was N/A); `**Closest attack:**`; `**Flip evidence:**` in both
+per-condition adjudication (`SURVIVED` / `REFUTED` / `PENDING <date>` /
+`UNKNOWN` / `NOT OBTAINED`) with the attack each faced — the conditions are
+§1's bull-case list, never the pass's; the standing/statistical/options-
+timing checks that ran (or why one was N/A); `**Closest attack:**`;
+`**Flip evidence:**` in both
 directions (what makes it SOUND, what makes it FLAWED); and
 `**p(beat SPY, N td):**` — the kill pass's own probability, written before
 re-reading §1's.

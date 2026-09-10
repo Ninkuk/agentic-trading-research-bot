@@ -204,3 +204,23 @@ def test_calibration_columns_migrate_existing_db(tmp_path):
     ).fetchone()
     assert row == (None, None, None, None)
     conn.close()
+
+
+def test_kill_verdict_column_migrates_and_is_constrained(tmp_path):
+    path = str(tmp_path / "scorer.db")
+    conn = db.connect(path)
+    conn.execute(
+        "CREATE TABLE research_verdicts (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " symbol TEXT NOT NULL, verdict TEXT NOT NULL, verdict_date TEXT NOT NULL,"
+        " doc TEXT, note TEXT, recorded_at TEXT NOT NULL, UNIQUE (symbol, verdict_date))"
+    )
+    conn.commit()
+    db.ensure_schema(conn)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(research_verdicts)")}
+    assert "kill_verdict" in cols
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(
+            "INSERT INTO research_verdicts (symbol, verdict, verdict_date, recorded_at,"
+            " kill_verdict) VALUES ('X', 'pass', '2026-09-10', 't', 'PENDING')"
+        )
+    conn.close()

@@ -316,6 +316,10 @@ CREATE TABLE IF NOT EXISTS research_verdicts (
     p_win_kill   REAL CHECK (p_win_kill IS NULL OR p_win_kill BETWEEN 0 AND 1),
     horizon_days INTEGER CHECK (horizon_days IS NULL OR horizon_days > 0),
     expectation  TEXT,
+    -- The kill-thesis label from the same run (verdicts.log vocabulary),
+    -- orthogonal to the buy/pass call: v_research_kill_filter grades it.
+    -- Legacy rows stay NULL until a re-ingest annotates them.
+    kill_verdict TEXT CHECK (kill_verdict IS NULL OR kill_verdict IN ('SOUND', 'FLAWED', 'UNPROVEN')),
     UNIQUE (symbol, verdict_date)
 );
 
@@ -429,6 +433,7 @@ _VERDICT_CALIBRATION_COLS = (
     "p_win_kill REAL CHECK (p_win_kill IS NULL OR p_win_kill BETWEEN 0 AND 1)",
     "horizon_days INTEGER CHECK (horizon_days IS NULL OR horizon_days > 0)",
     "expectation TEXT",
+    "kill_verdict TEXT CHECK (kill_verdict IS NULL OR kill_verdict IN ('SOUND', 'FLAWED', 'UNPROVEN'))",
 )
 
 _APPEARANCE_QUALITY_COLS = (
@@ -972,7 +977,7 @@ FROM v_option_pnl WHERE closed GROUP BY direction;
 DROP VIEW IF EXISTS v_research_verdict_outcomes;
 CREATE VIEW v_research_verdict_outcomes AS
 SELECT rv.id AS verdict_id, rv.symbol, rv.verdict, rv.verdict_date,
-       rv.doc, rv.note,
+       rv.doc, rv.note, rv.kill_verdict,
        vo.horizon, vo.entry_date, vo.entry_close,
        vo.fwd_return, vo.bench_fwd_return, vo.matured_at,
        vo.fwd_return - vo.bench_fwd_return AS excess,
@@ -1002,6 +1007,22 @@ SELECT verdict, horizon, COUNT(*) AS n,
 FROM v_research_verdict_outcomes
 WHERE matured_at IS NOT NULL
 GROUP BY verdict, horizon;
+
+-- v_research_filter split by the kill-thesis label: does SOUND / FLAWED /
+-- UNPROVEN carry information the buy/pass call does not? Same polarity-safe
+-- hit_rate; n_dates is the effective n (a sweep day's verdicts share one
+-- market). NULL kill_verdict is the legacy group, visible, never dropped.
+-- Human reading only; nothing feeds back.
+DROP VIEW IF EXISTS v_research_kill_filter;
+CREATE VIEW v_research_kill_filter AS
+SELECT kill_verdict, verdict, horizon, COUNT(*) AS n,
+       COUNT(DISTINCT verdict_date) AS n_dates,
+       AVG(verdict_correct) AS hit_rate,
+       AVG(excess) AS avg_excess,
+       AVG(fwd_return) AS avg_fwd_return
+FROM v_research_verdict_outcomes
+WHERE matured_at IS NOT NULL
+GROUP BY kill_verdict, verdict, horizon;
 
 -- Calibration of the stated probabilities. One row per matured, p-bearing
 -- verdict x horizon; beat is one polarity (fwd > bench) for buy and pass

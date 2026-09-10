@@ -18,6 +18,17 @@ position the user already holds. If the user gives you only a ticker and a
 direction ("I'm long X"), ask them to state the thesis in two sentences first
 — you cannot attack a claim nobody has made.
 
+**The object of the attack is always the bull case** — the claim that owning
+the name at today's price beats the benchmark over the horizon. This holds
+when the document's ownership call is PASS: attack the bull case the pass
+rejects, never the pass's own reasoning. A pass is what a refuted or
+unknowable bull condition leaves behind, not a thesis with conditions of its
+own; a list of negated bull claims ("X does not regain share") inverts every
+rule below, because uncertainty then shields the pass instead of blocking the
+buy. §1 derives the ownership call from this pass's result, and the ledger's
+`refuted=` / `unknown=` counts compare across documents only because they
+always count the bull case.
+
 **Before adding to a losing position**, pull the real cost basis before you
 attack anything else. The blended `average_buy_price` in `portfolio.db` hides
 which lots are actually underwater and by how much — averaging down changes
@@ -47,9 +58,15 @@ the answer per lot, not per position.
    is far more likely to be right than one resting on five, even when every
    step of the five sounds clever. Say the count out loud in the verdict.
 
+   An exogenous price — a commodity, a currency, a rate, a policy stance —
+   is never a load-bearing condition. It is a §4 scenario input; the
+   condition it hides is "the price clears the hurdle on the stated path",
+   which is attackable today. Move it, and count what remains.
+
 2. **Attack each condition independently.** For each, spend real effort trying
    to make it false. Under genuine uncertainty, **never credit the condition** —
-   uncertainty withholds SOUND, it never earns it.
+   uncertainty is written as PENDING, UNKNOWN or NOT OBTAINED, never as
+   SURVIVED.
 
    Before hunting external evidence, check whether the condition list attacks
    itself: claims of **high growth**, **low reinvestment**, and **low risk**
@@ -59,17 +76,43 @@ the answer per lot, not per position.
    low-risk claim denies. An internally inconsistent pair is an attack that
    costs nothing to run.
 
-   Then say *which kind* of uncertainty you hit, because they route to
-   different verdicts and are constantly confused:
+   Then tag the condition with exactly one of five words, because they
+   route to different verdicts and are constantly confused:
 
-   - **You attacked it, and the evidence stands against it.** The condition is
-     *refuted*. → FLAWED.
-   - **You could not attack it, because the evidence needed does not exist in
-     any disclosure.** The condition is *unverifiable*. Mark it UNKNOWN and
-     go to step 7. → UNPROVEN.
+   - **SURVIVED** — attacked with the evidence that exists today, and it
+     stands for the condition at its tier. A *plausible* condition survives
+     at *plausible*; say so.
+   - **REFUTED** — attacked, and the evidence stands against it. → FLAWED.
+   - **PENDING <YYYY-MM-DD>** — a forecast whose decisive disclosure is
+     dated: the print that discloses the number, the 10-Q that must mention
+     the term, the 8-K/A that carries the allocation. Attack it with what
+     bears on it today — guidance, the trend, the base rate; if that stands
+     against it, it is REFUTED, not pending. Pending never routes to
+     UNPROVEN: a dated checkpoint is not an unknowable. The earliest pending
+     date is the `reopen=` date.
+   - **UNKNOWN** — no filing, past or future, carries the number: a retired
+     metric, share at one customer, the terms of a private contract, a
+     counterparty list. Run the routes below before writing it. → UNPROVEN.
+   - **NOT OBTAINED** — the disclosure exists and this run did not get it
+     (a fetch refused, a proxy not read, a deck not reachable). Name the
+     document. It routes to UNPROVEN like UNKNOWN and appends a
+     `research/gaps.log` line (Verdict, below) so the miss is counted and
+     fixed; written as UNKNOWN it hides a fixable miss as an unknowable.
 
-   A condition you merely find *uncomfortable* is neither. Go and check it.
-   (Known bias: refusing to credit an unproven condition pushes toward
+   Only load-bearing conditions carry a tag into the ledger. An unknown
+   attached to a condition that survived belongs in §6 and does not count
+   in `unknown=`.
+
+   Routes to run before UNKNOWN: the return on an acquisition is never
+   disclosed as a figure, but the 10-K business-combination note (the
+   purchase-price allocation; ASC 805 pro-forma revenue and earnings for a
+   material deal), the goodwill impairment test's segment assignment, and the
+   acquired segment's margin in the first full quarter after close bound it.
+   A claim about a customer's share or a retired metric has no such route;
+   say so in one sentence and mark it.
+
+   A condition you merely find *uncomfortable* is none of these. Go and check
+   it. (Known bias: refusing to credit an unproven condition pushes toward
    inaction. Accepted deliberately — a false SOUND costs money, a false
    UNPROVEN costs an opportunity.)
 
@@ -146,21 +189,24 @@ the answer per lot, not per position.
 7. **Missing information is a finding.** When a load-bearing number does not
    exist in any disclosure, do not assume a value. State it as UNKNOWN and
    answer: *does its absence kill the thesis?* Sometimes the honest verdict is
-   "I can't know this," and that is a complete and useful answer.
+   "I can't know this," and that is a complete and useful answer. A number
+   that exists and was not fetched is NOT OBTAINED, never UNKNOWN; a number
+   a dated filing will print is PENDING, never UNKNOWN.
 
 ## Verdict
 
 Close with exactly one, matching the vocabulary this repo's plan reviewers use:
 
-- **SOUND** — every load-bearing condition survived a real attack. Say which
-  attack came closest to landing.
+- **SOUND** — no load-bearing condition is REFUTED, UNKNOWN, or NOT
+  OBTAINED: every one SURVIVED or is PENDING a dated disclosure. Say the
+  pending count and which attack came closest to landing.
 - **FLAWED** — you attacked at least one load-bearing condition and the
   evidence stands against it. Name it, show the evidence, and say whether the
   thesis is repairable or dead.
 - **UNPROVEN** — nothing was refuted, but at least one load-bearing condition
-  could not be attacked at all: the evidence needed does not exist. Name what
-  is missing and where it would have to come from. This is a real verdict, not
-  a failure to reach one.
+  is UNKNOWN or NOT OBTAINED. Name what is missing and where it would have to
+  come from — for NOT OBTAINED, the document this run failed to get. This is
+  a real verdict, not a failure to reach one.
 
 Then state, in one sentence, what evidence would flip your verdict.
 
@@ -180,8 +226,15 @@ per `.claude/skills/research-ticker/references/thesis-template.md`. Not an
 appendix, not a footer, not inside §1/§6/§7 — one fixed home.
 
 Finally, append one line to `research/verdicts.log` (create it if absent):
-`<YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n> [reopen=<YYYY-MM-DD|event>:<slug>]`
+`<YYYY-MM-DD> <TICKER or slug> <VERDICT> conditions=<n> refuted=<n> unknown=<n> pending=<n> not_obtained=<n> [reopen=<YYYY-MM-DD|event>:<slug>]`
 — the ledger that makes verdict drift measurable (see the design note below).
+`unknown=` counts load-bearing UNKNOWN only; `pending=` and `not_obtained=`
+are their own counts (lines written before 2026-09-10 lack both and read as
+zero). For every NOT OBTAINED, also append one line to `research/gaps.log`:
+`<YYYY-MM-DD> <TICKER> thesis=<YYYY-MM-DD> source-acquisition <slug> doc=<class> bench=kill-thesis`
+— `doc=` from audit-thesis's document classes, because recurrence groups on
+the exact string, and audit-thesis's two-ticker rule is what licenses a
+route fix.
 `reopen=` encodes the flip-evidence sentence above and is **always dated**:
 the latest date by which the condition is verifiable from a filing — the
 print that discloses the number, the 10-Q that must mention the renewal,
@@ -213,9 +266,15 @@ The resolution:
   proposed check would have caught, or the verdicts ledger showing this
   gauntlet under-kills. "A reviewer thought of another failure mode" is the
   exact accumulation this note exists to stop.
-- **Revisit when `research/verdicts.log` holds ten verdicts** (one existed on
-  the decision date). If SOUND has never occurred by then, that is data the
-  freeze question gets reopened on — in either direction.
+- **The vocabulary, not the checks, was what the ledger caught.** At 226
+  verdicts (2026-09-10): 56% UNPROVEN, 28% SOUND, 16% FLAWED; 25 of 38
+  reopen reruns returned UNPROVEN again and one in 38 reached SOUND. The
+  largest UNKNOWN class was a dated forecast, so any forward-looking
+  condition routed to UNPROVEN by construction and the label carried no
+  information. PENDING and NOT OBTAINED answer that; no check changed.
+- **Next revisit:** when `v_research_kill_filter` (scorer.db) shows ten
+  distinct verdict dates per label at the 21-day horizon. The question is
+  whether the label predicts anything the buy/pass call does not.
 
 ## Guardrails
 

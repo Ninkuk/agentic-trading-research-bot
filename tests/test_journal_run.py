@@ -301,3 +301,55 @@ def test_verdict_reingest_is_counted_duplicate(tmp_path):
     c = journal.run(dbp, doc, composite_db=None, now_iso="2026-07-23T04:13:00+00:00")
     assert c["verdicts_recorded"] == 0
     assert c["duplicates_skipped"] == 1
+
+
+def test_verdict_kill_verdict_is_stored(tmp_path):
+    dbp = str(tmp_path / "scorer.db")
+    doc = {
+        "verdicts": [
+            {
+                "symbol": "NVO",
+                "verdict": "pass",
+                "verdict_date": "2026-09-10",
+                "kill_verdict": "UNPROVEN",
+            }
+        ]
+    }
+    journal.run(dbp, doc, composite_db=None, now_iso="2026-09-11T04:12:00+00:00")
+    conn = db.connect(dbp)
+    assert conn.execute("SELECT kill_verdict FROM research_verdicts").fetchone() == ("UNPROVEN",)
+    conn.close()
+
+
+def test_verdict_reingest_annotates_missing_kill_verdict_only(tmp_path):
+    """A legacy row (kill_verdict NULL) gains the label from a re-ingest that
+    carries it -- an annotation, not a correction: the call, note and
+    calibration fields stay as first recorded, and a row that already has a
+    label keeps it. Backfilling verdicts.log onto scorer.db rides this path;
+    nothing else about the duplicate rule changes."""
+    dbp = str(tmp_path / "scorer.db")
+    first = {"symbol": "EOSE", "verdict": "pass", "verdict_date": "2026-07-22", "note": "v1"}
+    journal.run(dbp, {"verdicts": [first]}, composite_db=None, now_iso="2026-07-23T04:12:00+00:00")
+    again = dict(first, note="v2", kill_verdict="FLAWED")
+    c = journal.run(
+        dbp, {"verdicts": [again]}, composite_db=None, now_iso="2026-09-11T04:12:00+00:00"
+    )
+    assert c["verdicts_recorded"] == 0 and c["duplicates_skipped"] == 1
+    assert c["annotated"] == 1
+    conn = db.connect(dbp)
+    assert conn.execute("SELECT note, kill_verdict FROM research_verdicts").fetchone() == (
+        "v1",
+        "FLAWED",
+    )
+    conn.close()
+    # A second label never overwrites the first.
+    c = journal.run(
+        dbp,
+        {"verdicts": [dict(first, kill_verdict="SOUND")]},
+        composite_db=None,
+        now_iso="2026-09-12T04:12:00+00:00",
+    )
+    assert c["annotated"] == 0 and c["duplicates_skipped"] == 1
+    conn = db.connect(dbp)
+    assert conn.execute("SELECT kill_verdict FROM research_verdicts").fetchone() == ("FLAWED",)
+    conn.close()

@@ -1065,3 +1065,19 @@ def test_research_calibration_bins_form_a_reliability_table(tmp_path):
     ).fetchall()
     assert [(r[0], r[1]) for r in rows] == [(0.3, 1), (0.6, 1), (0.8, 1)]
     assert [r[3] for r in rows] == [0.0, 0.0, 1.0]
+
+
+def test_research_kill_filter_splits_outcomes_by_kill_label(tmp_path):
+    """v_research_kill_filter grades the kill-thesis label the way
+    v_research_filter grades the call: same polarity-safe hit_rate, plus
+    n_dates (distinct verdict dates -- a sweep day's verdicts share one
+    market). Legacy rows (NULL label) form their own group, never vanish."""
+    conn = _conn(tmp_path)
+    for sym, kill, fwd in (("AAA", "SOUND", 0.01), ("BBB", "SOUND", 0.10), ("CCC", None, 0.01)):
+        vid = _graded_verdict(conn, sym, "pass", fwd=fwd, bench=0.05)
+        conn.execute("UPDATE research_verdicts SET kill_verdict=? WHERE id=?", (kill, vid))
+    rows = conn.execute(
+        "SELECT kill_verdict, verdict, horizon, n, n_dates, hit_rate"
+        " FROM v_research_kill_filter ORDER BY kill_verdict"
+    ).fetchall()
+    assert rows == [(None, "pass", 5, 1, 1, 1.0), ("SOUND", "pass", 5, 2, 1, 0.5)]

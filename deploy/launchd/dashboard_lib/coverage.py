@@ -112,6 +112,12 @@ DB_SCHEMAS: dict[str, Callable[[Any], None]] = {
 # nothing on the page touches belong here.
 UNSURFACED: dict[tuple[str, str], str] = {
     (
+        "scorer.db",
+        "v_research_kill_filter",
+    ): "kill-thesis label vs outcome: 5-9 distinct verdict dates per cell today"
+    " and every pre-2026-09-10 row NULL until annotated; terminal reading"
+    " until n_dates justifies a card.",
+    (
         "market_calendar.db",
         "v_upcoming_closures",
     ): "folds both markets' holidays and early closes into one list; the holidays card queries events by type so kind can name the market",

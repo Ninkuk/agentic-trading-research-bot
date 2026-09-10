@@ -125,7 +125,10 @@ paper outcomes in `v_decision_outcomes`/`v_flag_response`/`v_human_filter`. Rese
 also carry a stated probability of beating SPY over a stated horizon (`p_win`/`horizon_days`,
 plus kill-thesis's own `p_win_kill`); the stated horizon registers as an extra outcome row and
 `v_research_calibration` scores the forecasts (Brier against the base-rate constant, distinct
-verdict dates as effective n) — calibration only, never feeding gates or sizing. Single-leg option
+verdict dates as effective n) — calibration only, never feeding gates or sizing. The
+kill-thesis label (`kill_verdict`, SOUND/FLAWED/UNPROVEN) rides the same row and
+`v_research_kill_filter` grades it beside the buy/pass call; a re-ingest annotates a
+label-less row once and changes nothing else. Single-leg option
 fills journal with contract identity (`contract_ref`/`position_effect`) and land in
 `v_flag_response` as their own `acted_option` bucket; their dollar P&L lives in the
 `premium_flows` ledger (signed cash events, broker-side signs, fixed ×100 multiplier; partial

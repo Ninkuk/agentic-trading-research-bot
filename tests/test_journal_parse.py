@@ -159,6 +159,7 @@ def test_parse_verdicts_validates_and_uppercases():
             "p_win_kill": None,
             "horizon_days": None,
             "expectation": None,
+            "kill_verdict": None,
         }
     ]
 
@@ -343,3 +344,22 @@ def test_parse_verdict_calibration_fields():
         None,
     )
     assert (absent["p_win"], absent["horizon_days"], absent["expectation"]) == (None, None, None)
+
+
+def test_parse_verdict_kill_verdict_normalizes_label():
+    base = dict(symbol="ABC", verdict="pass", verdict_date="2026-09-10")
+    good, lower, bad, absent = journal.parse_doc(
+        {
+            "verdicts": [
+                dict(base, kill_verdict="UNPROVEN"),
+                dict(base, symbol="DEF", kill_verdict=" sound "),
+                dict(base, symbol="GHI", kill_verdict="PENDING"),  # not a verdict label
+                dict(base, symbol="JKL"),
+            ]
+        }
+    )[2]
+    assert good["kill_verdict"] == "UNPROVEN"
+    assert lower["kill_verdict"] == "SOUND"
+    # A bad label drops the FIELD, never the verdict (same rule as p_win).
+    assert bad["kill_verdict"] is None and bad["symbol"] == "GHI"
+    assert absent["kill_verdict"] is None

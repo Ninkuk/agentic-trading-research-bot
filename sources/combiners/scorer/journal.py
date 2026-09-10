@@ -91,6 +91,16 @@ def _text(x):
     return x.strip() if isinstance(x, str) and x.strip() else None
 
 
+KILL_LABELS = ("SOUND", "FLAWED", "UNPROVEN")
+
+
+def _kill_label(x):
+    """The kill-thesis verdict label, case-normalized; anything outside the
+    three-word vocabulary (a per-condition tag like PENDING) is None."""
+    s = x.strip().upper() if isinstance(x, str) else ""
+    return s if s in KILL_LABELS else None
+
+
 def parse_doc(doc) -> tuple:
     """Validate one input document into (fills, passes, verdicts, skipped_count).
     Rows missing/failing required fields are skipped and counted, never
@@ -235,6 +245,7 @@ def parse_doc(doc) -> tuple:
                 p_win_kill=_probability(v.get("p_win_kill")),
                 horizon_days=_positive_int(v.get("horizon_days")),
                 expectation=_text(v.get("expectation")),
+                kill_verdict=_kill_label(v.get("kill_verdict")),
             )
         )
     fills.sort(key=lambda f: (f["filled_at"], 0 if f["side"] == "buy" else 1))
@@ -344,6 +355,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
     when fills/passes are present. Fills must be chronological (parse_doc
     guarantees it) so FIFO exit attachment is deterministic."""
     matched = freelance = exits = passes_n = verdicts_n = dupes = expired = corrected = 0
+    annotated = 0
     flows = 0
     # Phoenix clock, like fill_date/composite_date: an evening-dictated pass
     # (after the 9:05pm snapshot = next day UTC) answers THAT evening's flag.
@@ -523,8 +535,8 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
             cur = conn.execute(
                 "INSERT OR IGNORE INTO research_verdicts"
                 " (symbol, verdict, verdict_date, doc, note, recorded_at,"
-                "  p_win, p_win_kill, horizon_days, expectation)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "  p_win, p_win_kill, horizon_days, expectation, kill_verdict)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     v["symbol"],
                     v["verdict"],
@@ -536,6 +548,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                     v.get("p_win_kill"),
                     v.get("horizon_days"),
                     v.get("expectation"),
+                    v.get("kill_verdict"),
                 ),
             )
             verdicts_n += cur.rowcount
@@ -546,11 +559,22 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
             # recorded call, and it books the prior value for audit first.
             reason = v.get("corrects")
             prior = conn.execute(
-                "SELECT verdict FROM research_verdicts WHERE symbol=? AND verdict_date=?",
+                "SELECT verdict, kill_verdict FROM research_verdicts"
+                " WHERE symbol=? AND verdict_date=?",
                 (v["symbol"], v["verdict_date"]),
             ).fetchone()
             if not reason or not prior or prior[0] == v["verdict"]:
                 dupes += 1  # no reason given, or nothing actually changed
+                # A duplicate may still ANNOTATE: a legacy row with no
+                # kill-thesis label takes the one offered, once. The call,
+                # note and calibration fields are never touched here.
+                if prior and prior[1] is None and v.get("kill_verdict"):
+                    conn.execute(
+                        "UPDATE research_verdicts SET kill_verdict=?"
+                        " WHERE symbol=? AND verdict_date=?",
+                        (v["kill_verdict"], v["symbol"], v["verdict_date"]),
+                    )
+                    annotated += 1
                 continue
             conn.execute(
                 "INSERT INTO verdict_corrections (symbol, verdict_date, old_verdict,"
@@ -559,7 +583,8 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
             )
             conn.execute(
                 "UPDATE research_verdicts SET verdict=?, doc=?, note=?, recorded_at=?,"
-                " p_win=?, p_win_kill=?, horizon_days=?, expectation=?"
+                " p_win=?, p_win_kill=?, horizon_days=?, expectation=?,"
+                " kill_verdict=?"
                 " WHERE symbol=? AND verdict_date=?",
                 (
                     v["verdict"],
@@ -570,6 +595,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                     v.get("p_win_kill"),
                     v.get("horizon_days"),
                     v.get("expectation"),
+                    v.get("kill_verdict"),
                     v["symbol"],
                     v["verdict_date"],
                 ),
@@ -604,6 +630,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
             verdicts_recorded=verdicts_n,
             duplicates_skipped=dupes,
             corrected=corrected,
+            annotated=annotated,
             skipped=skipped,
             expired_closed=expired,
             option_flows=flows,
@@ -714,6 +741,7 @@ def main(argv=None) -> None:
         f" {c['freelance']} freelance, {c['exits_attached']} exits,"
         f" {c['passes_recorded']} passes, {c['verdicts_recorded']} verdicts,"
         f" {c['duplicates_skipped']} duplicates, {c.get('corrected', 0)} corrected,"
+        f" {c.get('annotated', 0)} annotated,"
         f" {c['skipped']} skipped, {c['expired_closed']} expired,"
         f" {c['option_flows']} option flows, into {a.db}"
     )

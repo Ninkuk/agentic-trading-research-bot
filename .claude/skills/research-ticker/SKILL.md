@@ -204,12 +204,19 @@ specific is another thing that has to go right.
 Then, explicitly:
 
 - **Enumerate the load-bearing conditions and count them.** Print the count.
-  Tag each one by evidence tier — **probable** (evidence exists today),
-  **plausible** (a reasoned argument, no tangible evidence yet), or
-  **possible** (could happen; can't say what or when). A *possible*-tier
-  condition may not be load-bearing for the base case: it is upside option
-  value or it is out. "Five conditions, two merely plausible" reads very
-  differently from "five probable conditions" — that is the point of tagging.
+  They are the bull case's conditions — what must be true for owning the
+  name at today's price to beat the benchmark — on a PASS as much as on a
+  BUY: kill-thesis attacks the bull case, and the pass is what its failure
+  leaves. Tag each one by evidence tier — **probable** (evidence exists
+  today), **plausible** (a reasoned argument whose decisive disclosure is
+  dated: name the document and the date; kill-thesis records it as
+  PENDING), or **possible** (could happen; can't say what or when). A
+  *possible*-tier claim is not a condition: it is upside option value, in
+  §6 or dropped, never numbered. An exogenous price — a commodity, a
+  currency, a rate, a policy stance — is a §4 scenario input, never a
+  condition; the condition is that the price clears the hurdle on the
+  stated path. "Four conditions, one plausible" reads very differently from
+  "four probable" — that is the point of tagging.
 - **Name the falsifiers.** What observable evidence would make you sell? A
   thesis with no falsifier is a position, not an argument. Say for each
   whether it is a **break** (the story is over — sell) or a **shift** (an
@@ -496,6 +503,7 @@ scratchpad:
                    "verdict": "buy" | "pass",
                    "verdict_date": "<Phoenix calendar date of the run, YYYY-MM-DD>",
                    "doc": "<TICKER>-<DATE>.md",
+                   "kill_verdict": "SOUND" | "FLAWED" | "UNPROVEN",
                    "note": "<one line: the load-bearing reason>",
                    "p_win": 0.60,
                    "p_win_kill": 0.45,
@@ -507,8 +515,9 @@ today's price? — `buy` if yes, `pass` otherwise. It is orthogonal to the
 kill-thesis SOUND/FLAWED/UNPROVEN label required by the Output section: that
 label grades the thesis's robustness, not its direction, so a FLAWED or
 UNPROVEN thesis can still log `buy` if §1 concludes ownership, and a SOUND
-one can log `pass`. Summarize the kill-thesis label in `note` if it's the
-load-bearing reason, but never let it decide `verdict` — §1 does.
+one can log `pass`. `kill_verdict` carries that label verbatim from the
+ledger line so `v_research_kill_filter` can grade it beside the call; it
+never decides `verdict` — §1 does.
 
 The calibration fields copy §1's second line and are mandatory here even
 though the parser tolerates their absence (legacy docs). `p_win` is the
