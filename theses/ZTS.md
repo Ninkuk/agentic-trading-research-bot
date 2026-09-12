@@ -1,0 +1,345 @@
+# ZTS — Zoetis — 2026-08-07 (reopen of 2026-07-30, trigger: q2-organic-ca-decel-and-guide-hold)
+
+Price $77.27 (official close, 2026-08-06) · market cap $32.39B · next earnings
+2026-11-03 BMO (unverified)
+
+**Reopen re-research of `research/ZTS-2026-07-30.md`** (prior verdict UNPROVEN,
+reopen=2026-08-06:q2 print; prior ownership call: PASS at $75.81). The prior thesis's own
+decision rule: "organic CA decel + guide hold → revisit toward buy; **third cut → stay
+away**."
+
+## 0. The reopen question, answered first
+
+**The trigger fired on the stay-away branch.** The Q2 2026 print (2026-08-06 BMO,
+confirmed reported: Robinhood `get_earnings_results` adj EPS actual $1.87 vs est $1.86,
+`verified=true`; press release and 10-Q fetched) delivered a **third guidance cut, the
+largest of the three** — not a hold:
+
+| prior falsifier | actual | status |
+|---|---|---|
+| A third guidance cut | Revenue $9.68–9.96B → **$9.12–9.32B** (organic **+2/+5% → −3/−1%**); adj net income organic **+2/+6% → −9/−5%** ($2.87–2.95B → $2.57–2.62B); adj EPS **$6.85–7.00 → $6.15–6.25** (−10% at midpoint) [release guidance table] | **FIRED** |
+| US companion-animal organic decline steeper than Q1's −8% (US segment referent) | US segment **−7%**; US companion animal **−11%** organic — steeper than the −8% referent, flat vs Q1's actual US CA −11% | FIRED vs the referent as written; flat vs Q1's CA rate |
+| Derm decline accelerating past Q1's −13% | Key dermatology **−16% global** ($395M), **−18% U.S.** ($251M), −13% intl — U.S. in-clinic share 86%, **−5pts sequentially, −10pts YoY** [CFO] | **FIRED** |
+| Librela regulatory escalation beyond label updates | None. Lenivia/Portela launched Canada/EU, approved Great Britain (+Lenivia Switzerland); feline mAbs +12% | NOT fired |
+| Livestock growth reversal | **+11%** organic (U.S. +23%, partly transitory: screwworm Dectomax demand + supply timing; normalized "high single digit," H2 guided mid-single) | NOT fired |
+| Leverage past ~2.5× EBITDA | Debt $9.25B, net debt $7.31B ≈ 1.9× TTM EBITDA $3.95B (debt/EBITDA 2.35 gross) [statistics probe] | NOT fired |
+| Transformational acquisition | VitalRADS tuck-in only (closed July) | NOT fired |
+
+And two degradations the prior falsifier list did not anticipate:
+**price realization** — Q2 price contribution ~flat, full-year now guided **0% to −2%**
+(May guide: +1–2pts; the historical algorithm carried +2–3pts) via "gross to net"
+promotional spend management says it will *accelerate* in H2 [CFO, call]; and the **CFO
+departure** — Wetteny Joseph out (special advisor to early 2027), Jay Saccaro
+(ex-GE HealthCare, ex-Baxter CFO) in as **CFO + COO** from 2026-08-17, announced with the
+cut, mid-class-action-period. Management's own words on current trading: July sales trends
+"**have not yet indicated market stabilization**" [CFO, call].
+
+What that does to the thesis: the 7/30 floor thesis — "ownership requires only that
+revenue holds roughly flat" — is no longer a floor. **Decline is now the company's own
+guided base case**, and the prior run's valuation note said exactly what that means: "the
+floor's real enemy is *decline*, not zero growth." The market read the print as a
+kitchen-sink de-risking: Aug 5 close $74.39 → Aug 6 close $77.27, **+3.9% on the cut day**
+(intraday $73.71–79.60, 17.7M shares vs 6.4M avg) [broker tier daily bars]. That reading
+may prove right; it is not evidence yet.
+
+## 1. Verdict and thesis
+
+**PASS at $77.27** (2026-08-06 close). kill-thesis: **UNPROVEN** — conditions=5,
+refuted=0, unknown=2. The prior thesis's own reopen rule fires on the
+stay-away branch, and the arithmetic agrees: at a $32.39B market cap on $2.363B TTM
+levered FCF, the guide-consistent decline path implies **~7.8%/yr, −104bp below an 8.80%
+hurdle** (rf + floored beta × operations-weighted ERP), and the decline path sits below
+*every* defensible hurdle variant. Flat-forever implies ~8.6% (−20bp, within hurdle-input
+noise); only recovery paths no current evidence supports (+2%/yr and up) clear the hurdle
+with room. The price is 1.9% *above* the 7/30 run on guidance ~10% lower.
+
+Thesis (plain): the business quality case is intact — dominant share, 27.5% ROIC,
+livestock/diagnostics/international all growing — but the U.S. companion-animal franchise
+that carries the margin structure is declining at −11% with its price umbrella now guided
+negative, stabilization is (still) evidenced by nothing independent of management, and the
+same management just cut guidance for the third time in nine months. Unverified ≠ wrong,
+but a pass here costs opportunity, not money. Revisit at the Q3 print under the new CFO.
+
+**Closest attack:** the print-day tape — +3.9% on a 10% EPS cut says expectations sat
+below the new guide (detail in the Kill-thesis record).
+
+Load-bearing conditions of the PASS (adjudication in the Kill-thesis record; condition
+tiers not recorded in original run):
+
+1. The guided decline is the right base case until stabilization is evidenced.
+2. The hurdle math is right.
+3. No independent stabilization evidence exists.
+4. Livestock/diagnostics cannot carry the multiple while US CA declines at −11%.
+5. The pipeline is not yet creditable as base-case value.
+
+## 2. Business
+
+Unchanged in structure from `ZTS-2026-07-30.md` §2 (created / captured / protected) — the
+print moves the **captured** and **protected** legs, in opposite directions:
+
+- **Captured (weakened):** the premium-price mechanism is suspended. Price realization
+  guided 0 to −2% for FY26; "growth to net" rebates, cross-portfolio bundling, and
+  point-of-sale subsidies are the new competitive currency, with contracts locked 2–3
+  years [CEO, call]. Management frames list price as untouched — true, and the reason the
+  suspension is claimed reversible — but rivals "largely competing on price" [CFO] plus a
+  non-growing category is exactly the configuration that converts temporary rebates into
+  permanent price levels.
+- **Protected (eroding at measured speed, not gone):** U.S. derm in-clinic share 86%
+  (−10pts YoY); Trio ~21% in-clinic, "nearly double the nearest competitor," puppy share
+  ~28% [CFO]. The field-force/portfolio-breadth mechanism and mAb manufacturing scale
+  stand; Europe shows "switch back" behavior after rivals' trials [CEO]. The moat is
+  measurably wide and measurably narrowing.
+- **Diversification (working as designed):** livestock +11%, diagnostics +12%, intl CA
+  +5%, emerging markets +21% — and total organic revenue *still* fell 1%. The offset
+  bounds the decline; it cannot fund the old algorithm.
+
+**Operating leverage (Phase 0):** not separately printed in original reopen run; the
+reopen thread notes "operating leverage is running in reverse this year" — adj net
+income organic guided −9% to −5% against revenue −3/−1% (§3).
+
+## 3. Threads pulled
+
+- **The reopen thread** — resolved above; the guidance table is the finding. The single
+  most informative row: adj net income organic guided **−9% to −5%** — the P&L now
+  declines faster than revenue (−3/−1%) despite SG&A −4%, because the gross-to-net spend
+  lands in realized price. Operating leverage is running in reverse this year.
+- **Is the cut a kitchen sink?** The case for: incoming outside CFO (classic
+  clear-the-decks timing), the guide's low end explicitly "stress-tested" for
+  accelerating pressure [CFO], +3.9% print-day reaction, W. Blair downgrade citing "too
+  much uncertainty" *after* a +43% analyst-target upside — capitulation shape. The case
+  against: July trading was still deteriorating at guide time, and the identical
+  de-risking read was available after the May cut and was wrong. **Unverifiable until
+  the Q3 print** — recorded as UNKNOWN, not credited either way.
+- **Price action vs the 7/30 session:** spot +1.9% (75.81 → 77.27) while FY guidance
+  fell ~10% at the EPS midpoint — the market cap now stands $625M higher on a
+  materially worse disclosed trajectory. This is the quiet reason the implied-return
+  table reads worse than a week ago; the base FCF rose only ~5.6% (2,237 → 2,363).
+- **CFO transition read.** Joseph stays as advisor to early 2027 (argues against
+  acrimony); Saccaro's CFO+COO combined mandate over manufacturing/supply is new
+  structure, pitched as "faster decision-making" [CEO]. A GE HealthCare/Baxter-caliber
+  CFO accepting the seat is mildly disconfirming of undisclosed-disaster theories, and
+  his first guide (Q3, Nov 3) is the natural re-basing moment — both directions cut.
+- **Class action, updated:** now disclosed in the 10-Q (filed 2026-08-06): *City of Ann
+  Arbor Retiree Health Care Benefit Plan & Trust v. Zoetis*, No. 1:26-cv-04401
+  (S.D.N.Y.), filed 2026-05-27, plus derivative complaints with similar assertions
+  [10-Q legal note]. The epistemic effect carried from 7/30 stands: every stabilization
+  claim is management-sourced from defendants in a concealment suit.
+- **Buyback into the cut:** >$550M repurchased in Q2, "above our historical quarterly
+  average… deliberate… at our current valuation" [CFO]; $1.3B remains of the $6B
+  Aug-2024 authorization [10-Q Note 13]. H1 net borrowing context: the Dec 2025 $2.0B
+  0.250% converts funded 12.3M shares of repurchases completed by 2026-03-31 [10-Q debt
+  note]. Capital return is now partly leverage-funded at declining fundamentals — watch
+  the 2.5× falsifier line.
+- **Cash flow reconciliation (dead end resolved):** H1'26 NCFO $1,056M − capex $227M =
+  FCF $829M vs H1'25 $796M [10-Q] — FCF *grew* H1/H1 on capex discipline (−$97M) and
+  working capital, not earnings. The stockanalysis TTM `fcf` $2,363M is Q2-inclusive
+  (capex bridge reconciles exactly: 621 − 324 + 227 = 524; the NCFO comparative differs
+  $47M from the 10-Q bridge — likely prior-year presentation; both figures quoted).
+- **Machine view:** composite has no current ZTS flag (last ticker_scores row is
+  snapshot 13; the 2026-07-14 `edgar_insider` grant-cluster flag from the prior run has
+  aged out), `in_portfolio=0`. This run is reopen-driven, not signal-driven.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; path 1 N/A — ZTS not in the
+  24-symbol CBOE catalog); liquidity gate FAILED — treat as directional only; see §4.
+- **Dead ends:** stocks.db/sec_fundamentals.db/earnings.db still carry no ZTS rows
+  (universe limits, unchanged); no minority-interest haircut (NCI line $0 in Q2)
+  [release income statement]; no new insider open-market buys surfaced in the news feed
+  through 2026-08-06 (Form 4 sweep not re-run this session — the crash-era zero-buy
+  finding stands from 7/30).
+
+## 4. Valuation
+
+Reverse DCF, **levered** TTM FCF **$2,363M** (`/financials/cash-flow-statement/` TTM,
+Q2-inclusive, live probe 2026-08-07) paired with **market cap $32,393,756,678**
+(statistics `hover`, live probe 2026-08-07; spot $77.27). `--base-earnings` $2,602M
+(TTM GAAP net income: 2,637 statistics through Q1 + 691 Q2'26 − 726 Q2'25). No net-debt
+input by construction (levered flow ↔ market cap). ATM IV 39.6% (<50%), so two-decimal
+quotes are permitted; the honest range is still the scenario spread.
+
+**Hurdle: 8.80%** = rf **4.74%** + beta **0.8** × ERP **5.08%**. As-of: rf and headline
+ERP 2026-08-01 (Damodaran home page); country table vintage 2026-01-05 (`ctryprem`).
+Beta 0.73 (statistics) floored to 0.8 per the stable-band rule. ERP is
+operations-weighted over the 10-Q's H1'26 revenue mix (~51% US at 4.46%; 13 named
+countries at table values — Brazil 7.47%, Mexico/Italy 6.69%, China/Japan 5.14%, UK/France
+5.01%, Aaa bloc 4.23%; "other developed" proxied at 4.23%, "other emerging" at ~7.5% —
+both bucket proxies are approximations). Hurdle sensitivity is material and stated:
+raw beta 0.73 + headline US-only ERP 4.28% gives **7.86%**; the strict-input hurdle is
+8.80%. The decline path fails **both**; the flat path fails only the strict one.
+
+| scenario | growth path | terminal | implied return | spread vs 8.80% hurdle |
+|---|---|---|---|---|
+| A guide-consistent decline | −3%, −2%, −1% | 1.0% | **7.76%** | **−104bp** |
+| B flat forever | 0% × 3yr | 1.5% | **8.60%** | −20bp |
+| B′ flat, SBC-deducted base ($2,263M) | 0% × 3yr | 1.5% | **8.30%** | −50bp |
+| C recovery (unevidenced) | 2% × 3yr | 2.0% | **9.44%** | +64bp |
+| D bull (old algorithm returns) | 4% × 5yr | 2.5% | **10.46%** | +166bp |
+
+Integrity checks: terminal reinvestment rate 9.2% (FCF < earnings — no
+growth-without-reinvestment warning). Implied terminal ROE: A 10.9% (just above hurdle —
+coherent for a fade case); C 21.8% / D 27.2% — more than 5 points above the hurdle,
+"tough to do" in perpetuity; the only defense is that ZTS earns 27.5% ROIC *today*, and
+that excess return is precisely what Zenrelia/Numelvi/Quattro and the generics are
+attacking, with the ~Sept-2029 Apoquel compound-patent cliff (third-party trackers,
+medium confidence, carried from 7/30) inside any terminal window. The terminal-risk
+sweep conclusion from 7/30 stands: blockbuster concentration (top-5 ≈ 42% of revenue,
+FY2025 10-K) is the dominant disclosed structural risk; 2%+ terminal growth leans on the
+pipeline UNKNOWN, which is why A uses 1%. SBC is modest (H1 $51M [10-Q]; ~$100M/yr ≈ 4%
+of FCF) — B′ shows the haircut. Adjusted ETR ~20.5% [guidance table] ≈ marginal — no
+NOL flattery. Serial-acquirer check: tuck-ins only (VitalRADS; H1 acquisitions $0
+[10-Q]); the growth paths are organic. Context multiples: trailing P/E 12.6, forward
+11.7 (pre-cut estimates) [statistics]; ~12.5× the new $6.20 adj EPS midpoint.
+
+**The read:** a low-ish implied return on the *company's own guided path* is the bad
+quadrant — the 7/30 "high return on conservative assumptions" configuration inverted.
+The pass does not require believing the decline persists forever; it requires only
+declining to pay a price that needs unevidenced recovery to clear the hurdle.
+
+**Options-implied move (path 2 — Robinhood stopgap; path 1 N/A, ZTS not in the 24-symbol
+CBOE catalog, no `options.db` history). Liquidity gate FAILED — treat as directional
+only** (call spread $1.00 = 26% of the $3.80 mark; put spread $0.20 = 14.8% of the $1.35
+mark vs a 13.5¢ threshold; OI healthy at 4,138/3,387). Quotes as of the 2026-08-06 close;
+nearest expiry 2026-08-21 (14 calendar days from the 2026-08-07 Phoenix run date). The
+strike grid is $5-wide — ATM approximated at the 75 line with spot $77.23 (≈2.9%
+moneyness skew; the straddle figure carries call intrinsic and overstates a true ATM
+read). No listed expiry brackets the next catalyst (Q3 print 2026-11-03 falls between
+2026-10-16 and 2026-12-18) — no timing check is possible against the thesis's own
+catalyst, and none is claimed; this table is background:
+
+| metric | value |
+|---|---|
+| spot | 77.23 |
+| dte (calendar days) | 14 |
+| ATM IV (mean of 75C/75P) | 39.56% |
+| expected absolute move (MEAN, not a ceiling) | 6.67% |
+| 1-sigma move | 7.75% |
+| RV60 | 29.78% |
+| RV20 | 26.76% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Both windows read below IV — nominally "elevated" — but the finding is the **crush**:
+pre-print ATM IV was 56.9% (7/30 session); post-print 39.6%. The event premium came out;
+what remains prices continued elevated single-name vol against trailing windows that
+already contain the May crash's aftermath. The thesis makes no dated numeric move claim —
+no `--required-move` check run.
+
+## 5. Falsifiers
+
+For the pass — what would make it wrong, and what confirms it:
+
+- **Q3 print (2026-11-03, BMO, date tentative):** derm/paras in-clinic share flat-or-up
+  sequentially + price realization ≥ −2% + no further guide cut → the stabilization the
+  floor thesis needed is finally evidenced; re-research toward buy, don't wait for Q4.
+- Conversely: a fourth guidance cut, or U.S. CA organic below −11%, or price realization
+  below −2% → decline entrenched; the pass hardens.
+- Livestock organic below mid-single-digit in H2 (the diversification offset failing).
+- Net debt/EBITDA past ~2.5× while repurchases continue at the Q2 pace.
+- Librela/mAb franchise regulatory escalation beyond label updates (unchanged).
+- The new CFO re-basing 2027 materially below the FY26 exit rate at his first guide —
+  that is a re-cut wearing transition clothes; read it as falsifier #2.
+
+**Reopen trigger:** 2026-11-03:
+zts-q3-share-stabilization-and-guide-floor-under-new-cfo — Q3 print (sequential
+derm/paras share, price realization in band, guide floor under the new CFO).
+
+## 6. UNKNOWNs
+
+1. **Whether July–August demand is troughing** — the load-bearing unknown; no independent
+   Rx/visit dataset was pulled (none is integrated); resolves only at the Q3 print.
+   Absence defers the buy case; it does not kill the business.
+2. **Pipeline value** (long-acting Cytopoint, CKD, oncology, cardiology, anxiety,
+   obesity) — unverifiable by construction; scenario A needs none of it.
+3. **Management comp structure** (DEF 14A filed 2026-04-08, still unread — third carry)
+   and the new CFO's incentive package (8-K/DEF 14A supplement when filed).
+4. **Class-action discovery risk** — complaint assertions vs. discovery record,
+   unknowable from outside.
+5. **The $47M NCFO comparative gap** between the 10-Q H1'25 figure ($1,120M) and the
+   FY25-route bridge — presentation-level, both sources quoted; checkable against the
+   FY2025 10-K cash-flow statement in a follow-up.
+
+## 7. Sources
+
+- **Primary:** Q2 2026 earnings release (8-K Ex. 99.1, 2026-08-06 — guidance
+  table with prior-guide comparison, segment/species/geography tables, GAAP↔adjusted
+  reconciliations); Q2 2026 10-Q (2026-08-06 — H1 cash flows NCFO $1,056M/capex $227M,
+  convertible notes & capped calls, $1.3B buyback remainder, securities class action
+  1:26-cv-04401 + derivative matters); FY2025 10-K (carried: concentration, generic
+  precedent, patent non-disclosure); DEF 14A 2026-04-08 (indexed, unread). Transcribed
+  (Quartr via stockanalysis; primary-transcribed): Q2 2026 earnings call
+  (`/stocks/ZTS/transcripts/662326-q2-2026/`, 34 turns, 2026-08-06): revised outlook
+  mechanics, gross-to-net framing, July non-stabilization, share figures (derm 86%,
+  Trio ~21%/puppy 28%), livestock transitory decomposition, FX $60–65M top-line delta,
+  CFO transition remarks.
+- **stockanalysis.com (vetted exception):** live 2026-08-07: `/stocks/ZTS/statistics/`
+  (market cap `hover` 32,393,756,678; beta 0.73; short float 4.49%; margins; debt);
+  `/financials/cash-flow-statement/` (TTM fcf 2,363M, Q2-inclusive); `/stocks/ZTS/`
+  news feed (downgrade items, put-volume colour); `/transcripts/`, `/filings/` indexes.
+- **Broker/market microstructure:** Robinhood MCP, 2026-08-06/07 — no integrated
+  official source covers these fields for ZTS: live quote & official close ($77.27);
+  daily bars 2026-03-25→08-06 (closes array for RV60/RV20; print-day move); Aug 21
+  75C/75P instruments + quotes (marks, IV, OI, spreads); `get_earnings_results`
+  (Q2 $1.87 vs $1.86 verified; next print 2026-11-03 BMO, unverified). Adjusted-EPS
+  actuals are non-GAAP; GAAP cross-check via the release ($1.65 diluted).
+- **Reference data:** Damodaran, fetched live: home page ERP 4.28% / rf 4.74%
+  (2026-08-01); `ctryprem.html` country total-ERPs (vintage 2026-01-05); EVA excess-
+  return base rate (~29%).
+- **Point-in-time repo DBs:** `composite.db` (no current ZTS flag; snapshot-13 row
+  is the last; in_portfolio=0). ZTS absent from `sec_fundamentals.db`, `stocks.db`,
+  `earnings.db` (unchanged).
+- **Low-confidence:** W. Blair downgrade and Reuters "cuts annual forecasts" headlines
+  (news feed); TheFly put-volume items (8/3, 8/5); Apoquel ~2029 patent-cliff dating
+  (third-party trackers, carried from 7/30).
+
+## Kill-thesis record
+
+**UNPROVEN — conditions=5, refuted=0, unknown=2.** The five load-bearing conditions of
+the PASS (attacked, not the business's):
+
+1. **The guided decline is the right base case until stabilization is evidenced.** —
+   **SURVIVED.** Management's own guide and July commentary ("have not yet indicated
+   market stabilization") are the evidence; the kitchen-sink counter-read is plausible
+   and unverifiable (§3, kitchen-sink thread). Uncertainty never credits.
+2. **The hurdle math is right.** — **SURVIVED, weakened.** The −104bp bear-path spread
+   holds under every input variant (worst-case hurdle 7.86% still exceeds 7.76%); but the
+   flat-path −20bp flips to roughly +70bp under raw-beta/US-ERP inputs. The pass
+   therefore rests on condition 1 more than the headline table suggests — stated, not
+   hidden.
+3. **No independent stabilization evidence exists.** — **SURVIVED.** Disconfirming
+   search found nothing independent of management on the stabilization side this
+   session; the class action (10-Q-confirmed) keeps the independence discount on
+   management's claims.
+4. **Livestock/diagnostics cannot carry the multiple while US CA declines at −11%.** —
+   **SURVIVED on printed arithmetic.** Q2: livestock +11% on ~30% of revenue ≈ +3.3pts
+   vs companion animal −6% on ~70% ≈ −4.2pts → total −1%; and H2 livestock is guided to
+   moderate to mid-single-digit [CFO] while the U.S. derm competitor only entered in
+   Q2'26 — comps don't ease before mid-2027.
+5. **The pipeline is not yet creditable as base-case value.** — **UNKNOWN by
+   construction.** 12 "potential blockbusters" (≥$100M sales each, release definition),
+   long-acting Cytopoint US approval expected this year, OmniMax validation by year-end
+   — real options, zero disclosed revenue basis. Upside option value, not base case.
+
+Standing checks: **base rate** — guidance-cut sequences (this is #3 in nine months) more
+often continue than trough on schedule, and only ~29% of firms sustain returns above
+their cost of capital (Damodaran EVA dataset) — both lean toward the pass;
+**strongest counter-case (the attack that came closest):** the print-day tape — a stock
+that *rises* 3.9% on a 10% EPS cut is a market saying expectations had already
+overshot below the new guide; with fwd ~12.5× cut numbers, 86% share, an outside CFO
+arriving, and $1.3B of buyback, passing here may be passing at the bottom, and the
+prior run's "the 50% drawdown has likely overshot" intuition now has a cheaper
+multiple on de-risked numbers. The counter to the counter: identical logic was
+available after the May cut at $75–85 and lost money; nothing observable yet separates
+"the bottom" from "the third step down." **Management incentives:** comp metrics still
+unread (DEF 14A 2026-04-08 — carried a third run; the new CFO's package unknown) —
+flagged, not credited; buying back >$550M/quarter while cutting guidance is either
+conviction or support of the comp-relevant share count — unresolved.
+**Moat-as-mechanism:** field force + breadth + mAb manufacturing — mechanism, intact;
+the price-umbrella component is suspended by management's own description.
+**Options timing check:** no dated claim; no aligned expiry for Nov 3; skipped per
+procedure — path-2 background table above, liquidity-gate FAILED.
+
+Unknowns (2): the kitchen-sink question (condition 1's counter — decidable only at the
+Q3 print) and pipeline value (condition 5). **Flip evidence:** (to buy) Q3 print
+2026-11-03 showing sequential share stabilization in derm *and* parasiticides, price
+realization inside the guided 0/−2% band, and the guide floor held under the new CFO —
+that evidences scenario C (9.4%, clears every hurdle variant); (to harder-away) a fourth
+cut, livestock breaking below mid-single, or leverage pushed past ~2.5× to fund
+buybacks.

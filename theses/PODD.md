@@ -1,0 +1,286 @@
+# PODD — Insulet Corporation — 2026-08-06
+
+Price $139.26 (2026-08-06, day after the −20.1% Q2 guide-down) · market cap
+$9.66B
+
+Entry path not recorded in original run.
+
+## 1. Verdict and thesis
+
+**PASS at $139.26.** kill-thesis: **SOUND** — conditions=5, refuted=0,
+unknown=1.
+
+An exceptional single-product franchise whose price still pays a below-hurdle
+return on every assumption set: even the bull-ceiling reverse DCF implies
+~9%/yr against a 9.4% cost of equity, while both of the things that made
+Omnipod special — the only tubeless AID pump, the only pump in the pharmacy
+channel — acquire expiry dates over 2026–27, in the middle of a two-recall
+quality crisis whose overlap with the Type 2 retention miss management's
+"onboarding execution" framing never mentions.
+
+**Closest attack:** base-FCF fairness (see §4; detail in the Kill-thesis
+record).
+
+Load-bearing conditions not enumerated in original run; condition tiers not
+recorded in original run.
+
+## 2. Business
+
+**Created:** Omnipod converts multiple-daily-injection (MDI) diabetics to
+automated insulin delivery with a 3-day disposable tubeless pod + CGM +
+closed-loop algorithm — no tubing, no durable hardware commitment,
+smartphone control. 85%+ of new US starts come from MDI, not from other
+pumps: the company grows the category, not its share of it (Q2'26 call).
+
+**Captured:** razor-blade without the razor. Pods are a recurring
+consumable (~every 3 days) sold as a **pharmacy benefit** (Part D, drug-like
+copays, no 4-year DME lock-in) — revenue = customer base × utilization ×
+net price. Omnipod is 98.7% of revenue (FY25 10-K Note 4: $2,674.0M of
+$2,708.1M); Drug Delivery (Amgen Neulasta pods, $34.1M) is guided −40–50%.
+The model's strength is also its exposure: with no upfront hardware
+commitment, churn shows up in revenue within a quarter — which is exactly
+what Q2 just demonstrated.
+
+**Protected:** (i) manufacturing scale — highly automated lines at Acton,
+Malaysia, a China contract manufacturer, Costa Rica building; management:
+"volumes multiples larger than the nearest competitor" (Q1'26 call);
+(ii) pharmacy-channel access/rebate infrastructure — **no longer exclusive**
+(Medtronic won pharmacy formulary access for MiniMed 780G incl. pump,
+Jan 7 2026 PR; Tandem "PayGo" targets 70% of US sales via pharmacy;
+Beta Bionics pharmacy sales +153% YoY); (iii) algorithm/data iteration —
+Omnipod 5 → annual algorithm drops → Omnipod 6 (STRIVE pivotal at ADA,
+510(k) '27) → fully closed loop for T2 ('27 submission); Libre 3 Plus
+compatibility added (Q2 release) reduces Dexcom single-sensor dependence.
+The trade-secret shield weakened: the $452M EOFlow verdict + worldwide
+injunction was **vacated by the Federal Circuit May 28, 2026** (time-barred;
+en banc petition pending).
+
+**Operating leverage (Phase 0):** not recorded in original run.
+
+## 3. Threads pulled
+
+- **What actually broke (the drawdown).** 52w high $352.82 (Sept 2025). The
+  −62% is a March–August event chain, not a slow fade: Mar 12 MDC #1 (−6%),
+  May 26 MDC #2 (−5%, cumulative corrective-disclosure decline ~$24/sh per
+  the securities complaint), Aug 5 guide-down (−20.1%). Q4'25 (Feb) was a
+  beat-and-raise; Q1'26 (May 6) was a beat-and-RAISE to 21–23%. The T2
+  retention problem surfaced, was quantified, and cut guidance **inside one
+  quarter** — that speed is the risk signature, not the size of the cut.
+- **The two recalls are worse than the call implied.** Mar 12: 51 lots,
+  internal-tube tear, under-delivery without alarm, 29 SAEs (revised up from
+  18); up to $40M 2026 cost (8-K). May 26: **7 million pods** (~8.5% of 2025
+  production) across Omnipod 5/DASH/Eros, cannula tear, 24 serious injuries;
+  **FDA classified Class I on July 2, 2026**. A securities class action
+  (period Feb 21 '25 – May 26 '26, lead-plaintiff deadline Aug 31) alleges
+  concealed cannula-defect handling at Acton. The Q2 call discussed the T2
+  retention miss at length and never connected it to the May correction,
+  whose window sits inside Q2. Whether leaking first pods drove first-90-day
+  T2 churn is **UNKNOWN** (§6) — but "not pricing, not competition, not
+  GLP-1s" was management's list, and "not the recalls" was conspicuously not
+  on it.
+- **Management's competition denial is true today, expiring tomorrow.** No
+  competing tubeless AID ships in the US as of today: twiist (Sequel/DEKA,
+  launched July '25, pharmacy, Tidepool Loop, Abbott dual-sensor deal) is
+  tubed; EOFlow has no US clearance; Roche Solo has no US launch. But:
+  Tandem Mobi Tubeless — riding a cleared **7-day** SteadiSet wear vs
+  Omnipod's 3 — filed 510(k) Q2'26, clearance targeted H2'26; Beta Bionics
+  Mint (pharmacy-only patch) targets Q2'27; Medtronic Fit patch submission
+  ~fall '26. The channel moat is already breached (above); the form-factor
+  moat has ~a year left. Terminal economics must assume both gone.
+- **Gross-to-net is already moving.** US pharmacy rebate provisions:
+  $367.3M ('23) → $452.7M ('24) → **$654.7M ('25)** — +45% against +31%
+  revenue (10-K critical accounting policies). Management's "price stable to
+  slightly up" and the CFO's "slightly lower pricing... not from competitive
+  pressure" (Q2 call) coexist with rebates compounding faster than sales.
+- **AR doubled.** Trade receivables $252.5M → $516.9M in FY25 (+105% vs
+  revenue +31%); three distributors = 78% of revenue (up from 71% in '23);
+  Q1'26 admitted a $10M distributor-timing revenue benefit. No disclosure
+  explains the AR build. Watch item in §5 — if collections lag persists, the
+  revenue quality question hardens.
+- **Insider tape (Forms 4, Feb–Aug).** CEO McEvoy bought ~$1.03M @ $239.35
+  Feb 20 (pre-recalls); directors Weatherman + Stonesifer bought ~$900K
+  combined @ $143–144 on June 3 (post-both-recalls); one small director sale.
+  Nothing filed yet after the Aug 5 guide-down. Read: no informed selling;
+  modest informed buying near today's price — genuine evidence against the
+  pass, noted, small in size.
+- **Estimate pattern.** 7 consecutive beats, none by a hair (Robinhood
+  earnings results, cross-checked direction vs press releases): guidance is
+  sandbagged at the EPS line even while the revenue guide broke. The cut is a
+  revenue-quality event, not an earnings-power event — margins expanded
+  through it (adj GM 72.9% +320bp; adj OM 19.3% +140bp, Q2 release).
+- **GLP-1s (dead end, mostly).** 10-K Item 1A names GLP-1 delay of T2
+  progression as a risk; ADA 2025 Standards allow bolus de-intensification
+  on GLP-1 initiation — the mechanism is real. External 2026 evidence that
+  the basal-bolus population is actually shrinking: not found; BCG and
+  sell-side call it slow/neutral. Ruled out as the near-term cause; kept as
+  the terminal-risk co-factor.
+- **CEO/CFO churn (context, not thread).** McEvoy (ex-J&J MedTech chair)
+  CEO since Apr 28 2025; Hollingshead resigned; CFO Chadwick out, Pease in
+  (Sept '25); CCO role reinstated. The team that set the Type 2 plan is not
+  the team now resetting it.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; PODD not in the
+  CBOE 24-symbol catalog, no options.db history) — liquidity gate FAILED,
+  quotes UNRELIABLE; table in §4.
+- **Dead ends:** "Big blue payer" pharmacy rollback for tube-pump rivals
+  (Q2 call, Wells Fargo q): identity and independent confirmation not found.
+  Recorded.
+
+## 4. Valuation
+
+Reverse DCF, **levered `fcf` ↔ market cap** pairing (statistics route
+`hover` values, live 2026-08-06): market cap **$9,661,039,921**, TTM FCF
+**$293.7M** (= NCFO $511.2M + capex −$217.5M), TTM GAAP net income $375.3M.
+No minority interest. Hurdle inputs: risk-free **4.74%**, implied ERP
+**4.28%** (Damodaran home page, as-of Aug 1 2026), beta **1.09**
+(stockanalysis) → **cost of equity 9.41%**.
+
+| scenario | growth ×5yr | terminal | implied return | spread vs 9.41% |
+|---|---|---|---|---|
+| A guide-consistent | 18/15/12/9/7 | 2.5% | **~7%** | **−214 bp** |
+| B bear (churn persists, '27 competition) | 8/6/5/4/3 | 2.0% | **~6%** | **−381 bp** |
+| C bull (T2 fix works) | 22/18/15/12/9 | 2.5% | **~8%** | **−154 bp** |
+| D = A on FY26-guide base $350M | 18/15/12/9/7 | 2.5% | **~8%** | **−126 bp** |
+| C+ margin-lever ceiling | 30/25/20/15/10 | 2.5% | **~9%** | **−47 bp** |
+
+Implied returns quoted to the nearest whole percent: the path-2 put-leg IV
+(51.6%) crosses the 50% precision line, so the range is wide and these
+figures are arithmetic, not knowledge.
+
+**Assumptions and their defense:**
+- **Base = TTM FCF $293.7M, deliberately un-adjusted.** It absorbs the MDC
+  cash costs, the AR build, and the Costa Rica capex ramp. The bull
+  counter — use adjusted-NI-like owner earnings (~$430–460M) — dies on the
+  growth identity: FCF ≥ net income means a reinvestment rate ≤ 0, and 20%+
+  growth with zero reinvestment is the tool's literal `growth without
+  reinvestment` refusal. Two corrections in four months also disqualify
+  "recall costs are one-time" (their adjusted-EBITDA definition excludes
+  *medical device corrections* as a recurring category — that is the trap,
+  not the answer). Scenario D concedes the moderate version of the attack.
+- **FCF margin is mid-expansion**, so C+ front-loads FCF growth above the
+  revenue rate (per the margin-lever rule) rather than quoting a flat path
+  as the ceiling: adj op margin guided +100bp/yr, capex ramp rolls off after
+  Costa Rica, AR should unwind. C+ is the honest ceiling and it still misses
+  the hurdle.
+- **Market-share sentence:** C+ implies ~$5.5–6.2B revenue by 2031 (at
+  14–15% FCF margin) — well inside management's own stated US T2 TAM (2.5M
+  basal-bolus + 3M basal-only users, ~5% AID-penetrated today, Q2 call) plus
+  T1 and international; the path does not require impossible share. The
+  constraint is competition for that share, not TAM.
+- **Terminal 2.0–2.5% ≤ risk-free 4.74%** (tool-enforced). Terminal
+  reinvestment: rate 21.7% (1 − 293.7/375.3), implied terminal ROE ~11.5% —
+  modest for a franchise earning ~20% ROIC today, i.e. the terminal already
+  assumes excess returns fade, consistent with the Item 1A read below.
+- **Item 1A dominant terminal risk: single-product concentration** — the
+  10-K's first risk factor ("nearly all our revenue from our Omnipod product
+  platform"), with GLP-1/cure obsolescence and CGM-partner dependence
+  (Omnipod 5 does not function without Dexcom/Abbott sensors) as the
+  channels through which it bites. A 2.5% terminal on a one-product company
+  whose form-factor and channel exclusivity both end 2026–27 survives only
+  because the implied terminal ROE is already cut to ~11.5%; anything
+  needing durable 20%+ terminal economics would not.
+- **Commitments check:** purchase obligations $467.2M (76% short-term,
+  demand-driven POs — no take-or-pay, no CGM purchase commitments; MD&A
+  table). The real forward draw is the guided-up capex (Costa Rica plant) —
+  already the reason the base FCF is honest rather than overstated.
+- **Read:** a low implied return on optimistic assumptions is a bad bet. At
+  $139 the price pays ≤9% even if the fix works and nobody ships a rival
+  patch on schedule. The market has repriced the growth, not overshot it.
+
+**Options-implied move** (path 2 — Robinhood stopgap; PODD not in the CBOE
+24-symbol catalog, no `options.db` history; **liquidity gate FAILED — both
+ATM legs breach the spread gate, volume 9 — quotes UNRELIABLE, may not move
+a verdict**): Sep 18 2026 expiry, DTE 43, ATM IV 47.55% (call 43.5 / put
+51.6 — 8-pt put skew).
+
+| metric | value |
+|---|---|
+| ATM IV (mean) | 47.55% |
+| expected absolute move (MEAN, not a ceiling) | 13.00% |
+| 1-sigma move | 16.32% |
+| RV60 | 63.2% |
+| RV20 | 88.1% |
+| IV > RV60? | NO |
+| IV > RV20? | NO |
+
+IV < RV60 and < RV20 only because both trailing windows contain the −20.1%
+print day. No dated thesis claim → no timing refutation asserted.
+
+## 5. Falsifiers
+
+- **Break —** (sell / stay away hardens) a third device correction or an FDA
+  enforcement escalation beyond the July 2 Class I classification — the
+  quality program, not the quarter, becomes the story.
+- **Shift —** (revalue — could flip the pass to buy) Q3/Q4 evidence that T2
+  retention stabilized (management says it monitors monthly and will reset
+  the long-range plan on the Q4 call) **with the stock still near $140** —
+  the C-path spread closes from the numerator side.
+- **Shift —** AR unwinding in the Q3 10-Q (collections normalize → FCF
+  conversion recovers toward the D base) — moves every scenario up ~100bp.
+- **Break —** (for the bear leg) Mobi Tubeless clearance slipping past
+  mid-2027 AND Mint delayed — the form-factor moat gets a longer tail than
+  priced here.
+
+**Reopen trigger:** the LRP reset (management resets the long-range plan on
+the Q4 call).
+
+## 6. UNKNOWNs
+
+1. **Did the recalls drive the T2 churn?** No disclosure ties them; timing
+   overlaps (May 26 correction inside Q2; first-90-day users are the cohort
+   most exposed to a bad first pod). Would come from cohort retention data
+   Insulet holds and does not publish. Absence does not kill the pass — the
+   valuation carries it either way — but it decides whether "execution fix"
+   or "product trust" is the right model for 2027, i.e. whether the C path is
+   even available.
+2. **Global customer-base absolute count** (call gives growth %, 23%; the
+   metrics route is unfed for PODD). Would come from the 10-K/investor day.
+   Not load-bearing.
+3. **AR-doubling cause** (channel mix vs pull-forward). 10-Q aging detail
+   would answer. Load-bearing only for the bear leg's revenue-quality claim.
+4. **Class-action exposure** beyond the $40M MDC #1 estimate: unquantifiable
+   pre-discovery. Bounded by history (2022 MDC liability was revised *down*
+   $11.5M) but two Class I events with 53 combined SAEs is not 2022.
+
+## 7. Sources
+
+- **Primary:** FY25 10-K (acc. 0001145197-26-000028: Item 1A, Note 4
+  revenue, Note 13 debt, MD&A obligations, rebate provisions, AR/distributor
+  concentration); 8-K 2026-03-12 (MDC #1, $40M); 8-K 2026-08-05 (Q2
+  results); Forms 4 Feb–Aug 2026 (McEvoy, Minogue, Weatherman, Stonesifer,
+  Borio); CAFC opinion 25-1807 (May 28 2026, EOFlow). Company disclosures:
+  Q2'26 press release + call transcript (Aug 5); Q1'26 call (May 6); Insulet
+  IR May 26 MDC release; omnipod.com MDC page. Regulator: FDA recall notices
+  (Mar MDC; June 4 Early Alert; July 2 Class I classification, res id
+  219130).
+- **stockanalysis.com (vetted exception):** statistics/income-statement/
+  transcripts/filings routes, live 2026-08-06 — market cap, FCF, margins,
+  beta, operating-leverage table.
+- **Broker/market microstructure** (admissible: no integrated official
+  source covers these fields): Robinhood earnings estimate-vs-actual
+  pattern; option chain quotes for the path-2 stopgap read (liquidity-gate
+  FAILED, labelled unreliable); daily bars for the −20.1% print-day move.
+- **Reference data:** Damodaran (free-use) — implied ERP 4.28% + risk-free
+  4.74% (home.htm, as-of Aug 1 2026); cost-of-capital distribution and ~29%
+  excess-return base rate (Data Update 5/EVA, Jan 2026).
+- **Point-in-time repo DBs:** none used beyond the options.db check (no PODD
+  history — not in the CBOE 24-symbol catalog; §4).
+- **Low-confidence:** press coverage of the drawdown timeline and competitor
+  launches (MedTech Dive, Drug Delivery Business, Benzinga, class-action
+  press releases) — dated, used for timeline only, each cross-checked
+  against a primary where one exists.
+
+## Kill-thesis record
+
+**SOUND** — conditions=5, refuted=0, unknown=1. Ownership verdict: pass.
+
+Per-condition adjudication not recorded in original run. Standing and
+statistical checks not recorded in original run; options check: liquidity
+gate FAILED (both ATM legs breach the spread gate, volume 9), quotes
+UNRELIABLE, may not move a verdict; no dated thesis claim → no timing
+refutation asserted (§4).
+
+**Closest attack:** base-FCF fairness — the strong form is internally
+inconsistent (growth without reinvestment); the moderate form (scenario D)
+still misses the hurdle by ~126bp.
+
+**Flip evidence:** not recorded in original run (ownership falsifiers in §5).
