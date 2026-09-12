@@ -4,3 +4,6 @@
 2026-08-08 APP thesis=2026-08-08 source-acquisition ir-financial-update-letter-never-fetched doc=earnings-letter bench=self-report
 2026-09-01 LYFT thesis=2026-09-01 source-acquisition serveo-deal-only-in-prepared-remarks doc=earnings-letter bench=eval-research-ticker
 2026-09-06 GOOG thesis=2026-08-27 in-hand token-throughput-22b-per-minute-unread doc=8-k-exhibit bench=yt:idX6GkxZXQU
+2026-09-10 BBOT thesis=2026-09-10 source-acquisition resale-selling-securityholder-table-never-read doc=424b3-base-prospectus bench=kill-thesis
+2026-09-11 WRB thesis=2026-09-11 source-acquisition ten-year-loss-development-triangle-never-fetched doc=10-k-financial-statement-note bench=kill-thesis
+2026-09-12 OTLY thesis=2026-09-12 source-acquisition nordic-bond-exchange-quote-never-fetched doc=exchange-bond-quote bench=kill-thesis
