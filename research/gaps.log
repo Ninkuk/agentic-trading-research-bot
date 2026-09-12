@@ -7,3 +7,4 @@
 2026-09-10 BBOT thesis=2026-09-10 source-acquisition resale-selling-securityholder-table-never-read doc=424b3-base-prospectus bench=kill-thesis
 2026-09-11 WRB thesis=2026-09-11 source-acquisition ten-year-loss-development-triangle-never-fetched doc=10-k-financial-statement-note bench=kill-thesis
 2026-09-12 OTLY thesis=2026-09-12 source-acquisition nordic-bond-exchange-quote-never-fetched doc=exchange-bond-quote bench=kill-thesis
+2026-09-12 SONY thesis=2026-09-12 source-acquisition sony-ir-site-qa-transcript-pdf-blocked-both-fetch-routes doc=earnings-call-qa-transcript bench=kill-thesis
