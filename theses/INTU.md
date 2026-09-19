@@ -1,0 +1,669 @@
+# INTU — Intuit Inc. — 2026-08-25 (reopen of 2026-08-20, trigger: fy27-guide)
+
+Price $331.60 (after-hours quote, 2026-08-25 13:30 Phoenix — ~30 minutes after
+the 4:00 PM EDT release, and *before* the 1:30 PM PDT earnings call) · regular
+close $357.28 · prior close $369.92 · market cap $90.70B ($331.60 ×
+273,537,000 sh) · next earnings Q1 FY27, ~late Nov 2026 (not yet scheduled);
+Investor Day Sep 17, 2026
+
+**Reopen provenance:** prior file `research/INTU-2026-08-20.md` — verdict
+SOUND, ownership call BUY at $360.54; original thesis
+`research/INTU-2026-07-30.md`, BUY at $312.81 (small notional buy filled
+2026-07-31, still held). Reopen question: did the FY27 guide keep or break the
+"mid-teens+ annual EPS growth" commitment, did share count turn up, did QBO
+online-ecosystem growth hold ≥12%, and what does that do to the thesis?
+
+## 0. The reopen question, answered first
+
+**The trigger fired one day early and the answer is: the EPS commitment was
+kept, the share count kept shrinking, QBO held — and the stock fell anyway,
+on revenue.** Intuit filed its Q4/FY26 8-K (items 2.02/8.01/9.01, accession
+0000896878-26-000029) at 4:00 PM EDT today with the FY27 guide inside it.
+
+**1. Mid-teens+ EPS: KEPT, and on a like-for-like basis the guide *beat*
+consensus.** This needs care, because the headline says the opposite. Intuit
+changed its non-GAAP definition effective Aug 1, 2026: share-based
+compensation is **no longer excluded**. FY27 non-GAAP diluted EPS is guided
+$22.88–$23.12 *including* a stated $5.81/sh SBC impact, against a sell-side
+consensus of $27.30 built on the old ex-SBC basis. The wire ran that as a 16%
+miss ("Intuit sees FY27 EPS $22.88-$23.12, consensus $27.30", TheFly 20:05
+UTC) and the stock lost ~7% in the first half hour. Add the company's own
+$5.81 back and the old-basis equivalent is **$28.69–$28.93** — **+5.1% to
++6.0% above the $27.30 consensus**, and **+18.2% to +19.2% over FY26's actual
+$24.27**. GAAP corroborates: FY27 diluted EPS $20.12–$20.36, +22–24% on FY26's
+$16.46, or +15–16% off the $17.52 base that excludes FY26's $1.06/sh
+restructuring charge. Mid-teens+ on every construction.
+
+**2. Share count: still falling.** $5.5B repurchased in FY26 (+96% Y/Y),
+weighted diluted shares 283M → 277M (−2.1%), $7.9B authorization remaining,
+quarterly dividend raised 15% to $1.38. The buyback more than covered SBC
+dilution, as the thesis required.
+
+**3. QBO online ecosystem: held, comfortably.** FY26 Online Ecosystem revenue
++19% to $9.9B (ex-Mailchimp +23%); Q4 +17% (ex-Mailchimp +20%); QuickBooks
+Online Accounting +23% FY26, +20% in Q4. The ≥12% test is not close to failing.
+
+**4. So what broke?** Revenue, and specifically Consumer. FY27 total revenue is
+guided $23,279–$23,512M, **+9–10%** against FY26's +14%, and ~1–2% below the
+$23.74B FactSet consensus. Inside it, **TurboTax is guided +2–3%** (from +7%),
+Consumer +4–6%, Mailchimp −1% to 0%. FY26 US TurboTax units fell 2% (39.0M vs
+39.9M; desktop −7%, online −2%). Management's stated reason for the FY27
+deceleration is a *deliberate* one: accepting lower revenue per customer up
+front in TurboTax to accelerate customer growth and share — the free/cheap-tax,
+monetize-via-Credit-Karma pivot the July thesis flagged as a plan is now in the
+guidance.
+
+**What that does to the thesis:** the *falsifier* did not fire, but the
+*composition* of the answer degraded. FY27's mid-teens+ EPS is bought with
+~450bp of operating-margin expansion (GAAP op income +26–27% on revenue
++9–10%) following a $293M Q4 restructuring charge and the May headcount
+action — margin, not growth. And the run's separate discovery (§4) is that
+FY26's cash tax bill was ~$172M against a $1,451M book provision, so the
+reported $8.6B free cash flow is roughly $1.28B flattered by a deferral
+reversal. Cutting the base for that and re-solving at the lower price leaves
+the implied-return table almost exactly where the prior run left it: the
+8%-price fall and the base haircut cancelled.
+
+| prior falsifier | actual | status |
+|---|---|---|
+| 1. FY27 guide abandons mid-teens EPS, or share count turns up | old-basis non-GAAP EPS +18–19%, GAAP +22–24% (+15–16% ex-restructuring); diluted shares −2.1%, $5.5B repurchased. But revenue decelerates 14% → 9–10% and the EPS is delivered by margin, not growth | GRAZED |
+| 2. TT Live growth < ~15%/yr or retention falling | Live revenue **+37%** in FY26, now 53% of TurboTax revenue | NOT TRIGGERED |
+| 3. Unit/share losses spreading above sub-$50K DIY | US TurboTax units −2% (39.0M vs 39.9M); FY27 TT guide +2–3% attributed to a chosen price reduction, not to loss. No tier-level disclosure | GRAZED |
+| 4. QBO online-ecosystem growth <12% two straight qtrs | FY26 +19% (ex-MC +23%); Q4 +17% (ex-MC +20%); QBO Accounting Q4 +20% | NOT TRIGGERED |
+| 5. AI-native filer at scale with assisted-grade accuracy | no evidence in the release or the tape | NOT TRIGGERED |
+| 6. Class-action discovery shows weakness was known/larger | no new facts; lead-plaintiff deadline Sep 8 | NOT TRIGGERED |
+| 7. Price rally to ~$395 erases the conservative spread → PASS | price went the other way: $360.54 → $331.60 (−8.0%) | NOT TRIGGERED (reversed) |
+
+## 1. Verdict and thesis
+
+**BUY at $331.60.** kill-thesis: **SOUND (on this pass)** — conditions=8
+(6 probable, 2 plausible), refuted=0, unknown=0.
+
+The compounder is intact and the market sold a definitional artifact. Global
+Business Solutions — QuickBooks, payments, payroll, ~56% of FY27 guided
+revenue once Mailchimp is carved out ($13.1B of $23.4B) — is guided +13–14%
+with QBO Accounting running +20–23%, and TurboTax Live grew 37% through the
+worst filing season since COVID. What decelerated is the DIY tax product, and
+Intuit is choosing to decelerate it further by cutting price to defend units.
+At $331.60 a tax-normalized free cash flow base of ~$7.34B clears the 8.84%
+cost of equity by 320–420bp on ordinary growth assumptions, and still clears
+it by ~90bp if you charge every dollar of stock compensation as cash. What you
+are paying for is a franchise; what you are not being asked to pay for is the
+outcome of the TurboTax bet.
+
+**Closest attack:** the FY27 cost freeze that produces the mid-teens EPS
+answer. Back the guide out and it asks for **total costs and expenses of
+~$15,947M against FY26's $15,564M — +2.5%, or +4.4% excluding FY26's $293M
+restructuring charge — after FY26 grew them 11.9%** (§3). Every dollar of the
+"commitment kept" is that freeze. It reconciles against the announced headcount
+action, but only approximately, and it is being asked for in the same year the
+company is scaling Big Bets that grew 34%. Second-closest: the TurboTax
+de-monetization — non-Live TurboTax revenue fell roughly 14% in FY26 (§2), and
+cutting price to hold units is what a company does when its product is being
+commoditized, which is the AI/price bear case arriving about four years ahead
+of Goldman's 2030 model, dressed as strategy.
+
+Load-bearing conditions (count = 8):
+
+1. *probable* — Assisted tax is a durable engine, not a one-season effect.
+   TurboTax Live revenue +37% in FY26 to 53% of TurboTax revenue, achieved
+   while total units fell 2% (FY26 press release).
+2. *probable* — Global Business Solutions is the compounder and is intact.
+   FY26 GBS +16% to $12.9B (ex-Mailchimp +18%), Online Ecosystem +19%
+   (ex-Mailchimp +23%), QBO Accounting +23%; FY27 guided +13–14% ex-Mailchimp.
+3. *probable* — TurboTax does not enter *accelerating* structural decline.
+   FY27 is guided +2–3% (positive, not negative), FY26 units fell 2% rather
+   than 10%, Live grew 37%, and revenue per unit rose ~9%. The stronger
+   version — that the deliberate price cut buys units which later buy revenue
+   via Live attach and Credit Karma — is **option value, explicitly excluded
+   from the base case**: it has no evidence until the FY27 season, and §4's
+   8%-growth row already survives its failure at +323bp.
+4. *probable* — FY27 operating-margin expansion is delivered. GAAP operating
+   income guided +26–27% on revenue +9–10%; the $293M restructuring charge is
+   already taken and the headcount action is already executed. Guidance, not
+   results — but specific, and the cost is sunk.
+5. *probable* — Buyback keeps outrunning SBC. $5.5B repurchased FY26 (+96%),
+   diluted shares −2.1%, $7.9B remaining authorization, dividend +15%.
+6. *plausible* — The FY26 free cash flow base normalizes to ~$7.34B rather
+   than collapsing further. Current taxes of ~$172M vs a $1,451M provision
+   imply a ~$1.28B one-time deferral benefit; the *cause* is inferred from the
+   deferred-tax-asset drawdown, not disclosed. The 10-K settles it.
+7. *plausible* — Litigation stays bounded. Stock-drop class actions remain
+   early-stage; the base rate for such suits is insurance-buffered settlements
+   orders of magnitude below thesis scale.
+8. *probable* — Price leaves a positive spread on conservative, tax-normalized
+   assumptions: +323bp at 8% growth, +94bp when SBC is charged as cash.
+
+**Dominant shared risk factor:** generative-AI substitution of paid
+software/services workflows — shared by 0 of 16 held names (none labelled
+matching) · 14 unlabelled. Only CAH (US brand-drug pricing regime) and KTB
+(US lower/middle-income consumer) carry factor lines today, and neither fails
+in this scenario; the other 14 holdings — SAP, MORN, G and BR among them —
+have no factor line and cannot be matched by grep, so the true overlap is
+unmeasured, not zero. This is the factor the tape traded today: INTU sold off
+into an Aug 25 session already headlined as a "software meltdown."
+
+## 2. Business
+
+Unchanged in kind from `research/INTU-2026-07-30.md` §2 — **created:**
+confidence in a compliance outcome with liability attached (tax filing,
+bookkeeping/payroll/payments, consumer credit), not software; **captured:**
+per-return DIY pricing, per-return + expert-hours Live pricing, QBO
+subscriptions, payments take-rate, payroll, Credit Karma referral fees, and
+refund-timing products; **protected:** switching costs across books + payroll
++ payments plus ~1M accountants who recommend QuickBooks (a genuine
+distribution network), and brand/data/audit-liability shield on assisted tax.
+The low-end DIY tax moat was already described there as thin and breached on
+price.
+
+**Delta this run — the DIY breach is now quantifiable.** Live is 53% of FY26
+TurboTax revenue and grew 37%; TurboTax total grew 7% to ~$5.3B. Backing that
+out, non-Live TurboTax revenue was ~$2.49B in FY26 against ~$2.90B in FY25 —
+roughly **−14%**. (Derived from rounded segment figures, so ±1–2 points; the
+sign and the order of magnitude are not in doubt.) Carry the FY27 guide of
++2–3% forward and, on any Live growth rate between 15% and 25%, the non-Live
+base declines a further 12–24%. The company is not merely losing the low end;
+it is now guiding to shrink its own DIY revenue per user on purpose. The moat
+claim this thesis leans on remains the assisted-plus-business side, and that
+side is measurably stronger this run than last.
+
+**Control:** one class of common stock, one vote per share, no controlling
+holder. Insiders 2.16%, institutions 90.09% (stockanalysis). The null answer —
+nothing forecloses an unsolicited approach or an activist campaign; a
+Delaware-incorporated, widely-held mega-cap is exposed to both.
+
+**Operating leverage (Phase 0): positive.** FY21 → FY26 revenue $9,633M →
+$21,448M (2.23×), operating income $2,531M → $5,884M (2.32×); margin 26.3% →
+27.4%, and 28.8% excluding FY26's $293M restructuring charge. The path is not
+monotone: margin troughed at 20.7% in FY22 on the Mailchimp/Credit Karma
+acquired-intangible load and has climbed every year since (21.9%, 23.7%,
+26.2%, 27.4%). The FY27 guide asks for the largest single-year step in the
+series — ~450bp to ~31.9%.
+
+## 3. Threads pulled
+
+- **The definitional trap, and whether the market fell for it.** Effective
+  Aug 1, 2026 Intuit stopped excluding SBC from non-GAAP. The FY27 EPS guide
+  is therefore not comparable to the standing consensus, and the wire printed
+  the incomparable pair anyway. The company hands you the bridge in its own
+  footnote ($5.81/sh SBC in FY27 EPS guidance; $2,020M in operating income),
+  and the corrected comparison is a 5–6% *beat*. Cross-checked three ways:
+  against the company's stated "+23% to 24%" growth (which implies a restated
+  FY26 base of ~$18.5, i.e. $24.27 less ~$5.7 of after-tax SBC); against GAAP
+  ($20.24 midpoint + ~$2.35 acquired-intangible amortization + $5.81 SBC ≈
+  $28.4); and against the Q4 print, where the $4.03 actual was struck on the
+  old basis. Finding: the EPS half of the sell-off is an artifact. **The
+  revenue half is not** — $23.28–23.51B vs $23.74B consensus is a real 1–2%
+  miss with a real deceleration behind it, and that is the honest reason to be
+  down today.
+- **Cash taxes: the base is flattered, and the prior two runs missed it.**
+  FY26 book tax provision $1,451M (24% effective), of which $1,279M is the
+  deferred component added back in the cash flow statement — leaving current
+  taxes of roughly **$172M on $6,017M of pretax income, a ~2.9% cash rate**.
+  The balance sheet corroborates: long-term deferred tax *assets* fell
+  $1,222M → $172M while long-term deferred tax *liabilities* rose $20M →
+  $239M, a ~$1.27B swing matching the cash-flow line almost exactly. FY25 ran
+  the other way (deferred −$435M, current tax ~$1,400M, ~29% cash rate). The
+  most likely cause is the OBBBA restoration of immediate §174 R&D expensing
+  with a catch-up on the previously capitalized balance — but that is an
+  **inference from the DTA drawdown, not a disclosure**; the 8-K's tax note
+  does not say. Consequence either way: the reported FY26 FCF of $8.617B is
+  not a run rate. §4 solves against $7.338B instead, and the prior run's
+  $7.755B TTM base carried the same flattery unexamined.
+- **Where the FY26 cash actually came from.** NCFO $8,838M vs $6,207M in FY25
+  is +42% on 14% revenue growth. Roughly $1.7B of the $2.6B swing is the
+  deferred-tax line alone; operating income (+20%) and working capital
+  (+$202M accrued compensation) do the rest. Capex also nearly doubled, $124M
+  → $221M — small in absolute terms, but the direction is worth watching on a
+  company whose compute is rented rather than owned.
+- **What the segment table says that the headline does not.** Q4 QBO
+  Accounting +20% "driven by higher effective prices, customer growth, and mix
+  shift"; Q4 Online Services +15% (ex-Mailchimp +21%) "driven by money and
+  payroll"; international online +10% constant-currency. Credit Karma +20%
+  FY26 to $2.6B on personal loans, auto insurance and cards. Mailchimp is
+  being severed into its own reportable segment from FY27 and guided to −1% to
+  0% — the acquisition that dragged the FY22 margin trough is now dragging the
+  growth rate, and separating it makes both facts visible. Reading that as
+  housekeeping would be a mistake; a company does not break out a segment it
+  expects to fix quietly.
+- **The guide's real ask: a cost freeze.** FY27 revenue midpoint $23,396M
+  less GAAP operating income midpoint $7,449M leaves total costs and expenses
+  of **~$15,947M against FY26's $15,564M — +2.5%**, or +4.4% against the
+  $15,271M that excludes FY26's $293M restructuring charge. FY26 grew that
+  line 11.9%. Guided SBC falls too ($2,056M → $2,020M). This is where the
+  entire mid-teens EPS answer comes from — ~450bp of margin (~310bp against
+  the ex-restructuring base), not revenue. It reconciles arithmetically with
+  the May headcount action: ~3,000–3,700 roles at a loaded cost in the low
+  hundreds of thousands is ~$0.8–0.9B of annualized saving against a $15.3B
+  base, i.e. ~5–6% of cost taken out to offset ~9–10% of inflation and
+  growth. That reconciliation uses a loaded-cost figure I constructed, not a
+  disclosed one, and the employee count (18,200, stockanalysis) is of
+  uncertain vintage relative to the cut — so treat it as plausible, not
+  verified. **The strain this creates:** a cost freeze is a reinvestment cut,
+  and reinvestment cuts buy one year of margin, not durable growth. Condition
+  4 (margin from the freeze) and condition 2 (GBS compounding at 13–14%) pull
+  against each other beyond FY27, which is exactly what Investor Day on
+  Sep 17 has to reconcile.
+- **The lending book is scaling faster than the balance sheet shows.**
+  QuickBooks Capital originations and purchases of notes receivable held for
+  investment ran **$6,755M in FY26 against $3,992M in FY25 (+69%)**, while
+  transfers to held-for-sale went $546M → $2,348M — an originate-to-distribute
+  model growing hard, with the retained book (notes receivable held for
+  investment $1,468M) up only 4.6% and therefore understating the origination
+  risk. The provision for expected credit losses grew **$134M → $237M (+77%)**,
+  faster than originations. On $36.8B of assets a 10% loss on the retained
+  book is ~$147M — about 3% of net income, so this is not thesis-scale today.
+  It is a rate-of-change alarm, not a level alarm: credit extended fast into
+  small businesses is the classic setup, the sold paper carries reps and
+  warranties that are not on this balance sheet, and no delinquency or vintage
+  disclosure exists in the 8-K. Falsifier 10 tracks it; the 10-K's credit note
+  is the first real read.
+- **Options read (mandatory):** path 2 only (Robinhood stopgap; INTU is not in
+  the 24-symbol CBOE catalog, so `data/options.db` holds no own-history IV
+  percentile for it and path 1 is structurally unavailable). Sep 18 expiry
+  bracketing the Sep 17 Investor Day, 355 strike, 24 DTE — table in §4.
+  Liquidity gate FAILED again, and this run carries a second defect: the marks
+  are stamped 19:59:59 UTC, i.e. the regular close, so they price the stock at
+  $357.28 and know nothing of the print.
+- **Insider tape since the prior run:** three Form 4s filed Aug 17 for Aug 14
+  transactions — MSPP salary-deferral RSU purchases and matching awards at
+  $345.66 (Hotz, Cozzens, Hilliard), 201 shares apiece on the purchased leg.
+  Routine deferral mechanics, not conviction buying. **Still no executive
+  open-market purchase**, unchanged across all three runs.
+- **Dead ends:** no 8-K between Jul 30 and today; no Form 144s; the Q4 FY26
+  earnings call began at 13:30 Phoenix as this was written and neither the
+  transcript nor the prepared remarks were published (`/transcripts/` newest
+  is still Q3 2026), so management's own framing of the TurboTax pricing
+  decision is unread — an UNKNOWN, not a finding. `composite.db`'s 2026-08-25
+  snapshot shows INTU with zero active signals (`sa_fscore` 8, `sa_fcf_yield`
+  7.73, both score-0 informational; `earnings_imminent` present, score 0;
+  in-portfolio at 3.25% weight). **Data-coverage delta:** contrary to both
+  prior runs, `data/sec_fundamentals.db` now *does* carry INTU (CIK 896878) —
+  the Q3 FY26 10-Q pivot, `eps_diluted` 11.09, which cross-checks exactly
+  against the press release's Q3 GAAP diluted EPS of $11.09.
+
+## 4. Valuation
+
+Inputs, all from the Aug 25 8-K (Exhibit 99.01) rather than the statistics
+page, which is stale by one quarter: FY26 net cash provided by operating
+activities **$8,838M** less capex **$221M** = levered free cash flow
+**$8,617M**. Against that, the deferred-tax finding above: current taxes ran
+~$1,279M below the book provision, so the **normalized base used throughout is
+$7,338M**. SBC was $2,056M in FY26 (guided $2,020M for FY27); the SBC-as-cash
+rows use $5,282M. Denominator is **market cap $90.70B** ($331.60 after-hours ×
+273,537,000 shares — the last disclosed share count, from the Q3 10-Q cover;
+Q4 weighted diluted was 272M, so the cap is if anything ~0.6% overstated).
+Total cash and investments $7.2B against total debt $7.7B leaves net debt
+~$0.5B, 0.6% of market cap, so the levered-FCF ↔ market-cap pairing is clean
+and `--net-debt` is zero. No minority interests. Growth paths are **3-year**,
+matching both prior runs for comparability rather than the template's 5-year
+default. ATM IV is 62.8%, so every implied return is quoted to the nearest
+whole percent and the ranking, not the decimal, is the finding.
+
+Hurdle: rf 4.74% + beta 0.959 × ERP 4.28% = **8.84%** (Damodaran, Aug 1, 2026,
+fetched live this run; beta inside the 0.8–1.2 band, no clamp).
+
+| scenario | base FCF | growth (3y) | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| Reported FY26 FCF, taken at face value | $8.617B | 10%/yr | 2.5% | ~14% | +545 bp |
+| Guide-shaped, tax-normalized | $7.338B | 12%/yr | 2.5% | ~13% | +423 bp |
+| Conservative, tax-normalized | $7.338B | 8%/yr | 2.5% | ~12% | +323 bp |
+| SBC as cash cost, tax-normalized | $5.282B | 10%/yr | 2.5% | ~10% | +94 bp |
+| Structural decline (Goldman-shaped) | $7.338B | −3, −3, 0% | 0.0% | ~8% | −122 bp |
+| Harsh floor: SBC-adjusted AND decline | $5.282B | −3, −3, 0% | 0.0% | ~5% | −336 bp |
+
+The prior run at $360.54, on the un-normalized $7.755B base, read
+~12/10/7/10/5% across its comparable rows and its harsh floor scored −338bp.
+**The two changes cancelled almost exactly**: an 8.0% lower price bought back
+what the $1.28B tax haircut took away. Nothing about the margin of safety
+improved today; the composition of it changed, and one previously invisible
+risk became visible.
+
+Integrity checks:
+
+- **Reinvestment warning answered.** The tool prints `growth without
+  reinvestment` on all four positive-growth rows (base FCF ≥ base earnings —
+  FY26 net income $4,566M). Two-part answer: (a) terminal growth is held at
+  2.5%, below the 4.74% risk-free and roughly at inflation — repricing
+  existing assets, which needs no reinvestment; the decline rows use 0.0% and
+  print `implied_terminal_roe −0.0000` by construction; (b) the FCF-above-NI
+  wedge is genuine non-cash charge, not accrual quality: SBC $2,056M (charged
+  explicitly in two rows), acquired-intangible amortization $659M against $187M
+  of depreciation and $221M of capex, and deferred revenue float. Cash
+  earnings sit meaningfully above GAAP net income here.
+- **Cash tax rate vs marginal — the check that bit.** Book effective rate 24%,
+  current cash rate ~2.9% (§3). This is exactly the "base FCF flattered by
+  deferrals" failure the checklist warns about, and every row above except the
+  first is already haircut for it. If the 10-K shows the benefit persisting
+  into FY27, the table understates by roughly 150–200bp; that is upside the
+  verdict does not rely on.
+- **Market-share sentence.** 12%/yr for three years puts FY29 revenue at
+  ~$30.1B, roughly 10% of management's claimed ~$300B TAM and well inside the
+  ~$90B mid-market claim plus the ~$42B US tax-prep pool. No
+  bigger-than-the-market problem.
+- **Terminal risk vs terminal growth.** The FY26 10-K is not yet filed, so the
+  Item 1A sweep rests on the FY25 filing (read in the original run) plus the
+  release's own forward-looking risk list, which leads with competition,
+  "potential governmental encroachment in our tax business", and the ability to
+  develop and deploy AI. The decline rows meet that endgame directly at 0%
+  terminal growth on a shrinking base; the 2.5% rows assume the assisted and
+  business franchises survive it, which is the thesis, not an assumption
+  smuggled into the arithmetic.
+- **Distribution clamp.** The four growth rows (10–14%) sit above the top of
+  the 80% band of US cost of capital (5.26–9.88%, Damodaran 2026, median
+  7.79%). The harsh floor (~5%) sits at the 10th percentile — the coherent
+  downside is a genuinely poor outcome, not a market-rate one. That has been
+  true since the prior run and remains the honest caveat on this BUY.
+- **Serial-acquirer note.** Zero cash spent on acquisitions in FY26 ($0 vs
+  $184M in FY25). No M&A-funded growth is riding free in these rows.
+- **Excess-return fade.** Only ~29% of firms sustain returns above their cost
+  of capital. ROIC is 20.6% against a 9.1% WACC today; the growth rows need
+  three years of it, not perpetuity, and the terminal rate is inflation-grade.
+
+**Options-implied move** (path 2 — Robinhood stopgap; path 1 unavailable,
+INTU is not a CBOE-catalog symbol): Sep 18, 2026 expiry bracketing the Sep 17
+Investor Day, 355 strike (nearest to the regular-session spot), 24 DTE, marks
+stamped 2026-08-25T19:59:59Z:
+
+| metric | value |
+|---|---|
+| spot | 357.28 |
+| expected absolute move (MEAN, not a ceiling) | 12.79% |
+| 1-σ move | 16.10% |
+| ATM IV | 62.77% |
+| RV60 | 51.35% |
+| RV20 | 50.24% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Both windows read YES so "elevated" is technically claimable, with the stopgap
+caveat at full strength: the 24-day IV window contained a scheduled earnings
+print that the trailing windows only partly contain, so most of the elevation
+is calendar, not discovery. **Liquidity gate: FAILED** (call bid/ask
+23.00/25.90 on a 24.45 mark ≈ 11.9% spread; put 19.60/22.90 on 21.25 ≈ 15.5%;
+volume 10/12 against a 100 floor; open interest 0/1) — marks UNRELIABLE. A
+second, larger defect this run: the marks predate the release, so the whole
+table describes the pre-print world and cannot be read as the market's view of
+the guide. Timing check: the thesis states no dated required-move claim, so
+the 2-sigma refutation is **NOT APPLICABLE**.
+
+Equity-as-option lens: **omitted.** Net debt is ~0.6% of market cap, book
+equity is $19.0B positive, interest coverage 23.5×. The leverage gate is
+nowhere near open; the DCF frame governs §1's ownership call.
+
+## 5. Falsifiers
+
+What would make me sell:
+
+1. **Shift —** The FY27 operating-margin expansion under-delivers: GAAP
+   operating margin tracking below ~30.5% (against the ~31.9% the guide
+   implies) at the Q1 and Q2 FY27 prints. This is now the source of the entire
+   EPS algorithm, so it carries the weight that revenue used to.
+2. **Break —** TurboTax Live revenue growth falls below ~15%/yr (FY26: +37%).
+   First read: the Q3 FY27 print, spring 2027.
+3. **Break —** FY27 US TurboTax units decline *again* despite the price
+   reduction — the price-for-units bet failing on its own stated terms. Full
+   read Aug 2027; partial read at the Q3 FY27 print.
+4. **Shift —** Online Ecosystem revenue growth ex-Mailchimp below ~12% for two
+   consecutive quarters (FY26 exit rate: +20% in Q4).
+5. **Break —** an AI-native tax filer demonstrably at scale (millions of
+   returns) with assisted-grade accuracy.
+6. **Shift —** FY27 free cash flow tracking below ~$7.3B through the first
+   half — which would mean the tax-normalized base solved against in §4 was
+   itself too generous, and every row shifts down together.
+7. **Shift —** the buyback stops outrunning SBC: diluted share count flat or
+   rising for two consecutive quarters.
+8. **Shift —** price recovers above ~$390 without new fundamentals, which puts
+   the SBC-as-cash, tax-normalized row below the 8.84% hurdle and makes this a
+   PASS on price alone — the same trap the prior run was one rally away from.
+9. **Shift —** class-action discovery revealing the DIY weakness was known and
+   materially larger than disclosed.
+10. **Shift —** the QuickBooks Capital provision for expected credit losses
+   keeps outgrowing originations, or the 10-K's credit note shows
+   deteriorating vintages — small today (~3% of net income at a 10% loss on
+   the retained book) but growing at 69%/yr and undisclosed at vintage level.
+
+**Reopen trigger:** 2026-09-18:
+intu-investor-day-algorithm-and-10k-cash-taxes — Investor Day on Sep 17
+restates the multi-year revenue/EPS algorithm under the redefined non-GAAP
+basis with Mailchimp separated (falsifier 1's first read), and the FY26 10-K,
+due by ~Sep 29, discloses cash income taxes paid and the refreshed
+commitments/Item 1A notes, settling whether the FY26 free cash flow base
+normalizes to ~$7.3B (condition 6, falsifier 6).
+
+## 6. UNKNOWNs
+
+1. **The Q4 FY26 earnings call — RESOLVED (transcript read 2026-08-25, ~14:30
+   Phoenix, stockanalysis `/stocks/INTU/transcripts/`).** Condition 3 survives:
+   management attributes the DIY losses to price ("we lost quality DIY customers
+   to low-cost providers… price is now the number one reason customers leave
+   TurboTax"), not to an AI-native filer; the lower DIY ARPC is a chosen funnel
+   rebuild. Falsifier 5 survives on stronger wording: the commitment is restated
+   as "annual non-GAAP EPS growth of at least high teens" on the SBC-inclusive
+   basis, with SBC guided to 8% of revenue by FY30. What the call adds that §2–§4
+   do not: the GBS long-term algorithm is cut to a 10–15% three-year CAGR (from
+   15–20%; consumer 4–8%; desktop, ~¼ of GBS, declining) — "we are creating the
+   pressure, we are not being pressured" — and online paying customers grew only
+   3% (8.9M), two points slower than FY25, with the fix (QuickBooks Free/Lite,
+   ~20k customers) unproven and re-acceleration timing left to "you'll be the
+   judge" of quarterly results. Neither moves §4: its 8–12% growth rows already
+   span the new algorithm and the 8% row clears the hurdle by ~320bp. The
+   customer-growth question is what the 2026-09-18 reopen checks.
+2. **The cause of the FY26 cash-tax deferral.** Inferred (OBBBA §174 R&D
+   catch-up) from a $1.27B deferred-tax-asset drawdown; not disclosed in the
+   8-K. Source: FY26 10-K income-tax note. If recurring, §4 understates by
+   ~150–200bp; if it reverses harder than modelled, the base is too high.
+   Either direction is bounded and neither kills the thesis.
+3. **FY27 Online Ecosystem / QBO growth.** Not guided separately — only GBS
+   ex-Mailchimp at +13–14%. Falsifier 4 therefore has no forward marker until
+   Q1 FY27 reports.
+4. **Where the −2% TurboTax units went.** No tier-level or competitor
+   attribution in the release. Source: the call, or FY27 season data. This is
+   the direct evidence condition 3 needs and does not have.
+5. **FY27 free cash flow.** Intuit does not guide it. Falsifier 6's threshold
+   is my construction, not a company number.
+6. **Class-action merits.** Early-stage; lead-plaintiff deadline Sep 8; no
+   complaint text read in any of the three runs.
+7. **Whether free/cheap tax monetized via Credit Karma works.** First evidence
+   is the FY27 filing season, spring 2027. This is the same UNKNOWN as (4)
+   seen from the revenue side.
+8. **The FY26 commitments-and-contingencies footnote.** The original run's
+   $4.89B of unconditional purchase obligations (primarily cloud, $725–881M/yr
+   through FY30) is the FY25 figure and is now stale — material because FY26
+   capex nearly doubled and the asset-light claim rests on that note.
+
+## 7. Sources
+
+**Primary:** Intuit Inc. Form 8-K filed 2026-08-25 (CIK 0000896878, accession
+0000896878-26-000029, items 2.02/8.01/9.01) and its Exhibit 99.01 press
+release — every FY26 actual, every FY27 and Q1 FY27 guidance figure, the
+segment and TurboTax unit tables, Tables A/B1/C/D (income statement, non-GAAP
+reconciliation, balance sheet, cash flow), the SBC and deferred-tax lines, the
+non-GAAP definitional change, the Mailchimp segment change, the buyback and
+dividend disclosures, and the forward-looking risk list; EDGAR submissions JSON
+(no other filing since Jul 30 except three Forms 4); Forms 4 accession
+0001628280-26-0575{01,04,06}, parsed XML (MSPP awards dated 2026-08-14 at
+$345.66); FY25 10-K Item 1A and commitments note as read in
+`research/INTU-2026-07-30.md`.
+
+**stockanalysis.com (vetted exception):** `/stocks/INTU/statistics/` (beta
+0.959, shares outstanding 273,537,000, insider/institutional ownership, ROIC
+20.63%, WACC 9.08%, short interest 12.14M, consensus rev3y/eps3y — all
+pre-print and labelled as such); `/stocks/INTU/financials/` (FY21–FY25 revenue
+and operating income for the Phase 0 print); `/stocks/INTU/` news feed (dated
+headlines, incl. TheFly's guidance-vs-consensus lines and the Bloomberg/WSJ/
+Reuters items); `/stocks/INTU/transcripts/` (index only — Q4 not yet posted).
+
+**Broker/market microstructure:** Robinhood MCP; admissible because no
+integrated official source covers real-time quotes or option chains for this
+ticker. After-hours quote $331.60 (2026-08-25T20:30:28Z), regular close
+$357.28, prior close $369.92; option chain, instruments and quotes for the
+Sep 18 355 straddle; daily bars 2026-04-17 → 2026-08-24 (closes → RV20/RV60).
+`get_financials` was not called (banned by the skill's provenance rule; the
+8-K is the audited-source route).
+
+**Reference data:** Damodaran implied ERP 4.28% and US 10Y risk-free 4.74%
+(Aug 1, 2026), fetched live from the Stern home page this run; US
+cost-of-capital distribution (2026: median 7.79%, 80% band 5.26–9.88%);
+~29% excess-return base rate.
+
+**Point-in-time repo DBs (read-only):** `earnings.db` (`calendar_now.today` =
+2026-08-25; INTU 2026-08-25 "after close", eps_est 3.29); `composite.db`
+2026-08-25 snapshot (zero active signals; `sa_fscore` 8.0, `sa_fcf_yield`
+7.725, `portfolio_holding` 3.25%, all score 0); `sec_fundamentals.db`
+`v_screener` (INTU row now present — Q3 FY26 pivot, eps_diluted 11.09);
+`portfolio.db` `v_latest_positions` (17 holdings, for the factor-overlap read);
+`options.db` (no INTU rows — not a CBOE-catalog symbol).
+
+**Low-confidence:** TheFly/TipRanks/Reuters/WSJ/Bloomberg/Investing.com
+headlines and one web search, used only for the consensus figures the guide is
+measured against ($27.30 FY27 EPS, $23.74B FY27 revenue per FactSet via
+MarketScreener, $3.59 Q4 EPS), the after-hours move, and management's stated
+rationale for the FY27 deceleration. Note the Q4 consensus EPS disagrees
+across sources — Robinhood carried $3.29, TheFly $3.59 — so the *size* of the
+Q4 beat is uncertain even though its sign is not.
+
+## Kill-thesis record
+
+**Kill-thesis verdict: SOUND (on this pass)** — conditions=8, refuted=0,
+unknown=0.
+
+Cost-basis step (add-to-a-losing-position rule): **N/A.** No order is
+contemplated by this document, and the held lot is above water (filled
+2026-07-31 at $312.81 against $331.60 after-hours). `get_equity_tax_lots` was
+not called.
+
+Per-condition adjudication:
+
+1. Assisted-tax durability — **SURVIVED.** Attack: "+37% Live" could be mix
+   relabeling — customers repackaged into a higher-priced SKU rather than
+   incremental demand — and a business whose growing half carries human labor
+   should show gross-margin compression. Both fail on the numbers: FY26
+   revenue per US TurboTax unit rose ~9% (revenue +7% on units −2%), which is
+   what a genuine mix shift into a higher tier looks like, and FY26 gross
+   margin was 80.2% ($21,448M revenue less $4,253M cost of revenue) with Live
+   already at 53% of TurboTax. No compression to point at.
+2. GBS compounder intact — **SURVIVED, degraded.** Attack: the +16% headline
+   flatters (ex-Mailchimp +18%), and FY27's +13–14% is a 400–500bp
+   deceleration; worse, Q4 QBO Accounting's +20% is attributed to "higher
+   effective prices" *first*, and no QBO customer count is disclosed anywhere
+   in the release — a price-led number with a hidden unit denominator. The
+   deceleration is real and conceded. The condition as stated — GBS is the
+   compounder and is intact — is not refuted by a segment guided to grow
+   13–14% while carrying ~56% of FY27 revenue ($13.1B of $23.4B), and doing so
+   with Mailchimp's drag now carved out. The customer-count opacity is
+   logged as §6.3's forward hole, not as a refutation.
+3. No accelerating TurboTax decline — **SURVIVED.** Attack ran against the
+   *strong* form first (the price-for-units bet works) and that form is
+   genuinely unverifiable — management's stated intent, first data spring
+   2027, and the same management said in June that AI startups were "not at
+   scale" and then cut price anyway, which is consistent with either reading.
+   So the strong form was **demoted out of the load-bearing set** and priced
+   as option value: §4's 8%-growth row is roughly what a −5%/yr TurboTax with
+   everything else on guide produces, and it clears the hurdle by +323bp. The
+   weak form that remains load-bearing survives on the guide itself (+2–3%,
+   positive) plus units −2% and revenue/unit +9%.
+4. FY27 margin expansion delivered — **SURVIVED, and this is the closest
+   attack.** See below.
+5. Buyback outruns SBC — **SURVIVED comfortably.** Attack: FY26 returned
+   $6.85B ($5.5B buyback + $1.35B dividends) against a *normalized* $7.34B of
+   free cash flow — 93% — and was part-funded by a $1.75B June note issuance,
+   so the pace is not self-financing. True, and irrelevant to the condition,
+   which needs only ~$2.0–2.5B/yr to outrun $2.0B of SBC, against a $7.9B
+   remaining authorization, $0.5B of net debt on $19.0B of book equity and
+   23.5× interest coverage. The guide's own arithmetic corroborates: EPS
+   $20.12–20.36 on a plausible FY27 tax rate implies ~271–277M diluted
+   shares, i.e. flat to −2%.
+6. FCF base normalizes to ~$7.34B — **SURVIVED.** Attack: the whole haircut
+   rests on an inferred cause, and if FY26's low cash tax were a timing
+   deferral it would reverse and FY27 free cash flow would land *below* the
+   normalized base, dragging every row down together. The balance sheet closes
+   this: the benefit consumed a deferred tax **asset** ($1,222M → $172M) and
+   left long-term deferred tax **liabilities** at only $239M, so there is no
+   large deferred obligation sitting there to be repaid — a consumed asset is
+   a permanently taken deduction, not a borrowing. For FY27 free cash flow to
+   fall under $7.34B, cash taxes would have to run ~$1.1B *above* book, which
+   the $239M liability bounds out. Working capital contributed −$4M, so
+   nothing else in NCFO is doing hidden work. The residual — *why* — is
+   §6.2's UNKNOWN and bears only on upside.
+7. Litigation bounded — **SURVIVED on base rate.** Securities stock-drop
+   settlements land at a small fraction of market cap and are
+   insurance-buffered; no name-specific evidence exists in any of the three
+   runs, and the merits stay §6.6's explicit UNKNOWN. The *boundedness* claim,
+   which is what the thesis needs, was not dented.
+8. Price spread — **SURVIVED.** +94bp on the harshest coherent-conservative
+   row (SBC as cash, tax-normalized). The standing caveat is unchanged from
+   the prior run: the coherent-harsh floor at ~5% sits at the 10th percentile
+   of US cost of capital, so the downside is a genuinely poor outcome rather
+   than a market-rate one.
+
+Internal-strain check: the condition list does claim moderate growth, low
+reinvestment and a moat together. The low reinvestment is an artifact of
+expensing R&D ($3,376M, 15.7% of revenue) rather than an absence of it, which
+also answers the reverse-DCF's growth-without-reinvestment warning. The real
+strain is conditions 2 and 4 against each other: a cost freeze is a
+reinvestment cut, and one cannot fund 13–14% GBS growth indefinitely out of
+one. Named, not resolved — Investor Day is where it has to be.
+
+Standing checks. **Base rate:** only ~29% of firms earn above their cost of
+capital (Damodaran EVA); INTU's 20.6% ROIC against a 9.1% WACC puts it in that
+minority today, and the growth rows ask for three more years, not perpetuity.
+For the specific claim in condition 4 — a company delivering a guided one-year
+cost freeze — I have no measured base rate and decline to invent one; that is
+part of why it is the closest attack. **Short case (strongest form):** the
+consumer franchise is being commoditized and management confirmed it by cutting
+price; the FY27 EPS number is manufactured by a cost freeze that cannot repeat;
+the reported cash flow is inflated by a one-time tax windfall; the non-GAAP
+definition was changed in the same release that carried the bad news; Mailchimp
+is being quarantined into its own segment while guided to shrink; and the
+remaining growth engine is being driven by price increases into an SMB base
+that AI-native bookkeeping will attack next — all for 20× GAAP earnings on
+9–10% revenue growth. It lands on conditions 3 and 4 and on §6's holes; it
+refutes nothing. **Management incentives:** the two decisions that look worst
+on the tape are the two that hurt management's own scorecard — including SBC in
+non-GAAP makes the comp metric harder, and cutting TurboTax price lowers
+near-term revenue. That is a credibility point, with the caveat that whether
+FY27 comp targets were reset alongside is unverifiable until the proxy
+(Nov–Dec). **Disconfirming search:** the one web search this run was aimed at
+the bear framing and returned it (Reuters "falls short of estimates", Seeking
+Alpha "soft guidance", the "AI could disrupt established software business
+models" framing); the EPS limb of that disconfirmation dissolved into a
+definitional artifact, the revenue limb stands and is recorded in §0. **Moat as
+mechanism, not checkbox:** accountant distribution (~1M accountants who
+recommend QuickBooks) and books+payroll+payments switching costs are the
+mechanism; the low-end DIY tax moat is explicitly conceded as thin, breached,
+and now being priced away on purpose.
+
+Statistical checks: **N/A** — no backtest-, screen-, or signal-derived claim is
+load-bearing here; `composite.db` carries INTU with zero active signals and
+score-0 informational annotations only.
+
+Options-timing check: **NOT APPLICABLE for refutation** — the thesis states no
+dated required-move claim. Coverage disclosed in full: path 1 is structurally
+unavailable (INTU is not one of the 24 CBOE-catalog symbols, so `options.db`
+holds no own-history IV percentile), path 2 ran as the mandatory read, its
+liquidity gate FAILED, and its marks are stamped at the regular close and
+therefore predate the release entirely. The table in §4 is informative about
+the pre-print world and moves nothing.
+
+**Closest attack:** condition 4 — the FY27 cost freeze. The guide requires
+total costs and expenses to grow **2.5%** (4.4% ex-restructuring) after growing
+**11.9%** in FY26, and that single line is what converts 9–10% revenue growth
+into 18–19% like-for-like EPS growth and answers the reopen question in the
+company's favour. It reconciles with the May headcount action at roughly
+$0.8–0.9B of annualized saving on a $15.3B base — but that reconciliation
+leans on a loaded-cost assumption I constructed and an employee count of
+uncertain vintage, and it is being asked for in the same year Intuit is scaling
+Big Bets that grew 34% and now carry 30% of revenue. If opex instead grows ~7%,
+GAAP operating income lands near $6.75B rather than $7.45B, EPS is roughly $18
+(+11%), and the mid-teens commitment that this whole reopen turned on is gone —
+without a single word of the revenue guide changing. Falsifier 1 is the
+tripwire and Q1 FY27 is the first read.
+
+**Flip evidence:** to FLAWED — Q1/Q2 FY27 operating margin tracking below
+~30.5%, or FY27 US TurboTax units declining again despite the price cut, or the
+FY26 10-K showing the cash-tax benefit was a reversible timing deferral rather
+than a consumed deduction; to a stronger SOUND — Investor Day on Sep 17
+restating a multi-year algorithm that holds mid-teens+ EPS on the *new*
+SBC-inclusive basis without leaning on a further cost freeze, plus a 10-K
+credit note showing the QuickBooks Capital vintages behaving.
