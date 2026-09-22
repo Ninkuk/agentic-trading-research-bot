@@ -20,13 +20,15 @@ from sources.combiners.scorer import catalog, db
 from sources.common.clock import phx_date
 
 HISTORY_URL = "https://stockanalysis.com/api/symbol/s/{symbol}/history?range=Max"
-_UA = {"User-Agent": "Mozilla/5.0"}
+# Cloudflare challenges the bare "Mozilla/5.0" token (403); the descriptive
+# UA the other sources send passes.
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 _SLEEP_SECONDS = 0.7  # unofficial endpoint; be a polite client
 
 
-def _default_get(symbol: str) -> dict:
+def _default_get(symbol: str, urlopen=urllib.request.urlopen) -> dict:
     req = urllib.request.Request(HISTORY_URL.format(symbol=symbol), headers=_UA)
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with urlopen(req, timeout=60) as resp:
         return json.load(resp)
 
 

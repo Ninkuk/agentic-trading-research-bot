@@ -86,3 +86,21 @@ def test_fetch_history_uses_injected_get_seam():
     rows = pricehistory.fetch_history("XLE", BEFORE, get=fake_get)
     assert seen == ["XLE"]
     assert rows == [("2026-07-06", 100.0), ("2026-07-07", 200.0)]
+
+
+def test_default_get_sends_descriptive_user_agent():
+    # Same Cloudflare challenge as the screener's data-points endpoint: the bare
+    # "Mozilla/5.0" token gets a 403 challenge page, the descriptive UA passes.
+    import io
+    import json
+
+    seen = {}
+
+    def fake_urlopen(req, timeout=0):
+        seen["ua"] = req.get_header("User-agent")
+        seen["url"] = req.full_url
+        return io.BytesIO(json.dumps({"data": []}).encode())
+
+    assert pricehistory._default_get("SPY", urlopen=fake_urlopen) == {"data": []}
+    assert seen["ua"] == "agentic-trading-research-bot ninadk.dev@gmail.com"
+    assert "/SPY/history" in seen["url"]

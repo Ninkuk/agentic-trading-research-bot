@@ -3,7 +3,9 @@ import urllib.parse
 import urllib.request
 
 DATA_URL = "https://stockanalysis.com/_api/endpoints/screener/data-points"
-_UA = {"User-Agent": "Mozilla/5.0"}
+# Cloudflare challenges the bare "Mozilla/5.0" token (403, cf-mitigated:
+# challenge); the descriptive UA probe.py and the other sources send passes.
+_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
 
 
 def parse_data_points(raw: dict) -> dict[str, dict]:
@@ -15,9 +17,14 @@ def parse_data_points(raw: dict) -> dict[str, dict]:
     return inner
 
 
-def fetch_data_points(ids: list[str], type_: str = "s", url: str = DATA_URL) -> dict[str, dict]:
+def fetch_data_points(
+    ids: list[str],
+    type_: str = "s",
+    url: str = DATA_URL,
+    urlopen=urllib.request.urlopen,
+) -> dict[str, dict]:
     query = urllib.parse.urlencode({"type": type_, "ids": " ".join(ids)})
     req = urllib.request.Request(f"{url}?{query}", headers=_UA)
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    with urlopen(req, timeout=120) as resp:
         raw = json.load(resp)
     return parse_data_points(raw)
