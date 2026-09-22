@@ -16,3 +16,4 @@
 2026-09-12 DXCM thesis=2026-09-12 source-acquisition dexcom-may-2026-investor-day-deck-with-numeric-2029-lrp-targets-never-fetched doc=investor-day-presentation bench=kill-thesis
 2026-09-17 EAT thesis=2026-09-17 source-acquisition brinker-2026-investor-day-slide-deck-and-webcast-ir-site-bot-challenge-stub-not-on-edgar-or-stockanalysis-at-run-close doc=investor-day-presentation bench=kill-thesis
 2026-09-17 MGY thesis=2026-09-17 source-acquisition cme-wti-futures-settlement-page-connection-reset-forward-curve-for-2027-hedge-drag-and-strip-scenario-not-read doc=exchange-settlement-page bench=kill-thesis
+2026-09-22 PRDO thesis=2026-09-22 source-acquisition prdo-fsa-data-center-proprietary-school-90-10-revenue-percentages-institution-level-ctu-aius-usahs-studentaid-gov-timed-out-data-ed-gov-403 doc=regulator-dataset bench=kill-thesis
