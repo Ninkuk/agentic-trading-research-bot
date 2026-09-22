@@ -11,9 +11,9 @@
 # Absent reopen= means the thesis states no reopen condition. Backfilled
 # 2026-07-29 from each thesis's falsifier/verdict prose.
 2026-07-10 CSU UNPROVEN conditions=6 refuted=0 unknown=3
-2026-07-21 BBAI UNPROVEN conditions=4 refuted=0 unknown=1 reopen=event:organic-growth-2q-or-price-near-net-cash
+2026-07-21 BBAI UNPROVEN conditions=4 refuted=0 unknown=1 reopen=2026-11-09:organic-growth-2q-or-price-near-net-cash
 2026-07-22 EOSE FLAWED conditions=5 refuted=2 unknown=3
-2026-07-22 CRML FLAWED conditions=7 refuted=1 unknown=6 reopen=event:tanbreez-feasibility-study
+2026-07-22 CRML FLAWED conditions=7 refuted=1 unknown=6 reopen=2026-12-31:tanbreez-feasibility-study
 2026-07-26 ADBE UNPROVEN conditions=6 refuted=0 unknown=3
 # 2026-07-26 PEGA: the line below SUPERSEDES a first same-day run that logged
 # buy on conditions=6 refuted=1 unknown=3. That run missed both Appian damages
@@ -31,9 +31,9 @@
 2026-07-27 PTC UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-07-29:q3-print-bookings
 2026-07-27 DECK UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-22:print-falsifier-checkpoint
 2026-07-27 SRAD UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-08-03:q2-print-guidance
-2026-07-27 TSLA FLAWED conditions=7 refuted=2 unknown=2 reopen=event:robotaxi-miles-or-capex-rollover
+2026-07-27 TSLA FLAWED conditions=7 refuted=2 unknown=2 reopen=2026-10-21:robotaxi-miles-or-capex-rollover
 2026-07-27 TTD UNPROVEN conditions=7 refuted=0 unknown=3 reopen=2026-08-06:q2-print-rerun
-2026-07-27 GFI UNPROVEN conditions=4 refuted=0 unknown=2 reopen=event:tarkwa-renewal-gold-ge-3800
+2026-07-27 GFI UNPROVEN conditions=4 refuted=0 unknown=2 reopen=2027-03-29:tarkwa-renewal-gold-ge-3800
 2026-07-27 DOCS UNPROVEN conditions=6 refuted=0 unknown=3 reopen=2026-08-06:q2-print
 2026-07-27 FSLR SOUND conditions=4 refuted=0 unknown=0
 2026-07-27 LOPE UNPROVEN conditions=5 refuted=0 unknown=3 reopen=2026-07-30:amendment-8k-q2-print
@@ -41,25 +41,25 @@
 2026-07-27 AEM UNPROVEN conditions=5 refuted=0 unknown=2
 2026-07-27 DSGX UNPROVEN conditions=5 refuted=0 unknown=3
 2026-07-27 TREX UNPROVEN conditions=7 refuted=0 unknown=3 reopen=2026-08-04:q2-print-sell-through
-2026-07-27 NYT UNPROVEN conditions=6 refuted=0 unknown=2 reopen=event:second-ai-deal-or-price-le-52
-2026-07-27 SII UNPROVEN conditions=5 refuted=0 unknown=2 reopen=event:critical-materials-aum-2q-flat-tape
+2026-07-27 NYT UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-11-09:second-ai-deal-or-price-le-52
+2026-07-27 SII UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-11-04:critical-materials-aum-2q-flat-tape
 2026-07-27 FFIV UNPROVEN conditions=6 refuted=0 unknown=3 reopen=event:price-le-290-or-systems-past-eos
 2026-07-27 UTHR FLAWED conditions=6 refuted=2 unknown=2 reopen=2026-08-05:q2-print-tyvaso-sequential
-2026-07-27 BMI UNPROVEN conditions=6 refuted=0 unknown=3 reopen=event:organic-growth-2q-margin-held
-2026-07-27 AZN FLAWED conditions=5 refuted=2 unknown=3 reopen=event:price-le-120-or-replacement-slate
+2026-07-27 BMI UNPROVEN conditions=6 refuted=0 unknown=3 reopen=2026-11-09:organic-growth-2q-margin-held
+2026-07-27 AZN FLAWED conditions=5 refuted=2 unknown=3 reopen=2026-10-30:price-le-120-or-replacement-slate
 2026-07-28 CAPR FLAWED conditions=5 refuted=2 unknown=3 reopen=2026-07-29:adcom-vote
-2026-07-29 MYRG SOUND conditions=3 refuted=0 unknown=0 reopen=event:price-low-200s-or-fcf-durable
+2026-07-29 MYRG SOUND conditions=3 refuted=0 unknown=0 reopen=2026-10-28:price-low-200s-or-fcf-durable
 2026-07-29 META UNPROVEN conditions=5 refuted=0 unknown=3 reopen=2026-10-28:q3-print-2027-capex-first-guide
-2026-07-29 DASH SOUND conditions=5 refuted=0 unknown=0 reopen=event:price-le-140-or-h2-2026-ebitda-gov-ge-3.5pct
+2026-07-29 DASH SOUND conditions=5 refuted=0 unknown=0 reopen=2026-11-04:price-le-140-or-h2-2026-ebitda-gov-ge-3.5pct
 2026-07-29 AMZN FLAWED conditions=6 refuted=4 unknown=2 reopen=2026-07-30:q2-print-capex-aws-margin
 2026-07-29 PTC UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-11-04:q4-print-fy27-guide
 2026-07-29 TIMB UNPROVEN conditions=7 refuted=0 unknown=3 reopen=2026-09-12:poste-tender-closed
 2026-07-29 SFM UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-28:q3-print-lap-expiry
 2026-07-29 CAPR FLAWED conditions=5 refuted=2 unknown=2 reopen=event:halt-lift-then-pdufa-2026-08-22
-2026-07-29 BLBD UNPROVEN conditions=6 refuted=0 unknown=1 reopen=event:epa-csb-2026-nofo-or-price-55
+2026-07-29 BLBD UNPROVEN conditions=6 refuted=0 unknown=1 reopen=2026-11-23:epa-csb-2026-nofo-or-price-55
 2026-07-30 GDDY UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-07-30:q2-bookings-parity-then-499-cohort-renewal
-2026-07-30 PIPR SOUND conditions=4 refuted=0 unknown=0 reopen=event:price-le-60-or-margin-18pct-through-downturn
-2026-07-30 UHS UNPROVEN conditions=6 refuted=0 unknown=2 reopen=event:cms-florida-2026-dpp-or-price-le-130
+2026-07-30 PIPR SOUND conditions=4 refuted=0 unknown=0 reopen=2026-10-30:price-le-60-or-margin-18pct-through-downturn
+2026-07-30 UHS UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-10-26:cms-florida-2026-dpp-or-price-le-130
 2026-07-30 INTU SOUND conditions=6 refuted=0 unknown=0 reopen=2026-08-20:fy27-guide
 2026-07-30 BR UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-08-04:fy27-guide
 2026-07-30 TME UNPROVEN conditions=7 refuted=0 unknown=2 reopen=2026-11-11:membership-two-clean-prints
@@ -74,23 +74,23 @@
 2026-07-30 SEZL FLAWED conditions=7 refuted=1 unknown=5 reopen=2026-08-06:q2-print-provision-and-growth
 2026-07-30 FFIV SOUND conditions=5 refuted=0 unknown=0 reopen=2026-10-26:ffiv-fy27-guide
 2026-07-30 BSY UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-08-06:bsy-q2-print-nrr-and-api-monetization
-2026-07-30 FIX SOUND conditions=5 refuted=0 unknown=1 reopen=event:price-le-1100-or-margin-holds-at-low-growth
+2026-07-30 FIX SOUND conditions=5 refuted=0 unknown=1 reopen=2026-10-22:price-le-1100-or-margin-holds-at-low-growth
 2026-07-30 APPF UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-29:appf-q3-units-vas-margin
-2026-07-30 ERO SOUND conditions=4 refuted=0 unknown=0 reopen=event:copper-normalization-or-pullback-implied-ge-12pct-at-4.60
+2026-07-30 ERO SOUND conditions=4 refuted=0 unknown=0 reopen=2026-11-03:copper-normalization-or-pullback-implied-ge-12pct-at-4.60
 2026-07-30 PRIM UNPROVEN conditions=7 refuted=0 unknown=4 reopen=2026-08-05:prim-q2-ringfence
 2026-07-30 SAP UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-21:sap-q3-ccb-cloudgm-2027-guide
-2026-08-03 CINF UNPROVEN conditions=5 refuted=0 unknown=2 reopen=event:cinf-price-le-145-or-market-hardening
+2026-08-03 CINF UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-26:cinf-price-le-145-or-market-hardening
 2026-08-03 CHKP FLAWED conditions=6 refuted=2 unknown=4 reopen=2026-10-27:q3-trough-and-q4-setup
 2026-08-03 LOPE UNPROVEN conditions=6 refuted=0 unknown=3 reopen=2026-11-04:q3-fall-online-new-starts
 2026-08-03 PCTY UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-08-05:pcty-fy27-guide-recurring-ge-9-exfloat-margin
-2026-08-03 FTI SOUND conditions=5 refuted=0 unknown=1 reopen=event:fti-price-le-52-or-2027-fcf-guide-ge-2b
+2026-08-03 FTI SOUND conditions=5 refuted=0 unknown=1 reopen=2026-10-29:fti-price-le-52-or-2027-fcf-guide-ge-2b
 2026-08-03 GDDY UNPROVEN conditions=5 refuted=0 unknown=3 reopen=2026-10-29:q3-bookings-parity-and-airo-transition-quantified
 2026-08-03 AMZN UNPROVEN conditions=6 refuted=0 unknown=3 reopen=2026-10-29:q3-aws-growth-capex-fcf-trajectory
 2026-08-03 VRSK UNPROVEN conditions=6 refuted=0 unknown=4 reopen=2026-10-28:vrsk-q3-subscription-occ-ge-7-transactional-recovery
 2026-08-03 WT UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-10-30:wt-q3-flows-margins-ceres-fund2
 2026-08-03 SRAD UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-11-04:q3-h2-acceleration-prediction-market-revenue
 2026-08-03 RDDT UNPROVEN conditions=6 refuted=0 unknown=3 reopen=2026-10-29:rddt-q3-us-dau-and-revenue-vs-guide
-2026-08-03 CD SOUND conditions=5 refuted=0 unknown=1 reopen=event:cd-price-le-0.75-or-audited-recurring-rev-ge-25m
+2026-08-03 CD SOUND conditions=5 refuted=0 unknown=1 reopen=2026-11-16:cd-price-le-0.75-or-audited-recurring-rev-ge-25m
 2026-08-03 KPTI UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-08-11:kpti-q2-financing-or-strategic-transaction
 2026-08-04 TREX UNPROVEN conditions=7 refuted=0 unknown=5 reopen=2026-11-03:q3-print-transition-economics-share
 2026-08-04 BR UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-11-03:q1-fy27-print-final-rule-check
@@ -127,8 +127,8 @@
 2026-08-11 WRB SOUND conditions=5 refuted=0 unknown=2 reopen=2026-10-20:wrb-q3-rate-decel-and-casualty-pyd
 2026-08-11 SKHY SOUND conditions=5 refuted=0 unknown=3 reopen=2026-09-30:skhy-q3-return-program-and-ads-premium
 2026-08-11 PGNY UNPROVEN conditions=4 refuted=0 unknown=2 reopen=2026-11-05:pgny-q3-utilization-rebound-and-fy27-cost-normalization
-2026-08-11 EBAY SOUND conditions=5 refuted=0 unknown=2 reopen=event:ebay-price-under-88-or-gme-bid-withdrawn
-2026-08-11 ATMU SOUND conditions=5 refuted=0 unknown=1 reopen=event:atmu-price-below-39-optimistic-clears-hurdle
+2026-08-11 EBAY SOUND conditions=5 refuted=0 unknown=2 reopen=2026-10-28:ebay-price-under-88-or-gme-bid-withdrawn
+2026-08-11 ATMU SOUND conditions=5 refuted=0 unknown=1 reopen=2026-11-06:atmu-price-below-39-optimistic-clears-hurdle
 2026-08-11 SMCI SOUND conditions=5 refuted=0 unknown=2 reopen=2026-11-04:smci-q1fy27-gm-cash-and-review
 2026-08-11 ARKO FLAWED conditions=5 refuted=1 unknown=2 reopen=2026-11-04:arko-q3-gallons-and-parent-vs-apc-debt-split
 2026-08-11 MPT FLAWED conditions=5 refuted=1 unknown=3 reopen=2026-10-29:mpt-q3-cash-rent-conversion-and-step-two-refi
@@ -142,21 +142,21 @@
 2026-08-13 HIG SOUND conditions=5 refuted=0 unknown=1 reopen=2026-11-02:hig-q3-casualty-pyd-and-bi-pricing-vs-trend
 2026-08-13 NCMI SOUND conditions=6 refuted=0 unknown=3 reopen=2026-10-29:ncmi-q3-per-attendee-pricing-and-captivate-close-pro-formas
 2026-08-16 YETI UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-11-06:yeti-q3-om-expansion-vs-280bp-guide-and-us-drinkware
-2026-08-16 IPAR SOUND conditions=5 refuted=0 unknown=0 reopen=event:ipar-price-below-80-or-fy27-guide-rev-ge-8pct-margin-ge-18pct
+2026-08-16 IPAR SOUND conditions=5 refuted=0 unknown=0 reopen=2026-11-04:ipar-price-below-80-or-fy27-guide-rev-ge-8pct-margin-ge-18pct
 2026-08-17 G UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-11-05:g-q3-cash-conversion-and-cbs-exwalkaway-trend
 2026-08-17 TPR SOUND conditions=6 refuted=0 unknown=0 reopen=event:tpr-price-below-116-or-ks-stabilizes-while-coach-holds-hsd
 2026-08-17 WMG UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-11-19:wmg-q4-fy27-ai-licensing-guide-margin-delivery-or-price-below-23
-2026-08-17 CYCUW SOUND conditions=3 refuted=0 unknown=1 reopen=event:cycuw-public-warrant-repricing-or-exchange-offer-8k
+2026-08-17 CYCUW SOUND conditions=3 refuted=0 unknown=1
 2026-08-17 FIEE UNPROVEN conditions=4 refuted=0 unknown=2 reopen=2026-11-11:fiee-q3-ar-conversion-and-related-party-note
 2026-08-17 HKPD UNPROVEN conditions=5 refuted=0 unknown=3 reopen=2027-01-11:hkpd-nasdaq-bid-deadline-reverse-split-or-shelf-takedown
 2026-08-18 IMAX SOUND conditions=3 refuted=0 unknown=1 reopen=2027-02-25:imax-fy26-owner-fcf-fy27-guide-or-price-below-35
 2026-08-18 COST SOUND conditions=4 refuted=0 unknown=0 reopen=event:cost-fcf-yield-4pct-or-renewal-below-90
-2026-08-18 AON SOUND conditions=5 refuted=0 unknown=1 reopen=event:aon-price-below-300
+2026-08-18 AON SOUND conditions=5 refuted=0 unknown=1 reopen=2026-10-30:aon-price-below-300
 2026-08-18 ULTA FLAWED conditions=4 refuted=1 unknown=1 reopen=2026-12-04:ulta-q2q3-margin-inflection-or-price-below-460
 2026-08-19 ZTO UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-11-19:zto-q3-asp-discipline-second-installment
-2026-08-19 CAAP UNPROVEN conditions=5 refuted=0 unknown=1 reopen=event:caap-aa2000-rebalancing-binding-terms
+2026-08-19 CAAP UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-11-23:caap-aa2000-rebalancing-binding-terms
 2026-08-19 TEL SOUND conditions=6 refuted=0 unknown=1 reopen=2026-10-29:tel-fq4-fy27-guide-or-price-below-170
-2026-08-19 RL SOUND conditions=5 refuted=0 unknown=1 reopen=event:rl-price-below-300
+2026-08-19 RL SOUND conditions=5 refuted=0 unknown=1 reopen=2026-11-05:rl-price-below-300
 2026-08-19 BHF UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-12-06:bhf-outside-date-delaware-form-a-hearing-or-deal-termination
 2026-08-19 IEP UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-11-04:iep-q3-nav-per-unit-vs-price
 2026-08-19 JBGS SOUND conditions=3 refuted=0 unknown=1 reopen=2026-11-03:jbgs-q3-bond-collateral-and-post-trial-ruling
@@ -165,15 +165,15 @@
 2026-08-20 PRI SOUND conditions=5 refuted=0 unknown=0 reopen=2026-11-05:pri-q3-sales-force-trend-and-adp-growth
 2026-08-20 OMAB SOUND conditions=6 refuted=0 unknown=1 reopen=2027-03-01:fy26-print-owner-fcf-traffic
 2026-08-20 BRC UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-09-04:brc-q4-fy27-first-pss-guide-or-price-below-80
-2026-08-20 WMT SOUND conditions=5 refuted=0 unknown=0 reopen=event:price-below-70-or-owner-fcf-25b
-2026-08-20 VRSK UNPROVEN conditions=6 refuted=0 unknown=5 reopen=event:acculynx-appeal-ruling
+2026-08-20 WMT SOUND conditions=5 refuted=0 unknown=0 reopen=2026-11-19:price-below-70-or-owner-fcf-25b
+2026-08-20 VRSK UNPROVEN conditions=6 refuted=0 unknown=5 reopen=2026-10-28:acculynx-appeal-ruling
 2026-08-21 WM SOUND conditions=5 refuted=0 unknown=0 reopen=2027-01-29:wm-fy27-fcf-guide-or-price-below-196
-2026-08-21 BTCT UNPROVEN conditions=5 refuted=0 unknown=1 reopen=event:btct-signed-ai-compute-contract
+2026-08-21 BTCT UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-11-11:btct-signed-ai-compute-contract
 2026-08-21 WB UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2027-03-17:wb-fy26-capture-dividend-and-buyback
 2026-08-23 KTB SOUND conditions=5 refuted=0 unknown=0 reopen=2026-11-02:ktb-q3-print-lee-close-and-helly-margin
 2026-08-23 CAH UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-11-05:cah-fq1-cvs-renewal-status-or-8k
 2026-08-23 NRDS UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-11-05:nrds-q3-guide-hold-and-card-smb-decay
-2026-08-24 SIFG UNPROVEN conditions=3 refuted=0 unknown=1 reopen=event:sifg-financing-or-190kt-fid
+2026-08-24 SIFG UNPROVEN conditions=3 refuted=0 unknown=1 reopen=2026-11-06:sifg-financing-or-190kt-fid
 2026-08-24 BE FLAWED conditions=6 refuted=1 unknown=1 reopen=2026-10-28:be-q3-fy27-guide-and-backlog-disclosure
 2026-08-24 MDLN SOUND conditions=5 refuted=0 unknown=0 reopen=2026-11-04:mdln-q3-print-h2-margin-and-fda-remediation
 2026-08-24 ADEA SOUND conditions=3 refuted=0 unknown=0 reopen=2026-11-03:adea-q3-semi-run-rate-and-h2-guide-hold
