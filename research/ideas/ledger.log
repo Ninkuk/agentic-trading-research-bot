@@ -232,3 +232,13 @@
 2026-09-06 rQ2HD2oTMCw ll-flooring-model-death DEAD gate=1:provenance
 2026-09-06 rQ2HD2oTMCw direct-sourcing-needs-focus DEAD gate=1:provenance
 2026-09-06 rQ2HD2oTMCw load-bearing-piton-checklist DEAD gate=6:statistics
+2026-09-15 87MfLs_i-zM ex-growth-terminal-multiple-10x DEAD gate=1:provenance
+2026-09-15 87MfLs_i-zM implied-revenue-from-market-cap DEAD gate=2:duplication
+2026-09-15 87MfLs_i-zM implied-growth-cagr-from-horizon DEAD gate=2:duplication
+2026-09-15 87MfLs_i-zM multiple-grows-with-forward-growth DEAD gate=2:duplication
+2026-09-15 87MfLs_i-zM wall-street-models-horizon-3-5y DEAD gate=1:provenance
+2026-09-15 87MfLs_i-zM margin-tied-to-exit-multiple DEAD gate=2:duplication
+2026-09-15 87MfLs_i-zM multiple-is-shorthand-dcf DEAD gate=2:duplication
+2026-09-15 87MfLs_i-zM reverse-dcf-discount-rate-output DEAD gate=2:duplication
+2026-09-15 87MfLs_i-zM sp500-return-decomposition DEAD gate=1:provenance
+2026-09-15 87MfLs_i-zM palantir-priced-in-37b DEAD gate=2:duplication
