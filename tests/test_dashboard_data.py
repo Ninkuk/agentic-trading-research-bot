@@ -246,16 +246,24 @@ def test_candidates_section_exports_screened_rows(populated_data_dir):
     assert row["marketCap"] == 8.4e10  # raw dollars, not pre-divided into $B
 
 
-def test_research_reopens_dated_upcoming_event_and_superseded(populated_data_dir):
-    sec = data.export_data(populated_data_dir, NOW)["sections"]["research-reopens"]
+def test_research_dated_upcoming_event_and_closed(populated_data_dir):
+    sec = data.export_data(populated_data_dir, NOW)["sections"]["research"]
     by_ticker = {r["ticker"]: r for r in sec["rows"]}
     assert by_ticker["STNE"]["due"] == "2026-07-07"  # NOW's Phoenix date is 2026-07-08: due
     assert by_ticker["GNTX"]["due"] == "2026-08-20"  # ahead of today: upcoming
     assert by_ticker["GFI"]["due"] is None  # event-shaped trigger, no date
     assert by_ticker["GFI"]["trigger"] == "tarkwa-renewal"
-    assert "OLD" not in by_ticker  # re-researched after its trigger: superseded, no reopen=
+    # OLD was re-researched after its trigger: its newest line has no
+    # reopen=, so it still rows (every researched name does) with no trigger
+    # and the newer line's kill verdict.
+    assert by_ticker["OLD"]["due"] is None
+    assert by_ticker["OLD"]["trigger"] is None
+    assert by_ticker["OLD"]["verdict"] == "SOUND"
+    assert by_ticker["OLD"]["thesis_date"] == "2026-07-05"
     assert by_ticker["STNE"]["verdict"] == "UNPROVEN"
     assert by_ticker["STNE"]["thesis_path"] == "research/STNE-2026-07-01.md"
+    # No research_verdicts row for these fixture tickers: call is blank, not an error.
+    assert by_ticker["STNE"]["call"] is None
 
 
 def test_efficacy_rows_have_ci_for_dotplot(populated_data_dir):
@@ -473,7 +481,7 @@ def test_ticker_subtree_never_leaks_journal_private_fields(populated_data_dir):
     walk(doc["tickers"])  # sections' `note` prose lives outside this subtree
 
 
-def test_research_reopens_exports_relative_thesis_paths(tmp_path):
+def test_research_exports_relative_thesis_paths(tmp_path):
     (tmp_path / "research").mkdir()
     (tmp_path / "research" / "verdicts.log").write_text(
         "2026-07-27 STNE UNPROVEN conditions=6 refuted=0 unknown=3"
@@ -482,7 +490,7 @@ def test_research_reopens_exports_relative_thesis_paths(tmp_path):
     )  # real line shape (verified): <date> <TICKER> <SOUND|FLAWED|UNPROVEN>
     # conditions=n refuted=n unknown=n [reopen=<date|event>:<slug>]
     sec = data.export_data(str(tmp_path / "data"), NOW, repo_root=str(tmp_path))["sections"][
-        "research-reopens"
+        "research"
     ]
     assert all(
         not r["thesis_path"].startswith("http") for r in sec.get("rows", []) if r["thesis_path"]

@@ -1,4 +1,4 @@
-// Cross-section constants. Today just the repo URL ResearchReopens needs to
+// Cross-section constants. Today just the repo URL the Research section needs to
 // build a thesis-file link (data.py exports a repo-relative `thesis_path`
 // only — never an absolute URL — so the client owns this join). Verified
 // against `_REPO_URL` in deploy/launchd/dashboard_lib/sections.py:70 —

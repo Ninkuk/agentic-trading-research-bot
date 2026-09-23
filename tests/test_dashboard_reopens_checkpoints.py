@@ -1,7 +1,6 @@
 """Position checkpoints: held-ticker dated reopen triggers within +/- 7
-Phoenix days, computed by `dashboard_lib.data._research_reopens`'s
-`checkpoints` list and rendered on the dashboard's research-reopens
-section."""
+Phoenix days, computed by `dashboard_lib.data._research`'s `checkpoints`
+list and rendered on the dashboard's research section."""
 
 import sqlite3
 import sys
@@ -49,7 +48,7 @@ def test_held_ticker_dated_reopen_today_is_checkpoint(tmp_path):
         "2026-07-01 AAA UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-22:q2-print",
     )
     _write_pdb(tmp_path / "data", "AAA")
-    sec = data._research_reopens(str(tmp_path / "data"), NOW)
+    sec = data._research(str(tmp_path / "data"), NOW)
     assert sec["checkpoints"] == [
         {
             "ticker": "AAA",
@@ -69,7 +68,7 @@ def test_held_ticker_past_and_future_checkpoints_have_signed_when_days(tmp_path)
         "2026-07-01 CCC UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-25:future-print",
     )
     _write_pdb(tmp_path / "data", "BBB", "CCC")
-    checkpoints = data._research_reopens(str(tmp_path / "data"), NOW)["checkpoints"]
+    checkpoints = data._research(str(tmp_path / "data"), NOW)["checkpoints"]
     by_ticker = {c["ticker"]: c for c in checkpoints}
     assert by_ticker["BBB"]["when_days"] == -2  # 2 days ago
     assert by_ticker["CCC"]["when_days"] == 3  # 3 days ahead
@@ -86,7 +85,7 @@ def test_phoenix_date_not_utc_date(tmp_path):
         "2026-07-01 III UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-23:rollover",
     )
     _write_pdb(tmp_path / "data", "III")
-    checkpoints = data._research_reopens(str(tmp_path / "data"), NOW)["checkpoints"]
+    checkpoints = data._research(str(tmp_path / "data"), NOW)["checkpoints"]
     assert len(checkpoints) == 1
     assert checkpoints[0]["when_days"] == 1
 
@@ -97,7 +96,7 @@ def test_unheld_ticker_in_rows_not_checkpoints(tmp_path):
         "2026-07-01 DDD UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-22:q2-print",
     )
     _write_pdb(tmp_path / "data")  # nothing held
-    sec = data._research_reopens(str(tmp_path / "data"), NOW)
+    sec = data._research(str(tmp_path / "data"), NOW)
     assert sec["checkpoints"] == []
     row = next(r for r in sec["rows"] if r["ticker"] == "DDD")
     assert row["held"] is False
@@ -110,7 +109,7 @@ def test_held_ticker_outside_window_not_checkpoint(tmp_path):
         "2026-07-01 EEE UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-08-15:q3-print",
     )
     _write_pdb(tmp_path / "data", "EEE")
-    sec = data._research_reopens(str(tmp_path / "data"), NOW)
+    sec = data._research(str(tmp_path / "data"), NOW)
     assert sec["checkpoints"] == []
     row = next(r for r in sec["rows"] if r["ticker"] == "EEE")
     assert row["held"] is True
@@ -124,7 +123,7 @@ def test_only_newest_verdict_line_counts(tmp_path):
         "2026-07-15 FFF UNPROVEN conditions=5 refuted=0 unknown=1 reopen=2026-07-27:new-trigger",
     )
     _write_pdb(tmp_path / "data", "FFF")
-    checkpoints = data._research_reopens(str(tmp_path / "data"), NOW)["checkpoints"]
+    checkpoints = data._research(str(tmp_path / "data"), NOW)["checkpoints"]
     assert len(checkpoints) == 1
     assert checkpoints[0]["trigger"] == "new-trigger"
     assert checkpoints[0]["thesis_date"] == "2026-07-15"
@@ -136,7 +135,7 @@ def test_missing_portfolio_db_degrades_to_no_checkpoints(tmp_path):
         "2026-07-01 GGG UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-22:q2-print",
     )
     (tmp_path / "data").mkdir()  # no portfolio.db written at all
-    sec = data._research_reopens(str(tmp_path / "data"), NOW)
+    sec = data._research(str(tmp_path / "data"), NOW)
     assert sec["checkpoints"] == []
     assert all(r["held"] is False for r in sec["rows"])
 
@@ -147,7 +146,7 @@ def test_event_reopen_never_becomes_checkpoint(tmp_path):
         "2026-07-01 HHH UNPROVEN conditions=6 refuted=0 unknown=2 reopen=event:some-trigger",
     )
     _write_pdb(tmp_path / "data", "HHH")
-    sec = data._research_reopens(str(tmp_path / "data"), NOW)
+    sec = data._research(str(tmp_path / "data"), NOW)
     assert sec["checkpoints"] == []
     row = next(r for r in sec["rows"] if r["ticker"] == "HHH")
     assert row["held"] is True
@@ -158,7 +157,7 @@ def test_malformed_date_on_held_ticker_drops_only_that_checkpoint(tmp_path):
     """`_REOPEN_FIELD_RE` validates digit shape only, never calendar
     validity -- verdicts.log is human-written, so a typo like 2026-02-30
     (2026 is not a leap year: Feb tops out at 28) is a live possibility.
-    Before this branch `_research_reopens` only string-compared these
+    Before this branch `_research` only string-compared these
     values, so a bad date was inert; now it is `date.fromisoformat`-parsed
     for `when_days` and must not take the whole section down with it --
     only the one bad checkpoint drops, every row and every other checkpoint
@@ -170,7 +169,7 @@ def test_malformed_date_on_held_ticker_drops_only_that_checkpoint(tmp_path):
         "2026-01-01 KKK UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-02-25:good-date",
     )
     _write_pdb(tmp_path / "data", "JJJ", "KKK")
-    sec = data._research_reopens(str(tmp_path / "data"), now)
+    sec = data._research(str(tmp_path / "data"), now)
     assert {r["ticker"] for r in sec["rows"]} == {"JJJ", "KKK"}  # rows all survive
     assert {c["ticker"] for c in sec["checkpoints"]} == {"KKK"}  # JJJ's bad date dropped
 
@@ -186,7 +185,7 @@ def test_checkpoint_window_boundary_inclusive_both_ends(tmp_path):
         "2026-07-01 MMM UNPROVEN conditions=6 refuted=0 unknown=2 reopen=2026-07-29:on-ceiling",
     )
     _write_pdb(tmp_path / "data", "LLL", "MMM")
-    checkpoints = data._research_reopens(str(tmp_path / "data"), NOW)["checkpoints"]
+    checkpoints = data._research(str(tmp_path / "data"), NOW)["checkpoints"]
     by_ticker = {c["ticker"]: c for c in checkpoints}
     assert set(by_ticker) == {"LLL", "MMM"}
     assert by_ticker["LLL"]["when_days"] == -7
@@ -222,7 +221,7 @@ def test_filings_since_counts_distinct_8ks_after_thesis_date(tmp_path):
         ("CAH", "insider", "2026-07-11", "acc-3"),  # Form 4, not an 8-K
         ("DDD", "event", "2026-07-05", "acc-4"),
     )
-    rows = {r["ticker"]: r for r in data._research_reopens(str(tmp_path / "data"), NOW)["rows"]}
+    rows = {r["ticker"]: r for r in data._research(str(tmp_path / "data"), NOW)["rows"]}
     assert rows["CAH"]["filings_since"] == 2
     assert rows["DDD"]["filings_since"] == 1  # dated rows carry it too
 
@@ -233,5 +232,5 @@ def test_filings_since_is_none_without_edgar_db(tmp_path):
         "2026-07-01 CAH UNPROVEN conditions=5 refuted=0 unknown=1 reopen=event:cvs-renewal",
     )
     (tmp_path / "data").mkdir()
-    rows = data._research_reopens(str(tmp_path / "data"), NOW)["rows"]
+    rows = data._research(str(tmp_path / "data"), NOW)["rows"]
     assert rows[0]["filings_since"] is None

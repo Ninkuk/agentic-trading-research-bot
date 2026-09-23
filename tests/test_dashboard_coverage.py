@@ -30,7 +30,7 @@ def schema_dir(tmp_path_factory):
     root = tmp_path_factory.mktemp("repo")
     d = root / "data"
     d.mkdir()
-    # research-reopens resolves research/ as data's sibling.
+    # research resolves research/ as data's sibling.
     (root / "research").mkdir()
     (root / "research" / "verdicts.log").write_text("")
     for name, ensure in coverage.DB_SCHEMAS.items():

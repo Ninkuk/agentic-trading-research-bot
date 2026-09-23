@@ -145,24 +145,29 @@ def test_regime_performance_chip_reads_the_longest_horizon(tmp_path):
     assert {r["regime"] for r in sec["rows"]} == {"Risk on"}
 
 
-# --- research-reopens --------------------------------------------------------
+# --- research ----------------------------------------------------------------
 
 
-def test_research_reopens_chip_counts_the_week_and_sorts_due_first(populated_data_dir):
-    sec = _sections(populated_data_dir)["research-reopens"]
+def test_research_chip_counts_the_week_and_sorts_due_first(populated_data_dir):
+    sec = _sections(populated_data_dir)["research"]
     # STNE's 2026-07-07 trigger is a day past NOW's Phoenix date: due this week
     assert sec["verdict"] == {"text": "1 due this week", "tone": "mid"}
-    assert [r["ticker"] for r in sec["rows"]] == ["STNE", "GNTX", "GFI"]
-    assert _labels(sec)["trigger"] == "Waiting for"
+    # due, upcoming, event, then OLD (no open trigger) last
+    assert [r["ticker"] for r in sec["rows"]] == ["STNE", "GNTX", "GFI", "OLD"]
+    labels = _labels(sec)
+    assert labels["trigger"] == "Waiting for"
+    assert labels["due"] == "Reopen"
+    assert labels["call"] == "Call"
+    assert labels["verdict"] == "Kill verdict"
 
 
-def test_research_reopens_chip_when_nothing_is_due(tmp_path):
+def test_research_chip_when_nothing_is_due(tmp_path):
     (tmp_path / "data").mkdir()
     (tmp_path / "research").mkdir()
     (tmp_path / "research" / "verdicts.log").write_text(
         "2026-07-01 GNTX UNPROVEN conditions=5 refuted=0 unknown=2 reopen=2026-08-20:q3-print\n"
     )
-    sec = _sections(tmp_path / "data")["research-reopens"]
+    sec = _sections(tmp_path / "data")["research"]
     assert sec["verdict"] == {"text": "nothing due this week", "tone": "mid"}
 
 

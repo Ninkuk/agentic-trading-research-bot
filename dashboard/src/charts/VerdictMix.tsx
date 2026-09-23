@@ -1,7 +1,7 @@
 // oxlint-disable react/only-export-components -- geometry helpers are
 // exported for tests; there is one component here for fast refresh to preserve.
 //
-// One horizontal proportion bar for the open-thesis verdict mix. Pure SVG:
+// One horizontal proportion bar for the kill-verdict mix across theses. Pure SVG:
 // three tone segments split by 2px gaps in the card color, outer ends
 // rounded via a clip on the whole bar so the interior joins stay square.
 // Counts ride below as text ("SOUND 47") — the tone only echoes the word.
@@ -59,7 +59,7 @@ export function VerdictMix({ counts }: { counts: VerdictCounts }) {
         preserveAspectRatio="none"
         height={BAR_H}
         role="img"
-        aria-label={`Verdict mix of ${total} open theses: ${title}`}
+        aria-label={`Verdict mix of ${total} theses: ${title}`}
       >
         <title>{title}</title>
         <defs>

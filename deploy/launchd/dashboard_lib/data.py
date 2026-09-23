@@ -534,11 +534,18 @@ def _verdict_thesis_path(doc: str | None) -> str | None:
     return f"research/{doc}"
 
 
-_RESEARCH_REOPENS_COLUMNS: list[dict[str, Any]] = [
+_RESEARCH_COLUMNS: list[dict[str, Any]] = [
     {"key": "ticker", "label": "Ticker", "numeric": False, "direction": None, "term": None},
     {"key": "held", "label": "Held", "numeric": False, "direction": None, "term": None},
-    {"key": "verdict", "label": "Verdict", "numeric": False, "direction": None, "term": None},
-    {"key": "due", "label": "Due", "numeric": False, "direction": None, "term": None},
+    {"key": "call", "label": "Call", "numeric": False, "direction": None, "term": None},
+    {
+        "key": "verdict",
+        "label": "Kill verdict",
+        "numeric": False,
+        "direction": None,
+        "term": None,
+    },
+    {"key": "due", "label": "Reopen", "numeric": False, "direction": None, "term": None},
     {"key": "trigger", "label": "Waiting for", "numeric": False, "direction": None, "term": None},
     {
         "key": "filings_since",
@@ -614,37 +621,59 @@ def _held_symbols(data_dir: str) -> set[str]:
         return set()
 
 
-def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
-    """Open revisit triggers from research/verdicts.log, a sibling of the
-    data dir (mirrors sections.py's `_research_reopens`, which resolves the
-    same path from `data_dir`). Only the newest verdict line per ticker
-    counts — a re-researched name retires its old trigger whether or not
-    the new verdict sets its own."""
+def _research_calls(data_dir: str, symbols: set[str]) -> dict[str, str]:
+    """{symbol: "BUY"|"PASS"} from scorer.db research_verdicts, newest
+    verdict_date per symbol. The ownership call is journaled here by the
+    research-ticker skill; verdicts.log carries it only as a trailing
+    parenthetical on recent lines, so the DB is the one complete source.
+    TOTAL: a missing/unreadable scorer.db yields no calls, never an error."""
+    if not symbols:
+        return {}
+    try:
+        conn = _ro(data_dir, "scorer.db")
+        try:
+            marks = ",".join("?" * len(symbols))
+            calls: dict[str, str] = {}
+            for r in conn.execute(
+                "SELECT symbol, verdict FROM research_verdicts"
+                f" WHERE symbol IN ({marks}) ORDER BY verdict_date, id",
+                tuple(symbols),
+            ):
+                calls[r["symbol"]] = str(r["verdict"]).upper()
+            return calls
+        finally:
+            conn.close()
+    except Exception:
+        return {}
+
+
+def _research(data_dir: str, now_iso: str) -> dict[str, Any]:
+    """Every researched name from research/verdicts.log, a sibling of the
+    data dir: kill verdict and reopen trigger from the log, BUY/PASS call
+    from scorer.db. Only the newest verdict line per ticker counts — a
+    re-researched name retires its old trigger whether or not the new
+    verdict sets its own, and a name whose newest line has no reopen= still
+    rows here with an empty trigger."""
     vlog = Path(data_dir).parent / "research" / "verdicts.log"
     newest = newest_verdict_lines(vlog.read_text(encoding="utf-8").splitlines())
 
-    dated: list[tuple[str, str, str, str, str | None]] = []
-    events: list[tuple[str, str, str, str | None]] = []
+    # (ticker, thesis_date, kill verdict, due date | None, slug | None)
+    parsed: list[tuple[str, str, str | None, str | None, str | None]] = []
     for ticker, (thesis_date, line) in sorted(newest.items()):
-        m = REOPEN_FIELD_RE.search(line)
-        if m is None:
-            continue
-        # Verdict-token extraction (field 2) is new logic, not a port of the
-        # legacy parser (which reads only fields 0-1 and the reopen= regex):
-        # validate against the allowed set, None for anything unrecognized.
         fields = line.split()
         call = fields[2] if len(fields) > 2 and fields[2] in _REOPEN_VERDICTS else None
-        if m.group(1) == "event":
-            events.append((ticker, m.group(2), thesis_date, call))
+        m = REOPEN_FIELD_RE.search(line)
+        if m is None:
+            parsed.append((ticker, thesis_date, call, None, None))
+        elif m.group(1) == "event":
+            parsed.append((ticker, thesis_date, call, None, m.group(2)))
         else:
-            dated.append((m.group(1), ticker, m.group(2), thesis_date, call))
-    dated.sort(key=lambda t: (t[0], t[1]))
+            parsed.append((ticker, thesis_date, call, m.group(1), m.group(2)))
 
     held = _held_symbols(data_dir)
-    filings = _filings_since(
-        data_dir,
-        {t: d for _w, t, _s, d, _v in dated} | {t: d for t, _s, d, _v in events},
-    )
+    symbols = {t for t, *_ in parsed}
+    calls = _research_calls(data_dir, symbols)
+    filings = _filings_since(data_dir, {t: d for t, d, *_ in parsed})
     today = phx_date(now_iso)
     now_dt = datetime.fromisoformat(now_iso)
     floor = phx_date(now_dt - timedelta(days=7))
@@ -654,42 +683,35 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
         {
             "ticker": ticker,
             "held": ticker in held,
-            "verdict": call,
+            "call": calls.get(ticker),
+            "verdict": kill,
             "due": when,
             "trigger": slug,
             "filings_since": filings.get(ticker),
             "thesis_date": thesis_date,
             "thesis_path": _thesis_path(ticker, thesis_date),
         }
-        for when, ticker, slug, thesis_date, call in dated
-    ] + [
-        {
-            "ticker": ticker,
-            "held": ticker in held,
-            "verdict": call,
-            "due": None,
-            "trigger": slug,
-            "filings_since": filings.get(ticker),
-            "thesis_date": thesis_date,
-            "thesis_path": _thesis_path(ticker, thesis_date),
-        }
-        for ticker, slug, thesis_date, call in events
+        for ticker, thesis_date, kill, when, slug in parsed
     ]
 
-    # Due (trigger date on or before today) rows lead, oldest first; then
-    # upcoming dated rows; event-shaped triggers last. `dated` is already
-    # (date, ticker)-sorted, so a stable partition keeps that order.
-    def _rank(r: dict[str, Any]) -> int:
-        due = r["due"]
-        if not isinstance(due, str):
-            return 2
-        return 0 if due <= today else 1
+    # Due rows (trigger on or before today) lead, oldest first; then
+    # upcoming dated; then event-shaped triggers; then names with no open
+    # trigger, newest thesis first. Ties break on ticker.
+    def _rank(r: dict[str, Any]) -> tuple[int, int, str, str]:
+        due, slug = r["due"], r["trigger"]
+        if isinstance(due, str):
+            return (0 if due <= today else 1, 0, due, r["ticker"])
+        if slug is not None:
+            return (2, 0, "", r["ticker"])
+        return (3, _newest_first(r["thesis_date"]), "", r["ticker"])
 
     rows.sort(key=_rank)
+    dated = [(when, t, slug, d) for t, d, _k, when, slug in parsed if when is not None]
+    events = sum(1 for _t, _d, _k, when, slug in parsed if when is None and slug is not None)
     due_this_week = sum(1 for when, *_ in dated if floor <= when <= ceiling)
     today_date = date.fromisoformat(today)
     checkpoints = []
-    for when, ticker, slug, thesis_date, _call in dated:
+    for when, ticker, slug, thesis_date in sorted(dated):
         if ticker not in held or not (floor <= when <= ceiling):
             continue
         try:
@@ -715,12 +737,21 @@ def _research_reopens(data_dir: str, now_iso: str) -> dict[str, Any]:
         "verdict": verdict(f"{due_this_week} due this week", "mid")
         if due_this_week
         else verdict("nothing due this week", "mid"),
-        "columns": _RESEARCH_REOPENS_COLUMNS,
+        "columns": _RESEARCH_COLUMNS,
         "rows": rows,
         "dated": len(dated),
-        "events": len(events),
+        "events": events,
         "checkpoints": checkpoints,
     }
+
+
+def _newest_first(iso_date: str) -> int:
+    """Negated YYYYMMDD, so an ascending sort lists newer theses first. A
+    malformed date (verdicts.log is human-written) sorts after every real one."""
+    try:
+        return -int(iso_date.replace("-", ""))
+    except ValueError:
+        return 0
 
 
 _HEALTH_COLUMNS: list[dict[str, Any]] = [
@@ -1883,25 +1914,30 @@ SECTION_EXPORTERS: list[
         ],
     ),
     (
-        "research-reopens",
-        "Research reopens",
-        "research/verdicts.log",
-        _research_reopens,
+        "research",
         "Research",
-        "Researched names set aside, each with the evidence that would reopen the question.",
+        "research/verdicts.log",
+        _research,
+        "Research",
+        "Every researched name: the ownership call, how the thesis held up under attack, and what would reopen the question.",
         [
             (
                 "How to read it",
-                "A dated trigger is usually an earnings report; “due”"
-                " means that evidence now exists and the name deserves a"
-                " fresh look. An event trigger waits on a filing or a"
-                " price, with no date attached.",
+                "Call is the ownership verdict (BUY or PASS) at the time"
+                " of research; kill verdict is how the thesis fared under"
+                " adversarial review. Reopen is the date new evidence is"
+                " expected, usually an earnings report; a row with a"
+                " trigger but no date waits on a filing or a price. A"
+                " blank trigger means the question is closed until"
+                " someone reopens it by hand.",
             ),
             (
-                "Lifecycle",
-                "A row retires when the name is re-researched; the ticker"
-                " links to the full thesis. Due rows lead the table, and"
-                " the chip counts triggers dated within a week of today.",
+                "Order and lifecycle",
+                "Due rows lead, then upcoming dates, then event triggers,"
+                " then closed names newest first; sort any column to"
+                " change that. Re-researching a name replaces its row; the"
+                " ticker links to the full thesis. The chip counts triggers"
+                " dated within a week of today.",
             ),
         ],
     ),

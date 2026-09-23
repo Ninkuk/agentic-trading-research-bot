@@ -1098,18 +1098,18 @@
       ],
       "snapshot_date": "2026-07-08"
     },
-    "research-reopens": {
-      "title": "Research reopens",
+    "research": {
+      "title": "Research",
       "kicker": "Research",
-      "note": "Researched names set aside, each with the evidence that would reopen the question.",
+      "note": "Every researched name: the ownership call, how the thesis held up under attack, and what would reopen the question.",
       "about": [
         {
           "heading": "How to read it",
-          "body": "A dated trigger is usually an earnings report; “due” means that evidence now exists and the name deserves a fresh look. An event trigger waits on a filing or a price, with no date attached."
+          "body": "Call is the ownership verdict (BUY or PASS) at the time of research; kill verdict is how the thesis fared under adversarial review. Reopen is the date new evidence is expected, usually an earnings report; a row with a trigger but no date waits on a filing or a price. A blank trigger means the question is closed until someone reopens it by hand."
         },
         {
-          "heading": "Lifecycle",
-          "body": "A row retires when the name is re-researched; the ticker links to the full thesis. Due rows lead the table, and the chip counts triggers dated within a week of today."
+          "heading": "Order and lifecycle",
+          "body": "Due rows lead, then upcoming dates, then event triggers, then closed names newest first; sort any column to change that. Re-researching a name replaces its row; the ticker links to the full thesis. The chip counts triggers dated within a week of today."
         }
       ],
       "verdict": {
@@ -1132,15 +1132,22 @@
           "term": null
         },
         {
+          "key": "call",
+          "label": "Call",
+          "numeric": false,
+          "direction": null,
+          "term": null
+        },
+        {
           "key": "verdict",
-          "label": "Verdict",
+          "label": "Kill verdict",
           "numeric": false,
           "direction": null,
           "term": null
         },
         {
           "key": "due",
-          "label": "Due",
+          "label": "Reopen",
           "numeric": false,
           "direction": null,
           "term": null
@@ -1171,20 +1178,35 @@
         {
           "ticker": "BLBD",
           "held": false,
+          "call": "PASS",
           "verdict": "UNPROVEN",
           "due": "2026-09-15",
           "trigger": "epa-2026-nofo",
+          "filings_since": 1,
           "thesis_date": "2026-07-28",
           "thesis_path": "research/BLBD-2026-07-28.md"
         },
         {
           "ticker": "DASH",
           "held": true,
+          "call": "BUY",
           "verdict": "SOUND",
           "due": "2026-08-05",
           "trigger": "reopen-140",
+          "filings_since": 0,
           "thesis_date": "2026-07-28",
           "thesis_path": "research/DASH-2026-07-28.md"
+        },
+        {
+          "ticker": "KBH",
+          "held": false,
+          "call": "PASS",
+          "verdict": "FLAWED",
+          "due": null,
+          "trigger": null,
+          "filings_since": 0,
+          "thesis_date": "2026-07-20",
+          "thesis_path": "research/KBH-2026-07-20.md"
         }
       ],
       "dated": 2,

@@ -1,12 +1,13 @@
 // oxlint-disable react/only-export-components -- verdictCounts/dueSoonCount
 // are exported for tests; the one component here still fast-refreshes.
 //
-// Research strand: open revisit triggers from research/verdicts.log.
-// Summary first (KPI tiles, verdict mix), table second. `today` is
-// injected for the due-soon tile, defaulting to the rows' earliest due
-// date so the fixture renders the same on every run. `renderCell` turns
-// the "ticker" column into a link to the ticker page (#/ticker/SYM) —
-// every researched symbol has one.
+// Research strand: every researched name from research/verdicts.log with
+// its BUY/PASS call, kill verdict and reopen trigger. Summary first (KPI
+// tiles, kill-verdict mix), table second. `today` is injected for the
+// due-soon tile, defaulting to the rows' earliest due date so the fixture
+// renders the same on every run. `renderCell` turns the "ticker" column
+// into a link to the ticker page (#/ticker/SYM) — every researched symbol
+// has one.
 
 import type { ReactNode } from "react";
 import type { Column, Glossary, Row, Section } from "../types";
@@ -47,7 +48,7 @@ export interface SectionComponentProps {
 
 const DUE_SOON_DAYS = 7;
 
-function renderReopensCell(row: Row, col: Column): ReactNode {
+function renderResearchCell(row: Row, col: Column): ReactNode {
   if (col.key === "ticker") {
     const symbol = String(row.ticker ?? "");
     return (
@@ -56,8 +57,9 @@ function renderReopensCell(row: Row, col: Column): ReactNode {
       </a>
     );
   }
-  // Everything else through the shared heuristics: verdict pills
-  // (SOUND/FLAWED/UNPROVEN tones) and humanized trigger slugs included.
+  // Everything else through the shared heuristics: call and kill-verdict
+  // pills (BUY/PASS, SOUND/FLAWED/UNPROVEN tones) and humanized trigger
+  // slugs included.
   return sectionCell(row, col);
 }
 
@@ -94,7 +96,12 @@ function Kpi({ value, label }: { value: number; label: string }) {
   );
 }
 
-export function ResearchReopens({ sec, glossary, today: todayProp }: SectionComponentProps) {
+/** Rows whose ownership call is BUY (the exporter uppercases the call). */
+export function buyCount(rows: Row[]): number {
+  return rows.filter((r) => typeof r.call === "string" && r.call.toUpperCase() === "BUY").length;
+}
+
+export function Research({ sec, glossary, today: todayProp }: SectionComponentProps) {
   const checkpoints = sec.checkpoints ?? [];
   const rows = sec.rows ?? [];
   const today = todayProp ?? defaultToday(rows);
@@ -104,7 +111,8 @@ export function ResearchReopens({ sec, glossary, today: todayProp }: SectionComp
       {rows.length > 0 && (
         <div className="research-summary mb-4 space-y-4">
           <div className="tiles">
-            <Kpi value={rows.length} label="open theses" />
+            <Kpi value={rows.length} label="researched" />
+            <Kpi value={buyCount(rows)} label="buy calls" />
             <Kpi value={held} label="held" />
             <Kpi value={dueSoonCount(rows, today)} label={`due within ${DUE_SOON_DAYS} days`} />
           </div>
@@ -124,9 +132,9 @@ export function ResearchReopens({ sec, glossary, today: todayProp }: SectionComp
       <DataTable
         columns={sec.columns ?? []}
         rows={rows}
-        storageKey="research-reopens"
+        storageKey="research"
         glossary={glossary}
-        renderCell={renderReopensCell}
+        renderCell={renderResearchCell}
       />
     </>
   );

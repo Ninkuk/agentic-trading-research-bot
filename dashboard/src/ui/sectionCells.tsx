@@ -156,10 +156,14 @@ const REC_VARIANT: Record<string, "up" | "down" | "hold"> = {
 // Research verdicts get the same tone treatment as every other verdict on
 // the page — SOUND/FLAWED as bare uppercase text made a failed thesis
 // visually identical to a sound one (the Three-Tones Rule, unapplied).
+// The ownership call rides the same pill: BUY is the one actionable
+// outcome, PASS is neutral (a declined name is not a failed one).
 const RESEARCH_VERDICT_VARIANT: Record<string, "up" | "down" | "hold"> = {
   SOUND: "up",
   FLAWED: "down",
   UNPROVEN: "hold",
+  BUY: "up",
+  PASS: "hold",
 };
 
 export function researchVerdictPill(v: unknown): ReactNode {
@@ -242,7 +246,7 @@ function scaledCell(row: Row, col: Column, scale: ColumnScale): ReactNode {
   if (typeof v === "boolean" && k !== "in_portfolio" && k !== "exceeds_buying_power")
     return boolCell(k, v);
   if (k === "signal_id" || k === "trigger") return machineIdCell(row, k, v);
-  if (k === "verdict") return researchVerdictPill(v);
+  if (k === "verdict" || k === "call") return researchVerdictPill(v);
   if (k === "score_sum") return scoreCell(v);
   if (MULTIPLES.has(k)) return multipleCell(v);
   if (k === "recommendation") return recommendationPill(v);

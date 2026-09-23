@@ -2,7 +2,7 @@
 // so that file stays component-only (oxlint's react-refresh rule flags a
 // plain function export alongside a component). Sections whose `renderCell`
 // only special-cases a couple of columns (Scorecard, SignalEfficacy,
-// ResearchReopens) fall back to this for every other column, so their
+// Research) fall back to this for every other column, so their
 // formatting still matches DataTable's own default.
 
 import type { ReactNode } from "react";

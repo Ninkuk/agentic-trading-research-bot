@@ -37,7 +37,7 @@ import { PositionHeat } from "../sections/PositionHeat";
 import { Regime } from "../sections/Regime";
 import { RegimePerformance } from "../sections/RegimePerformance";
 import { RegimeTimelineSection } from "../sections/RegimeTimelineSection";
-import { ResearchReopens } from "../sections/ResearchReopens";
+import { Research } from "../sections/Research";
 import { Scorecard } from "../sections/Scorecard";
 import { SignalEfficacy } from "../sections/SignalEfficacy";
 import { SignalRecommendations } from "../sections/SignalRecommendations";
@@ -131,7 +131,7 @@ const SECTION_COMPONENTS: Record<
   regime: Regime,
   "regime-timeline": RegimeTimelineSection,
   candidates: Candidates,
-  "research-reopens": ResearchReopens,
+  research: Research,
   scorecard: Scorecard,
   "signal-efficacy": SignalEfficacy,
   "regime-performance": RegimePerformance,

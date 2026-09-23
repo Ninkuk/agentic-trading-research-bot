@@ -609,7 +609,7 @@ def populated_data_dir(tmp_path):
     populated via each source's own db.py — real schemas/views throughout, no
     hand-rolled DDL — so every section of dashboard_lib.data's export has at
     least one real row to show. Laid out as tmp_path/data + tmp_path/research
-    because the research-reopens section resolves research/ as the data dir's
+    because the research section resolves research/ as the data dir's
     sibling (mirroring repo-root data/ and research/)."""
     data = tmp_path / "data"
     data.mkdir()
@@ -622,7 +622,8 @@ def populated_data_dir(tmp_path):
     research.mkdir()
     # NOW's Phoenix date is 2026-07-08: STNE's trigger has passed (due),
     # GNTX's is ahead (upcoming), GFI's is undated (event), and OLD was
-    # re-researched after its trigger (superseded — must not render).
+    # re-researched after its trigger (its old trigger is retired; the
+    # newer line rows with no trigger).
     (research / "verdicts.log").write_text(
         "# Format: <YYYY-MM-DD> <TICKER> <VERDICT> ... [reopen=<YYYY-MM-DD|event>:<slug>]\n"
         "2026-07-01 STNE UNPROVEN conditions=6 refuted=0 unknown=3 reopen=2026-07-07:q2-print\n"
