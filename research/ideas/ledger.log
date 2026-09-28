@@ -242,3 +242,14 @@
 2026-09-15 87MfLs_i-zM reverse-dcf-discount-rate-output DEAD gate=2:duplication
 2026-09-15 87MfLs_i-zM sp500-return-decomposition DEAD gate=1:provenance
 2026-09-15 87MfLs_i-zM palantir-priced-in-37b DEAD gate=2:duplication
+2026-09-26 iKJdaNq9AVQ lunar-phase-return-gap DEAD gate=6:statistics
+2026-09-26 iKJdaNq9AVQ lunar-phase-oos-null DEAD gate=1:provenance
+2026-09-26 iKJdaNq9AVQ shifted-calendar-placebo-null SURVIVED
+2026-09-26 iKJdaNq9AVQ mars-saturn-angle-returns DEAD gate=1:provenance
+2026-09-26 iKJdaNq9AVQ random-signal-predicts-40pct DEAD gate=1:provenance
+2026-09-26 iKJdaNq9AVQ nyc-sunshine-returns DEAD gate=1:provenance
+2026-09-26 iKJdaNq9AVQ split-equity-curve-misleads DEAD gate=2:duplication
+2026-09-26 iKJdaNq9AVQ post-publication-holdout DEAD gate=7:priority
+2026-09-26 iKJdaNq9AVQ many-cycles-one-wins DEAD gate=2:duplication
+2026-09-26 iKJdaNq9AVQ lunar-mood-mechanism DEAD gate=1:provenance
+2026-09-26 lYmXOYbKHUI stock-picking-value-inverse-corr-salvaged DEFERRED gate=6:statistics reopen=scorer.v_research_verdict_outcomes.distinct_verdict_date@matured@21d>=100

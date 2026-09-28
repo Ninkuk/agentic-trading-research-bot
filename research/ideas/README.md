@@ -7,7 +7,8 @@ time and run through its seven-gate kill gauntlet.
   stated it, survivor or corpse, in the format its header states. Most lines are
   corpses; that is the design. It exists so a sibling video cannot re-propose an
   idea this repo already killed, and so the kill distribution across gates is
-  measurable. The gate-budget freeze in
+  measurable. A `DEFERRED` slug recurs when its reopen check re-runs it; the
+  latest line for a slug governs. The gate-budget freeze in
   `.claude/skills/kill-video-concepts/SKILL.md` has a revisit trigger keyed to
   this file's line count; that file owns the number, so read it there rather
   than restating it here.
