@@ -149,6 +149,59 @@ def test_run_survives_a_permutation_pass_failure_and_clears_stale_nulls(
     conn.close()
 
 
+def test_run_writes_rotation_null(data_dir, tmp_path, capsys):
+    run.run(
+        str(tmp_path / "backtest.db"),
+        db_dir=data_dir,
+        now_iso="2025-02-01T00:00:00+00:00",
+        n_perms=5,
+        seed=2,
+    )
+    conn = db.connect(str(tmp_path / "backtest.db"))
+    n_rows, n_shifts = conn.execute(
+        "SELECT COUNT(*), MAX(n_shifts) FROM replay_rotation_null"
+    ).fetchone()
+    fam = conn.execute("SELECT p_value FROM replay_rotation_null WHERE signal_id = '*'").fetchone()
+    joined = conn.execute(
+        "SELECT COUNT(*) FROM v_replay_efficacy WHERE rot_p IS NOT NULL"
+    ).fetchone()
+    conn.close()
+    assert n_rows > 1 and n_shifts > 0
+    assert fam is not None and 0 < fam[0] <= 1.0
+    assert joined[0] > 0
+    out = capsys.readouterr().out
+    assert "rotation null" in out
+    assert "rot_p=" in out  # printed beside perm_p on every graded cell
+
+
+def test_run_survives_a_rotation_pass_failure_and_clears_stale_rows(
+    data_dir, tmp_path, capsys, monkeypatch
+):
+    """Same contract as the shuffle pass: a raise inside the rotation pass
+    neither kills the run nor leaves last week's rot_p joined to this
+    week's flags — and the shuffle pass still lands."""
+    path = str(tmp_path / "backtest.db")
+    conn = db.connect(path)
+    db.ensure_schema(conn)
+    db.write_rotation_null(conn, [("stale_sig", "bullish", 5, 9, 0.5)], "2026-07-01T00:00:00+00:00")
+    conn.commit()
+    conn.close()
+
+    def boom(conn):
+        raise RuntimeError("population drifted")
+
+    monkeypatch.setattr(run.mcpt, "rotation_null", boom)
+    sid, _, _ = run.run(path, db_dir=data_dir, now_iso="2025-02-01T00:00:00+00:00", n_perms=5)
+    assert sid is not None
+    out = capsys.readouterr().out
+    assert "skip rotation pass" in out
+    assert "graded rows" in out
+    conn = db.connect(path)
+    assert conn.execute("SELECT COUNT(*) FROM replay_rotation_null").fetchone() == (0,)
+    assert conn.execute("SELECT COUNT(*) FROM replay_null").fetchone()[0] > 1
+    conn.close()
+
+
 def test_run_missing_source_dbs_skip_and_count_failures(tmp_path, capsys):
     sid, n_vint, n_bench = run.run(
         str(tmp_path / "backtest.db"),

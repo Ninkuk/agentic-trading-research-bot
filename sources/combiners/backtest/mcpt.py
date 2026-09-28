@@ -53,11 +53,17 @@ a result. A block-shuffle robustness variant is the recorded follow-up.
 
 Determinism: random.Random(seed) with the seed injected through run(...);
 no wall-clock, no network, stdlib only.
+
+rotation_null below is the shuffle's complement — spine fixed, flag rows
+circularly shifted, exhaustive — and is the block-shuffle follow-up named
+above, without a block length to choose.
 """
 
 import math
 import random
 from itertools import accumulate
+
+from sources.combiners.backtest import catalog
 
 # The one corrected-for-multiplicity row in replay_null. '*' can never
 # collide with a signal_id, so the efficacy view's LEFT JOIN skips it.
@@ -107,26 +113,18 @@ def harvest(conn):
     return spines, groups, real
 
 
-def permutation_null(conn, n_perms: int, seed: int) -> list[tuple]:
-    """Run the pass; returns replay_null rows
-    (signal_id, direction, horizon, n_perms, p_value), family row included.
-    Empty when nothing is graded. Raises if the replicated population ever
-    disagrees with the view's n_bench — a p for a different statistic must
-    never be published silently."""
-    from sources.combiners.backtest import catalog
+def _logret(spines):
+    return {b: [math.log(c[i] / c[i - 1]) for i in range(1, len(c))] for b, c in spines.items()}
 
-    if n_perms < 1:
-        # 0 would "compute" p = 1.0 everywhere without permuting anything;
-        # negatives divided by zero or wrote p = -1.0 rows. run.py skips
-        # the pass on 0; anything else non-positive is a caller error.
-        raise ValueError(f"n_perms must be >= 1, got {n_perms}")
 
-    spines, groups, real = harvest(conn)
-    logret = {b: [math.log(c[i] / c[i - 1]) for i in range(1, len(c))] for b, c in spines.items()}
-    # Cell = (key, benchmark, bullish?, matured obs rns). Window for as-of
-    # rn a: entry rn a+1, exit rn a+1+h; with P = prefix sums of the log
-    # returns (P[0] = 0), the window's log return is P[a+h] - P[a], matured
-    # iff a <= N-1-h — index arithmetic identical to v_replay_returns.
+def _graded_cells(spines, groups, real):
+    """Cell = (key, benchmark, bullish?, matured obs rns), one per graded
+    efficacy cell. Window for as-of rn a: entry rn a+1, exit rn a+1+h; with
+    P = prefix sums of the log returns (P[0] = 0), the window's log return
+    is P[a+h] - P[a], matured iff a <= N-1-h — index arithmetic identical
+    to v_replay_returns. Raises if the replicated population ever disagrees
+    with the view's n_bench — a p for a different statistic must never be
+    published silently."""
     cells = []
     for signal_id, benchmark, direction, rns in groups:
         n = len(spines[benchmark])
@@ -141,7 +139,23 @@ def permutation_null(conn, n_perms: int, seed: int) -> list[tuple]:
                     f" {len(obs)} obs vs n_bench {real[key][2]}"
                 )
             cells.append((key, benchmark, direction == "bullish", obs))
-    cells = [c for c in cells if c[3]]
+    return [c for c in cells if c[3]]
+
+
+def permutation_null(conn, n_perms: int, seed: int) -> list[tuple]:
+    """Run the pass; returns replay_null rows
+    (signal_id, direction, horizon, n_perms, p_value), family row included.
+    Empty when nothing is graded; raises on population drift (see
+    _graded_cells)."""
+    if n_perms < 1:
+        # 0 would "compute" p = 1.0 everywhere without permuting anything;
+        # negatives divided by zero or wrote p = -1.0 rows. run.py skips
+        # the pass on 0; anything else non-positive is a caller error.
+        raise ValueError(f"n_perms must be >= 1, got {n_perms}")
+
+    spines, groups, real = harvest(conn)
+    logret = _logret(spines)
+    cells = _graded_cells(spines, groups, real)
     if not cells:
         return []
 
@@ -189,4 +203,86 @@ def permutation_null(conn, n_perms: int, seed: int) -> list[tuple]:
         for key, count in sorted(exceed.items())
     ]
     rows.append((*FAMILY_KEY, n_perms, (1 + family_exceed) / (1 + n_perms)))
+    return rows
+
+
+def rotation_null(conn) -> list[tuple]:
+    """Circular-shift null, the shuffle's complement: the SPINE is held
+    fixed and every cell's observation rows are rotated by k for every k in
+    1..M-1 (M = returns in that cell's spine; the returns wrap so every
+    shifted window is the same length). Returns replay_rotation_null rows
+    (signal_id, direction, horizon, n_shifts, p_value), family row included;
+    empty when nothing is graded.
+
+    What it prices that the shuffle cannot: each rotation keeps the returns'
+    autocorrelation and volatility clustering intact and moves a clustered
+    flag WHOLE — a 53-day episode is graded as one episode landing on 53
+    random-but-real consecutive days, not as 53 draws over near-iid returns.
+    Exhaustive over the shifts, so no RNG and no seed; the drift baseline is
+    identical for every k (returns untouched), so per-cell p compares hit
+    rates directly and the family statistic is the shift's hit-rate delta
+    added to the real excess (exact ties stay exact ties).
+
+    Conservative by construction: shifts near 0 and near M are near-copies
+    of the real alignment for a persistent flag and count as ties. Same
+    inclusive convention as the shuffle — p = (1 + #{k: stat_k >= real}) / M,
+    the real alignment counted as its own shift, p never 0. The family row
+    shares one k across every cell (cross-cell dependence survives into the
+    max-statistic) over the SHORTEST graded spine's shift range.
+
+    Raises on population drift (see _graded_cells).
+    """
+    spines, groups, real = harvest(conn)
+    logret = _logret(spines)
+    cells = _graded_cells(spines, groups, real)
+    if not cells:
+        return []
+
+    # Doubled prefix sums: window (start, h) on the circle is P2[start+h] -
+    # P2[start] for any start < M and h <= M, no modular arithmetic inside.
+    prefix2 = {}
+    for b, r in logret.items():
+        prefix2[b] = [0.0, *accumulate(r + r)]
+
+    rows = []
+    deltas = {}  # key -> [hit_rate_k - hit_rate_0 for k in 0..M-1]
+    for key, benchmark, bullish, obs in cells:
+        h = key[2]
+        p2 = prefix2[benchmark]
+        m = len(logret[benchmark])
+        # Per circular start index: 1 if that window is a hit for this cell.
+        if bullish:
+            hit = [1 if p2[i + h] - p2[i] > 0 else 0 for i in range(m)]
+        else:
+            hit = [1 if p2[i + h] - p2[i] < 0 else 0 for i in range(m)]
+        hit2 = [0, *accumulate(hit + hit)]
+        # Consecutive obs form runs; a run's hits under shift k are one
+        # prefix-sum difference, so a cell costs O(runs) per shift.
+        runs: list[list[int]] = []
+        for a in obs:
+            if runs and runs[-1][0] + runs[-1][1] == a:
+                runs[-1][1] += 1
+            else:
+                runs.append([a, 1])
+        n_obs = len(obs)
+        rates = []
+        for k in range(m):
+            hits = 0
+            for start, length in runs:
+                s = (start + k) % m
+                hits += hit2[s + length] - hit2[s]
+            rates.append(hits / n_obs)
+        real_rate = rates[0]
+        ties = sum(1 for k in range(1, m) if rates[k] >= real_rate)
+        rows.append((key[0], key[1], key[2], m - 1, (1 + ties) / m))
+        deltas[key] = [r - real_rate for r in rates]
+
+    k_max = min(len(logret[b]) for _, b, _, _ in cells)
+    t_real = max(real[key][1] for key, _, _, _ in cells)
+    family_ties = 0
+    for k in range(1, k_max):
+        t_k = max(deltas[key][k] + real[key][1] for key, _, _, _ in cells)
+        if t_k >= t_real:
+            family_ties += 1
+    rows.append((*FAMILY_KEY, k_max - 1, (1 + family_ties) / k_max))
     return rows

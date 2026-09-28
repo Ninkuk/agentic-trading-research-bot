@@ -71,6 +71,7 @@ def test_replay_efficacy_folds_the_statistics_columns():
         "baseline",
         "excess",
         "perm_p",
+        "rot_p",
         "beats_baseline",
         "anti_signal",
     ]
@@ -78,7 +79,23 @@ def test_replay_efficacy_folds_the_statistics_columns():
         _view(
             "v_replay_efficacy",
             cols,
-            [("eia_natgas_storage", "bearish", 21, 1607, 0.51, 0.45, 0.56, 0.44, 0.07, 0.04, 1, 0)],
+            [
+                (
+                    "eia_natgas_storage",
+                    "bearish",
+                    21,
+                    1607,
+                    0.51,
+                    0.45,
+                    0.56,
+                    0.44,
+                    0.07,
+                    0.04,
+                    0.03,
+                    1,
+                    0,
+                )
+            ],
         )
     )
     sec = grades.replay_efficacy(conn, NOW)
@@ -97,6 +114,7 @@ def test_replay_efficacy_folds_the_statistics_columns():
         "CI high",
         "Drift alone",
         "Chance of a fluke",
+        "Fluke odds, episode-aware",
     ]
     # keys are unchanged so the cell formatter still recognises them
     assert {c["key"] for c in sec["columns"] if c.get("hidden")} == {
@@ -105,6 +123,7 @@ def test_replay_efficacy_folds_the_statistics_columns():
         "hit_ci_hi",
         "baseline",
         "perm_p",
+        "rot_p",
     }
     assert sec["verdict"]["text"] == "1 beat the drift · 0 anti-signal · 0 noise"
 

@@ -152,6 +152,31 @@ def run(
                         " evidence of anti-prediction). Vol-keyed cells (cboe_vix*)"
                         " read an optimistic null (shuffling destroys vol clustering)."
                     )
+            # Rotation null (mcpt.rotation_null): spine fixed, flag rows
+            # circularly shifted, exhaustive — the null that keeps vol
+            # clustering and grades a clustered flag as one episode. Same
+            # gate and the same skip-and-CLEAR discipline as the shuffle.
+            try:
+                rot_rows = mcpt.rotation_null(conn)
+                db.write_rotation_null(conn, rot_rows, now_iso)
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                db.write_rotation_null(conn, [], now_iso)
+                conn.commit()
+                print(f"skip rotation pass: {type(e).__name__}")
+            else:
+                family = next((r for r in rot_rows if (r[0], r[1], r[2]) == mcpt.FAMILY_KEY), None)
+                if family:
+                    print(
+                        f"-- rotation null: {len(rot_rows) - 1} cells, exhaustive over"
+                        f" {family[3]} shared shifts; family max-statistic p ="
+                        f" {family[4]:.3f}. Per-cell rot_p reads like perm_p; a cell"
+                        " under 0.05 on both is a lead under two nulls, one that"
+                        " passes the shuffle and fails the rotation is a one-episode"
+                        " artifact. Conservative: shifts near zero are near-copies"
+                        " of the real alignment and count as ties."
+                    )
         # Print `excess` beside `hit`: a bare hit rate is unreadable against a
         # benchmark that drifts up 61-68% of the time. `reliable` is a
         # sample-size floor, NOT evidence the signal works — `beats baseline`
@@ -173,7 +198,7 @@ def run(
         for row in conn.execute(
             "SELECT signal_id, direction, horizon, n_obs, n_days, n_bench, hit_rate,"
             " hit_ci_lo, hit_ci_hi, reliable, baseline, excess, beats_baseline,"
-            " anti_signal, perm_p"
+            " anti_signal, perm_p, rot_p"
             " FROM v_replay_efficacy ORDER BY signal_id, direction, horizon"
         ):
             (
@@ -192,6 +217,7 @@ def run(
                 beats,
                 anti,
                 perm_p,
+                rot_p,
             ) = row
             if hr is None:
                 stats = f"ungraded (n_obs incl. neutral; n_obs={n_obs})"
@@ -203,6 +229,8 @@ def run(
                 )
             if perm_p is not None:
                 stats += f" perm_p={perm_p:.3f}"
+            if rot_p is not None:
+                stats += f" rot_p={rot_p:.3f}"
             tag = " reliable" if rel else ""
             if beats:
                 tag += " beats baseline"

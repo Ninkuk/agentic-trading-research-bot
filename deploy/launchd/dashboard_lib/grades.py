@@ -501,6 +501,7 @@ _REPLAY_EFFICACY_COLUMNS = [
     col("baseline", "Drift alone", term="Base rate", hidden=True),
     col("excess", "Better than drift by", term="Excess", direction="up-good"),
     col("perm_p", "Chance of a fluke", direction="down-good", hidden=True),
+    col("rot_p", "Fluke odds, episode-aware", direction="down-good", hidden=True),
     col("beats_baseline", "Beats drift?", numeric=False),
     col("anti_signal", "Anti-signal?", numeric=False),
 ]
@@ -510,7 +511,7 @@ def replay_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     rows = fetch(
         conn,
         "SELECT signal_id, direction, horizon, n_days, hit_rate, hit_ci_lo, hit_ci_hi,"
-        " baseline, excess, perm_p, beats_baseline, anti_signal FROM v_replay_efficacy"
+        " baseline, excess, perm_p, rot_p, beats_baseline, anti_signal FROM v_replay_efficacy"
         " ORDER BY beats_baseline DESC, anti_signal, signal_id, direction, horizon",
     )
     for r in rows:

@@ -75,6 +75,23 @@ CREATE TABLE IF NOT EXISTS replay_null (
     captured_at TEXT,
     PRIMARY KEY (signal_id, direction, horizon)
 );
+
+-- Rotation null (mcpt.rotation_null): same cells and family row, but the
+-- spine is held fixed and each cell's flag rows are circularly shifted by
+-- every k — the returns' dependence survives and a clustered flag moves
+-- whole. Exhaustive (n_shifts = spine returns - 1), so no seed. Read
+-- beside perm_p: a cell under 0.05 on both is a lead under two nulls; one
+-- that passes the shuffle and fails the rotation is a one-episode artifact.
+-- Rewritten whole by each pass; v_replay_efficacy LEFT JOINs rot_p/rot_n.
+CREATE TABLE IF NOT EXISTS replay_rotation_null (
+    signal_id   TEXT NOT NULL,
+    direction   TEXT NOT NULL,
+    horizon     INTEGER NOT NULL,
+    n_shifts    INTEGER NOT NULL,
+    p_value     REAL NOT NULL,
+    captured_at TEXT,
+    PRIMARY KEY (signal_id, direction, horizon)
+);
 """
 
 
@@ -386,7 +403,9 @@ SELECT g.signal_id, g.direction, g.horizon,
                  (CASE g.direction WHEN 'bullish' THEN b.p_up ELSE b.p_down END)
             THEN 1 ELSE 0 END AS anti_signal,
        p.p_value AS perm_p,
-       p.n_perms AS perm_n
+       p.n_perms AS perm_n,
+       r.p_value AS rot_p,
+       r.n_shifts AS rot_n
 FROM (
     -- One row per OBSERVATION, not per forward-filled trading day. A weekly EIA
     -- report is served on ~5 consecutive as-of dates; those are ONE measurement.
@@ -426,7 +445,10 @@ LEFT JOIN v_benchmark_baseline b
        ON b.benchmark = g.benchmark AND b.horizon = g.horizon
 LEFT JOIN replay_null p
        ON p.signal_id = g.signal_id AND p.direction = g.direction
-      AND p.horizon = g.horizon;
+      AND p.horizon = g.horizon
+LEFT JOIN replay_rotation_null r
+       ON r.signal_id = g.signal_id AND r.direction = g.direction
+      AND r.horizon = g.horizon;
 """
 
 
@@ -545,6 +567,18 @@ def write_replay_null(conn, rows, now_iso: str) -> int:
     conn.executemany(
         "INSERT INTO replay_null (signal_id, direction, horizon, n_perms, p_value,"
         " captured_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [(*r, now_iso) for r in rows],
+    )
+    return len(rows)
+
+
+def write_rotation_null(conn, rows, now_iso: str) -> int:
+    """Replace the rotation-null table whole, for the same reason as
+    write_replay_null: stale cells must not survive a rewrite."""
+    conn.execute("DELETE FROM replay_rotation_null")
+    conn.executemany(
+        "INSERT INTO replay_rotation_null (signal_id, direction, horizon, n_shifts,"
+        " p_value, captured_at) VALUES (?, ?, ?, ?, ?, ?)",
         [(*r, now_iso) for r in rows],
     )
     return len(rows)
