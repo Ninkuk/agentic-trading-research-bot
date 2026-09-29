@@ -253,3 +253,14 @@
 2026-09-26 iKJdaNq9AVQ many-cycles-one-wins DEAD gate=2:duplication
 2026-09-26 iKJdaNq9AVQ lunar-mood-mechanism DEAD gate=1:provenance
 2026-09-26 lYmXOYbKHUI stock-picking-value-inverse-corr-salvaged DEFERRED gate=6:statistics reopen=scorer.v_research_verdict_outcomes.distinct_verdict_date@matured@21d>=100
+2026-09-28 QYGUrkoB7Fg reverse-dcf-goalseek-irr DEAD gate=2:duplication
+2026-09-28 QYGUrkoB7Fg two-axis-scenario-grid DEAD gate=7:priority
+2026-09-28 QYGUrkoB7Fg market-return-anchor-9-10pct DEAD gate=1:provenance
+2026-09-28 QYGUrkoB7Fg tranche-fade-growth-schedule DEAD gate=2:duplication
+2026-09-28 QYGUrkoB7Fg full-capex-burden-implies-growth SALVAGED gate=2:duplication
+2026-09-28 QYGUrkoB7Fg full-capex-burden-implies-growth-salvaged DEAD gate=7:priority
+2026-09-28 QYGUrkoB7Fg owner-earnings-fcf-98pct DEAD gate=1:provenance
+2026-09-28 QYGUrkoB7Fg contested-segment-full-burden DEAD gate=2:duplication
+2026-09-28 QYGUrkoB7Fg implied-return-distribution-not-point DEAD gate=2:duplication
+2026-09-28 QYGUrkoB7Fg pricing-view-forward-multiple DEAD gate=6:statistics
+2026-09-28 QYGUrkoB7Fg antithetical-competitor-cac-kill DEAD gate=7:priority
