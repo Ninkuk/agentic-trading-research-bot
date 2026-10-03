@@ -1,0 +1,216 @@
+# SANM — Sanmina Corporation — 2026-07-27
+
+Price $208.90 (pre-print close) · market cap $11.20B · next earnings ~Nov 2
+(Q4 FY26 call)
+
+Entry path: not recorded (pre-template run).
+
+## 1. Verdict and thesis
+
+**PASS at $208.90.** kill-thesis: **UNPROVEN** — conditions=5, refuted=0,
+unknown=1 (the FY27 upside cap rests on disclosures that don't exist until
+the Q4 call ~Nov 2).
+
+Good business, honestly financed, executing well — but the price already
+pays market-rate (~7–11%/yr implied) for the AI-ramp scenario going right,
+on a name whose own options market prices 83% annualized uncertainty.
+
+Run note: Sanmina reported fiscal Q3 2026 **today after the close** (adj.
+EPS $3.31 vs $2.79 consensus; FY26 EPS guide raised to $11.90–12.20). All
+prices here are the pre-print close ($208.90, $11.20B market cap);
+after-hours traded $206.01 (−1.4%) as of 4:04 PM Phoenix. A market that
+sells a beat-and-raise had already priced more than the raise.
+
+**Closest attack:** not labelled as such in original run; §3's load-bearing
+thread (FCF quality — the one-time receivables release) is the nearest
+candidate.
+
+Load-bearing conditions: five counted; not individually enumerated in the
+original run (0 refuted, 1 unknown). Condition tiers not recorded in
+original run.
+
+## 2. Business
+
+**Created:** contract design + manufacturing (EMS) for complex, regulated,
+high-mix electronics — comms/cloud/AI infrastructure (62% of Q3 revenue),
+industrial/medical/defense/auto (38%). Customers get capital-light
+manufacturing, global logistics, and regulatory/qualification expertise.
+
+**Captured:** thin-margin assembly (IMS, 10.2% non-GAAP GM) plus a
+higher-margin components arm (CPS: precision machining/racks, 70+ layer
+PCBs, optical/memory modules; 12.8% GM, management targets >15%). ZT
+Systems (bought from AMD, closed Oct 2025, ~$1.27B cash+stock net) adds
+rack- and cluster-scale AI system integration; AMD named Sanmina "preferred
+NPI manufacturing partner" for its rack-scale AI systems and took 1.15M
+shares.
+
+**Protected:** switching costs (requalification of a live program is costly
+and slow), certifications in medical/defense, and now a contractual NPI
+position in AMD's ecosystem. The mechanism protects *volumes, not price* —
+52% → **67%** top-10 customer concentration post-ZT (Q3 10-Q) means the
+customers hold the pricing pen. GAAP operating margin has lived at 3.8–5.1%
+for five years; that is the moat's honest width.
+
+**Operating leverage (Phase 0): positive in dollars, flat-to-dilutive in
+margin** — (FY, /financials/ route): FY21 $6.74B/$256M → FY23 $8.94B/$456M
+→ FY25 $8.13B/$355M → TTM $12.76B/$530M (4.15% GAAP op margin). The
+acquired revenue came in at ~3.8% incremental GAAP margin.
+
+## 3. Threads pulled
+
+- **Today's call (read in full).** The 8.0% non-GAAP op margin was
+  flattered by non-recurring engineering services for the AMD Helios
+  pre-production work; CFO Jon Faust explicitly re-anchored: *"Longer term…
+  we'd still expect margin to be in that 6%–7% range."* FY27 "$16+ billion"
+  reaffirmed, back-half weighted; next-gen accelerated-compute revenue
+  starts Q1 FY27; legacy ZT accelerated compute already "pretty much gone
+  to zero." Cerebras confirmed by name as a core-Sanmina platform win.
+  Book-to-bill >1.1.
+- **FCF quality (the load-bearing thread).** 9M FY26 CFO of $702M contains
+  a **+$699M swing from receivables decline** — collection of ZT's acquired
+  AR, a one-time release; the company's own MD&A says $658M came "from
+  earnings." Q3 standalone: CFO $124.5M vs capex $100.9M ≈ $24M FCF.
+  Management guided working capital to build "and accelerate" into the
+  Helios ramp, capex to $135M next quarter (~$540M/yr vs $307M TTM), and
+  net leverage (0.29x) to rise into a 1.0–2.0x target. TTM FCF of $594M is
+  therefore a *ceiling* on the near-term run-rate, not a base.
+  (Transcript's "free cash flow was $223.7M" line does not reconcile with
+  $124.5M − $100.9M; treated as a transcription artifact.)
+- **Concentration.** Top-10 customers 52% of net sales (FY25 10-K) →
+  **67%** (Q3 10-Q). The 10-Q states the ZT acquisition's success "depends
+  in part on success of the products of AMD achieving acceptance in the AI
+  marketplace" — the single-ecosystem dependency is the company's own
+  disclosure, not an inference.
+- **Estimate pattern** (Robinhood, broker tier): seven consecutive beats,
+  accelerating (last three: +19%, +36%, +23%) — the sell side has been
+  chronically behind the ramp, and today's −1.4% AH says the *buy side* no
+  longer is. SEC cross-check of actuals unavailable (SANM not in
+  `sec_fundamentals.db` universe); these "actuals" are non-GAAP adjusted
+  EPS.
+- **Point-in-time coverage:** SANM absent from `sec_fundamentals.db`,
+  `earnings.db`, and `composite.db` universes — no machine opinion exists;
+  live probe + EDGAR were the sources.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; path 1 N/A,
+  SANM not in the CBOE catalog). See §4's table.
+- **Dead ends:** no purchase-obligation trap (10-K: liability "not expected
+  to be significant"; $944M of *customer advances* fund raw inventory —
+  customers finance the WC, a genuinely favorable term). ZT intangibles
+  tiny ($49M) — the GAAP/non-GAAP gap is SBC (~$95M/yr), the $49M inventory
+  step-up, and a $72M contingent-consideration fair-value charge, not an
+  amortization overhang. Buybacks real (diluted shares 67.1M → 55.2M in 5y;
+  $239M repurchased 9M FY26; none in Q3, $600M authorized).
+
+## 4. Valuation
+
+Reverse DCF, **market cap $11,196,566,842** (pre-print) against **levered**
+FCF (`fcf` = ncfo + capex, post-interest; paired with market cap, net debt
+left at zero). Base $560M = $594M TTM × ~0.94 minority haircut (India JV
+with Reliance; minority NI $18.7M TTM ≈ 5.7% of company NI — NI-line proxy,
+cash distributions not disclosed). 5-year growth path + terminal. No
+Damodaran hurdle was computed in the original run.
+
+| variant | growth path | terminal | implied return |
+|---|---|---|---|
+| conservative (WC build + capex step-up bite) | base $460M; 8/6/5/4/3% | 2.0% | **~7%** |
+| management-trajectory | base $560M; 12/10/8/6/4% | 2.0% | **~9%** |
+| optimistic (FY27 $16B lands) | base $560M; 20/15/10/6/4% | 2.5% | **~10%** |
+| full bull (ramp + margin expansion) | base $560M; 30/20/12/8/5% | 2.5% | **~11%** |
+
+Quoted to whole percents per the precision rule — ATM IV is 83%, far above
+the 50% gate; these are wide ranges, not point estimates. A flat-rate path
+understates a margin-expansion story; the full-bull row is the margin-lever
+case and still only reaches ~11%. Terminal risk (10-K Item 1A + 10-Q):
+customer concentration and AMD-ecosystem acceptance — a 2.0–2.5% terminal
+rate survives it only because EMS capacity is redeployable across end
+markets (it survived its own 2001 telecom collapse); the *margin* never
+re-rates in terminal.
+
+**Options-implied move** (path 2 — Robinhood stopgap; path 1 N/A, SANM not
+in the CBOE catalog): Dec-18-2026 expiry (144 DTE, brackets the ~Nov 2 Q4
+report/FY27 guide), ATM 210 straddle, marks pre-print (4 PM close, one hour
+before the release):
+
+| metric | value |
+|---|---|
+| spot | 208.90 |
+| expected absolute move (MEAN, not a ceiling) | 41.12% |
+| 1-σ move | 52.29% |
+| ATM IV | 83.25% |
+| RV60 | 62.71% |
+| RV20 | 67.20% |
+| IV > RV60 / RV20? | YES / YES |
+
+Elevated — but the forward window spans an earnings print (the stopgap's
+known blind spot), and the read is **UNRELIABLE** under the liquidity gate
+(OI 12/13, volume 0, ~10% spreads). Used only as an uncertainty gauge, not
+for any timing refutation.
+
+Forward multiple (≤3y): 17.3× FY26 non-GAAP EPS midpoint ($12.05); PEG 0.61
+(stockanalysis). Cheap-looking *if* the E is durable — which is exactly the
+unproven part.
+
+## 5. Falsifiers
+
+For the pass (what would flip it toward buy):
+
+- FY27 formal guide (Q4 call, ~Nov 2) quantifying WC/capex such that
+  normalized FCF ≥ ~$650M is visible while the price sits near or below
+  ~$150–170 (where the management-trajectory path implies ≥12%).
+- Margin evidence above the 6–7% anchor that is *not* NRE mix — two
+  consecutive quarters of CPS GM >15% with rising volume would qualify.
+- Concentration falling (new non-AMD rack platforms at scale — Cerebras
+  revenue disclosed separately would be the tell).
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Helios production schedule and operating model** — explicitly not
+   finalized (CFO, today). Comes at the Q4 call. Its absence is *why* the
+   verdict is UNPROVEN, not a kill.
+2. **Sanmina's share of AMD rack demand** — management: "pretty tough to
+   gauge." No disclosure exists.
+3. **Post-ZT single-customer revenue %** — 10-Q says one customer >10% of
+   Q3 net sales but names no figure above that threshold.
+4. **India JV cash distributions to minority** — NI-line proxy used for the
+   FCF haircut; distributions not separately disclosed.
+
+## 7. Sources
+
+- **Primary:** Q3 FY26 10-Q (filed 2026-07-27, incl. cash-flow statement,
+  concentration note, ZT purchase-price allocation); FY25 10-K (filed
+  2025-11-13: 52% top-10, purchase obligations, Item 1A); Q3 FY26 earnings
+  call transcript (2026-07-27, via stockanalysis/Quartr,
+  primary-transcribed).
+- **stockanalysis.com (vetted exception):** /statistics/ (market cap,
+  ratios, short interest), /financials/ routes (annual series; /financials/
+  overview now empty — income statement moved to
+  /financials/income-statement/), transcript corpus, live quote block.
+- **Broker/market microstructure:** (own tier; admissible — SANM not
+  covered by any integrated official source) Robinhood quotes (AH price),
+  8-quarter estimate-vs-actual pattern, option chain/quotes, daily bars for
+  RV.
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** SANM absent from `sec_fundamentals.db`,
+  `earnings.db`, and `composite.db` universes — no machine opinion exists.
+- **Low-confidence:** none used.
+
+## Kill-thesis record
+
+**kill-thesis verdict: UNPROVEN** — 5 load-bearing conditions, 0 refuted,
+1 unknown (the FY27 upside cap rests on disclosures that don't exist until
+the Q4 call ~Nov 2).
+
+Per-condition adjudication: not recorded in original run (the five
+conditions were not individually enumerated).
+
+Standing/statistical/options-timing checks: not recorded in original run,
+beyond §4's failed liquidity gate (the read used only as an uncertainty
+gauge, not for any timing refutation).
+
+**Closest attack:** not labelled as such in original run; the FCF-quality
+thread (the one-time $699M receivables release making TTM FCF a ceiling,
+not a base) is the nearest candidate.
+
+**Flip evidence:** not recorded as a labelled pair in the original run; §5
+carries the flip-toward-buy evidence.

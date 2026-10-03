@@ -1,0 +1,182 @@
+# DSGX — The Descartes Systems Group — 2026-07-27
+
+Price $71.08 · market cap $6,094.2M · next earnings ~2026-09-02
+
+Entry path: not recorded (pre-template run).
+
+## 1. Verdict and thesis
+
+**PASS at $71.08.** kill-thesis: **UNPROVEN** — conditions=5, refuted=0,
+unknown=3.
+
+Descartes is a genuinely defensible, asset-light, net-cash serial acquirer of
+logistics/customs software with a real two-sided network and a live tariff
+tailwind — but the price already pays for it: implied return is ~8¾%/yr only
+when double-digit growth is credited *free of its M&A cost*, ~7¾% on
+organic-only growth, and 4.6% ex-growth. Same-day gold passes (GFI ~9%, OGC
+~10%) cleared more on easier assumptions. The load-bearing unknown: how much
+of Q1's 11% organic growth is the 2025-26 tariff-chaos spike rather than
+durable demand.
+
+**Closest attack:** not recorded as such in original run.
+
+Load-bearing conditions: five counted; not individually enumerated in the
+original run (0 refuted, 3 unknown; condition 1 — the network moat holding
+pricing — is referenced in §4). Condition tiers not recorded in original
+run.
+
+## 2. Business
+
+**Created:** the Global Logistics Network (GLN) moves shipment/customs
+messages between carriers, forwarders, shippers, and customs authorities;
+SaaS on top (routing, TMS, customs filings, trade-intelligence/tariff
+content). Customers buy regulatory compliance and connectivity they cannot
+practically self-build (Q1 FY27 MD&A).
+
+**Captured:** recurring services revenue (subscription + per-transaction) at
+77.3% gross margin; TTM op margin 30.0% (per `/financials/`, includes
+restructuring; `/statistics/` excludes it and reads 31.1%). RPO $725.1M (Q1
+MD&A note).
+
+**Protected:** (mechanism, not label) two-sided network (each carrier added
+makes the network more valuable to every forwarder); customs integrations
+are certified per-authority and embedded in filing workflows (switching =
+re-certification); tariff/duty content requires continuous regulatory
+maintenance at scale. 26 years of tuck-in M&A consolidates the niche.
+
+**Operating leverage (Phase 0): positive.** FY22→FY26 revenue +72%
+($424.7M→$729.0M), op income +103% ($103.4M→$210.0M), margin 24.4%→28.8%,
+TTM 30.0%; diluted shares +1.5% over four years (stockanalysis
+`/financials/`). Q1 FY27: revenue $193.6M +14.7% YoY, op income $62.5M
+(32.3% vs 27.4% prior year) (6-K exhibit, 2026-06-04).
+
+## 3. Threads pulled
+
+- **Organic split:** of Q1's +$24.9M YoY, $18.7M (~11.1%) was new/existing
+  customers — driven by "global trade intelligence and routing solutions,"
+  i.e. the tariff-complexity products; ~$6.2M was acquisitions (Q1 MD&A).
+  Whether that 11% survives trade normalization is the thesis risk (UNKNOWN
+  §6).
+- **M&A cadence intact:** 3GTMS $112.7M, Finale $39.2M, PackageRoute $1.9M
+  (FY26); OrderMine $2.3M, Idelic $25.3M (FY27); Drivin (LatAm last-mile)
+  announced Jul 6, 2026 (6-Ks). F-10 shelf refiled Jul 15, 2026 + $350M
+  undrawn revolver + $369M net cash = large deal capacity.
+- **Asset-light confirmed, not vibes:** commitments footnote shows total
+  operating lease obligations of $8.7M, no take-or-pay/cloud reservations
+  (Q1 MD&A commitments note). Capex TTM $6.4M on $753.9M revenue.
+- **Baseline calibration discipline:** Q2 FY27 baseline revenue ~$169.0M vs
+  baseline opex ~$102.5M (~39% calibration) — management's own
+  contracted-floor metric (Q1 MD&A).
+- **Data-coverage note:** DSGX is a Canadian foreign private issuer
+  (40-F/6-K filer) — `sec_fundamentals.db` has no row, `composite.db` has no
+  scores. Live probe + EDGAR 6-K/40-F are the structured sources for this
+  name; DB cross-checks don't apply.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; path 1 N/A, not
+  in CBOE catalog). See §4's table.
+- **Dead ends:** AGM (Jun 11) routine; 13G filings passive; interest expense
+  ~$0.9M/yr trivial; no minority interests, so no owner-FCF haircut applies;
+  stockanalysis transcripts/filings routes unfed for DSGX (coverage gap, not
+  signal).
+
+## 4. Valuation
+
+Reverse DCF, levered TTM FCF $281.3M (`fcf` = ncfo $287.8M + capex −$6.4M)
+against market cap $6,094.2M (both `/statistics/` hover figures,
+2026-07-27). Net debt left at zero (net cash). No Damodaran hurdle was
+computed in the original run.
+
+| growth path | terminal g | implied return |
+|---|---|---|
+| 10% × 3y (credits acquired growth, charges no M&A cash) | 3.0% | **~8¾%/yr** |
+| 6% × 3y (organic-only) | 2.5% | **~7¾%/yr** |
+| 0% | 0% | 4.6%/yr |
+
+Quoted coarse: ATM IV is ~50%, so the point estimates are wide. The 10% path
+is generous — the growth it credits is bought with the same FCF being valued
+(~$180M/yr of tuck-ins). Trailing P/E 34.6, EV/EBITDA 18.0 (`/statistics/`).
+Terminal-risk sweep (40-F/MD&A risk factors): dominant structural risk is
+trade-volume cyclicality plus wage-cost escalation; 2.5-3% terminal growth
+survives it only if the network moat holds pricing — reflected in
+condition 1.
+
+**Options-implied move (path 2 — Robinhood stopgap; path 1 N/A, not in CBOE
+catalog):** Aug-21-2026 expiry, 25 DTE, no earnings inside the window (next
+print ~Sep 2, stockanalysis; earnings.db last event 2026-06-03 AMC):
+
+| metric | value |
+|---|---|
+| spot | 71.08 |
+| expected absolute move (MEAN, not ceiling) | 10.31% |
+| 1-σ move | 13.04% |
+| ATM IV | 49.81% |
+| RV60 / RV20 | 43.71% / 43.16% |
+| IV > RV60? / IV > RV20? | YES / YES |
+
+**Liquidity gate FAILED** (70-strike spread $2.35 on $4.03 mark ≈ 58% ≫ 10%;
+volume 0; OI 3/32) → the read is UNRELIABLE and no verdict leans on it. No
+dated thesis claim, so no timing refutation was run.
+
+## 5. Falsifiers
+
+- Organic growth (new/existing-customer contribution) below ~5% for two
+  consecutive quarters.
+- Sequentially declining baseline calibration.
+- A large premium acquisition (> $500M at high-single-digit × revenue) — the
+  shelf makes one possible.
+- GAAP op margin reverting below ~25% ex-restructuring charges.
+- Customs/trade content displaced by free government APIs or AI-native
+  aggregators winning named customers.
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Durable vs tariff-spike share of the 11% organic growth** — not
+   decomposable from any disclosure; only forward quarters answer it. This
+   is the pass; its absence caps conviction rather than killing the business
+   case.
+2. **AI-native competitive pressure** (project44/FourKites-class visibility
+   platforms moving into customs/routing) — depth unverifiable from
+   Descartes' filings; a rival-side sweep found no dated displacement event,
+   which bounds but does not close it.
+3. **Management comp structure** — the Management Information Circular
+   (dated 2026-04-27, SEDAR+) was not read; if comp pays on adjusted-EBITDA
+   growth, the M&A engine has an incentive to buy growth at worsening
+   returns. Verifiable; does not kill the thesis.
+4. **Insider transactions** — Canadian issuer, insiders file on SEDI, not
+   EDGAR Forms 4; not integrated here. UNKNOWN by coverage.
+
+## 7. Sources
+
+- **Primary:** SEC EDGAR CIK 1050140 — Q1 FY2027 6-K MD&A + statements
+  (acc. 0000929638-26-002122, 2026-06-04); Drivin 6-K
+  (0000929638-26-002501, 2026-07-06); AGM 6-K (0000929638-26-002208); 40-F
+  FY2026 (0001104659-26-026450); F-10EF (2026-07-15).
+- **stockanalysis.com (vetted exception):** `/stocks/DSGX/statistics/`,
+  `/financials/income-statement/`, symbol-lookup — market cap, FCF, margins,
+  history, next-earnings estimate.
+- **Broker/market microstructure:** (Robinhood MCP; admissible — no
+  integrated source covers DSGX quotes/chains) spot, Aug-21 ATM chain
+  quotes, daily bars for RV.
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** `earnings.db` (last print 2026-06-03 AMC);
+  `composite.db` / `sec_fundamentals.db` (absence of coverage, noted).
+- **Low-confidence:** none used.
+
+## Kill-thesis record
+
+**Kill-thesis verdict: UNPROVEN** — 5 load-bearing conditions, 0 refuted,
+3 UNKNOWN.
+
+Per-condition adjudication: not recorded in original run (the five
+conditions were not individually enumerated; condition 1 — the network moat
+holding pricing — is referenced in §4).
+
+Standing/statistical/options-timing checks: not recorded in original run,
+beyond §4's failed liquidity gate and the note that no dated thesis claim
+exists, so no timing refutation was run.
+
+**Closest attack:** not recorded as such in original run.
+
+**Flip evidence:** not recorded as a labelled pair in the original run; §5
+carries the directional evidence.
