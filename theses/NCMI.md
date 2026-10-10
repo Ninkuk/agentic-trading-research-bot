@@ -1,0 +1,254 @@
+# NCMI — National CineMedia, Inc. — 2026-08-13
+
+Price $2.68 (close, 2026-08-13) · market cap $251.6M · shares 94.07M · next
+earnings 2026-10-29 (Q3 print)
+
+Unattended scheduled run. Entry path not recorded in original run.
+
+## 1. Verdict and thesis
+
+**PASS at $2.68.** kill-thesis: **SOUND** (the pass survived attack) —
+conditions=6, refuted=0, unknown=3.
+
+A cinema-advertising business whose revenue is 44% below 2019 and whose ad
+*pricing* is deflating even at a post-pandemic attendance high is borrowing
+$275M at SOFR+700 — more than its entire market cap — to buy an unrelated
+elevator-screen business at 14.25× trailing EBITDA, and has suspended its
+dividend and buyback to service it. At $2.68 the equity implies a 1.9%–9.4%
+annual return across every scenario I could defend, against a 10.90% hurdle.
+
+**Closest attack:** not labelled in original run — see the Kill-thesis record.
+
+Load-bearing conditions not enumerated in original run; condition tiers not
+recorded in original run.
+
+## 2. Business
+
+**Created:** sells the pre-show ad inventory in ~18,000 US cinema screens —
+advertisers get a captive, full-attention, big-screen audience that no
+skippable digital format replicates. That attention is genuinely scarce and
+genuinely valuable. Post-deal it adds Captivate: digital screens in office
+elevators and lobbies, 26,000 of them, same "captive audience in dead time"
+logic.
+
+**Captured:** three ways, and the split matters: *national* advertising (~77%
+of Q2 revenue, $45M) sold on CPM to brand advertisers; *local/regional*
+($9.5M, +48% YoY) sold by a field sales force at much higher revenue per
+attendee; and *programmatic* (+45% YoY), where inventory is auctioned through
+supply-side platforms. NCM does not own a single screen — it buys access,
+then resells it.
+
+**Protected:** exclusive multi-year Exhibitor Services Agreements giving it
+the sole right to sell advertising on AMC, Cinemark and Regal screens. That
+is a real mechanism, not a label. **But the rent accrues to the exhibitor,
+not to NCM's shareholders**: theatre access fees are repriced at renewal, and
+gross profit fell from $115.2M (FY24) to $106.4M (TTM) *while revenue rose* —
+margin 43.6% and compressing. NCM holds an exclusive contract and hands the
+surplus to its counterparty. Cinemark and Regal also exited as founding
+members in the 2023 restructuring, so the alignment that built the moat is
+gone.
+
+**Operating leverage (Phase 0):** not recorded in original run.
+
+## 3. Threads pulled
+
+- **The pricing thread — this is the whole story.** Q2 attendance rose 19.3%
+  and national ad revenue rose only 9%. Deriving per-attendee: national fell
+  from **$0.358 to $0.327, −8.7%**. The method reconciles exactly against
+  management's own disclosed local metric ($0.07/attendee, +24%, implying
+  +48.2% local revenue vs the +48.4% they reported), so it is sound. In the
+  strongest post-pandemic box office quarter, NCM's core product got
+  *cheaper*. Volume recovery is not translating into pricing power.
+- **The structural-decline thread.** Revenue was flat for a decade at peak
+  attendance — $427.5M (2010) → $444.8M (2019), peaking at $462.8M in 2013.
+  TTM is $249.0M, **44% below 2019**. Even a full attendance recovery at
+  today's unit price gets to roughly $340M, not $445M. This was never a
+  growth business; it is now a smaller version of a no-growth business.
+- **The leverage thread.** The $275M first-lien term loan carries **SOFR +
+  700bp** with a 2.00% PIK toggle for two years, maturing five years after
+  close, plus a $25M revolver. SOFR+700 with a PIK option is distressed-tier
+  pricing — the lenders who did diligence priced this as a rescue-adjacent
+  credit. At ~11% all-in that is ~$30.3M of annual cash interest against
+  combined pre-interest cash flow of ~$39.5M.
+- **Management's 3.9x reconciles — but only on three stacked addbacks.** NCM's
+  own Adjusted OIBDA was $39.1M (FY25), down from $45.7M (FY24) on +1.0%
+  revenue. Against stockanalysis's stricter EBITDA of $19.4M TTM, the same
+  debt is ~6–7×. The 3.9x figure requires Captivate's 2026 forecast *plus*
+  $3.5M synergies *plus* unquantified "operational transformation" savings —
+  and guidance was withdrawn.
+- **"Meaningful delever in two to three years" is arithmetically
+  implausible.** At ~$9M of post-interest cash flow against $275M of
+  principal, three years of full FCF sweep repays ~10% of the loan.
+  Deleveraging requires EBITDA growth management declined to guide to.
+- **Insiders (Form 4 sweep, low-confidence aggregator):** 12 open-market
+  transactions in six months, **0 purchases, 12 sales**. Caveat: aggregators
+  often misclassify vest-withholding as sales, so this is directional only.
+- **Options read (mandatory):** ran path 2 only (NCMI is not in the 24-symbol
+  CBOE catalog, so no path-1 percentile) — gate failed, refutes nothing; the
+  full read and values are in §4.
+- **Coverage gaps this run.** `data/*.db` was unreadable (no `sqlite3` in
+  this scheduled slot), so there are no point-in-time cross-checks against
+  `sec_fundamentals.db`, `stocks.db`, or `composite.db`, and no composite
+  flag read. SEC EDGAR returned 403 to both `browse-edgar` and
+  `data.sec.gov`, so the 10-K Item 1A risk factors were **not read
+  directly** — the terminal-risk assessment in §4 is built from the revenue
+  history and the per-attendee derivation, not from the company's own risk
+  disclosure. Financial statements came from stockanalysis.com's rendered
+  pages rather than the `__data.json` route, because arbitrary Python was not
+  executable in this slot.
+- **Dead ends:** (1) *The balance-sheet hole.* Equity fell $100.2M (FY23
+  $434.5M → TTM $334.3M) against only ~$33M of cumulative losses. Not a
+  hidden impairment: dividends (~$23M) and buybacks (~$39M) account for it.
+  They returned capital while losing money. Ruled out as a fraud/writedown
+  signal; it is a capital-allocation signal instead. (2) *The +20.7% bounce
+  on 2026-08-13.* Searched for an upgrade, insider buy, or 13D behind the
+  move off the $2.16 low (6.1M shares, 3.1× average). Found none. Consistent
+  with short covering into 11.0% of float short after a −41.4% day. No
+  catalyst identified; treated as noise, not information.
+
+**Judgment calls (unattended run):**
+
+- Used the Dec-18-2026 expiry over Sep-18 because it brackets both the Q3
+  print and the expected H2 close; the $2.50 strike was the only one near
+  spot.
+- Left beta at 1.44 rather than flooring it into the 0.8–1.2 band — the
+  band's purpose is to catch artificially *low* thin-float betas, not to cap
+  a genuine one.
+- Deducted SBC in the headline scenarios and showed the SBC-free variant
+  beside it, rather than picking one.
+- Assumed SOFR 4.00% for the interest calculation and flagged it as an
+  assumption.
+
+## 4. Valuation
+
+Levered FCF paired with **market cap** (never EV — `fcf` here is
+post-interest). Hurdle = 4.74% + 1.44 × 4.28% = **10.90%** (risk-free and
+implied ERP as of **2026-08-01**; beta 1.44 from the statistics page, left
+unfloored — a post-bankruptcy microcap levering to ~5× is not a sub-1.2-beta
+business).
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| A · Standalone, no deal, SBC deducted | $12.0M | 2% | 1% | **6.04%** | −487bp |
+| A′ · Standalone on 3-yr mean FCF | $18.0M | 2% | 1% | **8.54%** | −236bp |
+| B · Pro forma, owner-honest (SBC deducted) | $1.55M | 12→5% | 1% | **1.87%** | −903bp |
+| C · Pro forma, mgmt framing (SBC free) | $9.25M | 12→5% | 1% | **6.12%** | −479bp |
+| D · Bull: Captivate at mgmt's $27.5M pro forma | $13.95M | 12→5% | 2% | **9.40%** | −151bp |
+
+- **Assumptions.** NCM TTM: OCF $23.9M, capex $4.2M, FCF $19.7M, SBC $7.7M.
+  Per the high-SBC rule, SBC is deducted from the base in A and B — $7.7M is
+  3.1% of market cap annually and is compensation, not owner cash. Captivate:
+  2025 revenue ~$64M, Adjusted EBITDA $19.3M, capex ~$3M. Interest: $275M ×
+  11.0% = $30.3M, assuming SOFR ~4.00% (**assumed, not verified**). Terminal
+  growth 1% (2% in D) — for a business 44% below 2019 with deflating unit
+  pricing, even 1% assumes the decline has stopped; the tool caps TG at the
+  risk-free rate and 1% sits far below it.
+- **No reinvestment warning to answer** — FCF is below net income here only
+  because net income is negative; the $37.1M D&A vs $4.2M capex gap is
+  fresh-start intangible amortization from the 2023 Chapter 11, non-cash and
+  non-recurring in economics though it runs for years in accounting.
+- **Market-share sentence.** 2% for five years puts revenue at $275M. NCM
+  already holds the dominant share of US cinema advertising, a category whose
+  total size I could not verify (UNKNOWN) but which has not grown in fifteen
+  years. Growth must come from the category, not from share.
+- **Clamps.** Every scenario sits below the US median cost of capital
+  (7.79%); A, B and C sit at or below the 10th percentile (5.26%). Only ~29%
+  of firms earn above their cost of capital; NCM's ROIC is −4.28% and ROE
+  −2.28%, placing it in the 71%. Piotroski F-score 4.
+- **Precision note.** Call-leg IV is 38.3%, below the 50% line, so the
+  figures are quoted to two decimals — but the range across scenarios
+  (1.9%–9.4%) is far wider than that precision suggests. The scenario
+  spread, not the decimals, is the finding.
+
+**Options-implied move — RAN, GATE FAILED, REFUTES NOTHING.** Path 2 only
+(NCMI is not in the 24-symbol CBOE catalog, so no path-1 percentile).
+Dec-18-2026 expiry (127 DTE) brackets both the Q3 print and the expected
+close. The chain has three strikes total; the $2.50 put has a **zero bid**,
+zero volume, and an 11.5% IV inconsistent with its own $0.375 mark. Feeding
+the mean IV (24.92%) prints `refutes timing claim: YES` at 2.36σ; feeding the
+call-only IV (38.30%) prints `NO` at 1.53σ. The verdict flips on the input,
+so the check is UNRELIABLE and moves nothing. RV60 (126%) and RV20 (208%) are
+both inflated by the single −41% day, so the `IV > RV?` rows are mechanical.
+(No metric table was produced in the original run; the values above are the
+read.)
+
+## 5. Falsifiers
+
+Each would move me toward owning it; all are shifts except the first two.
+
+- **Break —** buy interest: Captivate's audited forward EBITDA lands at
+  ~$30.5M+ (vs $19.3M actual 2025) in the post-close 8-K/A pro formas. That
+  is the level that clears the hurdle; below it the arithmetic does not work.
+- **Break —** re-rate: deal terminates. The $275M never gets drawn and NCMI
+  reverts to a net-cash ($21.2M) microcap — though note Scenario A still
+  implies only 6.04%, so a break improves the risk, not the return.
+- **Shift —** national ad revenue per attendee stabilizes or rises for two
+  consecutive quarters. This is the single metric the thesis turns on.
+- **Shift —** insider open-market *purchases* appear on Form 4.
+- **Shift —** theatre access fees renegotiated downward, reversing the
+  gross-margin compression (43.6% and falling).
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Captivate's forward EBITDA and organic growth.** Private (Generation
+   Partners the seller); only management's unaudited figures exist. Would
+   come from the post-close 8-K/A pro formas. **Bounded, not fatal** — I ran
+   the bull at management's own $27.5M and it still misses by 151bp; refuting
+   the pass needs ~$30.5M, which nobody has claimed.
+2. **NCM's FY2026 Adjusted OIBDA.** Guidance withdrawn "in connection with
+   the pending transaction." Would come from the Q3 print (2026-10-29).
+3. **Post-close all-in cash interest.** SOFR at close is unknown, and whether
+   the 2.00% PIK toggle is elected is management's option. Bounded ~9% (PIK
+   elected) to ~11% cash.
+
+Not fatal individually or together: the pass holds across the full bounded
+range.
+
+## 7. Sources
+
+**Primary:** (via secondary carriers — EDGAR direct was 403) Q2 2026 earnings
+call transcript, 2026-08-11 (Captivate terms, dividend and buyback
+suspension, 3.9x leverage claim, $46.1M cash, $12M debt, analyst Q&A); 8-K
+financing terms — $275M first-lien term loan and $25M revolver at SOFR+700 /
+base+600 with a 2.00% PIK toggle, five-year maturity; Q2 2026 press release
+(revenue $58.4M, national $45M, local $9.5M, Adjusted OIBDA $2.1M, attendance
+137.6M, operating loss $12.8M, net loss $9.9M / −$0.11); FY2025 results
+2026-02-26 (Adjusted OIBDA $39.1M vs $45.7M FY2024).
+
+**stockanalysis.com (vetted exception):** income statement, balance sheet,
+cash flow, statistics, revenue history 2006–2026, transcript index.
+*Deviation noted:* rendered pages via WebFetch rather than the `__data.json`
+probe.
+
+**Broker/market microstructure:** (Robinhood MCP — real-time market state, no
+integrated official source covers these fields for this ticker) quote $2.675
+and close $2.68; fundamentals (market cap $251.6M, beta context, float 65.5M,
+52-week range $2.16–$5.03); 8 quarters of estimate-vs-actual EPS; daily bars
+2026-04-06 → 2026-08-13; option chain, instruments and quotes for the
+Dec-18-2026 $2.50 strikes.
+
+**Reference data:** Damodaran NYU Stern — implied ERP 4.28% and risk-free
+4.74%, as of 2026-08-01; cost-of-capital distribution (median 7.79%,
+10th–90th 5.26%–9.88%); EVA excess-return base rate ~29%.
+
+**Point-in-time repo DBs:** none used (`data/*.db` unreadable in this
+scheduled slot — see §3 coverage gaps).
+
+**Low-confidence:** sell-side aggregate (4 analysts, "Buy", $5.25 target —
+likely predates or under-weights the SOFR+700 terms); insider transaction
+counts from a retail aggregator, not read off Form 4s directly.
+
+## Kill-thesis record
+
+**SOUND** (the pass survived attack) — conditions=6, refuted=0, unknown=3.
+No scenario clears the hurdle once the real financing cost is used; the
+single run that did (+8bp) assumed 8.5% debt, which the disclosed SOFR+700
+terms refute.
+
+Load-bearing conditions were not enumerated in the original run;
+per-condition adjudication and the standing/statistical checks were not
+recorded. **Closest attack:** not labelled in original run. **Flip
+evidence:** not recorded as such in original run — §5's falsifiers state the
+conditions that would move the call toward owning it.

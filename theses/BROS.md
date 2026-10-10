@@ -1,0 +1,257 @@
+# BROS — Dutch Bros Inc. — 2026-08-06
+
+Price ~$53.34 · market cap $10.0B · next earnings 2026-11-04 AMC (Q3)
+
+Entered from the earnings-day move, not the pipeline — composite has never
+flagged BROS and it has never appeared in the candidates screen (§3 dead
+ends).
+
+## 1. Verdict and thesis
+
+**PASS at ~$53.34.** kill-thesis: **SOUND** — conditions=3, refuted=0,
+unknown=2.
+
+Dutch Bros is an excellent operating business whose price, even after today's
+−18.8% post-earnings crash, still implies only ~8%/yr granting a decade of
+near-flawless growth — a low implied return on optimistic assumptions — while
+the comp mix is quietly shifting from transactions to ticket exactly as
+pricing rolls off.
+
+Run context: this research landed the day after the Q2 2026 print (Aug 5 AMC).
+The quarter was a beat-and-raise — revenue $550.9M (+32.5%) vs ~$524M est,
+adjusted EPS $0.33 vs $0.29 est, FY guidance raised — and the stock fell 18.8%
+anyway (SPY −0.2% same day; CAVA −5.9%, WING −5.8%, so a growth-restaurant
+cohort selloff amplified an idiosyncratic repricing of growth durability).
+
+**Closest attack:** a >10-year runway (undisclosed TAM beyond 2029) could make
+the 10-year reverse-DCF truncation unfair — detail in the Kill-thesis record.
+
+Load-bearing conditions not enumerated in original run; condition tiers not
+recorded in original run.
+
+## 2. Business
+
+**Created:** a fast, consistent, deliberately friendly drive-thru serving
+endlessly customizable sweet caffeinated drinks — energy drinks (Rebel, and
+Myst Energy Refreshers, made permanent this quarter), coffee, refreshers, and
+since 2025 hot food. The product is as much the 30-second window interaction
+("Broista" culture) and the routine as the beverage. 73% of transactions run
+through Dutch Rewards; Order Ahead is 16% of mix. 1,225 shops in 26 states as
+of June 30, 2026 (888 company-operated, 337 franchised).
+
+**Captured:** overwhelmingly company-operated shop economics — $510.0M of
+$550.9M Q2 revenue (92.6%) from company shops at a 30.6% shop contribution
+margin; company AUV $2.164M and climbing (systemwide $2.193M). Franchise
+royalties and CPG are small. Growth capture is units (48 opened in Q2, ≥185
+guided for 2026, 2,029 shops targeted by 2029 with ~90% of the pipeline sited)
+plus ticket (pricing, food attach). Net capex ~$1.4M/shop; at mature AUV and
+~30% contribution a shop returns roughly $650K/yr — ~45% pre-tax cash-on-cash
+(my arithmetic from disclosed figures, not a company claim).
+
+**Protected:** honestly, no structural moat. The mechanism is operational: a
+promote-from-within operator pipeline (525 candidates, ~8-year average tenure)
+that is genuinely hard to replicate at speed, plus site density and control of
+drive-thru corners (Salad and Go real-estate deal: up to 65 sites; earlier
+Clutch Coffee Bar). The drinks themselves are imitable — Starbucks launched
+blended energy this month (analyst statement on the Q2 call, low-confidence
+until observed in market data). Brand/culture moats are real but erode at the
+edges as scale forces standardization. Written down as the thesis requires: the
+silence where a structural answer should be *is* the answer.
+
+**Operating leverage (Phase 0): positive.** Revenue 2021→TTM: $497.9M →
+$739.0M → $965.8M → $1,281.0M → $1,638.2M → $1,882.5M; operating income:
+−$111.2M → −$2.6M → $46.2M → $106.1M → $161.2M → $180.2M (margin −22.3% →
++9.6%). Direction: positive, every year — the income statement confirms the
+cash-flow story; SBC is modest ($18.0M TTM, 0.96% of revenue).
+
+## 3. Threads pulled
+
+- **Why −19% on a beat-and-raise? (the crux)** The print's own metrics table:
+  system same-shop transactions decelerated **+3.7% (Q2'25) → +1.7% (Q2'26)**;
+  company **+5.9% → +3.4%**. Comp is now ticket-led (company: 4.9pts ticket vs
+  3.4pts transactions; a year ago 1.9 vs 5.9) — and the CFO guided <1pt of
+  effective pricing in H2 with the food-rollout lap starting Q3. Q3 system
+  comp guided 4–5% vs 5.8% in Q2. The market repriced growth durability, not
+  the quarter. Nuance that survives: the two-year company transaction stack is
+  roughly flat (Q1'26 ~9.9 vs Q2'26 ~9.3), and densification cannibalizes the
+  comp base by design while systemwide sales grew 23% — so this is
+  deceleration in comp quality, not demand decay.
+- **Guidance-beat pattern.** Robinhood's 8-quarter series shows 7 consecutive
+  beats (e.g. Q4'24 est $0.02 → actual $0.07; Q2'26 $0.29 → $0.33). Managed
+  guidance; the modal next print is a beat. Caveat: Robinhood's "actual" is
+  the adjusted figure ($0.33), not GAAP diluted ($0.28 per the release); the
+  repo's sec_fundamentals.db has no BROS row, so the cross-check ran against
+  the earnings release directly.
+- **Up-C structure and the pairing trap (resolved).** Class B (35.2M), C
+  (2.3M), and D (~13.0M) shares are non-economic voting shares paired 1:1
+  with OpCo units; only Class A carries economics at Inc level. NCI's 27.5%
+  share of Q2 net income matches (B+C+D)/(all classes) = 50.5M/187.7M —
+  so the all-class share count × price ($10.0B) values the whole enterprise
+  and consolidated FCF pairs with it correctly. No haircut needed.
+- **The liabilities screens miss.** Term debt is only $198.5M (2025 JPM
+  facility: $500M revolver mostly undrawn + $150M term). The "$1.21B debt"
+  aggregators show is mostly $1,009M of operating-lease liabilities (rising:
+  deliberate shift toward build-to-suit, +~50bps occupancy in 2026). Separately
+  the **TRA liability is $973.0M** (85% of realized tax savings owed to
+  pre-IPO holders) — a real, long-dated cash claim standard EV screens ignore.
+- **Insider activity.** Sustained Form 4 / Form 144 cadence May–July 2026
+  (roughly 20 Form 4s and a dozen 144s; looks programmatic), last Form 4
+  July 6; nothing filed post-print as of today. Persistent supply, not a
+  post-crash signal either way.
+- **Options read (mandatory):** path 2 (Robinhood stopgap) — BROS is not in
+  the CBOE catalog, so no path-1 percentile exists. Sep 18, 2026 expiry
+  (43 DTE), ATM 52.5 strike: table in §4. **No listed expiry brackets the
+  Nov 4 (AMC) Q3 catalyst** — weeklies end Sep 25, then Oct 16 → Jan 2027 —
+  so the 2-sigma timing check is NOT APPLICABLE.
+- **Terminal-risk sweep (10-K Item 1A).** The first risk factor is evolving
+  consumer preference and **health/regulatory scrutiny of sugar and caffeine**
+  (FDA named; taurine, obesity, anxiety linkages; consumer litigation). BROS's
+  growth mix leans increasingly on sweetened energy drinks (energy % of sales
+  rose again in Q2 — level not disclosed). This is the disclosed endgame risk
+  the terminal-growth input must survive; it is why runs above 3% terminal are
+  not credited.
+- **Commitments footnote / capital-intensity check.** ~$370M purchase
+  obligations, substantially all due within 1–2 years (construction, real
+  estate, inventory — the visible growth pipeline, not hidden capacity
+  take-or-pay); normal-course green coffee commitments (no derivatives);
+  $7.8M franchise lease guarantees. No asset-light claim to falsify — FY26
+  capex guided $350–370M against $385–390M adjusted EBITDA: company-level FCF
+  ≈ zero this year by choice.
+- **Dead ends:** composite has never flagged BROS (no ticker_scores row) and
+  it has never appeared in the candidates screen (candidate_appearances
+  empty) — this run entered from the earnings-day move, not the pipeline.
+  sec_fundamentals.db has no BROS row (EPS cross-check done against the
+  release instead). The stockanalysis news-feed probe errored (payload
+  shape) — the reaction was reconstructed from quotes/bars instead. No
+  numeric long-run TAM ("7,000 shops") exists in the 2025 10-K — only
+  "considerable whitespace"; treated as UNKNOWN, not cited.
+
+## 4. Valuation
+
+Reverse DCF, `tools.valuation.reverse_dcf`, market cap $10,008,634,261 (exact
+hover), base FCF = TTM levered `fcf` $124,563,000 (ncfo $365.7M + capex
+−$241.1M; post-interest, so paired with market cap, net debt left at zero;
+minority pairing verified in the Up-C thread, §3). Coffee-shop growth capex
+suppresses this base — handled by front-loading growth per the skill, plus a
+steady-state frame:
+
+No hurdle computed this run.
+
+| Run | Growth path | Terminal | Implied return |
+|---|---|---|---|
+| A (management plan executed) | 30,30,30,25,25,20,15,12,10,8% | 3.0% | **8.1%/yr** |
+| B (conservative) | 18,18,18,15,15,12,10,8% | 2.5% | **5.4%/yr** |
+| C (steady-state owner FCF: adj. EBITDA $385M − ~$70M maint. capex − ~$28M interest − ~$60M cash taxes ≈ $227M base) | 10,10,8,8,6% | 3.0% | **6.0%/yr** |
+| D (heroic) | 40,40,40,35,30,25,20,15,12,10% | 3.5% | **10.8%/yr** |
+| F (management plan at $6.5B cap, −35%) | as A | 3.0% | 10.4%/yr |
+
+Run C's maintenance-capex and cash-tax splits are my estimates (not
+disclosed) — the frame, not the decimals, is the finding. Given ATM IV ~46%
+(below the 50% precision gate, but barely), read these as whole-percent
+figures with a wide band. Every framing agrees: **at $10B the price already
+pays for the growth; equity-like (≥10–12%) returns require either the heroic
+path or a ~$6.5B/-35% entry**. Trailing multiples for reference: 74× GAAP P/E,
+80× P/FCF, ~35× EV/EBITDA (per stockanalysis; EV there excludes the TRA).
+
+Options-implied move (path 2 — Robinhood stopgap; no path-1 history), Sep 18
+expiry, 43 DTE, spot $53.34, ATM IV 46.05% (mean of call 45.6%/put 46.5%):
+
+| metric | value |
+|---|---|
+| expected absolute move (MEAN, not a ceiling) | 12.56% |
+| 1-sigma move | 15.81% |
+| RV60 | 62.98% |
+| RV20 | 81.23% |
+| IV > RV60? | NO |
+| IV > RV20? | NO |
+
+Both realized windows exceed IV because they contain the −18.8% day (one such
+return inflates a 20-day annualized stdev massively); the windows agree with
+each other and disagree with forward IV — the finding is that the market
+prices calm-down, not continuation. Liquidity gate: the 52.5 call spread
+($3.40/$4.30, 23% of mark) **fails** the 10%-of-mark spread gate (put passes at
+7%); gate constants are uncalibrated, so treat the table as informative, not
+load-bearing. Timing refutation: NOT APPLICABLE (no dated thesis claim; no
+expiry brackets Nov 4 anyway).
+
+## 5. Falsifiers
+
+Would flip the PASS to a fresh look:
+
+- **Transactions reaccelerate without pricing:** two consecutive quarters of
+  company same-shop *transaction* growth ≥5% after the H2 pricing roll-off
+  (Q3 print Nov 4, Q4 in Feb 2027) — that would mean the demand engine is
+  stronger than the ticket-led Q2 mix implies and run A is too mean.
+- **Price:** the conservative path only reaches ~6.8% even at $6.5B; a cap
+  near **$5.5–6.5B (~$30–35/share)** puts the management path at ~10.4%+ and
+  makes the bet asymmetric.
+- **New-shop productivity holding at record levels through the 2027 Salad
+  and Go conversions** (65 sites) — sustained year-1 AUVs at or above system
+  would be direct evidence the reinvestment runway is longer than modeled.
+
+Would flip toward *never mind entirely*: system transaction comps going
+negative, company shop contribution margin below ~28% on coffee costs, or an
+FDA/regulatory action on caffeine/sugar marketing.
+
+**Reopen trigger:** 2026-11-04.
+
+## 6. UNKNOWNs
+
+1. **Long-run TAM.** No numeric shop-count ceiling beyond the 2,029-by-2029
+   target exists in the 2025 10-K. Where it would come from: an investor day
+   or S-1-era disclosure. Its absence does not kill the PASS (run D bounds
+   the upside case) but it is the load-bearing unknown in the bull case.
+2. **Maintenance vs growth capex split.** Not disclosed; run C uses ~$70M
+   maintenance. Would come from management commentary; absence tolerable (the
+   steady-state frame is a cross-check, not the verdict driver).
+3. **Energy drinks' share of sales.** Management says energy mix rose again
+   in Q2; the level is undisclosed. Matters because the terminal risk (the
+   terminal-risk sweep, §3) concentrates there. Would come from a future
+   investor deck.
+4. **Executive comp metrics.** Proxy not pulled this run; whether incentives
+   pay on adjusted EBITDA/unit growth vs returns is unverified.
+5. **Starbucks blended-energy impact.** Too early for any data; watch Q3/Q4
+   energy-mix commentary.
+
+## 7. Sources
+
+- **Primary:** Q2 2026 earnings release (8-K exhibit 99.1, Aug 5, 2026 — all
+  comp/transaction/ticket splits, shop counts, AUVs, guidance, balance sheet
+  incl. TRA $972.95M and lease liabilities); FY2025 10-K filed 2026-02-13
+  (risk factors, commitments footnote, credit facility, share classes); EDGAR
+  submissions index (Form 4/144 cadence). Q2 2026 call transcript via Quartr
+  (primary, transcribed — quarterly figures corroborated against the
+  release).
+- **stockanalysis.com (vetted exception):** /stocks/BROS/statistics/ (exact
+  market cap, EV, TTM P&L/FCF/margins, short interest, beta, RSI),
+  /financials/income-statement/ annual + quarterly series (operating-leverage
+  trajectory), /transcripts/, /filings/ (Quartr PDF links).
+- **Broker/market microstructure** (own tier, admissible — no integrated
+  official source covers these fields): Robinhood MCP — live quote and
+  official closes (the −18.8% day; SPY/SBUX/CAVA/WING same-day moves), daily
+  bars for the RV closes array, option chain/instruments/quotes (ATM IV,
+  marks, OI), 8-quarter estimate-vs-actual EPS series (estimates side is the
+  new data; actuals cross-checked against the release, noted as adjusted
+  non-GAAP).
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** the checks recorded in §3's dead ends —
+  composite (no ticker_scores row for BROS), candidate_appearances (empty),
+  sec_fundamentals.db (no BROS row).
+- **Low-confidence:** analyst Q&A assertions on the call (Starbucks blended
+  energy launch, gas prices); Chicago shop "$4M/$7M pacing" is management's
+  own on-call claim, not yet in any filing.
+
+## Kill-thesis record
+
+**SOUND** — conditions=3, refuted=0, unknown=2. Ownership: PASS at ~$53.34.
+
+Per-condition adjudication not recorded in original run. Standing and
+statistical checks not recorded in original run; options-timing check: NOT
+APPLICABLE (no listed expiry brackets the Nov 4 (AMC) Q3 catalyst — §4).
+
+**Closest attack:** a >10-year runway (undisclosed TAM beyond 2029) could
+make the 10-year reverse-DCF truncation unfair — but even a heroic 40%-start
+path with a 3.5% terminal only reaches ~11%, and the 10-K's own first risk
+factor argues against a generous terminal rate.
+
+**Flip evidence:** not recorded in original run (ownership falsifiers in §5).
