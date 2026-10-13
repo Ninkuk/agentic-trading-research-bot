@@ -318,3 +318,6 @@
 2026-10-01 FDS UNPROVEN conditions=5 refuted=0 unknown=1 pending=1 not_obtained=0 reopen=2026-11-10:fds-investor-day-medium-term-targets-adj-op-margin-path-above-35pct-with-organic-asv-5-to-7pct-or-margin-frame-at-or-below-34pct-or-price-at-or-below-245 (BUY at $277.51)
 2026-10-01 JBL FLAWED conditions=8 refuted=1 unknown=0 pending=5 not_obtained=0 reopen=2026-12-16:jbl-q1fy27-print-adj-fcf-guide-at-or-above-1.8b-or-q1-core-margin-at-or-above-6.3pct-or-price-at-or-below-222 (PASS at $299.80)
 2026-10-01 SKHY FLAWED conditions=6 refuted=1 unknown=2 pending=2 not_obtained=0 reopen=2026-11-20:skhy-q3-print-return-scale-and-ads-premium (PASS at $193.47)
+2026-10-13 KNRX FLAWED conditions=5 refuted=2 unknown=1 pending=2 not_obtained=0 reopen=2026-12-31:knrx-h1-2026-6k-revenue-cash-opex-and-eloc-plus-exchange-note-shares-issued (PASS at $0.18; supersedes 2026-09-29)
+2026-10-13 DPZ FLAWED conditions=6 refuted=1 unknown=0 pending=1 not_obtained=1 reopen=2027-02-22:dpz-q4-fy27-guide-us-comp-ge-2pct-units-ge-150-franchisee-ebitda-stable-or-price-at-or-below-260 (PASS at $298.81; supersedes 2026-09-07)
+2026-10-13 AYI FLAWED conditions=5 refuted=1 unknown=0 pending=2 not_obtained=0 reopen=2027-01-07:q1-fy27-print-abl-orders-and-ais-memory-margin-or-price-at-or-below-270 (PASS at $296.27)
