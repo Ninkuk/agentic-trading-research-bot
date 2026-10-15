@@ -99,9 +99,10 @@ belt-and-suspenders speed bump and the wrapper's `.env` pass-through must never 
 Money safety is structural, not prose: the atomic `BEGIN IMMEDIATE` claim
 (queued→planned flips once, even under duplicate wake-coalesced sessions — macOS has no
 flock(1)), the per-order `ref_id` the broker deduplicates on, the limit ceiling
-`ref_price×(1+max_gap_pct)` from human-supplied numbers, and `.env` dollar caps bounded
-by `catalog.py`'s committed hard ceilings (caps stay out of the public repo — they
-disclose account scale). Queue rows are one of two kinds: whole-share (`--qty`, GFD
+`ref_price×(1+max_gap_pct)` with `ref_price` pinned to the live ask at queue time (a thesis
+price is not a reference price — plan names a fresh row's gap veto as a stale ref), and
+`.env` dollar caps bounded by `catalog.py`'s committed hard ceilings (caps stay out of the
+public repo — they disclose account scale). Queue rows are one of two kinds: whole-share (`--qty`, GFD
 limit under the ceiling) or notional (`--notional`, dollar-based market order — the
 broker only accepts fractional as market type; the spend is capped exactly by the
 notional and the same gap band vetoes placement against a fresh quote, so only the

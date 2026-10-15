@@ -19,11 +19,19 @@ dollar-based GFD market order (notional rows).
 ## Queueing
 
 1. Gather: symbol, size — whole-share `--qty` OR dollar `--notional`, never
-   both — reference price, max gap %, optional expiry (default: next trading
-   day), and the rationale. If the user has no reference price, offer to
-   fetch `get_equity_quotes` and pin it to the live quote — with their
-   confirmation, since ref_price × (1 + gap) is the hard price ceiling
-   (share rows) / the pre-placement gap veto band (notional rows).
+   both — max gap %, optional expiry (default: next trading day), and the
+   rationale. **`--ref-price` is the live ask at queue time**: call
+   `get_equity_quotes` in this session and pin `ask_price` verbatim, then
+   show the user the quote and the band it implies. ref_price × (1 ± gap)
+   is the pre-placement veto band (notional rows) and ref_price × (1 + gap)
+   the hard limit ceiling (share rows), so the band must be centred on
+   where the stock trades NOW. A thesis entry price, a journal price, or
+   any number older than this session is NOT a reference price — it
+   belongs in `--note`: a band centred weeks in the past excludes today's
+   market before plan ever runs, and every retry inherits the miss. The
+   one exception is a share row where the user explicitly states a lower
+   buy-up-to price as a limit; say back that the row will sit until the
+   ask comes down to it.
 
    Order-kind semantics — say this back to the user when queueing notional:
    - `--qty N` plans a GFD LIMIT order capped at ref × (1 + gap). The fill
@@ -69,7 +77,12 @@ dollar-based GFD market order (notional rows).
      one to ask; you do. A veto printed by plan (gap, stale quote, caps) is
      reported verbatim, and the row retries at the next open per the
      semantics above — do not work around a veto by re-queueing with wider
-     bands unless the user explicitly re-decides.
+     bands unless the user explicitly re-decides. One veto is different: a
+     gap reason ending `ref_price X was stale at queue time ... re-queue at
+     the live ask` means step 1 was not followed — the band never contained
+     the market, so every retry will miss too. Tell the user plainly, show
+     the live ask, and on their go-ahead `cancel` the row and `queue` it
+     again with `--ref-price` pinned to that ask and the same gap and size.
 
    The transport rules of execute-queue bind here too: never adjust a
    price, substitute an order type, or mint a `ref_id`; place exactly what
