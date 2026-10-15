@@ -179,6 +179,80 @@ def test_headless_claude_slots_are_wall_clock_capped():
         )
 
 
+def test_headless_claude_slots_probe_login_and_write_debug_logs():
+    """The wedge class leaves nothing behind: no transcript, no stderr line,
+    a process killed at the cap. Each headless slot must (a) run the fast
+    login probe BEFORE its real `claude -p`, so a dead token costs ~90s and
+    a FAILED: line instead of 20-45 silent minutes, and (b) hand claude a
+    --debug-file, the only evidence a wedged startup can ever produce."""
+    for wrapper in _MCP_SLOTS:
+        lines = [_code_only(ln) for ln in (LAUNCHD / wrapper).read_text().splitlines()]
+        probe_at = next((i for i, ln in enumerate(lines) if "claude_probe " in ln), None)
+        claude_at = next((i for i, ln in enumerate(lines) if "claude -p " in ln), None)
+        assert probe_at is not None, f"{wrapper} never runs claude_probe"
+        assert claude_at is not None, f"{wrapper} has no claude -p line"
+        assert probe_at < claude_at, f"{wrapper} probes after the real session"
+        assert "|| exit 1" in lines[probe_at], f"{wrapper} ignores a failed probe"
+        block = "\n".join(lines[claude_at : claude_at + 8])
+        assert '--debug-file "$(claude_debug_file ' in block, f"{wrapper} runs claude undebugged"
+
+
+def _probe_script(tmp_path, fake_claude_body, limit=1):
+    """A bash script that sources env.sh with a fake `claude` first on PATH
+    and runs claude_probe against it."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake = bin_dir / "claude"
+    fake.write_text("#!/bin/bash\n" + fake_claude_body + "\n")
+    fake.chmod(0o755)
+    script = tmp_path / "probe.sh"
+    script.write_text(
+        textwrap.dedent(
+            f"""\
+            #!/bin/bash
+            set -uo pipefail
+            source "{LAUNCHD / "env.sh"}"
+            export PATH="{bin_dir}:$PATH"
+            claude_probe {limit} testjob
+            echo "status=$?"
+            """
+        )
+    )
+    return script
+
+
+def test_claude_probe_fails_fast_on_a_wedged_claude(tmp_path):
+    """A claude that never answers (the expired-token startup wedge) must
+    come back as the watchdog's 124 within the probe's own short cap, with
+    a FAILED: line naming the probe so the dashboard's marker scan sees it.
+    `exec sleep` so TERM reaches the sleep itself (see the retry tests)."""
+    script = _probe_script(tmp_path, "exec sleep 60")
+    result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=60)
+    assert "status=124" in result.stdout, result.stdout
+    assert "FAILED:" in result.stderr and "probe" in result.stderr, result.stderr
+
+
+def test_claude_probe_passes_a_healthy_claude(tmp_path):
+    """A claude that answers at once returns 0 and prints no marker, so the
+    real job runs exactly as before on a healthy morning."""
+    script = _probe_script(tmp_path, 'echo "{"result":"ok"}"; exit 0', limit=30)
+    result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=60)
+    assert "status=0" in result.stdout, result.stdout
+    assert "FAILED:" not in result.stderr, result.stderr
+
+
+def test_claude_probe_reports_a_real_auth_error_too(tmp_path):
+    """The CLI sometimes DOES exit with an auth error instead of wedging
+    (`No messages returned from query`). Any nonzero probe status is a
+    dead headless login and must fail the job the same loud way."""
+    script = _probe_script(
+        tmp_path, 'echo "Error: No messages returned from query" >&2; exit 1', limit=30
+    )
+    result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=60)
+    assert "status=1" in result.stdout, result.stdout
+    assert "FAILED:" in result.stderr and "probe" in result.stderr, result.stderr
+
+
 def test_journal_slot_routes_claude_through_the_retry_variant():
     """The wedge class is a transient stall inside the headless claude
     process while the machine around it stays healthy -- an immediate second

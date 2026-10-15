@@ -16,9 +16,11 @@ job_start "journal sync"
 # Skill (loads /journal-sync) and TodoWrite become explicit for that reason.
 # 20min cap vs. a ~100s normal run; the _retry variant grants a killed
 # wedge one more attempt -- see env.sh.
+claude_probe "${CLAUDE_PROBE_SECS:-90}" journal || exit 1
 run_with_timeout_retry "${JOURNAL_TIMEOUT_SECS:-1200}" \
 claude -p "/journal-sync" \
     --model sonnet \
+    --debug-file "$(claude_debug_file journal)" \
     --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_equity_orders,mcp__claude_ai_Robinhood_MCP__get_option_orders,mcp__claude_ai_Robinhood_MCP__get_realized_pnl,mcp__claude_ai_Robinhood_MCP__get_pnl_trade_history,Write,Bash(uv run python main.py journal *),Bash(uv run python main.py orders reconcile *),Bash(sqlite3 -readonly data/orders.db *)" \
     --permission-mode default \
     --output-format json

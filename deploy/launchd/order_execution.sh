@@ -35,9 +35,14 @@ fi
 # killed after planning stands down and the STUCK check below alarms. Both
 # attempts (2x1200s) finish inside the window with room to plan, and stay
 # under health.py's 60min hang budget.
+# Login probe first: a dead token otherwise burns both 1200s attempts in
+# silence and the queue rows surface only as STUCK. Rows stay 'queued' and
+# retry at the next open.
+claude_probe "${CLAUDE_PROBE_SECS:-90}" order-execution || exit 1
 run_with_timeout_retry "${ORDERS_TIMEOUT_SECS:-1200}" \
     claude -p "/execute-queue" \
     --model sonnet \
+    --debug-file "$(claude_debug_file order-execution)" \
     --allowedTools "Skill,TodoWrite,Write,mcp__claude_ai_Robinhood_MCP__get_equity_quotes,mcp__claude_ai_Robinhood_MCP__get_portfolio,mcp__claude_ai_Robinhood_MCP__review_equity_order,mcp__claude_ai_Robinhood_MCP__place_equity_order,Bash(uv run python main.py orders preflight *),Bash(uv run python main.py orders plan *),Bash(uv run python main.py orders record *)" \
     --permission-mode default \
     --output-format json

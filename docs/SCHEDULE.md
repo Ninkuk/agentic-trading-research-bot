@@ -102,6 +102,18 @@ summer open (6:30am Phoenix).
   distinct from `start:` so it doesn't inflate the health section's run
   count), `end:` (whole-run finish with duration + exit code, from the EXIT
   trap), plus ad hoc `FAILED`/`STALE` lines from individual wrappers.
+- **Headless login probe + debug logs**: the three `claude -p` slots
+  (`order-execution`, `portfolio`, `journal`) first run `claude_probe`
+  (`env.sh`): one haiku turn under `CLAUDE_PROBE_SECS` (default 90s). The
+  startup wedge is an OAuth access token that expired since the last claude
+  activity on the machine — headless cannot refresh it, and the CLI hangs
+  instead of erroring — so the probe turns a silent 20–45min burn into a
+  `FAILED: claude login probe` line and the job exits 1 (queue rows stay
+  `queued`). Every claude invocation, probe included, writes
+  `logs/claude-debug/<job>-<stamp>.log` (`--debug-file`, 14-day retention);
+  read the newest one before reasoning about a wedge. Recovery is unchanged:
+  any interactive session rewrites the Keychain token, then rerun
+  account-positions / journal-sync by hand.
 - **Hang detection**: `deploy/launchd/dashboard_lib/health.py` cross-references
   `launchctl list`'s PID column (not the exit-status column, which cannot
   distinguish "running" from "exited cleanly" — see `status.sh`) against each

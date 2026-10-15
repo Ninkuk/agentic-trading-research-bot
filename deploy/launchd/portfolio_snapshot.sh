@@ -22,9 +22,11 @@ job_start "portfolio snapshot"
 # Skill (loads /account-positions) and TodoWrite become explicit for that reason.
 # 20min cap vs. a ~30-80s normal run, safely under dashboard_lib/health.py's
 # 60min hang tier so a wedge dies on its own run.
+claude_probe "${CLAUDE_PROBE_SECS:-90}" portfolio || exit 1
 run_with_timeout "${PORTFOLIO_TIMEOUT_SECS:-1200}" \
 claude -p "/account-positions" \
     --model sonnet \
+    --debug-file "$(claude_debug_file portfolio)" \
     --allowedTools "Skill,TodoWrite,mcp__claude_ai_Robinhood_MCP__get_accounts,mcp__claude_ai_Robinhood_MCP__get_portfolio,mcp__claude_ai_Robinhood_MCP__get_equity_positions,mcp__claude_ai_Robinhood_MCP__get_equity_quotes,mcp__claude_ai_Robinhood_MCP__get_option_positions,Write,Bash(uv run python main.py portfolio *)" \
     --permission-mode default \
     --output-format json

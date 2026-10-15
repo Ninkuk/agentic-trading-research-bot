@@ -106,3 +106,34 @@ run_with_timeout_retry() {
     echo "[$(date '+%F %T')] RETRY: wedge killed at ${limit}s — one bounded retry" >&2
     run_with_timeout "$@"
 }
+
+# Debug log path for ONE headless claude invocation. The startup wedge leaves
+# no transcript and no stderr line, so this file is the only evidence of what
+# the process did before the watchdog killed it. logs/ is gitignored.
+claude_debug_file() {
+    mkdir -p logs/claude-debug
+    # ~85KB per run, six runs a day: keep two weeks, enough to cover a wedge
+    # that is only noticed from the weekly dashboard.
+    find logs/claude-debug -name '*.log' -mtime +14 -delete 2>/dev/null
+    echo "logs/claude-debug/$1-$(date '+%F_%H%M%S').log"
+}
+
+# Fail-fast login probe, run BEFORE a real headless job: claude_probe <secs> <job>.
+# An expired OAuth token wedges `claude -p` at startup until the 1200s cap;
+# the probe turns that into a ~90s FAILED: line (matches health.py's markers)
+# and the caller skips the job. One haiku turn, no session file, no tools
+# needed. Any nonzero status is a dead headless login -- the CLI sometimes
+# exits with an auth error instead of wedging, and that must fail the same way.
+claude_probe() {
+    local limit="$1"
+    local job="$2"
+    run_with_timeout "$limit" \
+        claude -p "Reply with exactly: ok" --model haiku --max-turns 1 \
+        --no-session-persistence --permission-mode default --output-format json \
+        --debug-file "$(claude_debug_file "$job-probe")" >/dev/null
+    local status=$?
+    if [ "$status" -ne 0 ]; then
+        echo "[$(date '+%F %T')] FAILED: claude login probe status $status — headless auth is dead (expired token?); skipping $job. See logs/claude-debug/" >&2
+    fi
+    return "$status"
+}
