@@ -1,0 +1,524 @@
+# WRB — W. R. Berkley Corporation — 2026-10-12
+
+Price $72.90 (official close, 2026-10-12) · market cap $28,329,402,113 ·
+next earnings 2026-10-19 AMC (company-verified; call 5:00pm ET)
+
+Entry path: held name, refresh of `research/WRB-2026-09-11.md` (PASS at
+$69.89, kill-thesis FLAWED), whose reopen trigger 2026-10-20 has not fired —
+a refresh, not a reopen, so there is no §0. Unattended scheduled run.
+
+## 1. Verdict and thesis
+
+**PASS at $72.90.** kill-thesis: **FLAWED** — conditions=4 (2 probable,
+2 plausible), refuted=1, unknown=0, pending=1, not_obtained=0.
+
+**p(beat SPY, 63 td): 0.43** · kill-thesis: 0.41 ·
+**Disputed expectation:** at 2.88x book the price implies WRB earns ~19.2% on
+equity forever, i.e. today's near-peak 20.2% held in perpetuity; what revises
+it upward is a Q3'26 print (2026-10-19) holding the combined ratio near 90%
+with rate ex-comp re-accelerating, and what revises it downward is the
+industry's decelerating casualty rate earning into the AY loss ratio.
+
+Still a very good business at a price that pays even less to own it than a
+month ago. The stock rose 4.3% ($69.89 → $72.90) with no new filing, no new
+call, and no new number. Against that, the two facts this run added both cut
+the bull case. First, the like-for-like ZIRP-era investment yield, now pulled
+rather than estimated, was 3.44% (2013–2020 mean of the 10-K "percent earned"
+series), so the structural rate uplift to ROE is ~2.9pts on trailing yield,
+not the 4.3pts the prior run assumed. Second, the FY2025 10-K loss triangle
+shows reserves adequate in aggregate but not line by line: long-tail casualty
+develops adverse every year and is covered by redundancy elsewhere. The
+required perpetual ROE rose from 18.65% to 19.17%, and the honest mid-cycle
+range fell to 14.9%–16.3%. Hold-what-you-own is a reasonable reading; adding
+is not.
+
+**Closest attack:** same as last run and still decisive. The refutation rests
+on flooring beta at 0.8. At the screened 0.27 the hurdle is 6.22%, the
+required perpetual ROE falls to 13.5%, and even the 14.9% trailing-yield
+mid-cycle estimate clears it. The floor is kept for the same reasons (6.22%
+sits inside but near the bottom of Damodaran's 5.26%–9.88% US band; float is
+62.7% of shares out with two vote-aligned anchors holding ~40%; a regression
+beta on an underwriting cycle measures liquidity, not risk). It is a stated
+convention doing load-bearing work.
+
+Load-bearing conditions of the bull case (4):
+
+1. **Mid-cycle ROE is sustained at ~19.2% or better.** *Plausible*: trailing
+   ROE 20.2%, five-year 19.5% (`stocks.db`, 2026-10-09), but the 2010–2020
+   mean was ~12% and pricing the rate regime like-for-like adds ~2.9–4.3pts.
+   The Q3'26 print (2026-10-19) settles the near-term leg. Arithmetic in §4.
+2. **Underwriting discipline holds through the softening cycle** (reported
+   combined ratio in the low 90s as written rate decelerates). *Probable*:
+   Q2'26 CR 90.0%, AY ex-cat 88.1%, current-AY ex-cat loss ratio improved
+   YoY, Reinsurance & Monoline Excess NPW cut 9% (Q2'26 8-K, 2026-07-20,
+   carried). The Q3'26 print is the next reading.
+3. **Total reserves stay adequate: long-tail adverse development keeps being
+   absorbed without a material charge.** *Plausible*: net prior-year
+   development was $34.4M adverse (2025), $14.4M adverse (2024), $29.7M
+   favourable (2023), each ≤0.2% of ~$19B net reserves (FY2025 10-K, reserve
+   note). But other liability and auto develop adverse every year, and the
+   offsets come from lines now softening (§3). The FY2026 10-K triangle
+   (~2027-02-26) settles it; the Q3'26 10-Q is the interim read.
+4. **Capital-return and governance regime unchanged.** *Probable*:
+   shareholder yield ~3.8% (dividend yield 2.64% incl. specials plus 1.11%
+   net buyback yield, `stocks.db`). EDGAR (owner forms included) shows
+   nothing filed since 2026-09-03: no 8-K, 13D/A, Form 144 or Form 4.
+
+**Dominant shared risk factor:** US commercial casualty pricing cycle and
+long-tail loss-cost inflation — shared by 2 of 23 held names (HIG, ORI) ·
+0 unlabelled. Three of the book's holdings are US commercial P&C writers on
+one cycle. That concentration is itself an argument against adding a dollar
+here. (Holdings list from `composite.db` `in_portfolio`, snapshot 104;
+`portfolio.db` is not granted to this slot.)
+
+## 2. Business
+
+Unchanged from `research/WRB-2026-09-11.md` §2; deltas only.
+
+**Created:** specialty and E&S commercial coverage through ~60 decentralized
+operating units with their own P&L and underwriting authority, for risks a
+standard carrier prices badly or will not write.
+
+**Captured:** (1) underwriting profit on ~$12.6B TTM net premiums earned at a
+Q2'26 CR of 90.0%; (2) float. $22.2B of gross reserves ($18.95B net,
+12/31/2025) funds a ~$34.2B portfolio that earned 4.5% on average investments
+in 2025 (4.6% in 2024, 3.9% in 2023; FY2025 10-K). (3) A small fee and
+non-insurance line.
+
+**Protected:** decentralized authority plus a demonstrated willingness to
+shrink. The new evidence qualifies it. The triangle shows the units *did* misprice
+long-tail casualty in the 2016–2019 soft market (other-liability accident
+years now +20.7% above their first estimates). What protected the company
+was diversification across lines, not underwriting foresight on those lines.
+That is still a real mechanism, a multi-line book whose redundancies absorb
+one line's miss. It is not a barrier against an industry-wide soft market.
+
+**Control:** one class, one vote per share. The Berkley family holds ~24.6%
+and Mitsui Sumitomo Insurance 15.1% (13D/As carried from the prior run). Per
+the 2025 framework agreement, MSI and the family intend to vote their shares
+in alignment and the family recommends an MSI board designee (trade press
+on the agreement; low-confidence tier for the voting-alignment wording, the
+13D/A is the primary). ~40% voting in concert forecloses an unsolicited
+takeover and any activist path.
+
+**Operating leverage (Phase 0): positive over the cycle, flat in FY2025.**
+SEC XBRL, CIK 11544, carried from the prior run (no new annual filing since):
+
+| FY | revenue | pretax income | pretax margin |
+|---|---|---|---|
+| 2019 | $7,902.2M | $852.9M | 10.8% |
+| 2020 | $8,098.9M | $704.8M | 8.7% |
+| 2021 | $9,455.5M | $1,282.9M | 13.6% |
+| 2022 | $11,166.5M | $1,719.7M | 15.4% |
+| 2023 | $12,142.9M | $1,754.4M | 14.4% |
+| 2024 | $13,638.8M | $2,264.5M | 16.6% |
+| 2025 | $14,707.9M | $2,280.5M | 15.5% |
+| TTM 2026-06-30 | $14,896.1M | ~$2,411M (`stocks.db` pretax margin 16.19%) | 16.2% |
+
+Six-year CAGRs: revenue 10.9%, pretax 17.8%. FY2025 is the flat year
+(revenue +7.8%, pretax +0.7%), and H1'26 re-accelerated.
+
+## 3. Threads pulled
+
+- **The FY2025 loss-development triangle — the repeat gap, closed.** Route:
+  the 10-K body truncates in WebFetch at 230k characters (before MD&A and
+  the notes), but `FilingSummary.xml` → `R22.htm` (reserve note) returns the
+  rollforward, the line narratives and the accident-year triangles.
+  Rollforward ($K): beginning net reserves 17,166,641; current-year incurred
+  7,702,638; prior years +34,446 (adverse); ending 18,953,674. In 2025,
+  Insurance was $44M unfavourable net and Reinsurance & Monoline Excess $47M
+  favourable net. Adverse lines were other liability (umbrella/excess, much
+  of it from "underlying auto exposures", AY2017–2022), auto liability
+  ("particularly impacted by social inflation", AY2021–2023) and
+  non-proportional casualty reinsurance (AY2019–2023). Favourable lines were
+  short-tail property, auto physical damage, professional liability and
+  workers' comp. 2024 had the same shape. The triangles, first-reported vs
+  2025 estimate, net incurred:
+
+  | line | accident years | first estimate | 2025 estimate | drift |
+  |---|---|---|---|---|
+  | other liability | 2016–2019 | $4,392.9M | $5,303.7M | **+20.7%** |
+  | other liability | 2020–2021 | $2,857.2M | $2,674.6M | −6.4% |
+  | other liability | 2022 | $1,813.5M | $1,889.3M | +4.2% |
+  | other liability | 2023–2024 | $4,497.4M | $4,380.0M | −2.6% |
+  | auto | 2018–2019 | $886.7M | $1,045.5M | +17.9% |
+  | auto | 2021–2023 | $2,166.0M | $2,341.1M | **+8.1%** |
+  | auto | 2024 | $1,062.4M | $1,022.1M | −3.8% |
+
+  Read plainly: soft-market accident years were under-reserved by ~20%, and
+  it took six to nine years to show. Hard-market 2020–21 came in redundant.
+  But AY2022 other liability and AY2021–23 auto, also hard-market years, are
+  already adverse. AY2023–24 other liability looks favourable, yet carries
+  IBNR of $837M and $1,603M (41% and 69% of incurred), so it is mostly
+  unseasoned. Stress (my arithmetic, not a forecast): +10% on the other-
+  liability AY2022–2025 estimates ($8,895M) is ~$890M pretax, ~$700M after
+  tax, ~7% of book. The aggregate stays clean only while comp and property,
+  both now soft-pricing lines, keep releasing.
+- **The ZIRP-era yield, pulled rather than estimated.** "Percent earned on
+  average investments": 2013 3.7%, 2014 3.9%, 2015 3.2%, 2016 3.4%, 2017
+  3.3% (FY2017 10-K); 2018 3.7%, 2019 3.4%, 2020 2.9% (FY2020 10-K); mean
+  **3.44%**. Like-for-like against 2025's 4.5%, the uplift is 1.06pt, not
+  the 1.55pt (4.8% domestic book yield vs an estimated 3.25%) the prior run
+  used. The prior's figure mixed two yield definitions. Total-company CR over
+  the same 2013–2020 span averaged ~94.7% (95.1, 93.8, 93.7, 94.3, 96.7,
+  95.3, 93.8, 94.9). That is the bull's best rebuttal ("underwriting is 4–5
+  points structurally better now"). The triangle undercuts it: those reported
+  CRs were themselves later revealed too low on the long-tail lines.
+- **FY2025's flat pretax income: the prior attribution is weakened.**
+  Current-AY cat losses were $336M (2025) vs $298M (2024) vs $195M (2023)
+  (FY2025 10-K). The 2025 step-up is only +$38M pretax, against a ~$150M
+  shortfall versus 2024's margin on 2025 revenue. So the January 2025
+  wildfire cat load the prior run named explains a quarter of it at most.
+  The earned yield also dipped (4.6% → 4.5%) and PYD swung adverse (+$20M
+  YoY). The remainder is unattributed (§6 #2).
+- **Short interest jumped ~150× with no filing behind it.** `stocks.db`
+  shortFloat ran 0.029% (2026-09-15) → 0.041% (2026-09-29) → **6.35%**
+  (2026-10-08; 15.46M shares, 7.36 days to cover), and the live statistics
+  page text reads the same 15.46M. Not a universe-wide vendor change: CB,
+  TRV, CINF, MKL, ORI, HIG and AAPL are unchanged across the same two
+  snapshots. Two readings. (a) The earlier ~0.03% values were the broken
+  ones: they are implausibly low against peers (CB 1.03%, TRV 2.98%, ORI
+  4.76%), and HIG shows the same suspiciously tiny 0.0096% today. (b) A
+  genuine position built around 2026-09-18, the quad-witching/rebalance day
+  WRB traded 20.3M shares (~10× normal). Neither anchor is the source as far
+  as filings show: an affiliate hedge or prepaid forward would be
+  Form-4-reportable for a >10% group, and none was filed. An exchange-sourced
+  cross-check (Nasdaq short-interest page) timed out. Cause UNKNOWN (§6 #3).
+  Not load-bearing: even at face value, 6% of float is ordinary for a P&C
+  name (ORI 4.8%).
+- **Industry pricing since the last call.** Marsh's Q2 2026 index
+  (published 2026-07-24): global commercial rates −6%, US composite −2%, US
+  casualty **+7%**. Marsh's Q3 2026 index is not out yet; a search returned
+  Q3 **2025** figures that must not be read as current (US casualty +3%,
+  excess +7% vs +16%). WRB's own Q2'26 rate ex-comp of +3.8% sits below
+  Marsh's US casualty average, consistent with management's framing of
+  trading rate for exposure where margins are strong, and also with a book
+  that is taking less rate than the market (carried, Q2 call).
+- **No new company statement.** The transcript index still holds 94 events,
+  newest Q2 2026 (2026-07-20). The Q3 call is 2026-10-19. The disclosure
+  cadence is unchanged.
+- **Earnings-estimate pattern** (broker tier): beat by $0.00–$0.02 through
+  2025, then $1.30 vs $1.14 (Q1'26) and $1.27 vs $1.09 (Q2'26). Q3'26
+  consensus has risen to $1.15 (from $1.12 a month ago); Q4 is $1.21. These
+  are operating EPS, not GAAP (Q2 GAAP diluted $1.15). The H1 run-rate
+  ($1.27–$1.30) still sits above consensus, so the near-term skew is
+  positive. That is the main reason p(beat SPY) is not lower.
+- **Options read (mandatory):** path 2 only (Robinhood stopgap). WRB is not
+  in the CBOE catalog and `data/options.db` holds no WRB history, so path 1
+  is structurally unavailable. Nov-20-2026 ATM 72.5, DTE 39, the first
+  expiry bracketing the 2026-10-19 print. Liquidity gate FAILS. §4 has the
+  table.
+- **Dead ends:** `composite.db` scores WRB at coverage 0.0 with no flags,
+  `in_portfolio = 1` (snapshot 104). No machine opinion to reconcile. The
+  probe CLI prints schema only and ad-hoc Python is not granted in this
+  slot, so live statistics *values* came from `stocks.db` (priceDate
+  2026-10-09). The TTM inputs are unchanged since Q2 regardless. XBRL
+  `companyconcept` for `PriorYearClaimsAndClaimsAdjustmentExpense` and
+  `...IncurredClaims2` returned 404 (WRB does not tag them). The R22 note
+  answered the sign question instead. Analyst consensus is Hold, mean
+  target $69.12, now $3.78 *below* the price.
+
+## 4. Valuation
+
+**Inputs.** Market cap $28,329,402,113 (388,606,339 shares × $72.90 official
+close). TTM revenue $14,896,102,000; net income $1,928,021,000; operating
+cash flow $3,602,896,000 with capex −$133,200,000, so levered FCF
+$3,469,696,000. Equity $9,843,081,000 (6/30/2026, now 3½ months stale; Q3
+retained earnings will lift it modestly, see the excess-return bullet). SBC
+$56,037,000 (0.38% of revenue), deducted in Run C only. Effective tax rate
+19.77%. All flows are levered and paired with **market cap**; net debt 0 by
+the pairing rule. The $3.90B cash is float-backing, not excess, so it is not
+netted. Minority interest is negligible; no NCI haircut. The share-basis
+caveat carries: on the cover-page 371.06M shares (grantor-trust shares
+excluded), P/B is 2.75 and the required ROE below is 18.41%, not 19.17%.
+
+**Hurdle:** rf 5.22% (DGS10, 2026-10-08) + beta 0.80 × ERP 3.70% (Damodaran
+implied ERP, trailing-12-month cash yield, as-of 2026-10-01, solved against
+his 5.29% T-bond rate) = **8.18%**. Beta is **floored** from the screened
+0.27 (float 62.7% of shares out, two vote-aligned anchors). Raw-beta hurdle:
+6.22%. **Terminal growth 2.33%**, the 10-year breakeven (T10YIE,
+2026-10-09).
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| A — all TTM net income distributable | $1,928.0M | 5% | 2.33% | 10.12% | +194bp |
+| B — current 20.2% ROE, retention charged (payout 75.2%) | $1,450.8M | 5% | 2.33% | 8.21% | **+3bp** |
+| C — raw levered FCF less SBC (float-inflated bound) | $3,413.7M | 4% | 2.33% | 15.49% | +731bp |
+| D — mid-cycle 16.3% ROE (forward 5.0% yield), retention charged | $1,112.3M | 5% | 2.33% | 6.85% | **−133bp** |
+| E — mid-cycle 14.9% ROE (trailing like-for-like yield), retention charged | $974.4M | 5% | 2.33% | 6.30% | **−188bp** |
+
+Run B is the honest headline: the price is exactly fair on today's 20% ROE
+held forever. D and E are the cycle sensitivity that decides the verdict.
+Versus last month at the same scenario labels: B went from +21bp to +3bp.
+The price rose 4.3% while the hurdle fell only 8bp (rf +27bp offset by ERP
+−44bp × 0.8).
+
+**Integrity checks.**
+
+- *Reinvestment / terminal ROE.* Runs A and C trip the tool's
+  growth-without-reinvestment warning and are bounds only. Runs B/D/E charge
+  retention = g/ROE. Their implied terminal ROEs are 9.41%, 7.60% and 6.94%
+  against the 8.18% hurdle: B assumes a modest surviving excess return, D and
+  E a mild terminal fade below the cost of equity. Damodaran's EVA base rate
+  (~29% of firms earn above their cost of capital) makes the fade the
+  default.
+- *The excess-return cross-check (the finding).* Required perpetual ROE =
+  g + P/B × (r − g) = 2.33% + 2.878 × (8.18% − 2.33%) = **19.17%**. A Q3
+  book build of ~$300M (my estimate: TTM-rate earnings less dividends, before
+  AOCI) would lower it to ~18.6%. Against it: ~12% 2010–2020 mean ROE (range
+  8.7%–15.0%, carried), plus the rate uplift on today's 3.47x investment
+  leverage ($34.2B / $9.84B). Like-for-like trailing: 1.06pt × $34.2B =
+  $362M pretax, ~$286M after 21%, +2.9pts, giving **~14.9%**. Forward (book
+  yield repricing to ~5.0% at today's 5.22% 10-year): 1.56pt, +4.3pts,
+  giving **~16.3%**. Shortfall: 2.9–4.3pts at today's book, 2.3–3.7pts after
+  the estimated Q3 build. The bull's remaining argument is structurally
+  better underwriting (CR ~90% vs a ~94.7% 2013–20 mean). Each CR point is
+  ~$126M pretax on $12.6B NPE, ~1.0pt of ROE, so the bull needs ~3–4 CR
+  points of *permanent* improvement to close the gap. The triangle says the
+  old CRs were understated, which makes the comparison look better than it
+  was, not worse. So it is not dismissable, but it is not banked either.
+- *Why the bull's Gordon arithmetic is inadmissible.* At 20% ROE and ~70%
+  payout, sustainable g ≈ 6% and justified P/B = (20 − 6)/(8.18 − 6) =
+  6.4x. That is the formula detonating as g → r. The breakeven cap on
+  terminal growth exists to stop exactly this.
+- *Base-year integrity.* Cash tax 19.77% vs ~23% normalized: a ~$80M base
+  headwind if it normalizes. Growth is organic; no acquisition charge. SBC
+  immaterial. Cat load: H1'26 benign; FY2025 $336M is the normal-year
+  anchor, and D/E subsume it.
+- *Market share.* 5% a year for five years takes revenue from $14.90B to
+  ~$19.0B, roughly 3% → 4% of US commercial P&C premium
+  (order-of-magnitude, carried, not re-pulled). The forecast fails on
+  margin, if it fails, not on size.
+- *Terminal risk (FY2025 10-K Item 1A).* Pricing cycle, long-tail reserve
+  estimation under social inflation, cat severity. A 2.33% terminal rate
+  survives: annual repricing lets nominal premium track nominal loss cost.
+  The triangle sharpens the *level* risk (book value), not the growth rate.
+  That is why it lives in condition 3 and the stress in §3, not in the
+  terminal rate.
+- *Distribution clamp.* D 6.85%, E 6.30%: inside Damodaran's 5.26%–9.88%
+  band, below the 7.79% US median. A below-median expected return on an
+  above-median business.
+
+**Options-implied move** — path 2 (Robinhood stopgap) only. Path 1 is
+unavailable (WRB not in the CBOE catalog; no `options.db` history).
+Nov-20-2026 expiry, strike 72.5, DTE 39. It brackets the 2026-10-19 AMC
+print plus ~4½ weeks of tape after it; the Oct-16 monthly expires before the
+print.
+
+| metric | value |
+|---|---|
+| spot | 72.90 |
+| expected absolute move (MEAN, not a ceiling) | 6.28% |
+| 1-sigma move | 7.87% |
+| ATM IV | 24.09% |
+| RV60 | 18.42% |
+| IV > RV60? | YES |
+| RV20 | 19.92% |
+| IV > RV20? | YES |
+
+Both windows YES: IV is "elevated" against realized, as it should be with a
+print inside the window. IV is essentially unchanged (23.7% on the Jan
+contract a month ago), while RV20 rose from 15.3% to 19.9% on the September
+slide and the October bounce.
+
+**Liquidity gate: FAILED → UNRELIABLE.** Call 2.40/2.90 around a 2.65 mark
+is an 18.9% spread; put 1.70/2.15 around 1.925 is 23.4%. Both are beyond
+max(10% of mark, 2 ticks). Same-day volume was 2 (call) and 0 (put) against
+open interest of 114 and 54. It may not move a verdict and does not.
+
+**Timing check: NOT APPLICABLE.** The thesis states no required move and no
+dated price claim.
+
+## 5. Falsifiers
+
+**For the pass (flip toward buy):**
+
+- **Shift —** the beta convention. Reject the 0.8 floor on argued grounds and
+  the hurdle is 6.22%, the required perpetual ROE ~13.5%, and both mid-cycle
+  estimates clear it. A method disagreement available today, not a pending
+  fact.
+- **Shift —** price. Below ~$60.50 (P/B 2.39 on the market's share basis)
+  the required ROE falls to 16.3% and Run D's mid-cycle clears the hurdle;
+  below ~$54.50, Run E's does. The 52-week low is $62.87 (2026-06-01).
+- **Shift —** proof the plateau is real: two to three quarters of CR near
+  90% with rate ex-comp re-accelerating and pretax margin above 16.5%. That
+  is ~3–4 points of CR improvement shown to be permanent, the amount §4 says
+  the bull needs.
+
+**For an owner (sell):**
+
+- **Break —** reserve story fails: other-liability or auto strengthening at
+  $100M+ in a quarter, or *net* PYD turning adverse beyond ~$150M a year
+  (~0.8% of reserves). That would mean the redundancies have stopped
+  covering the long tail, and the book value P/B is struck on is overstated.
+- **Break —** discipline fails: AY ex-cat CR sustained above 95% while NPW
+  keeps growing.
+- **Shift —** pricing: rate ex-comp goes negative, or earned rate falls
+  clearly below stated trend for two or more quarters. Revalue on Run E.
+- **Shift —** control: estate or family open-market selling, MSI moving off
+  15%, or a filing that explains the October short-interest jump as an
+  anchor-holder hedge.
+
+**Reopen trigger:** 2026-10-20: `wrb-q3-roe-ay-excat-rate-and-casualty-pyd-or-price-at-or-below-60-50`
+— the Q3'26 print (2026-10-19 AMC, company-verified) must show annualized
+ROE, current-AY ex-cat loss ratio, rate ex-comp and line-level PYD (other
+liability, auto, casualty reinsurance). Classification: shift (revalue, not
+exit). An owner holds through it.
+
+## 6. UNKNOWNs
+
+1. **PENDING 2026-10-19 — Q3'26 underwriting and reserve readings**
+   (condition 2; interim read on condition 3). The 8-K ex-99.1 and the call
+   carry them, and the 10-Q follows ~2026-11-05 with the development note.
+2. **UNKNOWN — the residual cause of FY2025's flat pretax income.** Cat
+   (+$38M), the earned yield dip and PYD (+$20M swing) explain under half.
+   The rest (realized gains, expense ratio, non-insurance) would come from
+   the FY2025 10-K MD&A, which truncates in WebFetch past 230k characters.
+   An R-page for the income-statement detail is the route next run. Does
+   not kill the thesis; bears on condition 1's "plateau vs peak" question.
+3. **UNKNOWN — cause of the 2026-10-08 short-interest jump** (0.04% → 6.35%
+   of float). FINRA's bi-monthly file would date it; `data/finra.db` is not
+   granted to this slot and the Nasdaq page timed out. Not load-bearing (§3).
+4. **UNKNOWN — loss-cost trend by line.** Management does not publish it, a
+   standing non-disclosure. The triangle's AY direction is the only proxy.
+5. **NOT OBTAINED (non-load-bearing) — the DEF 14A compensation metrics.**
+   ROE-linked pay points at condition 3's reserve question. Not pulled;
+   carried from the prior run. Does not bear on the base case, so it is not
+   a ledger count.
+6. **UNKNOWN — the founder's estate's liquidity needs** (17.37M sole-voting
+   shares, carried). No 13D/A, Form 144 or secondary filed through
+   2026-10-12.
+7. **UNKNOWN (option value, not a condition) — the California workers' comp
+   turn**, management's 129% AY citation, *possible* tier, upside only.
+
+## 7. Sources
+
+**Primary:** SEC EDGAR, CIK 11544. Full filing docket (owner forms
+included), newest entry 2026-09-03 SC 13G/A, nothing since. FY2025 10-K
+(0000011544-26-000005, filed 2026-02-27): Item 1 business/investment tables
+("percent earned" 2023–2025, net reserves $18,953,674K, cat losses
+2023–2025) and `R22.htm` reserve note (rollforward, line-level PYD
+narratives 2024–2025, other-liability and auto accident-year triangles,
+undiscounted reserves $19,374,076K). FY2020 10-K (0000011544-21-000013)
+and FY2017 10-K (0000011544-18-000012): "percent earned on average
+investments" 2013–2020, average investments, NII, total-company CR
+2013–2020. Company release: Q3 2026 earnings 2026-10-19 after close, call
+5:00pm ET (q4cdn IR PDF). Carried, not re-fetched: Q2'26 8-K ex-99.1 and
+10-Q figures, family and MS&AD 13D/As, XBRL revenue and pretax series.
+
+**stockanalysis.com (vetted exception):** `/stocks/WRB/statistics/` (probe
+schema plus the short-interest text, 15.46M shares) and
+`/stocks/WRB/transcripts/` (94 events, newest Q2 2026, 2026-07-20).
+
+**Broker/market microstructure** (admissible: no integrated official source
+covers these fields): Robinhood official close $72.90 (2026-10-12);
+eight-quarter estimate-vs-actual series and the verified 2026-10-19 PM
+date; option chain (expiries 10-16, 11-20, 2027-01-15, 2027-04-16) and
+Nov-20 72.5 call/put quotes (marks, IV 24.09%, OI, volume, spreads); daily
+split-adjusted bars 2026-06-04 → 2026-10-09 (the 10-12 bar was interpolated
+and replaced by the official close) for RV, including the 20.3M-share
+2026-09-18 session.
+
+**Reference data:** Damodaran home page, implied ERP 3.70% as-of
+2026-10-01 against his 5.29% T-bond. EVA base rate (~29%) and the US
+cost-of-capital distribution (median 7.79%, 5.26%–9.88%) from the anchors
+reference.
+
+**Point-in-time repo DBs:** `stocks.db` `v_latest` (priceDate 2026-10-09):
+market cap, P/E 14.80, P/B 2.84, beta 0.27, ROE 20.21% / 5y 19.55%, TTM
+revenue, net income, OCF, capex, FCF, equity, cash, debt, tax rate 19.77%,
+SBC, shares, float, buyback yield 1.11%, dividend yield 2.64%, ATR 1.36,
+52-week $62.87–$78.96, analyst Hold / $69.12 (18 analysts). `metrics`
+history 2026-09-15 → 2026-10-12 for WRB and peers' shortFloat. `fred.db`:
+DGS10 5.22% (2026-10-08), T10YIE 2.33% (2026-10-09). `earnings.db`: WRB
+2026-10-19, `scheduled` (edgar-estimate). `composite.db`: coverage 0.0, no
+flags, `in_portfolio = 1`, and the held-name list (snapshot 104).
+`options.db`: no WRB history. `portfolio.db` not read (no grant in this
+slot).
+
+**Low-confidence:** Marsh Global Insurance Market Index Q2 2026 via
+insurance-edge.net (2026-07-24) and the mis-dated Q3 2025 figures surfaced
+by search (named only to be excluded). Trade press on the MSI–family
+voting-alignment terms. Management's CA workers' comp 129% citation.
+
+## Kill-thesis record
+
+Ledger line restated: **FLAWED** — conditions=4 (2 probable, 2 plausible),
+refuted=1, unknown=0, pending=1, not_obtained=0; ownership PASS at $72.90.
+
+The attack ran against the bull case: that owning WRB at $72.90 beats SPY.
+Self-consistency check first: the bull needs a ~19% perpetual ROE, 5%
+growth, *and* a 0.27-beta risk profile at once. High return, growth and low
+risk together is the strained trio. The excess return the moat claim asserts
+is exactly what the eight-quarter softening in global commercial rates
+(Marsh) is competing away.
+
+1. **Mid-cycle ROE ≥ ~19.2% — REFUTED (at the 0.8 beta floor).** The
+   required perpetual ROE is 19.17% (18.41% on the cover-page share basis;
+   ~18.6% after an estimated Q3 book build). The bull's best rebuttal, rates,
+   is now priced on pulled data: 3.44% 2013–2020 earned yield vs 4.5% today
+   gives ~14.9%, and repricing to 5.0% gives ~16.3%. Both fall short on every
+   share basis. The second rebuttal, structurally better underwriting, needs
+   3–4 permanent CR points. The triangle shows the soft-market CRs it would
+   compare against were themselves understated in real time, so today's 90%
+   is an unseasoned reading of the same kind. Does not survive at raw beta
+   (required ROE 13.5%). The dependency is stated in §1.
+2. **Underwriting discipline — PENDING 2026-10-19.** What bears today:
+   Q2'26 CR 90.0%, AY ex-cat 88.1%, voluntary shrinking in reinsurance. Stands
+   for the condition. Against it, decelerating rate (+3.8% ex-comp, below
+   Marsh's +7% US casualty) earning in over 12–18 months. Not refuted by
+   today's evidence, not credited.
+3. **Total reserve adequacy — SURVIVED (at *plausible*).** Attacked with the
+   triangle this run obtained. Net PYD ≤0.2% of reserves in each of
+   2023–2025 stands for the aggregate condition. The attack that nearly
+   landed: the condition holds only because favourable comp, property and
+   professional releases cover long-tail adverse. Comp and property are
+   precisely the lines now pricing soft, so the cover shrinks just as
+   hard-market AY2022 other liability (+4.2%) and AY2021–23 auto (+8.1%)
+   begin to drift. A +10% move on AY2022–25 other liability is ~7% of book.
+   Survives at plausible, because no evidence yet shows the net turning.
+4. **Capital-return and governance unchanged — SURVIVED (at *probable*).**
+   Attacked on estate liquidity and the unexplained 150× short-interest jump.
+   EDGAR carries nothing since 2026-09-03. An anchor-holder hedge would be
+   Form-4-reportable, and none exists. The earlier sub-0.05% short readings
+   look like the broken values against peers. Real, modest evidence.
+
+Standing checks. **Base rate:** ~29% of firms earn above their cost of
+capital (Damodaran EVA). The bull needs a ~11-point perpetual excess, quoted
+before crediting the franchise. **Short case (strongest form):** a cyclical
+at 2.88x book and 14.8x near-peak earnings, priced for its peak ROE forever,
+eight quarters into a global commercial rate decline. Its reported
+profitability rests on short-tail releases covering long-tail casualty that
+has developed adverse every year since at least 2024. Its last full year
+showed pretax going flat on 7.8% revenue growth, with the cat explanation
+covering a quarter of the gap. The sell-side mean target sits 5% below the
+price, and ~40% of the vote is price-insensitive. **Management incentives:**
+family ownership is genuine alignment. ROE-linked compensation, unread, would
+point at reserve releases (§6 #5). **Disconfirming search:** run against
+the bull, it found the like-for-like yield (smaller uplift), the line-level
+triangle drift, and the weak cat attribution. The one piece for the bull was
+the aggregate PYD. **Moat as mechanism:** multi-line diversification plus
+unit-level authority is a mechanism that absorbed a ~20% soft-market miss on
+its largest casualty line without a visible charge. It does not defend
+against industry-wide soft pricing, and §4 prices that limit.
+
+Statistical checks: **not applicable**. No condition rests on a backtest, a
+screen or a repo signal (composite coverage 0.0).
+
+Options timing check: **NOT APPLICABLE**. No dated price claim. Coverage
+disclosed: path 2 stopgap only, Nov-20-2026 ATM at DTE 39, liquidity gate
+FAILED (spreads 18.9% and 23.4% of mark; volume 2 and 0) → UNRELIABLE.
+
+**Closest attack:** against the *pass*, the near-term earnings skew (Q3
+consensus $1.15 vs an H1 run-rate of $1.27–$1.30 after two large beats)
+plus the beta-floor dependency. A third large beat re-rates the name before
+§4's slow arithmetic is tested.
+
+**Flip evidence:** toward SOUND, reject the 0.8 floor on argued grounds, or
+see price at or below ~$60.50, or see two to three quarters of CR near 90%
+with re-accelerating rate that make ~3–4 CR points of improvement look
+permanent. Toward more-flawed, a Q3 print with $100M-scale casualty
+strengthening or net PYD adverse beyond the ~$35M annual run-rate. That
+would attack condition 3 and the book value under P/B at the same time.
+
+**p(beat SPY, 63 td): 0.41** — written before re-reading §1's number.

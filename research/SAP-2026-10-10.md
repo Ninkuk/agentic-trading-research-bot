@@ -1,0 +1,517 @@
+# SAP — SAP SE — 2026-10-10
+
+Price $214.83 (official close, 2026-10-09) · market cap $241.35B · next
+earnings 2026-10-21 (AMC)
+
+Entry path: unattended scheduled run. Supersedes `research/SAP-2026-09-07.md`
+(PASS at $215.11, kill-thesis UNPROVEN). That thesis's reopen trigger
+(2026-10-21 print, or price ≤ ~$187) has **not** fired — the print is eleven
+days out and the price is unchanged — so this is a fresh run, not a reopen;
+§0 is omitted and the prior falsifiers are swept in §3. Judgment call, stated:
+with no new company disclosure since the prior run, this document re-prices
+the same business against a new rate environment rather than re-deriving it.
+
+## 1. Verdict and thesis
+
+**PASS at $214.83.** kill-thesis: **FLAWED** — conditions=5 (2 probable,
+3 plausible), refuted=1, unknown=1, pending=1, not_obtained=0.
+
+**p(beat SPY, 63 td): 0.43** · kill-thesis: 0.42
+
+**Disputed expectation:** at $241.35B the market is paying 23.8× forward
+earnings and a 3.70% SBC-adjusted FCF yield for SAP to compound free cash
+flow ~10%/yr for five years and 2.33% forever — a path that returns 7.62%/yr
+against a 9.12% cost of equity that rose 36bp in five weeks because the
+10-year Treasury did. What revises it is the Oct 21 Q3 print (CCB cc at or
+above 26% with the ~€10B FY26 FCF guide raised and the 2027 acceleration
+guide reaffirmed), or a price near $178 that lets the consensus path clear.
+
+The business is the one the July and September theses described, and nothing
+the company has said since contradicts them. What moved is the hurdle. SAP's
+price went $215.11 → $214.83 in five weeks; the 10-year Treasury went 4.77% →
+5.22% while the 10-year breakeven went 2.35% → 2.33% — a real-rate move of
+~47bp, which is exactly the input a long-duration, low-yield equity is most
+exposed to. The September PASS rested on a −74bp spread; the same base path
+now sits at −149bp, and no growth path in the table clears the hurdle, not
+even under the most generous combination of inputs available (−36bp). A good
+business at a price that already discounts more than the consensus path.
+
+**Closest attack:** the hurdle-construction attack. Swap the strict
+operations-weighted country ERP (4.87%, the anchors reference's one-vintage
+rule) for Damodaran's US headline (4.20%, Oct 1 2026), use the prior run's
+higher FCF base ($9.247B — the stockanalysis TTM `fcf` line moved −3.3%
+between snapshots with no new report), and grant the consensus-tracking
+growth path: 8.22% against 8.58%, **−36bp**. Every concession available at
+once still does not clear the bar. It shrinks "expensive" to "fully priced";
+it does not reach "owned."
+
+Load-bearing conditions of the bull case (owning SAP at $214.83 beats SPY):
+
+1. **The moat holds.** Re-implementing a core ERP is a multi-year rebuild of
+   every process, integration and control, with the risk of not being able
+   to close the books. *probable* — decades of 20%+ maintenance paid in
+   preference to switching; Q2 CCB 26% cc; Klein at Goldman (2026-09-08):
+   "60% of our installed base is not yet in the cloud."
+2. **The margin envelope keeps expanding.** TTM operating margin 28.8% vs
+   FY25's 26.1%. *probable* — FY25 operating income €9.617B on €36.8B
+   (20-F, audited); TTM above it; FY26 non-IFRS operating-profit guide
+   €11.8–12.2B, trimmed €0.1B in July for Dremio/Prior Labs dilution only.
+3. **~10%/yr FCF growth for five years.** *plausible* — cloud +24% cc
+   against an −8% maintenance runoff; total revenue only +6.4% trailing.
+   The Q3 statement of 2026-10-21 quantifies the guided CCB deceleration and
+   restates the ~€10B FY26 FCF guide.
+4. **Terminal growth of 2.33% survives AI build-vs-buy.** *plausible* — a
+   reasoned argument (the ledger survives even if the seat layer does) with
+   no dated disclosure that settles it; the 20-F Item 1A Innovation factor
+   concedes customers "may leverage AI to produce their own solutions."
+5. **The price clears the hurdle on the stated path.** *plausible* — the
+   condition the rate input hides. Attacked today in §4: it fails on every
+   row, including consensus (−109bp) and the most generous combination
+   (−36bp).
+
+**Dominant shared risk factor:** long-duration equity repriced by rising
+real rates (10-year real yield +47bp in five weeks) compounding with AI-agent
+displacement of enterprise application seat-and-suite spend — holdings
+unavailable in this session. (`data/composite.db` marks SAP `in_portfolio`=1;
+the book itself could not be read.)
+
+## 2. Business
+
+Unchanged from `research/SAP-2026-09-07.md` §2 — Created (a single auditable
+system of record across 130+ statutory jurisdictions), Captured (Cloud ERP
+Suite subscriptions ~€5.5B/qtr +27% cc; a declining ~€2.4B/qtr maintenance
+annuity; ~€1.0B/qtr services; RISE reprices maintenance into subscriptions at
+an uplift), Protected (switching cost as a priced mechanism, which protects
+the ledger but not the seat-and-module pricing above it). Deltas from the
+2026-09-08 Goldman Sachs Communacopia appearance (CEO Christian Klein):
+
+**Created — delta:** 200 of a planned 400 AI agents shipped in September,
+framed as "complex business challenges, not the low-hanging fruit"; model-
+agnostic ("we can switch the model within a day"). Joule Work has 150 pilot
+customers and 80,000 internal users. No revenue figure for any of it.
+
+**Captured — delta:** Klein reiterated the "30% consumption revenue by end of
+decade" target and dismissed cloud-gross-margin concern ("I have no concerns
+that the cost margin will see not a healthy development"), citing model
+switching — Mistral "cut the cost by five" versus some frontier models.
+
+**Protected — delta:** the ECC runway is now partially quantified for the
+first time in this ledger: 60% of the installed base is not yet in the cloud.
+Klein also said the 2030 end of extended maintenance is "not even the
+dominating factor" — management is distancing the migration case from the
+deadline, which matters because a deadline-driven conversion wave ends at the
+deadline and a value-driven one does not. That framing is unverified.
+
+**Control:** one share class, one vote per share, no controlling holder;
+institutions ~41.3% and insiders ~5.4% of the register (`data/stocks.db`).
+German SE with co-determination — a constraint on restructuring speed, not on
+capital allocation. Nothing structural forecloses an unsolicited approach;
+size does. Foreign private issuer: no Forms 3/4.
+
+**Operating leverage (Phase 0): positive — since 2024 only.** Audited 20-F
+(IFRS, €B):
+
+| FY | revenue | operating income | op margin |
+|---|---|---|---|
+| 2019 | 27.553 | 4.473 | 16.2% |
+| 2020 | 27.338 | 6.623 | 24.2% |
+| 2021 | 26.953 | 6.308 | 23.4% |
+| 2022 | 29.520 | 5.914 | 20.0% |
+| 2023 | 31.207 | 5.799 | 18.6% |
+| 2024 | 34.176 | 4.665 | 13.7% |
+| 2025 | 36.800 | 9.617 | 26.1% |
+
+2019→2024: revenue +24.0%, operating income +4.3%. FY25 +106% off a
+restructuring-depressed base; TTM margin 28.8% (USD-converted, stockanalysis).
+Two years of positive leverage after six flat-to-negative.
+
+## 3. Threads pulled
+
+- **The rate move is the whole change.** DGS10 (`data/fred.db`): 4.78%
+  (2026-09-04) → 5.22% (2026-10-08), peaking 5.31% on 2026-10-05; T10YIE
+  2.35% → 2.33%. Damodaran's month-start T-bond rate went 4.75% → 5.29% and
+  his implied ERP 4.14% → 4.20% (Sep 1 → Oct 1). With beta clamped at 0.8
+  the hurdle moves ~1:1 with the risk-free rate: 8.41% → 9.12% on the strict
+  construction (+71bp, of which +45bp is the rate and +26bp is this run
+  applying the anchors reference's one-vintage rule that the September run
+  deliberately relaxed — both stated, not blended).
+
+- **The price did nothing; the cohort derated around it.** SAP −1.3% over one
+  month; CRM −12.1%, ORCL −14.5%, INTU −8.7%, ADBE −9.6%, WDAY −4.1%, NOW
+  −1.1%; MSFT +4.6%, ACN +11.6% (`data/stocks.db`, 2026-10-08). Forward P/E
+  is now 23.8× against CRM 15.5, WDAY 15.6, ORCL 15.9, IBM 17.7, ACN 14.2,
+  INTU 12.7, ADBE 9.0; only NOW (30.8) and MSFT (26.4) are higher. SAP held
+  its premium while the group gave ground. One-date cross-section, no null —
+  descriptive colour, not a significance claim.
+
+- **Forward earnings did not move.** $212.40 / 23.78 = $8.93 forward EPS
+  versus $8.94 at the September run. Q3 consensus EPS $2.04 (+10.3% y/y),
+  revenue $11.54B (+9.4%) (`data/stocks.db`). Nothing earnings-relevant
+  arrived; that is consistent with the disclosure silence below.
+
+- **Disclosure since the prior run.** EDGAR: one S-8 (2026-08-24, employee
+  plan registration — not material) and no 6-K since 2026-07-28. Transcript
+  corpus: one new event, the 2026-09-08 Goldman Sachs Communacopia appearance
+  (deltas in §2). No Q3 trading comment was given there. A dated web sweep
+  found only pre-print quiet-period colour. Silence since the call is the
+  reading.
+
+- **Klein's "not even the dominating factor" line is a thread, not a
+  finding.** If ECC conversions are deadline-pulled, Cloud ERP growth decays
+  into 2030 and the 10%/yr FCF path is front-loaded and fragile; if they are
+  value-pulled, the runway outlasts the deadline. The 60% not-yet-migrated
+  figure supports the runway's size, not its motive. Could not be settled
+  from any disclosure; recorded in §6.
+
+- **The base FCF line moved without a report.** stockanalysis TTM `fcf` was
+  $10.140B on the September snapshot and is $9.805B now (`adjustedFCF`
+  $9.247B → $8.942B), while net income ($8.907B) and SBC ($0.879B) are
+  byte-identical — consistent with a EUR→USD reconversion of the cash-flow
+  lines only. Not resolved. Both bases are run in §4; the higher one is the
+  generous row, so the choice cannot flip the verdict.
+
+- **Share count discrepancy.** stockanalysis `marketCap` ($238.62B at
+  $212.40) implies 1,123.45M shares; its `sharesOut` field says 1,154.2M
+  (−0.8% y/y). This run uses the lower implied count ($241.35B at $214.83),
+  which raises the implied return — conservative against this document's
+  PASS. On 1,154.2M shares the cap would be $247.96B and every spread ~10bp
+  worse.
+
+- **Prior-thesis falsifier sweep.**
+
+  | prior falsifier | actual | status |
+  |---|---|---|
+  | price ≤ ~$187 (flip toward buy) | $214.83 | NOT TRIGGERED |
+  | Q3 CCB ≥26% cc + FCF guide raised + 2027 guide reaffirmed | print 2026-10-21 | NOT TRIGGERED |
+  | forward multiple < ~21× at unchanged price | 23.8× | NOT TRIGGERED |
+  | CCB cc < 20% two quarters ex-M&A | Q2 26%; Klein restated it 2026-09-08 | NOT TRIGGERED |
+  | 2027 acceleration guide withdrawn | not discussed at Goldman; not withdrawn | NOT TRIGGERED |
+  | cloud gross margin −2pp y/y cc | no disclosure; CEO dismissed concern | NOT TRIGGERED |
+  | support decline outrunning cloud capture | no disclosure | NOT TRIGGERED |
+
+  The price trigger moved *further away* in substance even though the price
+  did not: at today's hurdle the base path clears at ~$166, not ~$187.
+
+- **Minority interests, pension, net cash.** Unchanged: NCI ~1.8% of net
+  income, no haircut; net cash $1.93B is 0.8% of cap, immaterial.
+
+- **Asset-light claim stands** — capex $826M on $43.6B revenue (1.9%); 20-F
+  Note D.8 purchase obligations (€8.64B) are hyperscaler capacity behind an
+  already-contracted backlog. Carried forward, not re-read.
+
+- **Options read (mandatory):** path 2 only (Robinhood stopgap — SAP is not
+  in the 24-symbol CBOE catalog, so path 1 is structurally unavailable). Nov
+  20 2026 monthly, 41 DTE, brackets the Oct 21 AMC print; the liquidity gate
+  passed this time (the September weekly failed it). Table in §4.
+
+- **Dead ends:** `data/sec_fundamentals.db` has no SAP row (20-F filer);
+  `data/earnings.db` has no SAP row (US-universe monitor; the date came from
+  `data/stocks.db` and Robinhood); `data/composite.db` scores SAP 0 at
+  coverage 0.0 over the last three snapshots — no opinion, as expected for a
+  mega-cap in a microcap-dislocation scanner. No insider Forms 3/4 exist.
+  The statistics probe CLI prints a schema, not row values, and an ad-hoc
+  decoder script was not permitted in this slot, so the `data/stocks.db`
+  snapshot of 2026-10-09T11:00Z (same stockanalysis source, ~1 day old)
+  supplied the statistics figures, rolled to the live Robinhood close.
+  None of these ruled anything out.
+
+## 4. Valuation
+
+**Inputs.** Levered TTM FCF paired with **market cap**; net debt 0 by the
+pairing rule (`fcf` = NCFO + capex, NCFO post-interest). Market cap
+**$241,350,000,000** = stockanalysis $238,620,833,218 at $212.40 rolled to the
+$214.83 official close (1,123.45M implied shares; see §3). Base FCF
+**$8,941,668,557** = stockanalysis `adjustedFCF` (`fcf` $9,805,397,124 less
+equity-settled SBC, internally FX-consistent; SBC 2.01% of revenue). Base
+earnings $8,906,660,570 (TTM net income). No NCI haircut, no cash adjustment.
+USD figures, converted by stockanalysis from EUR financials.
+
+**Hurdle.** `rf 5.22% + beta 0.8 × ERP 4.87% = 9.12%`. Risk-free: DGS10
+2026-10-08 (`data/fred.db`). Beta clamped up from 0.758 to the 0.8 floor —
+works against this document's PASS, stated. ERP: operations-weighted country
+ERP (EMEA 46% / Americas 39% / APJ 15%) from Damodaran's country table, Last
+updated Jan 5 2026 (Germany 4.23%, US 4.46%, UK/France 5.01%, Japan/China
+5.14%, India 7.08%, Brazil 7.47%) = 4.87%, single vintage per the anchors
+reference. Generous alternative shown in the table: US headline implied ERP
+**4.20% (Oct 1, 2026)** against his T-bond rate 5.29% → hurdle **8.58%**.
+
+**Terminal growth ceiling.** T10YIE = **2.33% at 2026-10-09**; used as the
+terminal rate except where stressed lower.
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| Consensus-tracking (3y EPS +16.7%, 3y rev +11.0%) | $8.942B | 15/14/12/10/8% | 2.33% | 8.03% | −109bp |
+| Guided year-1 (~€10B FY26 FCF) | $8.942B | 15/11/10/9/8% | 2.33% | 7.76% | −136bp |
+| **Base** | $8.942B | 12/11/10/9/8% | 2.33% | **7.62%** | **−149bp** |
+| Conservative | $8.942B | 8/8/6/6/5% | 2.00% | 6.64% | −248bp |
+| AI-stress | $8.942B | 6/4/2/0/0% | 0.00% | 4.15% | −497bp |
+| Most generous (prior FCF base, consensus path, headline ERP) | $9.247B | 15/14/12/10/8% | 2.33% | 8.22% | −36bp vs 8.58% |
+| *Clearing — consensus path at $178.02 (−17.1%)* | $8.942B | 15/14/12/10/8% | 2.33% | 9.17% | +6bp |
+| *Clearing — base path at $165.56 (−22.9%)* | $8.942B | 12/11/10/9/8% | 2.33% | 9.15% | +3bp |
+
+The spread is the finding: **no row clears, and the most generous
+construction available misses by 36bp.** Against the headline hurdle alone
+(8.58%) the base path is −96bp and consensus −55bp. Decomposing the base
+path's move from September's −74bp to −149bp: the hurdle rose 71bp (45bp
+rate, 26bp the strict ERP rule) and the implied return fell only 5bp (the
+SBC-adjusted FCF yield went 3.72% → 3.70%: the lower FCF base and the lower
+share count nearly offset). It is the hurdle, not the business.
+
+**Integrity checks.**
+
+- *Reinvestment / terminal-ROE warning fired* (`terminal_reinvestment_rate:
+  −0.0039`; base FCF ≥ base earnings). Answered by construction: terminal
+  growth equals the 10-year breakeven, so the perpetuity claims zero real
+  growth and needs no reinvestment. The explicit-period 10%/yr, by contrast,
+  *is* growth without visible reinvestment — legitimate only because SAP
+  expenses its reinvestment through R&D (18.0% of revenue), which the
+  levered FCF already nets out. Any terminal rate above 2.33% would need a
+  reinvestment story this document does not give.
+- *Market-share sentence.* The base path compounds revenue ~8–9%/yr, taking
+  $43.6B TTM to roughly $64–67B by 2031 — under ~10% of enterprise
+  application software spend. No "bigger than the market" failure. TAM
+  figures low-confidence.
+- *Terminal risk from Item 1A.* The Innovation factor ("customers may
+  leverage AI to produce their own solutions"). 2.33% survives it only if the
+  ledger persists as a repriced annuity while the application layer
+  commoditizes; if the ledger itself is displaced, the AI-stress row (4.15%)
+  is the bound.
+- *Excess-return base rate.* ~29% of firms earn above their cost of capital.
+  SAP is inside that group today (ROIC 18.2% vs stockanalysis WACC 8.18%);
+  the terminal assumption fades it rather than extrapolating it.
+- *Cash tax rate* 28.2% — German statutory blend, no NOL flattery.
+- *Serial-acquirer check.* Reltio <1pp of CCB growth; Dremio/Prior Labs
+  negligible revenue, ~€100M+ H2 dilution. Paths are organic.
+- *Distribution clamp.* 7.62% sits just below Damodaran's US median cost of
+  capital (7.79%) and inside the 5.26–9.88% 80% band (Data Update 5, 2026) —
+  not an automatic pass, but now 150bp below a hurdle that is itself in the
+  upper half of that band because the risk-free rate is.
+- *Absolute companion.* rf + 4.5% = 9.72%; every row fails it by ≥169bp.
+
+**Options-implied move** (path 2 — Robinhood stopgap; path 1 unavailable,
+SAP not in the CBOE catalog). Nov 20 2026 monthly expiry, **41 DTE**,
+brackets the Oct 21 AMC print. Nearest strike to the $214.83 spot is $210
+(2.2% ITM call — nearest-strike approximation, footnoted; no ex-dividend in
+the window). Marks call 14.45 / put 8.95; IV the mean of 40.14% and 41.15%.
+The dated claim tested is this document's own clearing price: $165.56, a
+22.93% decline, by expiry.
+
+| metric | value |
+|---|---|
+| spot | 214.83 |
+| dte (calendar days) | 41 |
+| ATM IV | 40.64% |
+| expected absolute move (MEAN, not a ceiling) | 10.89% |
+| 1-sigma move | 13.62% |
+| RV60 | 38.63% |
+| IV > RV60? | YES |
+| RV20 | 25.22% |
+| IV > RV20? | YES |
+| thesis requires | 22.93% |
+| that is | 1.52 sigma |
+| P(\|move\| ≥ required) | 12.963038% |
+| refutes timing claim (> 2 sigma)? | NO |
+
+**Liquidity gate: PASSED (approximate).** Spreads $13.80/$15.10 (9.0% of the
+call's mark) and $8.70/$9.20 (5.6% of the put's) are inside the 10%-of-mark
+gate. Same-day volume 18/21 is under 100, so the OI floor governs: OI 91/442
+against 25% of the median OI across the four quoted contracts ($210/$220
+calls and puts, median ~320 → floor ~80) — the call clears by 11 contracts.
+The median was taken over four strikes, not the full ladder; read the pass as
+marginal.
+
+Timing check applicability: applied, and did **not** refute — 1.52σ is
+between one and two sigma, so the market is merely less pessimistic than the
+clearing price requires; that is not evidence for the PASS or against it.
+Both windows read IV > RV; RV60 still spans the July 23 crash-and-rebound,
+and RV20 (25.2%) shows how quiet the stock has been since — the ~15-point
+IV premium over RV20 is the Q3 print being priced. ATM IV 40.64% < 50%, so
+implied returns keep their decimals; ±1pp is the honest width.
+
+## 5. Falsifiers
+
+**For the pass (flip toward buy):**
+
+- **Shift —** price at or below **~$178** with the thesis otherwise intact:
+  the consensus-tracking path clears the 9.12% hurdle there; the base path
+  needs ~$166.
+- **Shift —** Q3 (2026-10-21) prints CCB cc at or above 26%, raises the
+  ~€10B FY26 FCF guide, and reaffirms the 2027 revenue-acceleration guide —
+  the combination that makes the consensus path the base rather than the
+  stretch.
+- **Shift —** DGS10 back to ~4.8% with price unchanged: that alone returns
+  the hurdle to ~8.7% and the consensus path to within ~65bp (rate is a §4
+  input, not a condition — this is a revaluation, not a story change).
+
+**For an owner (sell):**
+
+- **Break —** CCB cc growth below 20% for two consecutive quarters, ex-M&A.
+- **Break —** the 2027 total-revenue acceleration guide is withdrawn.
+- **Shift —** cloud gross margin down ≥2pp y/y cc and sustained — inference
+  and sovereign-cloud cost as structural COGS, contradicting Klein's
+  2026-09-08 framing.
+- **Shift —** support revenue decline accelerating without matching cloud
+  capture (third-party maintenance winning defectors).
+
+**Reopen trigger:** 2026-10-21:
+`sap-q3-ccb-fy26-fcf-guide-2027-accel-or-price-at-or-below-178`
+
+## 6. UNKNOWNs
+
+1. **PENDING 2026-10-21 — magnitude of the guided CCB deceleration.**
+   Management guided CCB cc to "slightly decelerate" from 2025's 25% and has
+   not quantified it; Klein did not update it at Goldman. Sets the five-year
+   growth path in §4. Two-sided. Its absence does not kill the PASS: even the
+   consensus path fails by 109bp.
+2. **UNKNOWN — AI-agent displacement of the application layer.** Unverifiable
+   by construction; bounded below by the AI-stress row. Load-bearing for
+   condition 4.
+3. **UNKNOWN — deadline-pulled vs value-pulled migration.** 60% of the
+   installed base is not yet in the cloud (Klein, 2026-09-08), but the share
+   that migrates *because of* the 2030 end of extended maintenance is not
+   disclosed anywhere. Caps conviction on the runway after 2030; does not
+   kill either direction.
+4. **UNKNOWN — AI-specific revenue.** Not disclosed; agent counts and Joule
+   Work user counts are adoption, not revenue.
+5. **NOT OBTAINED — the cause of the −3.3% move in the stockanalysis TTM
+   `fcf` line** between the 2026-09-07 and 2026-10-09 snapshots with no new
+   report. Would come from re-deriving TTM FCF from the H1 2026 6-K in EUR.
+   Not load-bearing: the higher base is run as the generous row and still
+   fails.
+6. **NOT OBTAINED — share count.** 1,123.45M (implied by `marketCap`) vs
+   1,154.2M (`sharesOut`); would come from the Q2 statement's share data.
+   The lower figure is used, conservative against the PASS; not load-bearing.
+7. **NOT OBTAINED — current management compensation plan** (20-F
+   remuneration report). Relevant because CCB, the bull case's headline
+   metric, is a bookings measure management defines. Not load-bearing for a
+   valuation-driven PASS.
+8. **NOT OBTAINED — news feed.** `get_equity_news` is not granted to this
+   slot, and an FPI can disclose under MAR Art. 17 without a 6-K. Mitigated
+   by flat forward EPS ($8.94 → $8.93) and the Goldman transcript.
+
+## 7. Sources
+
+**Primary:** SEC EDGAR filing index, CIK 0001000184 (S-8 2026-08-24,
+0001104659-26-100300; latest 6-K 2026-07-28, 0001104659-26-087251); FY2025
+20-F (0001104659-26-020058) — Item 1A Innovation risk factor, Note D.8;
+FY2019–FY2025 audited revenue and operating income via the SEC XBRL
+`companyconcept` API (carried from the 2026-09-07 run); Goldman Sachs
+Communacopia + Technology conference, 2026-09-08 (Christian Klein),
+transcript via stockanalysis `/quote/etr/SAP/transcripts/` (Quartr —
+primary-transcribed); Q2 2026 statement and call (2026-07-23), figures
+carried forward and labelled as such.
+
+**stockanalysis.com (vetted exception):** `/stocks/SAP/statistics/` (route
+and trust stamp read live; values via the `data/stocks.db` snapshot below);
+`/quote/etr/SAP/transcripts/` corpus listing (138 events, `lastUpdated`
+2026-09-08).
+
+**Broker/market microstructure:** Robinhood MCP — admissible because no
+integrated official source covers these fields for SAP: official close
+$214.83 (2026-10-09) and $212.40 (2026-10-08); trailing-8-quarter EPS
+estimate vs actual (five beats, the Q2 2026 USD "miss" $1.85 vs $2.01, a
+currency/definition artifact per the July run; Q3 est $2.04 on 2026-10-21);
+Nov 20 2026 option chain, $210/$220 quotes, IV, OI, volume; daily bars
+2026-06-02 → 2026-10-09 for realized vol. `get_equity_news` not granted.
+
+**Reference data:** Damodaran implied ERP 4.20% (Oct 1, 2026) against T-bond
+5.29%; country ERP table, Last updated Jan 5, 2026; US median cost of capital
+7.79%, 80% band 5.26–9.88% (Data Update 5, 2026); EVA excess-return base rate
+~29%.
+
+**Point-in-time repo DBs:** (read-only) `data/stocks.db` snapshot
+2026-10-09T11:00Z — market cap, FCF, adjustedFCF, SBC, net income, margins,
+beta 0.758, forward P/E 23.78, peer forward multiples and one-month moves,
+Q3 consensus; `data/fred.db` — DGS10 5.22% (2026-10-08), T10YIE 2.33%
+(2026-10-09); `data/composite.db` — SAP score 0, coverage 0.0,
+`in_portfolio` 1. `data/sec_fundamentals.db` and `data/earnings.db`: no SAP
+row. `data/portfolio.db` not granted to this slot.
+
+**Low-confidence:** web colour (earningswhispers implied ±7.21% print move;
+trading-treff.de "Ruhephase vor den Zahlen"; ground.news on the July profit
+trim); consensus PT $257.33 across 16 analysts (stockanalysis aggregate);
+TAM statistics.
+
+## Kill-thesis record
+
+**Kill-thesis verdict: FLAWED** — 5 load-bearing conditions, 1 refuted, 1
+unknown, 1 pending, 0 not obtained.
+
+The object attacked is the bull case — owning SAP at $214.83 beats SPY over
+the horizon. The September run adjudicated the PASS's own claims; this run
+follows the current rule and attacks §1's bull-case list, which is why the
+label moves from UNPROVEN to FLAWED with no change in the business.
+
+**Per-condition adjudication:**
+
+1. *The moat holds.* **SURVIVED** (probable). Attacked via the agent layer:
+   if agents mediate access to the ledger, the seat price erodes — but that
+   attack lands on condition 4's terminal economics, not on the switching
+   cost, which Klein's 60%-not-migrated figure and 26% Q2 CCB both
+   corroborate.
+2. *Margin envelope keeps expanding.* **SURVIVED** (probable). Attacked via
+   the July €0.1B profit-guide trim and Q2 token costs; the trim was
+   attributed entirely to acquisitions, TTM margin (28.8%) still exceeds
+   FY25 (26.1%), and the CEO publicly dismissed cloud-margin concern on
+   2026-09-08 — a statement that is now itself a falsifiable claim.
+3. *~10%/yr FCF growth for five years.* **PENDING 2026-10-21.** Attacked
+   with the trend: blended revenue +6.4% and a guided CCB deceleration.
+   Against it nothing decisive exists today — the ~€10B FY26 FCF guide
+   implies ~15% year-1 — so it is not refuted; Q3 quantifies it.
+4. *Terminal 2.33% survives AI build-vs-buy.* **UNKNOWN.** No filing, past
+   or future, settles it; the 20-F concedes the risk in Item 1A. Route run:
+   none exists for a forecast about customer behaviour a decade out.
+5. *The price clears the hurdle on the stated path.* **REFUTED.** At 9.12%
+   every row fails, the consensus path by 109bp. Every concession granted at
+   once — headline ERP, the higher prior FCF base, consensus growth — leaves
+   −36bp. Internal-consistency attack also lands: high growth (10%/yr) with
+   FCF ≥ earnings is growth without visible reinvestment, defensible only
+   via expensed R&D, which means the path already embeds a generous
+   reading. Repairable, not dead: by price (~$178 consensus, ~$166 base), by
+   Q3, or by the rate.
+
+**Standing checks.** *Base rate:* ~29% of firms out-earn their cost of
+capital; single large caps beat a cap-weighted index over a quarter roughly
+45–47% of the time. *Short case (strongest form):* a maintenance-annuity
+harvester priced as a cloud grower — 6.4% blended growth at 23.8× forward,
+a premium the whole cohort surrendered this month while SAP held it; a
+2019–2024 record of revenue +24% against operating income +4%; a CEO now
+distancing migration from the 2030 deadline, which is what one says when
+deadline-pulled conversions are expected to thin; and a duration-heavy
+3.7% FCF yield facing a 5.2% Treasury. *Management incentives:* comp leans
+on cloud revenue, CCB and non-IFRS operating profit; CCB is a bookings
+metric RISE conversions inflate (plan not re-read — §6.7). *Disconfirming
+search:* ran — looked for a post-September catalyst supporting the premium
+(news, filings, the Goldman transcript) and found none; looked for one
+against it and found the rate move. *Moat as mechanism:* passes for the
+ledger, not for the seat pricing on top.
+
+**Statistical checks.** Peer multiples are a single-date cross-section with
+no null — descriptive only. No backtest or signal claim. Effective n for any
+price-move observation here is 1.
+
+**Options timing check.** Ran, path 2 only (path 1 structurally unavailable).
+Dated claim tested: the −22.93% move to the $165.56 clearing price by the Nov
+20 expiry. `refutes timing claim (> 2 sigma)? NO` — 1.52σ, P = 12.96%.
+Liquidity gate passed, marginally. The non-refutation is not evidence for the
+thesis.
+
+**Closest attack:** the hurdle-construction attack — headline ERP plus the
+prior FCF base plus the consensus path narrows the gap to −36bp. It does not
+clear.
+
+**Flip evidence — to SOUND (bull case holds):** a price near $178 or below
+with Q3 confirming CCB ≥ ~24% cc and the FY26 FCF guide intact, which would
+un-refute condition 5 and leave only the unknown — or Q3 raising the FCF
+guide enough that the consensus path becomes the base at a hurdle the rate
+has relaxed.
+**Flip evidence — deeper FLAWED (thesis dead, not repairable):** Q3 quantifies
+the CCB deceleration below ~20% or withdraws the 2027 acceleration guide,
+which would refute condition 3 as well.
+
+**p(beat SPY, 63 td): 0.42** — written before re-reading §1. Base rate
+~45–47% for a single large cap over a quarter; shaded down for the cohort's
+richest growth-adjusted multiple held through a sector derating and a
+real-rate shock that hits long-duration equities hardest; shaded back up for
+a two-sided print inside the window and the stock's own quiet tape (RV20
+25%).
