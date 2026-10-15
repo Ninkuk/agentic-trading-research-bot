@@ -32,7 +32,7 @@ from decimal import ROUND_DOWN, Decimal
 from sources.common.clock import phx_date
 from sources.monitors.market_calendar import db as cal_db
 from sources.screeners.orders import catalog, db, fetch, market_clock
-from sources.screeners.orders.catalog import SLIPPAGE, STALE_QUOTE_SEC
+from sources.screeners.orders.catalog import FRESH_QUEUE_SEC, SLIPPAGE, STALE_QUOTE_SEC
 from sources.screeners.orders.fetch import PlanInput, Quote
 
 
@@ -81,6 +81,20 @@ def _age_sec(quote_ts: str, now_iso: str) -> float:
     return (now - ts).total_seconds()
 
 
+def _stale_ref_hint(row: dict, now_iso: str) -> str:
+    """A gap veto minutes after queueing means ref_price was never the live
+    ask (a thesis price pinned weeks later): the band excluded the market
+    from the start and every retry inherits the miss. Name it so the
+    interactive session re-anchors instead of letting the row expire."""
+    age = _age_sec(row.get("queued_at") or "", now_iso)
+    if age > FRESH_QUEUE_SEC:
+        return ""
+    return (
+        f"; ref_price {row['ref_price']} was stale at queue time (row queued"
+        f" {max(1, int(age // 60))}m ago): cancel and re-queue at the live ask"
+    )
+
+
 def _compute_decision(
     row: dict,
     quote: Quote | None,
@@ -108,12 +122,16 @@ def _compute_decision(
         Decimal("1") - Decimal(str(row["max_gap_pct"])) / Decimal("100")
     )
     if Decimal(str(quote.ask)) > ceiling:
-        return "vetoed", f"gapped: ask {quote.ask} > ceiling {ceiling:.2f}"
+        return "vetoed", f"gapped: ask {quote.ask} > ceiling {ceiling:.2f}" + _stale_ref_hint(
+            row, now_iso
+        )
     if Decimal(str(quote.ask)) < floor:
         # Symmetric sanity bound: an ask far BELOW ref is a corrupt quote or
         # news, not a bargain to auto-buy — without this, ask=0.01 plans a
         # penny limit and permanently consumes the human's intent.
-        return "vetoed", f"gapped down: ask {quote.ask} < floor {floor:.2f}"
+        return "vetoed", f"gapped down: ask {quote.ask} < floor {floor:.2f}" + _stale_ref_hint(
+            row, now_iso
+        )
     if row["qty"] is not None:
         limit = min(Decimal(str(quote.ask)) * SLIPPAGE, ceiling).quantize(
             Decimal("0.01"), rounding=ROUND_DOWN
@@ -270,18 +288,22 @@ def run_plan(
             conn.commit()
             return {"account_number": limits.account_number, "orders": []}
         rows = conn.execute(
-            "SELECT id, symbol, qty, notional, ref_price, max_gap_pct, expires_on"
-            " FROM queue WHERE status='queued' ORDER BY id"
+            "SELECT id, symbol, qty, notional, ref_price, max_gap_pct, expires_on,"
+            " queued_at FROM queue WHERE status='queued' ORDER BY id"
         ).fetchall()
         spent = Decimal("0")
+        cols = (
+            "id",
+            "symbol",
+            "qty",
+            "notional",
+            "ref_price",
+            "max_gap_pct",
+            "expires_on",
+            "queued_at",
+        )
         for row_t in rows:
-            row = dict(
-                zip(
-                    ("id", "symbol", "qty", "notional", "ref_price", "max_gap_pct", "expires_on"),
-                    row_t,
-                    strict=True,
-                )
-            )
+            row = dict(zip(cols, row_t, strict=True))
             status, detail = _compute_decision(
                 row, pi.quotes.get(row["symbol"]), now_iso, limits, spent, pi.settled_cash
             )

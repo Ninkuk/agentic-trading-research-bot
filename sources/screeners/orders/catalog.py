@@ -15,6 +15,7 @@ __all__ = [
     "SESSION_END_MIN",
     "SLIPPAGE",
     "STALE_QUOTE_SEC",
+    "FRESH_QUEUE_SEC",
     "MIN_REF_PRICE",
     "MIN_NOTIONAL",
     "Limits",
@@ -31,6 +32,9 @@ WINDOW_END_MIN = 45
 SESSION_END_MIN = 385
 SLIPPAGE = Decimal("1.002")
 STALE_QUOTE_SEC = 300
+# A gap veto on a row queued this recently is a mis-pinned ref_price, not a
+# market move: the band must be centred on the live ask at queue time.
+FRESH_QUEUE_SEC = 1800
 MIN_REF_PRICE = 1.0  # cents rounding distorts sub-$1 limits; refuse at queue time
 MIN_NOTIONAL = 1.0  # broker minimum for dollar-based (fractional) orders
 

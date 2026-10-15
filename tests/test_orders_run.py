@@ -39,6 +39,7 @@ def _queue(
     ref=310.0,
     gap=3.0,
     expires="2026-07-27",
+    queued_now="2026-07-27T02:00:00+00:00",
 ):
     return run.run_queue(
         orders_path,
@@ -50,7 +51,7 @@ def _queue(
         gap,
         expires,
         note="test",
-        now_iso="2026-07-27T02:00:00+00:00",
+        now_iso=queued_now,
         stdin_isatty=True,
         env=ENV,
     )
@@ -552,6 +553,48 @@ def test_gap_down_veto_blocks_corrupt_low_ask(dbs):
     status, reason = conn.execute("SELECT status, resolution_reason FROM queue").fetchone()
     conn.close()
     assert status == "vetoed" and "gapped down" in reason
+
+
+def test_fresh_gap_veto_names_stale_ref_price(dbs):
+    # A row queued a minute ago cannot have gapped 3% on the market: its
+    # ref_price was not the live ask when the session pinned it. The veto
+    # reason must say so, so the interactive session re-anchors instead of
+    # leaving the row to retry against a band the price was never inside.
+    orders_path, cal_path = dbs
+    fresh = "2026-07-27T13:34:00+00:00"
+    qid = _queue(
+        orders_path,
+        cal_path,
+        qty=None,
+        notional=50.0,
+        ref=26.09,
+        gap=3.0,
+        expires="2026-07-28",
+        queued_now=fresh,
+    )
+    plan = run.run_plan(orders_path, cal_path, _plan_doc(ask=24.84), SUMMER_OPEN, ENV)
+    assert plan["orders"] == []
+    conn = orders_db.connect(orders_path)
+    status, reason = conn.execute(
+        "SELECT status, resolution_reason FROM queue WHERE id=?", (qid,)
+    ).fetchone()
+    conn.close()
+    assert status == "queued"
+    assert reason.startswith("retry: gapped down: ask 24.84 < floor 25.31")
+    assert "ref_price 26.09 was stale at queue time" in reason
+    assert "re-queue at the live ask" in reason
+
+
+def test_overnight_gap_veto_carries_no_stale_ref_hint(dbs):
+    # Queued the prior evening (the default fixture), vetoed at the open: a
+    # real overnight gap, so the reason stays a plain market veto.
+    orders_path, cal_path = dbs
+    _queue(orders_path, cal_path, ref=300.0, gap=3.0, expires="2026-07-31")
+    run.run_plan(orders_path, cal_path, _plan_doc(ask=312.0), SUMMER_OPEN, ENV)
+    conn = orders_db.connect(orders_path)
+    (reason,) = conn.execute("SELECT resolution_reason FROM queue").fetchone()
+    conn.close()
+    assert reason == "retry: gapped: ask 312.0 > ceiling 309.00"
 
 
 def test_queue_rejects_non_iso_expiry(dbs):
