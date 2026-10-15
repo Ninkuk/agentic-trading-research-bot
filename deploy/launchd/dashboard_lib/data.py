@@ -1474,6 +1474,9 @@ def _equity_curve_body(conn: sqlite3.Connection, dff: list[tuple[str, float]]) -
             " the nightly harvest adds one per market day"
         }
     rows = [all_rows[0], *scorer_scorecard.measured_legs(all_rows[1:])]
+    # A point's index among ALL book trading days (all-cash days included),
+    # so the dashboard's range windows count trading days exactly.
+    session_of = {r["obs_date"]: i for i, r in enumerate(all_rows)}
     # Cash (DFF) index legs between consecutive charted dates. All-or-nothing:
     # if any leg is unmeasurable (no fred.db, no DFF on/before the anchor) the
     # whole line is null — a cash line that starts mid-window would read as a
@@ -1496,6 +1499,7 @@ def _equity_curve_body(conn: sqlite3.Connection, dff: list[tuple[str, float]]) -
         curve.append(
             {
                 "date": r["obs_date"],
+                "session": session_of[r["obs_date"]],
                 "portfolio": round(port_idx, 2),
                 "spy": round(spy_idx, 2),
                 "cash": None if cash_level is None else round(cash_level, 2),

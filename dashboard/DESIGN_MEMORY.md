@@ -109,6 +109,19 @@ named rules) for the impeccable skill; keep all three in sync.
   design. Gated checks (CVD separation, normal-vision floor) pass in both modes
   (validated 2026-08-07) — don't "fix" the gray or re-litigate without re-running
   the validator.
+- Equity curve carries a Robinhood range row (1D 1W 1M 3M YTD 1Y ALL) as the
+  card's last row, under the legend: a single-select ToggleGroup of
+  `rounded-full` pills, the chosen one `bg-primary`. Windows are cut back
+  from the LAST CHARTED date, rebase every series to $100 at the close
+  at-or-before the cutoff, and the tiles, header chip ("since <base day>")
+  and footnote's trading days follow the window — the chip through
+  SectionShell's verdict context, trading days by the exporter's per-point
+  `session` index so skipped all-cash days still count. ALL keeps the
+  exporter's exact figures; positions is the book as held today and never
+  changes. 1D is the past session's two closes (no intraday data). A range
+  that would repeat ALL renders disabled until the book has the history —
+  never hidden, never three identical views. Y-axis precision follows the
+  plotted span (cents under a dollar) or a 1D view reads "$100" five times.
 - No counts in strand nav labels (user preference, 2026-07-30).
 
 ## Repo conventions

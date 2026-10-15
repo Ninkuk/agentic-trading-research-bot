@@ -1837,18 +1837,21 @@
       "curve": [
         {
           "date": "2026-07-31",
+          "session": 0,
           "portfolio": 100.0,
           "spy": 100.0,
           "cash": 100.0
         },
         {
           "date": "2026-08-04",
+          "session": 1,
           "portfolio": 109.72,
           "spy": 101.0,
           "cash": 100.04
         },
         {
           "date": "2026-08-05",
+          "session": 2,
           "portfolio": 112.5,
           "spy": 101.59,
           "cash": 100.05

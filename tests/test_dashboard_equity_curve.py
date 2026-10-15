@@ -57,7 +57,13 @@ def test_indexes_rebase_on_the_book_and_buys_are_not_returns(tmp_path):
     sec = _section(tmp_path)
     assert "error" not in sec
     curve = sec["curve"]
-    assert curve[0] == {"date": "2026-07-31", "portfolio": 100.0, "spy": 100.0, "cash": None}
+    assert curve[0] == {
+        "date": "2026-07-31",
+        "session": 0,
+        "portfolio": 100.0,
+        "spy": 100.0,
+        "cash": None,
+    }
     # buy day: the $50 lot joins at its fill price — index +9.72%, never +259%
     assert abs(curve[1]["portfolio"] - 100.0 * 79.0 / 72.0) < 0.01
     assert abs(curve[2]["portfolio"] - 112.5) < 0.01
@@ -68,6 +74,7 @@ def test_indexes_rebase_on_the_book_and_buys_are_not_returns(tmp_path):
     assert abs(s["excess"] - (s["twr"] - s["spy"])) < 1e-9
     assert s["positions"] == 2
     assert s["trading_days"] == 3
+    assert [r["session"] for r in curve] == [0, 1, 2]
     assert "excluded" not in s
 
 
@@ -131,6 +138,10 @@ def test_empty_book_days_are_not_charted_and_spy_skips_them_too(tmp_path):
     assert [r["spy"] for r in sec["curve"]] == [100.0, 100.0, 100.0, 100.0]
     assert [r["portfolio"] for r in sec["curve"]] == [100.0, 100.0, 100.0, 100.0]
     assert sec["curve_summary"]["excess"] == 0.0
+    # `session` is the point's index among ALL book trading days, so the two
+    # uncharted all-cash days still count toward a window's trading days.
+    assert [r["session"] for r in sec["curve"]] == [0, 1, 4, 5]
+    assert sec["curve_summary"]["trading_days"] == 6
 
 
 def test_unpriceable_symbol_leaves_the_line_untouched(tmp_path):

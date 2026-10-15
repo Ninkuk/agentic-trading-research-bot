@@ -144,6 +144,9 @@ export interface Section {
 // DFF) is null on EVERY point or none — data.py refuses a partial cash line.
 export interface EquityCurvePoint {
   date: string;
+  // Index among ALL book trading days, all-cash days included, so a range
+  // window counts trading days exactly even where the chart skips days.
+  session: number;
   portfolio: number;
   spy: number;
   cash: number | null;

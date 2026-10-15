@@ -44,21 +44,44 @@ const CONFIG = {
 
 const money = (v: number) => `$${v.toFixed(2)}`;
 
+// Axis precision follows the plotted span: a 1D window moves a tenth of a
+// percent, so whole-dollar ticks would all read "$100". Under a dollar
+// shows cents, under five shows tenths, otherwise whole dollars.
+function axisDecimals(rows: EquityCurvePoint[]): number {
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const r of rows) {
+    for (const v of [r.portfolio, r.spy, r.cash]) {
+      if (v === null) continue;
+      if (v < lo) lo = v;
+      if (v > hi) hi = v;
+    }
+  }
+  const span = hi - lo;
+  return span < 1 ? 2 : span < 5 ? 1 : 0;
+}
+
 export interface EquityCurveProps {
   rows: EquityCurvePoint[];
   height?: number;
   // Coverage note ("19 positions · 44 trading days") rendered at the right
   // end of the legend row, at legend size — a footnote, never a headline stat.
   footnote?: ReactNode;
+  // Rendered last, under the legend row — Robinhood's order: chart, then
+  // the range labels beneath everything. The chart stays agnostic about
+  // what the slot holds.
+  controls?: ReactNode;
 }
 
 export function EquityCurve({
   rows,
   height = 260,
   footnote,
+  controls,
 }: EquityCurveProps) {
   const { ref, width } = useMeasuredWidth(640);
   const hasCash = rows.some((r) => r.cash !== null);
+  const dp = axisDecimals(rows);
 
   return (
     <div ref={ref} className="equity-curve w-full">
@@ -84,11 +107,11 @@ export function EquityCurve({
             tickFormatter={(d: string) => d.slice(5)}
           />
           <YAxis
-            width={44}
+            width={dp === 0 ? 44 : 56}
             tickLine={false}
             axisLine={false}
             domain={["auto", "auto"]}
-            tickFormatter={(v: number) => `$${Math.round(v)}`}
+            tickFormatter={(v: number) => `$${v.toFixed(dp)}`}
           />
           <ChartTooltip
             content={
@@ -160,6 +183,9 @@ export function EquityCurve({
         )}
         {footnote != null && <span className="ml-auto">{footnote}</span>}
       </div>
+      {controls != null && (
+        <div className="equity-curve-controls mt-3">{controls}</div>
+      )}
     </div>
   );
 }
