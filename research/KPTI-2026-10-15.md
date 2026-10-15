@@ -1,0 +1,679 @@
+# KPTI — Karyopharm Therapeutics — 2026-10-15 (reopen of 2026-09-12, trigger: kpti-oct15-forbearance-expiry-restructuring-or-chapter11)
+
+Price $0.35 (last regular-session trade, 2026-10-15; official close $0.315 on
+2026-10-14) · market cap $7.96M (stockanalysis, 22,681,460 shares at $0.351)
+· EV $271.4M (carrying debt $328.5M less 6/30 cash $65.1M — the cash figure is
+three and a half months stale) · next earnings 2026-11-02 BMO (Robinhood,
+unverified; stockanalysis "Nov 2, 2026, before market open"; no row in
+`data/earnings.db` `v_upcoming_earnings`)
+
+**Reopen of `research/KPTI-2026-09-12.md`** (prior verdict FLAWED —
+conditions=5, refuted=2, unknown=1, pending=2; prior ownership call PASS at
+$1.60). The reopen question: **what happened at the October 15 forbearance
+expiry — restructuring, financing, Chapter 11, extension, or nothing — and
+what does that do to the thesis?**
+
+## 0. The reopen question, answered first
+
+**Extension — one week, and nothing else.** The 8-K filed 2026-10-14 (event
+date 10/13, Item 8.01 only) is two sentences: "in accordance with Section 19
+of the Forbearance Agreement, the applicable parties extended the date on
+which the Forbearance Period ... will end, absent earlier termination, from
+11:59 p.m., Eastern time, on October 15, 2026 to 11:59 p.m., Eastern time,
+on October 22, 2026." No Item 1.01 (no new agreement), no Item 1.03 (no
+bankruptcy), no Item 3.02 (no issuance), no Item 2.04 beyond what the 9/11
+8-K already triggered. No restructuring support agreement, no financing, no
+sale, no waiver. The Specified Defaults stand; the overdue $15.8M installment
+and both unpaid Notes coupons stand; the +2.00% default interest keeps
+accruing; the $25.0M minimum-liquidity covenant stepped up on October 10 as
+scheduled and nothing says it was met.
+
+So the trigger fired in its mildest branch, and the reopen question has a
+one-word answer: *extended*. The documents say what that is worth — Section
+19 extensions are consensual and revocable, the five early-termination
+events are untouched, and seven days is the shortest runway the creditor bloc
+could grant while still calling it a forbearance. A one-week roll is the
+shape of a negotiation that is alive and unfinished: a deal being papered, or
+a filing being prepared with a restructuring support agreement attached. It
+is not the shape of a rescue financing that has been found.
+
+**What the market did while nothing was filed is the larger fact.** KPTI
+closed $1.62 on 9/28 and $0.315 on 10/14 — **−80.6%** in twelve sessions,
+with no 8-K, no press release of substance (the only two IR releases since
+September 1 are Nasdaq Rule 5635(c)(4) inducement-grant notices, 9/1 and
+10/1), no Item 3.01 Nasdaq notice, no insider filing beyond a 378-share
+sell-to-cover. The two big down days were 9/29 (−25.6%, $1.62 → $1.205) and
+10/1 (−29.0%, $1.22 → $0.867, the day it broke $1.00); the rest was a grind
+to $0.315 on rising volume. Short interest **fell** across the same window —
+9.81M shares at the prior run, 7.87M at the end of September, 6.06M at the
+latest print (35.0% of float, down from 62.2%) — so this was not a short
+attack; shorts covered into it. The one identifiable seller is Acorn
+Bioventures, a biotech-specialist holder, whose 13G/A filings show 1,284,221
+shares (5.7%) on 9/22 and 1,021,668 (4.5%) on 10/2 — a specialist cutting
+below the reporting threshold in the exact window. The market cap went from
+$36.3M to $7.96M with the capital structure unchanged. §4 reads what that
+means: the market stopped paying for the contractual 2028–2029 maturities and
+now pays for roughly one year of effective life.
+
+**What that does to the thesis: the prior pass's reasoning was right and its
+price target for that reasoning has been met and passed.** The 9/12 option
+lens said the equity was fairly priced at the contractual maturity and worth
+nothing at the forbearance horizon; the market has since moved most of the
+way toward the second reading. At $7.96M the stub is now *below* the
+contractual-maturity option value (3.6× model-to-market at 2.75 years, §4)
+and still far above the one-week value (zero). That reopens the one
+condition the prior run refuted on arithmetic — "the stub is cheap" — but
+only conditional on duration the creditors have shown, twice now, that they
+grant seven to thirty-five days at a time. The ownership call does not move.
+
+| prior falsifier | actual | status |
+|---|---|---|
+| **Break —** Financing or restructuring closes on or before Oct 15 that funds past the sNDA decision and leaves common with more value than $36.3M | Nothing closed. A seven-day extension; the common is worth $7.96M | NOT TRIGGERED |
+| **Break —** Acquisition or partnership clearing the $427.3M stack plus the $20M preference in cash | None filed | NOT TRIGGERED |
+| **Shift —** Forbearance extension that materially lengthens effective maturity without further preference | Extended by **7 days**, no new fee disclosed — the "without further preference" half held, the "materially lengthens" half did not | GRAZED |
+| **Shift —** FDA acceptance with Priority Review (pulls a PDUFA into H1'27) | Not yet; the 60-day filing review from the 8/31 submission runs to ~10/30. No filing | NOT TRIGGERED |
+| **Break —** (owner) Forbearance terminated or bankruptcy filed | Neither. Forbearance rolled to 10/22 | NOT TRIGGERED |
+| **Break —** (owner) FDA refusal to file / sNDA withdrawn | No filing either way | NOT TRIGGERED |
+| **Shift —** (owner) Liquidity below $10.0M or $25.0M covenant missed from Oct 10 | Not separately disclosed. The 9/11 8-K already said the covenant "may not" be met; no cure, no new default notice, no cash figure since 6/30 | HALF-TRIGGERED |
+
+## 1. Verdict and thesis
+
+**PASS at $0.35** (last regular trade, 2026-10-15). kill-thesis: **FLAWED** —
+conditions=5 (0 probable, 4 plausible, 1 unknown), refuted=1, unknown=1,
+pending=3, not_obtained=0.
+
+**p(beat SPY, 63 td): 0.30** · kill-thesis: 0.25 — **Disputed expectation:**
+the market's $7.96M prices the common as a call on the firm with roughly
+one year of effective life (the option lens prints $5.4M at 1.0y and $28.9M
+at the contractual 2.75y against zero at the seven days actually granted);
+it revises on the 8-K that ends the Forbearance Period — a transaction that
+names the common's recovery, a Chapter 11 petition, or another bare
+extension — due by October 22.
+
+The company defaulted on September 10, bought thirty-five days for a $20M
+senior preferred, and on October 13 bought seven more for nothing disclosed.
+The stock lost four-fifths of its value in the interval on no company news,
+and now trades at a market cap below the value a call on the firm would carry
+if the creditors' claims really matured in 2028–2029. They do not: the
+Forbearance Agreement makes every overdue amount due now and the creditors
+hold a weekly option to accelerate. The drug story is intact — the sNDA is
+in, acceptance is due within about two weeks, the $1B US peak frame stands —
+but it is the creditors' collateral, and a seven-day roll with a Q3 print
+and an FDA filing decision both inside the next three weeks says the bloc is
+holding the equity on the shortest possible leash until those two events
+tell it what the collateral is worth.
+
+**Closest attack:** *"At $8M the market has already priced the wipe-out: the
+option lens says the stub is worth $29M on contractual maturity and $15M
+even at the term-loan date, so any outcome that leaves the common a sliver —
+an out-of-court exchange with warrants, a sale with a token equity recovery —
+beats SPY from here, and the creditors' choice to roll rather than file is
+revealed preference for exactly that outcome."* It is the first version of
+the bull case in four runs that is arithmetically coherent, and it fails on
+the one input it borrows: the 2.75-year duration is not the company's to
+promise, the seven-day duration is the one in the filing, and the lens at
+that duration prints zero. "Any sliver beats SPY" is also false at the
+sliver sizes that out-of-court biotech restructurings actually hand to
+existing common — the §4 arithmetic needs the common to keep more than ~3%
+of a $271M firm, after a $20M preference and a $427M stack, for the stub to
+be worth today's price.
+
+Load-bearing conditions of the **bull case** (5):
+
+1. *plausible* — **A transaction closes on or before October 22 (or a
+   further extended date) that leaves existing common with a recovery worth
+   more than today's $7.96M.** Settled by the 8-K that ends the Forbearance
+   Period. Evidence today: two forbearances, one financing (the preferred —
+   paid to creditors, not raised from investors), a banker retained since
+   July, and the shortest extension the parties could have chosen.
+2. *plausible* — **The creditor bloc prefers an out-of-court outcome to a
+   Chapter 11 in which the common is extinguished.** The 10/13 roll is
+   consistent with both: a deal being papered, or a pre-arranged filing
+   being prepared. Same 8-K settles it.
+3. *plausible* — **The FDA accepts the sNDA for filing (~October 30), with
+   or without Priority Review.** A refusal is simultaneously a
+   forbearance-termination event and a Fundamental Change that puts the
+   $20M preferred back to the company. Settled by an 8-K in the Q4 window.
+4. *plausible* — **The effective maturity of the creditors' claim is at
+   least about one year — the duration the market is now implicitly
+   paying for.** The documents grant seven days. Anything longer is a
+   creditor decision not yet made, settled by the same 8-K as condition 1.
+5. *unknown* — **A buyer, partner, or financier exists above the stack.**
+   The Centerview process is private; an unclosed bid is never filed.
+
+**Dominant shared risk factor:** speculative-grade biotech rescue-financing
+availability — shared by 0 of 24 held names · 0 unlabelled.
+
+## 2. Business
+
+Unchanged in structure from `research/KPTI-2026-08-13.md` §2 and
+`research/KPTI-2026-09-12.md` §2 — one commercial asset (XPOVIO/selinexor,
+first-in-class oral XPO1 inhibitor) in multiple myeloma, with the whole
+equity story resting on the pending frontline-myelofibrosis label expansion.
+No new call, letter, or operating disclosure since the Q2 print on 8/13; the
+Q3 print (~11/2) is the next.
+
+**Created:** unchanged — an oral, community-administrable option where the
+alternatives are infused or hospital-anchored; in MF the SENTRY combination
+roughly doubled week-24 SVR35 versus ruxolitinib alone on the accelerated-
+approval co-primary. **Captured:** unchanged — US net product revenue plus
+ex-US royalties, now the whole of license revenue after Menarini's
+reimbursement expired. **Protected:** composition-of-matter patents and a
+first-in-class mechanism — a real moat on an enterprise whose creditors
+hold the collateral.
+
+**Control:** one share, one vote for the common; no controlling holder. The
+9/18 8-K and Certificate of Designations fix what the prior run left open:
+the 20,000 preferred shares carry no general vote (protective matters only,
+at a two-thirds threshold), convert at $1.62 — now **4.6× the share price**,
+so conversion is economically dead and the instrument is a $20M senior
+claim with a 2029 put and a Fundamental Change put — and until stockholder
+consent (meeting by March 15, 2027) conversion is capped at 4,520,000 shares
+with any excess cash-settled at 20-day VWAP, deferred until after the
+earlier of the first vote and March 15, 2027. The preferred's change-of-
+control term is the live one: "the Company may not enter into such a
+transaction unless the definitive agreement provides for" payment of the
+greater of $1,000/share and as-converted value, in priority to the common —
+every sale now carries a $20M toll ahead of the equity. Institutional
+ownership 80.6%, insiders 2.9%; Acorn Bioventures cut to 4.5% (13G/A 10/8);
+Millennium's 5.7% 13G (9/4) has not been amended.
+
+**Operating leverage (Phase 0): negative — unchanged, no new period.**
+Revenue 2021 $209.8M → 2022 $157.1M → 2023 $146.0M → 2024 $145.2M → 2025
+$146.1M → TTM $146.6M, against operating income −$98.3M → −$142.2M →
+−$129.5M → −$119.4M → −$90.7M → TTM −$82.4M. Expense reduction on a flat
+top line, not volume leverage; the next data point is the Q3 print.
+
+## 3. Threads pulled
+
+- **The 10/14 8-K — the whole reopen answer.** Item 8.01, two sentences,
+  Section 19 extension from 10/15 to 10/22. No exhibit, no fee, no new
+  party, no new term. Read against the Forbearance Agreement's own
+  structure: Section 19 extensions require the applicable Consenting
+  Parties' agreement and change nothing else, so every lever the creditors
+  held on 9/10 they hold on 10/22.
+- **The 9/18 8-K and the Certificate of Designations.** Resolves the prior
+  run's UNKNOWN #5 (cash-settlement exposure): capped at 4,520,000 shares
+  pre-consent, excess cash-settled at 20-day VWAP but *deferred* to after
+  the earlier of the first stockholder vote and 3/15/27; unpaid amounts
+  accrete at 2% compounded quarterly. Adds two facts the prior run did not
+  have: (a) "specified FDA action with respect to, or the Company's
+  withdrawal of," the MF sNDA is a Fundamental Change that lets holders put
+  the preferred at Liquidation Value — so an FDA refusal-to-file now trips
+  the forbearance *and* a $20M put; (b) a bankruptcy event is a Fundamental
+  Change too, which in practice makes the preferred a $20M unsecured claim
+  junior to the stack and senior to the common.
+- **The −80.6% with no filing.** Price path 9/28 → 10/14 from Robinhood
+  daily bars; 9/29 and 10/1 were the two gaps; 10/1 is the day the stock
+  broke $1.00. EDGAR has nothing dated 9/19 → 10/13 except Acorn's 13G/As
+  and a 378-share CAO sell-to-cover at $1.19 (Form 4, 10/2). IR press
+  releases: two inducement-grant notices. Web search (one, standard) returned
+  nothing dated after September. The candidates are a specialist seller
+  (Acorn, below), the 10/10 covenant step-up arriving with no cure
+  disclosed, the 9/30 Notes coupon the company had said it would not pay,
+  and simple time decay on a 35-day option — all consistent with the tape,
+  none filed. Recorded as **UNKNOWN** (§6); the absence of a filed cause
+  does not change the ownership call.
+- **Short interest fell while the stock fell.** 9,813,744 (62.2% of float)
+  at the prior run → 7,865,168 prior month → 6,056,162 (35.0% of float,
+  26.7% of shares out, DTC 4.17) at the latest print. Shorts covered ~3.8M
+  shares into the decline; the move was long selling.
+- **Acorn Bioventures.** Schedule 13G/A event 9/22: 539,373 + 744,848 =
+  1,284,221 shares (2.4% + 3.3%, 5.7% aggregate); event 10/2: 429,101 +
+  592,567 = 1,021,668 (1.9% + 2.6%, 4.5%). A biotech-specialist fund
+  reduced ~263k shares across the exact window and dropped below 5%. Small
+  in shares against 1.4M average daily volume, large as a signal: the
+  specialist who held through the July endometrial failure and the
+  September default sold the October extension.
+- **Nasdaq minimum bid.** Closes below $1.00 on every session from 10/1
+  through 10/14 — ten consecutive business days. Nasdaq Rule 5810 counts
+  thirty before a deficiency notice (Item 3.01 8-K, ~November 12 if the
+  price stays under $1), then a 180-day cure period; the February 2025
+  reverse split is outside the one-year lookback that would otherwise deny
+  the cure period. A delisting is itself a Fundamental Change on the
+  preferred. Not a near-term trigger; a Q1'27 one.
+- **The 10/10 covenant step-up and the 9/30 coupon.** Neither has a filing
+  of its own. The 9/11 8-K pre-disclosed both ("does not expect to pay the
+  cash interest due on September 30"; "may not satisfy the $25.0 million"
+  floor), so no new 8-K was required — but it means the last hard liquidity
+  number is $65.1M at 6/30, and every reader including this one is
+  estimating current cash.
+- **Post-call reconciliation.** The latest transcript is still the Q2 call
+  of 8/13 (no AGM, no interim call); every financial claim in it has been
+  overtaken by the 9/11 and 10/14 8-Ks. The next management statement is the
+  Q3 print (~11/2 BMO, unverified) and the 10-Q (~11/9), which will carry
+  the first cash figure since June and, presumably, the forbearance's then-
+  current state. Earnings pattern (Robinhood estimate vs actual, 8 quarters):
+  misses in four of the last six (Q2'26 −$2.32 vs −$1.42 est.), the actuals
+  cross-check against `sec_fundamentals.db` diluted EPS −$2.32 for Q2'26 —
+  they agree.
+- **Options read (mandatory):** path 2 only (KPTI is outside the 24-symbol
+  CBOE catalog; `data/options.db` has no history for it by construction).
+  Two expiries considered: 2026-10-16 (1 DTE — the $0.50 put's IV is null,
+  the check cannot run on it) and 2026-11-20 (36 DTE, bracketing the 10/22
+  forbearance end, the ~10/30 sNDA-acceptance decision, and the ~11/2 Q3
+  print). Nearest strike $0.50 sits 43% above the $0.35 spot — nearest-
+  strike-to-spot is not ATM in any useful sense here. **Liquidity gate
+  FAILED → UNRELIABLE**; table in §4, quoted and not leaned on.
+- **Dead ends:** EDGAR sweep of CIK 1503802 through 10/15 — no S-1/S-3, no
+  8-K Item 1.03 (bankruptcy), 1.01 (new agreement), 3.01 (Nasdaq), 3.02
+  (issuance), or 5.02 (officer departure) since 9/18; no Form 4 purchases;
+  the only 13D/G activity is Acorn's reduction. `data/composite.db`:
+  KPTI not in `v_flagged` or `v_latest_scorecard` — not machine-flagged;
+  the entry path is the reopen alone. No NCCN/compendia announcement
+  anywhere. The web search returned 2024–2025 material only.
+
+## 4. Valuation
+
+**Reverse-DCF is a category error on this name and the tool refuses it a
+third time** (run 2026-10-15, TTM inputs from the live statistics probe):
+
+```
+$ uv run python -m tools.valuation.reverse_dcf --market-cap 7956656 \
+    --base-fcf -65347000 --growth 0.05 0.05 0.05 --terminal-growth 0.0235
+refused: base_fcf must be positive, got -65347000.0        # exit 2
+```
+
+TTM levered FCF is **−$65.347M** (ncfo −$65.347M, capex n/a; `fcf` hover
+value). Market cap $7,956,656 would have been the denominator, net debt zero
+by the pairing rule. **Hurdle, stated anyway:** rf **5.21%** (`DGS10`,
+2026-10-13, `data/fred.db`) + beta **1.038** × ERP **4.20%** (Damodaran
+implied ERP, trailing-12-month with adjusted payout, October 1 2026, solved
+against his T-bond rate of 5.29%) = **9.57%**. Beta is inside the 0.8–1.2
+band so no clamp applied, and it is uninformative: float 17,292,692 of
+22,681,460 shares (76.2%) is under the four-fifths thin-float threshold, and
+a five-year regression says nothing about a security whose RV20 is 190%. The
+10-year breakeven `T10YIE` is **2.35%** (2026-10-14) — the terminal-growth
+ceiling, unused because no DCF ran. Scenario table, market-share sentence,
+reinvestment / terminal-ROE check, base-year cash-tax check: **not
+applicable** — no positive base, no growth path, no terminal value. The
+Item 1A terminal risk is the 10-Q's own going-concern paragraph, now dated
+seven days out.
+
+**The capital structure is the valuation**, unchanged from the 9/11 8-K
+except for accrued default interest and the preferred's issuance on 9/17:
+
+| claim | amount |
+|---|---|
+| Senior secured term loan, principal | $129.0M |
+| 2028 Notes (9.00%), principal | $15.6M |
+| New 2029 Notes (9.00%), principal | $108.0M |
+| Future royalty obligations (HCRx) | $113.5M |
+| Overdue Notes interest (6/30 and 9/30 coupons, the latter undisclosed) | ≥ $2.8M |
+| **Total principal + overdue interest** | **≥ $368.9M** |
+| Future obligations incl. cumulated coupons (10-Q, at 6/30/26) | **$427.3M** |
+| 0% Series A Convertible Perpetual Preferred, liquidation preference | $20.0M |
+| Market cap of the common, 2026-10-15 | **$7.96M** |
+
+Against that: $65.105M cash and investments at **6/30** (the only figure on
+file; the company's own runway language implies it is now a small fraction
+of that), stockholders' deficit −$330.2M, Altman Z −24.52, Piotroski F 2
+(down from 3), current ratio 0.79, interest coverage −1.67×.
+
+**Options-implied move — path 2 (Robinhood stopgap), expiry 2026-11-20, 36
+DTE, bracketing the October 22 forbearance end, the ~October 30 sNDA
+filing decision, and the ~November 2 Q3 print. Liquidity gate FAILED →
+UNRELIABLE.** Spot $0.35; nearest strike $0.50. The $0.50 call quotes
+$0.05 / $0.10 (mark $0.075, IV 278.76%, delta 0.51, OI 198, volume 58); the
+$0.50 put quotes $0.15 / $0.55 (mark $0.35, IV 648.01%, delta −0.16, OI
+668, volume 120). Spreads are 67% of mark on the call and 114% on the put
+against a gate of max(10% of mark, 2 ticks); the two legs' IVs disagree by
+370 points, which is what a $0.15-wide strike grid does to a $0.35 stock.
+The 10/16 expiry (1 DTE) cannot run: its $0.50 put carries a null IV. Table
+printed for the record, from 90 daily closes (2026-06-05 → 2026-10-14):
+
+| metric | value |
+|---|---|
+| spot | $0.35 |
+| expected absolute move (MEAN, not a ceiling) | 121.43% |
+| 1-σ move | 145.53% |
+| ATM IV (call/put mean, $0.50 strike) | 463.39% |
+| RV60 | 295.07% (142.78% with the single −73% July 31 session removed) |
+| RV20 | 190.00% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Both rows read YES, so the word is formally "elevated" — and it is quoted
+only as the gate failure it is: a 463% IV read off a strike 43% out of the
+money on a 2-tick-wide market is not a measurement. **Timing check: not
+applicable** — the thesis states no required move, so nothing is refuted and
+no condition's tag moves on options evidence. Per the IV rule, every
+implied-return figure in this section is whole-percent at best and no DCF
+ran, so the rule has nothing to round.
+
+**Equity as an option (the Phase 4 leverage gate fires on every count: book
+equity −$330.2M, net debt 97% of EV, filed going-concern doubt, payment
+default in progress, forbearance in its second extension).** Firm value =
+market EV $271,381,656 (an identity — carrying debt less 6/30 cash — not a
+traded number; the notes have no quoted market, and with cash lower than
+6/30 the true figure is lower, which lowers every equity value below); debt
+face = the 10-Q's $427.3M of coupon-inclusive future obligations; rf 5.21%;
+equity vol 1.90 (KPTI's own RV20 — the regime changed on 9/29 and the
+crash-excluded RV60 of 1.43 is the pre-regime number); debt vol 0.30; debt
+weight 0.971 (EV less $7.96M); correlation at the tool's 0.5 default;
+synthesized firm vol **32.24%** (the debt leg dominates at this weight, so
+the equity-vol choice barely moves it). Durations: 0.02y is the seven days
+to October 22; 0.09y is the prior run's 33-day horizon, kept for
+comparability.
+
+| duration | what it represents | equity value (call on firm) | risk-neutral P(firm covers debt) | option / market |
+|---|---|---|---|---|
+| **0.02y** | **Forbearance end, Oct 22 2026** | **$0** | **0.00%** | **0.00×** |
+| 0.09y | the prior run's 33-day horizon | $11 | 0.00% | 0.00× |
+| 0.25y | ~one quarter | $51,338 | 0.24% | 0.01× |
+| 0.50y | ~six months | $894,449 | 2.32% | 0.11× |
+| 1.00y | one year | $5,403,036 | 7.96% | 0.68× |
+| 1.75y | term-loan maturity | $15,036,100 | 14.37% | 1.89× |
+| 2.75y | face-weighted contractual | $28,919,012 | 19.81% | 3.63× |
+| 2.75y, face +$20M preferred | contractual, preference counted | $25,688,748 | 17.52% | 3.23× |
+| 2.75y, Damodaran firm σ 68.76% | industry-vol sensitivity | $93,496,072 | 19.97% | 11.75× |
+| 0.02y, Damodaran firm σ 68.76% | industry-vol sensitivity | $10 | 0.00% | 0.00× |
+
+Read with the two inversions stated: volatility is a shareholder asset and
+a creditor cost here (the industry-σ row shows how much — but note it does
+nothing at seven days, because no vol rescues a call with no time), and **a
+maturity extension is equity value** — which is why the one-week roll is the
+whole story. At the prior run the market paid 1.15× the contractual value
+and the lens said "fair at best"; today it pays 0.28× the contractual value
+and 1.5× the one-year value: the market has moved from pricing the
+2028–2029 dates to pricing roughly thirteen months of effective life, which
+is about what a consensual out-of-court exchange that leaves the common a
+residual would imply. The lens cannot say whether that residual will exist;
+it can say the stub is now *cheap if duration is granted and worthless if it
+is not*, and that the parties who grant it have chosen seven days. **The
+option frame, not a DCF, governs §1's ownership call** — the DCF refused —
+and the frame's answer is that the ownership question is a bet on a creditor
+decision due in a week, not on a business.
+
+## 5. Falsifiers
+
+**For the pass (flip toward buy):**
+
+1. **Break —** An 8-K on or before October 22 (or the then-current
+   forbearance date) disclosing a closed financing, sale, or restructuring
+   that both funds the company past the sNDA decision and leaves existing
+   common with a stated recovery worth more than $7.96M — reassess
+   ownership immediately.
+2. **Break —** An acquisition or partnership that clears the $427.3M stack
+   and the $20M preference in cash, with any residual to the common.
+3. **Shift —** A forbearance extension of at least a quarter with no new
+   fee or preference — read the §4 table at 0.25–0.50y; it is still a pass
+   at those durations, but the arithmetic changes.
+4. **Shift —** FDA filing acceptance with Priority Review (~October 30):
+   removes a termination trigger and a Fundamental Change trigger at once,
+   pulls a PDUFA into H1'27, and funds nothing.
+
+**For an owner (sell):**
+
+5. **Break —** Termination of the Forbearance Period, or a Chapter 11
+   petition (Item 1.03) — the preferred becomes a $20M claim ahead of the
+   common and the 10-Q's own language ("earlier than when we would otherwise
+   exhaust our cash resources") is the base case.
+6. **Break —** FDA refusal to file or sNDA withdrawal: the thesis's asset,
+   a forbearance-termination event, and now a $20M preferred put, in one
+   action.
+7. **Shift —** The Q3 10-Q (~November 9) carrying a cash figure below $10M
+   or a stated covenant breach — the "liquidity below $10.0M" termination
+   trigger, confirmed on the record.
+8. **Shift —** A Nasdaq Item 3.01 bid-price deficiency notice (~November 12
+   if the price stays under $1.00) — a delisting is a Fundamental Change on
+   the preferred and a Q1'27 problem.
+
+The asymmetry is now larger in ratio and smaller in dollars: a $7.96M stub
+against a $427M stack, with the forbearance end, the FDA filing decision,
+and the Q3 print all inside three weeks. A break-class flip toward buy
+produces a multi-hundred-percent move from $0.35; that remains the stated
+price of the pass and the reason it is a pass on ownership, not a short
+case. **A further bare extension changes nothing in this document** — the
+next reopen should confirm that, re-date, and stop rather than rebuild.
+
+**Reopen trigger:** 2026-10-23:
+kpti-oct22-forbearance-end-deal-chapter11-or-rolling-extension — the
+Forbearance Period now ends 11:59pm ET October 22 absent earlier
+termination; any 8-K disclosing a transaction, a termination, a petition, or
+another extension fires it, and the day after the expiry is the latest date
+the settling filing can land.
+
+## 6. UNKNOWNs
+
+1. **UNKNOWN — what the creditor bloc intends.** A seven-day consensual roll
+   is consistent with a deal being papered and with a pre-arranged filing
+   being prepared; no filing distinguishes them until the one that ends the
+   Forbearance Period. This is the whole thesis and it is unknowable this
+   week.
+2. **UNKNOWN — why the stock fell 80.6% between 9/28 and 10/14.** No 8-K,
+   no substantive press release, no Item 3.01, shorts covering, one
+   specialist seller (Acorn) visible. Candidates in §3; none filed. Its
+   absence does not kill the pass — it would matter only if the cause were
+   a disclosed deal term, and none is disclosed.
+3. **PENDING 2026-10-22 — the outcome of the Forbearance Period.** Deal,
+   termination, petition, or roll; an 8-K settles it.
+4. **PENDING ~2026-10-30 — FDA filing-acceptance of the sNDA** (60 days
+   from 8/31; company guides Q4). A refusal fires three triggers at once
+   (§5 item 6).
+5. **PENDING ~2026-11-09 — current cash, in the Q3 10-Q.** The last hard
+   figure is $65.105M at 6/30/26. The company's runway language and three
+   and a half months of ~$8–10M/month burn, less the September payments not
+   made, bound it loosely; nothing on file bounds it from below.
+6. **UNKNOWN — whether the 9/30 Notes coupon was paid and whether the
+   $25.0M minimum-liquidity covenant was met on October 10.** The 9/11 8-K
+   pre-disclosed that neither was expected; no filing has confirmed or
+   corrected that. Either outcome is already inside the Specified Defaults.
+7. **UNKNOWN — whether a bid or financing above the stack exists.** The
+   Centerview process is private. Unchanged from every prior run.
+
+*Option value, not a numbered condition (possible tier):* if the FDA grants
+Priority Review and the MF label arrives in H1'27, XPOVIO+rux sells into a
+management-stated "up to ~$1 billion" US peak. Real, undiscounted,
+unmodelled by any third party, and now at least seven months past the money
+instead of five.
+
+## 7. Sources
+
+**Primary:** (SEC / company disclosure, CIK 1503802) 8-K filed 2026-10-14,
+event date 2026-10-13 (acc. 0001193125-26-421025, Item 8.01) — the Section
+19 extension of the Forbearance Period from October 15 to October 22, 2026;
+8-K filed 2026-09-18, event date 2026-09-17 (acc. 0001193125-26-395517,
+Items 3.03/5.03/9.01, Exhibit 3.1 Certificate of Designations) — issuance
+of 20,000 shares of 0% Series A Convertible Perpetual Preferred, $1,000
+liquidation preference, $1.62 conversion price, 4,520,000-share pre-consent
+cap, deferred cash settlement, 2% accretion, protective-matter voting,
+September 17 2029 put, Fundamental Change definitions including specified
+FDA action on the MF sNDA, bankruptcy, and delisting, and the change-of-
+control payment covenant; 8-K filed 2026-09-11 (acc. 0001193125-26-388621)
+— the Forbearance Agreement, Fee Agreement, Specified Defaults, claim
+inventory, and termination triggers, as cited in `research/KPTI-2026-09-12.md`
+§7; Form 10-Q for the quarter ended 6/30/2026 (acc. 0001193125-26-347906) —
+Note 10 obligations ($427.3M coupon-inclusive), covenant step-up, going-
+concern note; Form 4 filed 2026-10-02 (acc. 0001193125-26-412209, Chief
+Accounting Officer, 378 shares sold at $1.19, 23,404 held after); Schedule
+13G/A filings by Acorn Bioventures L.P. / Acorn Bioventures 2 L.P. and
+their GPs: filed 2026-09-25 (accs. 0001636587-26-000083 and -000084, event
+9/22/2026, 539,373 and 744,848 shares, 2.4% and 3.3%) and 2026-10-08 (acc.
+0001636587-26-000086, event 10/2/2026, 429,101 and 592,567 shares, 1.9% and
+2.6%, 1,021,668 / 4.5% aggregate, all on 22,681,460 shares); EDGAR
+submissions index through 2026-10-15 (no other filing after 9/18). Company
+IR press-release index (investors.karyopharm.com) — two inducement-grant
+notices, 9/1 and 10/1, nothing else since September 1.
+
+**stockanalysis.com (vetted exception):** via
+`sources.screeners.stock_analysis_screener.probe` `page_data`, 2026-10-15 —
+market cap $7,956,656; EV $271,381,656; shares outstanding 22,681,460; float
+17,292,692; short interest 6,056,162 (26.70% of shares out, 35.02% of
+float, DTC 4.17; prior month 7,865,168); TTM revenue $146.621M, operating
+income −$82.350M, net income −$224.740M, ncfo/fcf −$65.347M; cash and
+investments $65.105M (6/30); total debt $328.530M; equity −$330.168M; beta
+(5Y) 1.038; RSI 16.08; 50-day SMA $1.54, 200-day $6.43; Altman Z −24.52;
+Piotroski F 2; analyst consensus Buy, 5 analysts, $7.25 target; next
+earnings "Nov 2, 2026, before market open". No new transcript since the Q2
+call read at prior runs.
+
+**Broker/market microstructure:** (Robinhood MCP — admissible where no
+integrated official source covers the field) live quote 2026-10-15 22:35
+UTC (last regular trade $0.35 at 19:59:57Z; after-hours $0.3483; bid/ask
+$0.33/$0.3896; official close $0.315 on 2026-10-14); daily split-adjusted
+bars 2026-06-05 → 2026-10-14 (90 closes) for the realized-vol series and
+the 9/28 → 10/14 price path (9/29 $1.205, 10/1 $0.8668, 10/14 $0.315);
+`get_earnings_results` — eight quarters of estimate vs actual and the
+unverified 11/2 BMO date; the KPTI option chain (expiries 10/16, 11/20,
+12/18, 1/15/27, 2/19/27, 5/21/27, 1/21/28, 1/19/29) and the 2026-10-16 and
+2026-11-20 $0.50 and $1.00 call/put quotes (marks, IV, delta, OI, volume,
+spreads; timestamps 16:38–19:59 UTC 10/15).
+
+**Reference data:** Damodaran implied ERP 4.20% (trailing 12-month with
+adjusted payout), October 1 2026 vintage, against his stated US treasury
+rate of 5.29%; "Standard Deviations in Equity and Firm Value" (January 2026
+vintage) — Drugs (Biotechnology) firm-value σ 68.76%, used only as the
+sensitivity row the write-up declines to adopt; Nasdaq Listing Rules
+5550(a)(2) / 5810(c)(3)(A) for the $1.00 bid-price mechanics (30 business
+days, 180-day cure, one-year reverse-split lookback) — rule text not
+re-fetched this run, stated from the prior-year deficiency cycle the
+company's own 10-K describes.
+
+**Point-in-time repo DBs:** `data/fred.db` — DGS10 5.21 (2026-10-13),
+T10YIE 2.35 (2026-10-14). `data/stocks.db` `v_latest` (snapshot
+2026-10-15T11:00Z) — price $0.315, market cap $7,144,660, beta 1.038,
+insiders 2.88%, institutions 80.57%, float 17,292,692, shares out
+22,681,460, SBC $11.642M TTM, SBC/revenue 7.94%, 5 analysts.
+`data/sec_fundamentals.db` `v_screener` — Q2'26 revenue $33.432M, net income
+−$67.023M, equity −$330.168M, diluted EPS −$2.32. `data/earnings.db` —
+`calendar_now.today` 2026-10-15, no upcoming KPTI row. `data/composite.db`
+— no KPTI rows in `v_flagged` or `v_latest_scorecard`. `data/portfolio.db`
+`v_latest_positions` — 24 held symbols, read for the factor-overlap count;
+all 24 carry a factor line. `data/options.db` — not consulted; KPTI is
+outside the CBOE catalog.
+
+**Low-confidence:** one standard web search (query naming the ticker,
+forbearance, and Nasdaq) — returned only 2024–2025 material; nothing used.
+
+## Kill-thesis record
+
+**Verdict: FLAWED** — conditions=5, refuted=1, unknown=1, pending=3,
+not_obtained=0. One load-bearing condition of the bull case is refuted on
+the filed record — the same one the prior run refuted, at a shorter grant —
+and the three that remain are dated inside three weeks. The thesis is not
+repairable at this price without the 8-K that ends the Forbearance Period
+saying what the common keeps.
+
+**Per-condition adjudication** (the bull case's conditions, never the
+pass's):
+
+1. **A transaction closes on or before October 22 that leaves existing
+   common with a recovery worth more than $7.96M.** — **PENDING
+   2026-10-22.** Attacked with what bears on it today: Centerview retained
+   since July with nothing to show; the only "financing" in three months
+   was $20M of preferred *paid to* creditors; the parties chose a seven-day
+   roll, the shortest extension a forbearance can carry; the preferred's
+   change-of-control covenant now puts a $20M toll ahead of the common in
+   any sale; and the 10/14 8-K was written to disclose the minimum. All of
+   it leans against, none of it closes the question — the settling filing
+   is dated, so pending, not refuted.
+2. **The creditor bloc prefers an out-of-court outcome to a Chapter 11 that
+   extinguishes the common.** — **PENDING 2026-10-22.** The bloc built a
+   "bankruptcy event" Fundamental Change into its own fee instrument on
+   9/17 — it priced the filing it was being paid to forbear from. The
+   10-Q's own language says a petition would come "earlier than when we
+   would otherwise exhaust our cash resources." A weekly roll is equally
+   the shape of a pre-arranged filing being papered. Not refuted by
+   anything filed; the same 8-K settles it.
+3. **The FDA accepts the sNDA for filing (~October 30).** — **PENDING
+   2026-10-30 (approx).** Nothing today stands against acceptance: written
+   FDA feedback that SVR35 "appears to qualify as a reasonably likely
+   surrogate endpoint," an approved NDA already on the molecule, a
+   submission on the guided date. A dated checkpoint, not a survival — and
+   acceptance funds nothing.
+4. **The effective maturity of the creditors' claim is at least about one
+   year.** — **REFUTED**, on the Forbearance Agreement's text as extended:
+   it "does not waive the Specified Defaults or extend the applicable
+   payment deadlines"; on termination "all overdue amounts become
+   immediately due and payable"; five early-termination events survive the
+   extension untouched; and the extension itself is seven days. The market
+   is paying for thirteen months of life the documents grant a week at a
+   time. The prior run refuted this at thirty-three days; the evidence is
+   stronger at seven.
+5. **A buyer, partner, or financier exists above the stack.** — **UNKNOWN.**
+   No filing, past or future, discloses a bid that does not close, and no
+   bounding route (purchase-price allocation, segment margin, pro-formas)
+   exists for a live private process. Unknowable this run, as at every
+   prior run.
+
+**Standing checks.** *Base rate* — the reference class is a substantial-
+doubt microcap biotech in payment default, under a rolling one-week
+forbearance, with secured and senior claims above fifty times its market
+cap, a banker retained for three months without a transaction, a creditor
+bloc holding 100% of the notes, and a filed statement that it would seek
+bankruptcy protection before cash exhaustion. The modal outcome is a
+pre-arranged Chapter 11 or §363 sale in which the common is extinguished or
+receives a token (warrants, a low-single-digit sliver); a qualitative class
+rate, stated as such. Damodaran's ~29% EVA rate is not the operative base
+rate — the question is solvency, not excess return. *The short case* — the
+strongest version: the equity is a weekly-expiring call with a $447M strike
+(stack plus preference) on a firm the balance sheet marks at $271M with
+stale cash; the $20M preferred's change-of-control toll and bankruptcy put
+sit ahead of the common in every exit; the Q3 10-Q will print the first
+cash figure since June and the covenant breach with it; the Nasdaq clock is
+ten days into thirty; and the one reason to roll weekly rather than file is
+to let the FDA acceptance land first so the collateral carries a cleaner
+label into the restructuring. The short's own cost is the squeeze — 35% of
+float short, DTC 4.2 — which is the short's problem, not evidence for the
+long. *Management incentives* — the 7/17 cash retention program pays
+officers through a transaction at any equity price; the 10/14 8-K is two
+sentences with no exhibit; no insider has bought a share at $0.35. *Moat* —
+mechanism, not label: composition-of-matter patents on a first-in-class
+oral XPO1 inhibitor, and it is the creditors' collateral. *Disconfirming
+search* — run for the bull and it found real things: the sNDA is in on
+schedule with Priority Review requested and the FDA's written surrogate-
+endpoint feedback behind it; the creditors have twice chosen forbearance
+over acceleration; short interest fell by a third while the stock fell
+80%; the option lens at the contractual maturity prints 3.6× today's
+market cap; the stale 5-analyst $7.25 target. None of it produces a dollar
+or a day of maturity before October 22.
+
+**Statistical checks.** The option-lens table is arithmetic on stated
+inputs, not an inference; its sensitivity to the unobservable firm-vol leg
+(32.24% synthesized vs 68.76% industry: $28.9M vs $93.5M at 2.75y, and $0
+vs $10 at seven days) is disclosed in §4, not smoothed. The realized-vol
+figures are trailing windows containing the July 31 regime break (RV60
+295% with it, 143% without) — reported both ways, not averaged. The
+"−80.6% on no filing" is a tape observation, not an inference, and the
+earnings miss count (four of six) is a count with n=6, not a pattern
+claim. The OS hazard ratio (0.43, 23 events, CI upper bound 1.00) is
+unchanged and remains the confirmatory dataset, years out.
+
+**Options timing check.** Applicable — three dated claims (October 22
+forbearance end; ~October 30 sNDA filing decision; ~November 2 Q3 print)
+and a chain exists. Ran, path 2 only (KPTI is outside the CBOE catalog;
+`data/options.db` has no rows), expiry 2026-11-20, 36 DTE. **Gate FAILED →
+UNRELIABLE:** nearest strike $0.50 is 43% above the $0.35 spot; spreads 67%
+and 114% of mark against max(10%, 2 ticks); the two legs' IVs are 279% and
+648%. The 1-DTE 10/16 expiry cannot run (null put IV). Table quoted in §4
+and leaned on for nothing. **Coverage disclosed: the check ran and its
+output is unreliable.** The thesis states no required move, so nothing was
+refuted and no condition's tag moved on options evidence.
+
+**Closest attack:** *"At $8M the wipe-out is priced. The lens says $29M at
+contractual maturity and $15M at the term-loan date; any outcome that
+leaves the common a sliver — an exchange with warrants, a sale with a token
+recovery — beats SPY from here, and rolling rather than filing is the
+creditors' revealed preference for exactly that."* The first arithmetically
+coherent bull case in four runs, and it fails three ways. (a) It borrows
+the one input the filing denies: the lens value is a function of duration,
+duration is the creditors' to grant, and they have granted seven days —
+at which the same lens prints zero. (b) "Any sliver" is not any sliver:
+for the common to be worth more than $7.96M after a $427M stack and a $20M
+preference on a $271M firm, it must keep roughly 3% of the reorganized
+equity, and the class base rate for existing common in a pre-arranged
+biotech restructuring is a token below that or nothing. (c) Rolling
+weekly is not revealed preference for a consensual deal; it is equally the
+revealed preference of a bloc that wants the FDA filing decision inside
+the forbearance window before it chooses — and it wrote a bankruptcy put
+into its own fee instrument.
+
+**Flip evidence — toward SOUND:** an 8-K on or before October 22 (or the
+then-extended date) disclosing a closed transaction with a stated recovery
+to existing common worth more than $7.96M *and* an effective maturity of at
+least a year on whatever claims remain. **Toward more FLAWED:** an Item 1.03
+petition, a forbearance termination, an FDA refusal to file, or a Q3 10-Q
+cash figure below $10.0M.
+
+**p(beat SPY, 63 td): 0.25.**
