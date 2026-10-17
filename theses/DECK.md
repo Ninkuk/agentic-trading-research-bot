@@ -1,0 +1,189 @@
+# DECK — Deckers Outdoor (HOKA, UGG) — 2026-07-27
+
+Price $97.73 (spot) · market cap $13.31B · net cash $1.13B · TTM levered FCF
+$1.10B (P/FCF 12.1) · next earnings 2026-10-22 AMC
+
+Entry path: not recorded (pre-template run).
+
+## 1. Verdict and thesis
+
+**BUY at $97.73.** kill-thesis: **UNPROVEN** — conditions=5, refuted=0,
+unknown=2.
+
+Own it at this price. Two currently-growing premium brands at a price where
+the reverse DCF pays ~8%/yr under *permanent zero growth* and ~11% on a
+fading 5→3% path — the unproven growth conditions are upside, not required
+for an adequate return. The bear case needs actual decline in both brands,
+not stagnation, while an 80%-of-FCF buyback retires ~8%/yr of shares at these
+prices.
+
+**Closest attack:** at this point in HOKA's series, "maturation" and "early
+decay" are observationally identical; first falsifier checkpoint is the
+Oct 22 print.
+
+Load-bearing conditions: five counted; not individually enumerated in the
+original run (0 refuted, 2 unknown). Condition tiers not recorded in
+original run.
+
+## 2. Business
+
+**Created:** HOKA ($2.6B TTM) — max-cushion performance running with genuine
+athlete credibility (Western States record, Challenge Roth record, Q1 call);
+UGG (~$2.5B) — comfort-luxury sheepskin franchise stretched into year-round
+(men's 15% of revenue, sneakers/sandals/apparel; Q1 call). Teva/other now
+immaterial (−18% Q1, Koolaburra wound down; 8-K ex-99.1).
+
+**Captured:** premium full-price model — scarcity-managed supply, DTC 40%+ of
+mix and growing (+13% Q1), gross margin 57.8% TTM (statistics probe), op
+margin 23.1% FY26 (10-K XBRL).
+
+**Protected:** brand heat + full-price discipline, not a structural moat.
+The 10-K's own first risk factor is consumer-preference change, and it
+states competitors are "specifically targeting" HOKA/UGG categories with
+lowered entry barriers. The protection is execution-dependent; written down
+as such.
+
+**Operating leverage (Phase 0): strongly positive** — FY17→FY26 revenue 3×
+($1.79B→$5.47B), op income −$2M→$1.26B, margin 11.7%→23.1%; one-year dip
+FY25→FY26 (23.6→23.1) on tariffs.
+
+## 3. Threads pulled
+
+- **Q1 FY27 call + 8-K (Jul 23):** revenue $1.02B +5.7%, EPS $0.94 (+7%
+  beat, smallest of 7 straight; Robinhood earnings pattern). HOKA +8% (DTC
+  +17%, wholesale +3% on EMEA warehouse shipment timing), UGG +5%. FY27
+  guide held: $5.86–5.91B, EPS raised to $7.35–7.50; op margin ~21.5% (down
+  from 23.1%). SG&A +13% vs revenue +5.7% — negative operating leverage this
+  year by design, leverage promised FY28+. Net income slightly down YoY
+  despite flat EPS.
+- **HOKA deceleration (segment metrics, stockanalysis):** quarterly YoY
+  40–90% (FY23) → ~27% (FY24) → ~25% (FY25) → ~15% (FY26) → +8% (Q1 FY27).
+  Lumpy around shipment timing (a +10% quarter in FY25 rebounded to +20%).
+  Structural deceleration confirmed; decay not confirmed.
+- **The −6% day was Jul 23 pre-print** (tariff-news session); the post-print
+  session opened −4% and closed −0.2% (Robinhood bars). The print was
+  absorbed; the market's complaint is the back-half-loaded guide, not the
+  quarter.
+- **Back-half wholesale acceleration:** pre-announced last quarter,
+  warehouse event documented, inventory −5% (anti-channel-stuffing), no
+  cancellations claimed. Unverifiable until Oct 22 / January prints — held
+  as UNKNOWN.
+- **Tariffs:** Q1 GM +60bps to 56.4% *including* −150bps tariff drag; guide
+  raised GM while lifting tariff assumption 10%→12.5%; sourcing Vietnam +
+  Indonesia, <5% China (10-K). IEEPA refunds pursued, excluded from
+  guidance — free option.
+- **Commitments footnote (10-K Note 8):** $1.37B purchase obligations = 95%
+  <1yr ordinary-course inventory POs + sheepskin/EVA minimums + IT/3PL. No
+  capacity take-or-pay; capex ~1.5% of revenue is a real asset-light base.
+- **Insiders:** no Forms 3/4/144 since routine Jun 2 comp-cycle cluster
+  (EDGAR submissions) — silence post-print, both directions.
+- **Sell-side (Jul 24, TheFly via stockanalysis news):** PT cuts across the
+  board, $85 (Wells) to $133 (Stifel/Barclays); consensus $122.81.
+- **Rival check (low-confidence web):** On compounds ~40% — faster than
+  HOKA — but both taking share from a declining Nike; HOKA+On ≈ 19% of US
+  premium running. Watch item, not a refutation.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; path 1 N/A, DECK
+  not in CBOE catalog). See §4's table.
+- **Dead ends:** `/stocks/DECK/financials/` history route now returns gated
+  `{info}` payload (catalog drift since 2026-07-09) — routed around via SEC
+  XBRL companyconcept. `sec_fundamentals.db` has no DECK row (coverage gap).
+
+## 4. Valuation
+
+Reverse DCF, levered TTM FCF $1,097.3M paired with market cap $13,309.1M
+(both statistics-probe `hover` exacts; no minority interest; net-debt 0 by
+pairing rule). No Damodaran hurdle was computed in the original run.
+
+| assumptions | implied return |
+|---|---|
+| 0% growth (3y), 0% terminal | **~8%/yr** |
+| 5/5/4/3/3%, terminal 2.0% | **~11%/yr** |
+| 8/8/7/6/5%, terminal 2.5% (guidance-ish) | **~13%/yr** |
+
+Quoted to whole percents: ATM IV ~46% says the range is wide. Terminal-risk
+check: the disclosed endgame risk is brand-preference decay; the 0%-terminal
+stress row exists precisely because a 2%+ terminal rate does not survive it —
+and the price clears the stress row anyway. FY27 FCF ≈ TTM (op margin guided
+down, revenue up ~8% → op income roughly flat). Buyback (~80% of FCF, $4.7B
+authorization ≈ 35% of mkt cap) converts flat FCF into ~8%+ per-share growth
+at this multiple.
+
+**Options-implied move** (path 2 — Robinhood stopgap; path 1 N/A, DECK not
+in CBOE catalog): exp 2026-11-20 (116 DTE, brackets Oct 22 AMC print; no
+weekly listed yet), ATM 100:
+
+| metric | value |
+|---|---|
+| expected absolute move (MEAN, not ceiling) | 20.77% |
+| 1-sigma move | 25.90% |
+| ATM IV | 45.94% |
+| RV60 | 39.72% |
+| RV20 | 39.32% |
+| IV > RV60 / RV20? | YES / YES |
+
+IV above both — mechanically elevated (window spans earnings). **Liquidity
+gate FAILED** (spreads $1.20/$1.60 > 10% of mark, volume 0, OI 34/174) —
+context only, no verdict leans on it. Timing-check applicability: not
+recorded in original run.
+
+## 5. Falsifiers
+
+Sell on:
+
+- HOKA global growth <5% in any H2 FY27 quarter, or the back-half wholesale
+  acceleration failing to materialize at Oct 22 / January prints.
+- US HOKA DTC turning negative, or credible measured US share loss >$120.
+- Gross margin <54% or a rising promo cadence (full-price model breaking).
+- UGG declining through a normal winter.
+- A large acquisition displacing the buyback.
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Third-party share data above $120** (management cites it; exists in no
+   disclosure). Absence does not kill: the zero-growth row carries the
+   price.
+2. **H2 wholesale timing story** — unverifiable until Oct 22. Same slack.
+3. **Tariff endgame beyond 12.5%** — policy, unknowable; slack exists.
+4. **Comp-plan metrics** (proxy filed Jul 24, unparsed this run) — minor.
+5. How much of Q1's GM beat was the one-off closeout benefit (60bps called
+   out) masking underlying DTC promo pressure — partially disclosed only.
+
+## 7. Sources
+
+- **Primary:** FY26 10-K (deck-20260331.htm; risk factors, Note 8,
+  sourcing), Q1 FY27 8-K ex-99.1 (Jul 23), Q1 FY27 call transcript (Jul 23,
+  via stockanalysis/Quartr — primary-transcribed), SEC XBRL companyconcept
+  (revenue/op income/net income FY17–FY26), EDGAR submissions API
+  (filing/Form-4 index).
+- **stockanalysis.com (vetted exception):** /stocks/DECK/statistics/ (all
+  exact `hover` figures), /metrics/revenue-by-segment/ (HOKA quarterly
+  series), /transcripts/, news feed (TheFly PT items).
+- **Broker/market microstructure:** (Robinhood MCP; no integrated official
+  source covers these fields) earnings estimate-vs-actual pattern, option
+  chain/quotes/IV, daily bars, live quote.
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** `sec_fundamentals.db` — no DECK row (coverage
+  gap; see §3's dead ends).
+- **Low-confidence:** web sweep on On/Nike competitive dynamics (SGI Europe,
+  Glossy, aggregators).
+
+## Kill-thesis record
+
+**kill-thesis verdict: UNPROVEN** — 5 load-bearing conditions, 0 refuted,
+2 unknown. The unproven growth conditions are upside, not required for an
+adequate return.
+
+Per-condition adjudication: not recorded in original run (the five
+conditions were not individually enumerated).
+
+Standing/statistical/options-timing checks: not recorded in original run,
+beyond §4's failed liquidity gate (context only).
+
+**Closest attack:** at this point in HOKA's series, "maturation" and "early
+decay" are observationally identical; first falsifier checkpoint is the
+Oct 22 print.
+
+**Flip evidence:** not recorded as a labelled pair in the original run; §5
+carries the sell-side evidence.

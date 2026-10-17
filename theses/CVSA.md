@@ -1,0 +1,613 @@
+# CVSA — Covista Inc. — 2026-10-13
+
+Price $129.14 (official close, 2026-10-13; after-hours $126.63) · market cap
+$4.396B · next earnings 2026-10-29 AMC (confirmed on stockanalysis
+`/statistics/`; the "Covista Announces First Quarter Fiscal Year 2027
+Conference Call" release is dated 2026-09-29)
+
+Scheduled re-run of a name that already carries a thesis — supersedes
+`research/CVSA-2026-09-12.md` (BUY at $125.09, SOUND, pending=3). That
+thesis's reopen trigger is dated 2026-10-29 and has **not** come due; no
+falsifier has fired. Unattended scheduled run. Issuer identity unchanged:
+CIK 0000730464, the former Adtalem Global Education (ATGE → CVSA, February
+2026). **This run lands 16 calendar days before the print that settles two of
+the five conditions** — the timing is part of the finding, not a footnote:
+almost nothing that decides this thesis can be learned until 2026-10-29, and
+this document mostly re-prices the unchanged argument against a higher
+risk-free rate and a 3.2% higher share price.
+
+## 1. Verdict and thesis
+
+**BUY at $129.14.** kill-thesis: **SOUND** — conditions=5 (2 probable,
+3 plausible), refuted=0, unknown=0, pending=3, not_obtained=0.
+
+**p(beat SPY, 63 td): 0.53** · kill-thesis: 0.52
+**Disputed expectation:** at $129.14 the market pays 12.2%/yr on 7% FCF growth
+and 8.8%/yr on a doubly-conservative base with zero growth, against an 8.60%
+hurdle — the price still assumes the OBBBA graduate-lending regime and the
+Chamberlain stall roughly stop the business, but the zero-growth cushion has
+thinned from +74bp to +17bp in a month (DGS10 4.95% → 5.24%). What forces the
+revision is the 2026-10-29 Q1 FY2027 print: the September-2026 Chamberlain
+session (bar: 40,483 students, +1.6%) and the first Walden cohort recruited
+entirely after Grad PLUS ended on 2026-07-01.
+
+The thesis is unchanged and still not clever: Covista is the largest US
+healthcare educator (99,472 students across Chamberlain, Walden and three
+Caribbean medical/veterinary schools), converting a demographic clinician
+shortage into 19.9% operating margins, 15.5% ROIC and $392.7M of FY2026
+levered FCF on $1.954B revenue, at 0.5× net leverage, with $661.8M of buyback
+authorization (15.1% of today's market cap). At 11.2× FCF (12.5× net of SBC)
+the discount is the market's inability to price OBBBA's graduate-lending caps
+and "Do No Harm" earnings test against Walden. The base case pays 250–480bp
+over the cost of equity; the stress case now pays almost exactly the cost of
+equity and no more.
+
+**Closest attack:** the stress row. The 2026-09-12 thesis earned SOUND
+despite three pending conditions *because* a base stripped of SBC and the
+deferred-revenue build, held flat for five years, still cleared the hurdle by
+74bp. Today it clears by **17bp** — inside the error of the base FCF itself —
+and misses Damodaran's rf + 4.5% mature-company companion (9.74%) by 97bp.
+The "you are paid even if nothing grows" leg of the argument is now a tie,
+not a margin. It fails to refute because no condition requires zero growth:
+the Bear row (4% growth on the same punished base) still clears the hurdle by
+138bp and the companion by 24bp. But a reader should now treat this as a
+thesis that needs *some* growth to be right, which puts more weight on
+conditions 1 and 2 than the prior document did.
+
+Load-bearing conditions of the bull case — **five** (carried unchanged from
+the 2026-09-12 thesis; nothing since has moved any tier):
+
+1. *plausible* — **Chamberlain's total enrollment growth re-accelerates from
+   the +1.6% May-2026 session.** FY2026 session series +4.5%, +2.2%, −1.0%,
+   −0.7%, +0.5%, +1.6%; pre-licensure BSN grew a 16th straight quarter. No new
+   figure since: at the 2026-09-14 Jefferies conference the CEO gave no
+   Chamberlain number, only "we see no abatement in demand on the consumer
+   side." Decisive disclosure: Q1 FY2027 print, **2026-10-29**, September
+   session vs 40,483.
+2. *plausible* — **Walden's graduate enrollment does not break under the
+   post-2026-07-01 federal graduate borrowing caps.** June-2026 Walden
+   enrollment 54,851 (+14.0%), all recruited before the caps. At Jefferies the
+   CEO called the lending changes "manageable" with no "slack in demand" —
+   assertion, not data. Decisive disclosure: the same **2026-10-29** print
+   (September-30 Walden enrollment).
+3. *plausible* — **"Do No Harm" does not strip Title IV eligibility from
+   Walden's mental-health, social-work and education graduate programs.**
+   ED's implementing regulations were published 2026-07-01, generally
+   effective **2027-07-01**, two failures in three years. The CEO's Jefferies
+   framing — ED evaluates programs on "the return on investment received by
+   the students," "the most attractive regulatory backdrop our industry has
+   seen in probably 20 years" — is the bull read of the same rule that is
+   the bear's main exhibit. PENDING 2027-07-01.
+4. *probable* — **The FY2029 floors of $2.35B revenue and $10.60 adjusted EPS
+   stay reachable.** $2.35B needs 6.55%/yr across FY2028–29 from the FY2027
+   guide midpoint of $2,070M; $10.60 needs 8.37%/yr from the $9.03 FY2027 EPS
+   midpoint. Read the revenue half (see Kill-thesis record: the EPS half is
+   largely buyback-satisfiable).
+5. *probable* — **Capital return continues near the FY2026 pace.** $661.8M
+   remaining at 2026-06-30 on the $750M authorization (to 2028-12-15); FY2026
+   repurchases $239.9M; shares −6.8% YoY. Since then: the $510M term loan was
+   repriced 25bp lower on 2026-09-18 (8-K, SOFR + 2.25% → + 2.00%), worth
+   ~$1.3M/yr pre-tax — confirming lender appetite, immaterial to cash.
+
+**Dominant shared risk factor:** US federal student-aid policy funding
+tuition demand (Title IV eligibility, graduate borrowing caps, earnings-based
+program accountability) — holdings unavailable in this session (the headless
+slot has no `data/portfolio.db` grant). The 2026-09-12 thesis read one match
+(LOPE) and five unlabelled names from the book as it stood then; that count is
+not re-asserted here.
+
+## 2. Business
+
+Unchanged from `research/CVSA-2026-09-12.md` §2 in substance; restated
+briefly so this document stands alone, with deltas.
+
+**Created:** a working adult gets a licensed-profession credential
+(nursing, mental-health practice, medicine, veterinary medicine) they can
+finish while employed, from schools with licensure and placement records. The
+preference satisfied is access on the student's schedule to a shortage
+profession, not price.
+
+**Captured:** four mechanisms — (1) Walden per-credit-hour tuition (FY2026:
++2.6% rate plus more credit hours per student); (2) Chamberlain per-session
+tuition (~+3.4%) over a largely fixed, leased campus base ($9–12M of capex
+per campus, EBITDA breakeven in 24 months — restated by the CEO at Jefferies
+2026-09-14); (3) medical/veterinary semester tuition and fees; (4) employer
+contracts (SSM Health, Advocate Health) that lower acquisition cost and raise
+persistence. Delta: Walden's acquisition-era freeze on new programs has
+lifted — the CEO said at Jefferies Walden has "just now jumped back into
+rolling out new programs," incremental to enrollment.
+
+**Protected:** a regulatory and operational barrier — ED-recognized
+accreditation, programmatic nursing accreditation, state authorization,
+clinical-placement networks, licensure history — that blocks a new for-profit
+entrant but not a non-profit expanding its own nursing seats, and that the
+regulator holding it can devalue. Delta found this run: **all five
+institutions operate under provisional Title IV certification with heightened
+cash monitoring** (FY2026 10-K Item 1: ED lowered the composite score in 2023
+after the Walden acquisition; Walden provisionally recertified in January 2026
+through 2028-12-31; surety-backed letters of credit of $202.6M in favour of
+ED, 10% of FY2025 Title IV funds). The filing calls the conditions
+immaterial to results, and they have been in place since 2023 — but
+provisional status means the regulator's option on the moat is closer to the
+money than "a regulatory moat" implies: ED can decline recertification without
+the full revocation process.
+
+**Control:** one class of common stock, one share one vote, no controlling
+holder; 34,038,820 shares outstanding; insiders 2.58%, institutions 104.6%
+(`stocks.db`). The 2026-11-11 annual meeting ballot (DEF 14A filed
+2026-10-02) carries no charter, bylaw, takeover-defense or shareholder
+proposal — eleven directors, auditor, say-on-pay and a new 2026 Equity
+Incentive Plan. Nothing forecloses an unsolicited takeover or an activist.
+
+**Operating leverage (Phase 0): positive**, and strongly so. No new fiscal
+period has been reported since the prior thesis.
+
+| FY | revenue $M | operating income $M | op margin |
+|---|---|---|---|
+| 2022 | 1,381.8 | 155.6 | 11.3% |
+| 2023 | 1,450.8 | 226.3 | 15.6% |
+| 2024 | 1,584.7 | 271.6 | 17.1% |
+| 2025 | 1,788.3 | 345.7 | 19.3% |
+| 2026 (=TTM) | 1,954.1 | 389.7 | 19.9% |
+
+Revenue +41.4% over four years; operating income +150.4%; SBC ($41.2M,
+2.11% of revenue) is charged in these figures.
+
+## 3. Threads pulled
+
+- **What changed since 2026-09-12 — swept, and almost nothing operational
+  did.** EDGAR filings since 2026-09-01: a 13G/A (09-08), the 8-K term-loan
+  repricing (09-23, Amendment No. 6 dated 09-18), the DEF 14A / DEFA14A / ARS
+  (10-02), Forms 144 (10-08, 10-09) and a Form 4 (10-09). News feed: the
+  Q1 call announcement (09-29), a Walden DAISY Foundation recognition
+  (10-01), BMO trimming its target to $145 from $148 at Outperform (~10-06),
+  and a release on Covista medical-school USMLE Step 1 pass rates (10-13).
+  None of it bears on conditions 1–3. Silence since the Q4 call on
+  enrollment is itself the reading: management has not pre-announced in
+  either direction.
+- **The most recent management transcript is a fireside chat, not a call.**
+  Jefferies Healthcare Services conference, 2026-09-14 (CEO Steve Beard). It
+  carried no Chamberlain, Walden or guidance figures and did not mention
+  Grad PLUS, Do No Harm or the July selloff by name. What it did carry: "just
+  under $400 million of free cash flow," buybacks continuing "where it makes
+  sense," lending changes "manageable," and the regulatory backdrop as "the
+  most attractive … in probably 20 years." That last line is a management
+  view of a rule whose first measured cohort does not exist yet; it is
+  recorded, not credited.
+- **The rate move is the largest change to the thesis, and it is
+  exogenous.** DGS10 went from 4.95% (2026-09-10) to 5.24% (2026-10-09);
+  Damodaran's implied ERP moved from 4.14% to 4.20% (2026-10-01). Together
+  with the price rising $125.09 → $129.14, every scenario's spread narrowed
+  by ~55–70bp. Under the condition rules this is a §4 input, not a
+  condition — but it is why the stress row went from a margin to a tie.
+- **Second sector-wide drawdown, again with no named cause.** 2026-09-24 →
+  09-28 closes: CVSA −5.4% (124.16 → 117.51, 674k shares on 09-28, ~2× its
+  recent norm), PRDO −5.3%, STRA −4.9%, APEI −4.9%, LOPE −3.2%, LAUR −1.3%.
+  Same ordering as the 2026-07-15 episode — US graduate/online exposure
+  worst, Latin-American LAUR least — and fully recovered by 10-08. Two
+  unexplained, policy-shaped sector moves in ten weeks is the tape telling
+  you the risk premium is moving on Washington inputs this document cannot
+  name. Recorded as an extension of §6 UNKNOWN 3, not as evidence.
+- **Insider activity: CEO selling on a plan, small.** Form 4 (10-09):
+  Beard sold 3,639 @ $130.369 (10-08) and 4,667 @ $130.769 (10-09), ~$1.09M
+  total, under a Rule 10b5-1 plan adopted 2025-12-10, footnoted as shares
+  above ownership guidelines; he holds 469,158 afterwards (the sale was 1.7%
+  of his holding). Company policy permits no discretionary trades. Neutral;
+  still no insider buying anywhere in the record.
+- **The provisional-certification fact (new, §2).** It was not in the prior
+  thesis. It does not change a condition — it has been in force since 2023
+  through the whole enrollment and margin run in the §2 table — but it
+  sharpens Break falsifier 2 and the short case (Kill-thesis record).
+- **Disconfirming search on Walden: one historical investigation, now not
+  disclosed as open.** A search surfaced a November-2023 HLC "Governmental
+  Investigation" designation tied to an ED investigation of Walden's doctoral
+  programs. The HLC's "updated" notice URL now returns 404, an EDGAR
+  full-text search for "Governmental Investigation" in CIK 730464 filings
+  since 2025-01-01 returns zero hits, and the FY2026 10-K's Note 18 (R24)
+  names no open ED, state-AG, FTC or DOJ investigation of any institution —
+  only the Borrower Defense claim counts (Walden 9,031 of 16,623; "none of
+  Covista's institutions have received an ED notice of BDR application
+  approvals or recoupment intent"). Read as resolved or immaterial; the 404
+  is not proof of closure, so §6 carries it.
+- **New equity plan on the ballot — the reserve was not read.** Proposal 4
+  approves a 2026 Equity Incentive Plan. The CD&A shows the CEO's FY2026 LTI
+  was 100% PSUs (50% revenue growth, 50% adjusted EBITDA margin), annual cash
+  bonus on revenue and adjusted EPS (CEO paid 145% of target). The share
+  reserve and overhang sit past the portion of the proxy this run's fetch
+  returned (§6, NOT OBTAINED, non-load-bearing).
+- **Options read (mandatory):** path 2 only (Robinhood). CVSA is outside the
+  CBOE catalog, so path 1 is structurally unavailable. 2026-11-20 expiry,
+  38 DTE, brackets the 2026-10-29 print. Liquidity gate FAILED → UNRELIABLE.
+  Table in §4.
+- **Dead ends.** (a) `data/earnings.db` — the `v_upcoming_earnings` query
+  keyed on `symbol` errored (no such column); the confirmed date came from
+  stockanalysis and the company release instead — no further attempt, the
+  date is not in dispute this time. (b) `data/composite.db` and
+  `data/sec_fundamentals.db` — not re-queried: no new filing period since the
+  prior thesis, which recorded composite coverage 0.09 with no flags and a
+  mixed-vintage `v_screener` row. (c) Robinhood `get_earnings_results` — not
+  re-pulled; no quarter has reported since the prior run's 7-for-7 beat
+  record. (d) The 2026-09-08 13G/A — not opened; a passive-holder amendment
+  does not bear on any condition. (e) Disconfirming web search on Walden /
+  Chamberlain litigation — only 2020–2025 items (Carroll v. Walden settled
+  $28.5M, final approval 2024-10-17; an individual's 2025 Georgia suit),
+  nothing new in 2026.
+
+## 4. Valuation
+
+**Inputs and pairing.** From `/stocks/CVSA/statistics/` (2026-10-13) and the
+Robinhood official close: market cap **$4,395,773,215** (34,038,820 shares ×
+$129.14), enterprise value $4.89B, TTM `fcf` **$392,726,000** (= `ncfo`
+$470.42M + `capex` −$77.70M — unchanged, no new period), total debt
+$905.50M (carrying value; funded principal is the $510.0M term loan after
+the revolver was repaid 2026-07-01), cash $406.32M, net income $251.57M.
+`fcf` is levered, so it pairs with **market cap**; **net debt 0 by the
+pairing rule**. No minority interests, no material pension, zero litigation
+reserve. Two haircuts, unchanged from the prior run:
+
+- **SBC** $41,216,000 TTM (`stocks.db` `shareBasedComp`; `sbcByRevenue`
+  2.11%). Base → **$351,510,000**.
+- **Deferred-revenue build** $45.0M (growth-contingent float that reverses
+  if enrollment stalls). Conservative base → **$306,300,000**.
+
+**Hurdle:** rf **5.24%** (`DGS10`, 2026-10-09) + beta **0.80** × ERP
+**4.20%** = **8.60%**. ERP is Damodaran's implied ERP on **2026-10-01**
+(trailing 12-month, adjusted payout), solved against his 5.29% Treasury
+rate. **Beta clamped** from the raw 0.65 (5Y, `/statistics/`; `stocks.db`
+0.652) to the bottom of the 0.8–1.2 band — not a thin-float artefact
+(float 97.4% of shares out) but clamped on the absolute companion: the
+unclamped 7.98% would sit far below rf + 4.5% = **9.74%**. Rows clearing the
+companion are named.
+
+**10-year breakeven:** `T10YIE` **2.33%** (2026-10-13, `data/fred.db`) —
+the terminal growth in every row: inflation-only growth, no real growth, no
+reinvestment claimed.
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| Stress — normalized base, growth stops | $306.3M | 0% | 2.33% | 8.77% | **+17bp** |
+| Bear — normalized base | $306.3M | 4% | 2.33% | 9.98% | +138bp |
+| Bear+ — normalized base, plan floor | $306.3M | 7% | 2.33% | 10.97% | +237bp |
+| Conservative — SBC-adj base | $351.5M | 4% | 2.33% | 11.10% | +250bp |
+| Base — SBC-adj base, plan floor | $351.5M | 7% | 2.33% | 12.21% | +361bp |
+| Bull — SBC-adj base, plan ceiling | $351.5M | 10% | 2.33% | 13.40% | +480bp |
+
+Against 2026-09-12 every row is 55–70bp tighter (stress +74 → +17; base
++428 → +361). The shape still holds — every row clears the hurdle — but the
+stress row now ties it, and five of six rows clear the 9.74% companion (the
+Bear row by only 24bp). The price no longer pays the cost of equity on zero
+growth with any margin; it pays it on 4% growth with a modest one.
+
+**Integrity checks.**
+
+- *Reinvestment / terminal-ROE warning, answered.* Every row prints
+  `growth without reinvestment` (base FCF ≥ $251.6M earnings; terminal
+  reinvestment rate −22% / −40%; no `implied_terminal_roe`). Answer as
+  prescribed: terminal growth is exactly the 2.33% breakeven, zero real
+  growth. The intangible-amortization escape is not invoked (~$11M/yr of
+  amortization). The FCF-over-earnings gap is D&A ($43.9M), SBC (deducted),
+  lease/cloud amortization and the deferred-revenue build (removed in three
+  rows).
+- *Cash tax rate.* FY2026 effective 22.5%, below the ~24–25% marginal on the
+  low-taxed Caribbean schools, not NOLs; management guides FY2027 higher.
+  A 100bp rise is ~$3.5M — immaterial beside the $45.0M haircut.
+- *Serial acquirer: N/A.* FY2026 investing = $77.7M capex + $5.0M minority
+  investment; growth is organic and its capex is charged. The 2026-09-16
+  $150,000 Health Collaborative investment is immaterial.
+- *Market-share sentence.* The Bull row compounds FY2026 revenue to $3.15B in
+  five years — above management's own FY2029 ceiling ($2.53B), which is why
+  no condition relies on it. The binding constraint is self-sized capacity
+  (120,000 students by FY2029, +20%; 10–15 new campuses of 450–500 seats),
+  not addressable market.
+- *Terminal growth vs Item 1A terminal risk.* Dominant structural risk:
+  Do No Harm (earnings-based loss of graduate Title IV eligibility, effective
+  2027-07-01). A breakeven terminal rate asserts constant real size, not
+  Walden's mental-health franchise surviving intact; a Do No Harm loss lowers
+  the terminal *level*, which the stress row tests. Provisional certification
+  of all five institutions (§2) does not change the rate argument but is the
+  administrative channel through which a level cut would arrive.
+- *Distribution clamp.* US median cost of capital 7.79%, 80% of firms
+  5.26–9.88% (Damodaran Data Update 5, 2026). Stress 8.77% sits inside the
+  band; the rest sit at or above its top — the cheap side, not the
+  strong-pass side. Fading excess returns (~29% base rate) are what the
+  zero-real-growth terminal encodes.
+- *Precision.* ATM IV 48.27% is under the 50% line, so figures stay at two
+  decimals — but barely, and the conservative-to-bull spread (230bp) is
+  smaller than the plausible error in the base FCF.
+
+**Equity as option: omitted.** Net debt ~$267M at 2026-06-30 ($673.0M funded
+principal less $406.3M cash; the revolver repayment on 07-01 moves cash and
+debt together) ≈ 5–6% of EV; positive book equity $1,446.2M; no
+going-concern language. The leverage gate does not open; the DCF frame
+governs §1.
+
+**Options-implied move.** Path 2 only (Robinhood); path 1 unavailable (CVSA
+not in the CBOE catalog, no `data/options.db` history). Expiry **2026-11-20**,
+**38 calendar days** from 2026-10-13, chosen because it brackets the
+2026-10-29 AMC print — the thesis's own checkpoint. ATM strike $130 against
+$129.14 spot; call mark $7.85 (IV 48.41%), put mark $8.15 (IV 48.14%), mean
+IV 48.27%. Closes: 77 daily official/RTH closes 2026-06-25 → 2026-10-13
+(`scratchpad/cvsa-closes-2026-10-13.json`).
+
+| metric | value |
+|---|---|
+| spot | $129.14 |
+| expected absolute move (mean, not a ceiling) | 12.39% |
+| 1-σ move | 15.57% |
+| ATM IV | 48.27% |
+| RV60 | 47.81% |
+| IV > RV60? | YES |
+| RV20 | 23.70% |
+| IV > RV20? | YES |
+
+**Liquidity gate: FAILED → UNRELIABLE.** Call quotes 5.90 / 9.80 (a $3.90
+spread on a $7.85 mark), put 6.50 / 9.80 ($3.30 on $8.15) — both far wider
+than the ~10%-of-mark gate ($0.79 / $0.82). Same-day volume 0 on both legs;
+open interest 5 calls and 13 puts. No conclusion leans on these numbers.
+
+**Timing check: NOT APPLICABLE** — no `--required-move`; the thesis asserts
+no dated magnitude, only a dated disclosure. The one reading: IV sits above
+both realized windows, unlike 2026-09-12 when the windows split; with RV20 at
+a calm 23.70% and a print inside the expiry, that is an event premium, not
+evidence of anything about the thesis — and per the one-way valve it is not
+used as support.
+
+## 5. Falsifiers
+
+**For an owner (sell):**
+
+- **Break —** ED approves and pursues recoupment on a material share of the
+  16,623 Borrower Defense claims (Walden 9,031); nothing is accrued.
+- **Break —** Any institution's audited 90/10 rate crosses 90% in two
+  consecutive fiscal years (AUC and RUSM at 86% in FY2025), or ED declines
+  recertification of any provisionally certified institution — provisional
+  status (Walden through 2028-12-31) is the shorter path to the same outcome.
+- **Break —** ED publishes program-level Do No Harm results placing a
+  material block of Walden graduate enrollment below the bachelor's-earnings
+  bar in the first measured year.
+- **Shift —** Chamberlain total enrollment growth turns negative in the
+  September-2026 or January-2027 session (condition 1).
+- **Shift —** Walden total enrollment growth below ~8% in any FY2027 quarter
+  (from +14.0%) — the caps binding on new starts (condition 2).
+- **Shift —** Any cut to the FY2027 revenue ($2.04–2.09B; 5–7%) or adjusted
+  EPS ($8.90–9.15) guide, or FY2028 guidance below the Investor Day's 7–10% /
+  10–14% ranges.
+- **Shift —** Buyback pauses for two consecutive quarters at 0.5× leverage
+  (condition 5); the Q1 10-Q is the first read on post-June repurchases.
+- **Shift —** DGS10 rises another ~25–30bp with the price unchanged: the
+  stress row goes negative and the thesis becomes growth-dependent outright
+  (a §4 input, not a condition — revalue, don't sell on it alone).
+
+**Reopen trigger:** 2026-10-29: Chamberlain September-2026 session total
+enrollment growth below +1.6% **or** Walden total enrollment growth below 8%
+**or** any cut to the FY2027 revenue or adjusted-EPS guide **or** price ≥
+$160.
+
+## 6. UNKNOWNs
+
+1. **PENDING 2027-07-01** — Walden's program-level completer earnings vs the
+   bachelor's-degree median under Do No Harm. Decides condition 3; regulations
+   published 2026-07-01, generally effective 2027-07-01. Does not kill the
+   thesis (the stress row prices five flat years) but is the largest
+   unquantified terminal risk.
+2. **PENDING 2026-10-29** — The September-2026 Chamberlain session and the
+   September-30 Walden enrollment (conditions 1 and 2); the Q1 FY2027 8-K and
+   call. Also the first post-June buyback figure (condition 5, via the 10-Q).
+3. **UNKNOWN** — The dollar exposure behind 16,623 Borrower Defense claims.
+   No accrual, approval, recoupment notice or average balance; it would
+   arrive only as an ED notice. A sizing constraint, not an ownership one.
+4. **UNKNOWN** — The catalysts of the 2026-07-15 (−12.3%) and 2026-09-24→28
+   (−5.4%) sector-wide drawdowns. Both ordered by US graduate/online
+   exposure; neither has a named cause in any source this run or the last
+   found. Does not kill the thesis; means the sector's risk premium moves on
+   unmodelled policy inputs.
+5. **PENDING 2027-08-31** — FY2026 audited 90/10 rates (FY2027 10-K).
+   Direction favourable (private loans leave the federal numerator),
+   magnitude unmeasured. Feeds Break falsifier 2; not a condition.
+6. **NOT OBTAINED** (non-load-bearing) — The 2026 Equity Incentive Plan share
+   reserve, overhang and burn rate, and the beneficial-ownership table, in
+   the DEF 14A filed 2026-10-02 (accession 0001104659-26-113316). Two
+   WebFetch reads returned only the proxy summary and CD&A. It bears on the
+   SBC run-rate deducted in §4 (dilution beyond $41.2M/yr) but no condition
+   rests on it, so it stays out of the ledger count.
+7. **UNKNOWN (low weight)** — Formal closure of the ED investigation of
+   Walden's doctoral programs that the HLC flagged in November 2023. Not
+   disclosed as open in the FY2026 10-K; the HLC notice URL now 404s. No
+   filing will state the closure if it was immaterial.
+
+Option-value claims (*possible* tier, unnumbered in §1): a $4.4B
+single-class company at 11.2× FCF with a 97% float is structurally
+acquirable; employer partnerships (SSM, Advocate) could change unit
+economics; Walden's resumed new-program launches could add enrollment beyond
+the plan. None is dated or sized; §4 pays for none.
+
+## 7. Sources
+
+- **Primary:** Covista FY2026 Form 10-K (CIK 0000730464, accession
+  0001104659-26-092044, filed 2026-08-06) — Item 1 (provisional
+  certifications, Walden PPA through 2028-12-31, heightened cash monitoring,
+  $202.6M letters of credit, composite-score history), Note 18 Commitments
+  and Contingencies (R24.htm: BDR claim counts, no ED recoupment notices,
+  no named open investigation). 8-K filed 2026-09-23 (Amendment No. 6 to the
+  2021 Credit Agreement, dated 2026-09-18: $510M term loans repriced to
+  SOFR + 2.00% from + 2.25%, six-month 1% soft call). Form 4 filed
+  2026-10-09 (Beard, 10b5-1 plan adopted 2025-12-10) and Forms 144
+  (10-08, 10-09). DEF 14A filed 2026-10-02 (2026-11-11 meeting, four
+  proposals, FY2026 CD&A — read in part). EDGAR filing index and full-text
+  search (zero hits for "Governmental Investigation", 2025-01-01 →
+  2026-10-13). Jefferies Healthcare Services and Technology Conference
+  transcript, 2026-09-14 (primary-transcribed via stockanalysis.com). All
+  figures carried from the prior thesis are sourced there: FY2026 10-K MD&A
+  and segment notes, Q4 FY2026 8-K Ex. 99.1, Q4 deck, Q4 call and 2026-02-24
+  Investor Day transcripts.
+- **stockanalysis.com (vetted exception):** `/stocks/CVSA/statistics/`
+  (market cap 4.40B, EV 4.89B, fcf 392.73M, ncfo 470.42M, capex −77.70M,
+  debt 905.50M, cash 406.32M, beta 0.65, ROIC 15.49%, F-score 7, Z 4.09,
+  short interest 7.67% of float, next earnings 2026-10-29 AMC, 4-analyst
+  Buy, $158.75 target), `/stocks/CVSA/` (news feed incl. BMO $148 → $145,
+  09-29 call announcement, 10-13 USMLE release), `/stocks/CVSA/transcripts/`
+  (index), `/symbol-lookup/?q=CVSA` (route + $4,395,773,215 cap).
+- **Broker/market microstructure:** Robinhood MCP — `get_equity_quotes`
+  (official close $129.14, 2026-10-13), `get_equity_historicals` (CVSA daily
+  closes 2026-06-25 → 10-12 for RV windows; CVSA/LOPE/PRDO/STRA/APEI/LAUR
+  2026-09-23 → 09-30 for the sector drawdown), `get_option_chains` /
+  `get_option_instruments` / `get_option_quotes` (2026-11-20 $130 straddle).
+  Admissible: `data/options.db` has no CVSA history and no integrated source
+  carries these fields. `get_financials` not called.
+- **Reference data:** Damodaran implied ERP 4.20% on **2026-10-01**
+  (trailing 12-month, adjusted payout; his rf 5.29%); cost-of-capital
+  distribution (median 7.79%, 80% within 5.26–9.88%) and ~29% excess-return
+  base rate, Data Update 5, 2026; mature-company companion rf + 4.5%.
+- **Point-in-time repo DBs (read-only):** `data/fred.db` — `DGS10` 5.24%
+  (2026-10-09), `T10YIE` 2.33% (2026-10-13). `data/stocks.db` — beta 0.652,
+  insiders 2.58%, institutions 104.6%, float 33.15M, sharesOut 34.04M,
+  `shareBasedComp` $41.216M, `sbcByRevenue` 2.11%, analystCount 4.
+  `data/earnings.db` — query errored (column name), not retried.
+  `data/portfolio.db` — not granted to this slot.
+- **Low-confidence:** two web searches — one on Covista enrollment / loan
+  caps (Health Affairs commentary on nursing exposure to the graduate caps;
+  no Covista-specific fall data), one on Walden/Chamberlain investigations
+  (surfaced the 2023 HLC designation and the settled Carroll case). Used to
+  direct primary-source checks only.
+
+## Kill-thesis record
+
+Ledger line: conditions=5 (2 probable, 3 plausible), refuted=0, unknown=0,
+pending=3, not_obtained=0. Verdict **SOUND** (on this pass) — and more
+narrowly than on 2026-09-12, for the reason in Closest attack.
+
+**Internal consistency.** Unchanged: growth is paid for inside the flow
+(FY2026 sales-to-capital ~2.13 on $77.7M capex; a 7% path needs ~$64M of
+reinvestment against a base already charging $77.7M). The moat/risk tension
+— the regulator holds the option on the excess return — is stated in §2,
+and this run finds that option closer to the money than previously written
+(provisional certification of all five institutions).
+
+Per-condition adjudication (§1's bull-case conditions, attacked as written):
+
+1. **Chamberlain re-accelerates — PENDING 2026-10-29.** *Attack:* a month
+   on, management again declined to supply any Chamberlain figure (Jefferies
+   09-14), extending the withheld-metric pattern from the Q4 call; and the
+   segment's FY2026 adjusted EBITDA fell 3.1%. *Adjudication:* nothing
+   since 09-12 is evidence against the condition — no pre-announcement, no
+   guide change, a new Nashville campus taking January-2027 applications
+   (09-09). The trend (−1.0, −0.7, +0.5, +1.6%) still points the right way.
+   Dated; PENDING.
+2. **Walden withstands the graduate caps — PENDING 2026-10-29.** *Attack:*
+   the CEO's "manageable … no slack in demand" is the third unquantified
+   assurance in a row, and Health Affairs commentary argues nursing graduate
+   programs are where the caps bite hardest. *Adjudication:* commentary is
+   not Walden data; grandfathering, the nursing professional-cap
+   reclassification and Walden's undergraduate growth are filing-level facts
+   that stand. PENDING the print.
+3. **Do No Harm spares Walden — PENDING 2027-07-01.** No measured cohort
+   exists. The CEO's "most attractive regulatory backdrop in 20 years" is
+   not evidence for the condition; the attack (mental-health and social-work
+   master's are the credentials the test is built to catch) is not evidence
+   against it either. Dated; PENDING.
+4. **FY2029 floors reachable — SURVIVED** at *probable*. *Attack:* the plan
+   was already cut once (Investor Day 6–8% / 9–13% → guide 5–7% / 8–11%), and
+   the EPS floor is mostly buyback-satisfiable. At today's price $661.8M
+   retires ~5.1M shares (15.1%), ~7.8%/yr over two years against the 8.37%/yr
+   the $10.60 floor needs on flat earnings — slightly *less* self-fulfilling
+   than at $125.09, but still nearly. *Adjudication:* survives on the revenue
+   half (6.55%/yr, inside the plan's own FY2028–29 ranges). Weakest as a
+   test, likeliest to be true.
+5. **Capital return continues — SURVIVED** at *probable*. *Attack:* a new
+   equity plan with an unread reserve could mean buybacks partly offset
+   dilution rather than shrink the count. *Adjudication:* the reserve is
+   NOT OBTAINED (§6.6) but cannot refute the condition, which is about the
+   cash returned; the 09-18 repricing and the CEO's 09-14 "repurchasing
+   shares where it makes sense" point the same way as FY2026's $239.9M.
+   The first post-June figure arrives with the Q1 10-Q.
+
+**Base rate.** ~29% of firms earn above their cost of capital (Damodaran
+EVA); §4's terminal assumes fading. Sector rate: Corinthian and ITT went to
+zero in 2015–16 on Title IV restriction (general knowledge, low-confidence on
+detail); this issuer still carries a $340.0M DeVry/Cogswell indemnity cap
+from the last cycle. The thesis beats that base rate only through price —
+and the price cushion is what shrank this month.
+
+**The short case, strongest version.** Everything in the 2026-09-12 record
+stands — 16,623 unreserved Borrower Defense claims, AUC/RUSM at 86% 90/10,
+half of EBITDA from a graduate online school specialised in exactly the
+credentials Do No Harm targets, Chamberlain profit down 3.1%, a guide cut
+described as "pacing ahead," negative tangible book. Add two things this run
+found. First, **every Covista institution is already on provisional Title IV
+certification with heightened cash monitoring and $202.6M of letters of
+credit posted** — the regulator does not need to build a case to tighten,
+it needs only to decline to recertify. Second, **the sector has now sold off
+twice in ten weeks on no named news**, both times ordered by graduate-online
+exposure, which is what a market front-running a policy read it cannot yet
+see looks like. On this reading the zero-growth stress row tying the hurdle
+is not a cushion gone thin — it is the market saying the cushion was never
+there.
+
+**Management incentives.** CEO LTI is 100% PSUs split evenly between revenue
+growth and adjusted EBITDA margin; the cash bonus runs on revenue and
+adjusted EPS (paid 145% of target for FY2026). Adjusted metrics add back SBC
+and buybacks flatter EPS (FY2026 adjusted net income +15.3% vs adjusted EPS
++23.7%); §4 deducts SBC and uses no adjusted figure. Revenue-growth PSUs
+reward enrollment volume, which in a Title IV business is also the incentive
+behind every past misrepresentation case — a standing reason the Borrower
+Defense tail is not zero. No condition assumes management acts against pay.
+
+**Disconfirming search.** Three routes. (a) Web search for 2026 ED / AG /
+DOJ action against Walden or Chamberlain: nothing new; surfaced a 2023 HLC
+"Governmental Investigation" designation on Walden's doctoral programs. (b)
+Chased it to primary: EDGAR full-text search zero hits since 2025, Note 18
+names no open investigation — treated as closed-or-immaterial, carried as
+§6.7. (c) Read Item 1 for the regulatory status the bull narrative omits:
+found the provisional certification of all five institutions. Route (c)
+changed the document (§2, §5, short case); none refuted a condition.
+
+**Moat: mechanism, asymmetric, and provisional.** Strong against a new
+for-profit entrant (programmatic accreditation and clinical placement take
+years); weak against non-profit seat expansion; and held at the pleasure of
+a regulator that has the institutions on provisional terms. The prior
+finding stands: the moat protects pre-licensure BSN (16 straight growth
+quarters), not post-licensure RN-to-BSN (the part that declined).
+
+**Statistical check.** No repo signal, backtest or screen output feeds the
+conclusion; the 7-for-7 beat record is one team's managed cadence (effective
+n ≪ 7) and is not used. Nothing to correct for multiple comparisons.
+
+**Options timing check: ran, no operand.** Dated conditions exist (1, 2:
+2026-10-29) and a chain is listed, but the thesis states no required move,
+so the 2-sigma test has nothing to test. Coverage: path-2 stopgap only;
+liquidity gate FAILED (zero volume, 5/13 open interest, $3.90/$3.30 spreads)
+— any refutation would have been UNRELIABLE. The 15.57% 1-σ move brackets
+anything the thesis might want, which is not evidence for the thesis.
+
+**Falsifiers observable.** Eight in §5, each tied to a number or a filing
+(recoupment notice, 90/10 rate or recertification decision, first Do No Harm
+results, Chamberlain session count, Walden growth rate, guide changes,
+buyback cadence, DGS10). An argument, not a position.
+
+**Closest attack:** the stress row's spread collapsing from +74bp to +17bp
+— the property that earned SOUND on 2026-09-12 despite pending=3 is now a
+tie with the hurdle and a 97bp miss on the mature-company companion. It does
+not refute any condition (none requires zero growth, and the 4%-growth Bear
+row still clears by 138bp), but it converts the thesis from "paid even if
+the business stalls" to "paid if it grows at least modestly," which makes
+the 2026-10-29 readings on conditions 1 and 2 more decisive than before.
+
+**Flip evidence — what keeps it SOUND:** the Bear row — punished base, 4%
+growth, breakeven terminal — clearing the hurdle by 138bp, with no pending
+condition needing a favourable resolution for 4% to hold (the FY2027 guide
+alone is 5–7%).
+
+**Flip evidence — what makes it FLAWED:** a September Chamberlain session
+below +1.6% together with Walden growth below 8% on 2026-10-29 (conditions 1
+and 2 refuted at once, and the Bear row's 4% stops being conservative); or a
+first ED recoupment notice on the Walden claims; or any adverse
+recertification action against a provisionally certified institution.
+
+**p(beat SPY, 63 td): 0.52** — written before re-reading §1's. The window
+(to ~2027-01-13) contains the single print that resolves two of three
+pending conditions, so the distribution is wide and roughly symmetric.
+For: every §4 row clears the hurdle, 15% of the cap is authorized for
+buybacks, consensus target $158.75. Against: a single-stock base rate below
+a coin flip vs a cap-weighted index, a valuation cushion that thinned with
+rates, a 15.57% 1-σ move, and a sector that has twice fallen 5–12% on
+unnamed news. A hair above base rate.

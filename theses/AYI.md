@@ -1,0 +1,521 @@
+# AYI — Acuity Inc. — 2026-10-13
+
+Price $296.27 (official close, 2026-10-12; live $299.03 at 09:46 Phoenix) ·
+market cap $8,809,750,510 (29,735,547 shares × $296.27) · next earnings
+2027-01-07 BMO (Robinhood, unverified; `earnings.db` has no forward row)
+
+Entry path: `candidates` screen row (Industrials, roic 17.1 / roic5y 17.7,
+fcfy 8.5, rev3y 5.5, door 3y, fScore 6, RSI 38, −22% off the 52-week high,
+on-list tenure 10d/6). New name — no prior thesis. Unattended scheduled run
+(research sweep). The FY2026 Q4 / full-year release (8-K, 2026-10-01) is
+out; the FY2026 10-K is not yet filed (prior-year cadence: ~2026-10-27), so
+the business description, Item 1A and the footnotes below are the FY2025
+10-K's, and the FY2026 numbers are the preliminary, unaudited release.
+
+## 1. Verdict and thesis
+
+**PASS at $296.27.** kill-thesis: **FLAWED** — conditions=5 (2 probable,
+3 plausible), refuted=1, unknown=0, pending=2, not_obtained=0.
+
+**p(beat SPY, 63 td): 0.47** · kill-thesis: 0.45 — **Disputed
+expectation:** at $296.27 the market prices a 9.4–10.6%/yr implied return on
+the honest construction (normalized FY26 FCF less SBC, 4–8% growth, 2.33%
+terminal) against a 10.68% cost of equity (10.26% with beta clamped to the
+band). The reported FCF base clears by +108 to +173bp, but it carries $51.3M
+of one-time tariff refunds and an $82.4M working-capital release. What
+revises it: the 2027-01-07 Q1 FY27 print (ABL order firming and the first
+sight of the Q-SYS memory-cost hit), or a price near $270 where the honest
+path clears the unclamped hurdle.
+
+This is a good business at a fair price, not a cheap one. Acuity Brands
+Lighting is the North American share leader in commercial luminaires and
+controls, has taken gross margin from the high-30s to the mid-40s in a flat
+market, and funds everything: FY26 operating cash flow $825.6M, capex $77.7M,
+net debt $61M after repaying the QSC term loan in 21 months. Acuity
+Intelligent Spaces (Distech BMS, Atrius, Q-SYS AV-and-control) grew 16.6%
+organically in Q4 at a 24.9% adjusted operating margin and is the growth
+leg. Management guides FY27 to +1–6% sales and +3–11% adjusted EPS. At a
+10-year Treasury of 5.22% and a 1.30 beta, that growth priced at 15× adjusted
+EPS returns roughly the cost of equity and no more — a hold-quality name,
+not an entry.
+
+**Closest attack:** the valuation itself. Strip the two non-recurring cash
+items and the stock compensation out of FY26 FCF and the price implies
+9.98% at 6% growth, 69bp under the hurdle; a 4% path (the revenue guide
+midpoint is +3.4%) implies 9.37%, 130bp under. Only the reported, flattered
+base or Damodaran's mature-company companion (rf + 4.5% = 9.72%) is cleared.
+
+Load-bearing conditions (5) — the bull case: owning AYI at $296.27 beats SPY.
+DRAM pricing, the 10-year yield and US tariff policy are §4 scenario inputs,
+not conditions.
+
+1. *probable* — **Normalized owner FCF of ~$565–615M is the right base.**
+   FY26 NCFO $825.6M − capex $77.7M = $747.9M reported [8-K 2026-10-01
+   cash-flow statement]; it includes $51.3M of tariff refunds (cash, non-GAAP
+   adjusted out) and $82.4M of "other operating activities" (inventory fell
+   $76.3M as the FY25 tariff pre-buy unwound). Net income $531.3M + D&A
+   $156.4M − capex $77.7M = $610.0M corroborates ~$614M before SBC ($49.5M).
+   The cash-tax line that CFO Holcom credited for part of the rise is
+   PENDING the FY26 10-K (~2026-10-27), non-load-bearing (§6).
+2. *plausible* — **ABL holds flat-to-low-single-digit sales while its
+   structural gross-margin gains (50–100bp/yr) continue in a flat-to-down
+   market.** For: independent sales network +3.8% in Q4 (share gain, per
+   management), adjusted gross margin 46.2% (+50bp), order rates "firmed",
+   a September price increase live in December. Against: FY26 ABL sales
+   −1.0%, adjusted operating profit −2.5%, Q4 adjusted operating margin
+   −130bp on technology spend. Decisive read: Q1 FY27, 2027-01-07.
+3. *plausible* — **AIS grows low-to-mid-teens organically with operating
+   profit dollars up despite a ~200bp gross-margin memory-cost hit.** For:
+   Q4 AIS +16.6% with QSC in both periods, adjusted operating margin 24.9%
+   (+350bp); FY27 guide low-to-mid-teens. Against: the memory hit lands late
+   Q1 into Q2 and management itself guides AIS operating margin only "flat to
+   slightly up". Decisive read: Q1 FY27 (2027-01-07) for the first sight, Q2
+   (~2027-04-01) for the full quarter.
+4. *probable* — **Capital allocation keeps earning its cost.** The $600M QSC
+   term loan was repaid in full within 21 months of close [call]; 11M shares
+   (~28% of the FY20 count) repurchased since Q4 FY20 at ~$164 average
+   against $296 today; ROIC 17.1% (5-year 17.7%) [`stocks.db`]; the LTIP is
+   75% PSUs, half on three-year adjusted ROIC in excess of WACC [DEF 14A
+   2025-12-11]. Per-deal returns on QSC are undisclosed (§6).
+5. *plausible* → **refuted** — **At $296.27 the stated path clears the cost
+   of equity.** §4 scenario D (normalized FCF less SBC, 6%, 2.33%) implies
+   9.98% against 10.68% (−69bp), or against 10.26% with beta clamped
+   (−28bp). The honest path clears the unclamped hurdle at ~$270 and the
+   clamped one at ~$286.
+
+**Dominant shared risk factor:** US non-residential construction and
+renovation spend (rate-sensitive project starts; ABL is 77% of sales) —
+shared by 0 of 24 held names (none) · 0 unlabelled. Adjacent, not a match:
+HMC's factor is US tariff escalation on Mexico-built goods, and 57% of
+Acuity's finished goods are made in Mexico [FY25 10-K], so a Mexico tariff
+shock hits both; SAP's "long-duration equity repriced by rising real rates"
+shares the rate channel but not the end market.
+
+## 2. Business
+
+**Created:** a contractor, electrical distributor or lighting designer gets a
+specified, code-compliant luminaire-plus-controls package (Lithonia, Gotham,
+Holophane, Juno, nLight, SensorSwitch, eldoLED drivers) from one catalog,
+delivered from North American plants through an exclusive agency network
+covering ~80 markets, with a five-year warranty — speed, availability and
+spec-sheet trust rather than the cheapest fixture. Building owners and
+integrators get Distech open-protocol BMS controllers, Atrius data/cloud
+applications, and Q-SYS, a software-defined audio/video/control platform
+that runs a stadium, a casino or a classroom from one operating environment.
+
+**Captured:** four distinct mechanisms. (i) Luminaire and electronics sales
+through the independent agency network (FY26 $2,702.7M, 58% of sales),
+priced "strategically to realize the value" with an annual list increase and
+cost pass-through on supply shocks [call]. (ii) Direct, retail, corporate-
+account and OEM lighting channels ($874M; direct −23.6% in FY26 as a
+Mexico-linked channel reset). (iii) AIS hardware — Q-SYS cores and
+endpoints, Distech controllers — sold through system integrators ($1,106.6M,
++44.8% reported, mid-teens organic), at 61% adjusted gross margin. (iv) A
+small and growing software/cloud layer (Q-SYS Reflect, Atrius, eldoLED
+studio) whose revenue is not separately disclosed (§6). FY26 adjusted
+operating margin 17.9%; ABL 18.1%, AIS 23.0% [8-K 2026-10-01].
+
+**Protected:** in lighting, the mechanism is distribution plus
+specification: exclusive agents who carry the whole Acuity portfolio in each
+territory, spec-grade brands that designers write into plans, and a plant
+and distribution-centre footprint (18 plants, 9 DCs) that ships a large
+catalog quickly. Evidence: share gains in a flat market (independent network
++3.8% in Q4 while the market was flat-to-down) and a gross margin that rose
+~800bp over six years on roughly flat volume. It is a moderate moat — a
+commodity-fixture importer can undercut on price, and the 10-K names
+"importers outside of North America" and bundling global manufacturers as
+competitors. In AIS the mechanism is the installed base and the integrator
+channel: Q-SYS and Distech are open-protocol platforms, so switching is a
+re-integration cost rather than a lock-in. No single customer exceeded 10%
+of sales in FY23–FY25 [FY25 10-K Item 1A].
+
+**Control:** one class of common stock, one vote per share, no controlling
+holder. Insiders 0.43%; Vanguard 10.4%, BlackRock 9.0%, FMR 5.0% [DEF 14A
+2025-12-11]. Nothing structural forecloses a takeover or an activist; the
+board grew from nine to ten with Nick Tzitzon (ServiceNow) on 2026-09-24
+[8-K 2026-09-29]. The annual meeting is in January.
+
+**Operating leverage (Phase 0): positive.** Revenue and operating income,
+fiscal years ending August 31 [stockanalysis `/financials/income-statement/`;
+GAAP release figures in brackets where they differ — the statement route
+reclassifies some special charges]:
+
+| FY | revenue $M | operating income $M | margin |
+|---|---|---|---|
+| 2022 | 4,006.1 | 508.4 | 12.7% |
+| 2023 | 3,952.2 | 495.3 | 12.5% |
+| 2024 | 3,841.0 | 551.8 | 14.4% |
+| 2025 | 4,345.6 | 582.5 [GAAP 563.9] | 13.4% |
+| 2026 | 4,641.8 | 686.1 [GAAP 713.7] | 14.8% |
+
+Revenue +15.9% and operating income +35% FY22→FY26; FY25–26 include QSC
+(acquired 2025-01-01 for $1.2B, $428.6M of FY25 sales). Organic leverage is
+also positive: FY22–FY24 revenue fell 4.1% while operating income rose 8.5%.
+
+## 3. Threads pulled
+
+- **Is the FY26 FCF real?** NCFO rose $224.2M to $825.6M; the CFO attributed
+  it to "operating performance, tariff refunds, and lower tax payments".
+  The release shows $51.3M of tariff refunds ($44.9M in Q4) and an $82.4M
+  "other operating activities" inflow; inventories fell from $526.7M to
+  $450.4M as the FY25 tariff-driven pre-buy unwound. Working capital has been
+  a source in each of FY24–FY26 (+$89.5M, +$24.0M, +$82.4M [stockanalysis
+  cash-flow route]), so some recurrence is plausible, but the honest base
+  strips it. Normalized FCF ~$614M before SBC; this is the §4 base.
+- **Why the stock fell.** $376.66 on 2026-06-30 (the post-Q3 high) to
+  $296.27, −21.3%, while SPY rose 4.2% [stockanalysis history]. EDGAR shows
+  no 8-K between the Q3 print and the director appointment; the Q4 print
+  itself cost −3.4% on the day (10/01: $309.81 → $299.28) and the FY27 guide
+  implied little margin expansion (Baird's first question). DGS10 moved from
+  the low-4s toward 5.22% [`fred.db`] over the same window; for a 1.30-beta,
+  construction-linked name that is the simplest explanation. No web search
+  was spent on the move (budget shared with a concurrent run).
+- **Memory-cost headwind at AIS.** Management sized it at "around a couple of
+  hundred basis points" of AIS gross margin for FY27, landing late Q1 into
+  Q2, with operating margin "flat or slightly growing" in percentage and up
+  in dollars; priority order is supply, then dollar recovery, then margin
+  recovery [call]. This is an exogenous input (DRAM pricing) — a scenario
+  item, not a condition — but it is the reason the FY27 EPS guide
+  ($20.50–22.00 vs $19.90) carries less operating leverage than FY26 did.
+- **Mexico and tariffs.** 57% of finished goods are manufactured in Mexico
+  (seven plants, maquiladora/IMMEX status), 15% purchased from Asia, 23% US
+  [FY25 10-K]. FY26 *received* $51.3M of tariff refunds, so the regime moved
+  in Acuity's favour during the year; the 10-K risk factor is explicit that
+  tariffs "could increase in future periods". 8,200 of 13,800 employees are
+  in Mexico and ~6,600 are under union contracts renegotiated annually.
+  Scenario input; the falsifier is in §5.
+- **Capital allocation record.** $600M term loan drawn 2025-01 for QSC;
+  $200M repaid in FY25, $200M in FY26, the last $200M after 2026-08-31
+  [call]; remaining debt is the $500M 2.150% notes due 2030-12-15 against
+  $636.3M cash at year-end. Buybacks $287.2M in FY26 (940k shares, ~$305
+  average); 11M shares since Q4 FY20 at ~$164. Dividend +18% to $0.20/qtr
+  (0.27% yield). The acquisition pipeline is described as "multiple choices"
+  aimed at AIS — future M&A is unpriced here (§4 integrity bullet).
+- **Incentives.** STIP: net sales 34%, adjusted operating profit 33%,
+  adjusted free cash flow 33% (80% of the opportunity financial, 20%
+  individual). LTIP: 75% PSUs — 50% on three-year adjusted ROIC in excess of
+  WACC, 25% on relative TSR against the S&P 400 Capital Goods index — and
+  25% RSUs. Say-on-pay ≥95% three years running [DEF 14A 2025-12-11]. The
+  ROIC-over-WACC PSU is the right incentive for a serial acquirer.
+- **Insider filings since the Q3 call: routine.** CFO Holcom sold 2,000
+  shares at $329.62 on 2026-09-01 (17,447 held after); GC Goldman sold 1,200
+  at $365.65 on 2026-07-02. Form 144s land on the first trading day of
+  June, July and September — a plan-like cadence. Form 3 for new director
+  Tzitzon (2026-10-05). No buys.
+- **Earnings pattern.** Seven straight beats [Robinhood, broker tier]: Q2
+  FY25 +$0.03, Q3 +$0.68, Q4 +$0.57, Q1 FY26 +$0.27, Q2 +$0.18, Q3 +$0.19,
+  Q4 +$0.18 ($5.77 vs $5.59). The actuals are *adjusted* EPS: `data/
+  sec_fundamentals.db` `v_screener` has GAAP diluted EPS $4.56 for the
+  quarter ending 2026-05-31 against Robinhood's $5.31 — the two disagree
+  by exactly the non-GAAP add-backs, as the repo's standing note predicts.
+  Q1 FY27 consensus $5.01 vs $4.69 GAAP-adjusted a year ago (+7%).
+- **Machine view.** `composite.db` snapshot 79 (2026-09-18T04:05Z) scores
+  AYI 1 bullish / 0 bearish, coverage 0.10; the only live rows are the
+  informational `sa_fcf_yield` 8.43 and `sa_fscore` 6.0 (obs 2026-10-09,
+  score 0). Not a composite flag.
+- **Commitments footnote: asset-light holds.** FY25 10-K Note 8 carries
+  self-insurance, leases, collective bargaining (58% of the workforce),
+  litigation ("will not have a material adverse effect"), warranty (standard
+  five years) and indemnities — no purchase or capacity obligations beyond
+  "up to 12 months" of materials commitments [Item 1]. Capex has run
+  1.5–1.7% of sales for five years. Pension: funded status −$30.3M
+  domestic / −$29.3M international at FY25 — immaterial against an $8.8B
+  cap, no haircut.
+- **Options read (mandatory):** path 2 only (Robinhood stopgap); path 1 is
+  N/A because AYI is not in the CBOE catalog. The 2027-02-19 $300 pair is
+  the only listed expiry that brackets the 2027-01-07 print, and it **fails
+  the liquidity gate**. Table in §4.
+- **Dead ends:**
+  - The DEF 14A's beneficial-ownership table was reached only through the
+    raw HTML (the text extraction dropped it); the three >5% holders above
+    are from that pass.
+  - `earnings.db` has no forward AYI row (last event 2026-06-25); the
+    2027-01-07 date is Robinhood's unverified estimate, consistent with the
+    2026-01-08 and 2025-10-01 cadence.
+  - `/stocks/AYI/metrics/` (segment/geography breakdowns) was not probed;
+    the release's channel table and the 10-K's 14%-non-US figure suffice.
+  - The stockanalysis operating-income series differs from GAAP by $18.6M
+    (FY25) and $27.6M (FY26); the direction of leverage is the same on both.
+
+## 4. Valuation
+
+**Inputs and pairing.** Levered FCF against **market cap $8,809,750,510**
+(29,735,547 shares [statistics `sharesout` hover] × $296.27 official close).
+Net debt 0 by the pairing rule; for reference, debt $697.4M − cash $636.3M =
+$61.1M net debt at 2026-08-31 (0.7% of EV), ~0 after the post-year-end $200M
+repayment — far below the leverage gate, so the equity-option lens does not
+apply. Statistics-probe hovers (2026-10-13): `marketcap` 8,852,569,697 at
+the live price, `enterpriseValue` 8,913,669,697, `fcf` 747,900,000, `ncfo`
+825,600,000, `capex` −77,700,000, `debt` 697,400,000, `totalcash`
+636,300,000.
+
+- **Reported base:** $747.9M (NCFO − capex, FY26).
+- **Normalized base:** $614.2M = $747.9M − $51.3M tariff refunds − $82.4M
+  working-capital/other release.
+- **SBC haircut:** $49.5M (1.07% of revenue [`stocks.db` `sbcByRevenue`]).
+- **Minority interests:** none. **Pension/litigation:** immaterial (§3).
+- **Base earnings for the reinvestment test:** cash earnings $604.0M = net
+  income $531.3M + acquired-intangible amortization $93.1M × (1 − 21.95%).
+
+**Hurdle:** rf 5.22% + beta 1.299 × ERP 4.20% = **10.68%**. rf is DGS10 on
+2026-10-08 [`fred.db`]; the ERP is Damodaran's implied figure as of
+2026-10-01 (his T-bond rate then 5.29%). Beta 1.299 [`stocks.db`,
+statistics page 1.30] sits *above* the 0.8–1.2 band; the thin-float
+exception does not apply (insiders 0.43%, float 99.3% of shares out), so the
+unclamped figure governs and the clamped **10.26%** (beta 1.2) is shown
+beside it. Mature-company companion rf + 4.5% = **9.72%**. Non-US sales are
+14% (Canada, Mexico, Europe) [FY25 10-K], so the headline US ERP stands.
+**Terminal growth 2.33%** = the 10-year breakeven `T10YIE` on 2026-10-09
+(the working ceiling; zero real growth in perpetuity).
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle (10.68% / 10.26%) |
+|---|---|---|---|---|---|
+| A — reported FCF | $747.9M | 6% | 2.33% | 12.41% | +173 / +215bp |
+| B — reported less SBC | $698.4M | 6% | 2.33% | 11.75% | +108 / +149bp |
+| G — reported less SBC, revenue-guide growth | $698.4M | 4% | 2.33% | 11.03% | +35 / +77bp |
+| C — normalized | $614.2M | 6% | 2.33% | 10.64% | −4 / +38bp |
+| F — normalized less SBC, EPS-guide-high growth | $564.7M | 8% | 2.33% | 10.62% | −5 / +36bp |
+| **D — normalized less SBC** | **$564.7M** | **6%** | **2.33%** | **9.98%** | **−69 / −28bp** |
+| E — normalized less SBC, revenue-guide growth | $564.7M | 4% | 2.33% | 9.37% | −130 / −89bp |
+
+Against the 9.72% companion: D +26bp, E −35bp, F +90bp. Row D clears the
+unclamped hurdle at a market cap of ~$8.05B (~$270/share) and the clamped
+one at ~$8.5B (~$286). The FY27 guide midpoints are +3.4% sales and +6.8%
+adjusted EPS; analyst three-year consensus is 4.1% revenue / 7.8% EPS
+[statistics `analystForecasts`], so 4–8% brackets the stated paths and 6%
+is the centre. Precision: ATM IV is 32%, below the 50% line, so two
+decimals are quoted; the range across honest constructions (9.4–10.6%) is
+the finding, not any one row.
+
+**Integrity checks.**
+
+- **Reinvestment / terminal ROE.** Rows A, B, C and G print the tool's
+  `growth without reinvestment` warning (base FCF ≥ cash earnings): the
+  reported base is above what the business earns, which is the one-time
+  inflow argument restated. Rows D–F imply a terminal ROE of 35.8% on a
+  6.5% reinvestment rate — more than 5 points above the hurdle and "tough to
+  do" in perpetuity; today's 17% ROIC says the terminal 2.33% is cheap to
+  fund, but a 36% perpetual return on retained earnings is not defended
+  here. Cutting terminal growth further would lower every implied return,
+  so the table is, if anything, generous to the bull.
+- **Serial acquirer.** `fcf` excludes the $1,189.4M paid for QSC (FY25) and
+  any future deal; the 6% path treats AIS's growth as organic. The Q4
+  organic AIS print (+16.6%) supports mid-teens without M&A for now; a path
+  that leans on the "multiple choices" pipeline would need the deal spend
+  charged against the base, and every row would fall.
+- **SBC.** $49.5M deducted in rows B, D–G; sbcByRevenue 1.07% — small.
+  Diluted shares 30.755M vs basic 29.960M (Q4): a 2.7% overhang.
+- **Cash tax.** Effective rate 21.95% FY26 against a ~24–25% marginal rate;
+  cash taxes paid are PENDING the 10-K (FY25: $151.8M paid vs $103.6M
+  expense). No NOL story.
+- **Market share.** 6% for five years puts FY2031 revenue at ~$6.2B (1.34×).
+  With ABL flat-to-LSD per guide, that needs AIS at ~15%/yr to ~$2.2B, from
+  24% to ~36% of the company — plausible against a multi-$10B global
+  BMS/AV-control market whose exact size is not disclosed (§6), but the
+  path is AIS-dependent, not "bigger than the market".
+- **Terminal growth vs the Item 1A terminal risk.** The FY25 10-K's
+  structural risk is "technological developments and increased competition"
+  — global electronics/software entrants and vertically integrated
+  "total solution" packages compressing lighting margins. A 2.33% terminal
+  rate equals breakeven inflation and claims no real growth, so it survives
+  a commoditizing fixture market only if the controls/driver/software layer
+  keeps the pricing; the ~800bp gross-margin gain on flat volume is the
+  evidence for that today.
+- **Distribution clamp.** Implied returns 9.4–12.4% sit above the US median
+  cost of capital of 7.79% and at or above the 80% band's top (9.88%)
+  [Damodaran Data Update 2026, measured at a lower rf]. Nothing here is a
+  strong pass regardless of story; the finding is "fair" because this
+  name's own hurdle is high (beta 1.30 at a 5.22% rf). Excess-return base
+  rate: ~29% of firms.
+
+**Options-implied move.** Path 2 (Robinhood stopgap); path 1 is N/A because
+AYI is not in the CBOE catalog. Listed expiries: 2026-10-16, 2026-11-20,
+2027-02-19, 2027-05-21. **2027-02-19, DTE 129**, is the only expiry that
+brackets the 2027-01-07 BMO print. ATM pair: $300 strike against $299.03
+spot; ATM IV is the mean of the call's 30.99% and the put's 33.09%. Computed
+by `tools.options.implied_move` over 127 closes (2026-04-14 → 2026-10-13,
+stockanalysis `/history/`; the 2026-10-12 close matches Robinhood's).
+
+| metric | value |
+|---|---|
+| spot | 299.03 |
+| dte (calendar days) | 129 |
+| ATM IV | 32.04% |
+| expected absolute move (MEAN, not a ceiling) | 15.20% |
+| 1-sigma move | 19.05% |
+| RV60 | 29.56% |
+| IV > RV60? | YES |
+| RV20 | 29.43% |
+| IV > RV20? | YES |
+
+**Liquidity gate: FAILED → UNRELIABLE.**
+
+| leg | bid/ask | spread | spread / mark | OI | volume today |
+|---|---|---|---|---|---|
+| call | $22.00/$25.30 | $3.30 | 14.0% of $23.65 | 7 | 0 |
+| put | $20.10/$23.50 | $3.40 | 15.6% of $21.80 | 4 | 0 |
+
+Both legs breach the 10%-of-mark gate and the volume floor. IV above both RV
+windows is the stopgap's known artifact (the window spans a print; RV60 does
+not — the 2026-06-25 +17.6% print day sits just outside it). The thesis
+states no required move, so the 2-sigma timing check does not apply; the
+table brackets the print only as context, and an unreliable one.
+
+## 5. Falsifiers
+
+For the pass (flip toward buy):
+
+- **Shift —** price at or below ~$270 (unclamped hurdle) or ~$286 (clamped)
+  with the FY26 10-K confirming the normalized base, i.e. cash taxes and
+  working capital not materially different from the release.
+- **Shift —** the Q1 FY27 print (2027-01-07) shows ABL independent-network
+  growth holding ≥3% with adjusted gross margin ≥46%, *and* AIS ≥13% with
+  adjusted operating margin ≥22% despite memory costs — that lifts the
+  honest path toward row F and the companion hurdle is cleared by ~90bp.
+- **Shift —** DGS10 back below ~4.7%: at rf 4.7% the unclamped hurdle is
+  10.16% and row D is −18bp, row F +46bp.
+
+For an owner (sell):
+
+- **Break —** ABL adjusted gross margin falls below 44% for two quarters,
+  or ABL sales fall more than 5% — the structural-improvement story is the
+  whole ABL thesis.
+- **Break —** a Mexico tariff or USMCA break that is not passed through: 57%
+  of finished goods come from Mexico; watch the 10-Q tariff language and
+  the gross-margin bridge.
+- **Break —** AIS organic growth below 8% or adjusted operating margin below
+  20% for two quarters once memory costs annualize — the growth leg stops
+  paying for the multiple.
+- **Shift —** a leveraged acquisition (net debt/EBITDA above ~2×) outside
+  AIS, or buybacks suspended while the price sits below the hurdle-clearing
+  level.
+
+**Reopen trigger:** 2027-01-07: q1-fy27-print-abl-orders-and-ais-memory-margin-or-price-at-or-below-270
+
+## 6. UNKNOWNs
+
+1. **PENDING 2026-10-27 (FY26 10-K)** — cash taxes paid and the working-
+   capital detail behind the $82.4M "other operating activities" line. The
+   release's cash-flow statement is condensed. Does not kill the thesis:
+   the normalized base already strips the whole line.
+2. **UNKNOWN** — the return on the $1.2B QSC acquisition as a figure. Bounded:
+   FY26 AIS adjusted operating profit $255.0M on QSC ($1,189.4M net cash)
+   plus the earlier Distech/Atrius capital reads as a low-to-mid-teens pre-
+   tax return on acquired capital, above the ~10.8% WACC [statistics
+   `wacc`] and below the 17% company ROIC. Non-load-bearing; the pass does
+   not depend on it.
+3. **UNKNOWN** — AIS software/recurring revenue (Q-SYS Reflect, Atrius,
+   eldoLED studio) as a share of AIS; no filing breaks it out. Would raise
+   the quality of condition 3 if large. Non-load-bearing.
+4. **UNKNOWN** — the size of the addressable BMS/AV-control market; the 10-K
+   lists categories without figures. Bounded only by the market-share
+   sentence in §4.
+5. **NOT ASSESSED (budget)** — no dated web search for rival moves (Signify,
+   Hubbell/Cooper, Crestron, Johnson Controls) since the 2026-10-01 call;
+   EDGAR was swept instead. Option value, unnumbered: the data-center PLC/DDC
+   controller push at Distech ("in the door with more and more
+   hyperscalers") is *possible*-tier upside and carries no number.
+
+## 7. Sources
+
+- **Primary:** 8-K 2026-10-01 and Exhibit 99.1 (FY2026 Q4/full-year release:
+  income statement, condensed balance sheet and cash flow, channel table,
+  non-GAAP reconciliations); Q4 FY26 earnings call 2026-10-01 (transcript via
+  stockanalysis — primary-transcribed); FY2025 10-K filed 2025-10-27 (Items
+  1, 1A, Note 7 debt, Note 8 commitments, pension funded status); DEF 14A
+  2025-12-11 (ownership table, STIP/LTIP design); 8-K 2026-09-29 and Exhibit
+  99.1 (Tzitzon appointment); Forms 4 2026-09-03 (Holcom) and 2026-07-06
+  (Goldman); Form 3 2026-10-05; EDGAR submissions index for CIK 1144215.
+- **stockanalysis.com (vetted exception):** `/stocks/AYI/statistics/`
+  (hover values), `/financials/income-statement/` and
+  `/cash-flow-statement/` (FY22–FY26 series, working-capital lines),
+  `/transcripts/` index and `700422-q4-2026`, `/history/` (127 closes),
+  `/etf/SPY/history/`, `/symbol-lookup/`.
+- **Broker/market microstructure:** Robinhood MCP — `get_equity_quotes`
+  (live price and official close), `get_earnings_results` (estimate-side
+  pattern; actuals cross-checked against `sec_fundamentals.db`),
+  `get_option_chains` / `get_option_instruments` / `get_option_quotes`
+  (the 2027-02-19 $300 pair), `get_equity_historicals` (bars 2026-06-05 →
+  2026-10-12, used to confirm the close series). Admissible: no integrated
+  official source carries live quotes, estimates or option marks.
+- **Reference data:** Damodaran implied ERP 4.20% (2026-10-01); cost-of-
+  capital distribution and ~29% excess-return base rate (Data Update 2026).
+- **Point-in-time repo DBs:** `stocks.db` (captured 2026-10-13T11:00Z: beta
+  1.2991, sharesInsiders 0.43%, float 29,527,761, shareBasedComp $49.5M,
+  roic 17.06, netCash −$61.1M); `sec_fundamentals.db` (CIK 1144215; latest
+  `v_screener` row: revenues $1,198.0M, net income $141.0M, EPS 4.56,
+  debt_to_equity 0.63); `earnings.db` (last event 2026-06-25 BMO);
+  `composite.db` (snapshot 79, informational rows only); `fred.db` (DGS10
+  5.22 on 2026-10-08, T10YIE 2.33 on 2026-10-09); `portfolio.db` (24 held
+  symbols for the factor overlap).
+- **Low-confidence:** none used.
+
+## Kill-thesis record
+
+**FLAWED** — conditions=5 (2 probable, 3 plausible), refuted=1, unknown=0,
+pending=2, not_obtained=0. Attacked 2026-10-13 against the bull case (own
+AYI at $296.27 and beat SPY over 63 trading days).
+
+Per-condition adjudication:
+
+1. Normalized owner FCF ~$565–615M — **SURVIVED** (probable). Attack: the
+   working-capital release may partly recur (a source in each of FY24–FY26,
+   mean ~$65M), so stripping all $82.4M is conservative; at a generous
+   $647M-less-SBC base the 6% row reads ~10.4%, still −28bp unclamped. The
+   tariff refunds are plainly one-time. The base stands at either end.
+2. ABL flat-to-LSD with continued structural gross-margin gains — **PENDING
+   2027-01-07**. Attack with today's evidence: FY26 ABL adjusted operating
+   profit −2.5% and Q4 adjusted operating margin −130bp cut against it;
+   independent-network +3.8%, adjusted gross margin +50bp, a December price
+   increase and "firmed" orders cut for it. Mixed, not against — pending the
+   Q1 print.
+3. AIS mid-teens organic with operating-profit dollars up through the
+   memory-cost hit — **PENDING 2027-01-07** (full read ~2027-04-01).
+   Attack: DRAM cost inflation is exogenous and management's own margin
+   guide is only "flat to slightly up"; the Q4 +16.6% / 24.9% print is the
+   evidence for. Not refuted today.
+4. Capital allocation earns its cost — **SURVIVED** (probable). Attack:
+   QSC's per-deal return is undisclosed; bounded by AIS adjusted operating
+   profit on acquired capital (low-to-mid-teens pre-tax, above WACC); the
+   term loan was retired in 21 months and buybacks averaged $164 against
+   $296. The incentive design (ROIC over WACC PSUs) is aligned. Stands.
+5. The stated path clears the cost of equity at $296.27 — **REFUTED**. §4
+   row D: 9.98% vs 10.68% (−69bp), vs 10.26% clamped (−28bp); row E −130bp.
+   Only the one-time-inflated base (A/B) or the mature companion clears.
+   Repairable by price (~$270 / ~$286) or by a Q1 print that moves the
+   honest path to row F — and even F is −5bp unclamped.
+
+Standing checks: **base rate** — ~29% of firms earn above their cost of
+capital; Acuity does today (ROIC 17% vs ~10.8% WACC), so the terminal story
+is the 3-in-10 persistence case, defended only by the ~800bp six-year
+gross-margin gain. **Short case** — a mature, construction-tied luminaire
+maker (ABL −1% in FY26, 77% of sales) rebranded "industrial technology",
+whose growth leg was bought for $1.2B and now faces component inflation;
+at a 5.2% ten-year and 1.3 beta the multiple de-rates with rates, and 15×
+adjusted EPS for +3% revenue growth is not cheap. **Management incentives**
+— STIP sales/adjusted OP/FCF, LTIP ROIC-over-WACC and relative TSR; the
+thesis assumes nothing against them. **Disconfirming search** — EDGAR
+(8-Ks, Forms 3/4/144, 13G filers) swept since the Q3 call; routine. No web
+search was run (shared budget), recorded in §6. **Moat as mechanism** —
+exclusive agency distribution plus spec-grade brands in lighting; installed
+base plus integrator channel in AIS. A mechanism, moderate, evidenced by
+share gains and margin in a flat market. **Statistical checks** — N/A, no
+backtest or signal claim; the `candidates` appearance is a screen, graded
+for calibration only. **Options timing check** — the thesis dates its
+catalyst (2027-01-07) and a chain exists, but the only bracketing expiry
+fails the liquidity gate (14–16% spreads, OI 7/4, volume 0) and no required
+move is stated; UNRELIABLE, nothing refuted, coverage disclosed.
+
+**Closest attack:** the valuation (condition 5). It landed.
+
+**Flip evidence:** to SOUND — a price at or below ~$270 (or ~$286 with the
+beta clamped) with the FY26 10-K confirming the normalized base, or a Q1
+FY27 print strong enough on both segments to justify the 8% path *and* a
+lower rf; to a deeper FLAWED — ABL adjusted gross margin below 44% or AIS
+organic growth below 8% in the Q1 print, which would refute conditions 2–3
+outright.
+
+**p(beat SPY, 63 td): 0.45** — written before re-reading §1's 0.47. The
+window holds one print (2027-01-07) against a +7% consensus, a December
+price increase, and the first memory-cost quarter; the name has lagged SPY
+by 25 points since June and the rate channel is the swing factor.

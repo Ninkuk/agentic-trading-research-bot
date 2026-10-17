@@ -1,0 +1,317 @@
+# AMZN — Amazon.com, Inc. — 2026-08-03
+
+Price $271.58 (official close, 2026-07-31) · market cap $2,929,347,039,884 ·
+EV $3,057,994,039,884 · net debt $128,647M · next earnings 2026-10-29 AMC
+(tentative)
+
+**Reopen of a standalone kill-thesis run — no prior thesis document exists.
+Prior ledger line: `2026-07-29 AMZN FLAWED conditions=6 refuted=4 unknown=2
+reopen=2026-07-30:q2-print-capex-aws-margin`. The reopen question: what did
+the 2026-07-30 Q2 print show on capex and AWS margin/growth, and does it
+confirm or relieve the FLAWED concerns?**
+
+## 0. The reopen question, answered first
+
+Prior falsifier table: none available — the prior run was a standalone
+kill-thesis pass with no thesis document, so there is no prior falsifier
+list to sweep. The prior ledger line is quoted in the provenance block above.
+
+Direct answer, from the 8-K Ex-99.1 (filed 2026-07-30) and the Q2 call:
+
+- **AWS growth: decisively relieved.** AWS Q2 net sales $42,232M, **+37% YoY**
+  (36.7%, ex-FX 37%) — fastest growth in 18 quarters, fifth straight quarter of
+  acceleration, $169B annualized run rate, backlog **$496B** growing triple
+  digits YoY. Sequential add of $4.6B was ~80% larger than any prior QoQ add.
+- **AWS margin: relieved.** AWS operating income $16,621M (+64% YoY); segment
+  margin **39.4%** vs 32.9% in Q2-2025 and 37.7% in Q1-2026. The quarter
+  includes ~$600M of energy-derivative fair-value gain "primarily AWS"
+  (CFO, call) — ex-item margin ≈ **38.0%** ($16.0B/$42.2B), still up ~510bp
+  YoY. TTM AWS margin 36.8% (trough was 35.2% in Q1-2026).
+- **Capex: confirmed, and raised.** Q2 cash capex **$53.1B** (CFO); TTM
+  purchases of PP&E net **$169.0B, +64% YoY** (vs $103.0B). Jassy on the call:
+  "Earlier this year, we said we plan to invest approximately **$200 billion**
+  in cash CapEx in 2026 … We now believe we will spend approximately
+  **$220 billion**," attributing the raise to "the higher cost of memory."
+  TTM free cash flow (company definition) is **−$7.6B**, down from +$18.2B a
+  year ago, driven by a +$66.1B YoY increase in PP&E purchases "primarily …
+  investments in artificial intelligence" (press release).
+- **Net:** the FLAWED verdict's AWS-growth/margin legs are refuted by the
+  print; the capex leg is confirmed and larger than before. The market read
+  growth as dominant: AMZN closed 226.65 on 07-29 and **271.58 on 07-31,
+  +15.3% in the post-print session** (Robinhood daily bars). The concern has
+  migrated from "is there demand?" to "is the demand independent and durable?"
+  — see the circular-financing thread in §3.
+
+## 1. Verdict and thesis
+
+**PASS at $271.58.** kill-thesis: **UNPROVEN** — conditions=6, refuted=0,
+unknown=3.
+
+Amazon is an exceptional set of businesses whose Q2 print removed the
+operating concerns, but at ~$2.93T the price already implies only **~7%/yr**
+(6.5–8.3% band) on consensus-ish growth over a normalized owner-earnings
+base, while actual trailing FCF is −$7.6B, the FY26 capex guide just rose to
+~$220B, and a meaningful slice of the AWS demand book is owed by two AI labs
+Amazon itself part-funds. A low implied return on optimistic assumptions,
+bought one day after a +15% re-rate, is not the entry.
+
+**Closest attack:** condition 1 via the vendor-financing circularity —
+Amazon booked >$200B of multi-year AWS commitments from two labs into which
+it simultaneously put $60B of capital plus a milestone-linked $15–20B
+facility. Detail in the Kill-thesis record.
+
+Load-bearing conditions (count: 6). Condition tiers (probable/plausible/
+possible) not recorded in original run; the inline survived/UNKNOWN readings
+are the original's own:
+
+1. **AWS demand durability & backlog quality** — the $496B backlog converts at
+   contracted prices and AI demand does not air-pocket before the 2026–27
+   builds monetize. *UNKNOWN at the core*: the two anchor customers are
+   part-funded by Amazon (thread 2) and their own funding depends on continued
+   AI capital-market enthusiasm — not verifiable from any disclosure.
+2. **AWS margin holds mid-30s through the depreciation flood** — survived
+   attack: 36.8% TTM, ~38.0% Q2 ex-energy-item, up ~510bp YoY while D&A ramps.
+3. **Retail margin keeps expanding** — NA TTM 6.6% → 7.4% over five quarters;
+   Q2 NA margin flat YoY ex-tariff-refund (~7.4% vs 7.5%). Survived on trend;
+   quarter-grain evidence is mixed.
+4. **Capex normalizes / FCF inflects within ~2–3 years** — *UNKNOWN*:
+   management says capacity-short through 2027 and raised the guide for cost,
+   not capacity; the inflection date exists in no disclosure.
+5. **Balance sheet carries the build** — survived: coverage 28x, debt/EBITDA
+   1.5, $123.0B cash, AI-lab stakes carried ~$220B (Level 3, not cash).
+6. **NOPAT normalization is a fair owner-earnings proxy** — *UNKNOWN*: if
+   $200B+/yr is competitively mandatory (red-queen), maintenance capex is far
+   above D&A and the $72.5B base overstates owner earnings. Management's
+   "<3-year server breakeven / 5–6 year life, 5-year contracted terms" frame
+   supports it but is an unaudited management claim.
+
+## 2. Business
+
+**Created:** (a) Retail: the lowest-friction store with the fastest logistics —
+40%+ more same-day/overnight items YoY, prices measured 14% below other
+retailers (Profitero, cited by CFO). Customers get speed + price + selection
+surplus. (b) AWS: elastic compute/storage/AI infrastructure that turns
+customers' fixed IT cost into variable cost, now including AI training and
+inference near their existing data. (c) Advertisers get the highest-intent
+shelf on the internet.
+
+**Captured:** at least five distinct mechanisms — first-party retail gross
+margin; third-party seller take (fees $46.8B in Q2, +16%); advertising
+($19.8B in Q2, +26%, near-pure margin); Prime subscriptions ($13.7B, +12%);
+AWS usage and committed contracts ($42.2B, 39% margin); and now silicon
+(Trainium/Graviton chips business at a >$25B annualized run rate, +triple
+digits — 8-K).
+
+**Protected:** logistics scale nobody can replicate at unit cost (the retail
+moat is physical and compounding: robotics fleet doubling in 2026); AWS
+switching costs plus data gravity — AI inference "resides near their other
+applications and data" (Jassy); custom silicon price-performance (Graviton in
+use by 98% of top-1000 EC2 customers); and $650B of contracted
+commitments/leases that no entrant can finance. The moat is a mechanism, not
+a label — but note it is capex-fed now, not capex-light.
+
+**Operating leverage (Phase 0): strongly positive.** Revenue FY2021
+$469.8B → TTM $775.7B while operating income went $24.9B → $93.7B; operating
+margin 5.3% → 12.1% (stockanalysis income-statement route; matches 8-K TTM
+table). Revenue up 1.65x, op income up 3.8x.
+
+## 3. Threads pulled
+
+1. **Q2 print quality.** Q2 op income $27.5B includes ~$1.2B of one-time
+   benefits: ~$600M tariff-related refunds (North America) + ~$600M
+   energy-derivative fair-value gain (primarily AWS). Ex-items ~$26.3B, still
+   +37% YoY. Q2 net income $62.6B and EPS $5.75 are dominated by **$53.4B
+   pre-tax non-operating income, primarily Anthropic marks** — not operating
+   earnings. Robinhood's Q2 "actual" EPS 5.75 vs 1.82 est is GAAP-consistent
+   (matches the 8-K diluted EPS) but the beat is mostly the mark, not ops.
+2. **The circular-financing thread (the load-bearing adverse find, 10-Q):**
+   AWS-OpenAI commercial commitment expanded by **$100B over 8 years** in
+   Q1-26 (on a prior $38B), and AWS-Anthropic expanded by **>$100B over 10
+   years** in Q2-26 — both "include contractual obligations related to the
+   performance of AWS chips." Meanwhile Amazon **invested $50B into OpenAI**
+   (Series C: $28.7B in H1, remaining $21.3B funded after quarter-end) and
+   **$10B more into Anthropic** in Q2 (Series G + Series H), plus a **$20B
+   financing facility to Anthropic** (now $15B) that unlocks as Amazon hits
+   compute-delivery milestones. Vendor-financed demand: the two anchor tenants
+   of the AI backlog are part-funded by the landlord. Base rate for
+   vendor-financed capacity booms (1990s telecom) is poor. Not a refutation —
+   the labs raise far more from third parties than from Amazon — but it means
+   backlog quality cannot be verified from disclosure.
+3. **Balance-sheet funding of capex.** H1-2026 debt proceeds $82.4B; long-term
+   debt $65.6B → $128.9B YoY (8-K balance sheet); July 424B5 bond offering on
+   top. Interest coverage still 28.1x, debt/EBITDA 1.49 (stockanalysis
+   statistics). Offsetting asset: AI-lab stakes now carried at very large
+   marks — Anthropic convertible notes at **$97.9B fair value** plus private
+   preferred (Anthropic + OpenAI) carrying value **$122.3B** (10-Q, Level 3).
+   Serviceability is not in question today; Level 3 marks are not cash.
+4. **Commitments footnote (10-Q):** total commitments **$650.0B**, including
+   $137.2B leases not yet commenced and $130.1B unconditional purchase
+   obligations (energy, content, PP&E, software). The "asset-light" question
+   answers itself: the capex path is contractual, not discretionary.
+5. **Capex-raise composition.** The $20B guide raise is attributed to memory
+   cost inflation, not extra capacity — i.e., the same compute now costs more,
+   which pressures the "<3-year server breakeven" claim at the margin
+   (management's own economics framing, unaudited). Watch FY27 guide.
+6. **Post-call sweep (through 2026-08-03):** 10-Q filed 07-31; **S-4 filed
+   07-31** registering Amazon shares for a **Globalstar** acquisition
+   (stock-consideration; Leo/satellite adjacency — immaterial at AMZN scale,
+   confirms Leo will keep consuming capital); no post-print 8-Ks; last Form 4
+   was 07-02 (pre-print). Q3 guide: net sales $197–202B (Prime Day shifted
+   into Q2; ex-Prime-Day growth ~400bp higher), op income $22.5–26.5B vs
+   $17.4B YoY.
+7. **Tax:** H1 tax provision includes $15.9B discrete expense on the Anthropic
+   marks (non-cash gain, real deferred tax). IRS Notice 2026-7 (R&D
+   capitalization) reduces 2024/25 cash taxes — modest cash tailwind. Cash
+   taxes paid Q2: $2.7B vs $4.8B YoY.
+8. **Estimate-vs-actual pattern** (Robinhood, 8 quarters): chronic beats —
+   Q4-24 1.48→1.86, Q1-25 1.36→1.59, Q2-25 1.33→1.68, Q3-25 1.57→1.95,
+   Q4-25 1.97→1.95 (only miss, a hair), Q1-26 1.64→2.78, Q2-26 1.82→5.75
+   (mark-inflated). Managed-guidance pattern with genuine acceleration in
+   2026. Actuals cross-checked: sec_fundamentals.db `v_screener` shows Q2
+   revenue $200.606B / NI $62.647B / EPS 5.75 — identical to the 8-K.
+9. **Options read (mandatory):** paths used: path 2 only (Robinhood
+   stopgap) — the path-1 own-history percentile is unusable this run (depth
+   gate fails; see §4). Metric table and liquidity-gate outcome in §4.
+10. **Dead ends:** stockanalysis `/stocks/AMZN/metrics/` returns empty metric
+    groups (no segment splits there — used the 8-K supplemental tables
+    instead). Composite: AMZN carries no flag in `v_latest_scorecard`
+    (checked read-only).
+
+## 4. Valuation
+
+**Inputs (live probe, 2026-08-03):** market cap $2,929,347,039,884; EV
+$3,057,994,039,884; net debt $128,647M (statistics route `hover` values).
+Spot $271.58 (Robinhood official close 2026-07-31; pre-market ~$275).
+
+**Trailing FCF is negative** (stockanalysis `fcf` −$11.6B; company definition
+−$7.6B), so a trailing-FCF reverse DCF is a category error (the solver would
+refuse it). Per the mid-expansion guidance, I modeled a **normalized
+owner-earnings base**: NOPAT = TTM operating income $93.7B × (1 − 22.65% tax)
+≈ **$72.5B** — i.e., assuming steady-state capex ≈ D&A, which credits the
+entire $97B gap between TTM capex ($173B, stockanalysis basis) and D&A
+($75.2B) as growth investment. That is a generous assumption and it is the
+thesis's condition 6.
+
+Reverse-DCF (`tools.valuation.reverse_dcf`, NOPAT treated as unlevered flow,
+net debt passed). No hurdle was computed in the original run, so no
+`vs hurdle` column is shown:
+
+| scenario | base FCF | growth ×5y | terminal | implied return |
+|---|---|---|---|---|
+| A (central; ≈ analyst consensus rev 3y +14.6%/yr) | $72.5B NOPAT | 15/14/12/11/10% | 3.5% | **7.13%/yr** |
+| B conservative | $72.5B NOPAT | 10% ×5 | 3.0% | 6.47%/yr* |
+| C aggressive AWS-led | $72.5B NOPAT | 20/18/16/14/12% | 4.0% | 8.30%/yr |
+
+*B was run against market cap without net debt; its true EV-adjusted figure is
+slightly lower still. Entry sensitivity (scenario A): $232/sh → 7.7%, $213/sh
+→ 8.0%, $195/sh → 8.4%. No plausible near price restores 10%.
+
+**Terminal risk check:** the dominant disclosed structural risk is the AI
+investment cycle itself — supply-input volatility ("including for memory
+chips") and demand/spending uncertainty are named in the company's own
+forward-looking factors, and the commitments footnote makes the spend
+contractual. Terminal growth 3.5% survives it only because the retail + ads
+engine (12.1% TTM margin, rising) does not depend on AI returns; the AWS-AI
+share of terminal value is the part at risk, which is why condition 6 is
+marked UNKNOWN rather than assumed.
+
+**Options-implied move (paths used: path 2 only — Robinhood stopgap).** AMZN
+is in the CBOE catalog but `data/options.db` `v_iv_rank` has **n_days = 21 <
+60**: the depth gate fails, so no own-history percentile is quotable this run
+(put/call volume ratio 0.44 on 2026-07-31 noted as raw context only). Path 2:
+catalyst = Q3 print 2026-10-29 AMC (Robinhood, tentative) → repricing at the
+10-30 open; nearest bracketing expiry **2026-11-20** (DTE 109). ATM 270
+strike: call mark 23.55 / IV 0.359342, put mark 18.65 / IV 0.354126 (OI
+2,459/806, vol 1,161/2,364, spreads 3.4%/3.8% — passes the uncalibrated
+liquidity gate). CLI output, quoted:
+
+| metric | value |
+|---|---|
+| spot | 271.58 |
+| expected absolute move (MEAN, not a ceiling) | 15.54% |
+| 1-sigma move | 19.49% |
+| ATM IV | 35.67% |
+| RV60 | 42.57% |
+| RV20 | 58.69% |
+| IV > RV60? | NO |
+| IV > RV20? | NO |
+
+Not "elevated": both realized-vol windows contain the +15.3% print day, so
+IV < RV reads as post-event normalization, not cheap vol. The thesis makes no
+2-sigma-sized dated claim, so no timing refutation applies. This informs the
+equity thesis only; it recommends nothing.
+
+## 5. Falsifiers
+
+What would make me sell / stay out (class tags not stated in the original
+run):
+
+- AWS growth < ~25% while the capex guide holds or rises.
+- AWS segment margin below ~30% for two consecutive quarters ex-one-timers.
+- FY27 capex guided ≥ $260B without commensurate disclosed backlog growth.
+- TTM FCF still negative at the Q4-2027 print.
+- NA retail TTM margin back below 6%.
+- Either AI lab failing a funding round (the backlog-quality falsifier).
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **AWS core vs AI margin split** — not disclosed anywhere; determines
+   whether the incremental (AI) revenue is margin-accretive. Absence does not
+   kill the thesis but blocks SOUND.
+2. **Backlog composition** — how much of $496B is OpenAI + Anthropic; not
+   disclosed. Bounds: the two announced expansions alone are >$200B over 8–10
+   years, so plausibly a third or more. This is condition 1's core.
+3. **FCF inflection timing** — no guide exists beyond "at some point" (Jassy).
+4. **True maintenance capex** — undiscoverable by design; condition 6.
+
+## 7. Sources
+
+- **Primary:** 8-K Ex-99.1 2026-07-30 (all Q2 segment figures, TTM
+  cash-flow table, Q3 guidance); 10-Q filed 2026-07-31 (Anthropic/OpenAI
+  investment notes, $20B facility, commitments table, tax, debt); S-4 filed
+  2026-07-31 (Globalstar); EDGAR submissions index (filing dates). Primary,
+  transcribed (Quartr via stockanalysis): Q2-2026 call 2026-07-30 — Jassy
+  prepared remarks ($496B backlog, $200B→$220B capex raise, memory-cost
+  attribution, server economics), Olsavsky remarks ($53.1B Q2 cash capex,
+  $1.2B one-time items, guidance color). Load-bearing numbers corroborated
+  against the 8-K/10-Q above.
+- **stockanalysis.com (vetted exception):** statistics route (market cap, EV,
+  ratios, TTM lines), income-statement and cash-flow routes (annual/quarterly
+  series), transcripts index. Live probe 2026-08-03; live probe used over
+  stale DBs throughout for today's numbers.
+- **Broker/market microstructure:** Robinhood MCP; no integrated official
+  source covers these fields — spot quote and official 07-31 close, daily
+  bars (closes array, post-print +15.3% move), option chain/ATM quotes for
+  2026-11-20, earnings estimate-vs-actual pattern, next report date
+  2026-10-29 (tentative).
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** sec_fundamentals.db (Q2 EPS/NI cross-check),
+  options.db (path-1 gate check, n_days=21), earnings.db (07-30 AMC event
+  row), composite.db (no current flag). Read-only.
+- **Low-confidence:** none used.
+
+## Kill-thesis record
+
+**UNPROVEN** — conditions=6, refuted=0, unknown=3 (conditions 1, 4, 6).
+Nothing in the print or filings refutes a condition; the three UNKNOWNs are
+genuinely unverifiable from disclosure, not merely uncomfortable.
+
+**Closest attack:** condition 1 via the vendor-financing circularity —
+Amazon booked >$200B of multi-year AWS commitments from two labs into which
+it simultaneously put $60B of capital plus a milestone-linked $15–20B
+facility; the 1990s telecom base rate for vendor-financed demand is ugly. It
+fails to refute because the labs' third-party funding and the non-lab
+backlog remain large, but it converts "demand is booming" from a fact into a
+partially self-referential claim.
+
+**Flip evidence:** disclosure (or two more quarters of delivery) showing
+backlog conversion at stable AWS margins with the labs' funding independent
+of Amazon — flip toward SOUND; a lab funding failure or an AWS growth print
+< 25% with the capex guide intact — flip toward FLAWED.
+
+Per-condition adjudication beyond the inline survived/UNKNOWN readings in
+§1's condition list, and the standing/statistical/options-timing checks,
+were not separately recorded in the original run (pre-template); the
+options-timing non-applicability is stated in §4.

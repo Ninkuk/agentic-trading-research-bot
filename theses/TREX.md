@@ -1,0 +1,208 @@
+# TREX — Trex Company, Inc. — 2026-08-04 (reopen of 2026-07-27, trigger: q2-print-sell-through)
+
+Price $47.79 (live quote, 2026-08-04 ~10:52 PHX, +6.6% on the Q2 print) ·
+market cap $4,868M · next earnings 2026-11-03 (Q3 print)
+
+**Reopen re-research of `research/TREX-2026-07-27.md`** (prior verdict UNPROVEN,
+reopen=2026-08-04:q2-print-sell-through). The reopen question: what did the Q2 print
+(2026-08-04 BMO — this morning) show on sell-through vs sell-in during the distribution
+transition, and does it confirm or refute the prior thesis's load-bearing conditions?
+
+## 0. The reopen question, answered first
+
+| prior falsifier | actual | status |
+|---|---|---|
+| Sell-through vs sell-in (the 2022 air-pocket fear) | In-quarter **sell-out slightly ahead of sell-in**; rolling-12M sell-in +9% vs sell-out +7% (was 7%/6% in Q1) — gap called "timing effects" [CFO]. Demand accelerated through May/June, continued into July | NOT triggered in-quarter; R12M gap direction still runs sell-in-first — watch item, management-reported only |
+| Guidance cut attributed to transition | Guidance **reaffirmed** (raised Jul 13): FY26 $1.215–1.250B rev, adj EBITDA $335–350M; **FY adj gross margin raised to ~38% from 37.5%**; first Q3 guide $305–320M = **+7–12% YoY** vs Q3'25 $285.3M | NOT triggered |
+| Boise announces national decking partnership AND share loss follows | **First half FIRED**: Boise/BMD ↔ James Hardie 10-yr sole-national pact effective 2026-07-31, bundling TimberTech decking/railing with Hardie siding + AZEK trim (Boise 10-Q; Trex was ~9% of Boise revenue). Share-loss half unobservable until Q3+ | **HALF-TRIGGERED** — threat now concrete and contracted |
+| Gross margin <38% via SBP terms pressure | GM **37.9%** — under the line, but the stated mechanism is mix (railing + entry-level Enhance), Arkansas depreciation (D&A $19.4M vs $15.8M PY), and >100bp of temporary ramp inefficiencies; "no adjustments to gross profit"; pricing contribution minimal; FY adj GM guide *raised* | Number grazed, mechanism NOT triggered |
+| Capex back up / M&A consumes FCF | Capex guide unchanged $100–120M; H1 capex $52.7M vs $126.3M PY; Q2 FCF $181.8M → $51M buybacks + $130M revolver paydown; +$150M H2 buyback authorized | NOT triggered |
+
+Other print facts (8-K Ex-99.1): net sales $418.0M (+8%, pre-announced); GAAP EPS $0.60
+vs $0.71 PY; adj EPS $0.62 (met the $0.62 estimate exactly — de-risked by the Jul 13
+pre-release) incl. −$0.03 from a $5M non-cash equipment write-down; SG&A 16.1% of sales
+vs 14.4% PY (18% FY target); shares out 101.87M at Jun 30 (105.74M at Dec 31 — $153.6M
+H1 buybacks); AR $262.5M vs $48.1M at year-end (seasonal early-buy); revolver $253M
+drawn. Little Rock decking ramp pulled forward >6 months to Q3'26, 50% of lines by
+year-end, margin benefit "2027 and beyond."
+
+## 1. Verdict and thesis
+
+**PASS at $47.79.** kill-thesis: **UNPROVEN** — conditions=7, refuted=0,
+unknown=5.
+
+The reopen question resolved *in the company's favor* — sell-out
+slightly ahead of sell-in in-quarter, transition tracking to plan, guidance reaffirmed,
+another $150M buyback — but the stock answered before the analysis could: +6.6% today
+($44.83 → $47.79), and at this price the reverse DCF pays only **~6–8%/yr with growth
+credited** (worse than the 6–8% at $44 that drove the July pass), for a quarter whose
+own P&L ran the wrong way: revenue +8%, operating income **−16%**, adjusted EBITDA
+−8% YoY. Meanwhile the prior run's retaliation falsifier half-fired: Boise Cascade
+signed a **10-year sole-national distribution agreement with James Hardie effective
+Jul 31, 2026, explicitly carrying TimberTech decking/railing as the replacement for
+displaced Trex product**. The demand thread got better; the price and the competitive
+board got worse; the ownership math nets out to the same pass.
+
+**Closest attack:** not recorded (pre-template run).
+
+Condition tiers not recorded in original run — the seven load-bearing
+conditions were counted but not enumerated in this document (§6's UNKNOWNs
+carry the five unknowns).
+
+## 2. Business
+
+Unchanged from `TREX-2026-07-27.md` §2 (created / captured / protected) — the print
+extends it: #1 wood-alternative decking brand, ~6,700 outlets, recycled-LDPE feedstock
+cost advantage, now with an exclusive national/regional distribution network (SBP sole
+national from year-end) facing a newly symmetric rival axis (Boise sole-national for
+Hardie/TimberTech). New this quarter: entry-level **Trex Enhance Basics posted its first
+meaningful sales increase in years** — direct evidence the wood-conversion engine
+(75% of the category is still wood; 1% share from wood ≈ $80M revenue) can fire, at the
+cost of mix-driven gross-margin pressure.
+
+**Operating leverage (Phase 0): negative** (this quarter) — revenue +8%,
+operating income −16% ($86.2M vs $102.4M), from mix, Arkansas D&A, ramp
+inefficiency, and a deliberate SG&A step-up to 18% of sales.
+
+## 3. Threads pulled
+
+- **The reopen thread (the point of this run)** — resolved in §0; the falsifier table is
+  the finding. The most informative rows pull in opposite directions: sell-through
+  confirmed healthy in-quarter (one management-reported quarter), while the Boise/Hardie
+  pact converts the retaliation scenario from speculation to a signed 10-year contract.
+- **The competitive board is now two exclusive axes.** Trex↔SBP (+ exclusive regionals)
+  vs Hardie↔Boise carrying TimberTech + Hardie siding + AZEK trim as one bundle to the
+  same pro dealer base. Trex's counter-evidence today: distributor inventories "already
+  at desired levels," $100M tertiary-brand conversion target, one distributor converting
+  six dealers from a tertiary brand in three weeks (anecdote, management-sourced).
+  Nothing observable on share until Q3+ — this is the load-bearing UNKNOWN now.
+- **EBITDA down in the best demand quarter in years.** Q2 adj EBITDA $112.0M vs $122.0M
+  PY; H1 $215.1M vs $223.3M. The FY guide ($335–350M) therefore requires H2 adj EBITDA
+  of $120–135M vs $103.6M PY H2 — the raised guide leans on Little Rock utilization and
+  the claimed exit-June margin run-rate. The growth is real; the profit conversion is
+  entirely forward-promised.
+- **Q2 FCF $181.8M is seasonal, not run-rate.** H1 NCFO was $95.7M — *flat YoY to the
+  dollar* ($95.74M both years) — because AR balloons $214M in H1 (early-buy program).
+  TTM levered FCF now $208.1M (stockanalysis), down from $226.5M at the prior run.
+  The durable base remains the guide-normalized ~$158M / steady-state ~$183M from the
+  prior run's math (unchanged inputs: EBITDA midpoint 342.5, interest 9, tax ~65,
+  capex 110 → 85 post-Arkansas).
+- **Form 4 cluster (Jul 30, ten filings):** routine director acquisitions — code A,
+  plan-priced deferred/phantom stock (e.g. Volas +2,831 @ $42.39). No insider selling
+  into the print. Dead end.
+- **Earnings pattern (Robinhood, broker tier):** Q2 actual $0.62 = estimate $0.62 (the
+  Jul 13 pre-release collapsed the surprise); street still models Q3 down YoY ($0.42 est
+  vs $0.51 actual) — H2 caution remains in numbers. Dead end (no new signal).
+- **Options read (mandatory):** path 2 (Robinhood stopgap; TREX not in the
+  CBOE catalog). See §4 for the metric table; liquidity gate FAILED there.
+- **Dead ends:** stockanalysis statistics still carries 103.9M shares / $4.99B market
+  cap — stale vs the 8-K's 101.87M; used the filing count. Q2 10-Q not yet filed —
+  distribution-agreement economics (SBP terms, incentives) remain undisclosed; first
+  read comes with the 10-Q.
+
+## 4. Valuation
+
+Reverse DCF, levered FCF against **market cap $4,868M** (101,865,035 shares [8-K balance
+sheet, Jun 30] × $47.79 [Robinhood live, 2026-08-04 ~10:52 PHX]); terminal growth 2.5%,
+3-yr horizon.
+
+Hurdle: not computed in the original run.
+
+| scenario | base FCF | growth path | terminal | implied return |
+|---|---|---|---|---|
+| TTM as printed (WC-flattered) | $208.1M | 5/5/5% | 2.5% | **~7%/yr** |
+| FY26 guide-normalized (EBITDA 342.5 − int 9 − tax 65 − capex 110) | $158M | 5/5/5% | 2.5% | **~6%/yr** |
+| post-Arkansas steady state (capex ≈ D&A $85M) | $183M | 5/5/5% | 2.5% | **~7%/yr** |
+| steady state, management's $2B-by-2030 pace credited | $183M | 10/10/10% | 2.5% | **~7%/yr** |
+| TTM base AND the 2030 pace — the full bull stack | $208.1M | 10/10/10% | 2.5% | **~8%/yr** |
+
+ATM IV ~55% (>50%), so per the precision rule these are whole-percent figures and the
+range is wide. The honest read: **~6–8%/yr**, and the top requires crediting *both* the
+WC-flattered base *and* a growth rate the record has shown for exactly one
+(pre-announced) quarter. At the July run's $44 the same table read 6–8% — the print
+improved the evidence and the price consumed it. Terminal-risk check unchanged (10-K
+Item 1A): R&R-cycle demand for big-ticket discretionary; 2.5% terminal growth survives
+only on continued wood conversion — now with one quarter of direct supporting evidence
+(Enhance Basics), against a newly contracted rival channel.
+
+**Options-implied move (path 2 — Robinhood stopgap; TREX not in the CBOE catalog):**
+post-print read, Aug-21 expiry, 17 DTE, no scheduled catalyst inside the window —
+residual vol, not event pricing:
+
+| metric | value |
+|---|---|
+| spot | 47.79 |
+| ATM 47.5 call mark / IV | 2.25 / 48.8% |
+| ATM 47.5 put mark / IV | 2.25 / 60.3% |
+| expected absolute move (straddle/spot; MEAN, not a ceiling) | ~9.4% |
+
+**Liquidity gate FAILED** — put spread $1.70 on a $2.25 mark (76%), call 31%, OI 267/6,
+volume 13/2 — so the read is labelled UNRELIABLE and moves no verdict. No timing
+condition rests on it (the dated catalyst already passed this morning).
+
+## 5. Falsifiers
+
+What would make an owner sell — carried forward, updated:
+
+1. Q3 print (2026-11-03): guidance cut attributed to the transition, or the R12M
+   sell-in/sell-out gap widening instead of closing — the 2022 air-pocket pattern.
+2. Observable share loss to the Boise/Hardie/TimberTech axis: dealer defections,
+   price/terms concessions to SBP or regionals, or GM below ~38% *with distribution
+   named as the cause* (mix/ramp causes are the disclosed, benign path).
+3. H2 adj EBITDA tracking below the $120–135M the reaffirmed guide requires — the
+   margin-recovery promise failing its first test.
+4. Capex guidance revised back up, or the M&A third of the $2B-by-2030 plan consuming
+   the buyback at premium multiples.
+5. Enhance Basics / wood-conversion momentum stalling (the terminal-growth mechanism).
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Sell-through independence** — all sell-through figures are management-reported;
+   no external check exists until the Q3 print laps the transition. The favorable Q2
+   reading narrows but cannot close this. (Why the verdict stays UNPROVEN.)
+2. **Share retention vs the TimberTech national push** — the pact is signed
+   (Boise 10-Q); its effect is unobservable for at least a quarter.
+3. **Distribution-agreement economics** (SBP terms, incentives, exclusivity costs) —
+   undisclosed until the Q2 10-Q files.
+4. **Margin-lever arithmetic** ("every $100M revenue ≈ +100bp GM"; Little Rock
+   accretive once ramped) — management claims with no post-ramp record.
+5. **Multi-year growth persistence** — one pre-announced quarter of +8% against four
+   years of flat revenue; the guide credits +3.5–6.5% for FY26 only.
+6. Executive comp under the new team (proxy still unread) — flagged, not load-bearing.
+
+## 7. Sources
+
+- **Primary:** EDGAR — 8-K 2026-08-04 (0001193125-26-331450) + Ex-99.1 (Q2 print: all
+  P&L/balance/cash-flow figures, guidance tables, buyback); XBRL company facts (Q3'25
+  revenue $285.3M, 2025 quarterlies); Form 4 cluster 2026-07-30 (director code-A
+  acquisitions); Boise Cascade Q2'26 10-Q (bcc-20260630: Trex termination eff.
+  2026-08-12, ~9% of revenue, James Hardie 10-yr sole-national agreement eff.
+  2026-07-31) via dated web search; FY2025 10-K (carried from prior run).
+- **stockanalysis.com (vetted exception):** Q2 2026 call transcript (662072-q2-2026:
+  sell-in/sell-out splits, ramp inefficiency ~100bp, Little Rock acceleration, load-in
+  framing, tertiary-conversion anecdote); statistics block (TTM FCF $208.1M, short
+  interest 11.5% of float — noted; share count flagged stale vs 8-K).
+- **Broker/market microstructure:** Robinhood MCP (admissible — no integrated official
+  source covers these fields for TREX): live quote $47.79 (+6.6%), prior close
+  $44.83; option chain/instruments/quotes (ATM IV, marks, OI, spreads); earnings
+  estimate-vs-actual pattern incl. Q3'26 est $0.42.
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** `tools/valuation/reverse_dcf`, prior run
+  `research/TREX-2026-07-27.md` (guide-normalized FCF math carried forward),
+  `data/earnings.db`/`sec_fundamentals.db` (still no TREX rows — gap noted).
+- **Low-confidence:** building-products trade press headlines on the Boise/Hardie
+  pact (colour; the 10-Q is the load-bearing source).
+
+## Kill-thesis record
+
+**UNPROVEN** — conditions=7, refuted=0, unknown=5. Per-condition adjudication
+not recorded in original run; §6's UNKNOWNs 1–5 carry the five unknowns
+(sell-through independence, share retention vs the TimberTech push,
+distribution-agreement economics, margin-lever arithmetic, multi-year growth
+persistence). Standing/statistical/options-timing checks not recorded in
+original run beyond §4's liquidity-gate failure and the no-dated-catalyst
+timing note. **Closest attack:** not recorded (pre-template run). **Flip
+evidence:** not recorded as such — §5's owner-sell list is the nearest
+original equivalent.

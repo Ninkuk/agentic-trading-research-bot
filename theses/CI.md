@@ -1,0 +1,508 @@
+# CI — The Cigna Group — 2026-10-09
+
+Price $282.44 (live quote, last regular-session trade 2026-10-09; official
+close for 10-09 not yet posted, 10-08 close $281.03) · market cap $74.63B ·
+next earnings 2026-11-05 BMO (confirmed) · EV $99.25B · net debt $24.62B
+
+Entry path: scheduled held-name re-run. Unattended scheduled run. Supersedes
+`research/CI-2026-09-06.md` (BUY at $282.52, kill-thesis UNPROVEN). That
+file's reopen trigger is dated 2026-11-05 and has **not** fired, so §0 is
+omitted and the prior falsifiers are swept in §3. The one new primary event
+since the prior run is the **2026-09-30 Investor Day**, the near catalyst
+the prior thesis named; this run asks whether it changed the answer. The
+position is still **held** (`composite.db` `ticker_scores.in_portfolio = 1`),
+so §1 is a hold-at-today's-price call.
+
+## 1. Verdict and thesis
+
+**BUY at $282.44.** kill-thesis: **UNPROVEN** — conditions=6 (2 probable,
+4 plausible), refuted=0, unknown=1, pending=2, not_obtained=0.
+
+**p(beat SPY, 63 td): 0.55** · kill-thesis: 0.53 —
+**Disputed expectation:** at $282.44 the market prices owner free cash flow
+of ~$6.0–6.6B/yr growing low single digits (implied 10.3–11.5%/yr against an
+8.58% hurdle). That sits at or below management's own 2026–2030 plan of $50B
+operating cash flow with 20–25% reinvested, as if the rebate-pool rewrite will
+miss the plan. What revises it is the 2026-11-05 Q3 print: the owner cash
+flow run-rate, whether the minority claim keeps growing, and any 2027 PBS
+framing below the 0% floor.
+
+Cigna is a scaled toll on US drug spend (Express Scripts, Accredo) bolted to
+a commercial-only insurer that is absent from the government lines that broke
+its peers. Congress legislated its rebate-retention model away in CAA 2026;
+the price already assumes that goes badly. The Investor Day put management's
+own numbers on the table. They guided $50B of operating cash flow over
+2026–2030 and adjusted EPS of at least $45 in 2030, which is 10.3%/yr from the
+$30.45 FY26 floor, the bottom of the 10–14% algorithm. They guided PBS earnings
+at 0–4% a year through 2030. Those numbers make the plan less exciting and
+more checkable. They also *lower* the honest owner-FCF centre: the plan
+implies ~$6.4–6.9B/yr after stock comp and the minority claim, not the
+$7.96B TTM owner base the prior run centred on. Even discounted to a
+strict reading of the plan, the price implies 11.51%, +293bp over the hurdle.
+A bear run that shrinks owner FCF 3%/yr and then never grows implies 7.76%,
+82bp short. The hurdle rose 52bp since the prior run (rf 4.75% → 5.22%), and
+that widened the gap the bear case falls into.
+
+**Closest attack:** management's plan is itself the attack on condition 1.
+20–25% of $50B reinvested is $2.0–2.5B/yr against TTM capex of $1.164B, so
+reinvestment roughly doubles. After SBC and the minority claim, the plan's
+average owner FCF of ~$6.4–6.9B clears the $6.0B break line by only 7–15%.
+The prior run's 13.0–13.8% centre was built on a base that management's own
+plan does not support. The attack moves the centre of the range down to
+11.5–12.4%. It does not reach the hurdle, and it makes the Q3 cash-flow
+statement more decisive than the adjusted-EPS headline.
+
+Load-bearing conditions (6):
+
+1. *plausible* — **Owner free cash flow does not fall sustainably below
+   ~$6.0B/yr.** The plan implies $7.5–8.0B/yr consolidated FCF ($50B OCF less
+   20–25% reinvestment, averaged over five years), and ~$6.4–6.9B owner FCF
+   after $0.29B SBC and ~$0.86B NCI. FY21–FY25 consolidated FCF ran 6,037 /
+   7,361 / 10,240 / 8,957 / 8,389 ($M). Settled in part by the Q3 10-Q,
+   2026-11-05.
+2. *probable* — **Cigna Healthcare's MCR stays inside the 83.7–84.7% FY26
+   guide.** Q2'26 84.5%; band reaffirmed in the 2026-09-30 8-K.
+3. *probable* — **Specialty & Care growth (8–12% LT guide) plus Cigna
+   Healthcare (6–9%) carry earnings while PBS runs 0–4%.** Q2'26 segment
+   pre-tax adjusted: S&CS $1,054M (+22%), PBS $609M (−27%), Cigna Healthcare
+   $1,276M (+17%). The LT segment guides are new as of 2026-09-30.
+4. *plausible* — **No federal action beyond CAA 2026** reaching Accredo or
+   forcing PBMs to divest pharmacies. No disclosure can carry this.
+5. *plausible* — **The minority interests' claim stops doubling.** NCI income
+   H1'26 $422M vs H1'25 $186M; FY2025 $331M. The Q3 10-Q (2026-11-05) prints
+   the third quarter.
+6. *plausible* — **Capital discipline holds.** The plan sends 55–60% of $50B
+   to buybacks, debt paydown and M&A, ~20% to dividends and 20–25% to
+   reinvestment. The 9/30 outlook excludes future business combinations. No
+   deal above ~$10B.
+
+**Dominant shared risk factor:** US drug-pricing and PBM-compensation policy —
+holdings unavailable in this session (the unattended slot has no
+`portfolio.db` grant; `composite.db` confirms only that CI itself is held).
+
+## 2. Business
+
+Unchanged from `research/CI-2026-09-06.md` §2 in substance. The deltas this
+run come from the Investor Day.
+
+**Created:** Drug-purchasing scale across ~118M pharmacy lives. Accredo's
+specialty dispensing (8M+ prescriptions/yr, 1M+ patients per the 9/30 8-K).
+Employer health-benefit underwriting with the largest stop-loss book.
+
+**Captured:** Four mechanisms. (1) Rebate and spread retention in PBS, which
+CAA 2026 rewrites and the "Signature" rebate-free model replaces with higher
+administrative fees (Kautzner, 9/30: Signature preserves "earnings levels
+consistent with today", with ≥50% of members enrolled by end-2028).
+(2) Specialty dispensing economics in Accredo/S&CS. (3) Fee-based provider
+services (Shields, CarepathRx). (4) Insurance underwriting margin in Cigna
+Healthcare, guided at 10.5–11.5% LT margins. Investor Day earnings mix:
+Evernorth ~60% (S&CS ~37%, PBS ~23%), Cigna Healthcare ~40%.
+
+**Protected:** Purchasing scale (three firms hold ~80% of PBM volume) and
+Accredo's bilateral limited-distribution contracts protect the *volume*. The
+*toll* is protected by nothing: Congress rewrote it in February 2026. Analysts
+on 9/30 asked the same question twice: Fischbeck (BofA), "there's always
+concern when it comes to PBMs that there's another shoe to drop", and Lake
+(Wolfe), on what drives the 0% end. The moat question is unchanged.
+
+**Control:** One class of common stock, one share one vote, no controlling
+holder; insiders 0.38%, institutions 92.68%. Nothing forecloses an approach or
+an activist path beyond size and state insurance change-of-control approval.
+A director (Donna Zarcone) retires 2026-12-31, "not the result of any
+disagreement" (8-K Item 5.02, filed 2026-10-09).
+
+**Operating leverage (Phase 0): negative over five years, improving in the
+last twelve months.** No new print since the prior run.
+
+| period | revenue | operating income | operating margin |
+|---|---|---|---|
+| FY2021 | $174,069M | $8,162M | 4.69% |
+| FY2025 | $274,900M | $10,259M | 3.73% |
+| TTM (Jun'26) | $282,382M | $11,021M | 3.90% |
+
+Revenue grew 58% against operating income growth of 26%. That is mix
+(pass-through drug revenue at near-zero incremental margin), not decay.
+Diluted EPS went $15.75 → $22.18 → $24.18 on a share count down about a fifth.
+
+## 3. Threads pulled
+
+- **The Investor Day (2026-09-30): it happened, and it reaffirmed rather than
+  raised.** 8-K Ex-99.1 (items 7.01/9.01): FY26 reaffirmed (adjusted revenue
+  ~$280B, adjusted EPS ≥ $30.45, Evernorth ≥ $6.90B, Cigna Healthcare
+  ≥ $4.55B, MCR 83.7–84.7%). Long-term targets: 10–14% adjusted EPS CAGR,
+  ~$50B cumulative operating cash flow 2026–2030, and a $3B multi-year
+  modernization program that management says will "self-fund". CFO Dennison
+  (transcript): $45/share by 2030 is "a floor, not target". CEO Evanko: "we
+  continue to expect at least 10% EPS growth in 2027". Segment LT guides:
+  Evernorth 5–8%, S&CS 8–12%, PBS flat to 4% through 2030, Cigna Healthcare
+  6–9%. The prior thesis framed this as asymmetric: a reaffirmation is priced,
+  a cut is not. The outcome was the reaffirmation. The stock fell from $275.26
+  (9/29) to $271.83 on the day (intraday low $263.36) and $267.96 the next
+  day, then recovered to $282.44. Over 9/4 → 10/9, CI is flat (−0.03%)
+  against SPY +1.08%. That is one overlapping episode, effective n = 1, and
+  not evidence either way.
+- **The $50B cash-flow plan, decomposed, is the thread that moved the
+  answer.** $50B / 5 = $10.0B/yr OCF on average, against TTM OCF of $10.277B,
+  so the plan is roughly flat on cash generation. The plan reinvests 20–25%,
+  or $2.0–2.5B/yr, against TTM capex of $1.164B. Whether "reinvestment"
+  includes tuck-in M&A is not disclosed (§6), but the plan's own text puts
+  M&A in the separate 55–60% bucket, so it likely does not. At face value the
+  plan implies consolidated FCF of $7.5–8.0B/yr, and owner FCF of ~$6.4–6.9B
+  after SBC ($0.29B) and the Q2 NCI run-rate ($0.86B). §4 adds plan rows on
+  that basis and moves the centre down from the prior run's TTM-derived owner
+  row.
+- **Arithmetic of the algorithm.** At the Investor Day earnings weights, the
+  segment guides compound to ~5.4–9.0% operating-earnings growth (S&CS 8–12%
+  × 0.37, PBS 0–4% × 0.23, Cigna Healthcare 6–9% × 0.40). The 10–14% EPS
+  algorithm therefore needs ~4–5 points from buybacks and the $3B savings
+  program. $27.5–30B to buybacks/debt/M&A over five years against a ~$75B
+  market cap reaches that only if most of it goes to buybacks. At 70% of the
+  LTI, adjusted EPS (DEF 14A, 2026-03-12) pays management for exactly that
+  route. The algorithm is reachable at its bottom without heroics. It is not
+  free.
+- **The CAA effective date reads differently in the transcript summary.** The
+  transcript excerpt as summarized has Kautzner saying CAA "will go into
+  effect in August of 2026". The prior thesis read the FY2025 10-K as 100%
+  rebate remittance to ERISA sponsors from August 2028, Part D delinking
+  from January 2028, and any-willing-pharmacy from January 2029. The
+  likeliest reconciliation is that some provisions (reporting/transparency)
+  start in August 2026 and the remittance in 2028. This run did not settle
+  it verbatim. It is not load-bearing because the FY26 guide already
+  absorbs whatever started in August 2026 (§6).
+- **Prior-thesis falsifier sweep (2026-09-06 → 2026-10-09).** Owner FCF below
+  $6.0B: NOT TRIGGERED (no print). Pharmacy lives: NOT TRIGGERED (no new
+  datapoint). Federal action beyond CAA 2026: NOT TRIGGERED (no disclosure
+  found). Acquisition above $10B: NOT TRIGGERED (outlook excludes
+  combinations). MCR above 84.7%: NOT TRIGGERED (band reaffirmed 9/30).
+  Second year of double-digit PBS decline in 2027: NOT TRIGGERED, but GRAZED
+  in framing. The 0–4% PBS guide is "through 2030", and Fischbeck's question
+  whether 2027 is the margin "bottom" got no number. NCI at $215M+/quarter:
+  NOT TRIGGERED (no print). Investor Day cut to the 10–14% algorithm: NOT
+  TRIGGERED, algorithm reaffirmed. Anchor-client loss: NOT TRIGGERED.
+- **Ownership filings since the prior run.** EDGAR shows a Form 4 filed
+  2026-09-08 (reporting person and transaction code not pulled, §6). The 8-K of 2026-10-09 (Item 5.02) is a
+  director retirement with no disagreement. No Form 144 since 09-03. Nothing
+  reads as distribution.
+- **The rate move — a valuation input, not a condition.** DGS10 rose from
+  4.75% (Damodaran's 2026-09-01 figure used in the prior run) to **5.22%**
+  (`fred.db`, 2026-10-08). Damodaran's 10-01 update uses 5.29% with an implied
+  ERP of 4.20%. The hurdle rises 8.06% → 8.58%. CI did not reprice for it:
+  the spread compressed by exactly the hurdle move.
+- **Q3 date is settled.** Robinhood `get_earnings_results` now carries
+  2026-11-05 AM with `verified: true`, and stockanalysis says "confirmed".
+  Consensus Q3 adjusted EPS is $7.50 (Q3'25 actual $7.83). The beat pattern is
+  six straight beats of $0.05–0.39 on adjusted EPS, with a ~75% base rate per
+  quarter, so it is statistically empty (see the kill record).
+- **Options read (mandatory):** path 2 only (Robinhood stopgap). CI is not in
+  the 24-symbol CBOE catalog and `data/options.db` holds no CI history. Table
+  and liquidity verdict in §4.
+- **Dead ends:** the director-retirement 8-K, which looked like a governance
+  thread and is routine. The $3B program, which looked like a hidden
+  capex/charge commitment: the 8-K calls it "modernization and productivity
+  initiatives" that "self-fund", and the CFO frames it as "cumulative cost
+  savings by 2030". It is a savings target, not a spend, so no separate
+  base-FCF haircut, with the reinvestment line above covering any associated
+  spend. The Item 1A terminal-risk sweep was not re-run: no 10-K has been filed since
+  2026-02-26. The transcript corpus was not searched; no thread turns on
+  multi-year phrasing. The leverage gate is not triggered: net debt $24.62B
+  is 24.8% of EV, book equity is $42.91B, and there is no going-concern
+  language.
+
+## 4. Valuation
+
+**Inputs.** Market cap $74,629,440,461 (stockanalysis `marketcap` hover;
+264,240,486 shares × $282.44 = $74.632B, used in the solver). TTM levered FCF
+$9,113M = OCF $10,277M + capex −$1,164M, paired with **market cap**,
+`--net-debt 0` by the pairing rule (post-interest flow; EV $99.25B would
+re-count the debt). Haircuts as in the prior run. SBC is **$291M** (FY2025
+XBRL). The minority claim is **~$860M/yr** at the Q2'26 run-rate. Owner base
+TTM: **$7,962M**. Plan-implied owner base: **$6.4–6.9B/yr average** (§3). Base
+earnings for the reinvestment check are **cash earnings ~$7,676M** (net income
+to common $6,416M plus after-tax acquired-intangible amortization), carried
+from the prior run, with no new print since.
+
+Precision note: Nov-6 ATM IV 36.55% (< 50%), so decimals are quoted.
+
+**Hurdle.** rf 5.22% (DGS10, `fred.db`, 2026-10-08) + beta 0.8 × ERP 4.20%
+(Damodaran implied ERP, 2026-10-01) = **8.58%**. Regression beta 0.298 (5Y),
+floored into the 0.8–1.2 band (raw beta would give a 6.47% hurdle). Mature-
+company absolute anchor rf + 4.5% = **9.72%**. **Terminal-growth ceiling:**
+10-year breakeven T10YIE **2.33%** (`fred.db`, 2026-10-09); every row sits at
+or below it.
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| TTM as reported | $9.113B | 4% | 2.00% | 15.46% | +688bp |
+| owner FCF (TTM − SBC − NCI) | $7.962B | 4% | 2.00% | 13.78% | +520bp |
+| 5-year-mean base, haircut | $7.456B | 4% | 2.00% | 13.04% | +446bp |
+| **management plan** (owner, plan avg) | $6.600B | 5% | 2.33% | **12.41%** | +383bp |
+| **management plan, strict** (lower start) | $6.000B | 5% | 2.33% | **11.51%** | +293bp |
+| conservative — no plan credit | $6.600B | 2% | 1.00% | 10.31% | +173bp |
+| bear — owner FCF declines | $6.600B | −3% | 0.00% | 7.76% | −82bp |
+| harsh bear — rebate pool to zero | $5.000B | 0% | 0.00% | 6.70% | −188bp |
+
+The centre of the honest range is now the two plan rows, **11.5–12.4%**. The
+TTM-derived 13.0–13.8% rows carry less weight than in the prior run because
+management's own reinvestment guide does not support that base. The
+conservative row against the stricter 9.72% anchor is +59bp. The bear rows
+against it are −196bp and −302bp.
+
+**Integrity checks.**
+
+- *Reinvestment warning.* The TTM row prints `growth without reinvestment`
+  (FCF $9.113B ≥ cash earnings $7.676B). That is answered by not using it as
+  the centre. The owner and five-year rows sit within ±4% of cash earnings,
+  and their 2.0% terminal is under the 2.33% breakeven: price-level repricing
+  of existing assets needs no reinvestment.
+- *Terminal ROE two-sided.* Strict plan row **10.67%**, 209bp above the
+  hurdle: inside the five-point band. The plan row reads **16.62%**, more
+  than five points above, because its FCF base leaves only 14% reinvested
+  against 2.33% growth. Its terminal growth is the breakeven (no real growth
+  claimed), so the ROE line overstates what the row asks for. The strict row
+  is the one quoted as the floor of the centre anyway. Conservative row
+  **7.13%**, below the hurdle: it assumes mild perpetual value destruction,
+  which is intentional. Default read: excess returns fade (only ~29% of firms
+  earn above their cost of capital).
+- *Base-year cash tax.* Effective rate 19.17% vs ~23% marginal. That costs
+  ~$330M of base and ~48bp (prior run's normalized row). The plan rows already
+  start below that adjusted base.
+- *Serial acquirer.* FY2025 cash acquisitions were $597M, ~6.5% of FCF. The
+  plan's 55–60% bucket allows M&A. The rows grow the organic base, and any
+  large deal is a falsifier, not a modelled input.
+- *Asset-light / commitments.* FY2025 10-K purchase obligations $6.3B
+  ($2.1B due 2026) against ~$9B FCF. The plan's 20–25% reinvestment is the
+  forward capex signal, and the plan rows embed it.
+- *Terminal growth vs Item 1A.* The dominant structural risk is still the
+  CAA 2026 rewrite of PBM compensation (2028–2029 provisions per the 10-K).
+  PBS is guided at 0–4% through 2030. The plan rows' 2.33% terminal is
+  nominal inflation only, and the conservative/bear rows cut to 1% and 0%
+  for the case where Signature fails to hold earnings.
+- *Market share.* The 4%/yr path compounds TTM revenue of $282.4B to ~$343.6B
+  by 2031. Against CMS's NHE path (~$7.7T in 2031), share falls from ~5.3% to
+  ~4.5%. The 5% FCF path is a cash claim on flat-to-modest revenue growth
+  (analyst 3Y revenue forecast 4.7%), not a share-gain claim.
+- *Distribution clamp.* The US median cost of capital is 7.79%, with the 80%
+  band at 5.26–9.88%. Every non-bear row lands above the band's top: the
+  market prices CI as riskier than nine in ten US firms, which is the whole
+  disagreement.
+- *Leverage gate.* Not triggered (24.8% net debt/EV, positive equity,
+  debt/EBITDA 2.50×, interest coverage 7.78×). The DCF frame governs §1.
+
+**Options-implied move (path 2 — Robinhood stopgap; path 1 unavailable, CI is
+not in the CBOE 24 and `data/options.db` has no history).** Expiry
+**2026-11-06, 28 DTE** from 2026-10-09 (Phoenix). It is the first expiry
+after the 2026-11-05 BMO print, so it brackets the Q3 report and nothing
+else scheduled. Strike **280** against spot 282.44 (0.86% below spot; call
+delta 0.567, slightly in the money, footnoted, not corrected). Call mark
+12.95 (IV 36.38%), put mark 9.75 (IV 36.71%), mean ATM IV 36.55%.
+
+| metric | value |
+|---|---|
+| spot | 282.44 |
+| expected absolute move (MEAN, not a ceiling) | 8.04% |
+| 1-σ move | 10.12% |
+| ATM IV | 36.55% |
+| RV60 | 25.34% |
+| RV20 | 24.19% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Both windows read YES, so the word **elevated** is permitted. But the 28-day
+expiry contains the Q3 print, the RV20 window contains none, and RV60 holds
+only the 7/30 Q2 print. This is the stopgap's structural weakness: the
+premium is a calendar item being priced, not a discovery. For scale, the
+prior run's 103-DTE December IV was 30.42%. Compressing one print into 28
+days lifts IV by ~6 points, as it should.
+
+**Liquidity gate: FAILED → UNRELIABLE.** Call spread $12.40/$13.50 = 8.5% of
+mark (passes); put spread $9.20/$10.30 = 11.3% (fails the 10% limit). Volume
+is 0 on both legs (under the 100 floor). OI is 502 on the call and 0 on the
+put. The median-OI comparison was not computed. The gate constants are
+uncalibrated, so the failure is informative and a pass would not have been.
+**Timing check: NOT APPLICABLE**: the thesis makes no dated move-size claim,
+so no `--required-move` was passed.
+
+## 5. Falsifiers
+
+For an owner (sell):
+
+- **Break —** Owner FCF tracks to an annualized run-rate below **$6.0B** on
+  the Q3 cash-flow statement (OCF − capex − SBC − NCI, not adjusted EPS). That
+  is below the strict plan row's base. With the plan's average this close
+  to the line, a miss on the plan's own cash guide ends the margin of safety.
+- **Break —** Federal action beyond CAA 2026 that reaches Accredo or forces
+  PBM divestiture of owned pharmacies.
+- **Break —** An acquisition above ~$10B, which would spend the buyback leg
+  the EPS algorithm needs.
+- **Break —** Pharmacy lives keep leaking through the Q2'27 print. The
+  working-capital float (−$8.571B) unwinds with volume.
+- **Shift —** MCR above the 84.7% top of the FY26 band, or a repeat of the
+  stop-loss high-cost-claimant pattern.
+- **Shift —** A 2027 PBS framing below the 0% floor of the 0–4% guide on the
+  Q3 call or the Q4 print (2027-02-04, unverified date). That falsifies
+  Signature's "earnings levels consistent with today" claim.
+- **Shift —** NCI income holding at $215M+/quarter in Q3 with no one-off
+  explanation. At ~$860M/yr it is over an eighth of the plan-implied owner
+  base.
+- **Shift —** The capital plan tilts away from buybacks (e.g. FY27 buyback
+  under ~$3B with no deal to explain it). The 10–14% algorithm needs ~4–5
+  points from share count.
+
+**Reopen trigger:** 2026-11-05: ci-q3-owner-fcf-vs-plan-nci-run-rate-pbs-2027-floor
+
+## 6. UNKNOWNs
+
+1. **UNKNOWN — Federal legislative intent beyond CAA 2026.** No filing can
+   carry it. Condition 4 rests on it. It does not kill the thesis, but it
+   cannot be attacked, and it is the reason for UNPROVEN.
+2. **PENDING 2026-11-05 — Q3 owner FCF run-rate and Q3 NCI income.**
+   Conditions 1 and 5. The Q3 10-Q/8-K settles both.
+3. **NOT OBTAINED (attached, not load-bearing) — who the minority holders
+   are.** The FY2025 10-K noncontrolling-interest note would name the
+   consolidated subsidiaries, and this run did not fetch it (nor did the
+   prior). The size is bounded and §4 subtracts it; identity bears on whether
+   the doubling persists, which the Q3 print measures directly. Because it
+   does not decide a load-bearing tag, it is not in `not_obtained=`.
+4. **UNKNOWN — what "reinvestment" in the $50B plan contains.** It is
+   capex-like or tuck-in spend; the 9/30 8-K does not split it. If it
+   includes tuck-in M&A, plan FCF is higher than §4's plan rows and they
+   understate the return. The conservative reading is used.
+5. **NOT OBTAINED (not load-bearing) — the verbatim CAA effective-date
+   passage** in the Investor Day transcript (§3). The 10-K's 2028/2029
+   provision dates stand. The FY26 guide covers anything that started
+   August 2026.
+6. **UNKNOWN — Signature margins at scale.** "Earnings levels consistent with
+   today" is a management claim. External evidence starts with the 2027
+   insured-book conversions and ≥50% member enrolment by end-2028. The
+   conservative/bear rows carry the doubt.
+7. **NOT OBTAINED (not load-bearing) — the 2026-09-08 Form 4's reporting
+   person and transaction code** (EDGAR accession 0001641142-26-000003). No
+   Form 144 accompanied it. Recorded as a coverage gap.
+8. **The held position's cost basis.** `get_equity_tax_lots` and
+   `portfolio.db` are not available to this slot. The call is at today's
+   price regardless.
+9. **eviCore's review outcome** is option value, not a condition. Not
+   mentioned in the Investor Day materials this run read.
+
+## 7. Sources
+
+- **Primary:** 8-K filed 2026-09-30 (items 7.01/9.01), Ex-99.1 Investor Day
+  release (FY26 reaffirmation, 10–14% LT EPS CAGR, ~$50B cumulative OCF
+  2026–2030, $3B modernization program, outlook excluding business
+  combinations). 8-K filed 2026-10-09, Item 5.02 (Zarcone retirement,
+  effective 2026-12-31). EDGAR filing index (Form 4 2026-09-08; Form 4 and
+  Form 144 2026-09-03). Carried from the prior run and unchanged: FY2025 10-K
+  (CAA 2026 provisions, purchase obligations), DEF 14A 2026-03-12 (SPS 70%
+  adjusted EPS / 30% rTSR), SEC XBRL NCI/SBC/amortization concepts, Q2'26
+  8-K Ex-99.1. Primary, transcribed (via stockanalysis):
+  Investor Day transcript 2026-09-30 (Evanko, Dennison, Kautzner quotes; Q&A
+  from Fischbeck, Lake, Gill, Ha, Rhyee, Cassorla), read through a
+  summarizing fetch, so quotes are as returned, not checked against the
+  full text.
+- **stockanalysis.com (vetted exception):** `/stocks/ci/statistics/` (market
+  cap, EV, FCF, OCF, capex, debt, cash, working capital, ratios, beta 0.298,
+  earnings date "confirmed" 2026-11-05 BMO, analyst 3Y forecasts),
+  `/stocks/ci/` (news feed through 2026-10-09),
+  `/stocks/ci/transcripts/749380-investor-day-2026/`.
+- **Broker/market microstructure:** Robinhood MCP, admissible because no
+  integrated official source covers these fields: `get_equity_quotes`
+  (CI $282.44, SPY $778.53, 2026-10-09), `get_equity_historicals` (daily
+  bars 2026-06-25 → 10-08 for RV and the SPY comparison),
+  `get_option_chains` / `get_option_instruments` / `get_option_quotes`
+  (2026-11-06 ladder, 280/285 marks, IV, OI, volume), `get_earnings_results`
+  (eight quarters of adjusted-EPS estimate vs actual; Q3 2026-11-05 AM
+  `verified: true`, estimate $7.50).
+- **Reference data:** Damodaran NYU Stern: implied ERP 4.20% and T-bond
+  5.29% as of **2026-10-01**; US median cost of capital 7.79%, 80% band
+  5.26–9.88% (2026 update); ~29% excess-return base rate; the 0.8–1.2 beta
+  band; rf+4.5% mature anchor. CMS NHE projections for the share sentence.
+- **Point-in-time repo DBs (read-only):** `fred.db`: DGS10 5.22%
+  (2026-10-08), T10YIE 2.33% (2026-10-09). `stocks.db` `v_latest`: priceDate
+  2026-10-08, $281.03, beta 0.298, insiders 0.377%, institutions 92.6%,
+  shares 264.24M; `shareBasedComp`/`sbcByRevenue` NULL, so SBC is from XBRL.
+  `composite.db` `ticker_scores`: score 0, coverage 0.0, `in_portfolio = 1`.
+  `earnings.db` not used for the date (the view keys on `ticker`, and the
+  confirmed date came from two live sources). `portfolio.db`/`scorer.db` are
+  not readable from this slot.
+- **Low-confidence:** GuruFocus and Morningstar headlines on the Investor Day
+  ("profit growth acceleration after weak 2026") and the Reuters headline on
+  the $3B initiative. Used only to locate primary documents.
+
+## Kill-thesis record
+
+**UNPROVEN** — conditions=6 (2 probable, 4 plausible), refuted=0, unknown=1,
+pending=2, not_obtained=0.
+
+Per-condition adjudication:
+
+1. **PENDING 2026-11-05.** Attacked with management's own plan, and the
+   self-attack nearly lands. $50B OCF averages $10.0B/yr, flat to TTM. 20–25%
+   reinvestment doubles capex. The plan's own owner-FCF average of
+   $6.4–6.9B sits only 7–15% over the $6.0B break. FY2021 consolidated FCF
+   ($6,037M) less today's haircuts would already be below the line. Not
+   refuted: guidance, the five-year history (mean $8.2B consolidated) and the
+   reaffirmed FY26 stand for it. The Q3 cash-flow statement is the dated
+   check.
+2. **SURVIVED (probable).** Q2 MCR 84.5% inside 83.7–84.7%, reaffirmed
+   2026-09-30. The six-beat streak adds nothing: at a ~75% per-quarter beat
+   rate, six in a row happens ~18% of the time, and the beats are on adjusted
+   EPS, which pays 70% of the LTI.
+3. **SURVIVED (probable), thin.** The internal-consistency attack: segment
+   guides weight to only ~5.4–9.0% operating growth, so the 10–14% EPS
+   algorithm needs ~4–5 points of buyback and savings. The condition (S&CS
+   plus Cigna Healthcare carrying earnings while PBS runs 0–4%) is consistent
+   with that. The EPS algorithm itself is not a condition here, and the
+   valuation rows do not price the algorithm. Q2's +22% S&CS was flagged as
+   partly biosimilar timing.
+4. **UNKNOWN.** No route exists: legislative intent is not disclosed
+   anywhere. Fischbeck's "another shoe to drop" question on 9/30 is the
+   market saying the same. Not credited.
+5. **PENDING 2026-11-05.** H1'26 NCI income $422M vs $186M, and ~70% left
+   as cash (prior run's balance roll-forward). The Q3 10-Q prints the next
+   quarter. The holders' identity sits in the FY2025 10-K NCI note (not
+   fetched; §6 item 3), which does not decide the tag.
+6. **SURVIVED (plausible).** The 9/30 framework is explicit (55–60%
+   buybacks/debt/M&A, ~20% dividends, outlook excluding combinations). The
+   incentive cuts both ways: 70% adjusted EPS per share rewards buybacks,
+   which this condition wants, and an accretive large deal could also pass
+   that test. No deal is visible.
+
+Checks that ran. **Base rate:** ~29% of firms earn above their cost of
+capital, so no row assumes persistent excess returns. No measured base rate
+exists for "intermediary whose statutory profit pool is legislated away
+keeps its earnings", and none was invented. **Short case:** a 2.3%-net-margin
+intermediary guiding PBS to 0–4% for five years. Its own plan holds operating
+cash flow flat while reinvestment doubles. It meets an EPS algorithm whose
+bottom ($45 in 2030) is reachable mainly by buying back stock with debt
+capacity. At 9.3× FY26 adjusted EPS that is a fair price for a flat cash
+annuity with a political tail, not a bargain. The market dropped it to
+$263.36 intraday on the Investor Day itself. **Management incentives:** 70%
+adjusted EPS per share / 30% rTSR (DEF 14A). The thesis does not assume
+management acts against it. **Disconfirming search:** the Investor Day was
+searched for a cut and found none, but the plan's cash numbers were the
+disconfirming find: they lower the owner base. The director-retirement 8-K
+and the 09-08 Form 4 were checked; no red flags. **Moat as mechanism:**
+scale and Accredo's contracts protect volume; nothing protects the toll.
+**Statistical checks:** CI vs SPY since the prior thesis (−0.03% vs +1.08%)
+is one overlapping episode, n = 1. No repo signal underlies the thesis
+(composite coverage 0.0). **Options timing check: N/A**: no dated
+move-size claim; path 2 only, liquidity gate failed (put spread 11.3%, zero
+volume). **Already-held bias:** real. Mitigated by replacing the prior centre
+with the plan-implied base, which cut the quoted centre by ~150bp.
+
+**Closest attack:** management's own $50B / 20–25% reinvestment plan, which
+puts average owner FCF only 7–15% above the break line and moves the centre
+of the range from 13.0–13.8% to 11.5–12.4%. It does not reach the 8.58%
+hurdle.
+
+**Flip evidence — toward FLAWED:** Q3 owner FCF annualizing below $6.0B, MCR
+above 84.7%, NCI at $215M+/quarter unexplained, or a 2027 PBS framing below
+0%. **Toward SOUND:** no route closes condition 4. SOUND would need a
+reframing in which federal policy risk is a §4 scenario input rather than a
+condition, plus a Q3 print that clears conditions 1 and 5.
+
+**p(beat SPY, 63 td): 0.53.** One scheduled binary (the 11/5 print) inside
+the horizon. The options market prices a 10.12% one-sigma move through it.
+There is a genuine valuation cushion of ~290bp on the strict plan row, a
+negative near-term PBS direction, and a hurdle that just rose. Slight edge,
+not conviction.
