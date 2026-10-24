@@ -1,0 +1,241 @@
+# OGC — OceanaGold Corporation (NYSE/TSX) — 2026-07-27
+
+Price $24.14 · market cap $5,378,337,220 · next earnings 2026-08-05 AMC
+
+Entry path: not recorded (pre-template run); researched in the same-day gold
+cohort (AEM, GFI).
+
+## 1. Verdict and thesis
+
+**PASS at $24.14.** kill-thesis: **UNPROVEN** — conditions=5, refuted=0,
+unknown=1.
+
+OceanaGold is a net-cash, four-mine mid-tier gold producer trading at ~7x
+trailing earnings and a ~13.5% trailing FCF yield after a 45% drawdown
+caused by gold's correction ($5,595 peak in late January 2026 → ~$4,000 by
+July), not by any operational failure. The price implies roughly a 10%/yr
+return if spot gold persists and ~4%/yr at 2025's average gold (~$3,300) —
+the entire excess return is an uncredited forecast that gold stays near
+all-time highs, which is why this logs PASS despite clean execution,
+disciplined capital returns, and a fortress balance sheet.
+
+**Closest attack:** AISC creep — Q1 AISC $2,094/oz vs the FY guide, the
+closest thing to a company-specific crack; Aug 5 tests it (see §3).
+
+Load-bearing conditions: five counted; not individually enumerated in the
+original run (0 refuted, 1 unknown; condition 2 — guidance credibility — is
+referenced in §5). Condition tiers not recorded in original run.
+
+## 2. Business
+
+**Created:** Gold (and ~14kt/yr copper) from four operating mines: Haile
+(South Carolina, USA — largest, transitioning to underground by 2029, guided
+>200koz/yr through 2031), Didipio (Philippines — lowest cost, AISC guide
+$975–1,100/oz, 80% owned via PSE-listed OGPI), Macraes (New Zealand —
+highest cost open pit, mine life extended to 2032), and Waihi (New Zealand —
+small today; the WKP/Wharekirauponga underground is the growth asset, first
+ore targeted 2032). 2026 guidance: 520–590koz gold + 13–15kt copper at
+consolidated AISC $1,750–1,900/oz.
+
+**Captured:** Commodity price minus cost. Q1 2026: record revenue $714.5M at
+a record realized $4,894/oz; net profit $228.4M (EPS $1.01); FCF $255.2M.
+TTM: revenue $2,247.8M, operating income $1,055.0M (46.9% margin), net
+income $757.4M, FCF $729.0M. Cash $620.1M, debt $54.9M (leases) — net cash
+$565.2M, revolver undrawn. Didipio's FTAA gives the Philippine government
+60% of net revenue (booked as income tax), so Didipio's headline low AISC
+overstates its owner economics.
+
+**Protected:** No moat — no miner has one. The defenses are asset-level:
+reserve grade, two-thirds of production from tier-1 jurisdictions (US/NZ),
+net cash, and a renewed FTAA running to June 2044 with the state paid 60% to
+keep Didipio open.
+
+**Operating leverage (Phase 0): strongly positive** — revenue 3x 2021→TTM,
+net income −$3.7M → $757.4M — but it is leverage to the gold price, not to a
+business mechanism.
+
+## 3. Threads pulled
+
+- **Why is it down 45% from the March 2 high ($43.33)?** Sector, not
+  company: gold peaked at $5,595 (Jan 29) and fell ~28% to ~$4,000 by late
+  June. OGC is a 1.5-beta gold proxy. News sweep May–July found no company
+  damage: buyback renewed Jul 22 (up to 22M shares, ~10% of shares out),
+  Macraes 6Moz milestone, Q2 results notice. **Dead end (good news).**
+- **NYSE listing timing:** 40FR12B filed 2026-03-27, listed April 7, 2026 —
+  essentially at the top. Price history before April 7 on US feeds is
+  synthetic. TSX remains the primary listing.
+- **Didipio political risk:** not hypothetical — the 2019–2021 provincial
+  blockade suspended operations ~2 years during FTAA renewal. Renewal (July
+  2021, 25 years from June 2019 → June 2044) required OGPI's PSE listing
+  (20% minority) and social funds (1% + 0.5% of gross revenue). Bounded:
+  Didipio ≈ 20% of production, ~25–30% of FCF.
+- **Minority interest haircut:** consolidated FCF includes 100% of Didipio;
+  20% belongs to OGPI minorities. Cash claim ≈ $30M/yr ($7.6M distributions
+  in Q1, $7.0M earnings share; NCI book $103.5M). Owner FCF ≈ $700M TTM,
+  not $729M.
+- **AISC creep:** Q1 AISC $2,094/oz vs FY guide $1,750–1,900 — management
+  says timing (waste stripping pulled forward at Snake Pit; H2-weighted
+  production) and concedes "probably in the top half" of the range. Q1
+  Haile open-pit grade 1.60 g/t vs 2.56 a year prior. **The closest thing
+  to a company-specific crack; Aug 5 tests it.**
+- **Commitments/"asset-light" check:** capital commitments only $85.5M
+  within one year — no take-or-pay monsters. But planned capital investment
+  is $645M for 2026 ($170M sustaining, $135M pre-strip, $280M growth — of
+  which Waihi/WKP $160M, Haile $90M — $60M exploration). Dilution overhang
+  small: 5.4M rights/units on 223.76M shares (~2.4%); share count is
+  *falling* (buybacks, ~4.8% yield).
+- **Iran conflict / diesel:** ~6% of AISC is diesel; ~80% of Haile+Macraes
+  consumption hedged at Brent-equivalent $65/bbl through 2026; $100/bbl
+  sustained would add only ~$25/oz.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; OGC not in the
+  CBOE catalog; path 1 unavailable). See §4's table.
+- **Dead ends:** data-quality — stockanalysis's
+  `/financials/income-statement/` is corrupted for OGC (cost-of-revenue
+  sign flips mid-series → gross profit above revenue, 171% "operating
+  margin"); `/statistics/` figures reconcile with the MD&A and were used
+  instead. `/transcripts/` is unfed for OGC ({info} only). Robinhood has no
+  EPS estimate/actual history (US listing too new) — the 8-quarter
+  beat/miss pattern is unobtainable. sec_fundamentals.db has no OGC
+  (foreign private issuer, 40-F/6-K filer); composite.db has never flagged
+  it (not in universe).
+
+## 4. Valuation
+
+Reverse DCF, market cap $5,378,337,220 (statistics `hover`, 2026-07-27),
+levered FCF paired with market cap, net debt 0 (net cash $565.2M left as
+cushion, not credited). Owner FCF = consolidated minus ~$30M/yr Didipio NCI
+cash claim (distributions, not the NCI income line). ATM IV ~61% ⇒ implied
+returns quoted to whole percents only. No Damodaran hurdle was computed in
+the original run.
+
+| Scenario | Owner FCF base | Path | Implied return |
+|---|---|---|---|
+| Gold holds TTM realized (~$4,300–4,900) | $700M | flat 5y, 0% terminal | **~13%/yr** |
+| Same, −2% terminal (depletion) | $700M | flat 5y, −2% terminal | ~12%/yr |
+| Spot gold $4,000 | ~$515M | flat 5y, 0% terminal | **~10%/yr** |
+| 2025-average gold ~$3,300 | ~$240M | flat 5y, 0% terminal | ~4%/yr |
+
+Forward FCF construction at $4,000: 555koz × ($4,000 − $1,825 AISC midpoint)
+≈ $1.21B cash margin, less ~28–29% tax, less $280M growth capex + ~$45M
+growth exploration, less NCI ≈ $515M. At the $2,200 reserve-deck gold price,
+FCF after growth capex is roughly zero-to-negative — the company would cut
+growth spend. 0% terminal growth embeds perpetual reserve replacement at
+zero incremental cost; generous, partially defended by reserves *growing*
+in 2025 (5.83Moz P&P at a $2,200 deck, M&I 8.63Moz + 2.5Moz inferred, ~10.5y
+reserve life) and mine-life extensions at every asset. Dominant disclosed
+terminal risk (FY2024 AIF risk factors + reserve statement): reserve
+depletion and the Didipio FTAA term (June 2044, past the 2037 Didipio
+plan). Terminal rate of 0% survives only while reserve replacement keeps
+pace; −2% variant shown for the alternative.
+
+**Options-implied move (path 2 — Robinhood stopgap; OGC not in the CBOE
+catalog; path 1 unavailable):** Aug 21 expiry (25 DTE, brackets Aug 5 AMC
+earnings), nearest-ATM K=$25 vs spot $24.14 (sparse ladder — footnote:
+strike sits 3.6% above spot):
+
+| metric | value |
+|---|---|
+| ATM IV | 60.67% (mean of call 57.6% / put 63.7%) |
+| expected absolute move (MEAN, not a ceiling) | 13.05% |
+| 1-sigma move | 15.88% |
+| RV60 | 56.34% |
+| RV20 | 45.37% |
+| IV > RV60 / RV20? | YES / YES |
+
+"Elevated," but the window spans a scheduled earnings print, and the chain
+**fails the liquidity gate outright** (OI 3 and 8, volume ≤1, spreads $0.60
+and $2.90 vs $0.20 gates) → UNRELIABLE, context only. No timing claim in the
+thesis, so no 2-sigma refutation was run.
+
+## 5. Falsifiers
+
+Sell / stay-away evidence:
+
+1. Gold sustained below ~$3,300 — the implied return falls to ~4% and the
+   growth program becomes the balance sheet's problem.
+2. FY2026 AISC printing above $1,900/oz (Q2 report Aug 5 is the first
+   test) — guidance credibility is condition 2.
+3. Any Didipio stoppage — blockade, ECC challenge, adverse Philippine
+   political turn.
+4. Buyback suspension or a large cash M&A move at cycle prices — the
+   discipline that distinguishes OGC from the sector base rate would be
+   gone.
+5. 2026 reserve statement showing net depletion at a flat-or-higher gold
+   deck.
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Future gold price** — the thesis engine; unknowable from any
+   disclosure. Its unknowability is why the verdict is UNPROVEN and the
+   call is PASS.
+2. **Insider transactions** — FPI: no Forms 3/4 on EDGAR; SEDI not
+   integrated into this repo. Would come from SEDI filings. Absence does
+   not kill the thesis but leaves management conviction unobserved.
+3. **Management compensation structure** — information circular not read;
+   incentive alignment inferred only from behavior (buyback, reverse split,
+   dividend +167%).
+4. **Analyst estimate history** — no US estimate/actual record exists
+   (listed April 2026); guidance-management pattern unobservable.
+5. **FY2025 AIF risk-factor deltas** — FY2024 AIF read (in the 40-F); the
+   FY2025 AIF (filed 2026-03-31) not separately diffed. Structural set
+   unlikely to have changed.
+6. **Q2 realized price / results** — reports in 9 days (Aug 5 AMC). This
+   run deliberately precedes the print; the numbers here will be stale
+   within two weeks.
+
+## 7. Sources
+
+- **Primary:** (SEC EDGAR, CIK 0001487326)
+  - Q1 2026 MD&A, 6-K filed 2026-05-07 (acc. 0001279569-26-000392,
+    ex99.2) — production, AISC, guidance table, capex, commitments, NCI,
+    buyback, FCF.
+  - 40-F registration (2026-03-27, acc. 0001628280-26-021651, exhibit
+    99.1 = FY2024 AIF) — FTAA terms/history, 60/40 net-revenue split,
+    blockade history, OGPI listing requirement.
+  - EDGAR submissions index — filing cadence, NYSE registration date.
+  - Company releases (via investors.oceanagold.com / PRNewswire): FY2025
+    reserves/resources (2026-02-18): 5.83Moz P&P at $2,200/oz, M&I 8.63Moz,
+    inferred 2.5Moz; AIF + technical reports notice (2026-03-27): Macraes
+    to 2032, Didipio to 2037; buyback renewal (2026-07-22): up to 22M
+    shares.
+- **stockanalysis.com (vetted exception):** `/stocks/OGC/statistics/` exact
+  market cap, EV, FCF, cash/debt, short interest, analyst consensus (7
+  analysts, Strong Buy, PT $45.73); `/stocks/OGC/` overview + news;
+  income-statement route used for the revenue/NI/EPS/share-count history
+  **with its sign-flip corruption documented and its corrupted rows
+  discarded**.
+- **Broker/market microstructure:** (Robinhood MCP — admissible: no
+  integrated official source covers these fields for OGC) live quote,
+  option chain + quotes (Aug 21 K=25 pair), daily bars since NYSE debut (RV
+  inputs), earnings date confirmation (Aug 5 AMC).
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** `sec_fundamentals.db` (no OGC — foreign
+  private issuer, 40-F/6-K filer); `composite.db` (never flagged, not in
+  universe).
+- **Low-confidence:** Investing.com Q1 call transcript summary ($432M
+  return target, WKP portal progress, diesel hedge at Brent $65, "top half"
+  AISC admission); GuruFocus/TipRanks headlines (news sweep only); web
+  search results on gold price path (peak $5,595 Jan 29; ~$4,038 Jul 13;
+  GS/HSBC/JPM 2026 forecasts $4,500–4,900).
+
+## Kill-thesis record
+
+**Kill-thesis verdict: UNPROVEN** — 5 load-bearing conditions, 0 refuted,
+1 unknown.
+
+Per-condition adjudication: not recorded in original run (the five
+conditions were not individually enumerated; condition 2 — guidance
+credibility — is referenced in §5).
+
+Standing/statistical/options-timing checks: not recorded in original run,
+beyond §4's failed liquidity gate and the note that no timing claim exists
+in the thesis.
+
+**Closest attack:** AISC creep — Q1 AISC $2,094/oz vs the FY guide, with Q1
+Haile open-pit grade 1.60 g/t vs 2.56 a year prior; the closest thing to a
+company-specific crack, tested at the Aug 5 print.
+
+**Flip evidence:** not recorded as a labelled pair in the original run; §5
+carries the sell/stay-away evidence.

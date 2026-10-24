@@ -1,0 +1,368 @@
+# PARR — Par Pacific Holdings, Inc. — 2026-08-08
+
+Price $66.29 (Robinhood, Fri 8/7 close — market closed on run date) · market
+cap $3,321,104,274 · next earnings 2026-11-03 AMC
+
+Entry path not recorded in original run.
+
+## 1. Verdict and thesis
+
+**PASS at $66.29.** kill-thesis: **SOUND** (as a pass) — conditions=5,
+refuted=0, unknown=1.
+
+Par Pacific is a well-run niche refiner that just printed a record quarter
+($462M GAAP net income in Q2 2026 alone) off a war-driven crack spread
+environment, and the price already embeds that mean reversion happens:
+a conservative reverse DCF implies roughly **9%** a year against an **8.16%**
+hurdle (+90–97bp), and the spread thins toward zero once the expiring NOL
+shelter is charged against mid-cycle cash flow. The upside case (current
+margins are structural, not cyclical — implied ~14%) rests on a
+*plausible*-tier condition this write-up refuses to make load-bearing.
+
+**Closest attack:** the structural-supply argument — see the Kill-thesis
+record.
+
+Load-bearing conditions: **5**, of which one is merely plausible and it is
+the one carrying the entire above-hurdle case. (The original run did not
+enumerate the conditions as a numbered list; per-condition adjudication is
+in the Kill-thesis record.)
+
+Not researched into an imminent print: Q2 reported 2026-08-04; next report
+2026-11-03 (AMC, Robinhood earnings calendar; `data/earnings.db` has no PARR
+row — universe gap, recorded in §6).
+
+## 2. Business
+
+**Created:** makes transportation fuels (gasoline, jet, diesel, marine
+fuel, asphalt) in four logistically isolated markets — Kapolei, Hawaii
+(94 Mbpd), Tacoma, Washington (41 Mbpd), Billings, Montana (63 Mbpd), and
+Newcastle, Wyoming (~18 Mbpd); 219 Mbpd total (10-K, Item 1). Customers in
+these markets get locally produced supply where the alternative is long-haul
+waterborne imports (Hawaii prices at Singapore import parity) or constrained
+inland logistics (Rockies/PNW). Retail (Hele in Hawaii, nomnom in WA/ID) and
+a 13M-bbl storage/logistics network integrate refinery to pump.
+
+**Captured:** three distinct mechanisms, not one. (1) Refining: local
+market index × capture. Each refinery has its own index (Hawaii Index =
+Singapore 3-1-2 crack less PHR landed crude differential — i.e., the pricing
+mechanism *is* import parity; Montana/Wyoming/Washington on regional indexes),
+with normalized capture guided at 100–110%. This is the volatile engine:
+segment adjusted EBITDA was $552M in Q2 2026 vs $69M in Q1 2026 (Q2 release).
+(2) Logistics: ratable fees — adjusted EBITDA ~$30M/quarter, stable across
+both quarters. (3) Retail: fuel + in-store margin — ~$15–23M/quarter adjusted
+EBITDA. Logistics + retail together are a ~$180M/yr relatively stable EBITDA
+floor under the refining cycle (Q1+Q2 2026 annualized). Plus 46% of Laramie
+Energy (natgas, ~$18M quarterly EBITDAX, equity method — small).
+
+**Protected:** geography, not technology. Hawaii and the PNW/Rockies are
+markets no one will build new refining capacity for (no US refinery of scale
+built since the 1970s; Hawaii/Washington permitting environments are hostile
+to it — 10-K risk factors detail the state decarbonization programs), and the
+competitor set is shrinking (West Coast capacity closures — management cites
+tight product inventories and reduced import availability on the Q2 call).
+The moat's mechanism is *entry cost plus import parity*: PARR earns the
+freight-and-logistics wedge between its niche markets and the marginal
+imported barrel. What it does **not** protect against: the commodity cycle
+itself (FY2024 operating income was $47.6M on $8.0B revenue; FY2023 was
+$680M on $8.2B — same assets), demand decline (state EV mandates, RFS), or
+Asian export policy (Hawaii's index is set in Singapore). The 10-K does not
+claim sole-refinery status in Hawaii and this write-up does not rely on it.
+
+**Operating leverage (Phase 0): neither positive nor negative — cyclical.**
+Revenue → operating income, fiscal years (stockanalysis
+`/financials/income-statement/`, cross-checked against SEC XBRL for Q2 2026):
+
+| FY | Revenue | Op income |
+|---|---|---|
+| 2021 | $4.71B | −$7.6M |
+| 2022 | $7.32B | $437.9M |
+| 2023 | $8.23B | $680.0M |
+| 2024 | $7.97B | $47.6M |
+| 2025 | $7.46B | $538.8M |
+| TTM | $8.62B | $1,157.6M |
+
+Operating income is a crack-spread derivative, not a function of revenue; the
+same asset base swings from ~zero to >$1B. This is the central analytical
+fact of the name.
+
+## 3. Threads pulled
+
+- **What made Q2 2026 (the $9.35 GAAP / $10.10 adjusted EPS quarter).**
+  Combined refining index averaged ~$33/bbl vs $12.40 for all of 2025
+  (exceeding Q2 2022, the Russia-invasion quarter); Singapore 3-1-2 averaged
+  ~$50/bbl. Drivers per the call: reduced Persian Gulf and Russian product
+  exports, the Middle East conflict (Strait of Hormuz disruption periods;
+  ANS differentials swung ~$25/bbl in three months), Asian refiners running
+  conservatively, protectionist trade policy. On top: system capture 125%
+  (112% normalized), including a +$76.5M Hawaii price-lag benefit
+  ($11.49/bbl) that mechanically *reverses* when prices rise, and a ~$35M
+  GAAP-only RIN mark-up gain. Verified against the 10-Q XBRL
+  (`data/sec_fundamentals.db`: revenue $2.969B, NI $462.1M, EPS $9.35 —
+  exact match). **Read: an extraordinary quarter with identified one-off
+  components, not a new run-rate.**
+- **Why the stock fell 16% on the record print (Aug 5) and −23% from the
+  Jul 31 high.** No adverse disclosure found: no 8-K beyond the release, no
+  analyst downgrades (TD Cowen trimmed $100→$95, still +43% above spot;
+  Goldman raised to $92 on Jul 23). The stock had run $50→$86 from mid-June
+  into the print. July's index ($31.34) is below Q2's average, Q3 absorbs
+  the Hawaii turnaround costed-imports drag (CFO: capture below the
+  100–110% band) plus $6–8M Montana coker OpEx. Conclusion: the market
+  bought the war-margin run-up and sold the peak-confirmation. Dead end as
+  a "hidden bad fact" hunt — nothing found; that itself is the reading.
+- **Are the margins structural or cyclical?** The bear evidence is inside
+  the company's own call: TPH's analyst notes Singapore product inventories
+  at *five-year highs* while the CEO's prepared remarks say global product
+  inventories "remain tight" — a direct tension, unresolved on the call.
+  Management's structural case: China has internalized refining capability
+  for a decade and shows limited waterborne product exports (they watch
+  vessel movements); protectionism persists. Not verifiable from an
+  official source in this run → the structural claim stays
+  **plausible-tier** and cannot carry the base case.
+- **Small refinery exemptions (SRE).** 2025 RFS obligation is booked at
+  100% with *zero* SRE relief assumed (10-K fair-value note), so any grant
+  is pure upside: full exemption ≈ $300M at current RIN prices, partial ≈
+  $150M (CFO, Q2 call; mainland RVO ~140M RINs). Compliance deadline
+  Sept 1, 2026; management hopes to hear before it but EPA deadlines "rarely
+  seem to be binding." That is 4.5–9.0% of market cap in dated optionality.
+- **The NOL is dying — future FCF is structurally lower at the same
+  margins.** ~$700M federal NOL at YE2025, substantial portion consumed in
+  2026; CFO guides to a "more typical federal tax position beginning in
+  2027." The 2022–2025 FCF history the mean-reversion case anchors on was
+  largely cash-tax-sheltered. At a ~23% effective rate (TTM: 23.3%),
+  mid-cycle FCF estimates must be haircut ~$40–60M vs history. This is the
+  single biggest quiet drag on the valuation (§4).
+- **Insider tape post-print.** One Form 144: Richard Creamer (EVP Refining
+  & Logistics), 14,139 shares ≈ $956K, filed 2026-08-06 — the day after
+  the print, but small against the July 7 Form 4 cluster which is all RSU
+  *grants* at $0 (routine annual vesting). Benign; recorded, not weighted.
+- **Balance sheet repair at the top of the cycle (the right behavior).**
+  Inaugural $500M senior unsecured notes; gross term debt cut >$130M in Q2;
+  ABL down $78M; net debt down >$220M; total liquidity ~$1.4B; net debt
+  $949M ≈ 0.87× TTM EBITDA (peak-EBITDA denominator — mind it). Buybacks
+  deliberately moderated ($48M YTD) in favor of debt paydown; diluted
+  share count 61.0M (FY2023) → 50.2M (TTM), −18%. Capital allocation is
+  explicitly framed per-share on the call.
+- **Hawaii renewables.** Renewable diesel ramped to ~3,000 bpd in June;
+  first commercial sales in Q2; JV with Alohi (10-K: established Oct 2025;
+  the NCI line: +$0.8M Q2, −$7.5M H1). Early, small, option value only —
+  not load-bearing.
+- **Litigation/environmental tail (unquantified haircuts).** Hawaii
+  foreign-trade-zone false-claims suit (unspecified damages; company
+  disputes); 2023 EPA letter under the Hawaii Consent Decree — resolution
+  "will likely involve financial penalties or impose capital expenditure
+  requirements that could be material" (Note 19); legacy Wyoming consent
+  decrees. None reserved as probable/estimable. Recorded as UNKNOWNs.
+- **Options read (mandatory):** path 2 — Robinhood stopgap (PARR not in the
+  CBOE catalog, no `options.db` history) — see §4's metric table. IV
+  *below* realized; nothing refuted.
+- **Dead ends:** no PARR row in `data/earnings.db` (universe gap; dates
+  taken from stockanalysis + Robinhood instead). Robinhood "actual" EPS
+  $10.10 vs GAAP $9.35 — definitional (adjusted vs GAAP), reconciled to
+  the release's Adjusted Net Income $499.2M; the estimate-vs-actual
+  pattern (8 quarters) shows analysts chronically lagging the commodity
+  both directions (Q3'25 actual $5.95 vs $1.97 est; Q4'25/Q1'26 small
+  misses) — no managed-guidance signature, just an unforecastable margin.
+
+## 4. Valuation
+
+**Inputs (live, 2026-08-08):** market cap $3,321,104,274; EV $4,270,130,274
+(statistics `hover`); TTM levered FCF $412.4M (`fcf` = NCFO $555.0M + capex
+−$142.6M; post-interest, so paired with market cap, `--net-debt` 0); TTM net
+income $847.1M (attributable); SBC ≈ $22.8M (screener `shareBasedComp`);
+spot $66.29 (Robinhood, Fri 8/7 close — market closed on run date). Hurdle:
+rf 4.74% + beta 0.8 × ERP 4.28% = **8.16%** (Damodaran anchors as-of
+Aug 1, 2026; 5Y beta 0.79 floored into the 0.8–1.2 stable band per the
+anchors rule).
+
+**The base-year problem dominates:** TTM FCF is peak-cycle (index $33 vs
+$12.40 2025 average) yet simultaneously depressed by $312M of Q2 working
+capital outflows management expects to substantially reverse. Both signs are
+noted; no netting is attempted. Three runs, `tools.valuation.reverse_dcf`:
+
+| scenario | base FCF | growth path | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| A: peak fades to mid-cycle | $412.4M | −20%, −20%, −10% | 2.0% | **9%** (9.13%) | +97bp |
+| B: mid-cycle flat | $230M | +2% ×3 | 2.0% | **9%** (9.06%) | +90bp |
+| C: current margins structural | $412.4M | 0% ×3 | 2.0% | **14%** (14.01%) | +585bp |
+
+Scenario B's $230M mid-cycle levered FCF is built as: FY2022–25 FCF averages
+($400M / $497M / −$52M / $296M ≈ $285M avg) haircut for (i) the post-2027
+cash-tax step-up (~$40–60M — the NOL thread, §3) and (ii) SBC ~$23M. **It is
+the soft spot of this write-up**: taxed harder, ~$190M drops the implied
+return to roughly the hurdle. A and B converging on ~9% is the finding: *the
+price already assumes mean reversion.* C is what the bulls are buying and
+requires the plausible-tier structural condition.
+
+**Integrity checks (per skill):** `implied_terminal_roe` prints 3.9% —
+*below* the hurdle, i.e. the terminal value assumes returns below cost of
+equity forever. **Intentional**: a no-moat-against-the-cycle commodity
+refiner earning ≤ cost of capital in the terminal state is the correct
+default (only ~29% of firms out-earn their cost of capital — anchors ref).
+Terminal growth 2% ≈ inflation only — defended against the Item 1A terminal
+risk (state decarbonization/EV mandates: CA ICE ban 2035, WA/HI carbon
+intensity programs, RFS): survivable only because Pacific-basin supply is
+closing at least as fast as regional demand declines and jet/marine/asphalt
+(non-EV-substitutable) are a large share of the slate; if the demand side
+wins the race, 2% is generous — which is one reason the call is pass, not
+buy. No M&A-funded growth is assumed (fcf excludes acquisition spend; the
+growth paths are flat/negative, so the serial-acquirer trap doesn't bind).
+Base-year cash tax below marginal (NOL) is handled in scenario B, not
+ignored. Minority interests (YELP 65%, Alohi JV): NCI H1 2026 −$7.5M —
+immaterial haircut, noted not modeled. Pension/litigation: unquantified
+(§6). Not asset-light and not claimed to be: capex + deferred turnaround
+≈ $59M in Q2 alone; turnaround cadence (Hawaii ~4–5yr) is inside the FCF
+history used.
+
+**Precision clamp:** ATM IV is 53.6% (>50%) → implied returns quoted to the
+nearest whole percent above; the honest range on scenario B alone is
+roughly "8%–10%".
+
+**Upside not in the base:** SRE grant ($150–300M, 4.5–9.0% of mcap, dated
+~Sept 1) and the working-capital reversal (up to ~$300M, ~half Hawaii
+inventory build). Both one-time; neither changes mid-cycle earning power;
+both cushion the downside of a pass being wrong.
+
+**Options-implied move** (path 2 — Robinhood stopgap; PARR not in the CBOE
+catalog, no `options.db` history). Expiry 2026-09-18 (brackets the Sept 1
+SRE compliance deadline — the thesis's only dated catalyst), ATM strike 65,
+spot 66.29, DTE 41:
+
+| metric | value |
+|---|---|
+| spot | 66.29 |
+| dte (calendar days) | 41 |
+| ATM IV | 53.58% |
+| expected absolute move (MEAN, not a ceiling) | 14.26% |
+| 1-sigma move | 17.96% |
+| RV60 | 62.21% |
+| IV > RV60? | NO |
+| RV20 | 78.69% |
+| IV > RV20? | NO |
+| thesis requires | 9.00% |
+| that is | 0.48 sigma |
+| P(\|move\| >= required) | 63.13% |
+| refutes timing claim (> 2 sigma)? | NO |
+
+Reading: IV is **below** both realized windows (agreement, not conflict —
+the market prices post-print calming, not an event premium), and a
+full-SRE-sized 9% move is 0.48σ — routine. Nothing here refutes any
+condition; per the one-way valve it confirms nothing either. **UNRELIABLE
+per the liquidity gate**: call spread $2.70 on a $5.75 mark (>10%), volumes
+0/1, put OI 14 — quotes are Friday-close marks on a thin chain. Not allowed
+to move the verdict, and it doesn't.
+
+## 5. Falsifiers
+
+- **Break — Hawaii goes away:** catastrophic outage, closure decision, or
+  state action forcing conversion of the Kapolei refinery (~43% of
+  throughput and the price-lag/import-parity economics). Story over.
+- **Break — capital pivot:** a large debt-funded acquisition at cycle-top
+  multiples (watch the "prepared and ready to move" M&A language on calls
+  against the per-share discipline record).
+- **Shift — the cycle answers:** combined index sustained below ~$15/bbl
+  (2024-trough territory) for two consecutive quarters → revalue on trough
+  FCF; conversely two more quarters ≥ $30 with China exports still
+  suppressed would move the structural condition from plausible toward
+  probable → re-run scenario C seriously.
+- **Shift — SRE denied** (or silence past Sept 1 into the compliance
+  period): removes $150–300M of optionality; small, dated.
+- **Shift — China reopens product exports** (management's own tell: watch
+  waterborne refined-product vessel movements, not announcements).
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Where the post-closure Pacific mid-cycle index settles** — the true
+   base-FCF driver. Bounded ($12.40 FY2025 avg to $33 Q2 peak); would come
+   from a full cross-cycle index history (investor presentations) — absence
+   doesn't kill a pass; it kills precision on the buy case.
+2. **Hawaii Consent Decree resolution cost** — 10-K says possibly material
+   penalties/capex; no estimate exists. Would come from an 8-K/consent
+   modification when resolved.
+3. **Hawaii FTZ false-claims exposure** — unspecified damages, company
+   disputes; docket would be the source. Not quantifiable now.
+4. **Renewables JV unit economics** — no disclosed margins on the RD ramp;
+   treated as option value at zero.
+5. **The Singapore inventory tension** (the structural-or-cyclical thread,
+   §3) — five-year-high onshore stocks (analyst assertion) vs "tight"
+   global inventories (CEO). Needs a primary source (EIA/Enterprise
+   Singapore data) not integrated in this repo; unresolved here, and it is
+   the pivot between scenarios A/B and C.
+6. `data/earnings.db` carries no PARR row (screen-universe gap) — next
+   earnings date taken from stockanalysis/Robinhood instead; noted per
+   INCOMPLETE-honesty convention, not thesis-relevant.
+
+## 7. Sources
+
+- **Primary:** 10-K FY2025 (filed 2026-02-25, acc.
+  0000821483-26-000005: Item 1 segments/capacities, Item 1A risks, Note 19
+  contingencies, SRE booking, Citi intermediation); Q2 2026 news release +
+  10-Q (2026-08-04/05, via Quartr PDF and SEC XBRL in
+  `data/sec_fundamentals.db` — revenue/NI/EPS cross-checked exact); Form
+  144 (2026-08-06, Creamer); Form 4 cluster (2026-07-07, RSU grants);
+  Schedule 13G (2026-08-07, not analyzed).
+- **stockanalysis.com (vetted exception):** statistics page (market cap,
+  EV, ratios, beta, short interest 9.4% of float, F-score 7, next earnings
+  2026-11-03), income-statement history FY2021–TTM, transcripts (Q2 2026
+  call, 2026-08-05 — all management quotes above), filings index, news
+  feed (analyst PT changes — low-confidence tier).
+- **Broker/market microstructure:** Robinhood MCP, admissible — no
+  integrated official source covers these fields for PARR: live quote
+  and daily bars (spot $66.29, the Aug 5 −15.8% session), earnings
+  estimate-vs-actual pattern (the estimates side only; actuals
+  cross-checked against SEC data, $10.10-vs-$9.35 adjusted/GAAP flagged),
+  option chain/quotes for the §4 read.
+- **Reference data:** Damodaran home page (rf 4.74%, implied ERP 4.28%,
+  as-of 2026-08-01; cost-of-capital distribution and 29% excess-return
+  base rate, Jan 2026 vintage).
+- **Point-in-time repo DBs:** `composite.db` (informational
+  flags only: F-score 6–7, FCF yield ~6–7%, RSI-overbought −1 fired
+  2026-08-01→06 at RSI ~80 — the machine saw the run-up, not the value);
+  `stocks.db` (7/31 snapshot vs live probe deltas stated); `edgar.db`
+  (filing index). Read-only.
+- **Low-confidence:** analyst Q&A assertions from the call (Singapore
+  five-year-high inventories; China throughput upticks) — labelled as such
+  where used.
+
+## Kill-thesis record
+
+Verdict: **SOUND** (conditions=5, refuted=0, unknown=1 — the load-bearing
+unknown is the Singapore-inventory tension in §3's structural-or-cyclical
+thread, unverifiable from any integrated official source this run). Attack
+log:
+
+- Condition 1 (mean reversion happens) survives trivially: FY2024 op income
+  $47.6M and FY2021 −$7.6M on the same asset base refute any new-run-rate
+  claim by themselves.
+- Condition 2 ($230M mid-cycle FCF) was attacked *upward* with the best
+  available disclosure: FY2025 printed $296M FCF at a $12.40 average index
+  — taxed at ~23% that is ~$240M, confirming rather than refuting the
+  estimate. Survives with stated error bars (~$190–280M).
+- Condition 3 (structural case stays plausible-tier) attacked from the bull
+  side: PADD 5 closures are announced facts, but Hawaii — the largest
+  earnings driver — prices off *Singapore*, where the call's own Q&A
+  carries the five-year-high inventory datapoint; the supply half is
+  probable, the margin conclusion still needs the China-export and demand
+  halves. Held at plausible. This is the unknown.
+- Condition 5 (hurdle 8.16%) attacked — and the attack *strengthens* the
+  pass: a 0.79 regression beta on a leveraged commodity cyclical is
+  idiosyncratic-vol-suppressed; at a sector-like beta of 1.1 the hurdle is
+  9.45% and scenarios A/B fall below it.
+- **Closest attack:** (against the pass) "you are discarding a
+  +90bp base case *plus* up to ~$450–600M of near-dated one-time cash
+  (SRE + working-capital reversal) *plus* a 12% FCF-yield buyback
+  machine — the package is a buy at any reasonable weighting." Landed as
+  color, not refutation: +90bp is inside the input error of the base-FCF
+  estimate on a name whose options price ~54% vol, and one-time cash
+  cushions a wrong pass rather than compounding earning power.
+- Base rate: a cyclical at a 3.9 PE on record LTM earnings is the classic
+  buy-at-low-PE-peak value-trap signature — the base rate stands with the
+  pass. Options timing check ran (path-2 stopgap, liquidity gate FAILED —
+  disclosed, not verdict-moving): the SRE-sized 9% move is 0.48σ,
+  `refutes timing claim? NO`.
+
+**Flip evidence:** two more quarters of combined index ≥ $30/bbl with
+Chinese waterborne product exports still suppressed (condition 3 moves
+plausible → probable and scenario C becomes the base case), or an equivalent
+demonstration that post-closure mid-cycle FCF clears ~$350M after tax.

@@ -1,0 +1,417 @@
+# PEGA — Pegasystems Inc. — 2026-07-26
+
+Price $26.82 (official close 2026-07-24, post-split basis) · market cap
+$4,409,340,625 · next earnings 2026-10-20
+
+Entry path: unflagged research — PEGA is not in composite's flagged universe
+(see §7).
+
+> **Supersedes an earlier same-day run.** That run returned `buy`; the
+> verdict was formally withdrawn for missing the Appian trade-secrets retrial
+> (set 2027-01-11, ~47% of market cap) disclosed in the 10-Q filed five days
+> before it ran, and for skipping the disconfirming search and the
+> management-incentives check. The audit trail lives in `scorer.db`
+> `verdict_corrections` (id 1). This document replaces it in full; nothing
+> from the prior run is carried forward.
+
+> **Price correction.** The brief for this run carried "~$225". PEGA closed
+> **$26.82** on 2026-07-24 (market cap $4,409,340,625 ÷ 164,404,945 shares =
+> $26.82). A 2:1 forward split settled 2025-06-23. Every figure below is on
+> the post-split, $26.82 basis. [stockanalysis]
+
+*Decision support only. No position size is recommended and no order is
+implied — sizing is `advisor`'s job, from ATR and book heat, not from prose.*
+
+## 1. Verdict and thesis
+
+**PASS at $26.82.** kill-thesis: **FLAWED** — conditions=8, refuted=2,
+unknown=5 (one survived).
+
+Two separate damages claims, each roughly the size of the entire market cap,
+land inside seven months against $361.9M of cash and $0 accrued — and the
+forward metric that would otherwise justify owning through them just halved
+with no date on its recovery.
+
+The business is real and the cash generation is real: 11.2% trailing FCF
+yield, net cash, 68.4% ROIC, founder owns 46.6%. But the price is not the
+problem and never was. The thesis needs the Appian quantum to be knowable and
+small, and it is neither — the company itself says it is "unable to
+reasonably estimate," and no legal source produces a range. Unknowable
+downside at ~100% of market cap is not a discount to underwrite; it is a
+reason to wait for the number.
+
+(Per this run's scope, `research/verdicts.log` was intentionally not appended
+and no journal ingest was performed; the orchestrator owns those steps.)
+
+**Closest attack:** on the *bull* side — condition 1 genuinely held. H1 FCF
+was a record and backlog grew 10%; the cash engine did not crack in the
+quarter the story did.
+
+Load-bearing conditions (tiers not recorded in original run; adjudication
+detail in the Kill-thesis record):
+
+1. TTM FCF ~$492.5M is durable through the freeze — survived.
+2. The 11.2% FCF yield is owner earnings — REFUTED.
+3. The ACV freeze is delay, not displacement — UNKNOWN.
+4. Appian damages land far below $2.036B — UNKNOWN.
+5. Defamation counterclaim produces no material award — UNKNOWN.
+6. Feb-2027 securities trial produces no material award — UNKNOWN.
+7. Management allocates capital without destroying value — REFUTED.
+8. Terminal cash flows survive the AI-agent endgame — UNKNOWN.
+
+## 2. Business
+
+**Created:** Enterprise workflow automation and real-time decisioning for
+large banks, insurers, telcos and government agencies — the software that
+runs claims adjudication, case management, customer service and
+next-best-action. The customer buys a *business-readable model* of a process
+(stages, steps, decision rules) rather than code, so the people who own the
+process can change it without a rewrite. [10-Q 2026-06-30, Business Overview]
+
+**Captured:** Four distinct lines, not one. Pega Cloud subscription ($418.9M
+H1'26, +32%) is the growth engine and is priced **per case**, not per seat or
+per token; subscription license ($176.9M H1, −34% on renewal timing);
+maintenance ($149.8M, −4%, structurally declining as clients migrate to
+cloud); consulting ($105.0M, −11%, negative gross margin as reported).
+Agentic AI is sold as a **case-price uplift with no per-token charge** — an
+explicit repricing away from consumption. [10-Q; Q2'26 call 2026-07-22]
+
+**Protected:** The mechanism, in Trefler's own framing: generated code is
+cheap to produce and expensive to change, so the moat is the structured model
+layer plus the installed base of deployed mission-critical workflows inside
+regulated institutions. That is a mechanism, not a label — it names what a
+rival must replicate. It is also precisely the claim now under live test by
+the substitute it names, and the test result is not in. Backlog $2,019M
+(+10%) is the only hard evidence of stickiness. [Q2'26 call; 10-Q]
+
+**Operating leverage (Phase 0): positive over the arc, sharply negative
+right now.**
+
+| FY | revenue $M | operating income $M | op margin |
+|---|---|---|---|
+| 2017 | 888.5 | 93.2 | 10.5% |
+| 2019 | 911.4 | −134.9 | −14.8% |
+| 2022 | 1,317.8 | −109.4 | −8.3% |
+| 2024 | 1,497.2 | 123.9 | 8.3% |
+| 2025 | 1,745.8 | 263.1 | 15.1% |
+
+[SEC XBRL companyfacts, CIK 1013857 — primary]
+
+But H1 2026 reversed it: operating income **$144.3M → $53.8M (−63%)** on
+revenue −1%, because opex grew +15.5% ($503.9M → $582.1M) against a shrinking
+top line. Legal fees (+$25M G&A) explain only a third; S&M (+$35.8M) is the
+larger piece. TTM operating margin of 11.3% is flattered by a strong H2'25
+and is not the current run-rate. [computed from 10-Q segment tables —
+primary]
+
+**TTM net income is not repeatable.** $324.0M net on $187.3M pretax, via a
+**−$136.75M tax benefit** (valuation-allowance release + excess SBC
+benefits). The "14.9x PE" is an artifact of that. GAAP H1'26 EPS was $0.26 vs
+$0.63. [stockanalysis /statistics/; 10-Q tax note]
+
+## 3. Threads pulled
+
+- **The Appian retrial — load-bearing, and the reason this run exists.**
+  Fairfax County No. 2020-07216. Jury 2022-05-09: misappropriation of trade
+  secrets, **willful and malicious**, damages **$2,036,860,045**; judgment
+  entered 2022-09-15 at **$2,060,479,287** with 6% post-judgment interest.
+  Court of Appeals reversed and ordered a new trade-secrets trial 2024-07-30;
+  Supreme Court of Virginia **unanimously affirmed that reversal
+  2026-01-08**; Judge Oblon set **retrial to commence 2027-01-11** on
+  2026-05-07 and released the $25M letter of credit (released 2026-06-29).
+  Company "unable to reasonably estimate possible damages." **$0 accrued.**
+  [10-Q Note 16 — primary]
+
+  *Scope of the retrial.* Two concurring legal-analyst sources (Virginia
+  Appellate Law Blog; Holland & Knight, both 2026-01) hold that **liability
+  was affirmed and only damages were reversed** — the reversal turning on a
+  jury instruction that improperly shifted the burden of proving damages
+  *causation* onto Pega, plus improper exclusion of Pega's non-BPM revenue
+  evidence. Note the 10-Q's own words are looser ("ordered a new trade
+  secrets claim trial") and do not themselves limit it to damages. Treat
+  damages-only as well-supported but not primary-sourced. Either way the
+  willful-and-malicious finding stands, so the realistic floor is not zero.
+
+  *Sizing it.* Nominal exposure $2.06B = **46.7% of market cap**; with
+  interest accruing toward a 2027 judgment, plausibly 55–60%. Against that:
+  $361.9M cash, $289.9M net cash, ~$492.5M annual FCF. A full reinstatement
+  is not payable from the balance sheet. The best available triangulation is
+  primary and sits in the same filing — in the *defamation* case Appian's
+  own experts value four years (2022–2025) of head-to-head competition at
+  **$31.8M lost profits + $109.5M disgorgement**. Appian pricing its own
+  competitive harm at ~$141M is hard to reconcile with $2.04B, which was
+  Pega's whole BPM revenue attributed under the presumption the appellate
+  courts just struck down. **Realistic range: low hundreds of millions,
+  wide, and formally UNKNOWN** — both legal sources state explicitly that no
+  expert retrial estimate exists.
+- **The second ~market-cap claim, which nobody was looking for.**
+  `PegasystemsV.AppianDefamationLitigation` (D. Mass. 1:23-cv-11776): Pega
+  sued Appian for defamation, claiming $41.9M. Appian **counterclaimed**,
+  and beyond $31.8M lost profits and $109.5M disgorgement, "further seeks
+  that the Company be forced to disgorge the entirety of its profits
+  (**$2.33 billion**) from 2022-2025." Summary-judgment oral argument was
+  **2026-07-24**; Daubert briefing due 2026-09-18; **jury trial scheduled
+  November 2026** — two months *before* the Appian retrial. $0 accrued,
+  "unable to reasonably estimate." [10-Q Note 16 — primary]
+- **What the `SettledLitigationMember` / `SpecialDividendToShareholders`
+  context is.** Chased as instructed. It is **not** Appian settling. It is
+  the *derivative* litigation (*In re Pegasystems Inc. Derivative
+  Litigation*) — final approval entered 2026-06-30: $9.75M aggregate,
+  comprising a **$7M special dividend to shareholders (excluding
+  defendants)** and $2.75M plaintiffs' fees, plus governance reforms. The
+  Appian XBRL member co-occurs only because the derivative claims arise
+  *from* the Appian verdict. This is the one matter with an accrual
+  ($9.75M), and it is now closed. [10-Q Note 16 — primary]
+- **Third dated event.** Securities-fraud opt-outs (Eminence Capital funds;
+  PS Lit Recovery) survived dismissal on most claims 2026-01-08; **trial set
+  February 2027**. Unquantified, $0 accrued. Q1 2027 is therefore bracketed
+  by three separate trials.
+- **The demand shock — the actual reason for the −54%.** ACV $1,514M →
+  $1,620M, **+7%** (+8% cc). Company: "Unprecedented changes in the AI
+  market caused clients to delay their purchasing decisions… These factors
+  may continue to adversely affect the ACV growth rate for the rest of the
+  year," and "our cash flow generation may continue to be adversely
+  affected." Pega Cloud ACV +22% (moderated from 27%). Stock fell **−16.0%**
+  on the print (2026-07-21 $30.94 → 2026-07-22 $25.99, 14.0M shares). [8-K
+  Ex-99.1 2026-07-21; 10-Q; Robinhood historicals — microstructure tier]
+- **Earnings-pattern break.** Eight quarters via Robinhood [microstructure
+  tier]: five consecutive large beats through FY2025 Q4 (Q1'25: $0.23 est vs
+  $0.77 actual), then **two consecutive misses** — Q1'26 $0.68 est / $0.46
+  actual, Q2'26 $0.39 / $0.35. The beat streak broke exactly when ACV
+  decelerated. Cross-check as required: Robinhood's "actual" is **non-GAAP**
+  — Q2'26 GAAP diluted EPS was **$0.08** per `sec_fundamentals.db` and the
+  8-K, against Robinhood's $0.35. They disagree by definition, not by error.
+- **Disconfirming search (standing check — the earlier run skipped this).**
+  Four downgrades inside 48 hours, not just PT trims: Citizens
+  (Outperform→Perform), Loop Capital (Buy→Hold, PT $55→$25), KeyBanc
+  (Overweight→Sector Weight), William Blair (Outperform→Market Perform);
+  even retained Buys cut hard (DA Davidson $55→$32). [analyst-note tier]
+  Second straight quarter missing revenue *and* subscription revenue by >4%.
+  Industry context: an enterprise shift away from per-seat pricing, with
+  Pega's own no-token-cost repricing readable as a defensive response.
+- **Management incentives (standing check — the earlier run skipped this).**
+  From DEF 14A filed 2026-04-24 [primary]: the annual cash plan is **75%
+  "Rule of 40, calculated as the sum of ACV growth and free cash flow
+  margin"** + 25% operational initiatives; performance options vest on a
+  matrix of **ACV growth (cc) × Rule of 40**. The proxy explicitly disavows
+  the rest: the program targets long-term indicators "*rather than on
+  ancillary indicators such as our stock price or earnings per share*."
+  **No TSR, no EPS, no share-count, no buyback metric anywhere.**
+  - *Aligned:* FCF margin and ACV growth are exactly the two things the
+    thesis needs.
+  - *Not aligned:* nothing rewards buying stock cheaply — and in H1'26 they
+    repurchased 8,858k shares for **$367.2M at an average $41.46**, now
+    marked at $26.82, a **~$130M mark-to-market loss**, with the board
+    *raising* authorization by $1B on 2026-02-10.
+  - Trefler: $600k salary, **no PSUs, no performance options**, one
+    time-vesting option grant struck at **$38.82** (now 31% underwater); his
+    alignment is his **46.6% stake** (79,062,427 shares, single share class,
+    no dual-class). 7 of 8 directors independent but he is Chairman+CEO with
+    **no lead independent director**. Leon Trefler (NEO) is his brother.
+  - **Unpriced reflexivity:** **8,475,554 of his shares are pledged or held
+    in margin accounts** with the stock down 54%. No disclosure quantifies
+    the maintenance level.
+  - Insider selling checked and found routine: Trefler 10b5-1 sales Jan–Feb
+    2026 (~120k shares, $45–51); Stillwell 8,383 shares 2026-05-05; CAO
+    Kouninis 750-share blocks. No coordinated exit.
+- **Options read (mandatory):** path 2 only (Robinhood stopgap) — path 1
+  does not apply (not in the CBOE catalog; `options.db` depth gate
+  unreachable). See §4's table.
+- **Dead ends:** recorded — no evidence of a single named account lost to
+  Agentforce/ServiceNow/Copilot Studio; no identifiable published short
+  thesis despite 18.4% short-of-float; no disclosure of government-vertical
+  revenue concentration in any filing. Those three are unresolved, not
+  cleared.
+
+## 4. Valuation
+
+**Reverse DCF** — levered TTM FCF $492,500,000 (ncfo $512.956M + capex
+−$20.456M) paired with **market cap** $4,409,340,625, `--net-debt 0` (net
+*cash* $289.9M). 3-year horizon. **ATM IV is 62.9% (>50%), so every rate
+below is quoted to the nearest whole percent and the range is genuinely
+wide** — these are not precise numbers. No Damodaran hurdle was computed in
+the original run; the benchmark cited is the stockanalysis-derived WACC of
+8.89%.
+
+| scenario | base FCF | growth | terminal | implied return |
+|---|---|---|---|---|
+| A base (analyst rev3y +8.4%) | 492.5M | 8.4%×3 | 2.0% | **15%** |
+| B **SBC-charged** (FCF − $159.1M SBC) | 333.4M | 8.4%×3 | 2.0% | **11%** |
+| C conservative (ACV-consistent) | 492.5M | 3.0%×3 | 1.0% | **13%** |
+| D management target (~$700M in 3y) | 492.5M | 12.4%×3 | 2.0% | **17%** |
+| E SBC-charged, zero terminal growth | 333.4M | 3.0%×3 | 0.0% | **8%** |
+
+**The assumption that decides it: whether SBC is a cost.** It is —
+$159.1M/yr, 9.2% of revenue, and they spend *more* than that on buybacks to
+hold share count down (−4.06% YoY). Charging it takes the headline 11.2% FCF
+yield to a **7.6% owner yield** and the implied return from 15% to 11% —
+against a stockanalysis-derived WACC of 8.89%. Scenario B is the honest base
+case. **Terminal growth of 2.0% is the aggressive end**: the disclosed
+structural endgame risk is precisely that AI agents commoditize the workflow
+layer, which is why scenario E's 0% is shown rather than argued away.
+
+**None of these deduct litigation.** A probability-weighted haircut is not
+computable — both large claims carry $0 accrual and an explicit "unable to
+reasonably estimate." At even a 15% chance of a $600M net outcome across the
+two, ~$90M / $0.55 per share comes off; at a 10% chance of $2B, ~$1.22. The
+distribution, not the mean, is the problem.
+
+**Options-implied move (path 2 only — the Robinhood stopgap).** Path 1 does
+not apply: PEGA is not in the 24-symbol CBOE catalog, and `data/options.db`
+`v_iv_rank` shows **n_days = 16** against the 60-day depth gate for every
+symbol. Catalyst is the **2027-01-11 retrial**, not earnings (next print
+2026-10-20). Spot $26.82; nearest listed strike **$25.00** (strikes are
+$2.50-wide below $30, so ATM is 6.8% below spot — footnoted as an
+approximation).
+
+| | Jan-2027 (brackets trial start) | Mar-2027 (brackets plausible verdict + Feb securities trial) |
+|---|---|---|
+| DTE (calendar, from Phoenix 2026-07-26) | **173** | **236** |
+| ATM IV (mean of both legs) | **62.88%** | **62.07%** |
+| expected absolute move (MEAN, not a ceiling) | 33.56% | 38.40% |
+| **1-sigma move** | **43.29%** | **49.91%** |
+| RV60 / RV20 | 55.64% / 78.40% | same |
+| IV > RV60? / IV > RV20? | YES / **NO** | YES / **NO** |
+
+Required-move tests, quoting the CLI's own verdict row:
+
+- +60.33% (upside to the $43.00 consensus target): **1.09 sigma**, P=27.5%,
+  *refutes timing claim (> 2 sigma)?* **NO**.
+- 46.74% (full $2.06B judgment as % of market cap): **0.89 sigma**, P=37.6%,
+  *refutes?* **NO**. On Mar-2027: **0.77 sigma**, P=44.2%, *refutes?* **NO**.
+
+**The check refutes nothing, and by the one-way valve it confirms nothing
+either.** The two RV windows **disagree** (IV above RV60, below RV20) — that
+disagreement is the finding, and it means "elevated" may not be written;
+RV20 is inflated by the single −16% earnings gap. **The liquidity gate
+FAILED: the Jan-27 $25 straddle quotes bid 4.80 / ask 6.30 on a 5.55 mark — a
+27% spread against the 10% gate — with volume 0 and open interest 31
+(Mar-27: OI 6 and 10, 33% spread). Marked UNRELIABLE; it may not move the
+verdict, and the IV figures above should be read as indicative only.**
+
+## 5. Falsifiers
+
+**Would make this a buy:** a redetermined or settled Appian number that is
+small and *known*; plus two consecutive quarters of ACV re-acceleration above
+10% cc. The first alone is most of the work — this is a pass on
+unknowability, not on price.
+
+**Would confirm the pass / make it a sell:**
+
+- An accrual established against Appian or the defamation counterclaim —
+  that is management signalling loss is now *probable and estimable*.
+- ACV growth below 5% cc at the FY2026 print, or Pega Cloud ACV below 15%.
+- FY2026 FCF below ~$500M (guidance is $575M and management conceded on the
+  call that "any ACV shortfall puts pressure on our ability to hit that
+  $575").
+- Backlog ($2,019M) turning negative YoY — the last hard stickiness
+  evidence.
+- Forced sales against Trefler's 8.48M pledged shares.
+- Continued buybacks at scale without an ACV inflection.
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Appian retrial damages range.** No expert estimate exists in any
+   source; the company states it cannot estimate. Would come only from
+   expert reports on remand or a settlement. **This one alone carries the
+   call** — it is why the answer is pass, not a lower conviction buy.
+2. **Whether the retrial is damages-only.** Well-supported at legal-analyst
+   tier, not primary. The 10-Q says "new trade secrets claim trial" without
+   limiting it.
+3. **The $2.33B defamation disgorgement counterclaim.** $0 accrued, no
+   estimate, jury trial November 2026. Absence of a range does not kill the
+   thesis — it prevents one.
+4. **Whether the ACV freeze is delay or displacement.** Structurally
+   unanswerable today: management asserts delay (pipeline growing, no deals
+   lost); the disconfirming search found no Pega-specific deal-loss evidence
+   either way. Resolves at the FY2026 print.
+5. **Government-vertical concentration.** Not broken out in any filing.
+6. **Who holds the 18.4% short-of-float, and why.** No published thesis
+   found.
+7. **Trefler's margin maintenance level on 8.48M pledged shares.** Not
+   disclosed.
+
+## 7. Sources
+
+- **Primary:** (SEC / company) 10-Q for period ended 2026-06-30, filed
+  2026-07-21 (acc. 0001013857-26-000050) — Note 16 Commitments and
+  Contingencies, ACV and backlog tables, segment revenue/gross profit/opex,
+  liquidity, buyback tables, Part II Item 5 (Ledingham 10b5-1). 8-K Ex-99.1
+  filed 2026-07-21 (acc. …-000049) — Q2'26 print, GAAP vs non-GAAP. DEF 14A
+  filed 2026-04-24 (acc. …-000031) — compensation metrics, beneficial
+  ownership, board independence, pledged shares. SEC XBRL `companyfacts`
+  CIK 1013857 — FY2009–FY2025 revenue / operating income / OCF / SBC.
+  Rule 144 notices (Kouninis, Stillwell).
+- **stockanalysis.com (vetted exception):** `/stocks/PEGA/statistics/` and
+  `screener/table`: price $26.82 (priceDate 2026-07-24), market cap, shares,
+  FCF/ncfo/capex, SBC, ROIC 68.4%, fScore 6, RSI 34.5, ch6m −46.8%, short
+  float 18.4%, insiders 47.7%, WACC 8.89%, consensus PT $43.00 / 12
+  analysts. `/stocks/PEGA/transcripts/652839-q2-2026/` — Q2'26 call,
+  2026-07-22 ($575M FY FCF outlook, $700M long-term target, Rule of 40,
+  1/3–2/3 ACV phasing), primary-transcribed. *Note: `/stocks/PEGA/financials/`
+  returned a null `financialData` this session; the annual series was taken
+  from SEC XBRL instead.*
+- **Broker/market microstructure:** (own tier, below primary; admissible
+  here only where no integrated official source covers the field) Robinhood
+  MCP — option chain, instruments and quotes for the Jan-2027 and Mar-2027
+  $25 strikes; daily bars 2026-03-13 → 2026-07-24 for the realized-vol
+  series; `get_earnings_results` estimate-vs-actual (non-GAAP, flagged
+  above).
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** `data/sec_fundamentals.db` `v_screener` —
+  Q2'26 GAAP EPS $0.08 (the GAAP cross-check; `get_financials` is banned and
+  was not used); `data/options.db` `v_iv_rank` (n_days=16, gate check);
+  `data/earnings.db` (`calendar_now.today` = 2026-07-24; next print
+  2026-10-20); `data/composite.db` — **PEGA is not in composite's flagged
+  universe**, so this is unflagged research, not a machine-sourced idea.
+- **Low-confidence:**
+  - Legal-analyst tier (below primary — used only for the *scope* of the
+    2026-01-08 Virginia Supreme Court opinion): Virginia Appellate Law Blog,
+    2026-01-08; Holland & Knight alert, 2026-01. Two concurring sources; a
+    third summary was ambiguous and was discarded rather than averaged.
+  - Analyst-note / financial-press tier (low confidence, never laundered
+    into fact): post-print downgrades and price targets 2026-07-22/23
+    (Citizens, Loop Capital, KeyBanc, William Blair, DA Davidson,
+    Rosenblatt); industry pricing-model commentary.
+
+## Kill-thesis record
+
+**VERDICT: FLAWED.** conditions=8 refuted=2 unknown=5 (one survived).
+Repairable, not dead: restate the yield on an SBC-charged basis (7.6%) and
+the thesis is arithmetically honest again. What is *not* repairable today is
+the five UNKNOWNs, four of which are dated legal events.
+
+| # | condition | outcome |
+|---|---|---|
+| 1 | TTM FCF ~$492.5M is durable through the freeze | **survived** — H1'26 FCF $288.3M, a record, +1% YoY; backlog +10% |
+| 2 | The 11.2% FCF yield is owner earnings | **REFUTED** — SBC $159.1M/yr → 7.6% owner yield; implied return 15%→11% |
+| 3 | The ACV freeze is delay, not displacement | UNKNOWN |
+| 4 | Appian damages land far below $2.036B | UNKNOWN |
+| 5 | Defamation counterclaim produces no material award | UNKNOWN |
+| 6 | Feb-2027 securities trial produces no material award | UNKNOWN |
+| 7 | Management allocates capital without destroying value | **REFUTED** — $367.2M at $41.46 avg vs $26.82, ~$130M marked down; proxy excludes stock price, EPS and share count from every incentive metric, so nothing rewards discipline |
+| 8 | Terminal cash flows survive the AI-agent endgame | UNKNOWN |
+
+**Base rate.** Enterprise-software decelerations from mid-teens to 7% usually
+persist several quarters rather than snapping back, and multiple compression
+usually overshoots. Separately: a defendant carrying an *affirmed*
+willful-and-malicious liability finding into a damages retrial pays
+something. The base rate on both is against the thesis.
+
+**Strongest short case.** The forward metric halved with no date on recovery;
+two ~market-cap-sized claims land inside seven months with liability already
+established on one; $0 accrued against either; $361.9M of cash stands behind
+$2B+ of claims and management just spent $367.2M of it at a 35% markdown; the
+equity's only support is a trailing FCF number collected against a backlog
+built when growth was 14%; and the founder holds 8.48M shares on margin into
+a −54% stock.
+
+**Closest attack:** on the *bull* side — condition 1 genuinely held. H1 FCF
+was a record and backlog grew 10% — the cash engine did not crack in the
+quarter the story did.
+
+**Flip evidence:** a knowable, small Appian resolution plus one quarter of
+ACV re-acceleration would move the ownership call to buy; an accrual against
+either claim moves it to sell.

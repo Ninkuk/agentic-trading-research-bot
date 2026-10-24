@@ -1,0 +1,233 @@
+# MYRG — MYR Group Inc. — 2026-07-29
+
+Price $316.02 (live quote, 2026-07-29) · market cap $4.92B · next earnings
+Jul 29 AMC (tonight)
+
+Entry: the name surfaced on its −37% drawdown (see §3); no composite flag
+(no `ticker_scores` row).
+
+## 1. Verdict and thesis
+
+**PASS at $316.02.** kill-thesis: **SOUND** — conditions=3, refuted=0,
+unknown=0.
+
+MYR Group is a well-run, conservatively financed electrical
+contractor riding a real demand wave, but even after a 37% drawdown the price
+implies only ~5–9%/yr (reverse DCF, whole percents per the >50%-IV precision
+rule) on a peak, working-capital-flattered FCF base — no margin of safety for a
+5%-operating-margin business whose fixed-price tail risk fired as recently as
+2024.
+
+**Closest attack:** that normalized FCF may be $150–200M rather
+than $95–150M, which lifts the implied return to ~8–9% — borderline, still short
+of a >10% required return for this business.
+
+**Timing caveat, stated up front:** Q2 2026 results release **tonight (Jul 29
+AMC)**, call tomorrow 8am MT. This document is written hours before the print,
+after the stock fell 23% in four sessions (409 → 316, Jul 22→29) on no
+company-specific news. ATM IV is ~80%. Everything here is a price argument, not
+a prediction of tonight's numbers.
+
+Load-bearing conditions: not enumerated in the original run (pre-template);
+the original records only the counts above. Condition tiers not recorded in
+original run.
+
+## 2. Business
+
+**Created:** builds and maintains electrical infrastructure — transmission,
+distribution, substations (T&D, ~54% of revenue) and complex commercial/
+industrial electrical work: data centers, water/wastewater, transit, hospitals
+(C&I, ~46%). Customers are utilities and large owners who need scarce skilled
+union labor, safety records, and schedule certainty; MYR has operated since 1891
+and has done data-center electrical work "since data centers first started"
+(CEO, Q1'26 call).
+
+**Captured:** three contract shapes, not one — fixed-price (majority of
+C&I, ~86% of that segment's mix), unit-price, and T&M/MSA work. MSAs are now
+~70% of T&D revenue (Q1'26 call): recurring, predictable, but structurally
+never over-billed (a DSO headwind the CFO flagged herself). Margin capture is
+execution alpha: prefab/kitting, contract-risk selection, and closeout upside.
+Management raised full-year operating-margin profiles in April to 8–11% (T&D)
+and 6–9% (C&I).
+
+**Protected:** the honest answer is *thin*. Mechanisms: a skilled union
+workforce in a labor-short trade, decades-long utility relationships and MSA
+incumbency, bonding capacity, and prefab capacity. All real, all shared with
+Quanta/EMCOR/Primoris/IES. Management conceded on the Q1 call that labor
+tightness is **not** currently translating into margin ("it still remains fairly
+competitive"). There is no pricing-power moat here; that silence is recorded as
+an answer.
+
+**Operating leverage (Phase 0): positive over the last 18 months,
+flat-to-negative over the full five years.** Revenue 2021→TTM:
+$2.50B→$3.82B (+53%); op income $118.6M→$193.2M; margin 1.6% FY24 → 5.1%
+TTM (4.7% in 2021). The recent margin expansion IS the bull case; its
+durability is unproven through a bidding downcycle.
+
+## 3. Threads pulled
+
+- **The crash (the reason this name surfaced).** High 503.565 (Jun 30) → 316
+  today, −37%. Decomposes into: (a) sell-the-news on the $328M Valley/Comet
+  acquisition announced May 27 (globenewswire, 8-K filed May 28); (b) a
+  sector-wide AI-infrastructure de-rating from mid-July; (c) a violent final leg
+  −23% in the four sessions before tonight's print. Notably, Comfort Systems'
+  Q2 blowout (Jul 24: EPS 12.53 vs 10.42 est., tech now 58% of revenue) *also
+  sold off* — the complex is priced for perfection and de-rating on multiples,
+  not (yet) on fundamentals. Dead end checked: no MYRG-specific 8-K, no
+  downgrade, no guidance change explains the four-day leg.
+- **The acquisition.** $328M cash+revolver for Valley Electric (Everett, WA) +
+  Comet Electric (Chatsworth, CA), ~$400M combined revenue → 0.82× sales,
+  closing ~Jul 1 (company release, May 27). Consumes the $102M net cash; the
+  Mar-31 balance sheet in this doc is stale for sizing. Target margin quality is
+  an UNKNOWN until the Q2/Q3 10-Q purchase-price allocation.
+- **FCF quality (the load-bearing thread).** FCF by year: 2021 $84.9M, 2022
+  $90.4M, 2023 **−$13.7M**, 2024 $11.2M, 2025 $232.2M, TTM $230.6M. Five-year
+  average ~$81M vs TTM $231M. CFO (Q1 call): DSO mid-50s is "significantly
+  below our historical average," expect low-60s; capex guided to ~3% of revenue
+  (~$115M vs $97M TTM). The TTM base is a peak, not a run-rate.
+- **The 2024 scar.** Clean-energy fixed-price losses cut FY24 op income to
+  $54.1M (Q2'24 op income −$20.7M). The 10-K Item 1A names it as a standing
+  risk: "Our actual costs may be greater than expected in performing our
+  fixed-price and unit-price contracts" + percentage-of-completion reversal
+  risk. T&D fixed-price mix has been deliberately cut: 52.7% (2023) → 43.9%
+  (2024) → 34.3% (2025) of T&D revenue (10-K). Real de-risking, but C&I remains
+  ~86% fixed-price.
+- **Estimate-vs-actual pattern** (broker tier): six consecutive accelerating
+  beats — 0.68→0.99, 1.20→1.45, 1.53→1.70, 1.88→2.05, 1.81→2.33, 2.06→2.99.
+  Actuals cross-check against SEC-derived numbers (Q1'26: $46.8M NI / 15.6M
+  shares ≈ $3.00 ✓). Reads as estimates lagging genuine acceleration, not
+  managed penny-beats. Not leaned on for the verdict (n=6, non-independent).
+- **Insider activity.** Forms 144 (Jun 1–2) and Forms 4 code **S** (open-market
+  sales; e.g. D.C.I. Lucky, Jun 4) near the highs. Typical post-run behavior;
+  noted, not load-bearing.
+- **Backlog.** Record $2.84B at Mar 31 (+8% y/y): T&D $981M, C&I $1.86B. Only
+  90 days of MSA work counts, so backlog understates T&D visibility. Promised
+  catalysts: large transmission (incl. 765kV) awards "in the future two
+  quarters" with 2027+ starts (CEO, Q1 call) — not yet in backlog.
+- **Options read (mandatory):** path 2 (Robinhood stopgap; MYRG is not in
+  the CBOE catalog so path 1 structurally cannot apply) — see §4.
+- **Dead ends:** No composite flag (no `ticker_scores` row); earnings.db had no
+  MYRG row; stockanalysis's `ebit`/`ebitda` fields for MYRG are internally
+  inconsistent (EBIT $39.8M vs pretax $192.5M — EV/EBITDA 46.8 is built on a
+  broken field and is not quoted anywhere in this doc);
+  `sharesInstitutions` reads 100.9% (13F double-counting artifact).
+
+## 4. Valuation
+
+Reverse DCF, levered TTM FCF paired with **market cap** ($4.9205B = 316.02 ×
+15,571,036 shares; probe hover 4,924,495,845), net debt 0 at Mar 31 (now
+modestly net-debt post-acquisition — the market cap already reflects the cash
+out). Growth path 12/10/8/6/5% (management's 12% organic 2026 guide, fading),
+terminal 2.5%:
+
+Hurdle: not computed in the original run (pre-template); the original
+states a >10% required return for this business.
+
+| FCF base | rationale | implied return |
+|---|---|---|
+| $230.6M (TTM as reported) | peak conversion held durable | **~9%/yr** |
+| $150M (normalized) | NI-anchored, WC tailwind removed | **~7%/yr** |
+| $95M (harsh) | NI minus excess growth capex | **~5%/yr** |
+| $150M, front-loaded 20/15/10/6/5 | margin-expansion case per skill note | **~7%/yr** |
+
+Margins are mid-expansion, so a flat rate on the peak base can hide upside —
+the front-loaded run addresses this and still lands at ~7%. All figures quoted
+to the nearest whole percent because ATM IV (~80%) far exceeds the 50%
+precision gate. Terminal-growth check: the Item 1A dominant risk (fixed-price
+cost overruns) attacks the *margin* embedded in the base FCF, not year-10
+volume — grid/electrification volume growth at 2.5% terminal survives it; the
+vulnerable assumption is the base, which is why three bases are shown.
+Cross-check: forward P/E 27.1 (consensus ~$11.60); at a through-cycle 20x the
+stock is ~$232.
+
+**Options-implied move** (path 2 — Robinhood stopgap; MYRG is not in the CBOE
+catalog so path 1 structurally cannot apply; say so per the skill). Expiry
+2026-08-21 (23 DTE, monthlies only), ATM strike 320, spot 316.02:
+
+| metric | value |
+|---|---|
+| spot | 316.02 |
+| dte (calendar days) | 23 |
+| ATM IV | 80.01% |
+| expected absolute move (MEAN, not a ceiling) | 16.15% |
+| 1-sigma move | 20.08% |
+| RV60 | 54.95% |
+| RV20 | 56.45% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Both windows read YES → "elevated," with the stopgap's standing caveat: the
+window spans tonight's print, so part of the elevation is the market correctly
+pricing a known calendar item. **Liquidity gate FAILED** (call spread 26.7% of
+mark, put 15.6%; OI 15/6; volume 0) → marks UNRELIABLE; these figures are
+context only and no verdict leans on them.
+
+## 5. Falsifiers
+
+What would make this PASS wrong:
+
+- FCF conversion proves durable: DSO rises to the low-60s as guided **and**
+  2026–27 FCF still prints >$200M/yr.
+- Margin profiles (8–11% T&D, 6–9% C&I) hold or rise through a full
+  competitive bidding cycle, not just through backlog burn-off.
+- Price reaches where a $150M normalized base implies ≥11–12%/yr — roughly the
+  low-to-mid $200s — restoring a margin of safety.
+- Backlog inflects materially above $2.84B on the promised large-transmission/
+  765kV awards, converting the 2027+ story into contracted revenue.
+
+**Reopen trigger:** none stated.
+
+## 6. UNKNOWNs
+
+1. **Tonight's Q2 numbers and the post-acquisition balance sheet** — knowable
+   tomorrow; absence does not kill a price-based PASS.
+2. **Valley/Comet margin quality** ($328M for ~$400M revenue) — private
+   companies; unverifiable until the 10-Q purchase-price allocation. If they
+   earn C&I-like margins the deal is fine; if not, goodwill risk.
+3. **Whether the July sector de-rating reflects real hyperscaler capex
+   deceleration or pure multiple compression** — Comfort Systems' numbers argue
+   fundamentals are intact; the tape argues positioning was extreme. Not
+   resolvable from disclosures today.
+4. **Management incentive structure** (proxy not read this run) — flagged as
+   unverified color, not load-bearing.
+
+## 7. Sources
+
+**Primary:** MYR 10-K FY2025 (filed 2026-02-25; Item 1A risk factors,
+fixed-price mix by year, backlog definition); 8-Ks 2026-05-27/28 (Valley/Comet
+agreement); Forms 4/144 Jun 2026 (insider sales, code S verified in filing
+XML); 10-Q Q1'26 (filed 2026-04-29). EDGAR CIK 0000700923. Q1 2026 earnings
+call transcript (Quartr via stockanalysis.com — primary-transcribed;
+2026-04-30) — margin profiles raised, 12% growth guide, DSO/capex guidance,
+MSA 70%, labor-tightness-not-in-margins quote, 765kV timing.
+
+**stockanalysis.com (vetted exception):** statistics/financials/ratings/
+transcripts routes — market cap, FCF history, quarterly P&L, analyst actions.
+Field defects noted in §3 dead ends.
+
+**Broker/market microstructure:** (Robinhood MCP; admissible where no
+integrated official source covers the field) live quote 316.02 (16:22 UTC),
+daily bars for the closes array, option chain/quotes (ATM IV, OI, spreads),
+estimate-vs-actual EPS history. Actuals cross-checked to SEC-derived figures.
+
+**Reference data:** none used.
+
+**Point-in-time repo DBs:** `composite.db` — no flag (no `ticker_scores`
+row); `earnings.db` — no MYRG row.
+
+**Low-confidence:** press aggregation on the sector selloff (TipRanks,
+Alphastreet, GuruFocus, tikr) — used only to date/attribute the drawdown legs,
+no numbers carried into the verdict.
+
+## Kill-thesis record
+
+**Kill-thesis verdict: SOUND** — 3 load-bearing conditions, 0 refuted, 0
+unknown.
+
+**Closest attack:** that normalized FCF may be $150–200M rather than
+$95–150M, which lifts the implied return to ~8–9% — borderline, still short
+of a >10% required return for this business.
+
+Per-condition adjudication: not recorded in the original run (pre-template).
+Standing/statistical/options-timing checks: not recorded in the original
+run. **Flip evidence:** not recorded (pre-template run).

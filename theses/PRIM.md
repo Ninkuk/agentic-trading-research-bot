@@ -1,0 +1,359 @@
+# PRIM — Primoris Services Corporation — 2026-08-05 (reopen of 2026-07-30, trigger: prim-q2-ringfence)
+
+Price $83.48 (2026-08-05 close) · market cap $4.525B · next earnings 2026-11-02
+PM (tentative)
+
+**Reopen re-research** of `research/PRIM-2026-07-30.md` (prior verdict UNPROVEN,
+reopen=2026-08-05, trigger prim-q2-ringfence; prior ownership call: pass at $85.66).
+The reopen question: did the Q2 print (2026-08-04 AMC) land in-guide with **no
+additions** to the six-project distressed set, and did renewables book-to-bill
+reach ≥ 1?
+
+## 0. The reopen question, answered first
+
+**Two of the trigger's three legs fired favorably; the third did not fire and
+cannot until Q4.**
+
+| prior falsifier | actual | status |
+|---|---|---|
+| Q2 lands in-guide | FY26 guidance **maintained** exactly as set June 22 (net income $71–101M, adj EPS $2.05–2.60, adj EBITDA $275–325M); first quarter-shape disclosure ever: Q3 adj EBITDA $90–110M, Q4 $100–120M; "we expect our second quarter results to represent the low point for the year" (CFO) [8-K Ex-99.1; call] | FIRED favorably — with a catch (§3) |
+| No additions to the six-project set | Still **six**: two mechanically complete (one more submitting this week), three substantially complete in Q3, the last at mechanical completion early November / substantial completion by year-end. Remaining renewables portfolio (~two dozen projects) "on average performing within our expectations" — some "a little below" as-sold margin [call] | FIRED favorably |
+| Renewables book-to-bill ≥ 1 | **NOT in Q2** — one solar award of "a couple hundred million dollars" against ~$500M+/qtr of renewables burn; renewables backlog **$2.0B** at Q2-end. The claim rolled forward again: $1.5–2B of 2H bookings, "primarily in Q4"; one signing already slipped Q3→Q4; 2027 renewables now framed as "**modest growth** coming off of a reset year" (vs the historical 2→3B/yr cadence) [call] | NOT fired — evidence deferred to Q4 |
+
+**What that does to the thesis:** the containment story got its first
+confirming quarter — the guide held six weeks after being set, the set did not
+grow, and the completion schedule did not slip. But the deciding evidence for
+the *franchise* question (does renewables demand return post-48E) moved a
+quarter further out, and the market took the print badly anyway: 8/4 close
+$90.85 → 8/5 close **$83.48, −8.1%** on the call day [broker tier]. The
+ownership call stays **pass** (§1): at $4.52B the price still pays roughly
+cost of capital only on full-recovery assumptions.
+
+New facts the trigger didn't ask about: FY26 FCF guided **$150–200M**, down
+from an internal $350–400M forecast ("basically you can just subtract $200
+million out of it. That's essentially the impact from the renewables
+projects" — CFO); Utilities gross margin compressed too (11.9% vs 14.1%,
+comms/BEAD transition + prior-year gas-ops closeouts); record Q2 bookings
+$3.9B and record total backlog **$13.86B**.
+
+## 1. Verdict and thesis
+
+**PASS again at $83.48** (market cap $4.525B). kill-thesis: **UNPROVEN** —
+conditions=7, refuted=0, unknown=4.
+
+The reopen found what it was looking for and it wasn't enough. Ring-fencing
+now has one quarter of confirming evidence instead of zero — that is real, and
+it retires the "kitchen-sink guide fails immediately" branch. But the price
+already pays for that: reverse DCF at $4.52B implies ~**9%**/yr on the FY26
+guide-mid FCF with a front-loaded recovery, ~**10%** on a normalized $300M
+base — against a 10.2% WACC — and ~6–7% on damaged scenarios (whole percents
+only; ATM IV 71%). That is still the bad quadrant: a fair-at-best implied
+return conditional on a recovery whose demand leg (renewables bookings) is
+now promised for Q4 for the second consecutive quarter, from a management
+whose forecasts missed twice in eight weeks before holding once. The
+H2 arithmetic is also tighter than the maintained guide suggests: H1 adj
+EBITDA ~$72M + the new Q3/Q4 midpoints sum to ~$282M — the guide's low end —
+and the CFO conceded the range is "giving ourselves plenty of room"
+[call, Cantor exchange]. Better price than 7/30 (−2.6%), better FCF guide
+than the prior run's ~$100M estimate, same quadrant. The Q3 print
+(2026-11-02, tentative) brings the three-completions check and the first
+read on Q4 renewables bookings.
+
+**Closest attack:** condition 2 — the maintained guide's own quarter-shape
+sums to its low end; detail in the Kill-thesis record.
+
+Load-bearing conditions: enumerated and adjudicated in the Kill-thesis
+record. Condition tiers not recorded in original run.
+
+> Decision support only. No order, no size. No `data/*.db` written. Live
+> numbers are from the stockanalysis probe (2026-08-05) and Robinhood MCP
+> (live-over-stale per Phase 0); the point-in-time DBs are cited where used.
+
+## 2. Business
+
+Unchanged from `PRIM-2026-07-30.md` §2 (created / captured / protected —
+scarce self-perform craft labor in a power supercycle; MSA + fixed-price EPC
+capture; modest, cyclical protection). The print extends it in one direction:
+the **non-renewables Energy franchise is visibly compounding** — $1.4B of
+gas-gen awards in one quarter (all simple-cycle, TX/MO/NV), gas-gen revenue
+guided $500–600M FY26 → $800M–$1B 2027, funnel now $7–8B, crews grown from
+~6 to 8–9 teams; PayneCrest "exceeding expectations," +$250M of own bookings
+in two months; power-delivery MSA backlog +$1.5B in the quarter. Turbine-slot
+risk on gas-gen is claimed de-risked via OEM-queue visibility and PPA checks
+("in some cases, they're actually the ones making the market for us") —
+management's own framing, plausible mechanism, uncorroborated.
+
+**Operating leverage (Phase 0): negative.** TTM revenue $7.284B with TTM
+operating income down to $220.7M (3.0% margin, vs FY25 5.4%) — running
+negative through the blowup; the whole thesis is whether that is a scar or a
+trend.
+
+## 3. Threads pulled
+
+- **The reopen thread** — resolved in §0; the trigger table is the finding.
+  Single most informative row: renewables book-to-bill, which did *not*
+  fire — the same $1.5–2B promise from the Q1 call, re-dated.
+- **Guide arithmetic (the catch).** First-ever quarterly EBITDA shape:
+  Q3 $90–110M + Q4 $100–120M + H1 ~$72M ≈ $282M midpoint-sum vs the $275–325M
+  FY guide — an analyst did the math on the call and the CFO chose "the
+  latter" of miss-risk vs low-end-comfort. The maintained guide is real but
+  its headroom is one bad month wide. H2 needs ~3x H1's EBITDA; mechanism:
+  loss-projects complete (Q2 recognized "the majority of the impact"),
+  Utilities seasonal Q3 peak, gas-gen ramp.
+- **Utilities margin wobble (new).** The clean segment's gross margin fell
+  11.9% vs 14.1% YoY — communications (fiber-to-home → BEAD transition,
+  mix toward maintenance) and non-repeating 2025 gas-ops closeouts; power
+  delivery up. FY target 10–12% maintained. Watch item, not yet a thread
+  that lands: one quarter, explained, but it widens the attack surface
+  beyond renewables.
+- **FCF halved, balance sheet still fine.** FY26 FCF $150–200M (was
+  $350–400M internally); Q2 OCF −$8.7M; liquidity $959M; **revolver
+  undrawn** ($740.7M available, $9.3M LCs) [10-Q]; total debt $1,111.5M
+  (term loan upsized May 1, Fourth A&R Credit Agreement, for PayneCrest),
+  net debt $893M; net debt/EBITDA 1.6x → ~2x in Q3 → ~1.5x by YE, "1x over
+  2027" (CFO); "we were in compliance" with covenants [10-Q]. Thresholds
+  themselves still unread (carried UNKNOWN).
+- **Post-print sweep (EDGAR, through 2026-08-05).** 10-Q filed 8/5
+  (0001104659-26-090540): **no restatement, no material-weakness language**;
+  the securities class action is now in the notes — filed **2026-07-21,
+  N.D. Texas**, putative, vs the company and certain current/former
+  officers; the FLS still carries "the results of the review of prior
+  period accounting on certain projects." 8-K/A (8/5) is a clerical fix —
+  a mistitled table in Ex-99.1, nothing substantive. **Insider read
+  unchanged:** the seven Form 4s of 7/31 are all code-A director grants
+  (356 sh each, no price — sampled two); still zero open-market buying
+  since the June collapse.
+- **Earnings-print verification (broker tier).** Q2 adj EPS actual −$0.27
+  vs est −$0.26 (`verified=true`) — a one-cent miss on consensus, in a
+  quarter whose absolute level the June guide had already reset. Pattern
+  intact: beats through 2025, Q1'26 miss, Q2'26 in line. Next print
+  2026-11-02 pm, **unverified** date.
+- **Options read (mandatory):** path 2 only (Robinhood stopgap; PRIM not in
+  the 24-symbol CBOE catalog); liquidity gate failed — see §4's table.
+- **Dead ends (machine view, updated).** PRIM **entered composite's universe
+  ~2026-08-01** (it was absent on 7/30): informational-only `sa_fscore` 7.0
+  and `sa_fcf_yield` 3.45% (obs 2026-08-03), score 0 — never flagged, not
+  in portfolio [`composite.db`, read-only]. `sec_fundamentals.db` and
+  `earnings.db` still have no PRIM row.
+
+## 4. Valuation
+
+Reverse DCF, levered `fcf` paired with **market cap $4,524,861,579** (`hover`,
+live probe 2026-08-05; $83.40–83.48 × 54,254,935 sh), net-debt 0 per the
+pairing rule. ATM IV 71% > 50% ⇒ implied returns quoted to whole percents;
+these ranges are wide. Margins are mid-repair — the recovery scenarios
+front-load growth rather than using one flat rate, per the skill.
+
+No hurdle computed this run; the original compares against the stockanalysis
+WACC (10.17%).
+
+| scenario | base FCF | growth ×3yr | terminal | implied return |
+|---|---|---|---|---|
+| A guide-mid FY26, recovery front-loaded | $175M | +40%, +20%, +8% | 2.5% | **~9%** |
+| B normalized base | $300M | 5% ×3 | 2.5% | **~10%** |
+| C damaged (guide-low, slow repair) | $150M | 10%, 10%, 5% | 2.0% | **~6%** |
+| D FY25-peak base | $340M | 5% ×3 | 2.0% | **~10%** |
+| E TTM as-is ($88M), steep recovery | $88M | 60%, 40%, 10% | 2.5% | **~7%** |
+
+Base-flow provenance: A/C use the CFO's explicit FY26 FCF guide ($150–200M,
+call) — a better-grounded base than the prior run's ~$100M back-solve; B/D
+are the prior run's normalized/peak anchors (FY25 FCF $340M was itself
+flattered by AR-securitization ramp and mobilization advances — thread
+landed 7/30, unchanged); E is stockanalysis TTM `fcf` ($88.0M = ncfo $194.5M
++ capex −$106.5M). Read: at 10.2% WACC (stockanalysis), the stock is priced
+at-or-below cost of capital on *every* scenario except full normalization,
+which is exactly the case the UNKNOWNs sit under. Prior run at $85.66 printed
+the same ~6–10% band — the −2.6% price move and the firmer FCF guide roughly
+offset. Terminal-risk check unchanged (10-K Item 1A: fixed-price overruns —
+live; renewable-credit elimination — live via 48E/OB3): 2.0–2.5% terminal
+survives only because terminal cash flows lean on Utilities MSA + power
+delivery + gas-gen, not solar EPC. Asset-light check re-verified in kind:
+capex guide implies ~$120–140M FY26 (~1.8% of revenue); no take-or-pay
+purchase obligations found in the 10-K sweep (7/30, carried).
+
+**Options-implied move (path 2 only — Robinhood stopgap; PRIM not in the
+24-symbol CBOE catalog, no `options.db` history). Liquidity gate: FAILED** —
+call spread $1.40 = 27% of the $5.20 mark (OI 6, vol 20); put spread $1.50 =
+32% of the $4.65 mark (OI 13, vol 1). Treat as directional only. Aug 21
+expiry (16 DTE from the 2026-08-05 Phoenix run date), ATM strike 82.5
+(spot $83.48), quoted at the 8/5 close:
+
+| metric | value |
+|---|---|
+| spot | 83.48 |
+| dte (calendar days) | 16 |
+| ATM IV (mean 82.5C/82.5P) | 71.16% |
+| expected absolute move (MEAN, not a ceiling) | 11.80% |
+| 1-sigma move | 14.90% |
+| RV60 | 93.13% |
+| RV20 | 77.78% |
+| IV > RV60? | NO |
+| IV > RV20? | NO |
+
+Not elevated on either window — post-print IV crush against realized windows
+that still contain the May 6 −50% day (RV60) and the 7/28–29 slide plus
+today's −8.1% (RV20). Prior run's pre-print ATM IV was ~90%. The thesis makes
+no dated numeric move claim — the timing-refutation instrument is NOT
+APPLICABLE; recorded as the mandatory thread only.
+
+## 5. Falsifiers
+
+For the pass (what would reopen ownership):
+- Q3 print (2026-11-02, tentative) in-guide, three projects substantially
+  complete, no new charges — and management's Q4 renewables-bookings claim
+  intact with named awards starting to land.
+- Q4 renewables bookings $1.5–2B actually booked (the deciding evidence;
+  fully visible only at the Q4 print).
+- Price where the conservative base ($250M FCF) implies ≥ ~12%/yr — roughly
+  market cap ≤ $3.3B (~$60/share), unchanged from the prior run.
+
+For any future long: a third guidance cut, a seventh distressed project or
+re-charge on the six, CFO departure, restatement/material-weakness
+disclosure, covenant amendment or waiver, or renewables bookings promised
+again for "next quarter" a third time.
+
+**Reopen trigger:** 2026-11-02: prim-q3-completions-and-q4-renewables-bookings
+— Q3 print (tentative date): three completions confirmed, in-guide, and the
+first read on Q4 renewables bookings.
+
+## 6. UNKNOWNs
+
+1. **Ring-fencing** — one confirming quarter; unverifiable until the year-end
+   project completes. Still *is* the pass rather than killing it.
+2. **Q4 renewables bookings** — the load-bearing demand evidence; resolves
+   at the Q4 print (first read at Q3).
+3. **FY26 guide reliability** — low-end arithmetic; resolves 2026-11-02.
+4. **Class-action/accounting-review scope** — 10-Q names the suit; FLS
+   language persists; a restatement would kill any long thesis. Watch the
+   10-Q/8-K stream and lead-plaintiff docket (deadline 2026-09-21, prior
+   run's low-confidence sourcing).
+5. **New-CEO comp structure** — DEF 14A (2026-03-20) still unread; third
+   carry. Read it at the next reopen.
+6. **Covenant thresholds** — compliance asserted in the 10-Q; the ratios'
+   definitions and levels (credit-agreement exhibits) remain unread.
+
+## 7. Sources
+
+- **Primary:** Q2 earnings 8-K + Ex-99.1 (2026-08-04, accession
+  0001361538-26-000021; guidance, segments, backlog table, buyback,
+  liquidity); 8-K/A (2026-08-05, 0001361538-26-000023 — clerical table-title
+  fix); 10-Q Q2'26 (2026-08-05, 0001104659-26-090540; class action note,
+  revolver/covenants, Fourth A&R Credit Agreement, FLS language); Form 4
+  cluster 2026-07-31 (seven filings, director grants — two sampled);
+  EDGAR submissions index CIK 1361538. Prior-run primaries (10-K FY2025,
+  Q1'26 10-Q, 6/22 8-K) carried where cited.
+- **stockanalysis.com (vetted exception):** live 2026-08-05:
+  `/stocks/PRIM/statistics/` (market cap hover 4,524,861,579; TTM fcf 88.0M,
+  ncfo 194.5M, capex −106.5M; debt 1,111.5M; WACC 10.17%), `/stocks/PRIM/`
+  (news feed), `/stocks/PRIM/filings/` (Quartr PDFs — Q2 release fetched),
+  `/stocks/PRIM/transcripts/661403-q2-2026/` (full Q2 call, 2026-08-05,
+  134 turns — Vadlamudi/Dodgen prepared remarks + Q&A).
+- **Broker/market microstructure:** Robinhood MCP — no integrated official
+  source covers these fields for PRIM: live quote ($83.48 close 8/5,
+  prior close $90.85); daily bars Mar 25–Aug 4 + today's close (RV closes
+  array); Aug 21 82.5 call/put quotes (marks, IV, OI, spreads);
+  `get_earnings_results` (Q2 −0.27 vs −0.26 est, verified; next print
+  2026-11-02 pm, unverified). Actuals are non-GAAP; GAAP cross-check
+  unavailable (no `sec_fundamentals.db` row — coverage gap, carried).
+- **Reference data:** none used.
+- **Point-in-time repo DBs:** `composite.db` — PRIM entered
+  the universe 2026-08-01, informational-only (`sa_fscore` 7.0,
+  `sa_fcf_yield` 3.45%, obs 2026-08-03), never flagged; `sec_fundamentals.db`
+  and `earnings.db` still no PRIM row. Read-only.
+- **Low-confidence:** TheFly/GlobeNewsWire headlines in the ticker
+  feed (consensus framing, law-firm notices); prior run's class-period dates
+  (press-wire sourced).
+
+## Kill-thesis record
+
+**Conditions=7, refuted=0, unknown=4 (1, 2, 3, 6), survived=2 (4, 5),
+contingent=1 (7, counted with the unknowns for the ledger).** Nothing
+refuted → not FLAWED; four unattackable conditions → **UNPROVEN**.
+
+**Seven load-bearing conditions** for owning PRIM at $83.48, attacked:
+
+1. **Ring-fencing holds — no seventh project, no re-charge on the six.** —
+   **UNKNOWN, evidence improved.** First confirming quarter: guide held six
+   weeks after being set, set stayed at six, two complete, schedule intact,
+   third-party expert now focused on the one year-end project with weekly
+   updates [call]. Against it: management claimed containment at Q4'25 and
+   Q1'26 and was wrong both times, and the E&C base rate (Fluor, Granite,
+   Tutor Perini) is follow-on charges for 4–8+ quarters. One good quarter
+   does not close a base-rate gap; unverifiable until the last project
+   completes (year-end).
+2. **The FY26 guide is achievable.** — **UNKNOWN (not creditable).** The
+   call's own arithmetic sums the quarter-guides to ~$282M vs the $275–325M
+   range — low-end-resting, CFO's admission. H2 needs ~3x H1 EBITDA. The
+   mechanism (loss recognition complete + seasonality + ramp) is coherent
+   and the Q2 "low point" claim is specific and falsifiable at the next
+   print — but it is the same forecasting process that produced two cuts in
+   eight weeks. Resolves 2026-11-02.
+3. **Renewables demand returns post-48E (book-to-bill ≥ 1 in 2H, growth in
+   2027).** — **UNKNOWN — the promise rolled forward.** Q2 delivered one
+   ~$200M award; the $1.5–2B is now "primarily Q4"; a signing already moved
+   Q3→Q4; 2027 downgraded to "modest growth off a reset year." The $16B
+   funnel is self-reported CRM. Nothing here is refuted — solar procurement
+   is genuinely lumpy and safe-harbor re-engineering delayed clients — but
+   for the second consecutive quarter the deciding evidence does not exist.
+4. **Demand ex-renewables is durable.** — **SURVIVED.** $3.9B Q2 bookings
+   are contracts, not funnel: $1.4B gas-gen (simple-cycle, named
+   geographies), +$1.5B utilities MSA, PayneCrest +$250M own bookings.
+   Backlog $13.86B is a record with renewables only ~$2B of it. Turbine-slot
+   and PPA screening claimed as selection criteria. The Texas data-center
+   pause memo caps exposure at "10–15% of the total portfolio" (CEO). The
+   one soft spot — Utilities gross margin 11.9% vs 14.1% — has a disclosed,
+   checkable mechanism (BEAD transition + closeout comps) and a maintained
+   FY target; watch, not refuted.
+5. **Balance sheet survives the trough.** — **SURVIVED (thresholds unread).**
+   Revolver undrawn, $959M liquidity, covenant-compliant per the fresh 10-Q,
+   leverage peaking ~2x on trough EBITDA with a stated path down. A seventh
+   project would stress this; today's filings support it.
+6. **The legal/accounting tail stays a tail.** — **UNKNOWN.** 10-Q: no
+   restatement, no material weakness — and the class action (7/21, N.D.
+   Tex.) is now docketed, with "review of prior period accounting" still in
+   the FLS. A post-crash securities suit is base-rate normal and usually
+   insured; discovery risk is unbounded from outside. Absence of the closing
+   evidence keeps it UNKNOWN.
+7. **The price compensates for 1–6.** — **CONTINGENT, not credited.** ~9–10%
+   implied on recovery scenarios vs 10.2% WACC; ~6–7% on damaged ones. If
+   conditions 1–3 all resolve favorably the stock is adequately-but-not-
+   generously priced; the prior run's conservative-case entry (~$60 for
+   ~12% on a $250M base) remains far below. As an ownership condition today
+   it fails to clear on any already-verifiable scenario — but since it
+   turns entirely on the UNKNOWNs above, it routes UNKNOWN-contingent
+   rather than refuted.
+
+**Standing checks.** *Base rate:* E&C cost-overrun sagas produce follow-on
+charges for 4–8+ quarters after first disclosure; PRIM is 3 quarters in with
+1 clean print — the base rate still leans against condition 1. Turnaround
+guides that survive their first quarter are more credible than ones that
+don't; one data point. *Short case (strongest form):* the third forecast in
+eight weeks is resting on its own low end; H2 needs a 3x EBITDA ramp; the
+renewables bookings that justify any terminal value keep sliding right; the
+"clean" Utilities segment just compressed 220bp of gross margin; FCF was
+halved while debt doubled YoY; leverage peaks ~2x on trough EBITDA into a
+class action over prior-period accounting; and not one insider has bought a
+share since the crash — every post-crash Form 4 is a grant. Counter: the
+backlog is contractual and record, gas-gen/power-delivery demand is
+corroborated by bookings not claims, and the balance sheet has an undrawn
+revolver. *Management incentives:* new-CEO comp structure still unread
+(DEF 14A 3/20/26 — carried twice now); the call disclosed discretionary
+RSU-heavy retention for field teams, aligned but unquantified. *Disconfirming
+search:* the guide-arithmetic catch and the Utilities margin wobble are this
+run's finds; no post-call 8-K or news contradicts the call's framing
+(one-day-old window). *Moat as mechanism:* capacity + incumbency in a
+supply-short market — real but cyclical; unchanged.
+
+**Options timing check:** no dated numeric move claim — NOT APPLICABLE by
+procedure; path-2 read recorded in §4, liquidity gate failed (disclosure:
+the check could not have moved the verdict on this chain).
+
+**Closest attack:** condition 2 — the maintained guide's
+own quarter-shape sums to its low end, so "maintained" is doing less work
+than the headline suggests; one more soft month makes it a third cut.
+
+**Flip evidence:** (toward SOUND/buy) Q3 print in-range with the three
+projects substantially complete AND Q4 renewables bookings actually landing
+$1.5–2B — or a price near the conservative-case entry (~$60); (toward
+FLAWED) a seventh project, a re-charge, a Q3 miss, or renewables bookings
+slipping again.

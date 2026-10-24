@@ -1,0 +1,386 @@
+# PCT — PureCycle Technologies, Inc. — 2026-10-18
+
+Price $3.07 (official close 2026-10-16; after-hours $3.34 2026-10-18 evening
+ET, thin) · market cap $616.8M · EV $931.5M, net debt $314.7M · next earnings
+2026-11-05 AMC (unverified date)
+
+Entry path: composite flag (`stocks_rsi` 17.9 → +2, `si_days_to_cover` 16.9
+→ +1; snapshot 110). Unattended scheduled run.
+
+## 1. Verdict and thesis
+
+> **PASS at $3.07.** kill-thesis: **FLAWED** — conditions=4 (4 plausible),
+> refuted=1, unknown=1, pending=2, not_obtained=0.
+
+**p(beat SPY, 63 td): 0.35** · kill-thesis: 0.33
+
+**Disputed expectation:** the market prices PCT as a ~$617M option on Ironton
+ramping and the Thailand/Antwerp copies getting funded; a Q3 print
+(2026-11-05) showing utilization near the 40–50% breakeven, or Thailand
+financing closing without a common raise, forces the revision up. Another
+sub-$6M revenue quarter forces it down.
+
+PureCycle is a pre-commercial company that sells purified recycled
+polypropylene from one plant. The plant runs at a fraction of nameplate. It
+burns about $200M a year against $237M of liquidity plus an undrawn $200M
+revolver lent by its largest holder. The Phase 0 fast kill applies on both
+counts the skill names: it is persistently loss-making (operating loss
+-$166M on $13.8M TTM revenue) and leveraged against zero cash generation
+($470M debt principal against -$212M FCF). The fast kill is confirmed, not
+just triggered: the H2-2026 Ironton breakeven management keeps reaffirming
+needs roughly 3× Q2's volume in the half that is already three-quarters
+gone. Even at nameplate, Ironton alone cannot carry today's market cap at
+any plausible price per pound. Owning it is a bet on capital access, not on
+a business.
+
+**Closest attack:** the funding condition (C3). The undrawn $200M Sylebra
+revolver, extended to 2028-09-30 on 2026-08-28, pushes the cash cliff into
+2027–28. A heavily dilutive raise is therefore not forced before the Q3 print.
+
+**Load-bearing conditions (bull case):**
+
+1. Ironton reaches sustained ≥40–50% utilization (management's stated
+   breakeven) and plant-level EBITDA breakeven in H2 2026 — *plausible*:
+   management guidance reaffirmed on the 2026-08-06 call; settled by the Q3
+   print 2026-11-05 and the Q4 print 2027-02-25.
+2. Branded demand (P&G Downy/Tide caps, ZzzQuil lids; 42-brand pipeline)
+   converts into the reaffirmed "25–50M lb near-term" sales ramp —
+   *plausible*: settled by Q3/Q4 reported volumes, 2026-11-05 onward.
+3. Liquidity ($236.9M at 2026-06-30 plus the undrawn $200M Sylebra revolver)
+   funds the Ironton ramp and PCT's Thailand equity share without a further
+   heavily dilutive common raise at today's price — *plausible*: settled by
+   Thailand financial close, targeted by year-end 2026 (8-K).
+4. Ironton's unit economics at scale (realized price per lb less variable
+   cost) cover ~$100M/yr of fixed operating spend with room left over —
+   *plausible*: inferred from management's 40–50% breakeven figure; the
+   price per lb is never disclosed.
+
+Replication economics (Thailand ~$250M, Antwerp) earning above the cost of
+equity once built is *possible*, so it is option value (§6), not a numbered
+condition.
+
+**Dominant shared risk factor:** equity-financing window for pre-profit,
+capital-dependent small caps — holdings unavailable in this session.
+
+## 2. Business
+
+**Created:** PureCycle's solvent-based process strips colour, odour and
+contaminants from waste polypropylene. It yields "PureFive" resin that it
+markets as near-virgin quality. That lets consumer brands put recycled
+content into food-adjacent and cap/closure applications where mechanically
+recycled PP fails spec. The customer pays for a sustainability claim that
+holds up in spec-sensitive parts. P&G (Downy caps in commercial production,
+Tide caps slated for Q3 retail, ZzzQuil lids targeted Q4) holds an offtake
+for up to 15% of Ironton capacity (Q2 2026 call).
+
+**Captured:** three mechanisms. (a) Resin sold by the pound at a premium to
+virgin PP. Management calls branded pricing "robust" and discloses no per-lb
+price; Q2 revenue $4.51M against ~4.5M lb PureFive produced implies roughly
+$1.00/lb, but revenue includes compounded volume carrying additives and
+virgin PP, so that figure is mixed and approximate. (b) In-house compounding
+("one-pellet service") sold at a further premium. (c) Marketable co-product
+from the ~10% feedstock-to-resin gap. Licensing/JV economics for Thailand
+(with IRPC land lease) and Antwerp are not disclosed.
+
+**Protected:** a mechanism exists but is unproven at commercial scale: a
+licensed P&G-originated purification process plus the know-how earned
+debugging Ironton since 2022. That know-how is what took four years and
+$1B+ of assets (`sec_fundamentals.db` assets $1,002.6M). No competitor
+needs to copy it while PureCycle cannot yet run its own plant profitably.
+The protection is real only if the economics are. Moat state: unassessed
+domain science (solvent purification yield and cost at scale) — I cannot
+evaluate the chemistry. It is bounded only by the operating record:
+demonstrated 12,000 lb/hr peak, not routine (Q2 call).
+
+**Control:** one class of common stock. No legal controller, but Sylebra
+Capital is the effective one. It is a >5% holder (13D/A 2026-06-12), the
+sole lender on the $200M revolver, holder of $110.7M of related-party
+revenue bonds, and was repurchased out of $50M of 7.25% converts in June at
+$57.0M. Daniel Gibson (Sylebra) is an affiliate. Activist or unsolicited
+paths run through Sylebra's consent as lender. Takeover protections beyond
+that: NOT OBTAINED (charter not read).
+
+**Operating leverage (Phase 0): negative.** Revenue rose from nil to $13.8M
+TTM while operating loss widened, then flattened at a much worse level. Cost
+of operations scales with the plant, not with sales.
+
+| period | revenue | gross profit | operating income |
+|---|---|---|---|
+| FY2021 | — | — | -$69.6M |
+| FY2022 | — | — | -$81.3M |
+| FY2023 | — | -$52.0M | -$113.9M |
+| FY2024 | — | -$85.8M | -$145.4M |
+| FY2025 | $8.4M | -$101.0M | -$166.4M |
+| TTM 6/2026 | $13.8M | -$107.7M | -$166.2M |
+
+## 3. Threads pulled
+
+- **The Q2 2026 net loss is mostly not operating.** Net loss was -$142.2M,
+  against an operating loss of -$41.3M. The gap is a $52.5M warrant
+  fair-value charge, a $34.5M loss on extinguishment (repurchasing $216.0M of
+  7.25% converts for $246.3M incl. interest) and $15.4M of interest expense
+  (10-Q R4). The operating burn is the number that matters: ~$41M/quarter.
+- **June 2026 recapitalization.** It sold 17.57M shares at $8.21, plus the
+  2.28M-share option (424B5 2026-06-12), and $287.5M of 4.75% converts with
+  a $11.08 conversion price. The proceeds bought back most of the 7.25%
+  Green converts ($14.82 conversion). Net: put dates moved from 2027 to 2030
+  and liquidity rose to $236.9M (Q2 call). Debt principal rose from $407.0M
+  to $470.2M (10-Q R44). The stock is now 63% below the offering price.
+- **Warrant proceeds are not liquidity.** Management lists "~$273M potential
+  warrant proceeds" as a source (Q2 call). Every series strikes at $11.50
+  (10-Q R65): 3.7× spot. 23.65M of the 31.71M warrants expire 2027-03-17.
+  Treat that source as zero.
+- **Burn vs runway.** TTM operating cash flow -$159.8M, capex -$52.4M.
+  FY2026 project spend is guided to $45–50M; opex runs $8.3M/month ex
+  materials (Q2 call). Liquidity of $236.9M at 6/30 covers ~5 quarters of
+  that burn. The $200M revolver (now maturing 2028-09-30, extension fee
+  undisclosed, 8-K 2026-08-28) adds ~4. Revenue bonds have ~$76M undrawn
+  (Q2 call). No cash cliff before late 2027, but no margin for the Thailand
+  equity share either.
+- **The H2 2026 breakeven is arithmetically far off.** Nameplate is 130M
+  lb/yr (~32.5M lb/quarter). Q2 produced ~4.5M lb (~14%, a turnaround
+  quarter). Management's breakeven is 40–50% utilization, about 13–16M
+  lb/quarter. The CFO declined to confirm 12,000 lb/hr as routine, and
+  "production will always follow the commercial" (Q2 call), so output is
+  demand-gated. Q2 revenue $4.5M missed the ~$5.9M consensus (chartmill,
+  low-confidence).
+- **Earnings pattern (Robinhood).** Over 6 reported quarters: 3 beats, 3
+  misses. The actuals are not consistently GAAP. Q2 2026 "actual" is -$0.33
+  against GAAP -$0.80 (10-Q, matching `sec_fundamentals.db`
+  `eps_diluted` -0.80); Q2 2025's -$0.81 is GAAP. The broker figure strips
+  the warrant charge some quarters and not others, so the pattern carries
+  little signal.
+- **Post-call sweep (2026-08-06 → today).** EDGAR shows one 8-K (the revolver
+  extension, 2026-08-28) and Forms 4. Director Fernando Musa bought 15,479
+  shares at $6.38 on 2026-09-04 (open market, not 10b5-1). The GC's
+  2026-09-23 filing was a tax-withholding F, not a sale. No 144s and no new
+  offering. The slide from ~$7.2 (mid-Aug) to $3.07 was a steady grind with
+  no gap day (Robinhood daily bars). Volume peaked on 9/24, 9/30 and 10/8
+  (~10M shares), with short interest 36% of float. No single news event
+  explains it; it reads as the market pricing the next raise before the Q3
+  print.
+- **Composite flag is pure microstructure.** RSI 17.9 and 16.9 days to cover
+  — the dislocation-scanner pattern CLAUDE.md warns about. No fundamental
+  signal flagged it.
+- **Options read (mandatory):** path 2 (Robinhood) only; PCT is not in the
+  CBOE catalog. The 2026-11-06 expiry brackets the 2026-11-05 AMC print.
+  Liquidity gate FAILED → UNRELIABLE. Table in §4.
+- **Dead ends:** a search for a September production outage, guidance cut or
+  financing event found none (two web searches, EDGAR list). The Denham-Blythe
+  arbitration ($20.3M) is already paid, a Q2 cash outflow (10-Q R56,
+  chartmill). Augusta was not mentioned on the call. The Thailand lease is
+  small ($0.7M/yr, 10-Q R56). None of these moved the call.
+
+## 4. Valuation
+
+**Inputs and pairing.** TTM levered FCF -$212,250,000 (operating cash flow
+-$159.83M + capex -$52.41M) against market cap $616,777,767 (statistics
+page). Net debt is 0 by the pairing rule. SBC $9.68M TTM (`stocks.db`) is
+immaterial next to the burn. No minority interests.
+
+**Hurdle:** rf 5.10% (DGS10, 2026-10-15) + beta 2.63 × ERP 4.28% (Damodaran
+implied ERP as of 2026-08-01, from the anchors reference; curl is not granted
+headless) = **16.36%**. With beta clamped to the 0.8–1.2 band it is 10.24%.
+The terminal-growth ceiling is the 10-year breakeven T10YIE 2.35%
+(2026-10-16).
+
+`reverse_dcf` refused: `refused: base_fcf must be positive, got
+-212250000.0` (exit 2). The honest arithmetic in its place:
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| TTM, as reported | -$212M | — | 2.35% | refused (exit 2) | n/a |
+| Required steady FCF from today, raw hurdle | $86M/yr | 0% | 2.35% | 16% | 0bp by construction |
+| Required steady FCF from today, clamped hurdle | $48M/yr | 0% | 2.35% | 10% | 0bp by construction |
+
+The inversion is `market cap × (hurdle − g)`: $617M × (16.36% − 2.35%) ≈
+$86M per year, every year from now. Ironton carries ~$100M/yr of fixed
+operating spend ($8.3M/month), so clearing the raw hurdle needs ~$186M/yr of
+contribution. At nameplate (130M lb) that is ~$1.43/lb of contribution after
+feedstock and variable cost. Virgin homopolymer PP contract ran ~$0.42–0.45/lb
+in Dec 2025–Jan 2026 (Argus sample report, low-confidence). Even at 3×
+virgin, nameplate revenue is ~$175M before any cost of goods. Ironton alone
+cannot justify the market cap; the price rests on funded replication.
+
+- **Reinvestment/terminal ROE:** not computable on a negative base. The
+  replication path is reinvestment-heavy by construction (Thailand ~$250M),
+  so growth is paid for with new capital. At $3.07 that capital is
+  expensive.
+- **Market share:** at nameplate, Ironton is ~59 kt/yr. Global PP demand is
+  far larger (UNKNOWN figure, not sourced this run), so market size is not
+  the binding constraint. The premium-priced, spec-sensitive niche is, and
+  its size is UNKNOWN.
+- **Item 1A terminal risk:** NOT OBTAINED (10-K risk factors not read; June
+  8-K Ex. 99.2 updated risk factors not read). The named structural risk is
+  inferred: whether solvent purification can run at a cost that clears a
+  premium virgin PP buyers will keep paying. No terminal rate is defended
+  because no positive base exists.
+- **Distribution clamp:** n/a (no implied return).
+- **Leverage gate:** not triggered. Net debt/EV is 34%, below the half-of-EV
+  line; book equity is +$331.0M. No going-concern language was seen in the
+  10-Q note list (no liquidity note; MD&A NOT OBTAINED). Altman Z is -0.03
+  (statistics page). The equity-option lens is omitted.
+
+**Options-implied move** — path 2 (Robinhood), $3.00 strike straddle, expiry
+2026-11-06, 19 DTE from 2026-10-18. It brackets the Q3 print (2026-11-05
+AMC, repricing at the 11-06 open). Call mark $0.40 (IV 135.6%), put mark
+$0.30 (IV 121.2%); quotes as of 2026-10-16 close.
+
+| metric | value |
+|---|---|
+| spot | 3.07 |
+| expected absolute move | 22.80% (MEAN, not a ceiling) |
+| 1-σ move | 29.30% |
+| ATM IV | 128.40% |
+| RV60 | 63.34% |
+| RV20 | 58.89% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Both windows read YES, so IV is "elevated" by the rule. But the expiry
+spans the print and the trailing windows contain none, so this is the
+path-2 stopgap's known bias. Liquidity gate: **FAILED → UNRELIABLE.** Spread
+$0.20 on a $0.40/$0.30 mark is 50–67% (>10%); volume 0; open interest 10
+and 3. Timing check: not applicable. The pass makes no dated move claim,
+and the gate failure forbids the numbers from moving a verdict. ATM IV
+above 50% also caps any implied-return figure at whole percents.
+
+## 5. Falsifiers
+
+For the pass (flip toward buy):
+
+- **Shift —** Q3 or Q4 reported PureFive sales ≥13M lb in a quarter
+  (≈40% utilization), with quarterly revenue ≥$15M. That is the breakeven
+  band management names.
+- **Shift —** Thailand financial close with project-level debt and partner
+  equity covering PCT's share, and no common raise below $5.
+- **Shift —** disclosure of realized price per lb or contribution per lb
+  that implies Ironton at nameplate covers ~$100M/yr fixed spend with
+  ≥$50M left over.
+
+For an owner (sell):
+
+- **Break —** a common or equity-linked raise at or below the current price
+  before Ironton reaches breakeven: the repeat-dilution path.
+- **Break —** draw on the Sylebra revolver to fund operating burn rather
+  than project capex, or any revolver amendment tightening terms.
+- **Shift —** Q3 revenue below $6M or a dropped H2-2026 breakeven target.
+
+**Reopen trigger:** 2026-11-05: pct-q3-print-ironton-sales-ge-13m-lb-or-revenue-ge-15m-and-thailand-financing-without-sub-5-dollar-raise
+
+## 6. UNKNOWNs
+
+1. UNKNOWN — realized price per lb and variable cost per lb of PureFive. No
+   filing breaks it out; management says only "robust." Reported gross margin
+   at ~14% utilization is dominated by fixed-cost absorption and cannot
+   reveal it. This is load-bearing for C4 and sustains the PASS.
+2. PENDING 2026-11-05 — Q3 production, sales volume and utilization (Q3
+   10-Q/print).
+3. PENDING 2026-12-31 — Thailand financial-close terms and PCT's equity
+   contribution (8-K at close, targeted by year-end).
+4. NOT OBTAINED — 10-Q MD&A liquidity discussion (going-concern language
+   check) and 10-K Item 1A. Route: `pct-20260630.htm` main document; WebFetch
+   on the 4 MB file would truncate. Not load-bearing after the Phase 0 kill.
+5. NOT OBTAINED — Sylebra revolver interest rate, collateral, covenants and
+   the 12th-amendment extension fee (8-K 2026-08-28 Ex. 10.1 not read).
+6. NOT OBTAINED — Q1 2026 production volume (Q1 call not read).
+7. Option value (*possible*): Thailand and Antwerp plants earn above the
+   cost of equity once built. That would make Ironton's sunk know-how a
+   platform. Not a condition.
+
+## 7. Sources
+
+- **Primary:** PureCycle 10-Q for Q2 2026 (filed 2026-08-06; R4 income
+  statement, R44 debt schedule, R46 convertible notes, R56 commitments, R65
+  warrants, FilingSummary.xml). 8-K 2026-08-28 (Twelfth Amendment to the
+  Credit Agreement). 8-K 2026-06-10 (offering announcement, 11th
+  amendment). 424B5 2026-06-12 (common offering at $8.21). Forms 4
+  2026-09-08 (Musa purchase) and 2026-09-25 (Kalter tax withholding). EDGAR
+  filing list for CIK 1830033. Q2 2026 earnings call transcript (2026-08-06,
+  primary-transcribed via stockanalysis.com).
+- **stockanalysis.com (vetted exception):** statistics page (market cap,
+  EV, cash, debt, TTM FCF, beta, short interest, Altman Z); annual and
+  quarterly financials FY2021–TTM; transcript index.
+- **Broker/market microstructure:** Robinhood MCP. Admissible because no
+  integrated official source covers these fields for PCT: live quote and
+  official close (2026-10-16); daily bars 2026-06-10 to 2026-10-16;
+  option chain and $3 straddle quotes for 2026-11-06. The EPS
+  estimate-vs-actual history was used for estimates only; actuals were
+  cross-checked to the 10-Q.
+- **Reference data:** Damodaran implied ERP 4.28% (as of 2026-08-01, via
+  `references/damodaran-anchors.md`; live fetch not granted). Argus Global
+  Polypropylene sample reports (Jan–Feb 2026 US HoPP contract
+  $937–981/t).
+- **Point-in-time repo DBs:** `stocks.db` v_latest (close $3.22, beta 2.63,
+  institutions 72.1%, insiders 2.5%, SBC $9.68M, 5 analysts).
+  `sec_fundamentals.db` v_screener (assets $1,002.6M, equity $15.5M —
+  stale vs the live $331.0M book; eps_diluted -0.80). `fred.db` DGS10 5.10
+  (2026-10-15), T10YIE 2.35 (2026-10-16). `composite.db` snapshot 110:
+  bullish 2, score_sum 3, worst staleness 48 days. `earnings.db`: no PCT
+  row.
+- **Low-confidence:** chartmill (Q2 revenue vs $5.9M consensus); Seeking
+  Alpha headline (37% selloff 9/18–10/12); AAII/MarketBeat price colour.
+
+## Kill-thesis record
+
+> FLAWED — conditions=4, refuted=1, unknown=1, pending=2, not_obtained=0.
+> reopen=2026-11-05.
+
+**Per-condition adjudication (bull case):**
+
+1. Ironton ≥40–50% utilization and breakeven in H2 2026 — **REFUTED.**
+   Attack: the trend and the arithmetic. Q2 output ~4.5M lb against ~13–16M
+   lb/quarter needed. Q3 had closed by the time of this run with no
+   pre-announcement. The CFO would not call 12,000 lb/hr routine, and output
+   is demand-gated. Revenue grew $1.58M → $4.51M over five quarters, and
+   breakeven needs another ~3× in one or two quarters. Base rate: every
+   Ironton timeline since 2022 slipped (operating losses in each year of the
+   §2 table). Repairable as a later-dated condition, not in H2 2026.
+2. Branded demand → 25–50M lb near-term ramp — **PENDING 2026-11-05.** The
+   units are ambiguous even on the call ($ in prepared remarks, lb in Q&A),
+   and "near frame" is undated. The P&G caps are real but cover up to 15%
+   of capacity. No disclosure today refutes it.
+3. Funding without a heavily dilutive raise at today's price —
+   **PENDING 2026-12-31.** The revolver extension to 2028 is the strongest
+   evidence for it. Against it: the warrant "source" is 3.7× out of the
+   money, the lender is a related party, and Thailand's equity share is
+   undisclosed. It survives today only because the cash cliff is ≥4 quarters
+   out.
+4. Unit economics at scale cover fixed spend — **UNKNOWN.** No filing
+   carries price or variable cost per lb. The only bound (breakeven at
+   40–50% utilization) is management's and is plant-level, not corporate.
+   It is also not a route-able miss: no business-combination note or segment
+   data exists to triangulate it.
+
+**Standing checks.** Base rate: fewer than a third of new firms survive
+seven years (BLS); first-of-a-kind chemical-recycling plants have a long
+record of scale-up slips, and PCT's own record matches. The short case:
+36% of float is short (statistics page). The shorts see a company that
+must keep issuing equity until a single plant proves economics. Its
+"liquidity" counts dead warrants, and its controller-lender is paid ahead of
+common. Management incentives: equity compensation is modest (SBC $9.7M) and
+a director bought at $6.38. But management is paid to keep the project
+alive, which is aligned with raising capital, not with the per-share value
+of it. Disconfirming search: two searches for September bad news found
+nothing. The decline is unexplained, and that cuts both ways. Moat: a
+mechanism (process know-how plus a licensed technology), not a checkbox,
+but unproven at scale; the domain science is UNKNOWN to this run.
+
+**Statistical checks:** the composite flag rests on RSI and days-to-cover.
+No forward-return evidence for either was read for this name; effective
+n = 1 episode. No backtest claim in the thesis.
+
+**Options-timing check:** not applicable. No dated move claim in the bull
+case, and the path-2 chain failed the liquidity gate (UNRELIABLE).
+
+**Closest attack:** C3. The Sylebra revolver extension removes the
+near-term cash cliff, so the "forced dilution" leg of the short case is a
+2027 problem, not a Q4 2026 one.
+
+**Flip evidence:** toward SOUND, a Q3/Q4 print with ≥13M lb sold in a
+quarter and Thailand closed without a sub-$5 common raise (C1 restated to
+a 2027 date would then survive). Toward a harder kill, a common raise at or
+below spot, or a revolver draw for operating burn, before the Q4 print.
+
+**p(beat SPY, 63 td):** 0.33 — high-vol, heavily shorted cash-burner into a
+print. The right tail is real (IV 128%), but the median path underperforms.

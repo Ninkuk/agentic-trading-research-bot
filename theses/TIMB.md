@@ -1,0 +1,600 @@
+# TIMB — TIM S.A. — 2026-10-13
+
+Price $18.18 (official close, 2026-10-13) · market cap $8.65B · next earnings
+2026-11-03 AMC (Robinhood calendar verified; `stocks.db` agrees on 11-03 AMC)
+
+Unattended scheduled run. Supersedes `research/TIMB-2026-09-12.md` (**BUY at
+$18.88**, kill-thesis UNPROVEN) three weeks before its 2026-11-02 reopen
+trigger, which has slid to 2026-11-03. No new financial statements exist since
+that run: the last report is still Q2'26 (2026-07-29). So this run does three
+things. It re-prices the thesis at a higher risk-free rate and a lower share
+price. It sweeps the six TIM S.A. 6-Ks filed since 2026-09-11. And it takes a
+second attempt at the one NOT OBTAINED item, Poste Italiane's plan for TIM
+Brasil.
+
+| prior falsifier | actual | status |
+|---|---|---|
+| 1. MSR below IPCA for a second quarter while EBITDA-AL growth falls below inflation | No print since Q2'26. Off-cycle evidence cuts against: BofA (2026-10-13) says "continued competitive pressure could lead to further downward earnings revisions"; Safra (≈2026-08-20, press) puts TIM's ARPU growth at −0.2% in Q2'26, down from ~3.5% | HALF-TRIGGERED (unchanged; 1 of 2) |
+| 2. Disbursed lease cash outgrowing service revenue two straight quarters | No print. New: on 2026-09-17 the board approved terms for negotiating a **new unified Master Lease Agreement with SBA Torres** (6-K acc. 0001292814-26-004720) | NOT TRIGGERED (the input is being renegotiated) |
+| 3. Large FTTH/ISP acquisition or capex above ~R$5B/yr | No deal announced. The same board meeting approved unnamed "strategic projects… one project requires regulatory approvals as a condition precedent." No material fact followed | NOT TRIGGERED (watch item) |
+| 4. Remuneration guided below ~R$3.5B, or Program 9 abandoned | R$515M of interest on equity declared 2026-09-17, record date 2026-09-22. 13.2M treasury shares cancelled, capital now 2,378,925,889 shares, and the minutes say the buyback "remains in effect" | NOT TRIGGERED |
+| 5. Poste restructuring TIM Brasil (merger, incorporação, delisting) instead of a block sale | Poste holds **86.952%** of Telecom Italia after the reopened offer and market purchases (TIM 6-K, 2026-10-02). TIM's 2026-09-18 material fact says Poste "has become… the indirect controlling shareholder of TIM Brasil" and nothing more. No restructuring announced | NOT TRIGGERED |
+| 6. A contingency moved to probable above R$2B, or the possible tail above ~R$32B | No ITR since Jun 2026 (R$27.49B). The Fiscal Council minutes (2026-09-17) describe FUST–FUNTTEL settlement and amnesty programmes and "precedents favorable to the Company" | NOT TRIGGERED |
+| 7. Effective tax above ~15% for two quarters, or any limit on IoC deductibility | No print. No IoC change found | NOT TRIGGERED (pending 11-03) |
+| 8. BRL depreciating >9%/yr while BRL EBITDA-AL growth falls below 5% | The BRL **appreciated** ~4.7% (PTAX 5.2238 → 4.9892, 2026-10-02 → 10-09) after the 2026-10-04 first-round election | NOT TRIGGERED (moved away) |
+
+## 1. Verdict and thesis
+
+**BUY at $18.18.** kill-thesis: **UNPROVEN** — conditions=8 (2 probable,
+6 plausible), refuted=0, unknown=0, pending=4, not_obtained=1.
+
+**p(beat SPY, 63 td): 0.52** · kill-thesis: 0.47
+**Disputed expectation:** at $18.18 the market prices TIM at ~8.1× its
+tax-normalized, lease-adjusted owner FCF ($1.064B against $8.65B). Against an
+11.22% hurdle, that is consistent with USD owner FCF shrinking about 1% a year
+forever. The thesis is that it does not. The Q3'26 print on 2026-11-03 revises
+the expectation either way: it carries the MSR-vs-IPCA counter, the lease-cash
+counter and the first clean tax-rate read.
+
+The business and the cash machine are unchanged. What changed is the price
+(−3.7%), the US 10-year (+29bp, to 5.24%), and the stock's behaviour.
+Re-priced, the base case clears the hurdle by about the same margin as before
+(+403bp vs +382bp). The zero-growth floor is a little wider (+108bp vs +87bp).
+The break-even decline is now ~−1%/yr in USD, from ~−1.5%.
+
+So the BUY stands on valuation. One fact is new and points the other way. In
+the week after Brazil's first-round election, Brazilian assets re-rated hard:
+EWZ +14.0% (2026-10-02 → 10-12), Ibovespa at a record, BRL +4.7%. TIMB rose
+**0.8%**, and Vivo (VIV) rose 5.4% in the same window. In BRL, TIMS3 fell.
+A stock that cannot rise with its own market is a market that is pricing an
+idiosyncratic problem. The likeliest one is the mobile price competition in
+condition 3. BofA's 2026-10-13 note frames it that way while upgrading the
+stock to Neutral.
+
+**Closest attack:** the relative-performance attack on condition 3 (detail in
+the Kill-thesis record). The stock is −33% over six months against an
+Ibovespa ex-commodities +29% year to date (BofA, via Investing.com). Analyst
+cuts all cite promotional pressure. Management's own July answer was that TIM
+waits for its two larger postpaid rivals before it moves price. This stops
+short of a refutation because no operating number has been printed since Q2.
+Price action and sell-side estimates are opinions about the 2026-11-03 print,
+not the print.
+
+Load-bearing conditions of the bull case — **eight**:
+
+1. **Lease-adjusted owner FCF of ~R$5.76B is real and repeatable.** *probable*
+   — TTM ncfo R$13.92B − capex R$4.66B − lease cash ~R$3.34B − loan interest
+   ~R$0.15B. It reconciles to the FY2025 audited cash-flow statement and to
+   TIM's own EBITDA-AL − Capex metric (carried from the 2026-09-12 run; no new
+   statements since).
+2. **USD owner FCF does not decline more than ~1%/yr in perpetuity.**
+   *plausible* — decisive disclosure: the 3Q26 release and ITR, 2026-11-03,
+   then FY2026. This is the break-even in §4, tightened from −1.5% by the
+   higher risk-free rate. It rests on margin expansion (18.0% → 25.8% in five
+   years) outrunning a core that is shrinking in real terms, and that lever is
+   finite.
+3. **Brazilian mobile stays a three-player market in which TIM's price-ups
+   eventually stick.** *plausible* — decisive disclosure: 3Q26 release,
+   2026-11-03. Q2'26 MSR was +4.6% against 4.64% IPCA. Since then: the
+   election-week non-participation, Safra's −0.2% Q2 ARPU-growth figure (press)
+   and BofA's revision warning, all against.
+4. **Total lease cash does not outgrow service revenue on a sustained
+   basis.** *plausible* — decisive disclosure: the 3Q26 ITR financing
+   section, 2026-11-03. Gross lease cash has overshot two quarters running.
+   The SBA unified-MLA negotiation (board approval 2026-09-17) is the next
+   lever, the same playbook as the January 2026 American Tower consolidation
+   (~9k towers to 2034, press).
+5. **Poste extracts no value from TIM Brasil's minorities.** *plausible* —
+   Poste is now the indirect controller (TIM material fact, 2026-09-18) with
+   86.952% of Telecom Italia. Its offer announcement calls Brazil "a strategic
+   pillar of first importance" with "high profitability and significant cash
+   generation" (press-quoted). Its CEO is quoted ruling out a sale and saying
+   "we want to invest strongly in Brazil" (press). Novo Mercado's 100%
+   tag-along covers any future block sale (2025 20-F). The offer document's
+   "programmi futuri" section, which is the decisive text, was not read.
+6. **Capital returns continue at the guided scale without a large FTTH
+   acquisition.** *probable* — R$5.3–5.5B guided 2026 remuneration, the R$1B
+   Program 9 still running, and R$515M of IoC declared 2026-09-17.
+7. **Cash taxes settle at the 15% GloBE floor, not the 34% statutory rate.**
+   *plausible* — decisive disclosure: the 3Q26 ITR tax line, 2026-11-03.
+   Law 15,079's QDMTT and Complementary Law 224 apply from 2026-01-01, and
+   IoC deductibility holds the floor below statutory.
+8. **The R$27.49B unprovisioned "possible" contingency tail does not
+   crystallize materially.** *plausible* — the provision has held flat at
+   R$1.60B through the tail's growth. The Fiscal Council minutes describe
+   FUST–FUNTTEL precedents "favorable to the Company" and active settlement
+   programmes. Still no measured resolution rate.
+
+**Dominant shared risk factor:** Brazilian macro — the BRL/USD path and the
+Selic/IPCA indexation channel — holdings unavailable in this session (the
+unattended slot is not granted `portfolio.db`). The 2026-09-12 run counted 0 of
+20 held names sharing it and 5 unlabelled. It flagged PAGS, a Brazilian
+payments company, as the near-certain match once its thesis carries a factor
+line.
+
+## 2. Business
+
+Unchanged from `research/TIMB-2026-09-12.md` §2 and `research/TIMB-2026-07-27.md`
+§2. In short: mobile connectivity for ~62M Brazilian subscribers in a
+three-player spectrum oligopoly, monetized through postpaid ARPU (~70% of
+mobile service revenue), prepaid, B2B/IoT, broadband (Ultrafibra) and
+partnerships (C6 Bank, PicPay). Deltas since 09-12:
+
+**Created:** no new propositions disclosed. The Q2-launched TIM Ultracombo,
+TIM Play and Controle Fit are the current offers.
+
+**Captured:** unchanged. No print since Q2'26.
+
+**Protected:** the entry moat is intact (auction-allocated spectrum, a
+R$4.5B/yr build, 4→3 consolidation done). Price protection is still the weak
+leg. BofA names "rationality" (price-ups in prepaid or hybrid plans) as the
+re-rating trigger, which says the market thinks it is currently absent. On the
+infrastructure side, the SBA MLA negotiation is a cost lever, not a moat.
+
+**Control:** one share class, common voting shares (Novo Mercado). TIM Brasil
+S.A. holds 67.48% (2025 20-F). Its parent, Telecom Italia, is 86.952% owned by
+Poste Italiane (TIM 6-K, 2026-10-02). Poste is itself state-controlled: Cassa
+Depositi e Prestiti holds 35.000% and the Italian Ministry of Economy and
+Finance 29.257% (Poste offer FAQ, 2026-07-19). The ultimate controller of this
+ADR is therefore the Italian state. A takeover and any activist route are both
+foreclosed. Minorities' protection is Novo Mercado's 100% tag-along on a
+transfer of control. The indirect change of control did not trigger it:
+"Minority shareholders in São Paulo should not expect a buyout offer," and
+Equita "said checks with the company showed Poste has no obligation to extend
+its offer" (Rio Times, 2026-09-27, press).
+
+**Operating leverage (Phase 0): positive.** BRL millions (stockanalysis,
+carried; no new period since 09-12):
+
+| | FY21 | FY22 | FY23 | FY24 | FY25 | TTM |
+|---|---|---|---|---|---|---|
+| revenue | 18,058 | 21,531 | 23,834 | 25,448 | 26,625 | 27,403 |
+| operating income | 3,248 | 3,440 | 4,798 | 5,834 | 6,660 | 7,076 |
+| operating margin | 18.0% | 16.0% | 20.1% | 22.9% | 25.0% | 25.8% |
+
+Revenue +52% and operating income +118% since FY2021.
+
+## 3. Threads pulled
+
+- **The election week, and the stock's failure to join it (load-bearing,
+  new, cuts against).** Brazil's first round on 2026-10-04 put Flávio
+  Bolsonaro at 47.03% against Lula's 45.16%, with a runoff on 2026-10-25 (Rio
+  Times, citing the electoral court). Markets read it as fiscally restrictive:
+  Ibovespa +7.70% on 2026-10-05 to a record, long-rate futures sharply lower,
+  and PTAX 5.2238 → 4.9892 by 2026-10-09 (press). Robinhood closes for the
+  same window, 2026-10-02 → 10-12: **EWZ 38.19 → 43.54 (+14.0%), VIV
+  11.54 → 12.16 (+5.4%), TIMB 17.83 → 17.98 (+0.8%)**, SPY +1.1%. TIMB spiked
+  +8.2% on 10-05 (17.83 → 19.30, 1.37M shares, ~3× normal) and gave all of it
+  back in four sessions. That included −3.9% on 10-09, a day VIV also fell
+  3.6%. Implied in BRL, TIMS3 was flat to down while the index rose ~9%.
+  Effective n = 1 episode. It is a market opinion, not an operating fact, and
+  it is recorded as such.
+- **Sell-side since the call (cuts against).** BofA, 2026-10-13: upgraded
+  TIMB and VIV from Underperform to Neutral, cut the TIMB target $24 → $22, and
+  called risk/reward "balanced". It cites −15% YTD against Ibovespa
+  ex-commodities +29%, −33% over six months, and an EPS miss in Q2 ($0.4212 vs
+  $0.4323). It lowered estimates to "partial pass-through of inflation in
+  2027", and says continued competitive pressure could bring further cuts
+  (Investing.com summary). Safra (≈2026-08-20, press summary only):
+  neutral, target R$28 → R$22, TIM ARPU growth from ~3.5% to −0.2% in Q2'26,
+  with promotions costing an estimated R$38M of operating result. That ARPU
+  figure sits awkwardly beside the +4.6% MSR the Q2 release reported. I could
+  not reconcile it (it may be a prepaid-only or sequential measure), so it is
+  colour, not a number §4 uses. Robinhood's EPS record differs from BofA's:
+  Q2 actual $0.405 vs $0.370 estimate, a beat. This is a different consensus
+  vintage; not resolved.
+- **Poste's control, settled (load-bearing for condition 5).** TIM material
+  fact 2026-09-18 (acc. 0001292814-26-004601): Poste at ~66.627% after the
+  first window, and so "the controlling shareholder of TI and… the indirect
+  controlling shareholder of TIM Brasil". It is silent on tag-along, an OPA,
+  Novo Mercado and Poste's intentions. TIM notice 2026-10-02 (acc.
+  0001292814-26-004848): 85.823% after the reopening, then 86.952% after
+  market purchases on 10-01. That is below the 90% sell-out and squeeze-out
+  thresholds. Poste's offer FAQ (2026-07-19, primary, Poste) says that below
+  90% it "non intende porre in essere misure finalizzate a ripristinare" TI's
+  free float, so TI's delisting rests on Borsa Italiana's float rule. The FAQ
+  states no programme for TIM Brasil. The only Brazil language obtained is
+  press quotation of the March offer announcement.
+- **The SBA lease renegotiation (new, bears on condition 4).** Board minutes,
+  2026-09-17 (acc. 0001292814-26-004720): "approved the terms and conditions
+  for negotiations of a new unified Master Lease Agreement with SBA Torres
+  Brasil," with officers authorized to sign within limits. This is the
+  second tower-landlord consolidation in 2026, after American Tower in January
+  (press). Direction: it targets exactly the lease-cash line that has
+  overshot twice. Size and terms: unknown until signed or until the ITR.
+- **The unnamed strategic projects (watch item, condition 6).** The same
+  minutes approved "projects to strengthen the Company's market position…
+  one project requires regulatory approvals as a condition precedent." CVM
+  Resolution 44 requires a material fact for anything price-relevant, and none
+  was filed in the four weeks since. I read the project as sub-material for
+  now, but a project that needs Anatel or CADE consent is the shape an
+  acquisition takes. §6 item 4.
+- **Capital returns, still flowing.** R$515M of IoC (R$0.2166801148/share
+  gross, record date 2026-09-22, paid by 2027-01-22; 6-Ks
+  0001292814-26-004590 and -004718). 13.2M treasury shares cancelled
+  (material fact, acc. -004592), capital now 2,378,925,889 shares, Program 9
+  "remains in effect".
+- **Options read (mandatory):** path 1 structurally unavailable (TIMB is not
+  in the 24-symbol CBOE catalog). Path 2 on the 2026-11-20 expiry, 38 DTE,
+  bracketing the 2026-11-03 AMC print. **Liquidity gate FAILED on all four
+  legs.** Table and verdict in §4.
+- **Dead ends:** (a) No cause found for the 2026-10-09 −3.9% TIMB / −3.6% VIV
+  drop. One extended search for telecom news that day returned only quote
+  pages. (b) The offer document itself ("Motivazioni dell'Offerta e programmi
+  futuri") was not reached. One search found the Poste FAQ and press
+  summaries, not the Consob document; the FAQ points to transactions.sodali.com.
+  (c) The 2026-10-09 CVM-358 monthly report (acc. 0001292814-26-004896) is
+  again an image exhibit, unread. (d) The live statistics `hover` values could
+  not be read: this slot runs the probe in schema-only mode and ad-hoc Python
+  is not granted. Market data comes from `stocks.db` (2026-10-12 capture) and
+  Robinhood. (e) `sec_fundamentals.db` still has no row for CIK 0001826168
+  (20-F filer). (f) The Damodaran country table is still the 2026-01-05
+  vintage.
+
+## 4. Valuation
+
+**Inputs.** Levered TTM owner FCF paired with **market cap**; net debt 0 by
+the pairing rule. Market cap = $18.18 / 5 common per ADS × 2,378,925,889
+shares (post-cancellation capital, 2026-09-17 minutes) = **$8,649.8M**.
+Remaining treasury shares (≤ ~5M plus any Program 9 purchases) are not
+netted, which overstates the cap by ≤0.2%. Cross-check: `stocks.db` carries
+$8,679M at the 2026-10-12 capture.
+
+The base FCF is unchanged from the 2026-09-12 run because no new statements
+exist:
+
+| BRL m | TTM |
+|---|---|
+| ncfo | 13,916 |
+| capex | (4,664) |
+| lease cash (principal + interest) | (3,342) |
+| loan interest | (~150) |
+| **owner FCF** | **5,760** |
+
+At the statistics page's own TTM conversion (5.181 BRL/USD) that is $1.11B.
+Charged Brazil's 15% QDMTT floor (TTM cash tax 10.06%) it becomes **$1,064M**,
+and that is the base. I keep 5.181 rather than the post-election spot (PTAX
+4.9892) because a 4.7% move in one week, ahead of a runoff, is not a base
+rate. Row D shows spot. Haircuts: SBC $4.30M TTM (0.081% of revenue) is
+negligible; no minority interest (I-Systems is 100% owned); not cash-heavy
+($874M cash vs $3.18B debt); base earnings $834.9M (`stocks.db`).
+
+**Hurdle: rf 5.24% + beta 0.8 × ERP 7.47% = 11.22%.** Risk-free is DGS10 at
+2026-10-09 (`fred.db`), up from 4.95%. The ERP is Brazil's total ERP from
+Damodaran's country table ("Last updated: January 5, 2026"; Ba1, CRP 3.24%),
+because essentially all operations are Brazilian. His US implied ERP on
+2026-10-01 was 4.20% against a 5.29% T-bond, which would make Brazil's ≈7.44%,
+immaterially different. **Beta is clamped** from a raw 0.105 (a
+low-correlation artifact; insiders 0.053%, float 99.95%, so no thin-float
+trigger) to 0.8. At beta 1.0 the hurdle is 12.71% and row A clears by +254bp.
+
+**Terminal-growth ceiling: T10YIE 2.33% at 2026-10-13** (`fred.db`). Under
+PPP, a BRL flow growing at BRL inflation converts to a USD flow growing at US
+inflation, so the breakeven is exactly the zero-real-growth case.
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| **A — base (PPP-neutral, tax-normalized)** | **$1.064B** | **3%** | **2.33%** | **15%/yr** | **+403bp** |
+| B — zero growth forever | $1.064B | 0% | 0% | **12%/yr** | +108bp |
+| C — 20% cash tax, zero growth | $1.020B | 0% | 0% | 12%/yr | +58bp |
+| D — spot FX (PTAX 4.9892) | $1.105B | 3% | 2.33% | 16%/yr | +453bp |
+| E — break-even | $1.064B | −1% | −1% | 11%/yr | −4bp |
+| F — USD FCF shrinks 2%/yr | $1.064B | −2% | −2% | 10%/yr | −116bp |
+
+Whole percents per the IV rule. The usable leg IVs span 35–46% and the
+call-side 46% approaches the 50% line, and the gate failed, so I round
+conservatively. Solver decimals: A 15.25, B 12.30, C 11.79, D 15.75, E 11.18,
+F 10.05. **Rows B, C and E are the finding.** Against 09-12 the zero-growth
+floor widened by 21bp (the price fell faster than the rate rose), but the
+break-even decline tightened from −1.5% to −1.0%/yr. The 20%-tax case still
+clears by 58bp.
+
+**Integrity checks.**
+
+- *Reinvestment warning, answered.* The tool flags "growth without
+  reinvestment" on A and D because base FCF exceeds base earnings. A's
+  terminal **is** the 10-year breakeven, which is inflation repricing of
+  existing assets and needs no reinvestment. B, C, E and F sit at or below
+  zero, and B prints `implied_terminal_roe -0.0000` with no warning. The
+  FCF > earnings gap is an IFRS-16 timing artifact (ROU depreciation in net
+  income vs lease cash in financing), carried from 09-12.
+- *Market-share sentence.* 3% USD for five years takes revenue from $5.29B to
+  $6.13B. That is flat-to-declining real share from 22.4% of Brazilian mobile,
+  not a "bigger than the market" path.
+- *Terminal risk vs terminal growth.* The 20-F's dominant structural risks
+  are Brazilian macro (FX, inflation, government influence) and ANATEL
+  authorization renewals. A 2.33% USD terminal already concedes zero real
+  USD growth, and row E is the failure boundary. A new risk to name is the
+  runoff on 2026-10-25. A reversal of the first-round outcome would unwind
+  the BRL move, and row D's upside with it, not row A.
+- *Base-year cash tax vs marginal.* Answered by charging the 15% floor (row A)
+  and pricing 20% (row C). Same as 09-12; the 2026-11-03 ITR is the first
+  clean read.
+- *Distribution clamp.* Every row except E and F sits above the US 80% band
+  (5.26–9.88%). That is expected for a Ba1-country ADR whose own hurdle
+  (11.22%) is above it.
+- *Serial acquirer / excess-return fade.* Not a serial acquirer, so no
+  acquisition charge. Rows A–C fade terminal growth to inflation or below,
+  consistent with the ~29% excess-return base rate.
+
+**Leverage gate:** net debt $2.30B is ~21% of EV ($11.07B, `stocks.db`). Book
+equity is positive ($4.83B) and there is no going-concern language. Below the
+half-of-EV threshold, so the equity-option lens does not run.
+
+**Options-implied move — path 2 only (path 1 structurally unavailable),
+2026-11-20 expiry, 38 DTE, bracketing the 2026-11-03 AMC Q3'26 print.**
+
+| metric | value |
+|---|---|
+| spot | 18.18 |
+| expected absolute move (straddle/spot) | 11.14% — **contaminated by intrinsic, do not use** |
+| 1-σ move | 13.68% |
+| ATM IV | 42.39% (strike-17.50 pair; nearest strike, 0.68 below spot) |
+| RV60 | 34.23% |
+| RV20 | 39.05% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+**Liquidity gate: FAILED → UNRELIABLE.** 17.50 call: 1.00 × 1.95 on a 1.475
+mark (64% spread), OI 2, volume 0. 17.50 put: 0.40 × 0.70 on 0.55 (55%), OI 32,
+volume 1. The 20 strike is degenerate again: the call has bid 0.00 and IV
+14.8%, and the put is 1.55 × 2.45. The 17.50 call carries $0.68 of intrinsic,
+so the extrinsic straddle is ~7.4% of spot, not 11.14%. Both IV > RV rows read
+YES, and the window contains the 2026-09-28 ex-IoC drop and the election-week
+spike-and-reversal. On a chain this broken that reading carries no weight. It
+moves nothing.
+
+**Timing check: NOT APPLICABLE.** The thesis states no dated move
+requirement. §4 claims an annualized return over years, so there is no
+`--required-move`. The gate failure would make it inadmissible anyway.
+
+## 5. Falsifiers
+
+What would make this a sell (owned):
+
+1. **Break —** Mobile service revenue below IPCA for a second consecutive
+   quarter (3Q26) *while* EBITDA-AL growth also falls below inflation.
+2. **Shift —** Disbursed lease cash growing faster than service revenue for a
+   second consecutive quarter. Alternatively, the SBA MLA signed on terms
+   that raise total lease cash.
+3. **Break —** A large FTTH/ISP acquisition, including the "strategic
+   project" pending regulatory approval if it turns out to be one, or capex
+   guidance materially above ~R$5B/yr.
+4. **Shift —** Remuneration guided below ~R$3.5B, or Program 9 abandoned
+   unbought, without a stated higher-return use.
+5. **Break —** Poste announcing a restructuring of TIM Brasil (incorporação de
+   ações, merger, delisting route) rather than a block sale. Also a break: a
+   Poste plan that raises TIM's payout by cutting its investment below
+   maintenance (the mirror of condition 6).
+6. **Break —** Any single contingency reclassified as probable above R$2B, or
+   the possible tail above ~R$32B.
+7. **Shift —** Effective cash tax above ~15% for two consecutive quarters
+   without an offsetting operating gain, or any restriction on IoC
+   deductibility.
+8. **Break —** BRL/USD depreciating faster than ~9%/yr sustained while BRL
+   EBITDA-AL growth decelerates below 5%.
+9. **Shift (new) —** TIMB underperforming EWZ by more than 10pp again across
+   the 3Q26 print window. A second divergence of the election-week kind,
+   *with* a print in it, would turn a market opinion into an operating one.
+
+**Reopen trigger:** 2026-11-03: `timb-q3-26-msr-vs-ipca-lease-cash-and-tax-rate-print`
+— the 3Q26 release and ITR settle all four pending conditions on one date: 2
+(the USD FCF trajectory), 3 (MSR vs IPCA for the second quarter), 4 (gross and
+disbursed lease cash vs service revenue, plus any SBA MLA terms) and 7 (the
+first clean effective-tax-rate read). By then the runoff (2026-10-25) will
+have settled the FX scenario.
+
+## 6. UNKNOWNs
+
+1. **NOT OBTAINED — Poste Italiane's offer document, section "Motivazioni
+   dell'Offerta e programmi futuri" (Consob-approved 2026-07-15, published
+   2026-07-19).** It exists and is the decisive text for condition 5. This run
+   obtained Poste's FAQ (primary; silent on Brazil), the press-quoted March
+   announcement and CEO remarks, but not the document. Route next time: the
+   Sodali transactions site the FAQ names, or Poste's corporate site under
+   the OPAS documents. Its absence does not change the direction of the
+   evidence, but a kill pass cannot claim to have attacked a document it did
+   not read. Second consecutive run on this miss, logged to `gaps.log`.
+2. **PENDING 2026-11-03 — whether Q2's mobile deceleration is a cycle or a
+   level shift.** The election-week divergence says the market leans to
+   level shift. The 3Q26 release decides it.
+3. **PENDING 2026-11-03 — where the effective cash tax rate settles between
+   15% and 34%.**
+4. **UNKNOWN — what the "strategic project… requiring regulatory approvals"
+   approved on 2026-09-17 is.** The minutes do not name it, and no material
+   fact has been filed. It would come from a future material fact or the ITR
+   subsequent-events note. It does not kill the thesis as long as it stays
+   sub-material, and falsifier 3 covers it if it does not.
+5. **UNKNOWN — SBA MLA terms.** They come from a signing material fact or the
+   ITR. The direction is presumed favourable (same playbook as the American
+   Tower consolidation), but nothing is sourced.
+6. **UNKNOWN — the reconciliation of Safra's −0.2% Q2 ARPU-growth figure with
+   the release's +4.6% MSR.** Only a press summary was seen. Not used in §4.
+7. **UNKNOWN — C6 Bank stake economics** (carried).
+
+*Option value, not a condition (possible tier):* a CVM finding that Poste's
+acquisition triggers art. 254-A tag-along. Equita's checks (press) point the
+other way. Not priced.
+
+## 7. Sources
+
+**Primary:** SEC EDGAR, CIK 0001826168, TIM S.A. 6-Ks:
+- acc. 0001292814-26-004590 (2026-09-17, R$515M IoC notice).
+- -004592 (material fact, 13.2M treasury-share cancellation, capital
+  2,378,925,889).
+- -004601 (material fact 2026-09-18, Poste as indirect controller).
+- -004718 (Fiscal Council minutes 2026-09-17, IoC opinion, FUST–FUNTTEL
+  settlement programmes and "precedents favorable to the Company").
+- -004720 (Board minutes 2026-09-17: SBA unified MLA negotiation, strategic
+  projects with a regulatory condition precedent, buyback "remains in
+  effect").
+- -004848 (notice 2026-10-02: Poste at 85.823% then 86.952% of TI).
+- -004896 (CVM-358 September report, image-only, unread).
+
+Also: the EDGAR filing index, as the record of what was filed. Poste Italiane's
+offer FAQ (2026-07-19, emarketstorage SDIR): Poste's shareholders (CDP
+35.000%, MEF 29.257%), offer mechanics, below-90% intentions, no Brazil
+programme. Carried from `research/TIMB-2026-09-12.md`: the 2025 20-F (Novo
+Mercado 100% tag-along, 67.48% TIM Brasil holding, tax laws 15,079 and
+LC 224) and the Q2'26 release/ITR figures.
+
+**stockanalysis.com (vetted exception):** carried from the 09-12 run, with no
+new period: FY2021–TTM BRL revenue and operating income
+(`/quote/bvmf/TIMS3/financials/income-statement/`) and TTM ncfo/capex/tax. The
+Q2'26 call transcript at `/quote/bvmf/TIMS3/transcripts/548708-q2-2026/` is
+primary-transcribed. This run's live probe returned schema only (§3 dead end
+d).
+
+**Broker/market microstructure:** Robinhood MCP. It is admissible because no
+integrated official source covers these fields for TIMB. Used: the official
+closes for TIMB $18.18, VIV, EWZ and SPY (2026-10-13); daily bars 2026-06-05 →
+10-12 for TIMB/EWZ/VIV/SPY (the election-week divergence, RV60/RV20); and the
+8-quarter EPS record (Q3'26 estimate $0.39, report 2026-11-03, verified). The
+pattern is six straight at-or-above quarters since the Q4'24 miss,
+beats-by-a-hair, not credited. Also the 2026-11-20 option chain and quotes
+(the illiquidity finding). The `sec_fundamentals.db` EPS cross-check is
+unavailable (20-F filer).
+
+**Reference data:** Damodaran country premium table, "Last updated:
+January 5, 2026": Brazil Ba1, default spread 2.13%, CRP 3.24%, **total ERP
+7.47%** (used). Damodaran home page: US implied ERP 4.20% at 2026-10-01
+against a 5.29% T-bond (context). Cost-of-capital distribution and the ~29%
+excess-return base rate are carried from the anchors reference.
+
+**Point-in-time repo DBs:**
+- `data/fred.db`: DGS10 5.24% (2026-10-09), T10YIE 2.33% (2026-10-13).
+- `data/stocks.db` (2026-10-12 capture): price $17.98, market cap
+  $8,679.1M, EV $11,074.6M, beta 0.105, insiders 0.05295%, institutions
+  16.45%, float 2,387,403,607 of 2,388,668,322, `shareBasedComp` $4.30M,
+  `sbcByRevenue` 0.081%, analystCount 8, next earnings 2026-11-03 amc.
+- `data/earnings.db`: `calendar_now.today` 2026-10-13, no TIMB row in
+  `v_upcoming_earnings`.
+- `data/options.db`: TIMB not in the catalog.
+- `data/portfolio.db`: not granted to this slot.
+
+All reads were read-only.
+
+**Low-confidence:**
+- Election outcome and market reaction (Rio Times, TradingView, Latin Times).
+- PTAX figures (Rio Times).
+- BofA 2026-10-13 rating change (Investing.com summary of the note).
+- Safra, BBI, JPMorgan and Citi target changes (InfoMoney, Suno, BPMoney, Safra
+  summary).
+- Poste CEO remarks and the "strategic pillar" quote (Rio Times 2026-07-19,
+  Mobile Time and Convergência Digital 2026-03-23).
+- Equita's no-obligation finding (Rio Times 2026-09-27).
+- The American Tower consolidation (Times Brasil/TecMundo).
+- SBA deal status beyond the minutes (search summary).
+
+## Kill-thesis record
+
+**Kill-thesis verdict: UNPROVEN.** Conditions=8 (2 probable, 6 plausible),
+refuted=0, unknown=0, pending=4, not_obtained=1, survived=3. Nothing is
+refuted. Four conditions resolve on one dated print, 2026-11-03. The verdict
+is UNPROVEN rather than SOUND for one reason: Poste's offer document, the text
+that settles condition 5, was not read for the second run running.
+
+**p(beat SPY, 63 td): 0.47** — written before re-reading §1. It sits below
+even for three reasons. The single-stock base rate against a cap-weighted index
+over a quarter is under 50%. The stock has just shown it will not participate
+when its own market rallies. And the window holds both the runoff (2026-10-25)
+and a print the sell-side expects to disappoint. The valuation spread is what
+keeps it near even.
+
+Per-condition adjudication:
+
+1. *Owner FCF ~R$5.76B real and repeatable* — **SURVIVED** at *probable*. It
+   was attacked as a derived figure in the 09-12 pass and reconciled three
+   ways. No new statements have arrived to attack it with.
+2. *USD owner FCF declines no more than ~1%/yr* — **PENDING 2026-11-03.**
+   Attack: the break-even tightened by half a point purely from the risk-free
+   rate, and the core is shrinking in real terms (core client-generated
+   revenue +3.1% vs 4.64% IPCA, Q2). The evidence that bears on it today
+   (EBITDA-AL +7.8% in Q2, margin still expanding, BRL now *stronger*) does
+   not stand against it, so it is not refuted.
+3. *Price-ups eventually stick* — **PENDING 2026-11-03.** Strongest attack.
+   - TIMB +0.8% vs EWZ +14.0% vs VIV +5.4% in election week. VIV is the
+     cleanest control: same sector, same market, same week. TIM lagging it
+     by 4.6pp isolates something TIM-specific beyond "defensives lagged".
+   - BofA warns of further earnings cuts on competition and names price
+     rationality as the missing re-rating trigger.
+   - Safra (press) puts Q2 ARPU growth at −0.2%.
+   - The CEO's own price-follower answer.
+
+   It fails to refute for two reasons. Every item is an *opinion about* the
+   next print, not a print. And Q2's reported MSR was still +4.6% against
+   4.64% IPCA, so on the last hard number the condition is level with
+   inflation, not below it. Effective n: one quarter and one market episode.
+4. *Lease cash does not outgrow service revenue* — **PENDING 2026-11-03.**
+   Gross has already overshot twice, and the condition survives on disbursed
+   cash only, a measurement choice recorded in 09-12. The SBA MLA negotiation
+   cuts toward the condition (the landlord-consolidation playbook), but its
+   terms are unknown. It is credited nothing.
+5. *Poste extracts no value from minorities* — **NOT OBTAINED.** Attack:
+   - Poste is a state-controlled group (CDP + MEF = 64.3%).
+   - It levered up to pay €1.97 cash plus shares per TI share.
+   - It now controls a parent it says it will let delist.
+   - Its every incentive is to pull cash out of Brazil, and it owes TIM
+     Brasil's minorities nothing on this transaction (Equita via Rio Times).
+
+   That is a sharp incentive story, but it points at *more* dividends (aligned
+   with minorities pro rata), not at a squeeze. The value-extraction routes
+   would be transfer pricing, brand and management fees, or a below-market
+   incorporação. Each needs related-party approval under Novo Mercado
+   governance, and none is announced. The decisive document is the offer
+   document's programmi futuri section. It exists and was not obtained.
+6. *Capital returns continue without large M&A* — **SURVIVED** at *probable*.
+   R$515M of IoC was declared and Program 9 remains in effect. The attack
+   from the unnamed regulatory-gated "strategic project" did not land: no
+   material fact in four weeks, under a regime that requires one for anything
+   price-relevant. Recorded in §6 as UNKNOWN, not load-bearing.
+7. *Cash taxes settle at the 15% floor* — **PENDING 2026-11-03.** Nothing new.
+   The 09-12 attack, already charged in §4, stands.
+8. *Contingency tail does not crystallize* — **SURVIVED** at *plausible*. The
+   Fiscal Council minutes add mild support (favourable precedents, amnesty
+   and settlement programmes on FUST–FUNTTEL). The tail still exceeds half the
+   market cap and has no measured resolution rate.
+
+**Standing checks.**
+- *Base rate:* ~29% of firms earn above their cost of capital (Damodaran
+  EVA). The thesis does not need persistence, since rows A–C fade to
+  inflation or below. TIM sits in that 29% today.
+- *Short case, strongest form:* a #3 carrier that cannot lead price, whose
+  core is shrinking in real terms, and whose lease interest compounds
+  double-digit. It carries R$27.5B of unprovisioned tax claims, and its tax
+  rate was legislated up. It is now controlled by a foreign state group with a
+  cash-extraction motive. And the market just declined to re-rate it in the
+  strongest Brazil rally in years, which says the buyers who know Brazil best
+  are selling this name into strength.
+- *Management incentives:* aligned with payouts (condition 6). Potentially
+  against condition 2 via under-investment. Executive compensation sits in
+  the Brazilian Reference Form, not pulled, and is not load-bearing.
+- *Disconfirming search:* run this time, one extended search aimed at
+  downgrades and competition. It returned the BofA, Safra, BBI, JPMorgan and
+  Citi actions, which all cut against condition 3 and are recorded above.
+  This closes the gap the 09-12 pass admitted.
+- *Moat, mechanism not checkbox:* entry is blocked by spectrum scarcity and
+  build cost. Price is not protected for the #3 of three. Unchanged.
+
+**Statistical checks.** No backtest or hit-rate claim is made. Effective n
+was applied to condition 3 (one quarter, one market episode). The
+election-week divergence is one event: it is not counted as a pattern, and
+falsifier 9 waits for a second.
+
+**Options timing check: SKIPPED.** There is no dated move requirement in the
+thesis. In any case path 1 is unavailable and path 2's Nov 20 chain failed the
+liquidity gate on all four legs, so nothing here may move the verdict.
+
+**Closest attack:** condition 3 via the election-week divergence against the
+VIV control, corroborated by sell-side revision warnings. It is the first
+evidence in three runs that the market, not just management, prices TIM as a
+price-taker. It lands short of a refutation only because it predicts a number
+not yet printed.
+
+**Flip evidence.** *To SOUND:* reading Poste's programmi futuri section and
+finding no restructuring, fee or squeeze language on TIM Brasil. That clears
+the single NOT OBTAINED, and everything else is dated PENDING. *To FLAWED:* a
+3Q26 print with MSR below IPCA for the second consecutive quarter **and**
+EBITDA-AL growth decelerating below inflation, or an effective tax rate above
+20%. Either moves the realistic case toward row E/F, where the name fails its
+hurdle. All of it is decidable on 2026-11-03.
