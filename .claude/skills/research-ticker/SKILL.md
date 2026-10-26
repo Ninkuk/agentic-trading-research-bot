@@ -490,6 +490,13 @@ source-tier names are all fixed there. Then commit it. The skeleton:
 8. **Kill-thesis record** (unnumbered, last) — the Phase 5 detail lands
    here, per the template.
 
+Then, with §1 and the kill-thesis label final, write the template's
+`**In one sentence:**` line directly under the title — the last edit to the
+file before the verdict is logged. It is the top of the document and the
+last thing written: a reader skimming `research/` sees the call and its
+reason without opening §1, and a line composed after the verdict cannot
+contradict it.
+
 ## Log the verdict (mandatory final step)
 
 After writing research/<TICKER>-<DATE>.md and appending verdicts.log, record

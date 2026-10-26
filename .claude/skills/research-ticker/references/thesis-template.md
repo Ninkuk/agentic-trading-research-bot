@@ -14,7 +14,17 @@ skimmable in the same places.
   suffixed file is deliberately invisible to `tools/research/worklist.py`.
 - Title: `# <TICKER> — <Company Name> — <YYYY-MM-DD>`. Reopen runs append
   ` (reopen of <YYYY-MM-DD>, trigger: <slug>)`.
-- Under the title, one metadata line, middot-separated:
+- Directly under the title, REQUIRED, one line:
+  `**In one sentence:** <the sentence>` — what a reader who reads nothing
+  else takes away. BUY and PASS alike: what the business is, why it is
+  attractive, the one thing the call turns on (for a PASS, what blocks
+  owning it at this price — the hurdle, a pending condition, the capital
+  structure), and the call itself, by the word "buy" or "pass". One
+  sentence under 40 words, plain language, no ticker jargon, at most two
+  numbers. It is written LAST — after §1's ownership call and the
+  kill-thesis label are settled — and placed here, so it never drifts from
+  the verdict below it.
+- Then one metadata line, middot-separated:
   `Price $X (<basis: official close / after-hours / live quote, date>) ·
   market cap $X · next earnings <date + BMO/AMC, or "none scheduled">`.
   Add EV/net debt only when §4 uses them.
