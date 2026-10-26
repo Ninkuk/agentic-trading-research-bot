@@ -51,3 +51,10 @@
 2026-10-13 DPZ thesis=2026-10-13 source-acquisition dpz-dpe-asx-notice-france-belgium-mfa-second-extension-not-fetched doc=foreign-regulator-filing bench=kill-thesis
 2026-10-13 CVSA thesis=2026-10-13 source-acquisition cvsa-def-14a-2026-equity-plan-reserve-and-ownership-table-not-read doc=proxy bench=kill-thesis
 2026-10-13 TIMB thesis=2026-10-13 source-acquisition poste-italiane-offer-document-programmi-futuri-section-not-read doc=acquirer-offer-document bench=kill-thesis
+2026-10-17 FMC thesis=2026-10-17 source-acquisition fmc-fifth-ar-credit-agreement-2022-covenant-ebitda-definition-not-read doc=material-contract-exhibit bench=kill-thesis
+2026-10-17 FMC thesis=2026-10-17 source-acquisition fmc-q2-2026-10q-debt-note-truncated-at-note-8-by-webfetch doc=10-q-notes bench=kill-thesis
+2026-10-17 HYFM thesis=2026-10-17 source-acquisition hyfm-nasdaq-hearing-panel-decision-not-located doc=exchange-notice bench=kill-thesis
+2026-10-17 HYFM thesis=2026-10-17 source-acquisition hyfm-q2-2026-10q-debt-note-and-note-17-truncated-at-note-10-by-webfetch doc=10-q-notes bench=kill-thesis
+2026-10-19 CRWV thesis=2026-10-19 source-acquisition crwv-q2-2026-10q-debt-note-and-useful-life-truncated-at-note-8-by-webfetch doc=10-q-notes bench=kill-thesis
+2026-10-21 G thesis=2026-10-21 source-acquisition g-investor-day-2025-deck-multi-year-targets-unfetched-three-runs doc=investor-day-presentation bench=kill-thesis
+2026-10-25 PRDO thesis=2026-10-25 source-acquisition prdo-fsa-data-center-proprietary-school-90-10-revenue-percentages-studentaid-gov-timed-out-second-run doc=regulator-dataset bench=kill-thesis
