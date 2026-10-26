@@ -1,5 +1,7 @@
 # STNE — StoneCo Ltd. — 2026-08-13 post-print (reopen: q2-print-cost-of-risk, fired)
 
+**In one sentence:** StoneCo is a cheap Brazilian small-business payments and credit lender, but the Q2 print showed credit losses still above 20% and rising defaults, so the credit fix the thesis needed is behind schedule and I pass.
+
 Price $10.25 (8/13 regular close; after-hours $10.14 as of 22:08 UTC) · market
 cap $2,488.2M (probe `hover`) · Q2 print filed today, call held 5pm ET today.
 
