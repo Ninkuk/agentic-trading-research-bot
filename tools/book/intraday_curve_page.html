@@ -1,0 +1,317 @@
+<title>Today's Book vs SPY</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the dashboard's Track-record card — tiles, then the curve, then a one-line caveat; a second card for the movers.
+   Tokens mirror dashboard/src/index.css (shadcn on the Robinhood palette). */
+:root {
+  --radius: 0.75rem;
+  --bg: #ffffff;
+  --fg: oklch(0.22 0.003 285);
+  --card: #ffffff;
+  --muted: oklch(0.965 0 0);
+  --muted-fg: oklch(0.55 0 0);
+  --border: oklch(0.92 0 0);
+  --popover: #ffffff;
+  --chart-1: #00a304;
+  --tone-up: #008800;
+  --tone-down: #d34101;
+  --tone-hold: #b45309;
+  --tone-up-bg: rgba(0, 200, 5, 0.14);
+  --tone-down-bg: rgba(255, 80, 0, 0.13);
+  --tone-hold-bg: rgba(245, 158, 11, 0.15);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #000000; --fg: oklch(0.985 0 0); --card: oklch(0.19 0 0); --muted: oklch(0.26 0 0);
+    --muted-fg: oklch(0.72 0 0); --border: oklch(1 0 0 / 10%); --popover: oklch(0.19 0 0);
+    --chart-1: #02ae05; --tone-up: #00c805; --tone-down: #ff5000; --tone-hold: #fbbf24;
+    --tone-up-bg: rgba(0, 200, 5, 0.16); --tone-down-bg: rgba(255, 80, 0, 0.16); --tone-hold-bg: rgba(251, 191, 36, 0.15);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #000000; --fg: oklch(0.985 0 0); --card: oklch(0.19 0 0); --muted: oklch(0.26 0 0);
+  --muted-fg: oklch(0.72 0 0); --border: oklch(1 0 0 / 10%); --popover: oklch(0.19 0 0);
+  --chart-1: #02ae05; --tone-up: #00c805; --tone-down: #ff5000; --tone-hold: #fbbf24;
+  --tone-up-bg: rgba(0, 200, 5, 0.16); --tone-down-bg: rgba(255, 80, 0, 0.16); --tone-hold-bg: rgba(251, 191, 36, 0.15);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.page { width: 100%; max-width: 72rem; margin: 0 auto; padding-block: 1.5rem 4rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 1rem; }
+.masthead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; }
+.masthead h1 { font-size: 1.125rem; font-weight: 600; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.masthead .when { color: var(--muted-fg); font-size: 0.8125rem; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.25rem 1rem; min-width: 0; }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.card-head h2 { font-size: 0.9375rem; font-weight: 600; margin: 0 0 0.125rem; }
+.card-head .note { color: var(--muted-fg); font-size: 0.8125rem; margin: 0; max-width: 75ch; }
+.badge { flex: none; display: inline-flex; align-items: center; gap: 0.35em; border-radius: 999px; padding: 0.15rem 0.6rem; font-size: 0.75rem; font-weight: 500; border: 1px solid transparent; white-space: nowrap; }
+.badge.up { background: var(--tone-up-bg); color: var(--tone-up); border-color: color-mix(in oklab, var(--tone-up) 40%, transparent); }
+.badge.down { background: var(--tone-down-bg); color: var(--tone-down); border-color: color-mix(in oklab, var(--tone-down) 40%, transparent); }
+.badge.hold { background: var(--tone-hold-bg); color: var(--tone-hold); border-color: color-mix(in oklab, var(--tone-hold) 40%, transparent); }
+.tiles { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin-bottom: 1rem; }
+.tile .v { font-variant-numeric: tabular-nums; font-size: 1.375rem; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; }
+.tile .k { color: var(--muted-fg); font-size: 0.75rem; margin-top: 0.125rem; }
+.tile .d { font-size: 0.75rem; color: var(--muted-fg); }
+.tag-on { color: var(--tone-up); }
+.tag-off { color: var(--tone-down); }
+
+.chart-wrap { position: relative; width: 100%; min-width: 0; }
+.chart-wrap svg { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--font-sans); }
+.chart-wrap svg:focus-visible { outline: 2px solid var(--chart-1); outline-offset: 4px; border-radius: 4px; }
+.grid line { stroke: var(--border); stroke-width: 1; }
+.axis text { fill: var(--muted-fg); font-size: 11px; font-variant-numeric: tabular-nums; }
+.base line { stroke: var(--muted-fg); stroke-width: 1; opacity: 0.55; }
+.s-book { fill: none; stroke: var(--chart-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.s-book-area { fill: var(--chart-1); opacity: 0.08; }
+.s-spy { fill: none; stroke: var(--muted-fg); stroke-width: 2; stroke-dasharray: 5 4; stroke-linejoin: round; stroke-linecap: round; }
+/* Untraded remainder of a partial session: fine dots, half weight, so it reads as "not yet", not as data. */
+.proj { fill: none; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 0.5 5; opacity: 0.55; }
+.proj.book { stroke: var(--chart-1); }
+.proj.spy { stroke: var(--muted-fg); }
+.now line { stroke: var(--tone-hold); stroke-width: 1.5; stroke-dasharray: 2 4; stroke-linecap: round; }
+.now text { fill: var(--tone-hold); font-size: 11px; font-weight: 500; }
+.remain { fill: var(--muted); opacity: 0.45; }
+.end-dot { stroke: var(--card); stroke-width: 2; }
+.end-label text { font-size: 11.5px; fill: var(--fg); font-variant-numeric: tabular-nums; }
+.end-label text.name { fill: var(--muted-fg); }
+.cross line { stroke: var(--muted-fg); stroke-width: 1; opacity: 0.6; }
+.cross circle { stroke: var(--card); stroke-width: 2; }
+.hit { fill: transparent; cursor: crosshair; }
+
+.tip { position: absolute; pointer-events: none; z-index: 2; background: var(--popover); border: 1px solid var(--border); border-radius: calc(var(--radius) - 2px); padding: 6px 10px; font-size: 0.75rem; line-height: 1.5; box-shadow: 0 4px 12px rgba(0,0,0,0.15); white-space: nowrap; min-width: 150px; }
+.tip .t { color: var(--muted-fg); margin-bottom: 2px; }
+.tip .row { display: flex; align-items: center; gap: 8px; }
+.tip .key { width: 14px; height: 0; border-top: 2px solid var(--chart-1); flex: none; }
+.tip .key.spy { border-top: 2px dashed var(--muted-fg); }
+.tip .name { color: var(--muted-fg); flex: 1; }
+.tip .val { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-top: 0.75rem; font-size: 0.75rem; color: var(--muted-fg); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .key { width: 16px; height: 0; border-top: 2px solid var(--chart-1); }
+.legend .key.spy { border-top: 2px dashed var(--muted-fg); }
+.legend .key.proj { border-top: 2px dotted var(--muted-fg); opacity: 0.7; }
+.cap { color: var(--muted-fg); font-size: 0.75rem; font-style: italic; line-height: 1.6; border-top: 1px solid var(--border); padding-top: 0.75rem; margin: 1rem 0 0; }
+
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+th, td { padding: 0.4rem 0.5rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { color: var(--muted-fg); font-weight: 500; font-size: 0.75rem; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.sym { font-family: var(--font-mono); font-weight: 600; }
+.tbl-wrap { overflow-x: auto; }
+details summary { cursor: pointer; color: var(--muted-fg); font-size: 0.8125rem; margin-bottom: 0.5rem; }
+details summary:focus-visible { outline: 2px solid var(--chart-1); outline-offset: 2px; border-radius: 4px; }
+.table-twin { margin-top: 1rem; }
+.table-twin .tbl-wrap { max-height: 22rem; overflow-y: auto; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="page">
+  <div class="masthead">
+    <h1 id="h1">Today's book vs SPY</h1>
+    <span class="when" id="when"></span>
+  </div>
+
+  <section class="card" id="curve">
+    <div class="card-head">
+      <div>
+        <h2 id="h2">Stock book vs SPY, today</h2>
+        <p class="note">Both lines start at $100 at the prior close, so the gap between them is how much the book is beating or trailing the index this session.</p>
+      </div>
+      <span class="badge" id="verdict"></span>
+    </div>
+    <div class="tiles" id="tiles"></div>
+    <div class="chart-wrap" id="chart"></div>
+    <div class="legend" id="legend">
+      <span><i class="key"></i>Portfolio (stock book)</span>
+      <span><i class="key spy"></i>SPY</span>
+    </div>
+    <details class="table-twin">
+      <summary>Table view (every 5-minute bar)</summary>
+      <div class="tbl-wrap"><table id="series-table"></table></div>
+    </details>
+    <p class="cap" id="caveat"></p>
+  </section>
+
+  <section class="card" id="movers">
+    <div class="card-head">
+      <div>
+        <h2>What moved the book</h2>
+        <p class="note">Each holding's day return times its weight at the prior close, in points of the $100 line.</p>
+      </div>
+    </div>
+    <div class="two">
+      <div class="tbl-wrap"><table id="top-table"></table></div>
+      <div class="tbl-wrap"><table id="bottom-table"></table></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const DATA = __DATA__;
+(function () {
+  const pts = DATA.points, n = pts.length, S = DATA.session_bars, partial = DATA.partial;
+  const fmt$ = v => '$' + v.toFixed(2);
+  const pct = (v, d = 2) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(d) + '%';
+  const signed = (v, d = 2) => { const a = Math.abs(v).toFixed(d); return (Number(a) === 0 ? '' : v >= 0 ? '+' : '−') + a; };
+  const last = pts[n - 1];
+  const bookRet = last.book - 100, spyRet = last.spy - 100, excess = bookRet - spyRet;
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const dateLabel = new Date(DATA.date + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  const asOf = partial ? 'so far · as of ' + DATA.last_label : 'session close';
+  document.getElementById('when').textContent = dateLabel + ' · ' + asOf + ' · times in Phoenix';
+  document.getElementById('h2').textContent = partial ? 'Stock book vs SPY, today so far' : 'Stock book vs SPY, today';
+  document.title = partial ? "Today's Book vs SPY So Far" : "Today's Book vs SPY";
+
+  // Verdict badge + tiles
+  const badge = document.getElementById('verdict');
+  badge.classList.add(excess >= 0 ? 'up' : 'down');
+  badge.textContent = (excess >= 0 ? (partial ? 'Beating SPY by ' : 'Beat SPY by ') : (partial ? 'Trailing SPY by ' : 'Trailed SPY by ')) + Math.abs(excess).toFixed(2) + ' pts' + (partial ? ' so far' : '');
+  const tiles = document.getElementById('tiles');
+  [['Portfolio', last.book, bookRet, 'stock book, ' + DATA.holdings.length + ' names'],
+   ['SPY', last.spy, spyRet, 'benchmark'],
+   ['Excess', null, excess, 'points over SPY']].forEach(([k, v, d, sub]) => {
+    const t = el('div', 'tile');
+    const val = el('div', 'v', v == null ? signed(d) : fmt$(v));
+    if (v == null) val.classList.add(d >= 0 ? 'tag-on' : 'tag-off');
+    t.append(val, el('div', 'k', k));
+    const dd = el('div', 'd');
+    if (v != null) { const s = el('span', d >= 0 ? 'tag-on' : 'tag-off', pct(d)); dd.append(s, ' · ' + sub); }
+    else dd.textContent = sub;
+    t.append(dd); tiles.append(t);
+  });
+  if (partial) {
+    const s = el('span'); s.append(Object.assign(el('i', 'key proj'), {}), 'Rest of session (not yet traded)');
+    document.getElementById('legend').append(s);
+  }
+
+  // Caveat
+  const remaining = S - DATA.bars_done;
+  document.getElementById('caveat').textContent =
+    'Stock book only: ' + DATA.holdings.length + ' holdings at today’s quantities, marked at each 5-minute bar’s close and rebased to $100 at the prior close ($' +
+    DATA.base_book.toFixed(2) + ' → $' + DATA.close_book.toFixed(2) + '). Cash is excluded, as on the dashboard’s Portfolio-vs-SPY curve. ' +
+    (DATA.thin.length ? 'Thinly traded names (' + DATA.thin.join(', ') + ') had gap-filled bars carried forward from their last real print. ' : '') +
+    (partial ? 'The session is ' + DATA.bars_done + ' of ' + S + ' bars in; the dotted run to the right is the ' + remaining + ' bars (' + (remaining * 5 / 60).toFixed(1) + ' hours) still to trade, held flat at the last value, not a forecast.'
+             : 'The last point is the final bar’s close, not the official settled close.');
+
+  // Chart
+  const wrap = document.getElementById('chart');
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs) => { const e = document.createElementNS(svgNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  const allV = pts.flatMap(p => [p.book, p.spy]);
+  let lo = Math.min(...allV), hi = Math.max(...allV);
+  const pad = Math.max((hi - lo) * 0.12, 0.1); lo -= pad; hi += pad;
+  const step = (hi - lo) > 3 ? 1 : (hi - lo) > 1.5 ? 0.5 : 0.25;
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const xTicks = []; for (let i = 0; i <= S; i += 12) xTicks.push(i); if (xTicks[xTicks.length - 1] !== S) xTicks.push(S);
+  const openMin = (() => { const [h, m] = pts[0].t.split(':').map(Number); return h * 60 + m; })();
+  const tickLabel = i => { const mins = openMin + i * 5, hh = Math.floor(mins / 60), mm = mins % 60; return (hh % 12 || 12) + ':' + String(mm).padStart(2, '0') + (hh < 12 ? 'a' : 'p'); };
+  const tip = el('div', 'tip'); tip.hidden = true;
+  let hoverIdx = -1, svg;
+
+  function draw() {
+    const W = Math.max(wrap.clientWidth, 280), H = W < 480 ? 240 : 300;
+    const m = { t: 22, r: W < 480 ? 96 : 128, b: 30, l: 54 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const x = i => m.l + (iw * i) / S;
+    const y = v => m.t + ih - ((v - lo) / (hi - lo)) * ih;
+    if (svg) svg.remove();
+    svg = mk('svg', { viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img', tabindex: '0',
+      'aria-label': 'Line chart: stock book and SPY rebased to $100 at the prior close across today’s session' + (partial ? ', traded through ' + DATA.last_label : '') + '. Book at ' + fmt$(last.book) + ', SPY at ' + fmt$(last.spy) + '.' });
+    const grid = mk('g', { class: 'grid' }), axis = mk('g', { class: 'axis' }), base = mk('g', { class: 'base' });
+    if (partial) svg.append(mk('rect', { class: 'remain', x: x(n - 1), y: m.t, width: x(S) - x(n - 1), height: ih }));
+    for (let v = lo; v <= hi + 1e-9; v += step) {
+      const yy = y(v);
+      (Math.abs(v - 100) < 1e-9 ? base : grid).append(mk('line', { x1: m.l, x2: W - m.r, y1: yy, y2: yy }));
+      const t = mk('text', { x: m.l - 8, y: yy + 4, 'text-anchor': 'end' }); t.textContent = fmt$(v); axis.append(t);
+    }
+    xTicks.forEach(i => {
+      const t = mk('text', { x: x(i), y: H - m.b + 18, 'text-anchor': i === 0 ? 'start' : i === S ? 'end' : 'middle' });
+      t.textContent = tickLabel(i); axis.append(t);
+    });
+    svg.append(grid, base, axis);
+    const line = key => pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p[key]).toFixed(1)).join(' ');
+    const area = line('book') + ' L' + x(n - 1).toFixed(1) + ' ' + y(100).toFixed(1) + ' L' + x(0).toFixed(1) + ' ' + y(100).toFixed(1) + ' Z';
+    svg.append(mk('path', { class: 's-book-area', d: area }));
+    svg.append(mk('path', { class: 's-spy', d: line('spy') }));
+    svg.append(mk('path', { class: 's-book', d: line('book') }));
+    if (partial) {
+      ['spy', 'book'].forEach(k => svg.append(mk('path', { class: 'proj ' + k, d: 'M' + (x(n - 1) + 6).toFixed(1) + ' ' + y(last[k]).toFixed(1) + ' L' + x(S).toFixed(1) + ' ' + y(last[k]).toFixed(1) })));
+      const g = mk('g', { class: 'now' });
+      g.append(mk('line', { x1: x(n - 1), x2: x(n - 1), y1: m.t - 4, y2: m.t + ih }));
+      const t = mk('text', { x: x(n - 1), y: m.t - 8, 'text-anchor': x(n - 1) > W - m.r - 60 ? 'end' : 'middle' }); t.textContent = 'now · ' + DATA.last_label; g.append(t);
+      svg.append(g);
+    }
+    // End markers + direct labels (nudged apart if they would collide)
+    const ends = [{ key: 'book', name: 'Portfolio', cls: 'var(--chart-1)' }, { key: 'spy', name: 'SPY', cls: 'var(--muted-fg)' }]
+      .map(s => ({ ...s, yy: y(last[s.key]) })).sort((a, b) => a.yy - b.yy);
+    if (ends[1].yy - ends[0].yy < 16) { const c = (ends[0].yy + ends[1].yy) / 2; ends[0].ly = c - 8; ends[1].ly = c + 8; } else ends.forEach(s => s.ly = s.yy);
+    ends.forEach(s => {
+      svg.append(mk('circle', { class: 'end-dot', cx: x(n - 1), cy: s.yy, r: 4, fill: s.cls }));
+      const g = mk('g', { class: 'end-label' });
+      const v = mk('text', { x: x(S) + 10, y: s.ly + 4 }); v.textContent = fmt$(last[s.key]);
+      const nm = mk('text', { class: 'name', x: x(S) + 10 + (W < 480 ? 46 : 50), y: s.ly + 4 }); nm.textContent = s.name;
+      g.append(v, nm); svg.append(g);
+    });
+    // Hover layer
+    const cross = mk('g', { class: 'cross' }); cross.style.display = 'none';
+    const cl = mk('line', { y1: m.t, y2: m.t + ih }), cb = mk('circle', { r: 4.5, fill: 'var(--chart-1)' }), cs = mk('circle', { r: 4.5, fill: 'var(--muted-fg)' });
+    cross.append(cl, cb, cs); svg.append(cross);
+    const hit = mk('rect', { class: 'hit', x: m.l, y: m.t, width: iw, height: ih }); svg.append(hit);
+    function show(i) {
+      hoverIdx = i; const p = pts[i], xx = x(i);
+      cross.style.display = ''; cl.setAttribute('x1', xx); cl.setAttribute('x2', xx);
+      cb.setAttribute('cx', xx); cb.setAttribute('cy', y(p.book)); cs.setAttribute('cx', xx); cs.setAttribute('cy', y(p.spy));
+      tip.replaceChildren();
+      tip.append(el('div', 't', p.label));
+      [['Portfolio', p.book, ''], ['SPY', p.spy, 'spy']].forEach(([nm, v, k]) => {
+        const r = el('div', 'row'); r.append(el('i', 'key ' + k), el('span', 'name', nm), el('span', 'val', fmt$(v))); tip.append(r);
+      });
+      const r = el('div', 'row'); r.append(el('i', 'key', ''), el('span', 'name', 'Gap'), el('span', 'val', signed(p.book - p.spy) + ' pts')); r.firstChild.style.visibility = 'hidden'; tip.append(r);
+      tip.hidden = false;
+      const scale = wrap.clientWidth / W, px = xx * scale, left = px + 12 + tip.offsetWidth > wrap.clientWidth;
+      tip.style.left = (left ? px - 12 - tip.offsetWidth : px + 12) + 'px';
+      tip.style.top = (m.t * scale) + 'px';
+    }
+    function hide() { hoverIdx = -1; cross.style.display = 'none'; tip.hidden = true; }
+    hit.addEventListener('pointermove', e => {
+      const r = svg.getBoundingClientRect(); const px = (e.clientX - r.left) * (W / r.width);
+      show(Math.max(0, Math.min(n - 1, Math.round(((px - m.l) / iw) * S))));
+    });
+    hit.addEventListener('pointerleave', hide);
+    svg.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight') { show(Math.min(n - 1, hoverIdx < 0 ? n - 1 : hoverIdx + 1)); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { show(Math.max(0, hoverIdx < 0 ? n - 1 : hoverIdx - 1)); e.preventDefault(); }
+      else if (e.key === 'Home') { show(0); e.preventDefault(); } else if (e.key === 'End') { show(n - 1); e.preventDefault(); }
+      else if (e.key === 'Escape') hide();
+    });
+    svg.addEventListener('blur', hide);
+    wrap.append(svg, tip);
+  }
+  draw();
+  let raf = 0; new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(draw); }).observe(wrap);
+
+  // Tables
+  function table(id, head, rows) {
+    const t = document.getElementById(id); t.replaceChildren();
+    const thead = el('thead'), tr = el('tr');
+    head.forEach(([h, num]) => tr.append(el('th', num ? 'num' : '', h))); thead.append(tr);
+    const tb = el('tbody');
+    rows.forEach(r => { const tr = el('tr'); r.forEach(([v, cls]) => tr.append(el('td', cls || '', v))); tb.append(tr); });
+    t.append(thead, tb);
+  }
+  table('series-table', [['Time', 0], ['Portfolio', 1], ['SPY', 1], ['Gap (pts)', 1]],
+    pts.map(p => [[p.label], [fmt$(p.book), 'num'], [fmt$(p.spy), 'num'], [signed(p.book - p.spy), 'num']]));
+  const H = DATA.holdings, hrow = h => [[h.symbol, 'sym'], [(h.weight * 100).toFixed(1) + '%', 'num'], [pct(h.ret * 100), 'num ' + (h.ret >= 0 ? 'tag-on' : 'tag-off')], [signed(h.contrib * 100), 'num']];
+  const head = [['Symbol', 0], ['Weight', 1], ['Day', 1], ['Pts', 1]];
+  const gainers = H.filter(h => h.contrib > 0).slice(0, 5), losers = H.filter(h => h.contrib < 0).slice(-5).reverse();
+  table('top-table', head, gainers.map(hrow));
+  table('bottom-table', head, losers.length ? losers.map(hrow) : [[['No holding is down today', ''], ['', ''], ['', ''], ['', '']]]);
+})();
+</script>

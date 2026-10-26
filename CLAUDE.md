@@ -225,6 +225,10 @@ candidates, due `reopen=` triggers) and the canonical home of two rules the dash
 and `research_nightly.py` import rather than copy — the only module here that touches a
 DB (`stocks.db` read-only via `candidates`) or a clock (an injected `now_iso` its pure
 core never reaches for);
+`tools/book/intraday_curve.py`, today's stock
+book vs SPY rebased to $100 at the prior close from broker positions × 5-minute bars
+(the broker has no intraday portfolio history), rendered through the sibling page
+template by the `book-vs-spy-intraday` skill — cash excluded, interpolated bars dropped;
 `tools/valuation/reverse_dcf.py`, the bisection
 solver behind the `research-ticker` skill; `tools/options/implied_move.py`, the
 options-implied-move arithmetic behind the research skills' options check (straddle/spot
