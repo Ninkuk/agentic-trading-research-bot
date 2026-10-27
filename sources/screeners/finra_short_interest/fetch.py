@@ -1,19 +1,18 @@
 # finra_short_interest/fetch.py
-import time
 import urllib.error
 from datetime import date as _date
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_CDN
+from sources.common.parse import coerce, to_int
 
 FILES_BASE = "https://cdn.finra.org/equity/otcmarket/biweekly"
 
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+_UA = DEFAULT_UA
 # CDN sits behind Cloudflare; a descriptive UA avoids bot-rule blocks. Retry the
 # throttling/5xx family only. 403 is NOT retryable here: like the short-volume
 # CDN, it signals "no file for this settlement date".
-_RETRY_STATUS = frozenset({429, 503})
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
+_RETRY_STATUS = RETRY_CDN
 _MIN_FIELDS = 14
 
 _urlopen = http_client.make_opener(_UA)  # opener(url) -> decoded UTF-8 text
@@ -35,25 +34,8 @@ def _norm_iso(raw) -> str | None:
         return None
 
 
-def _num(raw, cast):
-    """Coerce a stripped string via cast; blank/unparseable -> None."""
-    raw = (raw or "").strip()
-    if not raw:
-        return None
-    try:
-        return cast(raw)
-    except (TypeError, ValueError):
-        return None
-
-
-def _to_int(raw):
-    """Integer, tolerant of a trailing '.0' FINRA may emit for share quantities.
-    The header row's non-numeric value fails float() -> None -> line dropped."""
-    return _num(raw, lambda v: int(float(v)))
-
-
 def _to_float(raw):
-    return _num(raw, float)
+    return coerce(raw, float)
 
 
 def parse_file(text: str) -> list[dict]:
@@ -96,7 +78,7 @@ def parse_file(text: str) -> list[dict]:
             sdate,
         ) = (p.strip() for p in parts[:14])
         settlement_date = _norm_iso(sdate)
-        current_short_qty = _to_int(cur)
+        current_short_qty = to_int(cur)
         if not symbol or settlement_date is None or current_short_qty is None:
             continue
         rows.append(
@@ -105,8 +87,8 @@ def parse_file(text: str) -> list[dict]:
                 "issue_name": issue or None,
                 "settlement_date": settlement_date,
                 "current_short_qty": current_short_qty,
-                "previous_short_qty": _to_int(prev),
-                "avg_daily_volume": _to_int(adv),
+                "previous_short_qty": to_int(prev),
+                "avg_daily_volume": to_int(adv),
                 "days_to_cover": _to_float(dtc),
                 "change_pct": _to_float(chg),
                 "revision_flag": rev or None,
@@ -116,17 +98,10 @@ def parse_file(text: str) -> list[dict]:
     return rows
 
 
-def _http_get(
-    url: str,
-    opener=_urlopen,
-    attempts: int = _MAX_ATTEMPTS,
-    base_delay: float = _BASE_DELAY,
-    sleep=time.sleep,
-) -> str:
-    """GET file text with bounded backoff, retrying 429/503 and transient
-    network errors. Non-retryable HTTP errors (e.g. 403/404) raise at once, so
-    fetch_settlement can map 403/404 -> None."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
+# GET file text with bounded backoff, retrying 429/503 and transient
+# network errors. Non-retryable HTTP errors (e.g. 403/404) raise at once, so
+# fetch_settlement can map 403/404 -> None.
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS)
 
 
 def fetch_settlement(date: str, get=_http_get, opener=None):

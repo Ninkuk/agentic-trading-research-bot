@@ -5,15 +5,13 @@ scaffolding (UA, bounded backoff over 403/429/503) verbatim — see the note in
 import csv
 import io
 import json
-import time
 import urllib.error
 import urllib.request
 import zipfile
 
 import sources.common.http_client as http_client
+from sources.common.parse import coerce, to_float
 from sources.screeners.edgar_screener.fetch import (  # reuse UA + bounded-backoff scaffolding
-    _BASE_DELAY,
-    _MAX_ATTEMPTS,
     _RETRY_STATUS,
     _UA,
     _http_get,
@@ -45,16 +43,6 @@ def cik_str(cik: int) -> str:
     return f"CIK{int(cik):010d}"
 
 
-def _num(v):
-    """Coerce a numeric string/number to float; blanks/None -> None."""
-    if v is None or v == "":
-        return None
-    try:
-        return float(v)
-    except (TypeError, ValueError):
-        return None
-
-
 def _unit_path(unit: str) -> str:
     """Frames URL unit segment: 'USD/shares' -> 'USD-per-shares'."""
     return unit.replace("/", "-per-")
@@ -73,7 +61,7 @@ def parse_frame(payload: dict) -> list:
                 "period_end": e.get("end"),
                 "fiscal_year": e.get("fy"),
                 "fiscal_period": e.get("fp"),
-                "value": _num(e.get("val")),
+                "value": to_float(e.get("val")),
                 "form": e.get("form"),
                 "filed": e.get("filed"),
                 "accession": e.get("accn"),
@@ -109,7 +97,7 @@ def parse_company_facts(payload: dict, tags) -> list:
                             "period_end": e.get("end"),
                             "fiscal_year": e.get("fy"),
                             "fiscal_period": e.get("fp"),
-                            "value": _num(e.get("val")),
+                            "value": to_float(e.get("val")),
                             "form": e.get("form"),
                             "filed": e.get("filed"),
                             "accession": e.get("accn"),
@@ -166,9 +154,9 @@ def parse_bulk(zip_bytes: bytes, tags) -> list:
                         "tag": row["tag"],
                         "uom": row.get("uom"),
                         "period_end": _iso(row.get("ddate")),
-                        "fiscal_year": _int(sub.get("fy")),
+                        "fiscal_year": coerce(sub.get("fy"), int),
                         "fiscal_period": sub.get("fp"),
-                        "value": _num(row.get("value")),
+                        "value": to_float(row.get("value")),
                         "form": sub.get("form"),
                         "filed": _iso(sub.get("filed")),
                         "accession": row["adsh"],
@@ -179,42 +167,13 @@ def parse_bulk(zip_bytes: bytes, tags) -> list:
     return out
 
 
-def _int(v):
-    try:
-        return int(v)
-    except (TypeError, ValueError):
-        return None
-
-
-def _bytes_opener(headers: dict, timeout: int = 60, *, limiter=None, limiter_key: str = ""):
-    """opener(url)->bytes for the binary quarterly ZIPs (make_opener decodes,
-    which would corrupt ZIP bytes). Pays the shared SEC throttle when supplied."""
-
-    def opener(url: str) -> bytes:
-        if limiter is not None:
-            limiter.acquire(limiter_key)
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.read()
-
-    return opener
-
-
 # Same UA + shared SEC bucket as the JSON path (edgar's _urlopen), just no decode.
-_bulk_urlopen = _bytes_opener(
-    _UA, limiter=http_client.SEC_RATE_LIMITER, limiter_key=http_client.SEC_HOST_KEY
+_bulk_urlopen = http_client.make_opener(
+    _UA, decode=False, limiter=http_client.SEC_RATE_LIMITER, limiter_key=http_client.SEC_HOST_KEY
 )
 
 
-def _http_get_bytes(
-    url: str,
-    opener=_bulk_urlopen,
-    attempts: int = _MAX_ATTEMPTS,
-    base_delay: float = _BASE_DELAY,
-    sleep=time.sleep,
-) -> bytes:
-    """GET raw bytes with the SEC bounded backoff (403/429/503 + transient)."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
+_http_get_bytes = http_client.make_getter(_bulk_urlopen, _RETRY_STATUS)
 
 
 def bulk_zip_url(year: int, quarter: int, base: str = _BULK_BASE) -> str:

@@ -7,11 +7,11 @@ a silent 'no meetings coming' is the dangerous failure mode for a macro monitor.
 import re
 from datetime import date, timedelta
 
-from sources.common.http_client import http_get, make_opener
+from sources.common.http_client import DEFAULT_UA, RETRY_SEC, make_getter, make_opener
 
 CALENDAR_URL = "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
-_RETRY_STATUS = frozenset({403, 429, 503})
+_UA = DEFAULT_UA
+_RETRY_STATUS = RETRY_SEC
 
 _MONTHS = {
     "jan": 1,
@@ -82,8 +82,7 @@ def parse_calendar(html: str) -> list:
 _urlopen = make_opener(_UA)
 
 
-def _http_get(url: str) -> str:
-    return http_get(url, _urlopen, _RETRY_STATUS)
+_http_get = make_getter(_urlopen, _RETRY_STATUS)
 
 
 def fetch_calendar(get=_http_get) -> list:

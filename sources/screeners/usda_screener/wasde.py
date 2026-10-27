@@ -18,22 +18,21 @@ network-free-testable. Raises WasdeSchemaError when no curated table matches
 so a layout change fails loudly instead of silently dropping data."""
 
 import re
-import time
 import urllib.error
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_THROTTLE_5XX
 
 REPORT_PAGE_URL = (
     "https://www.usda.gov/about-usda/general-information/"
     "staff-offices/office-chief-economist/commodity-markets/"
     "wasde-report"
 )
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
-_RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
+_UA = DEFAULT_UA
+_RETRY_STATUS = RETRY_THROTTLE_5XX
 _MAX_ATTEMPTS = 4
-_BASE_DELAY = 1.0
 # The USDA host is slow for the ~2MB report XML; give it room.
 _urlopen = http_client.make_opener(_UA, timeout=180)
 
@@ -110,10 +109,7 @@ class WasdeSchemaError(Exception):
     raised so the mismatch is visible rather than silently yielding zero rows."""
 
 
-def _http_get(
-    url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep
-):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS, attempts=_MAX_ATTEMPTS)
 
 
 def _num(v):

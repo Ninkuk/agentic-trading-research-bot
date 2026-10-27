@@ -4,16 +4,15 @@ ordered (key, value) tuple list + urlencode(doseq=True) so repeated
 facets[series][] survive."""
 
 import json
-import time
 import urllib.parse
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_THROTTLE_5XX
+from sources.common.parse import to_float
 
 API_BASE = "https://api.eia.gov/v2"
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
-_RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
+_UA = DEFAULT_UA
+_RETRY_STATUS = RETRY_THROTTLE_5XX
 _urlopen = http_client.make_opener(_UA)
 
 __all__ = ["require_api_key", "parse_response", "fetch_series_obs"]
@@ -26,19 +25,7 @@ def require_api_key(api_key):
     return api_key
 
 
-def _http_get(
-    url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep
-):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
-
-
-def _num(v):
-    if v is None or v == "":
-        return None
-    try:
-        return float(v)
-    except (TypeError, ValueError):
-        return None
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS)
 
 
 def _build_url(route, facet, api_key, start=None) -> str:
@@ -65,7 +52,7 @@ def parse_response(payload) -> tuple:
         period = d.get("period")
         if not period:
             continue
-        rows.append({"period": str(period)[:10], "value": _num(d.get("value"))})
+        rows.append({"period": str(period)[:10], "value": to_float(d.get("value"))})
         unit = unit or d.get("units") or d.get("unit")
     return rows, unit
 

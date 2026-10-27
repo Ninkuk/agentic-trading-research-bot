@@ -1,18 +1,17 @@
 # finra_short_volume/fetch.py
-import time
 import urllib.error
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_CDN
+from sources.common.parse import coerce, yyyymmdd_to_iso
 
 FILES_BASE = "https://cdn.finra.org/equity/regsho/daily"
 
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+_UA = DEFAULT_UA
 # CDN sits behind Cloudflare; a descriptive UA avoids bot-rule blocks. Retry the
 # throttling/5xx family (same shape the edgar/cftc fetchers already handle).
 # Note: 403 is not retryable for this CDN; it signals "no file for this date".
-_RETRY_STATUS = frozenset({429, 503})
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
+_RETRY_STATUS = RETRY_CDN
 
 _urlopen = http_client.make_opener(_UA)  # opener(url) -> decoded UTF-8 text
 
@@ -20,25 +19,6 @@ _urlopen = http_client.make_opener(_UA)  # opener(url) -> decoded UTF-8 text
 def day_url(date: str, base: str = FILES_BASE) -> str:
     """URL of the consolidated-NMS short-volume file for a 'YYYY-MM-DD' date."""
     return f"{base}/CNMSshvol{date.replace('-', '')}.txt"
-
-
-def _norm_date(raw) -> str | None:
-    """YYYYMMDD -> YYYY-MM-DD; None if not exactly 8 digits."""
-    raw = (raw or "").strip()
-    if len(raw) != 8 or not raw.isdigit():
-        return None
-    return f"{raw[:4]}-{raw[4:6]}-{raw[6:8]}"
-
-
-def _num(raw, cast):
-    """Coerce a stripped string via cast; blank/unparseable -> None."""
-    raw = (raw or "").strip()
-    if not raw:
-        return None
-    try:
-        return cast(raw)
-    except (TypeError, ValueError):
-        return None
 
 
 def parse_file(text: str) -> list[dict]:
@@ -57,9 +37,9 @@ def parse_file(text: str) -> list[dict]:
         if len(parts) < 6:
             continue
         d_raw, symbol, sv, sev, tv, market = (p.strip() for p in parts[:6])
-        date = _norm_date(d_raw)
-        short_volume = _num(sv, int)
-        total_volume = _num(tv, int)
+        date = yyyymmdd_to_iso(d_raw)
+        short_volume = coerce(sv, int)
+        total_volume = coerce(tv, int)
         if not symbol or date is None or short_volume is None or total_volume is None:
             continue
         short_ratio = (short_volume / total_volume) if total_volume else None
@@ -68,7 +48,7 @@ def parse_file(text: str) -> list[dict]:
                 "symbol": symbol,
                 "date": date,
                 "short_volume": short_volume,
-                "short_exempt_volume": _num(sev, int),
+                "short_exempt_volume": coerce(sev, int),
                 "total_volume": total_volume,
                 "short_ratio": short_ratio,
                 "market": market or None,
@@ -77,17 +57,10 @@ def parse_file(text: str) -> list[dict]:
     return rows
 
 
-def _http_get(
-    url: str,
-    opener=_urlopen,
-    attempts: int = _MAX_ATTEMPTS,
-    base_delay: float = _BASE_DELAY,
-    sleep=time.sleep,
-) -> str:
-    """GET file text with bounded backoff, retrying 429/503 and transient
-    network errors. Non-retryable HTTP errors (e.g. 403/404) raise at once, so
-    fetch_day can map 403/404 -> None (this CDN 403s for dates with no file)."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
+# GET file text with bounded backoff, retrying 429/503 and transient
+# network errors. Non-retryable HTTP errors (e.g. 403/404) raise at once, so
+# fetch_day can map 403/404 -> None (this CDN 403s for dates with no file).
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS)
 
 
 def fetch_day(date: str, get=_http_get, opener=None):

@@ -15,8 +15,10 @@ import json
 import sys
 import urllib.request
 
+from sources.common.http_client import DEFAULT_UA
+
 BASE = "https://stockanalysis.com"
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+_UA = DEFAULT_UA
 """Descriptive, per the catalog's "real User-Agent" note and edgar_screener's precedent.
 
 Not a browser spoof: the research corpus loop issues ~77 requests per session, and a
@@ -182,7 +184,7 @@ def main(argv=None):
     for path in (a for a in argv if not a.startswith("--")):
         try:
             final, raw = resolve_data_json(path)
-        except Exception as exc:  # noqa: BLE001 - CLI diagnostic
+        except Exception as exc:
             print(json.dumps({"path": path, "error": str(exc)[:120]}))
             continue
         nodes = [n for n in decode_nodes(raw) if n is not None]

@@ -5,18 +5,16 @@ loop only calls opener(url), so a body-capturing POST closure drops straight in.
 import csv
 import io
 import json
-import time
 import urllib.error
 import urllib.request
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_CDN
 
 _DATASET = "weeklySummary"  # confirmed live (otcMarket/weeklySummary, anon POST)
 API_URL = f"https://api.finra.org/data/group/otcMarket/name/{_DATASET}"
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
-_RETRY_STATUS = frozenset({429, 503})
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
+_UA = DEFAULT_UA
+_RETRY_STATUS = RETRY_CDN
 _DEMINIMIS = "NON_ATS_DEMINIMIS"
 # The weeklySummary feed carries several summaryTypeCodes: granular per-(symbol,
 # venue) rows plus symbol-only / firm-only aggregate roll-ups, for both ATS and
@@ -101,8 +99,8 @@ def _post_opener(body: dict):
     return opener
 
 
-def _http_get(url, opener, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
+# No module-level opener: fetch_week builds a per-week POST opener and passes it.
+_http_get = http_client.make_getter(None, _RETRY_STATUS)
 
 
 def fetch_week(week_start, get=_http_get, opener=None):

@@ -6,16 +6,14 @@ import csv
 import io
 import json
 import re
-import time
 import urllib.error
 from datetime import datetime
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_CDN
 
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
-_RETRY_STATUS = frozenset({429, 503})
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
+_UA = DEFAULT_UA
+_RETRY_STATUS = RETRY_CDN
 _urlopen = http_client.make_opener(_UA)
 
 # Cboe serves no free put/call-ratio CSV (the old CDN route 403s); the daily
@@ -28,10 +26,7 @@ _VIX_BASE = "https://cdn.cboe.com/api/global/us_indices/daily_prices"
 __all__ = ["parse_pcr_page", "parse_vix_csv", "fetch_pcr", "fetch_vix"]
 
 
-def _http_get(
-    url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep
-):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS)
 
 
 def _num(v):

@@ -1,15 +1,13 @@
 import json
-import time
 import urllib.parse
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_THROTTLE_5XX
 
 API_BASE = "https://api.stlouisfed.org/fred"
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+_UA = DEFAULT_UA
 
-_RETRY_STATUS = frozenset({429, 500, 502, 503, 504})  # FRED throttles with 429
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
+_RETRY_STATUS = RETRY_THROTTLE_5XX  # FRED throttles with 429
 
 _urlopen = http_client.make_opener(_UA)
 
@@ -27,16 +25,9 @@ def _build_url(path: str, params: dict, api_key: str) -> str:
     return f"{API_BASE}/{path}?{urllib.parse.urlencode(query)}"
 
 
-def _http_get(
-    url: str,
-    opener=_urlopen,
-    attempts: int = _MAX_ATTEMPTS,
-    base_delay: float = _BASE_DELAY,
-    sleep=time.sleep,
-) -> str:
-    """GET with bounded backoff, retrying FRED throttling (429) and transient
-    5xx/network errors. Other HTTP errors (e.g. 400) raise immediately."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
+# GET with bounded backoff, retrying FRED throttling (429) and transient
+# 5xx/network errors. Other HTTP errors (e.g. 400) raise immediately.
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS)
 
 
 def parse_observations(payload: dict) -> list[dict]:

@@ -7,8 +7,8 @@ import pytest
 
 import sources.common.http_client as http_client
 import sources.screeners.ftd_screener.fetch as ftd_fetch
+from sources.common.http_client import make_opener
 from sources.screeners.ftd_screener.fetch import (
-    _bytes_opener,
     _http_get,
     fetch_period,
     parse_file,
@@ -156,7 +156,9 @@ def test_bytes_opener_acquires_limiter_before_request():
     orig = ftd_fetch.urllib.request.urlopen
     ftd_fetch.urllib.request.urlopen = fake_urlopen
     try:
-        opener = _bytes_opener({"User-Agent": "UA"}, limiter=FakeLimiter(), limiter_key="sec.gov")
+        opener = make_opener(
+            {"User-Agent": "UA"}, decode=False, limiter=FakeLimiter(), limiter_key="sec.gov"
+        )
         blob = opener("http://www.sec.gov/files/data/x.zip")
     finally:
         ftd_fetch.urllib.request.urlopen = orig

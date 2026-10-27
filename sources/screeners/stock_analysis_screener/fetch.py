@@ -2,10 +2,12 @@ import json
 import urllib.parse
 import urllib.request
 
+from sources.common.http_client import DEFAULT_UA
+
 DATA_URL = "https://stockanalysis.com/_api/endpoints/screener/data-points"
 # Cloudflare challenges the bare "Mozilla/5.0" token (403, cf-mitigated:
 # challenge); the descriptive UA probe.py and the other sources send passes.
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+_UA = DEFAULT_UA
 
 
 def parse_data_points(raw: dict) -> dict[str, dict]:

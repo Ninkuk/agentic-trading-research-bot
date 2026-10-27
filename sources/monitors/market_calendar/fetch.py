@@ -18,9 +18,9 @@ Live-verified against both pages:
 import html as html_text
 import re
 
-from sources.common.http_client import http_get, make_opener
+from sources.common.http_client import DEFAULT_UA, http_get, make_opener
 
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+_UA = DEFAULT_UA
 _RETRY = {403, 429, 503}
 
 _MONTHS = {

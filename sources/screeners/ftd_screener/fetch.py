@@ -1,12 +1,13 @@
 # ftd_screener/fetch.py
 import calendar
 import io
-import time
 import urllib.error
 import urllib.request
 import zipfile
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_SEC
+from sources.common.parse import coerce, yyyymmdd_to_iso
 
 FILES_BASE = "https://www.sec.gov/files/data/fails-deliver-data"
 
@@ -26,25 +27,6 @@ def settlement_bounds(period: str) -> tuple[str, str]:
     return f"{year:04d}-{month:02d}-16", f"{year:04d}-{month:02d}-{last:02d}"
 
 
-def _norm_date(raw) -> str | None:
-    """YYYYMMDD -> YYYY-MM-DD; None if not exactly 8 digits."""
-    raw = (raw or "").strip()
-    if len(raw) != 8 or not raw.isdigit():
-        return None
-    return f"{raw[:4]}-{raw[4:6]}-{raw[6:8]}"
-
-
-def _num(raw, cast):
-    """Coerce a stripped string via cast; blank/unparseable -> None."""
-    raw = (raw or "").strip()
-    if not raw:
-        return None
-    try:
-        return cast(raw)
-    except (TypeError, ValueError):
-        return None
-
-
 def parse_file(text: str) -> tuple[list[dict], int | None]:
     """Parse an FTD file body into (rows, trailer_count).
 
@@ -60,17 +42,17 @@ def parse_file(text: str) -> tuple[list[dict], int | None]:
             continue
         if line.startswith("Trailer"):
             if "record count" in line:
-                trailer_count = _num(line.rsplit(" ", 1)[-1], int)
+                trailer_count = coerce(line.rsplit(" ", 1)[-1], int)
             continue
         parts = line.split("|")
         if len(parts) < 6:
             continue
         settle, cusip, symbol, qty, desc, price = (p.strip() for p in parts[:6])
-        date = _norm_date(settle)
-        quantity = _num(qty, int)
+        date = yyyymmdd_to_iso(settle)
+        quantity = coerce(qty, int)
         if not cusip or date is None or quantity is None:
             continue
-        p = _num(price, float)
+        p = coerce(price, float)
         rows.append(
             {
                 "cusip": cusip,
@@ -85,45 +67,21 @@ def parse_file(text: str) -> tuple[list[dict], int | None]:
     return rows, trailer_count
 
 
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
-_RETRY_STATUS = frozenset({403, 429, 503})  # SEC throttles with 403 (like EDGAR)
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
-
-
-def _bytes_opener(headers: dict, timeout: int = 60, *, limiter=None, limiter_key: str = ""):
-    """opener(url)->bytes for binary (ZIP) downloads. Unlike
-    http_client.make_opener, does NOT decode the body. When a ``limiter`` is
-    supplied, pays ``limiter.acquire(limiter_key)`` before each request."""
-
-    def opener(url: str) -> bytes:
-        if limiter is not None:
-            limiter.acquire(limiter_key)
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.read()
-
-    return opener
+_UA = DEFAULT_UA
+_RETRY_STATUS = RETRY_SEC  # SEC throttles with 403 (like EDGAR)
 
 
 # Pay into the same process-wide SEC bucket as edgar/fundamentals (per-IP cap
 # is domain-wide, not per-host) — see http_client.SEC_RATE_LIMITER.
-_urlopen = _bytes_opener(
-    _UA, limiter=http_client.SEC_RATE_LIMITER, limiter_key=http_client.SEC_HOST_KEY
+_urlopen = http_client.make_opener(
+    _UA, decode=False, limiter=http_client.SEC_RATE_LIMITER, limiter_key=http_client.SEC_HOST_KEY
 )
 
 
-def _http_get(
-    url: str,
-    opener=_urlopen,
-    attempts: int = _MAX_ATTEMPTS,
-    base_delay: float = _BASE_DELAY,
-    sleep=time.sleep,
-) -> bytes:
-    """GET raw bytes with bounded backoff, retrying SEC throttling (403/429/503)
-    and transient network errors. Non-retryable HTTP errors (e.g. 404) raise at
-    once, preserving fetch_period's 404 -> None handling."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
+# GET raw bytes with bounded backoff, retrying SEC throttling (403/429/503)
+# and transient network errors. Non-retryable HTTP errors (e.g. 404) raise at
+# once, preserving fetch_period's 404 -> None handling.
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS)
 
 
 def fetch_period(period: str, get=_http_get, opener=None):

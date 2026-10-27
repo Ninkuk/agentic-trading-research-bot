@@ -10,6 +10,7 @@ import sys
 from datetime import date, timedelta
 from statistics import median
 
+from sources.common.parse import date_prefix
 from sources.screeners.edgar_screener import fetch as _edgar
 from sources.screeners.stock_analysis_screener import probe
 
@@ -49,10 +50,6 @@ def _day_blocks(payload):
     return []
 
 
-def _norm_date(v):
-    return (v or "")[:10] or None
-
-
 def fetch_forward(get=probe.page_data) -> list:
     """Decode the earnings-calendar payload and flatten day-blocks into normalized
     rows. `get(route)` returns the decoded page data (injected in tests). Fails
@@ -60,7 +57,7 @@ def fetch_forward(get=probe.page_data) -> list:
     payload = get(EARNINGS_ROUTE)
     rows = []
     for block in _day_blocks(payload):
-        d = _norm_date(block.get("date"))
+        d = date_prefix(block.get("date"))
         for sym in block.get("symbols") or block.get("rows") or []:
             ticker = sym.get("s")
             if not ticker or not d:

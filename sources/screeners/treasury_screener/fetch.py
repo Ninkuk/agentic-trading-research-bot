@@ -3,41 +3,24 @@ par yield-curve feed. Pure parsers separated from HTTP so they unit-test without
 network. Key-free; reuses the shared bounded-backoff client."""
 
 import json
-import time
 import urllib.parse
 import xml.etree.ElementTree as ET
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_THROTTLE_5XX
+from sources.common.parse import date_prefix, to_float
 
 API_BASE = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service"
 YIELD_CURVE_URL = (
     "https://home.treasury.gov/resource-center/data-chart-center/"
     "interest-rates/pages/xml?data=daily_treasury_yield_curve"
 )
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
-_RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
+_UA = DEFAULT_UA
+_RETRY_STATUS = RETRY_THROTTLE_5XX
 _urlopen = http_client.make_opener(_UA)
 
 
-def _http_get(
-    url, opener=_urlopen, attempts=_MAX_ATTEMPTS, base_delay=_BASE_DELAY, sleep=time.sleep
-):
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
-
-
-def _num(v):
-    if v is None or v == "":
-        return None
-    try:
-        return float(v)
-    except (TypeError, ValueError):
-        return None
-
-
-def _date(v):
-    return (v or "")[:10] or None
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS)
 
 
 def _build_url(
@@ -72,10 +55,10 @@ def fetch_dataset(endpoint, *, fields=None, since=None, get=_http_get) -> list:
 def parse_dts_cash(records) -> list:
     return [
         {
-            "record_date": _date(r.get("record_date")),
+            "record_date": date_prefix(r.get("record_date")),
             "account_type": r.get("account_type"),
-            "open_balance": _num(r.get("open_today_bal")),
-            "close_balance": _num(r.get("close_today_bal")),
+            "open_balance": to_float(r.get("open_today_bal")),
+            "close_balance": to_float(r.get("close_today_bal")),
         }
         for r in records
     ]
@@ -84,10 +67,10 @@ def parse_dts_cash(records) -> list:
 def parse_debt_penny(records) -> list:
     return [
         {
-            "record_date": _date(r.get("record_date")),
-            "tot_pub_debt_out": _num(r.get("tot_pub_debt_out_amt")),
-            "debt_held_public": _num(r.get("debt_held_public_amt")),
-            "intragov_hold": _num(r.get("intragov_hold_amt")),
+            "record_date": date_prefix(r.get("record_date")),
+            "tot_pub_debt_out": to_float(r.get("tot_pub_debt_out_amt")),
+            "debt_held_public": to_float(r.get("debt_held_public_amt")),
+            "intragov_hold": to_float(r.get("intragov_hold_amt")),
         }
         for r in records
     ]
@@ -96,10 +79,10 @@ def parse_debt_penny(records) -> list:
 def parse_avg_rates(records) -> list:
     return [
         {
-            "record_date": _date(r.get("record_date")),
+            "record_date": date_prefix(r.get("record_date")),
             "security_type_desc": r.get("security_type_desc"),
             "security_desc": r.get("security_desc"),
-            "avg_interest_rate": _num(r.get("avg_interest_rate_amt")),
+            "avg_interest_rate": to_float(r.get("avg_interest_rate_amt")),
         }
         for r in records
     ]
@@ -111,9 +94,9 @@ def parse_upcoming_auctions(records) -> list:
             "cusip": r.get("cusip") or None,
             "security_type": r.get("security_type"),
             "security_term": r.get("security_term"),
-            "announcement_date": _date(r.get("announcemt_date")),
-            "auction_date": _date(r.get("auction_date")),
-            "issue_date": _date(r.get("issue_date")),
+            "announcement_date": date_prefix(r.get("announcemt_date")),
+            "auction_date": date_prefix(r.get("auction_date")),
+            "issue_date": date_prefix(r.get("issue_date")),
         }
         for r in records
     ]
@@ -123,13 +106,13 @@ def parse_auction_results(records) -> list:
     return [
         {
             "cusip": r.get("cusip"),
-            "auction_date": _date(r.get("auction_date")),
+            "auction_date": date_prefix(r.get("auction_date")),
             "security_type": r.get("security_type"),
             "security_term": r.get("security_term"),
-            "high_yield": _num(r.get("high_yield_rate")),
-            "bid_to_cover_ratio": _num(r.get("bid_to_cover_ratio")),
-            "offering_amt": _num(r.get("offering_amt")),
-            "total_accepted": _num(r.get("total_accepted_amt")),
+            "high_yield": to_float(r.get("high_yield_rate")),
+            "bid_to_cover_ratio": to_float(r.get("bid_to_cover_ratio")),
+            "offering_amt": to_float(r.get("offering_amt")),
+            "total_accepted": to_float(r.get("total_accepted_amt")),
         }
         for r in records
     ]
@@ -173,13 +156,13 @@ def parse_yield_curve(xml_text) -> list:
     for el in root.iter():
         if _local(el.tag) != "properties":
             continue
-        row = {c: None for c in _YC_COLS}
+        row: dict[str, str | float | None] = dict.fromkeys(_YC_COLS)
         for child in el.iter():
             name = _local(child.tag)
             if name == "NEW_DATE":
-                row["record_date"] = _date(child.text)
+                row["record_date"] = date_prefix(child.text)
             elif name in _TENOR:
-                row[_TENOR[name]] = _num(child.text)
+                row[_TENOR[name]] = to_float(child.text)
         if row["record_date"]:
             out.append(row)
     return out

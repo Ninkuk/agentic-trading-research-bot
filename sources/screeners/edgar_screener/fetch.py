@@ -1,10 +1,10 @@
 import gzip
 import json
-import time
 import urllib.error
 from datetime import datetime
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_SEC
 
 ARCHIVES_BASE = "https://www.sec.gov/Archives/edgar/daily-index"
 
@@ -81,28 +81,19 @@ def index_url(index_date: str, base: str = ARCHIVES_BASE) -> str:
 
 
 TICKER_MAP_URL = "https://www.sec.gov/files/company_tickers.json"
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+_UA = DEFAULT_UA
 
-_RETRY_STATUS = frozenset({403, 429, 503})  # SEC throttles with 403 (not 429)
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
+_RETRY_STATUS = RETRY_SEC  # SEC throttles with 403 (not 429)
 
 _urlopen = http_client.make_opener(
     _UA, limiter=http_client.SEC_RATE_LIMITER, limiter_key=http_client.SEC_HOST_KEY
 )
 
 
-def _http_get(
-    url: str,
-    opener=_urlopen,
-    attempts: int = _MAX_ATTEMPTS,
-    base_delay: float = _BASE_DELAY,
-    sleep=time.sleep,
-) -> str:
-    """GET with bounded backoff, retrying SEC throttling (403/429/503) and
-    transient network errors. Non-retryable HTTP errors (e.g. 404) raise at
-    once, preserving fetch_daily_index's 404 -> None handling."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
+# GET with bounded backoff, retrying SEC throttling (403/429/503) and
+# transient network errors. Non-retryable HTTP errors (e.g. 404) raise at
+# once, preserving fetch_daily_index's 404 -> None handling.
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS)
 
 
 def fetch_ticker_map(url: str = TICKER_MAP_URL, get=_http_get) -> dict:

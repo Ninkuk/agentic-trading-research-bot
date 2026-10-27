@@ -4,18 +4,8 @@ hands the doc to run.py — this module only validates and normalizes it."""
 
 from datetime import date
 
+from sources.common.parse import to_float
 from sources.screeners.portfolio_screener import catalog
-
-
-def _num(value):
-    """Tolerant numeric coercion: int/float/numeric-string -> float; anything
-    else (None, '', 'lots', bool) -> None."""
-    if isinstance(value, bool) or value is None:
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
 
 
 def _first(mapping: dict, aliases: tuple):
@@ -56,7 +46,7 @@ def parse_snapshot(doc) -> tuple:
     ):
         raise ValueError("account must be an object, positions/option_positions lists")
 
-    account = {f: _num(raw_account.get(f)) for f in catalog.ACCOUNT_FIELDS}
+    account = {f: to_float(raw_account.get(f)) for f in catalog.ACCOUNT_FIELDS}
 
     positions, skipped = [], 0
     for raw in raw_positions:
@@ -64,7 +54,7 @@ def parse_snapshot(doc) -> tuple:
             skipped += 1
             continue
         symbol = raw.get("symbol")
-        quantity = _num(_first(raw, catalog.POSITION_FIELDS["quantity"]))
+        quantity = to_float(_first(raw, catalog.POSITION_FIELDS["quantity"]))
         if not symbol or not isinstance(symbol, str) or quantity is None:
             skipped += 1
             continue
@@ -72,8 +62,8 @@ def parse_snapshot(doc) -> tuple:
             {
                 "symbol": symbol.strip().upper().replace(".", "-"),
                 "quantity": quantity,
-                "avg_cost": _num(_first(raw, catalog.POSITION_FIELDS["avg_cost"])),
-                "market_value": _num(_first(raw, catalog.POSITION_FIELDS["market_value"])),
+                "avg_cost": to_float(_first(raw, catalog.POSITION_FIELDS["avg_cost"])),
+                "market_value": to_float(_first(raw, catalog.POSITION_FIELDS["market_value"])),
             }
         )
 
@@ -85,7 +75,7 @@ def parse_snapshot(doc) -> tuple:
             continue
         occ = _first(raw, f["occ_symbol"])
         underlying = _first(raw, f["underlying"])
-        quantity = _num(_first(raw, f["quantity"]))
+        quantity = to_float(_first(raw, f["quantity"]))
         if (
             not occ
             or not isinstance(occ, str)
@@ -109,12 +99,12 @@ def parse_snapshot(doc) -> tuple:
                 "occ_symbol": occ.strip().upper(),
                 "underlying": underlying.strip().upper().replace(".", "-"),
                 "type": otype if otype in ("call", "put") else None,
-                "strike": _num(_first(raw, f["strike"])),
+                "strike": to_float(_first(raw, f["strike"])),
                 "expiration": _bare_date(_first(raw, f["expiration"])),
                 "quantity": quantity,
-                "avg_cost": _num(_first(raw, f["avg_cost"])),
-                "market_value": _num(_first(raw, f["market_value"])),
-                "multiplier": _num(_first(raw, f["multiplier"])),
+                "avg_cost": to_float(_first(raw, f["avg_cost"])),
+                "market_value": to_float(_first(raw, f["market_value"])),
+                "multiplier": to_float(_first(raw, f["multiplier"])),
             }
         )
     return account, positions, option_positions, skipped

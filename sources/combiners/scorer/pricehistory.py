@@ -18,11 +18,12 @@ from datetime import UTC, datetime
 
 from sources.combiners.scorer import catalog, db
 from sources.common.clock import phx_date
+from sources.common.http_client import DEFAULT_UA
 
 HISTORY_URL = "https://stockanalysis.com/api/symbol/s/{symbol}/history?range=Max"
 # Cloudflare challenges the bare "Mozilla/5.0" token (403); the descriptive
 # UA the other sources send passes.
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+_UA = DEFAULT_UA
 _SLEEP_SECONDS = 0.7  # unofficial endpoint; be a polite client
 
 

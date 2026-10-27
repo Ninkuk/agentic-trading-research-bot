@@ -1,18 +1,17 @@
 # cftc_screener/fetch.py
 import json
-import time
 import urllib.parse
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_THROTTLE_5XX
+from sources.common.parse import coerce
 
 _HOST = "https://publicreporting.cftc.gov/resource/{}.json"
 _LEGACY_DATASET = "6dca-aqww"
 API_URL = _HOST.format(_LEGACY_DATASET)  # legacy default; back-compat
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+_UA = DEFAULT_UA
 
-_RETRY_STATUS = frozenset({429, 500, 502, 503, 504})  # Socrata throttles with 429
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
+_RETRY_STATUS = RETRY_THROTTLE_5XX  # Socrata throttles with 429
 _LIMIT = 50000  # Socrata max; > full weekly history for any market
 
 # (db_column, socrata_field) for integer-valued columns. All "_all" (all
@@ -164,25 +163,9 @@ def _make_opener(app_token=None):
     return http_client.make_opener(_headers(app_token)) if app_token else _urlopen
 
 
-def _http_get(
-    url: str,
-    opener=_urlopen,
-    attempts: int = _MAX_ATTEMPTS,
-    base_delay: float = _BASE_DELAY,
-    sleep=time.sleep,
-) -> str:
-    """GET with bounded backoff, retrying Socrata throttling (429) and transient
-    5xx/network errors. Other HTTP errors raise immediately."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
-
-
-def _num(raw, cast):
-    if raw is None or raw == "":
-        return None
-    try:
-        return cast(raw)
-    except (TypeError, ValueError):
-        return None
+# GET with bounded backoff, retrying Socrata throttling (429) and transient
+# 5xx/network errors. Other HTTP errors raise immediately.
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS)
 
 
 def parse_rows(records: list, field_map=LEGACY_FIELDS) -> list[dict]:
@@ -202,7 +185,7 @@ def parse_rows(records: list, field_map=LEGACY_FIELDS) -> list[dict]:
             "name": rec.get("market_and_exchange_names"),
         }
         for col, api, cast in field_map:
-            row[col] = _num(rec.get(api), cast)
+            row[col] = coerce(rec.get(api), cast)
         out.append(row)
     return out
 

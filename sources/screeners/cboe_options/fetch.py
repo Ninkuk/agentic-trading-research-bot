@@ -1,19 +1,18 @@
 import json
-import time
 import urllib.error
 from datetime import date as _date
 
 import sources.common.http_client as http_client
+from sources.common.http_client import DEFAULT_UA, RETRY_CDN
+from sources.common.parse import coerce, to_int
 
 BASE = "https://cdn.cboe.com/api/global/delayed_quotes/options"
 
-_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+_UA = DEFAULT_UA
 # Undocumented CDN behind Cloudflare. Retry only throttling/5xx; 404 means no
 # chain for this ticker (fetch_chain maps it to None). Deep-OTM contracts often
 # report iv/greeks as 0 — stored as-is; downstream views filter.
-_RETRY_STATUS = frozenset({429, 503})
-_MAX_ATTEMPTS = 5
-_BASE_DELAY = 1.0
+_RETRY_STATUS = RETRY_CDN
 
 _urlopen = http_client.make_opener(_UA)  # opener(url) -> decoded UTF-8 text
 
@@ -22,21 +21,6 @@ def chain_url(symbol: str, is_index: bool, base: str = BASE) -> str:
     """URL of the delayed-quotes chain JSON. Indices take a leading underscore."""
     prefix = "_" if is_index else ""
     return f"{base}/{prefix}{symbol}.json"
-
-
-def _num(raw, cast):
-    """Coerce raw via cast; None/blank/unparseable -> None."""
-    if raw is None or raw == "":
-        return None
-    try:
-        return cast(raw)
-    except (TypeError, ValueError):
-        return None
-
-
-def _to_int(raw):
-    """OI/volume arrive as floats (e.g. 3131.0). None-safe int()."""
-    return _num(raw, lambda v: int(float(v)))
 
 
 def parse_occ(option: str):
@@ -75,7 +59,7 @@ def parse_chain(payload: dict, underlying: str):
     dicts) for the given catalog `underlying`. Contracts with an unparseable OCC
     symbol are skipped. Pure — no I/O."""
     data = payload.get("data") or {}
-    px = _num(data.get("current_price"), float)
+    px = coerce(data.get("current_price"), float)
     contracts = []
     call_vol = put_vol = call_oi = put_oi = 0
     for o in data.get("options", []):
@@ -83,8 +67,8 @@ def parse_chain(payload: dict, underlying: str):
         if parsed is None:
             continue
         _root, expiration, kind, strike = parsed
-        bid, ask = _num(o.get("bid"), float), _num(o.get("ask"), float)
-        oi, vol = _to_int(o.get("open_interest")), _to_int(o.get("volume"))
+        bid, ask = coerce(o.get("bid"), float), coerce(o.get("ask"), float)
+        oi, vol = to_int(o.get("open_interest")), to_int(o.get("volume"))
         contracts.append(
             {
                 "occ_symbol": o["option"],
@@ -95,14 +79,14 @@ def parse_chain(payload: dict, underlying: str):
                 "bid": bid,
                 "ask": ask,
                 "mark": _mark(bid, ask),
-                "last": _num(o.get("last_trade_price"), float),
-                "theo": _num(o.get("theo"), float),
-                "iv": _num(o.get("iv"), float),
-                "delta": _num(o.get("delta"), float),
-                "gamma": _num(o.get("gamma"), float),
-                "theta": _num(o.get("theta"), float),
-                "vega": _num(o.get("vega"), float),
-                "rho": _num(o.get("rho"), float),
+                "last": coerce(o.get("last_trade_price"), float),
+                "theo": coerce(o.get("theo"), float),
+                "iv": coerce(o.get("iv"), float),
+                "delta": coerce(o.get("delta"), float),
+                "gamma": coerce(o.get("gamma"), float),
+                "theta": coerce(o.get("theta"), float),
+                "vega": coerce(o.get("vega"), float),
+                "rho": coerce(o.get("rho"), float),
                 "open_interest": oi,
                 "volume": vol,
                 "underlying_price": px,
@@ -118,8 +102,8 @@ def parse_chain(payload: dict, underlying: str):
     daily = {
         "underlying": underlying,
         "underlying_price": px,
-        "close": _num(data.get("close"), float),
-        "iv30": _num(data.get("iv30"), float),
+        "close": coerce(data.get("close"), float),
+        "iv30": coerce(data.get("iv30"), float),
         "total_call_volume": call_vol,
         "total_put_volume": put_vol,
         "put_call_volume_ratio": (put_vol / call_vol) if call_vol else None,
@@ -198,17 +182,10 @@ def skew_term(contracts: list, snapshot_date: str) -> dict:
     return out
 
 
-def _http_get(
-    url: str,
-    opener=_urlopen,
-    attempts: int = _MAX_ATTEMPTS,
-    base_delay: float = _BASE_DELAY,
-    sleep=time.sleep,
-) -> str:
-    """GET chain JSON text with bounded backoff, retrying 429/503 and transient
-    network errors. Non-retryable HTTP errors (e.g. 403/404) raise at once, so
-    fetch_chain can map 404 -> None."""
-    return http_client.http_get(url, opener, _RETRY_STATUS, attempts, base_delay, sleep)
+# GET chain JSON text with bounded backoff, retrying 429/503 and transient
+# network errors. Non-retryable HTTP errors (e.g. 403/404) raise at once, so
+# fetch_chain can map 404 -> None.
+_http_get = http_client.make_getter(_urlopen, _RETRY_STATUS)
 
 
 def fetch_chain(symbol: str, is_index: bool, get=_http_get):
