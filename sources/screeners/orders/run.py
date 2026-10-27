@@ -26,6 +26,7 @@ import os
 import sqlite3
 import sys
 import uuid
+from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from decimal import ROUND_DOWN, Decimal
 
@@ -95,6 +96,24 @@ def _stale_ref_hint(row: dict, now_iso: str) -> str:
     )
 
 
+@contextmanager
+def _claim(db_path: str):
+    """One BEGIN IMMEDIATE transaction over orders.db: commits on a normal
+    exit, rolls back on any exception (which erases the runs header so the
+    wrapper's freshness check fires), always closes."""
+    conn = db.connect(db_path)
+    try:
+        db.ensure_schema(conn)
+        conn.execute("BEGIN IMMEDIATE")
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def _compute_decision(
     row: dict,
     quote: Quote | None,
@@ -115,17 +134,16 @@ def _compute_decision(
         return "vetoed", f"instrument state {quote.state}"
     if quote.quote_ts is None or _age_sec(quote.quote_ts, now_iso) > STALE_QUOTE_SEC:
         return "vetoed", "stale quote"
-    ceiling = Decimal(str(row["ref_price"])) * (
-        Decimal("1") + Decimal(str(row["max_gap_pct"])) / Decimal("100")
-    )
-    floor = Decimal(str(row["ref_price"])) * (
-        Decimal("1") - Decimal(str(row["max_gap_pct"])) / Decimal("100")
-    )
-    if Decimal(str(quote.ask)) > ceiling:
+    ref = Decimal(str(row["ref_price"]))
+    band = Decimal(str(row["max_gap_pct"])) / Decimal("100")
+    ask = Decimal(str(quote.ask))
+    ceiling = ref * (Decimal("1") + band)
+    floor = ref * (Decimal("1") - band)
+    if ask > ceiling:
         return "vetoed", f"gapped: ask {quote.ask} > ceiling {ceiling:.2f}" + _stale_ref_hint(
             row, now_iso
         )
-    if Decimal(str(quote.ask)) < floor:
+    if ask < floor:
         # Symmetric sanity bound: an ask far BELOW ref is a corrupt quote or
         # news, not a bargain to auto-buy — without this, ask=0.01 plans a
         # penny limit and permanently consumes the human's intent.
@@ -133,9 +151,7 @@ def _compute_decision(
             row, now_iso
         )
     if row["qty"] is not None:
-        limit = min(Decimal(str(quote.ask)) * SLIPPAGE, ceiling).quantize(
-            Decimal("0.01"), rounding=ROUND_DOWN
-        )
+        limit = min(ask * SLIPPAGE, ceiling).quantize(Decimal("0.01"), rounding=ROUND_DOWN)
         notional = limit * row["qty"]
         money = str(limit)
     else:
@@ -209,10 +225,7 @@ def run_queue(
             date.fromisoformat(expires_on)
         except ValueError:
             raise ValueError("expires_on must be an ISO date (YYYY-MM-DD)") from None
-    conn = db.connect(db_path)
-    try:
-        db.ensure_schema(conn)
-        conn.execute("BEGIN IMMEDIATE")
+    with _claim(db_path) as conn:
         (dup,) = conn.execute(
             "SELECT COUNT(*) FROM queue WHERE symbol = ? AND status = 'queued'", (symbol,)
         ).fetchone()
@@ -223,13 +236,7 @@ def run_queue(
             " note, queued_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (symbol, qty, notional, ref_price, max_gap_pct, expires_on, note, now_iso),
         )
-        conn.commit()
         return int(cur.lastrowid or 0)
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
 
 
 def run_preflight(
@@ -277,15 +284,11 @@ def run_plan(
     limits = catalog.load_limits(env)
     pi: PlanInput = fetch.parse_plan_input(doc)
     trading = _trading_day(cal_db_path, now_iso)
-    conn = db.connect(db_path)
-    try:
-        db.ensure_schema(conn)
+    with _claim(db_path) as conn:
         planned: list[dict] = []
-        conn.execute("BEGIN IMMEDIATE")
         _write_run(conn, now_iso, "plan", "intraday" if intraday else "")
         gate = market_clock.session_state if intraday else market_clock.window_state
         if gate(now_iso, trading) != "open":
-            conn.commit()
             return {"account_number": limits.account_number, "orders": []}
         rows = conn.execute(
             "SELECT id, symbol, qty, notional, ref_price, max_gap_pct, expires_on,"
@@ -354,13 +357,7 @@ def run_plan(
                     " WHERE id=? AND status='queued'",
                     (status, now_iso, detail, row["id"]),
                 )
-        conn.commit()
         return {"account_number": limits.account_number, "orders": planned}
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
 
 
 def run_record(db_path: str, doc: dict, now_iso: str, env: dict) -> tuple[int, int]:
@@ -370,10 +367,7 @@ def run_record(db_path: str, doc: dict, now_iso: str, env: dict) -> tuple[int, i
     (v_unreconciled + the wrapper's STUCK check surface it same-day)."""
     limits = catalog.load_limits(env)
     results = fetch.parse_record_input(doc)
-    conn = db.connect(db_path)
-    try:
-        db.ensure_schema(conn)
-        conn.execute("BEGIN IMMEDIATE")
+    with _claim(db_path) as conn:
         run_id = _write_run(conn, now_iso, "record", f"{len(results)} results")
         placed = errors = 0
         for r in results:
@@ -413,13 +407,7 @@ def run_record(db_path: str, doc: dict, now_iso: str, env: dict) -> tuple[int, i
                 placed += 1
             else:
                 errors += 1
-        conn.commit()
         return placed, errors
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
 
 
 def run_reconcile(db_path: str, doc: dict, now_iso: str) -> dict:
@@ -431,10 +419,7 @@ def run_reconcile(db_path: str, doc: dict, now_iso: str) -> dict:
     broker_orders = fetch.parse_reconcile_input(doc)
     by_order_id = {o.order_id: o for o in broker_orders}
     by_ref_id = {o.ref_id: o for o in broker_orders if o.ref_id}
-    conn = db.connect(db_path)
-    try:
-        db.ensure_schema(conn)
-        conn.execute("BEGIN IMMEDIATE")
+    with _claim(db_path) as conn:
         _write_run(conn, now_iso, "reconcile", f"{len(broker_orders)} broker orders")
         confirmed = 0
         orphan_placements = []
@@ -473,17 +458,11 @@ def run_reconcile(db_path: str, doc: dict, now_iso: str) -> dict:
             for o in broker_orders
             if o.order_id not in covered
         ]
-        conn.commit()
         return {
             "confirmed": confirmed,
             "orphan_placements": orphan_placements,
             "orphan_orders": orphan_orders,
         }
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
 
 
 def run_resolve(
@@ -496,10 +475,7 @@ def run_resolve(
         raise ValueError("resolve --as must be placed|failed")
     if as_state == "placed" and not order_id:
         raise ValueError("resolve --as placed requires --order-id")
-    conn = db.connect(db_path)
-    try:
-        db.ensure_schema(conn)
-        conn.execute("BEGIN IMMEDIATE")
+    with _claim(db_path) as conn:
         got = conn.execute(
             "SELECT ref_id, planned_limit FROM queue WHERE id=? AND status='planned'",
             (queue_id,),
@@ -525,12 +501,6 @@ def run_resolve(
                 " resolution_reason='manual' WHERE id=?",
                 (now_iso, queue_id),
             )
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
 
 
 def run_cancel(
@@ -552,10 +522,7 @@ def run_cancel(
             "refusing non-interactive cancel (set ORDERS_ALLOW_NONINTERACTIVE=1 from"
             " a human-driven session; the headless slot must never gain it)"
         )
-    conn = db.connect(db_path)
-    try:
-        db.ensure_schema(conn)
-        conn.execute("BEGIN IMMEDIATE")
+    with _claim(db_path) as conn:
         cur = conn.execute(
             "UPDATE queue SET status='cancelled', resolved_at=?, resolution_reason=?"
             " WHERE id=? AND status='queued'",
@@ -563,12 +530,6 @@ def run_cancel(
         )
         if cur.rowcount != 1:
             raise ValueError(f"queue row {queue_id} is not in status 'queued'")
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
 
 
 def _load_doc(path: str) -> dict:

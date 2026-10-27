@@ -13,6 +13,8 @@ against ref_price is the price protection)."""
 
 import sqlite3
 
+from sources.common.screener_common import connect as _connect
+
 __all__ = ["connect", "ensure_schema"]
 
 # Shared between the CREATE TABLE IF NOT EXISTS path (fresh DB) and the
@@ -168,10 +170,8 @@ def _migrate_queue_status_cancelled(conn: sqlite3.Connection) -> None:
 
 
 def connect(path: str) -> sqlite3.Connection:
-    conn = sqlite3.connect(path)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA busy_timeout=30000")
-    return conn
+    # 30s busy wait: duplicate wake-coalesced sessions contend on BEGIN IMMEDIATE.
+    return _connect(path, busy_timeout_ms=30000)
 
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
