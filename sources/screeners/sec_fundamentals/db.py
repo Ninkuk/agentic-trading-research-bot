@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta
-
 from sources.common.screener_common import connect
+from sources.common.screener_common import prune as _prune
 
 __all__ = ["connect", "ensure_schema", "upsert_companies", "write_facts", "write_snapshot", "prune"]
 
@@ -123,22 +122,8 @@ def write_snapshot(conn, captured_at: str, company_count: int, fact_count: int) 
 
 
 def prune(conn, keep_days: int, now_iso: str) -> int:
-    """Delete run-provenance snapshots older than keep_days before now_iso.
-    Single-table delete only — facts are the historical store and are NEVER
-    cascade-pruned (FRED prune shape, NOT the screener_common cascade)."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [
-        r[0]
-        for r in conn.execute(
-            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
-        ).fetchall()
-    ]
-    if not ids:
-        return 0
-    qmarks = ",".join("?" * len(ids))
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
-    conn.commit()
-    return len(ids)
+    """Headers only — facts are the historical store and are never cascade-pruned."""
+    return _prune(conn, keep_days, now_iso)
 
 
 _VIEWS = """

@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta
-
-from sources.common.screener_common import connect
+from sources.common.screener_common import add_missing_columns, connect
+from sources.common.screener_common import prune as _prune
 
 __all__ = [
     "connect",
@@ -208,10 +207,9 @@ WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM underlying_daily u2
 def ensure_schema(conn) -> None:
     """Create tables, indexes, and screener views. Idempotent."""
     conn.executescript(_SCHEMA)
-    have = {r[1] for r in conn.execute("PRAGMA table_info(underlying_daily)")}
-    for col, affinity in _SKEW_TERM_COLS.items():
-        if col not in have:
-            conn.execute(f"ALTER TABLE underlying_daily ADD COLUMN {col} {affinity}")
+    add_missing_columns(
+        conn, "underlying_daily", (f"{col} {aff}" for col, aff in _SKEW_TERM_COLS.items())
+    )
     conn.executescript(_VIEWS)
     conn.commit()
 
@@ -301,16 +299,4 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     """Delete run-provenance snapshots older than keep_days before now_iso.
     Options history is NOT snapshot-scoped, so this is a single-table delete of
     snapshot headers only — it must NOT cascade into option_snapshots."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [
-        r[0]
-        for r in conn.execute(
-            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
-        ).fetchall()
-    ]
-    if not ids:
-        return 0
-    qmarks = ",".join("?" * len(ids))
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
-    conn.commit()
-    return len(ids)
+    return _prune(conn, keep_days, now_iso)

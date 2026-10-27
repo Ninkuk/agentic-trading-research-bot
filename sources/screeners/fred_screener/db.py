@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta
-
 from sources.common.screener_common import connect
+from sources.common.screener_common import prune as _prune
 
 __all__ = [
     "connect",
@@ -203,25 +202,9 @@ def write_snapshot(conn, captured_at: str, series_count: int, observation_count:
 
 
 def prune(conn, keep_days: int, now_iso: str) -> int:
-    """Delete run-provenance snapshots older than keep_days before now_iso.
-
-    NOTE: unlike the other screeners, observations are NOT snapshot-scoped
-    (they are upserted by (series_id, date) and are the historical store), so
-    this is a plain single-table delete of old snapshot headers, NOT the shared
-    cascade prune in screener_common. Do not wire observations into a cascade."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [
-        r[0]
-        for r in conn.execute(
-            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
-        ).fetchall()
-    ]
-    if not ids:
-        return 0
-    qmarks = ",".join("?" * len(ids))
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
-    conn.commit()
-    return len(ids)
+    """Headers only. observations are upsert-keyed (series_id, date) history,
+    not snapshot-scoped — never wire them into the cascade."""
+    return _prune(conn, keep_days, now_iso)
 
 
 def set_asof(conn, asof: str) -> str:

@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta
-
-from sources.common.screener_common import connect
+from sources.common.screener_common import add_missing_columns, connect
+from sources.common.screener_common import prune as _prune
 
 __all__ = ["connect", "ensure_schema", "write_pcr", "write_vix", "write_snapshot", "prune"]
 
@@ -42,9 +41,7 @@ def ensure_schema(conn) -> None:
     change lands on a live DB (CREATE VIEW IF NOT EXISTS keeps the stale
     one; v_latest_sentiment is built on v_vix_term_structure). Idempotent."""
     conn.executescript(_SCHEMA)
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(vix_daily)")}
-    if "cor3m" not in cols:
-        conn.execute("ALTER TABLE vix_daily ADD COLUMN cor3m REAL")
+    add_missing_columns(conn, "vix_daily", ("cor3m REAL",))
     conn.executescript(
         "DROP VIEW IF EXISTS v_latest_sentiment; DROP VIEW IF EXISTS v_vix_term_structure;"
     )
@@ -97,21 +94,10 @@ def write_snapshot(conn, captured_at, feed_count, row_count) -> int:
     return cur.lastrowid
 
 
-def prune(conn, keep_days, now_iso) -> int:
+def prune(conn, keep_days: int, now_iso: str) -> int:
     """Single-table delete of old snapshots ONLY. pcr_daily/vix_daily are the
     accumulated history and are NEVER cascade-pruned (FRED prune shape)."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [
-        r[0]
-        for r in conn.execute(
-            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
-        ).fetchall()
-    ]
-    if not ids:
-        return 0
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({','.join('?' * len(ids))})", ids)
-    conn.commit()
-    return len(ids)
+    return _prune(conn, keep_days, now_iso)
 
 
 _VIEWS = """

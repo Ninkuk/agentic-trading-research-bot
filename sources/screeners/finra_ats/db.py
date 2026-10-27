@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta
-
 from sources.common.screener_common import connect
+from sources.common.screener_common import prune as _prune
 
 __all__ = [
     "connect",
@@ -116,21 +115,10 @@ def stored_weeks(conn) -> list:
     return [r[0] for r in conn.execute("SELECT week_start FROM weeks ORDER BY week_start")]
 
 
-def prune(conn, keep_days, now_iso) -> int:
+def prune(conn, keep_days: int, now_iso: str) -> int:
     """Single-table delete of old snapshots only. ats_volume is the store and is
     NEVER cascade-pruned (FRED prune shape)."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [
-        r[0]
-        for r in conn.execute(
-            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
-        ).fetchall()
-    ]
-    if not ids:
-        return 0
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({','.join('?' * len(ids))})", ids)
-    conn.commit()
-    return len(ids)
+    return _prune(conn, keep_days, now_iso)
 
 
 _VIEWS = """

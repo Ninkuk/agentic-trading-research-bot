@@ -3,9 +3,8 @@
 on prune. Downstream integrations (holdings dedup, G5 real exposure,
 whole-book heat, marked-to-market equity) read v_latest_* read-only."""
 
-from datetime import datetime, timedelta
-
-from sources.common.screener_common import connect
+from sources.common.screener_common import add_missing_columns, connect
+from sources.common.screener_common import prune as _prune
 
 __all__ = ["connect", "ensure_schema", "write_snapshot", "prune"]
 
@@ -75,9 +74,7 @@ def ensure_schema(conn) -> None:
     """Create tables + views, then the idempotent column migration (a db
     created before option capture lacks snapshots.option_count)."""
     conn.executescript(_SCHEMA)
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(snapshots)")}
-    if "option_count" not in cols:
-        conn.execute("ALTER TABLE snapshots ADD COLUMN option_count INTEGER NOT NULL DEFAULT 0")
+    add_missing_columns(conn, "snapshots", ("option_count INTEGER NOT NULL DEFAULT 0",))
     conn.commit()
 
 
@@ -114,18 +111,6 @@ def write_snapshot(
 def prune(conn, keep_days: int, now_iso: str) -> int:
     """Cascade account + positions then snapshot headers (fully
     snapshot-scoped, same pattern as candidates.db)."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [
-        r[0]
-        for r in conn.execute(
-            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
-        ).fetchall()
-    ]
-    if not ids:
-        return 0
-    qmarks = ",".join("?" * len(ids))
-    for child in ("account", "positions", "option_positions"):
-        conn.execute(f"DELETE FROM {child} WHERE snapshot_id IN ({qmarks})", ids)
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
-    conn.commit()
-    return len(ids)
+    return _prune(
+        conn, keep_days, now_iso, child_tables=("account", "positions", "option_positions")
+    )

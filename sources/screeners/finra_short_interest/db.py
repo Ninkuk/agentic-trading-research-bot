@@ -1,7 +1,7 @@
 # finra_short_interest/db.py
-from datetime import datetime, timedelta
 
 from sources.common.screener_common import connect
+from sources.common.screener_common import prune as _prune
 
 __all__ = [
     "connect",
@@ -189,16 +189,4 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     """Delete run-provenance snapshots older than keep_days before now_iso.
     Short-interest history is NOT snapshot-scoped, so this is a single-table
     delete of snapshot headers only — it must NOT cascade into short_interest."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [
-        r[0]
-        for r in conn.execute(
-            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
-        ).fetchall()
-    ]
-    if not ids:
-        return 0
-    qmarks = ",".join("?" * len(ids))
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
-    conn.commit()
-    return len(ids)
+    return _prune(conn, keep_days, now_iso)
