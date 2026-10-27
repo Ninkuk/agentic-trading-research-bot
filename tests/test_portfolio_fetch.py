@@ -143,3 +143,23 @@ def test_parse_option_positions_absent_is_empty():
 def test_parse_option_positions_non_list_raises():
     with pytest.raises(ValueError):
         fetch.parse_snapshot({"option_positions": "nope"})
+
+
+def test_parse_snapshot_derives_market_value_from_price():
+    # The headless slot cannot run arithmetic scripts (python3 is not
+    # allowlisted); the model passes the quote's price and the parser derives
+    # quantity x price. An explicit market_value still wins.
+    _, positions, _, skipped = fetch.parse_snapshot(
+        {
+            "account": {"equity": 100},
+            "positions": [
+                {"symbol": "INTU", "quantity": "0.032653", "price": "335.505"},
+                {"symbol": "MORN", "quantity": 2, "last_price": 10.0, "market_value": 19.5},
+                {"symbol": "NOPX", "quantity": 1},
+            ],
+        }
+    )
+    assert skipped == 0
+    assert positions[0]["market_value"] == pytest.approx(0.032653 * 335.505)
+    assert positions[1]["market_value"] == 19.5
+    assert positions[2]["market_value"] is None

@@ -13,6 +13,9 @@ POSITION_FIELDS = {
     "quantity": ("quantity", "shares"),
     "avg_cost": ("average_buy_price", "avg_cost", "average_cost"),
     "market_value": ("market_value", "equity"),
+    # A quote price; the parser derives market_value = quantity x price when
+    # market_value is absent, so the model never does the arithmetic itself.
+    "price": ("price", "last_price", "last_trade_price", "mark_price"),
 }
 
 # get_option_positions payload → option_positions row. Column names follow

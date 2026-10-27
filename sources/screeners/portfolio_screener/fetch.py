@@ -58,12 +58,17 @@ def parse_snapshot(doc) -> tuple:
         if not symbol or not isinstance(symbol, str) or quantity is None:
             skipped += 1
             continue
+        market_value = to_float(_first(raw, catalog.POSITION_FIELDS["market_value"]))
+        if market_value is None:
+            price = to_float(_first(raw, catalog.POSITION_FIELDS["price"]))
+            if price is not None:
+                market_value = quantity * price
         positions.append(
             {
                 "symbol": symbol.strip().upper().replace(".", "-"),
                 "quantity": quantity,
                 "avg_cost": to_float(_first(raw, catalog.POSITION_FIELDS["avg_cost"])),
-                "market_value": to_float(_first(raw, catalog.POSITION_FIELDS["market_value"])),
+                "market_value": market_value,
             }
         )
 

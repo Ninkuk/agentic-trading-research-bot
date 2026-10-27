@@ -21,12 +21,17 @@ directly.
      `buying_power.buying_power`
    - `get_equity_positions` → per-position symbol, quantity, average buy
      price. It carries **no market price** — see the next bullet.
-   - `get_equity_quotes` on the held symbols → per-position `market_value`
-     is **derived**: price × quantity. The positions payload carries no
-     `market_value` (its guide: "No market price here"). Omitting this
-     getter from the wrapper's allowlist is a silent weekday outage:
-     headless, the denial has nobody to approve it, so no snapshot lands
-     and the slot exits 1.
+   - `get_equity_quotes` on the held symbols → each position's `price`
+     (the last trade price). The positions payload carries no market
+     value (its guide: "No market price here"); pass the quote price
+     through as `price` and the dispatcher derives `market_value` =
+     quantity × price. **Never compute it yourself and never write a
+     helper script**: the headless slot allowlists `Write` and the
+     dispatcher command only, so `python3`, `sqlite3` and any other Bash
+     die on a permission prompt nobody can answer (this exact
+     improvisation produced the 2026-10-19 and 2026-10-21 stale-snapshot
+     alerts). Omitting this getter from the wrapper's allowlist is the
+     same silent weekday outage.
    - `get_option_positions` → per-contract legs (see the
      `option_positions` bullet below); zero open contracts is normal —
      emit an empty array, don't omit the key
@@ -42,12 +47,15 @@ directly.
    ```json
    {"account": {"equity": 205.37, "cash": 12.40, "buying_power": 12.40},
     "positions": [{"symbol": "GLD", "quantity": 0.5,
-                   "average_buy_price": 301.20, "market_value": 155.00}]}
+                   "average_buy_price": 301.20, "price": 310.00}]}
    ```
 
    Field aliases accepted per position: `quantity`/`shares`,
-   `average_buy_price`/`avg_cost`/`average_cost`, `market_value`/`equity`
-   (see `sources/screeners/portfolio_screener/catalog.py`).
+   `average_buy_price`/`avg_cost`/`average_cost`, `price`/`last_price`
+   (market value is derived from it), or an explicit `market_value`/
+   `equity` when the payload already carries one (see
+   `sources/screeners/portfolio_screener/catalog.py`). Write this one
+   file with the `Write` tool, directly — no intermediate script.
 
    - `option_positions`: one entry per contract leg —
      `{"occ_symbol", "underlying", "type": "call"|"put", "strike",
@@ -75,8 +83,10 @@ directly.
 
 4. Report to the user: snapshot id, position count (+ skipped count if any),
    and equity / cash / buying power.
-5. Transfer check (detect + confirm — never silent): compare against the
-   last equity-ledger row (read-only):
+5. Transfer check (detect + confirm — never silent). **Interactive
+   sessions only**: it needs a human to confirm and a `sqlite3` read the
+   headless slot does not allowlist, so a scheduled run ends after step 4.
+   Compare against the last equity-ledger row (read-only):
 
    ```bash
    sqlite3 "file:data/scorer.db?mode=ro" \
