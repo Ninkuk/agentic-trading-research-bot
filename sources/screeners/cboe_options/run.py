@@ -2,14 +2,9 @@ import argparse
 import sys
 from datetime import UTC, datetime
 
+from sources.common.clock import phx_date
+from sources.common.screener_common import split_csv
 from sources.screeners.cboe_options import catalog, db, fetch
-
-
-def _split(arg):
-    """'A,B , C' -> ['A','B','C']; None/'' -> None."""
-    if not arg:
-        return None
-    return [t.strip() for t in arg.split(",") if t.strip()]
 
 
 def run(
@@ -36,7 +31,7 @@ def run(
                 if payload is None:  # no chain for this ticker
                     continue
                 daily, contracts = fetch.parse_chain(payload, symbol)
-                snapshot_date = fetch.session_date(payload) or now_iso[:10]
+                snapshot_date = fetch.session_date(payload) or phx_date(now_iso)
                 db.upsert_underlying(conn, symbol, is_index, snapshot_date)
                 written = db.replace_day(conn, snapshot_date, symbol, contracts, now_iso)
                 daily.update(fetch.skew_term(contracts, snapshot_date))
@@ -75,7 +70,9 @@ def main(argv=None):
     )
     a = p.parse_args(argv)
     all_syms = [u.symbol for u in catalog.CATALOG]
-    symbols = catalog.select_symbols(all_syms, _split(a.only), _split(a.exclude), _split(a.add))
+    symbols = catalog.select_symbols(
+        all_syms, split_csv(a.only), split_csv(a.exclude), split_csv(a.add)
+    )
     _, sc, rc = run(a.db, symbols=symbols, keep_days=a.keep_days)
     print(f"stored {rc} option rows across {sc} symbols into {a.db}")
 

@@ -1,5 +1,6 @@
-from collections.abc import Iterable
 from dataclasses import dataclass
+
+from sources.common.screener_common import select_ids
 
 
 @dataclass(frozen=True)
@@ -51,17 +52,5 @@ def index_flag(symbol: str) -> bool:
     return symbol.strip() in _INDEX
 
 
-def select_symbols(all_symbols: Iterable[str], only, exclude, add=None) -> list[str]:
-    """Resolve the ordered, de-duplicated symbols to fetch: ``only`` (or all)
-    minus ``exclude``, then any ``add`` appended. Tokens stripped; blanks and
-    duplicates dropped."""
-    syms = list(only) if only else list(all_symbols)
-    ex = {e.strip() for e in (exclude or ())}
-    out, seen = [], set()
-    for s in list(syms) + list(add or ()):
-        s = s.strip()
-        if not s or s in ex or s in seen:
-            continue
-        seen.add(s)
-        out.append(s)
-    return out
+# The option chain's selection rule is the catalog-wide one.
+select_symbols = select_ids

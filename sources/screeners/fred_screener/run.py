@@ -3,6 +3,7 @@ import os
 import sys
 from datetime import UTC, datetime
 
+from sources.common.screener_common import split_csv
 from sources.screeners.fred_screener import catalog, db, fetch
 
 
@@ -106,8 +107,8 @@ def main(argv=None):
         help="also fetch ALFRED observation vintage history",
     )
     a = p.parse_args(argv)
-    only = a.only.split(",") if a.only else None
-    exclude = a.exclude.split(",") if a.exclude else None
+    only = split_csv(a.only)
+    exclude = split_csv(a.exclude)
     _, sc, oc = run(
         a.db,
         only=only,

@@ -2,29 +2,13 @@ import argparse
 import sys
 from datetime import UTC, datetime
 
+from sources.common.screener_common import select_ids, split_csv
 from sources.screeners.stock_analysis_screener import catalog, db, fetch
 from sources.screeners.stock_analysis_screener.typing import column_type
 
 SOURCE = "stockanalysis.com"
 
 _RESERVED_COLUMNS = {"snapshot_id", "symbol"}
-
-
-def select_ids(all_ids, only, exclude):
-    """Resolve the data-point ids to store: `only` (or the full catalog) minus
-    `exclude`. Tokens are stripped and blanks/duplicates dropped, so a CLI value
-    like `--only "pe, pe,,roe"` cannot produce a duplicate or empty-named
-    metrics column."""
-    ids = list(only) if only else list(all_ids)
-    ex = {e.strip() for e in (exclude or ())}
-    out, seen = [], set()
-    for i in ids:
-        i = i.strip()
-        if not i or i in ex or i in seen:
-            continue
-        seen.add(i)
-        out.append(i)
-    return out
 
 
 def run(
@@ -88,8 +72,8 @@ def main(argv=None):
     p.add_argument("--exclude", default=None, help="comma-separated data-point ids")
     p.add_argument("--type", dest="type_", default="s", choices=sorted(catalog.TYPE_ROUTES))
     a = p.parse_args(argv)
-    only = a.only.split(",") if a.only else None
-    exclude = a.exclude.split(",") if a.exclude else None
+    only = split_csv(a.only)
+    exclude = split_csv(a.exclude)
     snapshot_id, n = run(a.db, a.keep_days, only, exclude, a.type_)
     print(f"snapshot {snapshot_id}: stored {n} stocks into {a.db}")
 

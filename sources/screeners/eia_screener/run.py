@@ -3,6 +3,7 @@ import os
 import sys
 from datetime import UTC, datetime
 
+from sources.common.screener_common import split_csv
 from sources.screeners.eia_screener import catalog, db, fetch
 
 
@@ -76,10 +77,6 @@ def run(
     return snapshot_id, successes, total_obs
 
 
-def _split(v):
-    return [s for s in (v.split(",") if v else []) if s.strip()] or None
-
-
 def main(argv=None):
     p = argparse.ArgumentParser(
         prog="eia", description="Pull weekly EIA energy-inventory series into SQLite"
@@ -97,8 +94,8 @@ def main(argv=None):
     a = p.parse_args(argv)
     _, sc, oc = run(
         a.db,
-        only=_split(a.only),
-        exclude=_split(a.exclude),
+        only=split_csv(a.only),
+        exclude=split_csv(a.exclude),
         add=a.add,
         start=a.start,
         keep_days=a.keep_days,

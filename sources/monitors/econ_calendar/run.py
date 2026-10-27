@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 import sources.common.monitor_common as monitor_common
 from sources.common.clock import phx_date
+from sources.common.screener_common import split_csv
 from sources.monitors.econ_calendar import catalog, db, fetch
 
 
@@ -73,8 +74,8 @@ def main(argv=None):
         help="prune run-provenance snapshots older than N days",
     )
     a = p.parse_args(argv)
-    only = a.only.split(",") if a.only else None
-    exclude = a.exclude.split(",") if a.exclude else None
+    only = split_csv(a.only)
+    exclude = split_csv(a.exclude)
     _, count = run(
         a.db, only=only, exclude=exclude, horizon_days=a.horizon_days, keep_days=a.keep_days
     )

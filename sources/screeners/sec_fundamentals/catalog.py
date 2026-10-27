@@ -1,5 +1,6 @@
-from collections.abc import Iterable
 from dataclasses import dataclass
+
+from sources.common.screener_common import select_ids as select_ids  # re-exported
 
 
 @dataclass(frozen=True)
@@ -36,19 +37,3 @@ CATALOG: list[Concept] = [
     Concept("EarningsPerShareDiluted", "us-gaap", "USD/shares", "duration", "per_share"),
     Concept("CommonStockSharesOutstanding", "us-gaap", "shares", "instant", "shares"),
 ]
-
-
-def select_ids(all_ids: Iterable[str], only, exclude, add=None) -> list[str]:
-    """Resolve the ordered, de-duplicated tags to fetch: ``only`` (or the full
-    catalog) minus ``exclude``, then any ``add`` appended. Tokens stripped;
-    blanks and duplicates dropped. Identical to fred_screener.catalog.select_ids."""
-    ids = list(only) if only else list(all_ids)
-    ex = {e.strip() for e in (exclude or ())}
-    out, seen = [], set()
-    for i in list(ids) + list(add or ()):
-        i = i.strip()
-        if not i or i in ex or i in seen:
-            continue
-        seen.add(i)
-        out.append(i)
-    return out

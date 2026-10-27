@@ -1,7 +1,8 @@
 import argparse
 import sys
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
+from sources.common.screener_common import max_date, since_floor, split_csv
 from sources.screeners.treasury_screener import catalog, db, fetch
 
 # On incremental re-runs, re-fetch this many days before the latest stored
@@ -9,17 +10,6 @@ from sources.screeners.treasury_screener import catalog, db, fetch
 # (fiscal agencies revise a few days back). --full ignores it and re-pulls from
 # --start (or full history). See [[incremental-since-misses-revisions]].
 _LOOKBACK_DAYS = 7
-
-
-def _since_floor(last, start, full):
-    """Inclusive record_date floor for a daily/monthly dataset. Explicit
-    ``start`` wins; ``full`` (or a first-ever pull with no stored data) pulls
-    full history / from start; otherwise floor at ``last`` - _LOOKBACK_DAYS."""
-    if start is not None:
-        return start
-    if full or last is None:
-        return start
-    return (datetime.fromisoformat(last) - timedelta(days=_LOOKBACK_DAYS)).date().isoformat()
 
 
 # dataset_id -> (parser, writer, table). yield_curve is handled separately (XML).
@@ -34,11 +24,6 @@ _HANDLERS = {
     ),
     "auction_results": (fetch.parse_auction_results, db.write_auction_results, "auction_results"),
 }
-
-
-def _max_date(conn, table, date_col="record_date"):
-    row = conn.execute(f"SELECT MAX({date_col}) FROM {table}").fetchone()
-    return row[0] if row and row[0] else None
 
 
 def run(
@@ -78,7 +63,12 @@ def run(
                     if ds and ds.frequency == "event":
                         since = start
                     else:
-                        since = _since_floor(_max_date(conn, table), start, full)
+                        since = since_floor(
+                            max_date(conn, table, "record_date"),
+                            start,
+                            full,
+                            lookback_days=_LOOKBACK_DAYS,
+                        )
                     raw = fetch_dataset(ds.endpoint if ds else dataset_id, since=since)
                     n = writer(conn, parser(raw))
                 else:
@@ -99,10 +89,6 @@ def run(
     finally:
         conn.close()
     return snapshot_id, successes, total_rows
-
-
-def _split(v):
-    return [s for s in (v.split(",") if v else []) if s.strip()] or None
 
 
 def main(argv=None):
@@ -132,8 +118,8 @@ def main(argv=None):
     a = p.parse_args(argv)
     _, nds, nrows = run(
         a.db,
-        only=_split(a.only),
-        exclude=_split(a.exclude),
+        only=split_csv(a.only),
+        exclude=split_csv(a.exclude),
         add=a.add,
         start=a.start,
         full=a.full,

@@ -1,6 +1,6 @@
-from collections.abc import Iterable
 from dataclasses import dataclass
 
+from sources.common.screener_common import select_ids as select_ids  # re-exported
 from sources.screeners.cftc_screener import fetch
 
 
@@ -85,19 +85,3 @@ TFF = Family("tff", "gpe5-46if", TFF_CATALOG, "cot_tff", fetch.TFF_FIELDS)
 # non-goal for this cut: its dataset id and columns are unconfirmed. Add a fourth
 # Family here (and a `cot_supp` table + views in db.py) once verified live.
 FAMILIES: dict[str, Family] = {f.name: f for f in (LEGACY, DISAGG, TFF)}
-
-
-def select_ids(all_ids: Iterable[str], only, exclude, add=None) -> list[str]:
-    """Resolve the ordered, de-duplicated codes to fetch: ``only`` (or the full
-    catalog) minus ``exclude``, then any ``add`` codes appended. Tokens are
-    stripped; blanks and duplicates are dropped."""
-    ids = list(only) if only else list(all_ids)
-    ex = {e.strip() for e in (exclude or ())}
-    out, seen = [], set()
-    for i in list(ids) + list(add or ()):
-        i = i.strip()
-        if not i or i in ex or i in seen:
-            continue
-        seen.add(i)
-        out.append(i)
-    return out

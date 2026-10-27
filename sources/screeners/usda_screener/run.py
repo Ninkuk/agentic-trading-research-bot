@@ -3,6 +3,7 @@ import os
 import sys
 from datetime import UTC, datetime
 
+from sources.common.screener_common import split_csv
 from sources.screeners.usda_screener import catalog, db, fetch, wasde
 
 
@@ -82,10 +83,6 @@ def run_wasde(db_path, keep_days=None, now_iso=None, fetch=wasde.fetch_wasde):
     return snapshot_id, len(commodities), obs_count
 
 
-def _split(v):
-    return [s for s in (v.split(",") if v else []) if s.strip()] or None
-
-
 def main(argv=None):
     p = argparse.ArgumentParser(
         prog="usda", description="Pull USDA crop supply/demand balance-sheet data into SQLite"
@@ -115,7 +112,7 @@ def main(argv=None):
         print(f"stored {oc} WASDE observations across {cc} commodities into {a.db}")
         return
     _, sc, oc = run(
-        a.db, only=_split(a.only), exclude=_split(a.exclude), add=a.add, keep_days=a.keep_days
+        a.db, only=split_csv(a.only), exclude=split_csv(a.exclude), add=a.add, keep_days=a.keep_days
     )
     print(f"stored {oc} observations across {sc} targets into {a.db}")
 

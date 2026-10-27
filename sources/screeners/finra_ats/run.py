@@ -2,6 +2,7 @@ import argparse
 import sys
 from datetime import UTC, date, datetime, timedelta
 
+from sources.common.clock import phx_date
 from sources.screeners.finra_ats import db, fetch
 
 _PUBLICATION_LAG_DAYS = 14  # newest fetchable week floored ~2 weeks back
@@ -31,7 +32,7 @@ def run(db_path, start=None, keep_days=None, full=False, fetch_week=fetch.fetch_
     replace-week writes, snapshot, optionally prune. Returns
     (snapshot_id, week_count, row_count)."""
     now_iso = now_iso or datetime.now(UTC).isoformat()
-    today = date.fromisoformat(now_iso[:10])
+    today = date.fromisoformat(phx_date(now_iso))
     end = (today - timedelta(days=_PUBLICATION_LAG_DAYS)).isoformat()
     start = start or _default_start(today)
     weeks = weeks_in_range(start, end)

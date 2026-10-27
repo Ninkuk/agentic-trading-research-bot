@@ -2,6 +2,7 @@ import argparse
 import sys
 from datetime import UTC, datetime
 
+from sources.common.screener_common import split_csv
 from sources.screeners.cboe_stats import catalog, db, fetch
 
 
@@ -61,10 +62,6 @@ def run(
     return snapshot_id, successes, total_rows
 
 
-def _split(v):
-    return [s for s in (v.split(",") if v else []) if s.strip()] or None
-
-
 def main(argv=None):
     p = argparse.ArgumentParser(
         prog="cboe_stats", description="Pull CBOE market-wide put/call + VIX sentiment into SQLite"
@@ -82,8 +79,8 @@ def main(argv=None):
     a = p.parse_args(argv)
     _, fc, rc = run(
         a.db,
-        only=_split(a.only),
-        exclude=_split(a.exclude),
+        only=split_csv(a.only),
+        exclude=split_csv(a.exclude),
         add=a.add,
         start=a.start,
         keep_days=a.keep_days,

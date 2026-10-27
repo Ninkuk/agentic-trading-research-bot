@@ -3,6 +3,7 @@ import os
 import sys
 from datetime import UTC, datetime, timedelta
 
+from sources.common.screener_common import split_csv
 from sources.screeners.cftc_screener import catalog, db, fetch
 
 # On incremental re-runs, re-fetch this many recent weeks per market so the
@@ -127,8 +128,8 @@ def main(argv=None):
         help="COT report family (default: legacy)",
     )
     a = p.parse_args(argv)
-    only = a.only.split(",") if a.only else None
-    exclude = a.exclude.split(",") if a.exclude else None
+    only = split_csv(a.only)
+    exclude = split_csv(a.exclude)
     _, mc, rc = run(
         a.db,
         only=only,

@@ -2,12 +2,14 @@ import argparse
 import sys
 from datetime import UTC, date, datetime
 
+from sources.common.clock import phx_date
+from sources.common.screener_common import split_csv
 from sources.screeners.sec_fundamentals import catalog, db, fetch
 
 
 def _default_period(now_iso: str) -> str:
     """Most recent COMPLETED calendar quarter as 'CYyyyyQq' (no I suffix)."""
-    d = date.fromisoformat(now_iso[:10])
+    d = date.fromisoformat(phx_date(now_iso))
     q = (d.month - 1) // 3 + 1 - 1  # previous quarter
     y = d.year
     if q == 0:
@@ -23,7 +25,7 @@ def _period_for(concept, period: str) -> str:
 def _current_quarter(now_iso: str) -> tuple[int, int]:
     """(year, quarter) that now_iso falls in — the bulk enumeration's upper
     bound (its ZIP is unpublished until the quarter closes, so it 404-skips)."""
-    d = date.fromisoformat(now_iso[:10])
+    d = date.fromisoformat(phx_date(now_iso))
     return d.year, (d.month - 1) // 3 + 1
 
 
@@ -205,10 +207,6 @@ def run(
     return snapshot_id, company_count, fact_total
 
 
-def _split(v):
-    return [s for s in (v.split(",") if v else []) if s.strip()] or None
-
-
 def main(argv=None):
     p = argparse.ArgumentParser(
         prog="fundamentals", description="Pull SEC XBRL company fundamentals into a SQLite panel"
@@ -242,10 +240,10 @@ def main(argv=None):
     a = p.parse_args(argv)
     _, ncomp, nfact = run(
         a.db,
-        only=_split(a.only),
-        exclude=_split(a.exclude),
+        only=split_csv(a.only),
+        exclude=split_csv(a.exclude),
         add=a.add,
-        tickers=_split(a.tickers),
+        tickers=split_csv(a.tickers),
         periods=a.period,
         bulk=a.bulk,
         bulk_start=a.start,

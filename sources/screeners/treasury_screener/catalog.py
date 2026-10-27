@@ -1,5 +1,6 @@
-from collections.abc import Iterable
 from dataclasses import dataclass
+
+from sources.common.screener_common import select_ids as select_ids  # re-exported
 
 
 @dataclass(frozen=True)
@@ -37,19 +38,3 @@ CATALOG: list[Dataset] = [
     ),
     Dataset("yield_curve", "xml:yield_curve", "yield_curve", "record_date", "daily"),
 ]
-
-
-def select_ids(all_ids: Iterable[str], only, exclude, add=None) -> list[str]:
-    """Ordered, de-duplicated dataset ids: ``only`` (or full catalog) minus
-    ``exclude``, then ``add`` appended. Tokens stripped; blanks/dupes dropped.
-    Identical to fred_screener.catalog.select_ids."""
-    ids = list(only) if only else list(all_ids)
-    ex = {e.strip() for e in (exclude or ())}
-    out, seen = [], set()
-    for i in list(ids) + list(add or ()):
-        i = i.strip()
-        if not i or i in ex or i in seen:
-            continue
-        seen.add(i)
-        out.append(i)
-    return out

@@ -1,5 +1,6 @@
-from collections.abc import Iterable
 from dataclasses import dataclass
+
+from sources.common.screener_common import select_ids as select_ids  # re-exported
 
 
 @dataclass(frozen=True)
@@ -58,19 +59,3 @@ CATALOG: list[Series] = [
 # (e.g. SP500) are licensed/unrevised and 400 on the vintage endpoints. run.py
 # skips --vintages for these; their plain observations are still fetched.
 VINTAGELESS_THEMES = frozenset({"benchmark"})
-
-
-def select_ids(all_ids: Iterable[str], only, exclude, add=None) -> list[str]:
-    """Resolve the ordered, de-duplicated series ids to fetch: ``only`` (or the
-    full catalog) minus ``exclude``, then any ``add`` ids appended. Tokens are
-    stripped; blanks and duplicates are dropped."""
-    ids = list(only) if only else list(all_ids)
-    ex = {e.strip() for e in (exclude or ())}
-    out, seen = [], set()
-    for i in list(ids) + list(add or ()):
-        i = i.strip()
-        if not i or i in ex or i in seen:
-            continue
-        seen.add(i)
-        out.append(i)
-    return out
