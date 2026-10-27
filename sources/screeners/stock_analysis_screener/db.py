@@ -73,6 +73,15 @@ def ensure_schema(conn, columns: dict[str, str]) -> None:
                 f"(values may be stored with mismatched affinity)",
                 file=sys.stderr,
             )
+    # scorer.harvest_prices reads exactly these columns for every retained
+    # snapshot; without a covering index that is a full scan of a 300-column
+    # table (~6s cold) for three columns. Both are data-point columns, so the
+    # index can only exist once they do.
+    if {"price", "priceDate"} <= existing.keys() | columns.keys():
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_metrics_price"
+            ' ON metrics(symbol, "priceDate", snapshot_id, "price")'
+        )
     conn.commit()
 
 

@@ -96,20 +96,28 @@ SELECT k.cusip, s.symbol, s.description, k.streak_days,
 FROM v_fail_streaks k JOIN securities s ON s.cusip = k.cusip
 WHERE k.streak_days >= 5;
 
--- (3) spikes: latest fails vs the security's own trailing 20-day average
--- (excludes the current day). spike_ratio >= 3 => notable jump.
-CREATE VIEW IF NOT EXISTS v_spikes AS
-WITH w AS (
-  SELECT cusip, settlement_date, quantity,
-         AVG(quantity) OVER (PARTITION BY cusip ORDER BY settlement_date
-                             ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING) AS base
-  FROM fails)
-SELECT w.cusip, s.symbol, s.description, w.settlement_date,
-       w.quantity, w.base,
-       CASE WHEN w.base > 0 THEN w.quantity / w.base END AS spike_ratio
-FROM w JOIN securities s ON s.cusip = w.cusip
-WHERE w.settlement_date = (SELECT MAX(settlement_date) FROM fails)
-  AND w.base > 0;
+-- (3) spikes: latest fails vs the security's own trailing 20-row average
+-- (the cusip's own prior rows, excluding the current day — NOT the last 20
+-- calendar dates, which would change base for sparse cusips). spike_ratio
+-- >= 3 => notable jump. Only the latest date's rows are scored, so the
+-- average is taken per row over the PK rather than windowed over the whole
+-- fails table (3M rows for ~6k results). DROP+CREATE so the definition
+-- lands on a live DB.
+DROP VIEW IF EXISTS v_spikes;
+CREATE VIEW v_spikes AS
+WITH latest AS (SELECT MAX(settlement_date) AS d FROM fails),
+cur AS (
+  SELECT f.cusip, f.settlement_date, f.quantity,
+         (SELECT AVG(quantity) FROM (
+            SELECT p.quantity FROM fails p
+            WHERE p.cusip = f.cusip AND p.settlement_date < f.settlement_date
+            ORDER BY p.settlement_date DESC LIMIT 20)) AS base
+  FROM fails f JOIN latest ON f.settlement_date = latest.d)
+SELECT c.cusip, s.symbol, s.description, c.settlement_date,
+       c.quantity, c.base,
+       CASE WHEN c.base > 0 THEN c.quantity / c.base END AS spike_ratio
+FROM cur c JOIN securities s ON s.cusip = c.cusip
+WHERE c.base > 0;
 """
 
 

@@ -14,12 +14,15 @@ _DEFAULT_LOOKBACK_DAYS = 183  # ~6 months
 
 
 def days_in_range(start_date: str, end_date: str) -> list[str]:
-    """All calendar dates start_date..end_date inclusive, each 'YYYY-MM-DD'."""
+    """Weekdays start_date..end_date inclusive, each 'YYYY-MM-DD'. FINRA
+    publishes a file per trading day only; a weekend probe is a guaranteed
+    403 and `stored` never records it, so it would be re-requested forever."""
     d = date_cls.fromisoformat(start_date)
     end = date_cls.fromisoformat(end_date)
     out = []
     while d <= end:
-        out.append(d.isoformat())
+        if d.weekday() < 5:
+            out.append(d.isoformat())
         d += timedelta(days=1)
     return out
 
@@ -32,7 +35,7 @@ def _default_start(now_dt, days: int = _DEFAULT_LOOKBACK_DAYS) -> str:
 def run(
     db_path, start=None, keep_days=None, full=False, fetch_day=fetch.fetch_day, now_iso=None
 ) -> tuple[int, int, int]:
-    """Ingest FINRA daily short-volume files into SQLite. Enumerate calendar days
+    """Ingest FINRA daily short-volume files into SQLite. Enumerate weekdays
     from `start` (default: ~6 months back) through today; ingest new days and
     re-fetch the trailing _REFETCH_DAYS already-stored ones (all of them when
     full=True). A 404 (weekend/holiday/unpublished) is skipped. Any per-day

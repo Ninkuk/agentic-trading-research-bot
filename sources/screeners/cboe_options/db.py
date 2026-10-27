@@ -148,17 +148,26 @@ CREATE TABLE IF NOT EXISTS snapshots (
 _VIEWS = """
 -- (1) unusual activity on each underlying's per-underlying latest snapshot:
 -- contracts where today's volume dwarfs standing open interest. Works from
--- day one.
-CREATE VIEW IF NOT EXISTS v_unusual_activity AS
-SELECT underlying, occ_symbol, expiration, strike, type,
-       volume, open_interest, vol_oi_ratio, iv, snapshot_date
-FROM option_snapshots o
-WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM option_snapshots o2
-                       WHERE o2.underlying = o.underlying AND o2.source = 'cboe')
-  AND source = 'cboe'
-  AND volume >= 100
-  AND vol_oi_ratio >= 1.0
-ORDER BY vol_oi_ratio DESC;
+-- day one. The latest date is resolved per underlying FIRST (one row each),
+-- then CROSS JOIN forces an index seek per underlying; a correlated MAX in
+-- the WHERE scans every stored contract (10M rows, ~18s) and a plain JOIN
+-- lets the planner pick that scan too. DROP+CREATE so the definition lands
+-- on a live DB.
+DROP VIEW IF EXISTS v_unusual_activity;
+CREATE VIEW v_unusual_activity AS
+WITH latest AS MATERIALIZED (
+  SELECT u.symbol AS underlying,
+         (SELECT MAX(snapshot_date) FROM option_snapshots x
+           WHERE x.underlying = u.symbol AND x.source = 'cboe') AS d
+  FROM underlyings u)
+SELECT o.underlying, o.occ_symbol, o.expiration, o.strike, o.type,
+       o.volume, o.open_interest, o.vol_oi_ratio, o.iv, o.snapshot_date
+FROM latest l CROSS JOIN option_snapshots o
+  ON o.underlying = l.underlying AND o.snapshot_date = l.d
+WHERE o.source = 'cboe'
+  AND o.volume >= 100
+  AND o.vol_oi_ratio >= 1.0
+ORDER BY o.vol_oi_ratio DESC;
 
 -- (2) IV Rank/percentile of each underlying's per-underlying latest iv30
 -- within its full stored history (min-max rank + fraction-of-days-below

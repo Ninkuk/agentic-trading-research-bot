@@ -592,14 +592,15 @@ def _lean(score: Any) -> str | None:
 def replay_flags(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     """The newest flag per (signal, benchmark) with its score history —
     what the replay believes right now, from the same point-in-time inputs
-    it grades. One ordered scan of the view: a correlated MAX() subquery
-    re-evaluates the (expensive) view per row."""
+    it grades. One scan of the view, sorted here: a correlated MAX() subquery
+    re-evaluates the (expensive) view per row, and an ORDER BY on the view
+    makes SQLite re-plan it at four times the cost."""
     latest: dict[str, dict[str, Any]] = {}
     hist: dict[str, list[float]] = {}
-    for r in conn.execute(
+    flags = conn.execute(
         "SELECT signal_id, benchmark, asof_date, value, score FROM v_replay_flags"
-        " ORDER BY asof_date"
-    ):
+    ).fetchall()
+    for r in sorted(flags, key=lambda r: r["asof_date"]):
         k = f"{r['signal_id']}|{r['benchmark']}"
         latest[k] = dict(r)
         if r["score"] is not None:

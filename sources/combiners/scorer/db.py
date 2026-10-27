@@ -617,14 +617,20 @@ GROUP BY signal_id, via_crosswalk, horizon, composite_date;
 -- not rows or dates, are the sample size.
 DROP VIEW IF EXISTS v_signal_blocks;
 CREATE VIEW v_signal_blocks AS
-WITH RECURSIVE chain AS (
+-- d is MATERIALIZED: the recursion references the benchmarked dates four
+-- times (anchor, anchor-MIN, step, step-MIN) and would otherwise re-evaluate
+-- the efficacy-by-date view at each one.
+WITH RECURSIVE d AS MATERIALIZED (
+    SELECT signal_id, via_crosswalk, horizon, composite_date, entry_date, exit_date
+    FROM v_signal_efficacy_by_date WHERE n_bench > 0
+),
+chain AS (
     SELECT d.signal_id, d.via_crosswalk, d.horizon, d.composite_date, d.exit_date
-    FROM v_signal_efficacy_by_date d
-    WHERE d.n_bench > 0
-      AND d.composite_date = (
-          SELECT MIN(d2.composite_date) FROM v_signal_efficacy_by_date d2
+    FROM d
+    WHERE d.composite_date = (
+          SELECT MIN(d2.composite_date) FROM d d2
           WHERE d2.signal_id = d.signal_id AND d2.via_crosswalk = d.via_crosswalk
-            AND d2.horizon = d.horizon AND d2.n_bench > 0)
+            AND d2.horizon = d.horizon)
     UNION ALL
     -- composite_date > c.composite_date is redundant for well-formed data
     -- (mature() guarantees exit > entry) but is the cycle guard: a
@@ -632,15 +638,15 @@ WITH RECURSIVE chain AS (
     -- forever — UNION ALL has no cycle detection (verified: infinite
     -- recursion without this predicate).
     SELECT nx.signal_id, nx.via_crosswalk, nx.horizon, nx.composite_date, nx.exit_date
-    FROM chain c JOIN v_signal_efficacy_by_date nx
+    FROM chain c JOIN d nx
       ON nx.signal_id = c.signal_id AND nx.via_crosswalk = c.via_crosswalk
-     AND nx.horizon = c.horizon AND nx.n_bench > 0
+     AND nx.horizon = c.horizon
      AND nx.entry_date >= c.exit_date
      AND nx.composite_date > c.composite_date
     WHERE nx.composite_date = (
-        SELECT MIN(d2.composite_date) FROM v_signal_efficacy_by_date d2
+        SELECT MIN(d2.composite_date) FROM d d2
         WHERE d2.signal_id = c.signal_id AND d2.via_crosswalk = c.via_crosswalk
-          AND d2.horizon = c.horizon AND d2.n_bench > 0
+          AND d2.horizon = c.horizon
           AND d2.entry_date >= c.exit_date
           AND d2.composite_date > c.composite_date)
 )
@@ -764,15 +770,15 @@ GROUP BY regime, horizon;
 -- same BASIS_BREAK_* constants mature() binds as :lo/:hi.
 DROP VIEW IF EXISTS v_basis_breaks;
 CREATE VIEW v_basis_breaks AS
-SELECT a.symbol,
-       b.price_date AS prev_date, b.close AS prev_close,
-       a.price_date, a.close,
-       a.close / b.close AS ratio
-FROM prices a
-JOIN prices b ON b.symbol = a.symbol
- AND b.price_date = (SELECT MAX(c.price_date) FROM prices c
-                     WHERE c.symbol = a.symbol AND c.price_date < a.price_date)
-WHERE a.close < b.close * {BASIS_BREAK_LO} OR a.close > b.close * {BASIS_BREAK_HI};
+WITH w AS (
+    SELECT symbol, price_date, close,
+           LAG(price_date) OVER (PARTITION BY symbol ORDER BY price_date) AS prev_date,
+           LAG(close) OVER (PARTITION BY symbol ORDER BY price_date) AS prev_close
+    FROM prices)
+SELECT symbol, prev_date, prev_close, price_date, close, close / prev_close AS ratio
+FROM w
+WHERE prev_close IS NOT NULL
+  AND (close < prev_close * {BASIS_BREAK_LO} OR close > prev_close * {BASIS_BREAK_HI});
 
 -- Registered but not yet matured: what's cooking and roughly when.
 DROP VIEW IF EXISTS v_pending;
@@ -1558,12 +1564,6 @@ def registered_ids(conn):
     return {r[0] for r in conn.execute("SELECT composite_snapshot_id FROM registered_snapshots")}
 
 
-def register_verdicts(conn, horizons, benchmark, max_age_days) -> int:
-    """Outcome rows for research verdicts that have none yet. Entries reuse
-    entry_for: first ledger close STRICTLY AFTER verdict_date (a verdict
-    formed intraday cannot claim that day's close — same no-look-ahead rule
-    as snapshots), within the forward guard. Uncovered symbols register
-    nothing and are retried nightly; coverage arriving beyond the guard
 def _register_entries(conn, pending, table, id_col, benchmark, max_age_days, horizons_for) -> int:
     """One outcome row per (pending id, horizon), entered at the first ledger
     close STRICTLY AFTER the row's own date (entry_for); a symbol the ledger
@@ -1586,6 +1586,12 @@ def _register_entries(conn, pending, table, id_col, benchmark, max_age_days, hor
     return n
 
 
+def register_verdicts(conn, horizons, benchmark, max_age_days) -> int:
+    """Outcome rows for research verdicts that have none yet. Entries reuse
+    entry_for: first ledger close STRICTLY AFTER verdict_date (a verdict
+    formed intraday cannot claim that day's close — same no-look-ahead rule
+    as snapshots), within the forward guard. Uncovered symbols register
+    nothing and are retried nightly; coverage arriving beyond the guard
     window never registers (historically exact entry or nothing). A verdict's
     stated horizon_days registers alongside the fixed horizons. All horizons
     for all pending verdicts commit atomically."""

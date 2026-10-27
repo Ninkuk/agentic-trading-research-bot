@@ -22,6 +22,11 @@ def _rows(day):
     ]
 
 
+def test_days_in_range_skips_weekends():
+    # 2026-07-03 is a Friday; the 4th/5th are the weekend FINRA never publishes.
+    assert run_mod.days_in_range("2026-07-03", "2026-07-06") == ["2026-07-03", "2026-07-06"]
+
+
 def test_days_in_range_inclusive():
     assert run_mod.days_in_range("2026-06-29", "2026-07-02") == [
         "2026-06-29",
@@ -58,14 +63,14 @@ def test_run_incremental_skips_old_stored_refetches_last_two(tmp_path):
         return fetch_day
 
     dbp = str(tmp_path / "sv.db")
-    now = "2026-01-05T00:00:00+00:00"  # range 2026-01-01..2026-01-05
+    now = "2026-01-09T00:00:00+00:00"  # range Mon 2026-01-05 .. Fri 2026-01-09
     first = []
-    run_mod.run(dbp, start="2026-01-01", now_iso=now, fetch_day=make_fd(first))
-    assert len(first) == 5  # all five days fetched
+    run_mod.run(dbp, start="2026-01-05", now_iso=now, fetch_day=make_fd(first))
+    assert len(first) == 5  # all five weekdays fetched
 
     second = []
-    run_mod.run(dbp, start="2026-01-01", now_iso=now, fetch_day=make_fd(second))
-    assert second == ["2026-01-04", "2026-01-05"]  # only trailing two refetched
+    run_mod.run(dbp, start="2026-01-05", now_iso=now, fetch_day=make_fd(second))
+    assert second == ["2026-01-08", "2026-01-09"]  # only trailing two refetched
 
 
 def test_run_full_refetches_every_day(tmp_path):
@@ -77,10 +82,10 @@ def test_run_full_refetches_every_day(tmp_path):
         return fetch_day
 
     dbp = str(tmp_path / "sv.db")
-    now = "2026-01-05T00:00:00+00:00"
-    run_mod.run(dbp, start="2026-01-01", now_iso=now, fetch_day=make_fd([]))
+    now = "2026-01-09T00:00:00+00:00"  # Mon 2026-01-05 .. Fri 2026-01-09
+    run_mod.run(dbp, start="2026-01-05", now_iso=now, fetch_day=make_fd([]))
     second = []
-    run_mod.run(dbp, start="2026-01-01", full=True, now_iso=now, fetch_day=make_fd(second))
+    run_mod.run(dbp, start="2026-01-05", full=True, now_iso=now, fetch_day=make_fd(second))
     assert len(second) == 5
 
 

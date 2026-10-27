@@ -576,16 +576,19 @@ def _filings_since(data_dir: str, wanted: Mapping[str, str]) -> dict[str, int | 
     try:
         conn = ro(data_dir, "edgar.db")
         try:
-            return {
-                ticker: int(
-                    conn.execute(
-                        "SELECT COUNT(DISTINCT accession) FROM filings"
-                        " WHERE bucket = 'event' AND ticker = ? AND filed_date > ?",
-                        (ticker, thesis_date),
-                    ).fetchone()[0]
-                )
-                for ticker, thesis_date in wanted.items()
-            }
+            # One query for every thesis: the per-ticker form picks the bucket
+            # index and rescans ~16k rows per call.
+            items = list(wanted.items())
+            values = ", ".join("(?, ?)" for _ in items)
+            params = [v for item in items for v in item]
+            rows = conn.execute(
+                f"WITH w(ticker, since) AS (VALUES {values})"
+                " SELECT w.ticker, COUNT(DISTINCT f.accession) FROM w"
+                " LEFT JOIN filings f ON f.ticker = w.ticker AND f.bucket = 'event'"
+                "  AND f.filed_date > w.since GROUP BY w.ticker",
+                params,
+            ).fetchall()
+            return {r[0]: int(r[1]) for r in rows}
         finally:
             conn.close()
     except Exception:
@@ -1224,11 +1227,12 @@ def _cot_tails(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 def _basis_breaks(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
     """`total` is the full count; `rows` the newest 100 (the same cap and
     disclosure as `_pending`) — a bad vendor day can break thousands."""
-    total = conn.execute("SELECT COUNT(*) FROM v_basis_breaks").fetchone()[0]
     rows = conn.execute(
         "SELECT symbol, prev_date, prev_close, price_date, close, ratio"
-        " FROM v_basis_breaks ORDER BY price_date DESC, symbol LIMIT 100"
+        " FROM v_basis_breaks ORDER BY price_date DESC, symbol"
     ).fetchall()
+    total = len(rows)
+    rows = rows[:100]
     word = "move" if total == 1 else "moves"
     return {
         "verdict": verdict(f"{total} suspect price {word} tonight", "off")
