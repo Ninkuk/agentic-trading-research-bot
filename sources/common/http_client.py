@@ -1,13 +1,20 @@
-"""Shared bounded-backoff HTTP GET used by the edgar/fred/cftc fetchers.
+"""Shared bounded-backoff HTTP GET used by every network fetcher.
 
-Each screener supplies its own opener (with its User-Agent / auth headers) and
-its own retryable-status set, since the services throttle differently
-(SEC: 403; Socrata/FRED: 429 + 5xx)."""
+Each screener builds its opener from ``DEFAULT_UA`` (plus any auth headers) and
+picks one of the three retryable-status families below, since the services
+throttle differently (SEC: 403; Socrata/FRED/EIA: 429 + 5xx; CDN-fronted
+FINRA/Cboe files: 429/503 only)."""
 
 import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
+
+DEFAULT_UA = {"User-Agent": "agentic-trading-research-bot ninadk.dev@gmail.com"}
+
+RETRY_SEC = frozenset({403, 429, 503})  # SEC throttles with 403 (not 429)
+RETRY_THROTTLE_5XX = frozenset({429, 500, 502, 503, 504})
+RETRY_CDN = frozenset({429, 503})
 
 
 class RateLimiter:
@@ -52,19 +59,26 @@ SEC_RATE_LIMITER = RateLimiter(9.0)
 
 
 def make_opener(
-    headers: dict, timeout: int = 60, *, limiter: "RateLimiter | None" = None, limiter_key: str = ""
+    headers: dict,
+    timeout: int = 60,
+    *,
+    limiter: "RateLimiter | None" = None,
+    limiter_key: str = "",
+    decode: bool = True,
 ):
     """Return opener(url)->str that GETs the URL with the given request headers
-    and decodes the body as UTF-8 (replacing undecodable bytes). When a
-    ``limiter`` is supplied, ``limiter.acquire(limiter_key)`` is paid before
-    each request (including retries), throttling the shared source."""
+    and decodes the body as UTF-8 (replacing undecodable bytes); ``decode=False``
+    returns the raw bytes for binary (ZIP) downloads. When a ``limiter`` is
+    supplied, ``limiter.acquire(limiter_key)`` is paid before each request
+    (including retries), throttling the shared source."""
 
-    def opener(url: str) -> str:
+    def opener(url: str):
         if limiter is not None:
             limiter.acquire(limiter_key)
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.read().decode("utf-8", "replace")
+            body = resp.read()
+            return body.decode("utf-8", "replace") if decode else body
 
     return opener
 
@@ -103,3 +117,20 @@ def http_get[T](
                 raise
             sleep(retry_delay(e, attempt, base_delay))
     raise AssertionError("unreachable")  # pragma: no cover
+
+
+def make_getter(opener, retry_status, *, attempts: int = 5, base_delay: float = 1.0):
+    """Bind ``http_get`` to a module's opener and retry family. The returned
+    ``getter(url, opener=, attempts=, base_delay=, sleep=)`` keeps every seam
+    injectable so tests can swap the opener and the sleep."""
+
+    def getter(
+        url: str,
+        opener=opener,
+        attempts: int = attempts,
+        base_delay: float = base_delay,
+        sleep=time.sleep,
+    ):
+        return http_get(url, opener, retry_status, attempts, base_delay, sleep)
+
+    return getter

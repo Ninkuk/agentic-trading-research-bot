@@ -245,8 +245,15 @@ with a fetch that lives outside it — skill prose or `yt-dlp`. Not registered i
 - **`registry.py`** (repo root) — `REGISTRY` dict maps name → each screener's `main`;
   `dispatch()` routes `main.py <name> [args...]`. **A screener "ships" only once registered
   here.**
-- **`sources/common/screener_common.py`** — `connect()` (opens SQLite in **WAL** mode) and a
-  generic snapshot cascade `prune()`.
+- **`sources/common/screener_common.py`** — `connect()` (opens SQLite in **WAL** mode;
+  `uri=True` for combiners that ATTACH, `busy_timeout_ms` for orders), the snapshot cascade
+  `prune(child_tables=...)` (empty tuple = headers only, the shape for upsert-keyed history),
+  `add_missing_columns()` (the idempotent ALTER migration every `ensure_schema` uses), the CLI
+  selection pair `split_csv()`/`select_ids()`, and the incremental-window pair
+  `max_date()`/`since_floor()`. **`dbattach.py`** holds the read-only contract: `connect_ro()`
+  for reporters, `attach_ro()`/`attached()` for combiners. **`parse.py`** holds the tolerant
+  cell coercions (`to_float`, `coerce`, `to_int`, `yyyymmdd_to_iso`, `date_prefix`) the pure
+  parsers share.
 - **`sources/common/monitor_common.py`** — the event-date **monitor framework**: a forward
   `events` table keyed `(event_type, event_date, subtype)`, `upsert_events` (dates firm up in
   place: tentative → confirmed), `replace_forward_window` (cancellation-aware; **never touches
@@ -254,7 +261,9 @@ with a fetch that lives outside it — skill prose or `yt-dlp`. Not registered i
   (`econ_calendar`, `fomc`, `market_calendar`, `earnings`, and Treasury's
   `v_upcoming_auctions`) build on this.
 - **`sources/common/http_client.py`** — bounded exponential-backoff `http_get` (honors
-  `Retry-After`), `make_opener(headers)`, and a `RateLimiter` token bucket. Note the
+  `Retry-After`), `make_opener(headers, decode=)`, `make_getter(opener, retry_status)` (binds a
+  module's `_http_get` with every seam still injectable), `DEFAULT_UA`, the three retry
+  families (`RETRY_SEC`, `RETRY_THROTTLE_5XX`, `RETRY_CDN`), and a `RateLimiter` token bucket. Note the
   process-wide `SEC_RATE_LIMITER` (9 req/s) keyed on `SEC_HOST_KEY="sec.gov"` — **all** SEC
   fetchers (`edgar`, `ftd`, `fundamentals`) must acquire under that one key so the per-IP cap
   is shared, not doubled across `www.` / `data.` hosts.

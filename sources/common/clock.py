@@ -15,9 +15,15 @@ not be for an ET-anchored clock.
 
 from datetime import UTC, datetime, timedelta
 
-__all__ = ["PHOENIX_UTC_OFFSET", "phx_date"]
+__all__ = ["PHOENIX_UTC_OFFSET", "PHX_DATE_SQL", "phx_date"]
 
 PHOENIX_UTC_OFFSET = timedelta(hours=7)
+
+# The same conversion in SQL: format with the timestamp column, e.g.
+# PHX_DATE_SQL.format(ts="s.captured_at"). Every view that derives a calendar
+# date from a stored UTC instant must use this one expression so the journal's
+# fill-vs-opinion join and composite's obs_date stay on one clock.
+PHX_DATE_SQL = "substr(datetime({ts}, '-7 hours'), 1, 10)"
 
 
 def phx_date(when: str | datetime) -> str:

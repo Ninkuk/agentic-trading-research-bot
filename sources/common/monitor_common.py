@@ -6,10 +6,9 @@ Views are parameterised on 'today' via the single-row calendar_now table (a
 SQLite view body cannot bind :today); callers set it from the injected now_iso
 with set_today() — never date('now'), so tests are deterministic."""
 
-from datetime import datetime, timedelta
-
 from sources.common.clock import phx_date
 from sources.common.screener_common import connect
+from sources.common.screener_common import prune as _prune
 
 __all__ = [
     "connect",
@@ -138,8 +137,7 @@ def replace_forward_window(
     stops listing a future event lets that row disappear. Past events
     (event_date < today) are NEVER touched. Returns rows inserted."""
     conn.execute("DELETE FROM events WHERE event_type=? AND event_date >= ?", (event_type, today))
-    n = upsert_events(conn, rows, fetched_at)  # commits
-    return n
+    return upsert_events(conn, rows, fetched_at)  # commits
 
 
 def write_snapshot(conn, captured_at: str, event_count: int, source: str) -> int:
@@ -153,22 +151,6 @@ def write_snapshot(conn, captured_at: str, event_count: int, source: str) -> int
 
 
 def prune(conn, keep_days: int, now_iso: str) -> int:
-    """Delete run-provenance snapshots older than keep_days before now_iso.
-
-    Single-table delete of snapshot headers only, exactly like
-    fred_screener.db.prune. It must NEVER prune events: the whole point of a
-    monitor is the forward calendar. Compares captured_at to a UTC isoformat
-    cutoff as a plain string (fixed-width, so lexicographic '<' is correct)."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [
-        r[0]
-        for r in conn.execute(
-            "SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,)
-        ).fetchall()
-    ]
-    if not ids:
-        return 0
-    qmarks = ",".join("?" * len(ids))
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
-    conn.commit()
-    return len(ids)
+    """Headers only. It must NEVER prune events: the whole point of a monitor
+    is the forward calendar."""
+    return _prune(conn, keep_days, now_iso)
