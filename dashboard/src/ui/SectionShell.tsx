@@ -60,8 +60,11 @@ export function SectionShell({ id, sec, children }: SectionShellProps) {
             {(verdict || (sec.about && sec.about.length > 0)) && (
               /* On phones the action slot stops sharing a row with the note —
                  a side-by-side grid squeezes the one-sentence note into a
-                 ~130px column while the right half sits empty. */
-              <CardAction className="flex items-center gap-1 max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-3 max-sm:justify-self-start">
+                 ~130px column while the right half sits empty. min-w-0 lets
+                 the chip wrap to the slot (CardHeader caps it at 60% from
+                 sm) instead of widening the page, which a mobile browser
+                 answers by zooming the whole page out. */
+              <CardAction className="flex min-w-0 items-center gap-1 max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-3 max-sm:justify-self-start">
                 {verdict && <VerdictChip verdict={verdict} />}
                 <AboutDialog
                   title={sec.title ?? "About this section"}

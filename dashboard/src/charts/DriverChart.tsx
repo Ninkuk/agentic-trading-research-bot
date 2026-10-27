@@ -74,7 +74,7 @@ export function DriverChart({ label, points, thresholds = [], height = 112 }: Dr
   const mid = usable[Math.floor((usable.length - 1) / 2)].date;
   const ticks = [usable[0].date, mid, usable[usable.length - 1].date];
   return (
-    <div ref={ref} className="driver-chart mt-2 w-full">
+    <div ref={ref} className="driver-chart chart-measure mt-2 w-full">
       <ChartContainer
         config={config}
         responsive={false}

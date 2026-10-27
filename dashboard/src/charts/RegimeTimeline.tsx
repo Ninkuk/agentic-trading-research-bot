@@ -44,7 +44,7 @@ export function RegimeTimeline({ rows, height = 208 }: RegimeTimelineProps) {
   }
 
   return (
-    <div ref={ref} className="regime-timeline w-full">
+    <div ref={ref} className="regime-timeline chart-measure w-full">
       <ChartContainer
         config={vixConfig}
         responsive={false}

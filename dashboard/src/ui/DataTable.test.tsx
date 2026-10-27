@@ -272,3 +272,20 @@ test("no detail columns means no columns toggle", () => {
   render(<DataTable columns={COLS} rows={ROWS3} storageKey="t13" />);
   expect(screen.queryByRole("button", { name: /more columns/i })).not.toBeInTheDocument();
 });
+
+test("prose columns wrap on phones; short identity and date columns never do", () => {
+  const cols: Column[] = [
+    { key: "ticker", label: "Ticker", numeric: false, direction: null, term: null },
+    { key: "due", label: "Due", numeric: false, direction: null, term: null },
+    { key: "trigger", label: "Trigger", numeric: false, direction: null, term: null },
+  ];
+  const rows: Row[] = [
+    { ticker: "KPTI", due: "2026-10-15", trigger: "forbearance expiry, restructuring or chapter 11" },
+    { ticker: "WRB", due: "2026-10-20", trigger: "q3 print" },
+  ];
+  render(<DataTable columns={cols} rows={rows} storageKey="t-prose" />);
+  const cells = within(screen.getAllByRole("row")[1]).getAllByRole("cell");
+  expect(cells[0]).not.toHaveClass("max-sm:whitespace-normal");
+  expect(cells[1]).not.toHaveClass("max-sm:whitespace-normal");
+  expect(cells[2]).toHaveClass("max-sm:whitespace-normal");
+});

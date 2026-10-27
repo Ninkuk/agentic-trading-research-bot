@@ -27,7 +27,7 @@ export function YieldCurveChart({ points, height = 180 }: { points: YieldCurvePo
   // Pad the auto domain so the end dots don't sit on the frame.
   const pad = Math.max(0.1, (Math.max(...ys) - Math.min(...ys)) * 0.25);
   return (
-    <div ref={ref} className="yield-curve-chart w-full">
+    <div ref={ref} className="yield-curve-chart chart-measure w-full">
       <ChartContainer
         config={curveConfig}
         responsive={false}

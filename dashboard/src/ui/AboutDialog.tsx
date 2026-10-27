@@ -31,7 +31,7 @@ export function AboutDialog({ title, about }: AboutDialogProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="text-muted-foreground size-7"
+          className="text-muted-foreground size-7 pointer-coarse:size-9"
           aria-label={`About ${title}`}
         >
           <Info aria-hidden="true" />

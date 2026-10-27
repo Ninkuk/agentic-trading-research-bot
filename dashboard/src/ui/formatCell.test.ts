@@ -41,3 +41,8 @@ test("isMachineId requires separators, so symbols and words pass through", () =>
   expect(isMachineId("AAPL")).toBe(false);
   expect(isMachineId("comfortable")).toBe(false);
 });
+
+test("an ISO date is not a slug: it renders as typed and never wraps as words", () => {
+  expect(isMachineId("2026-10-13")).toBe(false);
+  expect(formatCell("2026-10-13")).toBe("2026-10-13");
+});

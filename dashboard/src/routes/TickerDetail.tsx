@@ -88,7 +88,7 @@ function ScoreHistoryChart({ points }: { points: ScoreHistoryPoint[] }) {
     return <EmptyNote>no score history yet</EmptyNote>;
   }
   return (
-    <div ref={ref} className="w-full">
+    <div ref={ref} className="chart-measure w-full">
       <ChartContainer
         config={scoreConfig}
         responsive={false}

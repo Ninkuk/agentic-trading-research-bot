@@ -16,6 +16,8 @@ import type { CellValue } from "../types";
 // named yet. TextReport.prettyHeader applies the same idea to its headers.
 const SNAKE_ID = /^[a-z0-9]+(?:_[a-z0-9]+)+$/;
 const SLUG_ID = /^[a-z0-9]+(?:-[a-z0-9]+){2,}$/;
+// An ISO date is three hyphenated groups too; it stays a date.
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 // Domain abbreviations that read wrong lowercased ("si days to cover").
 const ABBREVIATIONS: Record<string, string> = {
@@ -44,6 +46,7 @@ const ABBREVIATIONS: Record<string, string> = {
 };
 
 export function isMachineId(value: string): boolean {
+  if (ISO_DATE.test(value)) return false;
   return SNAKE_ID.test(value) || SLUG_ID.test(value);
 }
 

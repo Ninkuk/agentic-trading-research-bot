@@ -264,6 +264,10 @@ casts one.
 - **Do** render partial data as `EmptyNote`/`Alert` states; a missing
   section must say so.
 - **Do** respect `prefers-reduced-motion` (global transition kill).
+- **Do** keep every element narrower than the viewport on a phone: a
+  mobile browser zooms the page out to fit its widest element. Measured
+  charts use `.chart-measure`, verdict chips wrap, tables scroll inside
+  the card with the first column pinned.
 
 ### Don't:
 - **Don't** revive newspaper ornament: no serif display, no brass

@@ -84,7 +84,7 @@ export function EquityCurve({
   const dp = axisDecimals(rows);
 
   return (
-    <div ref={ref} className="equity-curve w-full">
+    <div ref={ref} className="equity-curve chart-measure w-full">
       <ChartContainer
         config={CONFIG}
         responsive={false}

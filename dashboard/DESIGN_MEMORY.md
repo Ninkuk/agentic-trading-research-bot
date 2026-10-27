@@ -123,6 +123,17 @@ named rules) for the impeccable skill; keep all three in sync.
   never hidden, never three identical views. Y-axis precision follows the
   plotted span (cents under a dollar) or a 1D view reads "$100" five times.
 - No counts in strand nav labels (user preference, 2026-07-30).
+- Phones (below `sm`): page gutter and card padding drop to 1rem (324px of
+  content at 390px). Nothing may be wider than the viewport — a mobile
+  browser zooms the whole page out to fit its widest element, and every
+  chart then measures against the zoomed-out width. So: measured charts
+  sit in `.chart-measure` (`contain: inline-size`), verdict chips wrap
+  (and take ≤60% of the header beside the note from `sm`), and tables
+  scroll inside their card with the first column pinned and a right-edge
+  fade while columns remain (DataTable's `data-scrolls`/`data-more`).
+  Text columns holding a value over 24 characters wrap with a 14rem
+  floor; dates and symbols never wrap. Pager, About and sort buttons grow
+  under `pointer-coarse:`.
 
 ## Repo conventions
 - `src/components/ui/` = shadcn primitives; `src/ui/` = app components.

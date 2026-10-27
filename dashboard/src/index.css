@@ -191,6 +191,39 @@
     margin: 0 auto;
     padding: 1.5rem 1.25rem 4rem;
   }
+  /* Phones: a 1.25rem gutter beside 1.5rem card padding left 300px of
+     content at 390px; 1rem + 1rem (card.tsx max-sm:px-4) leaves 324. */
+  @media (max-width: 639px) {
+    .page {
+      padding: 1rem 1rem 3rem;
+    }
+  }
+
+  /* Measured-width chart wrappers (useMeasuredWidth). Inline-size
+     containment keeps the SVG's own width — the pre-measurement fallback,
+     or the last measurement — from sizing the box it is measured against:
+     a 320px fallback in a 300px column otherwise reports 320 for good. */
+  .chart-measure {
+    contain: inline-size;
+    min-width: 0;
+  }
+
+  /* Tables wider than their card (DataTable sets data-scrolls): the
+     identity column stays put while the rest scrolls, and the right edge
+     fades until the reader has scrolled to the end. */
+  .datatable[data-scrolls="true"] th:first-child,
+  .datatable[data-scrolls="true"] td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--card);
+  }
+  .datatable[data-scrolls="true"] tr.flag td:first-child {
+    background: linear-gradient(var(--tone-hold-bg), var(--tone-hold-bg)), var(--card);
+  }
+  .datatable[data-scrolls="true"][data-more="true"] [data-slot="table-container"] {
+    mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent);
+  }
 
   /* caveat footnote */
   .cap {
@@ -359,7 +392,8 @@
 .thesis-md p, .thesis-md ul, .thesis-md ol { margin: 0 0 0.75rem; }
 .thesis-md ul, .thesis-md ol { padding-left: 1.25rem; }
 .thesis-md blockquote { border-left: 2px solid var(--border); margin: 0 0 0.75rem; padding-left: 0.75rem; color: var(--muted-foreground); }
-.thesis-md code { font-family: var(--font-mono); font-size: 0.85em; }
+.thesis-md code { font-family: var(--font-mono); font-size: 0.85em; overflow-wrap: anywhere; }
+.thesis-md pre { overflow-x: auto; }
 .thesis-md table { border-collapse: collapse; margin: 0 0 1rem; font-size: 0.85rem; display: block; overflow-x: auto; }
 .thesis-md th, .thesis-md td { border: 1px solid var(--border); padding: 0.3rem 0.5rem; vertical-align: top; text-align: left; }
 .thesis-md th { font-weight: 600; }

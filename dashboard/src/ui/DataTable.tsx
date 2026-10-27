@@ -15,7 +15,7 @@
 // lets a section (Scorecard's flagged rows) apply a row-level CSS hook
 // without owning row markup itself.
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import {
   columnFilteringFeature,
   columnVisibilityFeature,
@@ -131,6 +131,48 @@ function termForColumn(
 /** Tables shorter than this skip the filter chrome. */
 const FILTER_MIN_ROWS = 4;
 
+/** A text column holding a value longer than this wraps on phones (with a
+ * floor width) instead of pushing the table into a horizontal scroll; a
+ * date or a ticker never reaches it and stays on one line. */
+const PROSE_CHARS = 24;
+
+function proseColumns(columns: Column[], rows: Row[]): Set<string> {
+  const keys = new Set<string>();
+  for (const col of columns) {
+    if (col.numeric) continue;
+    if (rows.some((r) => typeof r[col.key] === "string" && (r[col.key] as string).length > PROSE_CHARS))
+      keys.add(col.key);
+  }
+  return keys;
+}
+
+/** Whether the table overflows its card (so the first column pins and the
+ * right edge fades) and whether there is more to the right of the current
+ * scroll position. Watches both the scroll container and the table, since
+ * paging or a filter changes the table's width without resizing the card. */
+function useTableOverflow(root: RefObject<HTMLDivElement | null>) {
+  const [state, setState] = useState({ scrolls: false, more: false });
+  useEffect(() => {
+    const el = root.current?.querySelector<HTMLElement>('[data-slot="table-container"]');
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      const scrolls = el.scrollWidth > el.clientWidth + 1;
+      const more = scrolls && el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+      setState((prev) => (prev.scrolls === scrolls && prev.more === more ? prev : { scrolls, more }));
+    };
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    el.addEventListener("scroll", measure, { passive: true });
+    measure();
+    return () => {
+      ro.disconnect();
+      el.removeEventListener("scroll", measure);
+    };
+  }, [root]);
+  return state;
+}
+
 function SortIcon({ sorted, dir }: { sorted: boolean; dir: SortDir }) {
   if (!sorted)
     return (
@@ -206,6 +248,9 @@ export function DataTable({
 
   const glossaryIndex = useMemo(() => buildGlossaryIndex(glossary), [glossary]);
   const columnByKey = useMemo(() => new Map(columns.map((c) => [c.key, c])), [columns]);
+  const prose = useMemo(() => proseColumns(columns, rows), [columns, rows]);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const overflow = useTableOverflow(rootRef);
 
   const columnDefs = useMemo<ColumnDef<Features, Row>[]>(
     () =>
@@ -290,7 +335,12 @@ export function DataTable({
   );
 
   return (
-    <div className="datatable space-y-2.5">
+    <div
+      ref={rootRef}
+      className="datatable space-y-2.5"
+      data-scrolls={overflow.scrolls ? "true" : "false"}
+      data-more={overflow.more ? "true" : "false"}
+    >
       {!filterable && detailToggle && <div className="flex justify-end">{detailToggle}</div>}
       {filterable && (
         <div className="flex items-center justify-between gap-3">
@@ -362,7 +412,7 @@ export function DataTable({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="sort-trigger size-6"
+                          className="sort-trigger size-6 pointer-coarse:size-8"
                           aria-label={`Sort by ${col.label}`}
                         >
                           <SortIcon sorted={sorted} dir={sortedDir || null} />
@@ -409,7 +459,9 @@ export function DataTable({
                     className={
                       columnByKey.get(cell.column.id)?.numeric
                         ? "num text-right font-mono tabular-nums"
-                        : undefined
+                        : prose.has(cell.column.id)
+                          ? "max-sm:min-w-56 max-sm:whitespace-normal"
+                          : undefined
                     }
                   >
                     <table.FlexRender cell={cell} />
@@ -429,7 +481,7 @@ export function DataTable({
             <Button
               variant="ghost"
               size="icon"
-              className="size-7"
+              className="size-7 pointer-coarse:size-9"
               aria-label="Previous page"
               disabled={pageIndex === 0}
               onClick={() => goToPage(pageIndex - 1)}
@@ -439,7 +491,7 @@ export function DataTable({
             <Button
               variant="ghost"
               size="icon"
-              className="size-7"
+              className="size-7 pointer-coarse:size-9"
               aria-label="Next page"
               disabled={pageIndex >= pageCount - 1}
               onClick={() => goToPage(pageIndex + 1)}

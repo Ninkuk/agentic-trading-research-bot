@@ -24,3 +24,10 @@ test("tone maps to the tint class, never an inline color", () => {
   expect(screen.getByText("Mixed")).toHaveClass("verdict-chip--mid");
   expect(screen.getByText("Mixed")).not.toHaveAttribute("style");
 });
+
+test("a verdict may wrap: a nowrap sentence is the widest thing on a phone", () => {
+  render(<VerdictChip verdict={{ text: "Stronger flags did not do better: 20% right vs 45% at 21 days", tone: "off" }} />);
+  const chip = screen.getByText(/Stronger flags/);
+  expect(chip).toHaveClass("whitespace-normal");
+  expect(chip).not.toHaveClass("whitespace-nowrap");
+});

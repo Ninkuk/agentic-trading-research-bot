@@ -23,7 +23,10 @@ export function VerdictChip({ verdict, className }: VerdictChipProps) {
   return (
     <Badge
       variant={TONE_VARIANT[verdict.tone]}
-      className={["verdict-chip", `verdict-chip--${verdict.tone}`, className]
+      // Overrides Badge's nowrap/shrink-0: a verdict is a sentence and may
+      // wrap, and it yields width to the About button beside it — a nowrap
+      // sentence is the widest thing on a phone.
+      className={["verdict-chip", `verdict-chip--${verdict.tone}`, "min-w-0 shrink whitespace-normal text-left", className]
         .filter(Boolean)
         .join(" ")}
     >
