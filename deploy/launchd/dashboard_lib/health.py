@@ -12,6 +12,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from sources.common.dbattach import connect_ro
+
 PREFIX = "com.tradingbot."
 # The section is built BY the dashboard job, which is running by definition
 # while this module scans logs -- so it must never report itself as hung.
@@ -269,7 +271,7 @@ def stale_dbs(now_utc: dt.datetime, data_dir: Path) -> list[dict[str, str]]:
     problems = []
     for db in sorted(data_dir.glob("*.db")):
         try:
-            with sqlite3.connect(db) as conn:
+            with connect_ro(str(db)) as conn:
                 latest = conn.execute("SELECT MAX(captured_at) FROM snapshots").fetchone()[0]
         except sqlite3.Error:
             continue  # not a snapshots-bearing DB; not ours to judge
@@ -298,7 +300,7 @@ def stale_dbs(now_utc: dt.datetime, data_dir: Path) -> list[dict[str, str]]:
         col = ROW_COUNT_COL.get(db.name)
         if col and db.name not in EMPTY_OK:
             try:
-                with sqlite3.connect(db) as conn:
+                with connect_ro(str(db)) as conn:
                     n = conn.execute(
                         f"SELECT {col} FROM snapshots ORDER BY captured_at DESC, id DESC LIMIT 1"
                     ).fetchone()[0]

@@ -14,6 +14,8 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
+from sources.common.dbattach import connect_ro
+
 Section = tuple[str, str, str, Any, str, str, list[tuple[str, str]]]
 
 
@@ -42,7 +44,7 @@ def spark_col(key: str = "history", label: str = "Trend") -> dict[str, Any]:
 
 def ro(data_dir: str, db_name: str) -> sqlite3.Connection:
     """Read-only connection; the exporters never hold write access."""
-    conn = sqlite3.connect(f"file:{Path(data_dir) / db_name}?mode=ro", uri=True)
+    conn = connect_ro(str(Path(data_dir) / db_name))
     conn.row_factory = sqlite3.Row
     return conn
 

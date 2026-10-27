@@ -220,7 +220,7 @@ def test_scorecard_columns_have_direction_metadata(populated_data_dir):
 
 
 def test_headline_symbols_includes_flagged(populated_data_dir):
-    conn = data._ro(populated_data_dir, "composite.db")
+    conn = data.ro(populated_data_dir, "composite.db")
     try:
         assert "FLAG1" in data.headline_symbols(conn)
     finally:

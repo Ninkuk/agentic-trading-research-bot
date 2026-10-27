@@ -26,13 +26,18 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
-from dashboard_lib import book, grades, health, narrative, sources_views  # noqa: E402
-from dashboard_lib.common import col, round_or_none, tile, verdict  # noqa: E402
-from dashboard_lib.glossary import load_glossary  # noqa: E402
-from sources.combiners.composite import candidates as candidates_mod  # noqa: E402
-from sources.combiners.scorer import scorecard as scorer_scorecard  # noqa: E402
-from sources.common.clock import PHOENIX_UTC_OFFSET, phx_date  # noqa: E402
-from tools.research.worklist import (  # noqa: E402
+from dashboard_lib import book, grades, health, narrative, sources_views
+from dashboard_lib.common import col, ro, round_or_none, tile, verdict
+from dashboard_lib.glossary import load_glossary
+from sources.combiners.composite import candidates as candidates_mod
+from sources.combiners.composite.catalog import (
+    REGIME_HY_WIDE,
+    REGIME_RISK_OFF_VIX,
+    REGIME_RISK_ON_VIX,
+)
+from sources.combiners.scorer import scorecard as scorer_scorecard
+from sources.common.clock import PHOENIX_UTC_OFFSET, phx_date
+from tools.research.worklist import (
     REOPEN_FIELD_RE,
     THESIS_RE,
     list_theses,
@@ -82,21 +87,16 @@ def _streak_nights(conn: sqlite3.Connection) -> int:
 # _classify_regime (sources/combiners/composite/db.py) decides the regime
 # from exactly three inputs — VIX level, VIX term-structure backwardation,
 # and the high-yield spread (matching this section's own `note` prose
-# below); the other eight tracked inputs never move the label. These
-# thresholds mirror that function's own numbers so a driver row's "lean"
-# reads consistently with the regime it explains; they are duplicated
-# (not imported) because `_classify_regime`'s constants are module-private.
-_VIX_RISK_ON_MAX = 20.0
-_VIX_RISK_OFF_MIN = 25.0
-_HY_SPREAD_WIDE = 4.0
+# below); the other eight tracked inputs never move the label. The lean
+# columns read the same catalog thresholds so they cannot drift from it.
 
 
 def _lean_vix(vix: float | None) -> str:
     if vix is None:
         return "mid"
-    if vix >= _VIX_RISK_OFF_MIN:
+    if vix >= REGIME_RISK_OFF_VIX:
         return "off"
-    if vix < _VIX_RISK_ON_MAX:
+    if vix < REGIME_RISK_ON_VIX:
         return "on"
     return "mid"
 
@@ -110,7 +110,7 @@ def _lean_backwardation(back: int | None) -> str:
 def _lean_hy_spread(hy: float | None) -> str:
     if hy is None:
         return "mid"
-    return "on" if hy < _HY_SPREAD_WIDE else "off"
+    return "on" if hy < REGIME_HY_WIDE else "off"
 
 
 _REGIME_DRIVER_COLUMNS: list[dict[str, Any]] = [
@@ -360,7 +360,7 @@ def flagged_tickers(data_dir: str) -> list[str]:
     hero bullets' flagged clause. Degrades to an empty list on any failure (missing DB,
     dropped view), mirroring every other data_dir-driven helper here."""
     try:
-        conn = _ro(data_dir, "composite.db")
+        conn = ro(data_dir, "composite.db")
         try:
             return [
                 r["symbol"]
@@ -459,7 +459,7 @@ _CANDIDATES_COLUMNS: list[dict[str, Any]] = [
 def _annotated_candidates(data_dir: str) -> tuple[list[dict[str, Any]], str | None]:
     """The screen (stocks.db) annotated from scorer.db when present — one
     read shared by the candidates section and the ticker pages."""
-    conn = _ro(data_dir, "stocks.db")
+    conn = ro(data_dir, "stocks.db")
     try:
         screened = candidates_mod.screen(conn)
         snapshot_date = candidates_mod.snapshot_date(conn)
@@ -468,7 +468,7 @@ def _annotated_candidates(data_dir: str) -> tuple[list[dict[str, Any]], str | No
     verdicts: dict[str, tuple[str, str]] = {}
     trends: dict[str, dict[str, Any]] | None = {}
     if (Path(data_dir) / "scorer.db").exists():
-        sc = _ro(data_dir, "scorer.db")
+        sc = ro(data_dir, "scorer.db")
         try:
             verdicts = candidates_mod.newest_verdicts(sc)
             trends = candidates_mod.quality_trends(sc)
@@ -574,7 +574,7 @@ def _filings_since(data_dir: str, wanted: Mapping[str, str]) -> dict[str, int | 
     if not wanted:
         return {}
     try:
-        conn = _ro(data_dir, "edgar.db")
+        conn = ro(data_dir, "edgar.db")
         try:
             return {
                 ticker: int(
@@ -609,7 +609,7 @@ def _held_symbols(data_dir: str) -> set[str]:
     reopens table must render without the checkpoint lens, never crash
     because of it."""
     try:
-        conn = _ro(data_dir, "portfolio.db")
+        conn = ro(data_dir, "portfolio.db")
         try:
             rows = conn.execute(
                 "SELECT symbol FROM v_latest_positions WHERE CAST(quantity AS REAL) > 0"
@@ -630,7 +630,7 @@ def _research_calls(data_dir: str, symbols: set[str]) -> dict[str, str]:
     if not symbols:
         return {}
     try:
-        conn = _ro(data_dir, "scorer.db")
+        conn = ro(data_dir, "scorer.db")
         try:
             marks = ",".join("?" * len(symbols))
             calls: dict[str, str] = {}
@@ -1288,7 +1288,7 @@ def _dff_series(data_dir: str) -> list[tuple[str, float]]:
     (missing fred.db, no DFF rows yet) so the cash column/line degrades to
     n/a-null rather than blanking the scorer sections it rides along with."""
     try:
-        conn = _ro(data_dir, "fred.db")
+        conn = ro(data_dir, "fred.db")
         try:
             return scorer_scorecard.dff_series(conn)
         finally:
@@ -1536,7 +1536,7 @@ def _equity_curve(data_dir: str, now_iso: str) -> dict[str, Any]:
     scorer.db plus fred.db (the cash line), so it can't ride the runner's
     single-conn branch."""
     dff = _dff_series(data_dir)
-    conn = _ro(data_dir, "scorer.db")
+    conn = ro(data_dir, "scorer.db")
     try:
         return _equity_curve_body(conn, dff)
     finally:
@@ -2507,7 +2507,7 @@ def _hero_regime_input(data_dir: str) -> dict[str, Any] | None:
     """{"regime", "streak_nights", "vix"} from composite.db, or None on any
     failure (missing DB, no snapshot yet) — ports `_hero_regime_clause`."""
     try:
-        conn = _ro(data_dir, "composite.db")
+        conn = ro(data_dir, "composite.db")
         try:
             r = conn.execute("SELECT regime, vix FROM v_latest_regime").fetchone()
             if r is None:
@@ -2529,7 +2529,7 @@ def _hero_book_input(data_dir: str) -> dict[str, Any] | None:
     narrative.hero_bullets' documented contract, same unit trap as the
     your-book strand's section exporters above."""
     try:
-        conn = _ro(data_dir, "advisor.db")
+        conn = ro(data_dir, "advisor.db")
         try:
             r = conn.execute("SELECT heat_pct, positions FROM v_book_heat").fetchone()
             if r is None:
@@ -2550,7 +2550,7 @@ def _hero_disagreements_input(data_dir: str) -> list[str] | None:
     failure — narrative.hero_bullets treats None the same as an empty list
     (falls through to the flagged-tickers bullet)."""
     try:
-        conn = _ro(data_dir, "advisor.db")
+        conn = ro(data_dir, "advisor.db")
         try:
             rows = conn.execute(
                 "SELECT symbol FROM v_disagreements WHERE strong ORDER BY symbol"
@@ -2588,7 +2588,7 @@ _TICKER_SCORE_HISTORY_LIMIT = 90
 def _ticker_universe(data_dir: str) -> set[str]:
     headline: set[str] = set()
     try:
-        conn = _ro(data_dir, "composite.db")
+        conn = ro(data_dir, "composite.db")
         try:
             headline = headline_symbols(conn)
         finally:
@@ -2598,7 +2598,7 @@ def _ticker_universe(data_dir: str) -> set[str]:
 
     held: set[str] = set()
     try:
-        conn = _ro(data_dir, "advisor.db")
+        conn = ro(data_dir, "advisor.db")
         try:
             held = {r["symbol"] for r in conn.execute("SELECT symbol FROM v_latest_heat")}
         finally:
@@ -2608,7 +2608,7 @@ def _ticker_universe(data_dir: str) -> set[str]:
 
     journal: set[str] = set()
     try:
-        conn = _ro(data_dir, "scorer.db")
+        conn = ro(data_dir, "scorer.db")
         try:
             journal = {r["symbol"] for r in conn.execute("SELECT DISTINCT symbol FROM decisions")}
         finally:
@@ -2745,7 +2745,7 @@ def _fill_composite_ticker_fields(
     ({"signal", "score", "raw_value"}) — one grouped query per field, never
     one query per symbol (same pattern as `_scorecard`'s history fetch)."""
     try:
-        conn = _ro(data_dir, "composite.db")
+        conn = ro(data_dir, "composite.db")
         try:
             marks = ",".join("?" * len(symbols))
             syms = tuple(symbols)
@@ -2785,7 +2785,7 @@ def _fill_advisor_ticker_fields(
     None) from advisor.db's v_latest_heat. heat_pct is percent-scale (the
     view's fraction × 100), same unit trap as the your-book strand above."""
     try:
-        conn = _ro(data_dir, "advisor.db")
+        conn = ro(data_dir, "advisor.db")
         try:
             marks = ",".join("?" * len(symbols))
             rows = {
@@ -2823,7 +2823,7 @@ def _fill_scorer_ticker_fields(
     privacy walk test bans from this subtree. research_verdicts' own `note`
     column is left out the same way."""
     try:
-        conn = _ro(data_dir, "scorer.db")
+        conn = ro(data_dir, "scorer.db")
         try:
             marks = ",".join("?" * len(symbols))
             syms = tuple(symbols)
@@ -2884,19 +2884,12 @@ def _tickers(data_dir: str) -> dict[str, dict[str, Any]]:
     return tickers
 
 
-def _ro(data_dir: str, db_name: str) -> sqlite3.Connection:
-    """Read-only connection to `<data_dir>/<db_name>` — never write access."""
-    conn = sqlite3.connect(f"file:{Path(data_dir) / db_name}?mode=ro", uri=True)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
 def _snapshot_number(data_dir: str) -> int | None:
     """The composite.db snapshot id for the masthead. Guarded on its own: a
     missing DB, no rows, or a NULL MAX(id) all mean "omit the snapshot
     number" — never fabricate or coerce a placeholder value."""
     try:
-        conn = _ro(data_dir, "composite.db")
+        conn = ro(data_dir, "composite.db")
         try:
             row = conn.execute("SELECT MAX(id) FROM snapshots").fetchone()
         finally:
@@ -2944,7 +2937,7 @@ def export_data(data_dir: str, now_iso: str, repo_root: str | None = None) -> di
             header["source"] = PUBLISHERS[db_name]
         try:
             if db_name.endswith(".db"):
-                conn = _ro(data_dir, db_name)
+                conn = ro(data_dir, db_name)
                 try:
                     body = fn(conn, now_iso)
                 finally:

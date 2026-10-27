@@ -141,7 +141,7 @@ def read_candidates(db_path: str) -> tuple[list[str], str | None, str | None]:
             return symbols, candidates.snapshot_date(conn), None
         finally:
             conn.close()
-    except Exception as e:  # noqa: BLE001 -- total by design
+    except Exception as e:
         return [], None, type(e).__name__
 
 
@@ -149,7 +149,7 @@ def read_verdicts(research_dir: Path) -> tuple[dict[str, tuple[str, str]], str |
     """Newest verdict line per ticker, or ({}, error class name)."""
     try:
         text = (research_dir / "verdicts.log").read_text(encoding="utf-8")
-    except Exception as e:  # noqa: BLE001 -- total by design
+    except Exception as e:
         return {}, type(e).__name__
     return newest_verdict_lines(text.splitlines()), None
 

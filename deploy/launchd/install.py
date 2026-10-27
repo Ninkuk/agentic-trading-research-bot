@@ -46,8 +46,10 @@ def yearly(months, day, hour, minute):
     return [{"Month": m, "Day": day, "Hour": hour, "Minute": minute} for m in months]
 
 
-def job(name, *args):
-    return ["/bin/bash", str(SCRIPTS / "run_job.sh"), name, "--db", f"data/{name}.db", *args]
+def job(name, *args, db=None):
+    """ProgramArguments for one dispatcher run; ``db`` names the DB when it
+    differs from the dispatcher name (fundamentals -> sec_fundamentals.db)."""
+    return ["/bin/bash", str(SCRIPTS / "run_job.sh"), name, "--db", f"data/{db or name}.db", *args]
 
 
 def script(basename):
@@ -77,16 +79,7 @@ JOBS = {
     "ats": (job("ats"), weekly([1], 18, 45)),
     "eia": (job("eia"), weekly([3, 4, 5], 10, 15)),
     "cftc": (script("cftc_weekly.sh"), weekly([5], 14, 15)),
-    "fundamentals": (
-        [
-            "/bin/bash",
-            str(SCRIPTS / "run_job.sh"),
-            "fundamentals",
-            "--db",
-            "data/sec_fundamentals.db",
-        ],
-        weekly([6], 6, 0),
-    ),
+    "fundamentals": (job("fundamentals", db="sec_fundamentals"), weekly([6], 6, 0)),
     "ftd": (job("ftd"), weekly([0], 7, 0)),
     # ALFRED vintage backfill into data/fred.db (the backtest combiner's
     # point-in-time store). Full re-pull is heavy (~80 windowed/paginated FRED
@@ -116,14 +109,7 @@ JOBS = {
     # amendments/restatements *filed* that quarter, which the weekly frames
     # job (current quarter only) never re-reads.
     "fundamentals-bulk": (
-        [
-            "/bin/bash",
-            str(SCRIPTS / "run_job.sh"),
-            "fundamentals",
-            "--db",
-            "data/sec_fundamentals.db",
-            "--bulk",
-        ],
+        job("fundamentals", "--bulk", db="sec_fundamentals"),
         yearly([2, 5, 8, 11], 20, 9, 0),
     ),
     # The hand-transcribed holiday seed in market_calendar/catalog.py ends

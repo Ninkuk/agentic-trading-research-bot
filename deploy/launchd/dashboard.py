@@ -45,7 +45,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # dashboard_lib
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # repo root
 
-from dashboard_lib import data  # noqa: E402
+from dashboard_lib import data
 
 DATA_DIR = "data"
 OUTPUT_PATH = "reports/data.json"

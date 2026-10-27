@@ -19,15 +19,16 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from sources.common.clock import phx_date  # noqa: E402
-from tools.research.worklist import list_theses  # noqa: E402
+from sources.common.clock import phx_date
+from sources.common.dbattach import connect_ro
+from tools.research.worklist import list_theses
 
 
 def _read_symbols(db_path: str, query: str) -> list[str]:
     """One-column symbol query against a read-only DB; total — a missing
     file, table, or view yields [] (a partial pipeline is not an error)."""
     try:
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        conn = connect_ro(db_path)
         try:
             return [row[0] for row in conn.execute(query)]
         finally:

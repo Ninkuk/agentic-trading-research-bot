@@ -36,7 +36,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from sources.common.clock import phx_date  # noqa: E402
+from sources.common.clock import phx_date
 
 DATA_PATH = "reports/data.json"
 DIST_DIR = "dashboard/dist"
@@ -186,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
             now_iso=datetime.now(UTC).isoformat(),
             repo_root=Path.cwd(),
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # publish() handles GitError and the stale/missing cases itself; this
         # catches the unexpected (disk full, tempfile failure) so the nightly
         # job logs a line and exits non-zero instead of dumping a traceback.
