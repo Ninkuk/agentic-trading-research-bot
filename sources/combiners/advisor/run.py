@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 
 from sources.combiners.advisor import catalog, db, fetch
 from sources.common.clock import phx_date
+from sources.common.dbattach import attached
 
 
 def run(db_path, db_dir, now_iso=None, keep_days=None):
@@ -39,21 +40,13 @@ def run(db_path, db_dir, now_iso=None, keep_days=None):
             printing only the exception type (secret hygiene). Failures are
             counted into the header so a partial night is visible."""
             nonlocal failures
-            path = os.path.join(db_dir, db_name)
             try:
-                fetch.attach_ro(conn, path)
-            except Exception as e:
-                failures += 1
-                print(f"skip {db_name}: {type(e).__name__}")
-                return
-            try:
-                reader()
+                with attached(conn, os.path.join(db_dir, db_name)):
+                    reader()
             except Exception as e:
                 failures += 1
                 conn.rollback()
                 print(f"skip {db_name}: {type(e).__name__}")
-            finally:
-                fetch.detach(conn)
 
         # Readers assign their nonlocals only after EVERY read in the source
         # succeeds — a failure mid-source must not apply half a source (real

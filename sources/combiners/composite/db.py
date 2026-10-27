@@ -3,7 +3,15 @@ row per run, and a per-ticker scorecard. The composite's value is its
 replayable history — everything is snapshot-scoped and pruned by cascade."""
 
 import sqlite3
-from datetime import datetime, timedelta
+
+from sources.combiners.composite.catalog import (
+    REGIME_HY_WIDE,
+    REGIME_RISK_OFF_VIX,
+    REGIME_RISK_ON_VIX,
+)
+from sources.common.screener_common import add_missing_columns
+from sources.common.screener_common import connect as _connect
+from sources.common.screener_common import prune as _prune
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -97,20 +105,15 @@ JOIN v_latest_snapshot l ON v.snapshot_id = l.id;
 
 
 def connect(path: str) -> sqlite3.Connection:
-    # uri=True so ATTACH 'file:...?mode=ro' works (plain paths still fine);
-    # without it the read-only attach fails outright.
-    conn = sqlite3.connect(path, uri=True)
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
+    # uri=True so ATTACH 'file:...?mode=ro' works (plain paths still fine).
+    return _connect(path, uri=True)
 
 
 def ensure_schema(conn) -> None:
     """Tables + views, then the idempotent column migration (CREATE IF NOT
     EXISTS never widens an existing market_regime)."""
     conn.executescript(_SCHEMA)
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(market_regime)")}
-    if "implied_corr_pctile" not in cols:
-        conn.execute("ALTER TABLE market_regime ADD COLUMN implied_corr_pctile REAL")
+    add_missing_columns(conn, "market_regime", ("implied_corr_pctile REAL",))
     conn.commit()
 
 
@@ -220,12 +223,6 @@ def apply_crosswalk(conn, sid: int, crosswalk: dict) -> int:
     return n
 
 
-# Hand-set regime thresholds — documented judgment, not fitted. Tune here.
-_REGIME_RISK_OFF_VIX = 25.0
-_REGIME_RISK_ON_VIX = 20.0
-_REGIME_HY_WIDE = 4.0
-
-
 def _int_or_none(v) -> int | None:
     return None if v is None else int(v)
 
@@ -235,9 +232,9 @@ def _classify_regime(vals: dict) -> str:
     back = (vals.get("vix_backwardation") or 0) > 0
     if vix is None or hy is None:
         return "mixed"
-    if vix >= _REGIME_RISK_OFF_VIX or (back and hy >= _REGIME_HY_WIDE):
+    if vix >= REGIME_RISK_OFF_VIX or (back and hy >= REGIME_HY_WIDE):
         return "risk_off"
-    if vix < _REGIME_RISK_ON_VIX and not back and hy < _REGIME_HY_WIDE:
+    if vix < REGIME_RISK_ON_VIX and not back and hy < REGIME_HY_WIDE:
         return "risk_on"
     return "mixed"
 
@@ -326,17 +323,7 @@ def write_ticker_scores(conn, sid: int) -> int:
 
 
 def prune(conn, keep_days: int, now_iso: str) -> int:
-    """Snapshot cascade over ALL child tables. Same fixed-width-timestamp
-    caveat as screener_common.prune (which handles a single child table —
-    calling it once per child would orphan the later ones, so the cascade
-    is reimplemented here over the three children)."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute("SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,))]
-    if not ids:
-        return 0
-    qmarks = ",".join("?" * len(ids))
-    for table in ("signal_values", "market_regime", "ticker_scores"):
-        conn.execute(f"DELETE FROM {table} WHERE snapshot_id IN ({qmarks})", ids)
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
-    conn.commit()
-    return len(ids)
+    """Snapshot cascade over all three child tables."""
+    return _prune(
+        conn, keep_days, now_iso, child_tables=("signal_values", "market_regime", "ticker_scores")
+    )

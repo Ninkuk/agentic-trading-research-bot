@@ -136,6 +136,48 @@ STOCKS_COMPANY_KEY = """
 # ensure_schema never ALTERs an existing column's affinity, so a DB created
 # before that pin keeps whatever it first inferred.
 STOCKS_PRIMARY_FIRST = "CASE WHEN isPrimaryListing IN ('1', 1) THEN 0 ELSE 1 END"
+# One row per company: the window that picks a company's representative
+# listing. Shared by stocks_rsi, the fundamental annotations and the
+# candidates screen so they can never disagree about what is one business.
+STOCKS_ONE_PER_COMPANY_RN = (
+    f"ROW_NUMBER() OVER (PARTITION BY {STOCKS_COMPANY_KEY}"
+    f" ORDER BY {STOCKS_PRIMARY_FIRST}, dollarVolume DESC, symbol)"
+)
+
+# Hand-set regime thresholds — documented judgment, not fitted. Tune here;
+# db._classify_regime decides the label and the dashboard explains it from
+# the same three numbers.
+REGIME_RISK_OFF_VIX = 25.0
+REGIME_RISK_ON_VIX = 20.0
+REGIME_HY_WIDE = 4.0
+# One row per company: the window that picks a company's representative
+# listing. Shared by stocks_rsi, the fundamental annotations and the
+# candidates screen so they can never disagree about what is one business.
+STOCKS_ONE_PER_COMPANY_RN = (
+    f"ROW_NUMBER() OVER (PARTITION BY {STOCKS_COMPANY_KEY}"
+    f" ORDER BY {STOCKS_PRIMARY_FIRST}, dollarVolume DESC, symbol)"
+)
+
+# Hand-set regime thresholds — documented judgment, not fitted. Tune here;
+# db._classify_regime decides the label and the dashboard explains it from
+# the same three numbers.
+REGIME_RISK_OFF_VIX = 25.0
+REGIME_RISK_ON_VIX = 20.0
+REGIME_HY_WIDE = 4.0
+# One row per company: the window that picks a company's representative
+# listing. Shared by stocks_rsi, the fundamental annotations and the
+# candidates screen so they can never disagree about what is one business.
+STOCKS_ONE_PER_COMPANY_RN = (
+    f"ROW_NUMBER() OVER (PARTITION BY {STOCKS_COMPANY_KEY}"
+    f" ORDER BY {STOCKS_PRIMARY_FIRST}, dollarVolume DESC, symbol)"
+)
+
+# Hand-set regime thresholds — documented judgment, not fitted. Tune here;
+# db._classify_regime decides the label and the dashboard explains it from
+# the same three numbers.
+REGIME_RISK_OFF_VIX = 25.0
+REGIME_RISK_ON_VIX = 20.0
+REGIME_HY_WIDE = 4.0
 
 # Universe floor for the stocks.db fundamental ANNOTATIONS below. Same
 # discipline as stocks_rsi — liquid names, one row per company — because a
@@ -158,10 +200,7 @@ def _stocks_annotation_sql(column: str) -> str:
                   AND dollarVolume >= {ANNOTATION_DOLLAR_VOLUME_MIN}
             ),
             ranked AS (
-                SELECT *, ROW_NUMBER() OVER (
-                    PARTITION BY {STOCKS_COMPANY_KEY}
-                    ORDER BY {STOCKS_PRIMARY_FIRST}, dollarVolume DESC, symbol
-                ) AS rn
+                SELECT *, {STOCKS_ONE_PER_COMPANY_RN} AS rn
                 FROM eligible
             )
             SELECT symbol, v, 0, priceDate FROM ranked WHERE rn = 1
@@ -619,10 +658,7 @@ SIGNALS: list[dict[str, Any]] = [
                   AND dollarVolume >= 10000000
             ),
             ranked AS (
-                SELECT *, ROW_NUMBER() OVER (
-                    PARTITION BY {STOCKS_COMPANY_KEY}
-                    ORDER BY {STOCKS_PRIMARY_FIRST}, dollarVolume DESC, symbol
-                ) AS rn
+                SELECT *, {STOCKS_ONE_PER_COMPANY_RN} AS rn
                 FROM eligible
             )
             SELECT symbol, rsi,

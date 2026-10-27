@@ -7,7 +7,11 @@ fetched from four source DBs; views only scope and aggregate."""
 
 import math
 import sqlite3
-from datetime import date, datetime, timedelta
+from datetime import date
+
+from sources.common.screener_common import add_missing_columns
+from sources.common.screener_common import connect as _connect
+from sources.common.screener_common import prune as _prune
 
 # Strong-disagreement thresholds, mirroring composite v_flagged
 # (|score_sum| >= 3 AND total >= 2). A schema test pins these to
@@ -236,9 +240,7 @@ JOIN v_latest_snapshot l ON e.snapshot_id = l.id;
 
 def connect(path: str) -> sqlite3.Connection:
     # uri=True so ATTACH 'file:...?mode=ro' works (plain paths still fine).
-    conn = sqlite3.connect(path, uri=True)
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
+    return _connect(path, uri=True)
 
 
 def ensure_schema(conn) -> None:
@@ -247,15 +249,10 @@ def ensure_schema(conn) -> None:
     table, so a DB written before a column was added needs the explicit ALTER
     (same pattern as scorer/db.py and backtest/db.py)."""
     conn.executescript(_TABLES)
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(position_heat)")}
-    if "avg_cost" not in cols:
-        conn.execute("ALTER TABLE position_heat ADD COLUMN avg_cost REAL")
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(size_caps)")}
-    if "research_verdict" not in cols:
-        conn.execute(
-            "ALTER TABLE size_caps ADD COLUMN research_verdict TEXT"
-            " CHECK (research_verdict IN ('buy', 'pass'))"
-        )
+    add_missing_columns(conn, "position_heat", ("avg_cost REAL",))
+    add_missing_columns(
+        conn, "size_caps", ("research_verdict TEXT CHECK (research_verdict IN ('buy', 'pass'))",)
+    )
     conn.executescript(_VIEWS)
     conn.commit()
 
@@ -263,16 +260,12 @@ def ensure_schema(conn) -> None:
 def prune(conn, keep_days: int, now_iso: str) -> int:
     """Cascade position_heat + size_caps + exit_advice then snapshot headers
     (fully snapshot-scoped, same pattern as portfolio.db)."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    ids = [r[0] for r in conn.execute("SELECT id FROM snapshots WHERE captured_at < ?", (cutoff,))]
-    if not ids:
-        return 0
-    qmarks = ",".join("?" * len(ids))
-    for child in ("position_heat", "option_heat", "size_caps", "exit_advice"):
-        conn.execute(f"DELETE FROM {child} WHERE snapshot_id IN ({qmarks})", ids)
-    conn.execute(f"DELETE FROM snapshots WHERE id IN ({qmarks})", ids)
-    conn.commit()
-    return len(ids)
+    return _prune(
+        conn,
+        keep_days,
+        now_iso,
+        child_tables=("position_heat", "option_heat", "size_caps", "exit_advice"),
+    )
 
 
 def write_snapshot(conn, now_iso: str) -> int:
@@ -580,59 +573,103 @@ def build_size_caps(
     return rows
 
 
-def write_position_heat(conn, sid, rows) -> int:
+def _insert_rows(conn, table, cols, sid, rows, defaults=None) -> int:
+    names = ", ".join(cols)
+    binds = ", ".join(f":{c}" for c in cols)
     conn.executemany(
-        "INSERT INTO position_heat (snapshot_id, symbol, group_name, quantity,"
-        " market_value, avg_cost, atr, price, price_date, heat_dollars, heat_pct,"
-        " weight_pct, score_sum, bullish, bearish, total, atr_stale)"
-        " VALUES (:sid, :symbol, :group_name, :quantity, :market_value, :avg_cost,"
-        " :atr, :price, :price_date, :heat_dollars, :heat_pct, :weight_pct,"
-        " :score_sum, :bullish, :bearish, :total, :atr_stale)",
-        [{**r, "sid": sid} for r in rows],
+        f"INSERT INTO {table} (snapshot_id, {names}) VALUES (:sid, {binds})",
+        [{**(defaults or {}), **r, "sid": sid} for r in rows],
     )
     return len(rows)
+
+
+_POSITION_HEAT_COLS = (
+    "symbol",
+    "group_name",
+    "quantity",
+    "market_value",
+    "avg_cost",
+    "atr",
+    "price",
+    "price_date",
+    "heat_dollars",
+    "heat_pct",
+    "weight_pct",
+    "score_sum",
+    "bullish",
+    "bearish",
+    "total",
+    "atr_stale",
+)
+_OPTION_HEAT_COLS = (
+    "occ_symbol",
+    "underlying",
+    "group_name",
+    "type",
+    "expiration",
+    "quantity",
+    "multiplier",
+    "market_value",
+    "delta",
+    "delta_date",
+    "atr",
+    "price",
+    "price_date",
+    "share_equiv",
+    "heat_dollars",
+    "heat_pct",
+    "uncovered",
+    "short_leg",
+)
+_EXIT_ADVICE_COLS = (
+    "symbol",
+    "quantity",
+    "price",
+    "avg_cost",
+    "atr",
+    "atr_stale",
+    "score_sum",
+    "total",
+    "strong",
+    "stop_price",
+    "stop_distance_pct",
+    "unrealized_pct",
+    "trim_shares",
+)
+_SIZE_CAP_COLS = (
+    "symbol",
+    "direction",
+    "score_sum",
+    "atr",
+    "price",
+    "cap_shares",
+    "cap_dollars",
+    "group_name",
+    "group_heat_pct",
+    "reliable_signals",
+    "total_signals",
+    "exceeds_buying_power",
+    "already_held",
+    "research_verdict",
+)
+
+
+def write_position_heat(conn, sid, rows) -> int:
+    return _insert_rows(conn, "position_heat", _POSITION_HEAT_COLS, sid, rows)
 
 
 def write_option_heat(conn, sid, rows) -> int:
-    conn.executemany(
-        "INSERT INTO option_heat (snapshot_id, occ_symbol, underlying, group_name,"
-        " type, expiration, quantity, multiplier, market_value, delta, delta_date,"
-        " atr, price, price_date, share_equiv, heat_dollars, heat_pct,"
-        " uncovered, short_leg)"
-        " VALUES (:sid, :occ_symbol, :underlying, :group_name, :type, :expiration,"
-        " :quantity, :multiplier, :market_value, :delta, :delta_date, :atr, :price,"
-        " :price_date, :share_equiv, :heat_dollars, :heat_pct, :uncovered, :short_leg)",
-        [{**r, "sid": sid} for r in rows],
-    )
-    return len(rows)
+    return _insert_rows(conn, "option_heat", _OPTION_HEAT_COLS, sid, rows)
 
 
 def write_exit_advice(conn, sid, rows) -> int:
-    conn.executemany(
-        "INSERT INTO exit_advice (snapshot_id, symbol, quantity, price, avg_cost,"
-        " atr, atr_stale, score_sum, total, strong, stop_price, stop_distance_pct,"
-        " unrealized_pct, trim_shares)"
-        " VALUES (:sid, :symbol, :quantity, :price, :avg_cost, :atr, :atr_stale,"
-        " :score_sum, :total, :strong, :stop_price, :stop_distance_pct,"
-        " :unrealized_pct, :trim_shares)",
-        [{**r, "sid": sid} for r in rows],
-    )
-    return len(rows)
+    return _insert_rows(conn, "exit_advice", _EXIT_ADVICE_COLS, sid, rows)
 
 
 def write_size_caps(conn, sid, rows) -> int:
-    conn.executemany(
-        "INSERT INTO size_caps (snapshot_id, symbol, direction, score_sum,"
-        " atr, price, cap_shares, cap_dollars, group_name, group_heat_pct,"
-        " reliable_signals, total_signals, exceeds_buying_power, already_held,"
-        " research_verdict)"
-        " VALUES (:sid, :symbol, :direction, :score_sum, :atr, :price,"
-        " :cap_shares, :cap_dollars, :group_name, :group_heat_pct,"
-        " :reliable_signals, :total_signals, :exceeds_buying_power,"
-        " :already_held, :research_verdict)",
-        # research_verdict defaults FIRST so an explicit value in the row wins:
-        # it is a late annotation, and a caller that never heard of it (or a
-        # scorer.db with no verdicts yet) must still be able to write a cap.
-        [{"research_verdict": None, **r, "sid": sid} for r in rows],
+    # research_verdict defaults so an explicit value in the row wins: it is a
+    # late annotation, and a caller that never heard of it (or a scorer.db with
+    # no verdicts yet) must still be able to write a cap.
+    return _insert_rows(
+        conn, "size_caps", _SIZE_CAP_COLS, sid, rows, defaults={"research_verdict": None}
     )
-    return len(rows)

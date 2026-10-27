@@ -79,12 +79,14 @@ Every gate below encodes a defect measured in stocks.db (audits dated
 """
 
 import argparse
-import os
 import sqlite3
 from datetime import UTC, datetime
 
-from sources.combiners.composite.catalog import STOCKS_COMPANY_KEY, STOCKS_PRIMARY_FIRST
+from sources.combiners.composite.catalog import STOCKS_ONE_PER_COMPANY_RN
 from sources.common.clock import phx_date
+from sources.common.dbattach import (
+    connect_ro,  # re-exported: worklist/tests pin candidates.connect_ro
+)
 
 # Stamped onto graded appearance rows (scorer.db candidate_appearances) so
 # efficacy samples never mix gate regimes. Bump on any threshold change.
@@ -109,13 +111,6 @@ SHARES_YOY_MAX = 2.0  # percent; buybacks are negative
 FSCORE_MIN = 6.0
 RSI_MAX = 45.0  # dislocation branch 1: momentum washout
 HIGH52_DISLOCATION_MAX = -30.0  # dislocation branch 2: percent off 52w high
-
-# One row per company. Both expressions are imported from catalog.py rather
-# than restated here, so this screen and composite's stocks_rsi signal can
-# never disagree about what counts as the same business — see the measured
-# comparison of isPrimaryListing / cik / CUSIP-issuer keys documented there.
-_COMPANY_KEY = STOCKS_COMPANY_KEY
-_PRIMARY_FIRST = STOCKS_PRIMARY_FIRST
 
 # All thresholds are on stockanalysis.com's PERCENT scale (roic=27.09 means
 # 27.09%), verified against the field distributions — a fraction/percent mixup
@@ -153,10 +148,7 @@ WITH eligible AS (
       AND (netDebtEbitda IS NULL OR netDebtEbitda < {NET_DEBT_EBITDA_MAX})
 ),
 ranked AS (
-    SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY {_COMPANY_KEY}
-        ORDER BY {_PRIMARY_FIRST}, dollarVolume DESC, symbol
-    ) AS rn
+    SELECT *, {STOCKS_ONE_PER_COMPANY_RN} AS rn
     FROM eligible
 )
 SELECT symbol, sector, marketCap, dollarVolume, roic, roic5y, fcfYield,
@@ -241,14 +233,6 @@ _LAYOUT = (
     ("tenure", 7),
     ("fS@in", 5),
 )
-
-
-def connect_ro(path: str) -> sqlite3.Connection:
-    """stocks.db opened read-only. This reporter must never be able to write
-    to a source DB, so the guarantee is in the connection, not in discipline."""
-    if not os.path.exists(path):
-        raise FileNotFoundError(path)
-    return sqlite3.connect(f"file:{os.path.abspath(path)}?mode=ro", uri=True)
 
 
 # ---- research context (scorer.db, optional) ----------------------------

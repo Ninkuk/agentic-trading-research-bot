@@ -4,7 +4,8 @@ this package. Every reader expects its source attached as `src`."""
 
 import sqlite3
 
-from sources.common.dbattach import attach_ro, detach  # noqa: F401  (re-exported)
+from sources.common.dbattach import attach_ro as attach_ro  # re-exported for run.py/tests
+from sources.common.dbattach import detach as detach  # re-exported for run.py/tests
 
 
 def read_composite_header(conn):

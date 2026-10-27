@@ -12,9 +12,11 @@ historically exact next close while the ledger retains it; beyond the
 price-prune window its symbols skip via the forward entry guard."""
 
 import sqlite3
-from datetime import datetime, timedelta
 
 from sources.combiners.scorer import catalog
+from sources.common.screener_common import add_missing_columns
+from sources.common.screener_common import connect as _connect
+from sources.common.screener_common import prune as _prune
 
 # Basis-break guard bounds: the ledger stores each day's close on that day's
 # price basis with no adjusted history to correct from, so a split shows up
@@ -1264,9 +1266,7 @@ FROM daily d JOIN prices s ON s.symbol = 'SPY' AND s.price_date = d.obs_date;
 
 def connect(path: str) -> sqlite3.Connection:
     # uri=True so ATTACH 'file:...?mode=ro' works (plain paths still fine).
-    conn = sqlite3.connect(path, uri=True)
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
+    return _connect(path, uri=True)
 
 
 def ensure_schema(conn) -> None:
@@ -1277,46 +1277,39 @@ def ensure_schema(conn) -> None:
     has no view referencing it -- it sits in this block for consistency with
     the other two migrations, not because ordering matters for it."""
     conn.executescript(_TABLES)
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(signal_outcomes)")}
-    if "benchmark" not in cols:
-        conn.execute("ALTER TABLE signal_outcomes ADD COLUMN benchmark TEXT")
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(decisions)")}
-    if "placed_agent" not in cols:
-        conn.execute("ALTER TABLE decisions ADD COLUMN placed_agent TEXT")
-    for ddl in (
-        "contract_ref TEXT",
-        "strategy_ref TEXT",
-        "position_effect TEXT CHECK (position_effect IN ('open', 'close'))",
-        "expiration TEXT",
-        "pinned_freelance INTEGER NOT NULL DEFAULT 0",
-    ):
-        if ddl.split()[0] not in cols:
-            conn.execute(f"ALTER TABLE decisions ADD COLUMN {ddl}")
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(journal_runs)")}
-    if "verdicts_recorded" not in cols:
-        conn.execute(
-            "ALTER TABLE journal_runs ADD COLUMN verdicts_recorded INTEGER NOT NULL DEFAULT 0"
-        )
-    if "expired_closed" not in cols:
-        conn.execute(
-            "ALTER TABLE journal_runs ADD COLUMN expired_closed INTEGER NOT NULL DEFAULT 0"
-        )
-    if "option_flows" not in cols:
-        conn.execute("ALTER TABLE journal_runs ADD COLUMN option_flows INTEGER NOT NULL DEFAULT 0")
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(research_verdicts)")}
-    for ddl in _VERDICT_CALIBRATION_COLS:
-        if ddl.split()[0] not in cols:
-            conn.execute(f"ALTER TABLE research_verdicts ADD COLUMN {ddl}")
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(candidate_appearances)")}
-    for col in _APPEARANCE_QUALITY_COLS:
-        if col not in cols:
-            conn.execute(f"ALTER TABLE candidate_appearances ADD COLUMN {col} REAL")
-    if "via_inflection" not in cols:
-        # DEFAULT 0 backfills every pre-door row as the 3y door, which is what
-        # they were; v_candidate_outcomes' CASE needs a 0, never a NULL.
-        conn.execute(
-            "ALTER TABLE candidate_appearances ADD COLUMN via_inflection INTEGER NOT NULL DEFAULT 0"
-        )
+    add_missing_columns(conn, "signal_outcomes", ("benchmark TEXT",))
+    add_missing_columns(
+        conn,
+        "decisions",
+        (
+            "placed_agent TEXT",
+            "contract_ref TEXT",
+            "strategy_ref TEXT",
+            "position_effect TEXT CHECK (position_effect IN ('open', 'close'))",
+            "expiration TEXT",
+            "pinned_freelance INTEGER NOT NULL DEFAULT 0",
+        ),
+    )
+    add_missing_columns(
+        conn,
+        "journal_runs",
+        (
+            "verdicts_recorded INTEGER NOT NULL DEFAULT 0",
+            "expired_closed INTEGER NOT NULL DEFAULT 0",
+            "option_flows INTEGER NOT NULL DEFAULT 0",
+        ),
+    )
+    add_missing_columns(conn, "research_verdicts", _VERDICT_CALIBRATION_COLS)
+    add_missing_columns(
+        conn,
+        "candidate_appearances",
+        (
+            *(f"{col} REAL" for col in _APPEARANCE_QUALITY_COLS),
+            # DEFAULT 0 backfills every pre-door row as the 3y door, which is
+            # what they were; v_candidate_outcomes' CASE needs a 0, never NULL.
+            "via_inflection INTEGER NOT NULL DEFAULT 0",
+        ),
+    )
     conn.executescript(_VIEWS)
     conn.commit()
 
@@ -1457,8 +1450,7 @@ def register_snapshot(
             print(f"defer composite snapshot {csid}: ledger not past {composite_date}")
             return 0, 0
         duplicate_window = (
-            window_anchor is not None
-            and conn.execute(
+            conn.execute(
                 "SELECT 1 FROM registered_snapshots WHERE entry_date = ? LIMIT 1",
                 (window_anchor,),
             ).fetchone()
@@ -1572,32 +1564,47 @@ def register_verdicts(conn, horizons, benchmark, max_age_days) -> int:
     formed intraday cannot claim that day's close — same no-look-ahead rule
     as snapshots), within the forward guard. Uncovered symbols register
     nothing and are retried nightly; coverage arriving beyond the guard
+def _register_entries(conn, pending, table, id_col, benchmark, max_age_days, horizons_for) -> int:
+    """One outcome row per (pending id, horizon), entered at the first ledger
+    close STRICTLY AFTER the row's own date (entry_for); a symbol the ledger
+    doesn't cover yet registers nothing and retries next night. All horizons
+    for all pending rows commit atomically."""
+    n = 0
+    with conn:
+        for rid, symbol, start_date, *extra in pending:
+            entry = entry_for(conn, symbol, start_date, max_age_days)
+            if entry is None:
+                continue
+            bench = _bench_close(conn, benchmark, entry[0])
+            for h in horizons_for(*extra):
+                cur = conn.execute(
+                    f"INSERT OR IGNORE INTO {table} ({id_col}, symbol, horizon, entry_date,"
+                    " entry_close, bench_entry_close) VALUES (?, ?, ?, ?, ?, ?)",
+                    (rid, symbol, h, entry[0], entry[1], bench),
+                )
+                n += cur.rowcount
+    return n
+
+
     window never registers (historically exact entry or nothing). A verdict's
     stated horizon_days registers alongside the fixed horizons. All horizons
     for all pending verdicts commit atomically."""
-    registered = 0
     pending = conn.execute(
         "SELECT rv.id, rv.symbol, rv.verdict_date, rv.horizon_days FROM research_verdicts rv"
         " WHERE NOT EXISTS (SELECT 1 FROM verdict_outcomes vo"
         "                   WHERE vo.verdict_id = rv.id)"
     ).fetchall()
-    with conn:
-        for vid, symbol, vdate, stated in pending:
-            entry = entry_for(conn, symbol, vdate, max_age_days)
-            if entry is None:
-                continue
-            bench = _bench_close(conn, benchmark, entry[0])
-            # The stated horizon rides alongside the fixed ones so the
-            # calibration views can grade the forecast at its own term.
-            for h in sorted(set(horizons) | ({stated} if stated else set())):
-                cur = conn.execute(
-                    "INSERT OR IGNORE INTO verdict_outcomes"
-                    " (verdict_id, symbol, horizon, entry_date, entry_close,"
-                    "  bench_entry_close) VALUES (?, ?, ?, ?, ?, ?)",
-                    (vid, symbol, h, entry[0], entry[1], bench),
-                )
-                registered += cur.rowcount
-    return registered
+    # The stated horizon rides alongside the fixed ones so the calibration
+    # views can grade the forecast at its own term.
+    return _register_entries(
+        conn,
+        pending,
+        "verdict_outcomes",
+        "verdict_id",
+        benchmark,
+        max_age_days,
+        lambda stated: sorted(set(horizons) | ({stated} if stated else set())),
+    )
 
 
 def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
@@ -1654,7 +1661,6 @@ def register_candidates(conn, horizons, benchmark, max_age_days, gap_days) -> in
     like verdicts. Entries reuse entry_for: first ledger close STRICTLY
     AFTER screen_date (the screen reads that day's settled close — claiming
     it would pocket the overnight gap)."""
-    registered = 0
     pending = conn.execute(
         "SELECT ca.id, ca.symbol, ca.screen_date FROM candidate_appearances ca"
         " WHERE NOT EXISTS (SELECT 1 FROM candidate_outcomes co"
@@ -1665,21 +1671,15 @@ def register_candidates(conn, horizons, benchmark, max_age_days, gap_days) -> in
         "                     AND prior.screen_date >= date(ca.screen_date, ?))",
         (f"-{int(gap_days)} days",),
     ).fetchall()
-    with conn:
-        for aid, symbol, sdate in pending:
-            entry = entry_for(conn, symbol, sdate, max_age_days)
-            if entry is None:
-                continue
-            bench = _bench_close(conn, benchmark, entry[0])
-            for h in horizons:
-                cur = conn.execute(
-                    "INSERT OR IGNORE INTO candidate_outcomes"
-                    " (appearance_id, symbol, horizon, entry_date, entry_close,"
-                    "  bench_entry_close) VALUES (?, ?, ?, ?, ?, ?)",
-                    (aid, symbol, h, entry[0], entry[1], bench),
-                )
-                registered += cur.rowcount
-    return registered
+    return _register_entries(
+        conn,
+        pending,
+        "candidate_outcomes",
+        "appearance_id",
+        benchmark,
+        max_age_days,
+        lambda: horizons,
+    )
 
 
 # Maturation: the Nth distinct ledger date after entry, per symbol.
@@ -1859,7 +1859,4 @@ def prune(conn, keep_days: int, now_iso: str) -> int:
     source can re-serve). equity_ledger and transfers are permanent for the
     same reason: they are the only record of account equity once
     portfolio.db's snapshot cascade has run."""
-    header_cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    n = conn.execute("DELETE FROM snapshots WHERE captured_at < ?", (header_cutoff,)).rowcount
-    conn.commit()
-    return n
+    return _prune(conn, keep_days, now_iso)

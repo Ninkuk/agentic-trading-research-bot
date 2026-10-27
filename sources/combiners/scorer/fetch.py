@@ -2,8 +2,15 @@
 No network anywhere in this package."""
 
 from sources.combiners.composite import candidates
-from sources.common.clock import phx_date
-from sources.common.dbattach import attach_ro, detach  # noqa: F401  (re-exported)
+from sources.common.clock import PHX_DATE_SQL, phx_date
+from sources.common.dbattach import attach_ro as attach_ro  # re-exported for run.py/tests
+from sources.common.dbattach import detach as detach  # re-exported for run.py/tests
+
+# The Phoenix calendar date of a snapshot row aliased `s`.
+_PHX_DATE = PHX_DATE_SQL.format(ts="s.captured_at")
+
+# The Phoenix calendar date of a snapshot row aliased `s`.
+_PHX_DATE = PHX_DATE_SQL.format(ts="s.captured_at")
 
 
 def read_candidate_rows(conn):
@@ -87,7 +94,7 @@ def harvest_prices(conn) -> list:
             'SELECT m.symbol, m."priceDate", m."price", MIN(s.id)'
             " FROM src.metrics m JOIN src.snapshots s ON s.id = m.snapshot_id"
             ' WHERE m."priceDate" IS NOT NULL AND m."price" IS NOT NULL'
-            "   AND substr(datetime(s.captured_at, '-7 hours'), 1, 10) > m.\"priceDate\""
+            f'   AND {_PHX_DATE} > m."priceDate"'
             ' GROUP BY m.symbol, m."priceDate"'
         )
     ]
@@ -123,10 +130,10 @@ def harvest_equity(conn) -> list:
         raise ValueError("portfolio account table missing columns")
     return conn.execute(
         "SELECT obs_date, equity, cash, captured_at FROM ("
-        " SELECT substr(datetime(s.captured_at, '-7 hours'), 1, 10) AS obs_date,"
+        f" SELECT {_PHX_DATE} AS obs_date,"
         "        a.equity, a.cash, s.captured_at,"
         "        ROW_NUMBER() OVER ("
-        "            PARTITION BY substr(datetime(s.captured_at, '-7 hours'), 1, 10)"
+        f"            PARTITION BY {_PHX_DATE}"
         "            ORDER BY (CAST(substr(datetime(s.captured_at, '-7 hours'), 12, 2)"
         "                      AS INTEGER) BETWEEN 13 AND 16) DESC,"
         "                     s.captured_at DESC"
@@ -152,7 +159,7 @@ def read_snapshots(conn) -> list:
     return [
         (r[0], r[1])
         for r in conn.execute(
-            "SELECT s.id, substr(datetime(s.captured_at, '-7 hours'), 1, 10)"
+            f"SELECT s.id, {_PHX_DATE}"
             " FROM src.snapshots s"
             " JOIN src.market_regime m ON m.snapshot_id = s.id"
             " ORDER BY s.id"

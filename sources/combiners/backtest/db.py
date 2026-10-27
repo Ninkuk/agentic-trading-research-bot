@@ -8,10 +8,13 @@ knowable that day, and how the benchmark moved afterward. Manual analysis
 tool — deliberately unscheduled."""
 
 import sqlite3
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from sources.combiners.backtest import catalog
 from sources.combiners.scorer.db import RELIABLE_MIN_N, _wilson
+from sources.common.screener_common import add_missing_columns
+from sources.common.screener_common import connect as _connect
+from sources.common.screener_common import prune as _prune
 
 _TABLES = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -454,9 +457,7 @@ LEFT JOIN replay_rotation_null r
 
 def connect(path: str) -> sqlite3.Connection:
     # uri=True so ATTACH 'file:...?mode=ro' works (plain paths still fine).
-    conn = sqlite3.connect(path, uri=True)
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
+    return _connect(path, uri=True)
 
 
 def ensure_schema(conn) -> None:
@@ -472,13 +473,8 @@ def ensure_schema(conn) -> None:
         conn.executescript(_TABLES)
     # snapshots is the provenance header -- widen it in place rather than
     # rebuilding: dropping it would discard run history that nothing re-derives.
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(snapshots)")}
-    if "market_rows" not in cols:
-        conn.execute("ALTER TABLE snapshots ADD COLUMN market_rows INTEGER NOT NULL DEFAULT 0")
-    # replay_null briefly shipped without captured_at (962058b..review fix)
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(replay_null)")}
-    if "captured_at" not in cols:
-        conn.execute("ALTER TABLE replay_null ADD COLUMN captured_at TEXT")
+    add_missing_columns(conn, "snapshots", ("market_rows INTEGER NOT NULL DEFAULT 0",))
+    add_missing_columns(conn, "replay_null", ("captured_at TEXT",))
     conn.executescript(_views())
     conn.commit()
 
@@ -587,7 +583,4 @@ def write_rotation_null(conn, rows, now_iso: str) -> int:
 def prune(conn, keep_days: int, now_iso: str) -> int:
     """Snapshot headers only — signal_vintages/benchmark_closes are the
     replay dataset and are never pruned."""
-    cutoff = (datetime.fromisoformat(now_iso) - timedelta(days=keep_days)).isoformat()
-    cur = conn.execute("DELETE FROM snapshots WHERE captured_at < ?", (cutoff,))
-    conn.commit()
-    return cur.rowcount
+    return _prune(conn, keep_days, now_iso)

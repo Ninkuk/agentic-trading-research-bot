@@ -22,7 +22,7 @@ import sys
 from datetime import UTC, date, datetime
 
 from sources.combiners.scorer import db, fetch
-from sources.common.clock import phx_date
+from sources.common.clock import PHX_DATE_SQL, phx_date
 
 # Calendar days an opinion stays matchable to a later fill: covers the
 # morning-after trade plus a long weekend. Two snapshots in the window
@@ -38,13 +38,9 @@ MATCH_WINDOW_DAYS = 5
 AUTOMATIC_AGENTS = ("drip", "recurring")
 
 
-def _phx_date(dt) -> str:
-    """Phoenix-local date of an aware datetime — the clock composite_date is on
-    (see fetch.read_snapshots). fill_date must share it: with a raw UTC date, an
-    extended-hours fill at 5:30pm Phoenix lands on the next UTC day and would
-    match that evening's 9:05pm opinion — formed AFTER the fill executed
-    (look-ahead)."""
-    return phx_date(dt)
+def _symbol(item: dict) -> str:
+    raw = item.get("symbol")
+    return raw.strip().upper() if isinstance(raw, str) else ""
 
 
 def _bare_date(s) -> bool:
@@ -117,8 +113,7 @@ def parse_doc(doc) -> tuple:
         if not isinstance(f, dict):
             skipped += 1
             continue
-        raw = f.get("symbol")
-        symbol = raw.strip().upper() if isinstance(raw, str) else ""
+        symbol = _symbol(f)
         side = f.get("side")
         price = _numeric(f.get("price"))
         filled_at = f.get("filled_at")
@@ -161,7 +156,6 @@ def parse_doc(doc) -> tuple:
             expiration = f.get("expiration")
             if not _bare_date(expiration):
                 expiration = None
-            terminal = None
             broker_side = side
             if quantity is None or quantity <= 0:
                 skipped += 1
@@ -183,6 +177,9 @@ def parse_doc(doc) -> tuple:
                     continue
                 side = "buy" if (side == "buy") == (right == "call") else "sell"
         sref = f.get("strategy_ref")
+        # fill_date is the Phoenix date so it shares composite_date's clock: on
+        # a raw UTC date a 5:30pm Phoenix extended-hours fill lands on the next
+        # day and would match that evening's 9:05pm opinion, formed AFTER it.
         fills.append(
             dict(
                 symbol=symbol,
@@ -190,7 +187,7 @@ def parse_doc(doc) -> tuple:
                 price=price,
                 quantity=quantity,
                 filled_at=filled_at,
-                fill_date=_phx_date(fill_dt),
+                fill_date=phx_date(fill_dt),
                 order_ref=f.get("order_ref"),
                 note=f.get("note"),
                 placed_agent=agent if isinstance(agent, str) else None,
@@ -205,8 +202,7 @@ def parse_doc(doc) -> tuple:
         if not isinstance(p, dict):
             skipped += 1
             continue
-        raw = p.get("symbol")
-        symbol = raw.strip().upper() if isinstance(raw, str) else ""
+        symbol = _symbol(p)
         if not symbol:
             skipped += 1
             continue
@@ -215,8 +211,7 @@ def parse_doc(doc) -> tuple:
         if not isinstance(v, dict):
             skipped += 1
             continue
-        raw = v.get("symbol")
-        symbol = raw.strip().upper() if isinstance(raw, str) else ""
+        symbol = _symbol(v)
         verdict = v.get("verdict")
         vdate = v.get("verdict_date")
         # A bare Phoenix calendar date, NOT a timestamp: research-ticker
@@ -252,10 +247,9 @@ def parse_doc(doc) -> tuple:
     return fills, passes, verdicts, skipped
 
 
-# composite_date, exactly as the scorer registers it (Phoenix shift; see
-# fetch.read_snapshots for the rationale). MUST stay identical or journal
-# keys won't join registered_snapshots.
-_CDATE = "substr(datetime(s.captured_at, '-7 hours'), 1, 10)"
+# composite_date exactly as the scorer registers it (fetch.read_snapshots),
+# so journal keys join registered_snapshots.
+_CDATE = PHX_DATE_SQL.format(ts="s.captured_at")
 
 
 def match_opinion(conn, symbol, fill_date):
@@ -349,6 +343,22 @@ def _dedup_ref(f) -> str:
     return "manual:" + hashlib.sha1(canon.encode("utf-8")).hexdigest()[:16]
 
 
+def _stamp_exit(conn, decision_id, fill_date, price, order_ref) -> None:
+    conn.execute(
+        "UPDATE decisions SET exit_fill_date = ?, exit_fill_price = ?, exit_order_ref = ?"
+        " WHERE id = ?",
+        (fill_date, price, order_ref, decision_id),
+    )
+
+
+def _book_flow(conn, decision_id, flow_date, kind, premium, contracts, cash, order_ref, now_iso):
+    conn.execute(
+        "INSERT INTO premium_flows (decision_id, flow_date, kind, premium, contracts, cash,"
+        " order_ref, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (decision_id, flow_date, kind, premium, contracts, cash, order_ref, now_iso),
+    )
+
+
 def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
     """One transaction: every decision row plus the journal_runs header
     commit together or not at all. Requires composite.db attached as `src`
@@ -359,7 +369,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
     flows = 0
     # Phoenix clock, like fill_date/composite_date: an evening-dictated pass
     # (after the 9:05pm snapshot = next day UTC) answers THAT evening's flag.
-    as_of_date = _phx_date(datetime.fromisoformat(now_iso))
+    as_of_date = phx_date(now_iso)
     with conn:
         for f in fills:
             ref = _dedup_ref(f)
@@ -386,11 +396,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                 did = open_row[0]
                 pos = _option_position(conn, did)
                 if pos is None:
-                    conn.execute(
-                        "UPDATE decisions SET exit_fill_date = ?,"
-                        " exit_fill_price = ?, exit_order_ref = ? WHERE id = ?",
-                        (f["fill_date"], f["price"], ref, did),
-                    )
+                    _stamp_exit(conn, did, f["fill_date"], f["price"], ref)
                     exits += 1
                     continue
                 outstanding = pos[0] - pos[1]
@@ -401,28 +407,20 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                         f" > {outstanding} outstanding"
                     )
                     continue
-                conn.execute(
-                    "INSERT INTO premium_flows (decision_id, flow_date, kind,"
-                    " premium, contracts, cash, order_ref, recorded_at)"
-                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                    (
-                        did,
-                        f["fill_date"],
-                        f.get("terminal") or "close",
-                        f["price"],
-                        f["quantity"],
-                        _flow_cash(f),
-                        ref,
-                        now_iso,
-                    ),
+                _book_flow(
+                    conn,
+                    did,
+                    f["fill_date"],
+                    f.get("terminal") or "close",
+                    f["price"],
+                    f["quantity"],
+                    _flow_cash(f),
+                    ref,
+                    now_iso,
                 )
                 flows += 1
                 if f["quantity"] == outstanding:
-                    conn.execute(
-                        "UPDATE decisions SET exit_fill_date = ?,"
-                        " exit_fill_price = ?, exit_order_ref = ? WHERE id = ?",
-                        (f["fill_date"], f["price"], ref, did),
-                    )
+                    _stamp_exit(conn, did, f["fill_date"], f["price"], ref)
                     exits += 1
                 continue
             if f["side"] == "sell" and not automatic and not contract:
@@ -435,11 +433,7 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
                     (f["symbol"], *AUTOMATIC_AGENTS, f["fill_date"]),
                 ).fetchone()
                 if open_buy:
-                    conn.execute(
-                        "UPDATE decisions SET exit_fill_date = ?,"
-                        " exit_fill_price = ?, exit_order_ref = ? WHERE id = ?",
-                        (f["fill_date"], f["price"], ref, open_buy[0]),
-                    )
+                    _stamp_exit(conn, open_buy[0], f["fill_date"], f["price"], ref)
                     exits += 1
                     continue
             m = None if automatic else match_opinion(conn, f["symbol"], f["fill_date"])
@@ -474,19 +468,16 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
             matched += 1 if m else 0
             freelance += 0 if m else 1
             if contract:
-                conn.execute(
-                    "INSERT INTO premium_flows (decision_id, flow_date, kind,"
-                    " premium, contracts, cash, order_ref, recorded_at)"
-                    " VALUES (?, ?, 'open', ?, ?, ?, ?, ?)",
-                    (
-                        cur.lastrowid,
-                        f["fill_date"],
-                        f["price"],
-                        f["quantity"],
-                        _flow_cash(f),
-                        ref,
-                        now_iso,
-                    ),
+                _book_flow(
+                    conn,
+                    cur.lastrowid,
+                    f["fill_date"],
+                    "open",
+                    f["price"],
+                    f["quantity"],
+                    _flow_cash(f),
+                    ref,
+                    now_iso,
                 )
                 flows += 1
         # Terminal-event sweep: an option expiring un-closed produces no
@@ -504,18 +495,9 @@ def ingest(conn, fills, passes, verdicts, now_iso, skipped=0) -> dict:
             synthetic = f"expired:{dcontract}:{did}"
             pos = _option_position(conn, did)
             if pos is not None and pos[0] - pos[1] > 0:
-                conn.execute(
-                    "INSERT INTO premium_flows (decision_id, flow_date, kind,"
-                    " premium, contracts, cash, order_ref, recorded_at)"
-                    " VALUES (?, ?, 'expire', 0.0, ?, 0.0, ?, ?)",
-                    (did, dexp, pos[0] - pos[1], synthetic, now_iso),
-                )
+                _book_flow(conn, did, dexp, "expire", 0.0, pos[0] - pos[1], 0.0, synthetic, now_iso)
                 flows += 1
-            conn.execute(
-                "UPDATE decisions SET exit_fill_date = ?, exit_fill_price = 0.0,"
-                " exit_order_ref = ? WHERE id = ?",
-                (dexp, synthetic, did),
-            )
+            _stamp_exit(conn, did, dexp, 0.0, synthetic)
         expired = len(expiring)
         for p in passes:
             m = match_flagged(conn, p["symbol"], as_of_date)

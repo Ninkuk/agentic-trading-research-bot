@@ -457,12 +457,11 @@ def test_company_key_is_the_hoisted_catalog_constant():
     what counts as the same business, so both read one hoisted expression."""
     from sources.combiners.composite import catalog
 
-    assert candidates._COMPANY_KEY is catalog.STOCKS_COMPANY_KEY
-    assert candidates._PRIMARY_FIRST is catalog.STOCKS_PRIMARY_FIRST
+    rn = catalog.STOCKS_ONE_PER_COMPANY_RN
+    assert catalog.STOCKS_COMPANY_KEY in rn and catalog.STOCKS_PRIMARY_FIRST in rn
     by_id = {s["signal_id"]: s for s in catalog.SIGNALS}
-    assert catalog.STOCKS_COMPANY_KEY in by_id["stocks_rsi"]["sql"]
-    assert catalog.STOCKS_PRIMARY_FIRST in by_id["stocks_rsi"]["sql"]
-    assert candidates.STOCKS_COMPANY_KEY in candidates._SCREEN_SQL
+    assert rn in by_id["stocks_rsi"]["sql"]
+    assert rn in candidates._SCREEN_SQL
 
 
 # ---------------------------------------------- data-age disclosure ----

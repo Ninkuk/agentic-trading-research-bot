@@ -2,7 +2,8 @@
 in this package — the replay's external feed is the local data/ dir (same
 convention as the composite combiner)."""
 
-from sources.common.dbattach import attach_ro, detach  # noqa: F401  (re-exported)
+from sources.common.dbattach import attach_ro as attach_ro  # re-exported for run.py/tests
+from sources.common.dbattach import detach as detach  # re-exported for run.py/tests
 
 
 def harvest_vintages(conn, series_ids) -> list:

@@ -17,7 +17,6 @@ sources/combiners/scorer/db.py):
     data (n=k)", so one trade's outcome is never mistaken for a trend."""
 
 import argparse
-import sqlite3
 from bisect import bisect_right
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -25,6 +24,7 @@ from pathlib import Path
 from sources.combiners.scorer import db
 from sources.combiners.scorer.journal import AUTOMATIC_AGENTS
 from sources.common.clock import phx_date
+from sources.common.dbattach import connect_ro
 
 # Suppression floor: a (response|horizon) or (aligned|horizon) cell with fewer
 # matured rows than this shows "insufficient data (n=k)" instead of an average.
@@ -363,7 +363,7 @@ def run(db_path: str, now_iso: str | None = None, fred_db_path: str | None = Non
     # cash is a reference benchmark, never a gate on the report itself.
     dff: list[tuple[str, float]] = []
     if fred_db_path and Path(fred_db_path).exists():
-        fconn = sqlite3.connect(f"file:{fred_db_path}?mode=ro", uri=True)
+        fconn = connect_ro(fred_db_path)
         try:
             dff = dff_series(fconn)
         finally:
