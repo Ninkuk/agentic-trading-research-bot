@@ -408,3 +408,21 @@ def test_env_sh_exit_trap_emits_exactly_one_end_line_with_the_real_exit_code(tmp
     end_lines = [line for line in result.stdout.splitlines() if "] end: " in line]
     assert len(end_lines) == 1, result.stdout
     assert "exit 5" in end_lines[0]
+
+
+def test_wedged_claude_gets_an_autopsy_before_the_kill(tmp_path):
+    """Every observed wedge is a frozen event loop (main thread blocked in
+    openat), so the process can never log what it is stuck on; the wrapper
+    must record it from outside -- stack sample, open files, and an lldb
+    register read -- and name the directory on stderr. The fake claude is an
+    Apple-signed sleep, which lldb refuses to attach to: the autopsy has to
+    land its sample/lsof files and the AUTOPSY: line regardless."""
+    script = _probe_script(tmp_path, "exec sleep 60")
+    result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=90)
+    assert "status=124" in result.stdout, result.stdout
+    line = next((ln for ln in result.stderr.splitlines() if "AUTOPSY:" in ln), None)
+    assert line is not None, result.stderr
+    autopsy_dir = Path(line.split("AUTOPSY: ", 1)[1].split(" leaf=")[0])
+    assert (autopsy_dir / "lsof.txt").exists() and (autopsy_dir / "sample.txt").exists()
+    assert (autopsy_dir / "lldb.txt").exists()
+    assert "leaf=" in line and "path=" in line

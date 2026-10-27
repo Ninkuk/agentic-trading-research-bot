@@ -102,18 +102,25 @@ summer open (6:30am Phoenix).
   distinct from `start:` so it doesn't inflate the health section's run
   count), `end:` (whole-run finish with duration + exit code, from the EXIT
   trap), plus ad hoc `FAILED`/`STALE` lines from individual wrappers.
-- **Headless login probe + debug logs**: the three `claude -p` slots
+- **Headless startup probe, debug logs, autopsy**: the three `claude -p` slots
   (`order-execution`, `portfolio`, `journal`) first run `claude_probe`
   (`env.sh`): one haiku turn under `CLAUDE_PROBE_SECS` (default 90s). The
-  startup wedge is an OAuth access token that expired since the last claude
-  activity on the machine — headless cannot refresh it, and the CLI hangs
-  instead of erroring — so the probe turns a silent 20–45min burn into a
-  `FAILED: claude login probe` line and the job exits 1 (queue rows stay
-  `queued`). Every claude invocation, probe included, writes
-  `logs/claude-debug/<job>-<stamp>.log` (`--debug-file`, 14-day retention);
-  read the newest one before reasoning about a wedge. Recovery is unchanged:
-  any interactive session rewrites the Keychain token, then rerun
-  account-positions / journal-sync by hand.
+  startup wedge is the CLI's main thread blocked in a synchronous `openat()`
+  that never returns — event loop frozen, so no log line, no timeout, no
+  error, SIGTERM ignored — seen only on launchd-started runs and not tied to
+  the OAuth token (2026-10-27: wedged three times with a token 68 minutes
+  old). The probe turns a silent 20–45min burn into a `FAILED: claude ...
+  probe` line and the job exits 1 (queue rows stay `queued`). Every claude
+  invocation writes `logs/claude-debug/<job>-<stamp>.log` (`--debug-file`,
+  14-day retention). When the cap fires on a claude process the wrapper
+  first runs `wedge_autopsy`: `logs/claude-debug/autopsy-<job>-<stamp>/`
+  holds `sample.txt` (native stacks), `lsof.txt`, and `lldb.txt` with the
+  blocked thread's registers and the string at `x1` — the path `openat` is
+  stuck on. lldb can only attach to the ad-hoc re-signed copy at
+  `~/.local/share/claude/debuggable/claude` (the shipped binary's hardened
+  runtime refuses debuggers); `env.sh` puts that copy first on PATH when it
+  exists, and it must be re-copied and re-signed after a CLI update (recipe
+  in `env.sh`). Recovery: rerun account-positions / journal-sync by hand.
 - **Hang detection**: `deploy/launchd/dashboard_lib/health.py` cross-references
   `launchctl list`'s PID column (not the exit-status column, which cannot
   distinguish "running" from "exited cleanly" — see `status.sh`) against each

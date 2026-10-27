@@ -1,6 +1,16 @@
 # Sourced by every launchd job script. launchd provides no shell profile,
 # no repo cwd, and no .env — this supplies all three.
 export PATH="$HOME/.local/bin:$HOME/.claude/local:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+# The headless claude wedge is a synchronous open() that never returns, and
+# the shipped binary's hardened runtime refuses debuggers, so lldb cannot read
+# which path it is stuck on. This copy is the same binary ad-hoc re-signed with
+# get-task-allow (see wedge_autopsy). Refresh it after a CLI update:
+#   cp ~/.local/share/claude/versions/<ver> ~/.local/share/claude/debuggable/claude
+#   codesign -s - -f --entitlements ~/.local/share/claude/debuggable/entitlements.plist \
+#     ~/.local/share/claude/debuggable/claude
+if [ -x "$HOME/.local/share/claude/debuggable/claude" ]; then
+    export PATH="$HOME/.local/share/claude/debuggable:$PATH"
+fi
 cd "$(dirname "${BASH_SOURCE[0]}")/../.." || exit 1
 if [ -f .env ]; then
     set -a
@@ -69,6 +79,7 @@ run_with_timeout() {
     local timed_out=0
     if kill -0 "$cmd_pid" 2>/dev/null; then
         timed_out=1
+        case "$cmd" in *claude*) wedge_autopsy "$cmd_pid" "${JOB_LABEL:-$cmd}" ;; esac
         # TERM first so claude can close its MCP children; KILL as backstop.
         kill -TERM "$cmd_pid" 2>/dev/null
         sleep 5
@@ -85,6 +96,38 @@ run_with_timeout() {
         status=124
     fi
     return "$status"
+}
+
+# Capture a wedged claude BEFORE it is killed: wedge_autopsy <pid> <label>.
+# Every observed wedge is the main thread blocked in openat() with the event
+# loop frozen, so the process itself can never log the path; the only record
+# is from outside. lldb needs the debuggable copy (see PATH above) -- on the
+# shipped binary the attach fails and the sample/lsof files still land.
+wedge_autopsy() {
+    local pid="$1" label
+    label=$(echo "$2" | tr ' /' '--')
+    local dir="logs/claude-debug/autopsy-$label-$(date '+%F_%H%M%S')"
+    mkdir -p "$dir"
+    ps -o pid,ppid,stat,etime,%cpu,command -p "$pid" >"$dir/ps.txt" 2>&1
+    for c in $(pgrep -P "$pid"); do ps -o pid,ppid,stat,etime,command -p "$c" | tail -1; done >>"$dir/ps.txt" 2>&1
+    lsof -nP -p "$pid" >"$dir/lsof.txt" 2>&1
+    sample "$pid" 2 -file "$dir/sample.txt" >/dev/null 2>&1
+    # lldb_autopsy.py names the path and then forces the blocked open to
+    # return -1, so claude's own debug log also records it before the kill.
+    lldb -p "$pid" --batch -o "command script import deploy/launchd/lldb_autopsy.py" \
+        >"$dir/lldb.txt" 2>&1 &
+    local lpid=$! waited=0
+    while [ "$waited" -lt 25 ] && kill -0 "$lpid" 2>/dev/null; do
+        sleep 1
+        waited=$((waited + 1))
+    done
+    kill "$lpid" 2>/dev/null
+    wait "$lpid" 2>/dev/null
+    sleep 3
+    local leaf path
+    leaf=$(grep -m1 -oE "[a-zA-Z_0-9\$]+  \(in libsystem_kernel" "$dir/sample.txt" 2>/dev/null | head -1 | sed 's/  (in libsystem_kernel//')
+    path=$(grep -m1 "^AUTOPSY_PATH: " "$dir/lldb.txt" 2>/dev/null | cut -c15-220)
+    echo "[$(date '+%F %T')] AUTOPSY: $dir leaf=${leaf:-?} path=${path:-unread}" >&2
 }
 
 # run_with_timeout plus exactly ONE retry when the cap fired (124). The wedge
@@ -118,12 +161,12 @@ claude_debug_file() {
     echo "logs/claude-debug/$1-$(date '+%F_%H%M%S').log"
 }
 
-# Fail-fast login probe, run BEFORE a real headless job: claude_probe <secs> <job>.
-# An expired OAuth token wedges `claude -p` at startup until the 1200s cap;
-# the probe turns that into a ~90s FAILED: line (matches health.py's markers)
-# and the caller skips the job. One haiku turn, no session file, no tools
-# needed. Any nonzero status is a dead headless login -- the CLI sometimes
-# exits with an auth error instead of wedging, and that must fail the same way.
+# Fail-fast startup probe, run BEFORE a real headless job: claude_probe <secs> <job>.
+# `claude -p` sometimes wedges at startup (main thread blocked in openat, see
+# wedge_autopsy) until the 1200s cap; the probe turns that into a ~90s FAILED:
+# line (matches health.py's markers) and the caller skips the job. One haiku
+# turn, no session file, no tools needed. Any nonzero status fails the same
+# way -- the CLI sometimes exits with an auth error instead of wedging.
 claude_probe() {
     local limit="$1"
     local job="$2"
@@ -133,7 +176,7 @@ claude_probe() {
         --debug-file "$(claude_debug_file "$job-probe")" >/dev/null
     local status=$?
     if [ "$status" -ne 0 ]; then
-        echo "[$(date '+%F %T')] FAILED: claude login probe status $status — headless auth is dead (expired token?); skipping $job. See logs/claude-debug/" >&2
+        echo "[$(date '+%F %T')] FAILED: claude startup probe status $status — headless claude wedged or errored; skipping $job. See logs/claude-debug/ (AUTOPSY line above on a wedge)" >&2
     fi
     return "$status"
 }
