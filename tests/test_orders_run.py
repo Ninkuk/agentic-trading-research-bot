@@ -931,3 +931,43 @@ def test_cancel_cli(dbs, monkeypatch, capsys):
     monkeypatch.setenv("ORDERS_ALLOW_NONINTERACTIVE", "1")
     run.main(["cancel", "--db", orders_path, "--id", str(qid), "--reason", "repriced"])
     assert f"cancelled #{qid}" in capsys.readouterr().out
+
+
+def test_notes_returns_queue_rationale_for_placed_order_ids(dbs):
+    """The journal slot attributes a broker fill to its queue row by order id
+    and copies the human's note; a fill journaled without it can never be
+    backfilled (order_ref dedupes). Read-only, unknown ids come back as
+    missing rather than erroring, and an absent db is a ValueError."""
+    orders_path, cal_path = dbs
+    qid = _queue(orders_path, cal_path)
+    plan = run.run_plan(orders_path, cal_path, _plan_doc(), SUMMER_OPEN, ENV)
+    ref_id = plan["orders"][0]["ref_id"]
+    run.run_record(
+        orders_path,
+        {
+            "results": [
+                {
+                    "queue_id": qid,
+                    "ref_id": ref_id,
+                    "account_number": "TESTACCT0",
+                    "order_id": "ord-9",
+                    "state": "placed",
+                    "raw": {},
+                }
+            ]
+        },
+        "t",
+        ENV,
+    )
+    out = run.run_notes(orders_path, ["ord-9", "mystery", "ord-9"])
+    assert out["notes"] == {"ord-9": {"queue_id": qid, "symbol": "TSLA", "note": "test"}}
+    assert out["missing"] == ["mystery"]
+    with pytest.raises(ValueError):
+        run.run_notes(orders_path + ".absent", ["ord-9"])
+
+
+def test_notes_cli_prints_json(dbs, capsys):
+    orders_path, _ = dbs
+    orders_db.ensure_schema(orders_db.connect(orders_path))
+    run.main(["notes", "--db", orders_path, "--order-id", "nothing"])
+    assert '"missing": ["nothing"]' in capsys.readouterr().out

@@ -4,12 +4,15 @@ export PATH="$HOME/.local/bin:$HOME/.claude/local:/opt/homebrew/bin:/usr/local/b
 # The headless claude wedge is a synchronous open() that never returns, and
 # the shipped binary's hardened runtime refuses debuggers, so lldb cannot read
 # which path it is stuck on. This copy is the same binary ad-hoc re-signed with
-# get-task-allow (see wedge_autopsy). Refresh it after a CLI update:
-#   cp ~/.local/share/claude/versions/<ver> ~/.local/share/claude/debuggable/claude
-#   codesign -s - -f --entitlements ~/.local/share/claude/debuggable/entitlements.plist \
-#     ~/.local/share/claude/debuggable/claude
-if [ -x "$HOME/.local/share/claude/debuggable/claude" ]; then
-    export PATH="$HOME/.local/share/claude/debuggable:$PATH"
+# get-task-allow (see wedge_autopsy). It lives UNDER versions/ because the CLI
+# only runs its native-install startup path (version lock, updater) when its
+# own path contains that directory, and a copy outside it never wedged.
+# Refresh after a CLI update:
+#   D=~/.local/share/claude/versions/debuggable
+#   cp ~/.local/share/claude/versions/<ver> $D/claude
+#   codesign -s - -f --entitlements $D/entitlements.plist $D/claude
+if [ -x "$HOME/.local/share/claude/versions/debuggable/claude" ]; then
+    export PATH="$HOME/.local/share/claude/versions/debuggable:$PATH"
 fi
 cd "$(dirname "${BASH_SOURCE[0]}")/../.." || exit 1
 if [ -f .env ]; then

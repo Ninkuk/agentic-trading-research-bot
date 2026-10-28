@@ -532,6 +532,31 @@ def run_cancel(
             raise ValueError(f"queue row {queue_id} is not in status 'queued'")
 
 
+def run_notes(db_path: str, order_ids: list[str]) -> dict:
+    """Queue rationale for broker order ids, SELECT-only. The journal slot
+    once read this with `sqlite3 -readonly`, which fails on a WAL database
+    whose -shm sidecar is absent (the sandbox cannot create it); the
+    dispatcher's own connection has no such limit."""
+    if not os.path.exists(db_path):
+        raise ValueError(f"no orders db at {db_path}")
+    wanted = [o for o in dict.fromkeys(order_ids) if o]
+    notes: dict[str, dict] = {}
+    if wanted:
+        conn = db.connect(db_path)
+        try:
+            marks = ",".join("?" * len(wanted))
+            for order_id, qid, symbol, note in conn.execute(
+                "SELECT p.order_id, q.id, q.symbol, q.note FROM placements p"
+                " JOIN queue q ON q.id = p.queue_id"
+                f" WHERE p.outcome = 'placed' AND p.order_id IN ({marks})",
+                wanted,
+            ).fetchall():
+                notes[order_id] = {"queue_id": qid, "symbol": symbol, "note": note}
+        finally:
+            conn.close()
+    return {"notes": notes, "missing": [o for o in wanted if o not in notes]}
+
+
 def _load_doc(path: str) -> dict:
     if path == "-":
         return dict(json.load(sys.stdin))
@@ -582,6 +607,10 @@ def main(argv=None) -> None:
     r.add_argument("--id", type=int, required=True, dest="queue_id")
     r.add_argument("--as", required=True, choices=("placed", "failed"), dest="as_state")
     r.add_argument("--order-id", default=None)
+
+    n = sub.add_parser("notes", help="queue rationale for broker order ids (read-only)")
+    n.add_argument("--db", default="orders.db")
+    n.add_argument("--order-id", action="append", default=[], dest="order_ids", required=True)
 
     c = sub.add_parser("cancel", help="human-only withdrawal of a still-queued row")
     c.add_argument("--db", default="orders.db")
@@ -643,6 +672,8 @@ def main(argv=None) -> None:
         elif a.cmd == "reconcile":
             report = run_reconcile(a.db, _load_doc(a.input), now_iso)
             print(json.dumps(report))
+        elif a.cmd == "notes":
+            print(json.dumps(run_notes(a.db, a.order_ids)))
         elif a.cmd == "resolve":
             run_resolve(a.db, a.queue_id, a.as_state, a.order_id, now_iso)
             print(f"resolved #{a.queue_id} as {a.as_state}")
