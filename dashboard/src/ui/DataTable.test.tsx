@@ -289,3 +289,12 @@ test("prose columns wrap on phones; short identity and date columns never do", (
   expect(cells[1]).not.toHaveClass("max-sm:whitespace-normal");
   expect(cells[2]).toHaveClass("max-sm:whitespace-normal");
 });
+
+test("data-pin-first follows the first rendered column's pin flag", () => {
+  const pinned: Column[] = [{ ...COLS[1], pin: true }, COLS[0]];
+  const { unmount } = render(<DataTable columns={pinned} rows={ROWS3} storageKey="t-pin" />);
+  expect(screen.getByRole("table").closest(".datatable")).toHaveAttribute("data-pin-first", "true");
+  unmount();
+  render(<DataTable columns={COLS} rows={ROWS3} storageKey="t-nopin" />);
+  expect(screen.getByRole("table").closest(".datatable")).toHaveAttribute("data-pin-first", "false");
+});

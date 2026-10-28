@@ -27,12 +27,20 @@ def col(
     direction: str | None = None,
     term: str | None = None,
     hidden: bool = False,
+    pin: bool = False,
 ) -> dict[str, Any]:
     """hidden=True marks a detail column: exported, but folded behind the
-    table's "more columns" toggle until the reader asks."""
+    table's "more columns" toggle until the reader asks.
+
+    pin=True marks a row-identity first column (symbol, ticker, signal id):
+    it stays put when the table scrolls sideways on a phone. Never a date,
+    a grouping value or a long name — those anchor nothing or eat the
+    324px the phone has."""
     c = {"key": key, "label": label, "numeric": numeric, "direction": direction, "term": term}
     if hidden:
         c["hidden"] = True
+    if pin:
+        c["pin"] = True
     return c
 
 

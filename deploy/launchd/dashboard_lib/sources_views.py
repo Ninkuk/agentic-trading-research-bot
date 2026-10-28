@@ -105,7 +105,7 @@ def dark_pools(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _OFF_EXCHANGE_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("total_shares", "Off-exchange shares"),
     col("total_trades", "Trades"),
     col("venue_count", "Venues"),
@@ -139,7 +139,7 @@ def off_exchange_leaders(conn: sqlite3.Connection, now_iso: str) -> dict[str, An
 # --- SEC XBRL fundamentals ---------------------------------------------------
 
 _REVISION_COLUMNS = [
-    col("ticker", "Ticker", numeric=False),
+    col("ticker", "Ticker", numeric=False, pin=True),
     col("tag", "Line item", numeric=False),
     col("period_end", "Period", numeric=False),
     col("form", "Form", numeric=False, hidden=True),
@@ -220,7 +220,7 @@ def sec_revisions(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _SEC_SCREENER_COLUMNS = [
-    col("ticker", "Ticker", numeric=False),
+    col("ticker", "Ticker", numeric=False, pin=True),
     col("name", "Company", numeric=False),
     col("revenues", "Revenue"),
     col("net_income", "Net income"),
@@ -433,7 +433,7 @@ def yield_curve(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _AUCTION_COLUMNS = [
-    col("security_term", "Security", numeric=False),
+    col("security_term", "Security", numeric=False, pin=True),
     col("auction_date", "Auction", numeric=False),
     col("latest_btc", "Bids per dollar sold", direction="up-good", term="Bid-to-cover"),
     col("avg_btc", "Typical bids per dollar", term="Bid-to-cover"),
@@ -596,7 +596,7 @@ def fred_series(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 # --- Fails-to-deliver -----------------------------------------------------------
 
 _FTD_SPIKE_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("description", "Security", numeric=False),
     col("settlement_date", "Settled", numeric=False),
     col("quantity", "Fails"),
@@ -639,7 +639,7 @@ def ftd_spikes(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _FTD_LARGEST_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("description", "Security", numeric=False),
     col("settlement_date", "Settled", numeric=False),
     col("quantity", "Fails"),
@@ -663,7 +663,7 @@ def ftd_largest(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _FTD_STREAK_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("description", "Security", numeric=False),
     col("streak_days", "Days failing"),
     col("streak_start", "Since", numeric=False),
@@ -690,7 +690,7 @@ def ftd_streaks(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 # --- FINRA short volume ---------------------------------------------------------
 
 _SHORT_RATIO_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("date", "Date", numeric=False),
     col("short_ratio", "Short share of volume"),
     col("short_volume", "Short volume"),
@@ -724,7 +724,7 @@ def short_volume_ratio(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
 
 
 _SHORT_STREAK_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("streak_days", "Days elevated"),
     col("streak_start", "Since", numeric=False),
     col("streak_end", "Last", numeric=False),
@@ -749,7 +749,7 @@ def short_volume_streaks(conn: sqlite3.Connection, now_iso: str) -> dict[str, An
 # --- FINRA short interest -------------------------------------------------------
 
 _CROWDED_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("settlement_date", "Settled", numeric=False),
     col("days_to_cover", "Days to cover", term="SI days to cover"),
     col("current_short_qty", "Shares short"),
@@ -787,7 +787,7 @@ def short_interest_crowded(conn: sqlite3.Connection, now_iso: str) -> dict[str, 
 # --- Cboe options ---------------------------------------------------------------
 
 _UNUSUAL_COLUMNS = [
-    col("underlying", "Underlying", numeric=False),
+    col("underlying", "Underlying", numeric=False, pin=True),
     col("type", "Type", numeric=False),
     col("expiration", "Expiry", numeric=False),
     col("strike", "Strike"),
@@ -1174,7 +1174,7 @@ def energy_inventories(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
 # --- USDA ---------------------------------------------------------------------------
 
 _AG_COLUMNS = [
-    col("commodity", "Crop", numeric=False),
+    col("commodity", "Crop", numeric=False, pin=True),
     col("period", "Crop year", numeric=False),
     col("ending_stocks", "Stockpile at year end"),
     col("vs_last_year", "Vs last year"),
@@ -1269,7 +1269,7 @@ def ag_balance(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _WASDE_COLUMNS = [
-    col("commodity", "Commodity", numeric=False),
+    col("commodity", "Commodity", numeric=False, pin=True),
     col("region", "Region", numeric=False),
     col("market_year", "Crop year", numeric=False),
     col("ending_stocks", "Left in storage"),
@@ -1295,7 +1295,7 @@ def wasde(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 # --- reddit ---------------------------------------------------------------------------
 
 _REDDIT_COLUMNS = [
-    col("ticker", "Ticker", numeric=False),
+    col("ticker", "Ticker", numeric=False, pin=True),
     col("name", "Name", numeric=False),
     col("filter", "Community", numeric=False, hidden=True),
     col("rank", "Rank"),
@@ -1337,7 +1337,7 @@ def reddit_trending(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 # --- EDGAR ----------------------------------------------------------------------------
 
 _INSIDER_COLUMNS = [
-    col("ticker", "Ticker", numeric=False),
+    col("ticker", "Ticker", numeric=False, pin=True),
     col("company", "Company", numeric=False),
     col("insider_filings", "Insider filings"),
     spark_col("history", "Filings per index day"),

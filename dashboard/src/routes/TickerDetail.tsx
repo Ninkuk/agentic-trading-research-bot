@@ -54,7 +54,7 @@ export interface TickerDetailProps {
 }
 
 const SIGNAL_COLUMNS: Column[] = [
-  { key: "signal", label: "Signal", numeric: false, direction: null, term: null },
+  { key: "signal", label: "Signal", numeric: false, direction: null, term: null, pin: true },
   { key: "score", label: "Score", numeric: true, direction: null, term: null },
   { key: "raw_value", label: "Raw value", numeric: true, direction: null, term: null },
 ];

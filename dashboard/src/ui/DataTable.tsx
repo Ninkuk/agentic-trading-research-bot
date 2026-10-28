@@ -146,8 +146,8 @@ function proseColumns(columns: Column[], rows: Row[]): Set<string> {
   return keys;
 }
 
-/** Whether the table overflows its card (so the first column pins and the
- * right edge fades) and whether there is more to the right of the current
+/** Whether the table overflows its card (so a pinned identity column sticks
+ * and the right edge fades) and whether there is more to the right of the current
  * scroll position. Watches both the scroll container and the table, since
  * paging or a filter changes the table's width without resizing the card. */
 function useTableOverflow(root: RefObject<HTMLDivElement | null>) {
@@ -321,7 +321,12 @@ export function DataTable({
   const displayedRows = processedRows.slice(pageStart, pageStart + pageSize);
   const paged = processedRows.length > pageSize;
   const filterable = filterableProp && rows.length >= FILTER_MIN_ROWS;
-  const visibleCount = table.getVisibleLeafColumns().length;
+  const leafColumns = table.getVisibleLeafColumns();
+  const visibleCount = leafColumns.length;
+  // The pin follows the column actually rendered first and only when the
+  // exporter marked it a row identity (col.pin): a date or a long name
+  // anchors nothing and would eat the phone's width.
+  const pinFirst = columnByKey.get(leafColumns[0]?.id ?? "")?.pin === true;
 
   const detailToggle = detailCount > 0 && (
     <Button
@@ -340,6 +345,7 @@ export function DataTable({
       className="datatable space-y-2.5"
       data-scrolls={overflow.scrolls ? "true" : "false"}
       data-more={overflow.more ? "true" : "false"}
+      data-pin-first={pinFirst ? "true" : "false"}
     >
       {!filterable && detailToggle && <div className="flex justify-end">{detailToggle}</div>}
       {filterable && (

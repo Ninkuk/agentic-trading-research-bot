@@ -208,17 +208,18 @@
     min-width: 0;
   }
 
-  /* Tables wider than their card (DataTable sets data-scrolls): the
-     identity column stays put while the rest scrolls, and the right edge
-     fades until the reader has scrolled to the end. */
-  .datatable[data-scrolls="true"] th:first-child,
-  .datatable[data-scrolls="true"] td:first-child {
+  /* Tables wider than their card (DataTable sets data-scrolls): the right
+     edge fades until the reader has scrolled to the end, and a first column
+     the exporter marked as the row's identity (data-pin-first, from
+     col(pin=True)) stays put while the rest scrolls. */
+  .datatable[data-scrolls="true"][data-pin-first="true"] th:first-child,
+  .datatable[data-scrolls="true"][data-pin-first="true"] td:first-child {
     position: sticky;
     left: 0;
     z-index: 1;
     background: var(--card);
   }
-  .datatable[data-scrolls="true"] tr.flag td:first-child {
+  .datatable[data-scrolls="true"][data-pin-first="true"] tr.flag td:first-child {
     background: linear-gradient(var(--tone-hold-bg), var(--tone-hold-bg)), var(--card);
   }
   .datatable[data-scrolls="true"][data-more="true"] [data-slot="table-container"] {

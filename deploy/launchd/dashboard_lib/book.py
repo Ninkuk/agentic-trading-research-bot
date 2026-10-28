@@ -15,7 +15,7 @@ from dashboard_lib.common import col, fetch, tile, verdict
 
 # The decision columns open; position bookkeeping folds behind "more columns".
 _EXIT_ADVICE_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("quantity", "Shares", hidden=True),
     col("price", "Price"),
     col("avg_cost", "Avg cost", hidden=True),
@@ -59,7 +59,7 @@ def exit_advice(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _OPTION_HEAT_COLUMNS = [
-    col("underlying", "Underlying", numeric=False),
+    col("underlying", "Underlying", numeric=False, pin=True),
     col("type", "Type", numeric=False),
     col("expiration", "Expiry", numeric=False),
     col("quantity", "Contracts"),
@@ -106,7 +106,7 @@ def reason_words(reason: Any) -> Any:
 
 
 _QUEUE_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("qty", "Shares"),
     col("notional", "Dollars"),
     col("ref_price", "Price you noted"),
@@ -131,7 +131,7 @@ def open_queue(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _RUN_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("qty", "Shares"),
     col("notional", "Dollars"),
     col("status", "Status", numeric=False),
@@ -165,7 +165,7 @@ def run_results(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _UNRECONCILED_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("status", "Status", numeric=False),
     col("resolution_reason", "Reason", numeric=False),
 ]

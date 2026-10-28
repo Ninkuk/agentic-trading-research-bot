@@ -81,7 +81,7 @@ def research_filter(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _VERDICT_OUTCOME_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("verdict", "Call", numeric=False),
     col("verdict_date", "Call date", numeric=False),
     col("horizon", "Horizon"),
@@ -272,7 +272,7 @@ def flag_response(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 # --- effective n ----------------------------------------------------------
 
 _EFFECTIVE_N_COLUMNS = [
-    col("signal_id", "Signal", numeric=False),
+    col("signal_id", "Signal", numeric=False, pin=True),
     col("via_crosswalk", "Via crosswalk", hidden=True),
     col("horizon", "Horizon"),
     col("n_matured", "Rows graded", hidden=True),
@@ -333,7 +333,7 @@ def signal_effective_n(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
 
 # The screen's mechanics fold behind "more columns"; the outcome stays.
 _CANDIDATE_OUTCOME_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("screen_date", "Entered list", numeric=False),
     col("growth_door", "Why it qualified", numeric=False, hidden=True),
     col("branch", "What flagged it", numeric=False, hidden=True),
@@ -371,7 +371,7 @@ def candidate_outcomes(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]
 # The words column leads; the entry/now pairs behind it fold behind
 # "more columns".
 _QUALITY_TREND_COLUMNS = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("what_weakened", "What weakened", numeric=False),
     col("days_on_list", "Days on list"),
     col("n_sightings", "Sightings"),
@@ -445,7 +445,7 @@ def candidate_quality_trend(conn: sqlite3.Connection, now_iso: str) -> dict[str,
 # --- options ---------------------------------------------------------------
 
 _OPTION_PNL_COLUMNS = [
-    col("symbol", "Underlying", numeric=False),
+    col("symbol", "Underlying", numeric=False, pin=True),
     col("direction", "Direction", numeric=False),
     col("expiration", "Expiry", numeric=False),
     col("fill_date", "Opened on", numeric=False),
@@ -491,7 +491,7 @@ def option_pnl(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 # toggle; keys stay so the cell formatter still draws the CI mark and the
 # excess bar.
 _REPLAY_EFFICACY_COLUMNS = [
-    col("signal_id", "Signal", numeric=False),
+    col("signal_id", "Signal", numeric=False, pin=True),
     col("direction", "Flag", numeric=False),
     col("horizon", "Horizon"),
     col("n_days", "Days flagged", hidden=True),
@@ -537,7 +537,7 @@ def replay_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _BASELINE_COLUMNS = [
-    col("benchmark", "Benchmark", numeric=False),
+    col("benchmark", "Benchmark", numeric=False, pin=True),
     col("horizon", "Horizon"),
     col("n_windows", "Days measured"),
     col("p_up", "Went up"),
@@ -573,7 +573,7 @@ def replay_baseline(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 # The score is a -1/0/+1 vote; the word is what a reader needs, so the
 # number folds. The catalog carries no unit per series, so Value stays bare.
 _REPLAY_FLAG_COLUMNS = [
-    col("signal_id", "Signal", numeric=False),
+    col("signal_id", "Signal", numeric=False, pin=True),
     col("lean", "Lean", numeric=False),
     col("benchmark", "Benchmark", numeric=False),
     col("asof_date", "As of", numeric=False),

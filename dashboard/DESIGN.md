@@ -267,7 +267,8 @@ casts one.
 - **Do** keep every element narrower than the viewport on a phone: a
   mobile browser zooms the page out to fit its widest element. Measured
   charts use `.chart-measure`, verdict chips wrap, tables scroll inside
-  the card with the first column pinned.
+  the card, pinning the first column only where it is a short row
+  identity (`pin=True`).
 
 ### Don't:
 - **Don't** revive newspaper ornament: no serif display, no brass

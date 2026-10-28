@@ -30,6 +30,9 @@ export interface Column {
   // asks for "more columns", so a wide table opens readable and loses
   // nothing (data.py `col(..., hidden=True)`).
   hidden?: boolean;
+  // A row-identity first column (symbol, ticker, signal id): stays put
+  // when the table scrolls sideways on a phone (data.py `col(..., pin=True)`).
+  pin?: boolean;
 }
 
 // A row's field values (columns), or a tile's own catch-all fields — plain

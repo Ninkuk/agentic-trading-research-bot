@@ -129,8 +129,10 @@ named rules) for the impeccable skill; keep all three in sync.
   chart then measures against the zoomed-out width. So: measured charts
   sit in `.chart-measure` (`contain: inline-size`), verdict chips wrap
   (and take ≤60% of the header beside the note from `sm`), and tables
-  scroll inside their card with the first column pinned and a right-edge
-  fade while columns remain (DataTable's `data-scrolls`/`data-more`).
+  scroll inside their card with a right-edge fade while columns remain
+  (DataTable's `data-scrolls`/`data-more`). Only a first column that is a
+  short row identity (`col(..., pin=True)`: symbol, ticker, signal id)
+  pins; a date, a grouping value or a long name scrolls with the rest.
   Text columns holding a value over 24 characters wrap with a 14rem
   floor; dates and symbols never wrap. Pager, About and sort buttons grow
   under `pointer-coarse:`.

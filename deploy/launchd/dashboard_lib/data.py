@@ -306,7 +306,14 @@ def _inflation(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _SCORECARD_COLUMNS: list[dict[str, Any]] = [
-    {"key": "symbol", "label": "Symbol", "numeric": False, "direction": None, "term": None},
+    {
+        "key": "symbol",
+        "label": "Symbol",
+        "numeric": False,
+        "direction": None,
+        "term": None,
+        "pin": True,
+    },
     # Diverging: a large negative score_sum is just as strong a signal as a
     # large positive one, so there is no "higher is better" arrow to show.
     {"key": "score_sum", "label": "Score", "numeric": True, "direction": None, "term": None},
@@ -428,7 +435,7 @@ def _scorecard(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _CANDIDATES_COLUMNS: list[dict[str, Any]] = [
-    col("symbol", "Symbol", numeric=False),
+    col("symbol", "Symbol", numeric=False, pin=True),
     col("sector", "Sector", numeric=False),
     col("marketCap", "Market cap"),
     col("ch6m", "6-month change %"),
@@ -535,7 +542,14 @@ def _verdict_thesis_path(doc: str | None) -> str | None:
 
 
 _RESEARCH_COLUMNS: list[dict[str, Any]] = [
-    {"key": "ticker", "label": "Ticker", "numeric": False, "direction": None, "term": None},
+    {
+        "key": "ticker",
+        "label": "Ticker",
+        "numeric": False,
+        "direction": None,
+        "term": None,
+        "pin": True,
+    },
     {"key": "held", "label": "Held", "numeric": False, "direction": None, "term": None},
     {"key": "call", "label": "Call", "numeric": False, "direction": None, "term": None},
     {
@@ -840,13 +854,20 @@ def _direction(key: str) -> str | None:
 # term= only when the label and the glossary key diverge ("Hit-rate CI low"
 # → "CI"); test_dashboard_glossary.py pins the keys both paths rely on.
 def _track_col(
-    key: str, label: str, numeric: bool = True, term: str | None = None, hidden: bool = False
+    key: str,
+    label: str,
+    numeric: bool = True,
+    term: str | None = None,
+    hidden: bool = False,
+    pin: bool = False,
 ) -> dict[str, Any]:
-    return col(key, label, numeric=numeric, direction=_direction(key), term=term, hidden=hidden)
+    return col(
+        key, label, numeric=numeric, direction=_direction(key), term=term, hidden=hidden, pin=pin
+    )
 
 
 _SIGNAL_EFFICACY_COLUMNS: list[dict[str, Any]] = [
-    _track_col("signal_id", "Signal", numeric=False),
+    _track_col("signal_id", "Signal", numeric=False, pin=True),
     _track_col("via_crosswalk", "Via crosswalk", hidden=True),
     _track_col("horizon", "Horizon"),
     _track_col("n_bench", "Graded"),
@@ -923,7 +944,7 @@ def _signal_efficacy(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _BUCKET_PERFORMANCE_COLUMNS: list[dict[str, Any]] = [
-    _track_col("bucket", "Bucket", numeric=False),
+    _track_col("bucket", "Bucket", numeric=False, pin=True),
     _track_col("horizon", "Horizon"),
     _track_col("n_bench", "Graded"),
     _track_col("avg_fwd_return", "Return", term="Forward return"),
@@ -1089,7 +1110,7 @@ def _human_filter(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _REGIME_PERFORMANCE_COLUMNS: list[dict[str, Any]] = [
-    _track_col("regime", "Mood", numeric=False),
+    _track_col("regime", "Mood", numeric=False, pin=True),
     _track_col("horizon", "Horizon"),
     _track_col("n_matured", "Nights graded"),
     _track_col("avg_bench_return", "Average return"),
@@ -1184,7 +1205,7 @@ def _pending(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _BASIS_BREAKS_COLUMNS: list[dict[str, Any]] = [
-    _track_col("symbol", "Symbol", numeric=False),
+    _track_col("symbol", "Symbol", numeric=False, pin=True),
     _track_col("prev_date", "Prev date", numeric=False),
     _track_col("prev_close", "Prev close"),
     _track_col("price_date", "Price date", numeric=False),
@@ -1251,7 +1272,7 @@ def _basis_breaks(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _SIGNAL_RECOMMENDATION_COLUMNS: list[dict[str, Any]] = [
-    _track_col("signal_id", "Signal", numeric=False),
+    _track_col("signal_id", "Signal", numeric=False, pin=True),
     _track_col("via_crosswalk", "Via crosswalk", hidden=True),
     _track_col("horizon", "Horizon"),
     _track_col("n_blocks", "Independent episodes"),
@@ -1302,7 +1323,7 @@ def _dff_series(data_dir: str) -> list[tuple[str, float]]:
 
 
 _YOUR_TRADES_COLUMNS: list[dict[str, Any]] = [
-    _track_col("symbol", "Symbol", numeric=False),
+    _track_col("symbol", "Symbol", numeric=False, pin=True),
     _track_col("side", "Side", numeric=False),
     _track_col("fill_date", "Filled", numeric=False),
     _track_col("backed_by", "Backed by", numeric=False),
@@ -1641,7 +1662,7 @@ def _book_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _GROUP_HEAT_COLUMNS: list[dict[str, Any]] = [
-    _track_col("bet", "Bet", numeric=False),
+    _track_col("bet", "Bet", numeric=False, pin=True),
     _track_col("members", "Positions in it"),
     _track_col("symbols", "Symbols", numeric=False),
     _track_col("heat_dollars", "At risk $"),
@@ -1673,7 +1694,7 @@ def _group_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _POSITION_HEAT_COLUMNS: list[dict[str, Any]] = [
-    _track_col("symbol", "Symbol", numeric=False),
+    _track_col("symbol", "Symbol", numeric=False, pin=True),
     _track_col("group_name", "Bet", numeric=False, hidden=True),
     _track_col("quantity", "Shares"),
     _track_col("market_value", "Market value"),
@@ -1719,7 +1740,7 @@ def _position_heat(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _DISAGREEMENTS_COLUMNS: list[dict[str, Any]] = [
-    _track_col("symbol", "Symbol", numeric=False),
+    _track_col("symbol", "Symbol", numeric=False, pin=True),
     _track_col("score_sum", "Signal lean", term="Score"),
     _track_col("group_name", "Bet", numeric=False),
     _track_col("strong", "Strong disagreement?", numeric=False),
@@ -1749,7 +1770,7 @@ def _disagreements(conn: sqlite3.Connection, now_iso: str) -> dict[str, Any]:
 
 
 _SIZE_CAPS_COLUMNS: list[dict[str, Any]] = [
-    _track_col("symbol", "Symbol", numeric=False),
+    _track_col("symbol", "Symbol", numeric=False, pin=True),
     _track_col("direction", "Direction", numeric=False),
     _track_col("score_sum", "Score"),
     _track_col("cap_shares", "Cap shares"),
