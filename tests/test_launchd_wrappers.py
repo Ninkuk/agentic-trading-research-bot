@@ -384,6 +384,55 @@ def test_run_with_timeout_passes_through_a_fast_commands_own_status(tmp_path):
     assert "FAILED:" not in result.stderr, result.stderr
 
 
+def _stable_copy_script(tmp_path, version):
+    """Source env.sh under a throwaway HOME whose ~/.local/bin/claude links to
+    a fake native install at versions/<version>, and report what `claude`
+    resolves to afterwards."""
+    home = tmp_path / "home"
+    versions = home / ".local" / "share" / "claude" / "versions"
+    versions.mkdir(parents=True, exist_ok=True)
+    fake = versions / version
+    fake.write_text(f"#!/bin/bash\necho {version}\n")
+    fake.chmod(0o755)
+    link = home / ".local" / "bin" / "claude"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    if link.is_symlink():
+        link.unlink()
+    link.symlink_to(fake)
+    script = tmp_path / "stable.sh"
+    script.write_text(
+        textwrap.dedent(
+            f"""\
+            #!/bin/bash
+            set -uo pipefail
+            export HOME="{home}"
+            source "{LAUNCHD / "env.sh"}"
+            echo "resolved=$(command -v claude)"
+            echo "runs=$(claude)"
+            """
+        )
+    )
+    return script, versions / "stable"
+
+
+def test_env_sh_runs_claude_from_one_fixed_path_across_versions(tmp_path):
+    """macOS keys a CLI binary's folder grant on its executable path and the
+    native installer moves claude to a new path every version, so the headless
+    slots must run a copy at a path that never changes -- and that copy must
+    follow the installed version, or a stale CLI runs forever."""
+    script, stable = _stable_copy_script(tmp_path, "9.9.9")
+    out = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=30)
+    assert f"resolved={stable / 'claude'}" in out.stdout, out.stdout + out.stderr
+    assert "runs=9.9.9" in out.stdout
+    assert (stable / "version").read_text().strip() == "9.9.9"
+
+    script, _ = _stable_copy_script(tmp_path, "9.9.10")
+    out = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=30)
+    assert "runs=9.9.10" in out.stdout, out.stdout + out.stderr
+    assert (stable / "version").read_text().strip() == "9.9.10"
+    assert not (stable / "claude.new").exists()
+
+
 def test_env_sh_exit_trap_emits_exactly_one_end_line_with_the_real_exit_code(tmp_path):
     """env.sh's EXIT trap must fire exactly once and log the ACTUAL exit
     code, even when `set -e` aborts the script on a failing command -- this

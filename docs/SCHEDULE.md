@@ -103,24 +103,28 @@ summer open (6:30am Phoenix).
   count), `end:` (whole-run finish with duration + exit code, from the EXIT
   trap), plus ad hoc `FAILED`/`STALE` lines from individual wrappers.
 - **Headless startup probe, debug logs, autopsy**: the three `claude -p` slots
-  (`order-execution`, `portfolio`, `journal`) first run `claude_probe`
-  (`env.sh`): one haiku turn under `CLAUDE_PROBE_SECS` (default 90s). The
-  startup wedge is the CLI's main thread blocked in a synchronous `openat()`
-  that never returns — event loop frozen, so no log line, no timeout, no
-  error, SIGTERM ignored — seen only on launchd-started runs and not tied to
-  the OAuth token (2026-10-27: wedged three times with a token 68 minutes
-  old). The probe turns a silent 20–45min burn into a `FAILED: claude ...
-  probe` line and the job exits 1 (queue rows stay `queued`). Every claude
+  (`order-execution`, `portfolio`, `journal`) run the shipped binary from one
+  fixed path, `~/.local/share/claude/versions/stable/claude` (`env.sh`
+  refreshes it from `~/.local/bin/claude` on every job start). macOS keys a
+  command-line binary's Desktop/Documents/Downloads grant on its executable
+  path, and the native installer puts every version at a new one: the first
+  headless run of each version opened a remembered Desktop project's `.git`,
+  the consent dialog nobody answers at 06:32 blocked that `openat()` with the
+  event loop frozen (no log line, no timeout, SIGTERM ignored), and the
+  privacy database grew one Desktop row per version (54 from 2.1.198 to
+  2.1.311). The fixed path needs one Allow per folder, ever. Each slot still
+  runs `claude_probe` first (one haiku turn under `CLAUDE_PROBE_SECS`, default
+  90s) so any new wedge is a `FAILED: claude ... probe` line and exit 1
+  (queue rows stay `queued`) instead of a 20–45min burn. Every claude
   invocation writes `logs/claude-debug/<job>-<stamp>.log` (`--debug-file`,
   14-day retention). When the cap fires on a claude process the wrapper
   first runs `wedge_autopsy`: `logs/claude-debug/autopsy-<job>-<stamp>/`
-  holds `sample.txt` (native stacks), `lsof.txt`, and `lldb.txt` with the
-  blocked thread's registers and the string at `x1` — the path `openat` is
-  stuck on. lldb can only attach to the ad-hoc re-signed copy at
-  `~/.local/share/claude/debuggable/claude` (the shipped binary's hardened
-  runtime refuses debuggers); `env.sh` puts that copy first on PATH when it
-  exists, and it must be re-copied and re-signed after a CLI update (recipe
-  in `env.sh`). Recovery: rerun account-positions / journal-sync by hand.
+  holds `sample.txt`, `lsof.txt`, and `lldb.txt` with the blocked path.
+  lldb attaches only to the ad-hoc re-signed copy at
+  `~/.local/share/claude/versions/debuggable/claude`, used when
+  `CLAUDE_DEBUGGABLE=1` is in the launchd environment (recipe in `env.sh`;
+  its grant dies with every re-sign). Recovery: rerun account-positions /
+  journal-sync by hand.
 - **Hang detection**: `deploy/launchd/dashboard_lib/health.py` cross-references
   `launchctl list`'s PID column (not the exit-status column, which cannot
   distinguish "running" from "exited cleanly" — see `status.sh`) against each

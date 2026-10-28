@@ -1,17 +1,36 @@
 # Sourced by every launchd job script. launchd provides no shell profile,
 # no repo cwd, and no .env — this supplies all three.
 export PATH="$HOME/.local/bin:$HOME/.claude/local:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
-# The headless claude wedge is a synchronous open() that never returns, and
-# the shipped binary's hardened runtime refuses debuggers, so lldb cannot read
-# which path it is stuck on. This copy is the same binary ad-hoc re-signed with
-# get-task-allow (see wedge_autopsy). It lives UNDER versions/ because the CLI
-# only runs its native-install startup path (version lock, updater) when its
-# own path contains that directory, and a copy outside it never wedged.
+# macOS keys a command-line binary's Desktop/Documents/Downloads grant on the
+# executable's PATH, and the native installer puts every version at a new one:
+# each update re-prompts, nobody answers at 06:32, and the open() behind the
+# dialog blocks until the watchdog kills claude. This copy is the shipped
+# binary at one fixed path, Anthropic signature intact, so a single grant
+# satisfies every version. Refreshed by rename, never in place: a running
+# copy keeps its inode.
+claude_stable() {
+    local stable="$HOME/.local/share/claude/versions/stable" target ver
+    target=$(readlink "$HOME/.local/bin/claude" 2>/dev/null) || return 0
+    [ -f "$target" ] || return 0
+    ver="${target##*/}"
+    mkdir -p "$stable"
+    if [ ! -x "$stable/claude" ] || [ "$(cat "$stable/version" 2>/dev/null)" != "$ver" ]; then
+        cp "$target" "$stable/claude.new" && mv -f "$stable/claude.new" "$stable/claude" \
+            && echo "$ver" >"$stable/version"
+    fi
+    export PATH="$stable:$PATH"
+}
+claude_stable
+# The shipped binary's hardened runtime refuses lldb, so wedge_autopsy can only
+# read the blocked path from this ad-hoc re-signed copy (get-task-allow). Its
+# grant is keyed on the signature hash and dies with every re-sign, so it is
+# opt-in: `launchctl setenv CLAUDE_DEBUGGABLE 1`. It lives UNDER versions/
+# because the CLI runs its native-install startup path only from there.
 # Refresh after a CLI update:
 #   D=~/.local/share/claude/versions/debuggable
 #   cp ~/.local/share/claude/versions/<ver> $D/claude
 #   codesign -s - -f --entitlements $D/entitlements.plist $D/claude
-if [ -x "$HOME/.local/share/claude/versions/debuggable/claude" ]; then
+if [ -n "${CLAUDE_DEBUGGABLE:-}" ] && [ -x "$HOME/.local/share/claude/versions/debuggable/claude" ]; then
     export PATH="$HOME/.local/share/claude/versions/debuggable:$PATH"
 fi
 cd "$(dirname "${BASH_SOURCE[0]}")/../.." || exit 1
@@ -104,8 +123,8 @@ run_with_timeout() {
 # Capture a wedged claude BEFORE it is killed: wedge_autopsy <pid> <label>.
 # Every observed wedge is the main thread blocked in openat() with the event
 # loop frozen, so the process itself can never log the path; the only record
-# is from outside. lldb needs the debuggable copy (see PATH above) -- on the
-# shipped binary the attach fails and the sample/lsof files still land.
+# is from outside. lldb attaches only to the CLAUDE_DEBUGGABLE copy (see PATH
+# above); on the shipped binary the sample/lsof files still land.
 wedge_autopsy() {
     local pid="$1" label
     label=$(echo "$2" | tr ' /' '--')
