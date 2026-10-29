@@ -398,9 +398,8 @@ function ReportCard({ rows, graded }: { rows: ReportRow[]; graded: number | null
       whileInView="in"
       viewport={{ once: true, amount: 0.5 }}
     >
-      <div className="text-muted-foreground mb-4 flex items-center justify-between font-mono text-xs">
-        <span>report card</span>
-        {graded !== null && <span>{graded} calls graded</span>}
+      <div className="text-muted-foreground mb-4 font-mono text-xs">
+        report card{graded !== null && ` · ${graded} calls graded`}
       </div>
       <ul className="m-0 grid list-none gap-0 p-0">
         {rows.map((r, i) => (
@@ -430,7 +429,7 @@ function ReportCard({ rows, graded }: { rows: ReportRow[]; graded: number | null
       </ul>
       <motion.span
         aria-hidden="true"
-        className="text-tone-up border-tone-up pointer-events-none absolute right-6 bottom-5 rotate-[-12deg] rounded-md border-2 px-2 py-0.5 font-mono text-sm font-semibold tracking-widest uppercase"
+        className="text-tone-hold border-tone-hold pointer-events-none absolute top-5 right-6 rotate-[8deg] rounded-md border-2 px-2.5 py-0.5 font-mono text-sm font-semibold tracking-widest uppercase sm:top-6 sm:right-8"
         variants={{ rest: { opacity: 0, scale: 1.8 }, in: { opacity: 0.9, scale: 1, transition: { delay: 0.3 + rows.length * 0.25, type: "spring", stiffness: 500, damping: 22 } } }}
       >
         graded
