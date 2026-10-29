@@ -75,6 +75,16 @@ export function bestCall(doc: DashboardDoc): BestCall | null {
   return b;
 }
 
+/** The first night the regime was called: the timeline's earliest date. */
+export function firstNight(doc: DashboardDoc): string | null {
+  const rows = live(doc.sections["regime-timeline"])?.rows ?? [];
+  let first: string | null = null;
+  for (const r of rows) {
+    if (typeof r.date === "string" && (first === null || r.date < first)) first = r.date;
+  }
+  return first;
+}
+
 /** Nights the regime has been called, from the timeline's row count. */
 export function nightsCalled(doc: DashboardDoc): number | null {
   const sec = live(doc.sections["regime-timeline"]);

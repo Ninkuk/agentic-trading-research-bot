@@ -117,6 +117,9 @@ test("the story has one chapter per step of the run, with last night's output", 
 
 test("the counters come from the research and timeline sections", () => {
   render(<Home doc={doc} />);
+  // The eyebrow says since when in plain words, never a snapshot number.
+  expect(screen.getByText(/Running every night since [A-Z][a-z]+ \d+, \d{4}/)).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/snapshot #/);
   const counts = researchCounts(doc)!;
   expect(screen.getByText("theses written").previousSibling).toHaveTextContent(String(counts.theses));
   expect(screen.getByText("ended in a pass").previousSibling).toHaveTextContent(String(counts.passes));

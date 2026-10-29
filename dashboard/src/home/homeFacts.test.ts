@@ -6,6 +6,7 @@ import {
   callHitRate,
   callsGraded,
   drivers,
+  firstNight,
   lastNight,
   lastRunOf,
   lastRuns,
@@ -48,6 +49,12 @@ test("newestThesis picks the latest thesis_date and lowercases the call", () => 
     ],
   });
   expect(newestThesis(d)).toEqual({ ticker: "NEW", date: "2026-07-09", call: "buy", verdict: null });
+});
+
+test("firstNight is the timeline's earliest date", () => {
+  const dates = doc.sections["regime-timeline"].rows!.map((r) => String(r.date)).sort();
+  expect(firstNight(doc)).toBe(dates[0]);
+  expect(firstNight(withSection("regime-timeline", { rows: [] }))).toBeNull();
 });
 
 test("nightsCalled prefers the exporter's total over the capped row count", () => {

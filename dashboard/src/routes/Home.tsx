@@ -4,7 +4,7 @@
 // counters); one night start to finish as a scroll story, one chapter per
 // step of the run, each in plain language with last night's real output;
 // the graded record; three ways in. It renders outside the sidebar shell
-// with its own top bar; every other route keeps the shell.
+// with no bar of its own; every other route keeps the shell.
 //
 // Every number comes from sections the exporter already ships (homeFacts);
 // a missing section drops its line rather than showing a zero. Performance
@@ -51,6 +51,7 @@ import {
   calibration,
   callHitRate,
   callsGraded,
+  firstNight,
   GRADE_HORIZON,
   lastNight,
   lastRunOf,
@@ -66,11 +67,9 @@ import {
 } from "../home/homeFacts";
 import { normalizeTicker, suggestionHref, TICKER_RE } from "../home/suggest";
 import type { BestCall, DashboardDoc, LastRun } from "../types";
-import { ThemeToggle } from "../ui/Masthead";
 import { VerdictChip } from "../ui/VerdictChip";
 
 const HEADLINE = "A research desk that grades its own work.";
-const DASHBOARD_HREF = "#/macro";
 
 /** In-page navigation that leaves the hash alone: a bare `#story` would be
  * parsed as a section route and send the reader to a strand page. */
@@ -83,6 +82,14 @@ function onScrollTo(id: string) {
     e.preventDefault();
     scrollToId(id);
   };
+}
+
+/** "2026-07-06" → "July 6, 2026", parsed from the string so no timezone shifts the day. */
+function longDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
 /** UTC export timestamp → the reader's local clock. */
@@ -140,6 +147,7 @@ function Counter({ value, label }: { value: string | number; label: string }) {
 function Hero({ doc }: { doc: DashboardDoc }) {
   const counts = researchCounts(doc);
   const nights = nightsCalled(doc);
+  const first = firstNight(doc);
   const graded = callsGraded(doc);
   const best = bestCall(doc);
   return (
@@ -153,8 +161,7 @@ function Hero({ doc }: { doc: DashboardDoc }) {
       <div className="page-wide relative grid gap-7 py-20 md:py-28">
         <span className="border-border text-muted-foreground inline-flex w-max items-center gap-2 rounded-full border px-3.5 py-1 text-sm">
           <span aria-hidden="true" className="bg-primary size-2 rounded-full shadow-[0_0_0_3px_var(--tone-up-bg)]" />
-          Running nightly{nights ? ` for ${nights} nights` : ""}
-          {doc.snapshot_number !== null && ` · snapshot #${doc.snapshot_number}`}
+          {first ? `Running every night since ${longDate(first)}` : "Running every night"}
         </span>
         <h1 className="m-0 max-w-[14ch] text-5xl leading-[1.02] font-semibold tracking-tight text-balance md:text-6xl lg:text-7xl">
           <TextGenerateEffect words={HEADLINE} duration={0.6} />
@@ -771,24 +778,6 @@ export function Home({ doc }: { doc: DashboardDoc }) {
   return (
     <MotionConfig reducedMotion="user">
       <div className="home bg-background text-foreground">
-        <nav className="border-border bg-background/80 sticky top-0 z-50 border-b backdrop-blur" aria-label="primary">
-          <div className="page-wide flex h-14 items-center justify-between gap-4">
-            <a className="flex items-center gap-2.5 font-semibold no-underline" href="#/">
-              <span aria-hidden="true" className="bg-primary size-4 rounded-full shadow-[0_0_0_4px_var(--tone-up-bg)]" />
-              Agentic Trading Research Bot
-            </a>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <a
-                className="border-border hover:bg-muted hidden items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium no-underline sm:inline-flex"
-                href={DASHBOARD_HREF}
-              >
-                Tonight's report <ArrowRight aria-hidden="true" className="size-3.5" />
-              </a>
-            </div>
-          </div>
-        </nav>
-
         <Hero doc={doc} />
         <Story doc={doc} />
         <Scorecard doc={doc} />
