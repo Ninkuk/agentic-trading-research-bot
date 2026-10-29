@@ -55,17 +55,31 @@ named rules) for the impeccable skill; keep all three in sync.
   items, same scroll-spy) shows there only. Scroll offsets are
   `scroll-mt-16 lg:scroll-mt-4`: the sticky row exists only below `lg`.
 - shadcn Sidebar shell (`src/ui/AppShell.tsx`, since 2026-09-01; replaced
-  the strand tab strip): Summary + one item per strand, offcanvas-collapsible
+  the strand tab strip): Home + one item per strand, offcanvas-collapsible
   with the trigger in the masthead, open state in prefs, a Sheet under `lg`
   (1024px — a portrait tablet beside the 16rem rail left ~512px for tables).
-  Routes: `#/` Summary, `#/<strand>` a strand, `#/ticker/SYM` drill-down; a
+  Routes: `#/` Home (outside the shell), `#/<strand>` a strand, `#/ticker/SYM` drill-down; a
   bare `#<section-id>` resolves to its strand and scrolls (StrandNav links
   keep working). Strands stay force-mounted and class-hidden when inactive.
-- Summary page = hero bullets + regime chip card, then a strand index
-  (name + one-line blurb from `strands.ts`, linking in). The macro-driver
-  KPIs are the macro-drivers card in Macro, right after the regime card
-  whose call they decide. Sections are Cards with note as description,
-  verdict badge in the header action slot, caveat as italic bordered footnote.
+- Home route (`#/`, `src/routes/Home.tsx`, since 2026-10-29) is the
+  visitor-facing front door and renders OUTSIDE the sidebar shell with its
+  own top bar: hero (sentence + counters), the night as an Aceternity
+  Timeline scroll story (one chapter per launchd slot, each with last
+  night's real output), the $100-rebased record with grade cards, three
+  ways in, a suggest-a-ticker box that opens a prefilled GitHub issue.
+  Every number derives from existing sections in `src/home/homeFacts.ts`
+  (null → the line is omitted, never a zero); the one exporter addition is
+  `research-verdict-outcomes.best_call`. Copy is subject-free, no "you".
+  In-page links keep `href="#/"` and scroll by id — a bare `#story` is a
+  section route and leaves the page. Aceternity sources live in
+  `src/components/aceternity/` (MIT, adapted to tokens, jsdom-guarded);
+  `motion` is the dependency; `MotionConfig reducedMotion="user"` wraps
+  the page. Flip Words' exiting word is scaled 2x and absolutely
+  positioned — its chapter is `overflow-hidden` or phones zoom out.
+  The macro-driver KPIs are the macro-drivers card in Macro, right after
+  the regime card whose call they decide. Sections are Cards with note as
+  description, verdict badge in the header action slot, caveat as italic
+  bordered footnote.
 
 ## Tables & charts
 - Tables run on TanStack Table v9 (feature API: sorting, global filter, column
@@ -92,7 +106,7 @@ named rules) for the impeccable skill; keep all three in sync.
 - Degraded states go through `EmptyNote` (shadcn Empty) and `Alert`;
   theme switch is a single-select ToggleGroup (items are radios); the
   ticker pin is a `Toggle` in a `Tooltip`; table filters are `InputGroup`;
-  Summary's strand index and Quiet-tonight rows are `Item`s.
+  Quiet-tonight rows are `Item`s.
 - No functional text below 12px or below full muted-foreground contrast
   (the 12px Floor Rule; 10px dir-hints failed AA in light mode).
 - No resting shadows (cards, sidebar rail); shadows only on floating layers

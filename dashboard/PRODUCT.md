@@ -6,13 +6,15 @@ product
 
 ## Users
 
-One person: the repo owner, a solo retail investor who is deliberately
-beginner-friendly in framing. They open the dashboard once a day (usually
+Two readers. The repo owner, a solo retail investor who is deliberately
+beginner-friendly in framing, opens the dashboard once a day (usually
 evening, Phoenix time) to read the nightly signal report — market regime,
 per-ticker scorecard, book heat, decision-journal grades — and decide
-whether anything deserves attention. They are not a professional trader
-staring at this all day; the job is a calm daily read, not real-time
-monitoring.
+whether anything deserves attention; every route but the home page serves
+that calm daily read. The visitor arrives from the README once, knows
+little about markets, and gets the home route (`#/`): a portfolio-style
+front door that shows what the desk is, what it did last night, and
+whether it has been right, with the owner's account state kept off it.
 
 ## Product Purpose
 

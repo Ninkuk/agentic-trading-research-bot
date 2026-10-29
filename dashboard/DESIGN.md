@@ -197,10 +197,10 @@ casts one.
 ## 5. Components
 
 ### App Shell (shadcn Sidebar)
-- **Anatomy:** left rail (Summary, then one item per strand, lucide icon +
+- **Anatomy:** left rail (Home, then one item per strand, lucide icon +
   label, active item tinted `sidebar-accent`), trigger in the masthead,
   offcanvas collapse persisted in prefs, Sheet below `lg` (1024px)
-- **Routing:** `#/` Summary, `#/<strand>` a strand, `#/ticker/SYM`
+- **Routing:** `#/` Home (outside the shell), `#/<strand>` a strand, `#/ticker/SYM`
   drill-down; bare `#<section-id>` lands on its strand and scrolls
 - **Tokens:** `--sidebar*` neutral set, one step off the page ground
 
