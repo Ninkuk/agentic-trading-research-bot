@@ -54,6 +54,7 @@ import {
   researchCounts,
   scoredSymbols,
   stocksBought,
+  thesisHeadings,
   thesisOneLiner,
   unprovenSignals,
   type Calibration,
@@ -97,28 +98,36 @@ function bestCallLine(b: BestCall): string {
   return `${b.excess >= 0 ? "+" : ""}${pts} points vs SPY over ${b.horizon} trading days, called ${dateShort(b.verdict_date)}`;
 }
 
-/** The published thesis's opening sentence, or null while loading, when
- * the file is not published, or when it has no such line. The published
- * file is the ticker's NEWEST thesis, which may postdate the graded call
- * (SAP's best call was a July buy; its newest thesis is a pass), so the
- * line is fetched only when the ticker's thesis date is the call's date. */
-function useThesisOneLiner(doc: DashboardDoc, best: BestCall | null): string | null {
-  const thesis = best ? doc.tickers?.[best.symbol]?.thesis : undefined;
-  const symbol = best && thesis && thesis.date === best.verdict_date ? best.symbol : null;
-  const [line, setLine] = useState<string | null>(null);
+interface ThesisPeek {
+  line: string | null;
+  headings: string[];
+}
+
+/** Last night's published thesis, peeked: its opening sentence and its
+ * section headings. Null while loading, when the file is not published,
+ * or when it has neither. The published file is the ticker's newest
+ * thesis, which for last night's name is the one just written. */
+function useThesisPeek(symbol: string | null): ThesisPeek | null {
+  const [peek, setPeek] = useState<ThesisPeek | null>(null);
   useEffect(() => {
-    setLine(null);
+    setPeek(null);
     if (!symbol || typeof fetch !== "function") return;
     let live = true;
     fetch(`./theses/${symbol}.md`)
-      .then(async (r) => (r.ok ? thesisOneLiner(await r.text()) : null))
-      .then((text) => live && setLine(text))
-      .catch(() => live && setLine(null));
+      .then(async (r) => {
+        if (!r.ok) return null;
+        const md = await r.text();
+        const line = thesisOneLiner(md);
+        const headings = thesisHeadings(md);
+        return line || headings.length > 0 ? { line, headings } : null;
+      })
+      .then((p) => live && setPeek(p))
+      .catch(() => live && setPeek(null));
     return () => {
       live = false;
     };
   }, [symbol]);
-  return line;
+  return peek;
 }
 
 // --- hero --------------------------------------------------------------------
@@ -461,39 +470,84 @@ function GradeChapter({
   );
 }
 
-function ResearchChapter({ doc, best, night }: { doc: DashboardDoc; best: BestCall | null; night: LastNight }) {
-  const line = useThesisOneLiner(doc, best);
+function ResearchChapter({ best, night }: { best: BestCall | null; night: LastNight }) {
+  const thesis = night.thesis;
+  const peek = useThesisPeek(thesis?.ticker ?? null);
   return (
     <div className="grid gap-6">
       <Prose>
         An AI assistant researches one stock from the reading list: what the company does, what growth the
         price already assumes, and a buy or a pass with stated odds. Every number points to the filing it
-        came from. Below is the call that has worked out best so far.
+        came from.
       </Prose>
-      {best && (
-        <div className="bg-card border-border grid max-w-2xl gap-3 rounded-2xl border p-5 sm:p-6">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="text-muted-foreground font-mono text-xs">research/{best.symbol}-{best.verdict_date}.md</span>
-            <Chip tone="up">best call so far</Chip>
+      {thesis && (
+        // Last night's write-up, as a document taking shape: the file name,
+        // the opening sentence decrypting into place, then the section
+        // headings landing one by one, and the call at the foot.
+        <motion.div
+          className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border"
+          initial="rest"
+          whileInView="in"
+          viewport={{ once: true, amount: 0.4 }}
+        >
+          <div className="border-border text-muted-foreground flex items-center gap-3 border-b px-5 py-3 font-mono text-xs sm:px-6">
+            <span className="flex gap-1.5" aria-hidden="true">
+              <span className="bg-border size-2.5 rounded-full" />
+              <span className="bg-border size-2.5 rounded-full" />
+              <span className="bg-border size-2.5 rounded-full" />
+            </span>
+            <span className="truncate">research/{thesis.ticker}-{thesis.date}.md</span>
           </div>
-          {line ? (
-            <p className="m-0 text-lg leading-relaxed font-medium">
-              <EncryptedText text={line} revealDelayMs={18} flipDelayMs={40} encryptedClassName="text-muted-foreground/60" />
+          <div className="grid gap-5 p-5 sm:p-6">
+            <p className="m-0 text-lg leading-relaxed font-medium sm:text-xl">
+              {peek?.line ? (
+                <EncryptedText text={peek.line} revealDelayMs={16} flipDelayMs={40} encryptedClassName="text-muted-foreground/50" />
+              ) : (
+                <>
+                  <span className="sym">{thesis.ticker}</span>: {thesis.call}
+                  {thesis.verdict ? `, thesis ${thesis.verdict}` : ""}.
+                </>
+              )}
             </p>
-          ) : (
-            <p className="text-foreground m-0 text-lg font-medium">
-              <span className="sym">{best.symbol}</span>: buy, {bestCallLine(best)}.
-            </p>
-          )}
-          <HoverBorderGradient as="a" href={`#/ticker/${best.symbol}`} containerClassName="no-underline" className="text-sm font-medium">
-            Read the whole thesis
-          </HoverBorderGradient>
-        </div>
+            {peek && peek.headings.length > 0 && (
+              <ol className="text-muted-foreground m-0 grid list-none gap-1.5 p-0 font-mono text-xs sm:grid-cols-2">
+                {peek.headings.map((h, i) => (
+                  <motion.li
+                    key={h}
+                    className="flex items-baseline gap-2"
+                    variants={{ rest: { opacity: 0, x: -6 }, in: { opacity: 1, x: 0, transition: { delay: 0.8 + i * 0.18, duration: 0.3 } } }}
+                  >
+                    <span className="text-tone-up" aria-hidden="true">
+                      ##
+                    </span>
+                    <span className="truncate">{h}</span>
+                  </motion.li>
+                ))}
+              </ol>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <Chip tone={thesis.call === "buy" ? "up" : undefined}>{thesis.call}</Chip>
+              {thesis.verdict && <Chip>kill-thesis: {thesis.verdict}</Chip>}
+              <HoverBorderGradient
+                as="a"
+                href={`#/ticker/${thesis.ticker}`}
+                containerClassName="ml-auto no-underline"
+                className="text-sm font-medium"
+              >
+                Read the whole thesis
+              </HoverBorderGradient>
+            </div>
+          </div>
+        </motion.div>
       )}
-      {night.thesis && (
-        <Chip>
-          last night: {night.thesis.ticker} · {night.thesis.call}
-        </Chip>
+      {best && (
+        <p className="text-muted-foreground m-0 text-sm">
+          Best call so far: <span className="sym text-foreground">{best.symbol}</span>, {bestCallLine(best)}.{" "}
+          <a className="underline underline-offset-4" href={`#/ticker/${best.symbol}`}>
+            Read it
+          </a>
+          .
+        </p>
       )}
     </div>
   );
@@ -574,7 +628,7 @@ function Story({ doc }: { doc: DashboardDoc }) {
         />
       ),
     },
-    { when: "10:00pm", title: "Research a name", content: <ResearchChapter doc={doc} best={bestCall(doc)} night={night} /> },
+    { when: "10:00pm", title: "Research a name", content: <ResearchChapter best={bestCall(doc)} night={night} /> },
     { when: "10:00pm", title: "Attack the thesis", content: <AttackChapter counts={counts} night={night} /> },
     { when: "6:30am", title: "A person decides", content: <DecideChapter counts={counts} />, accent: true },
   ];

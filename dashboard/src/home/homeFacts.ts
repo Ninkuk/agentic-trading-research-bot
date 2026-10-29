@@ -267,6 +267,16 @@ export function drivers(doc: DashboardDoc): Driver[] {
     .map((t) => ({ label: t.label, value: String(t.value), band: t.band ?? null }));
 }
 
+/** A thesis's section headings ("1. Verdict and thesis", "2. Business", …)
+ * from its markdown, in order; the write-up's shape at a glance. */
+export function thesisHeadings(md: string): string[] {
+  return md
+    .split("\n")
+    .filter((l) => l.startsWith("## "))
+    .map((l) => l.slice(3).trim())
+    .filter((h) => h.length > 0);
+}
+
 /** The "In one sentence" line a thesis opens with, out of its markdown:
  * the `> **In one sentence:** …` callout, joined across its wrapped
  * blockquote lines. Null when the thesis has no such line. */

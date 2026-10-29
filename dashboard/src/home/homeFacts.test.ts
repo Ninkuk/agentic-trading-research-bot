@@ -17,6 +17,7 @@ import {
   researchCounts,
   scoredSymbols,
   stocksBought,
+  thesisHeadings,
   thesisOneLiner,
   unprovenSignals,
 } from "./homeFacts";
@@ -196,6 +197,11 @@ test("drivers lists the macro tiles with their band words", () => {
     { label: "Junk-bond premium", value: "3.18", band: "calm" },
   ]);
   expect(drivers(withSection("macro-drivers", undefined))).toEqual([]);
+});
+
+test("thesisHeadings lists the ## sections in order", () => {
+  expect(thesisHeadings("# T\n\n## 1. Verdict\ntext\n### sub\n## 2. Business\n##  \n")).toEqual(["1. Verdict", "2. Business"]);
+  expect(thesisHeadings("no headings")).toEqual([]);
 });
 
 test("thesisOneLiner joins the wrapped callout line and stops at the next block", () => {
