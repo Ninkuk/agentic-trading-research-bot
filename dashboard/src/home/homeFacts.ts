@@ -75,6 +75,15 @@ export function bestCall(doc: DashboardDoc): BestCall | null {
   return b;
 }
 
+/** Distinct symbols with a journaled buy fill. */
+export function stocksBought(doc: DashboardDoc): number | null {
+  const syms = new Set<string>();
+  for (const r of rows(doc.sections["your-trades"])) {
+    if (String(r.side ?? "").toLowerCase() === "buy" && typeof r.symbol === "string") syms.add(r.symbol);
+  }
+  return syms.size > 0 ? syms.size : null;
+}
+
 /** The first night the regime was called: the timeline's earliest date. */
 export function firstNight(doc: DashboardDoc): string | null {
   const rows = live(doc.sections["regime-timeline"])?.rows ?? [];

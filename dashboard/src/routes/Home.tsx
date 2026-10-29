@@ -59,6 +59,7 @@ import {
   nightsCalled,
   record,
   researchCounts,
+  stocksBought,
   thesisOneLiner,
   unprovenSignals,
   type Calibration,
@@ -148,7 +149,8 @@ function Hero({ doc }: { doc: DashboardDoc }) {
   const counts = researchCounts(doc);
   const nights = nightsCalled(doc);
   const first = firstNight(doc);
-  const graded = callsGraded(doc);
+  const bought = stocksBought(doc);
+  const rec = record(doc);
   const best = bestCall(doc);
   return (
     <header className="relative overflow-hidden">
@@ -167,10 +169,8 @@ function Hero({ doc }: { doc: DashboardDoc }) {
           <TextGenerateEffect words={HEADLINE} duration={0.6} />
         </h1>
         <p className="text-muted-foreground m-0 max-w-[58ch] text-lg md:text-xl">
-          Every day this project visits about twenty official public sources, mostly the government agencies
-          that publish the country's economic and market numbers, and files away what it finds. Every evening it
-          re-reads those files, writes up an opinion on the market and on a few stocks, and goes back to check
-          how its earlier opinions worked out. A person reads the notes and makes every actual decision.
+          Every evening it reads about twenty official sources, writes up a few stocks, and goes back to check
+          how its earlier opinions worked out. A person makes every actual decision.
         </p>
         <div className="flex flex-wrap gap-3">
           <MovingBorderButton
@@ -201,12 +201,12 @@ function Hero({ doc }: { doc: DashboardDoc }) {
             </a>
           )}
         </div>
-        {(counts || graded || nights) && (
+        {(counts || bought || nights || rec) && (
           <div className="border-border grid max-w-3xl grid-cols-2 gap-5 border-t pt-6 sm:grid-cols-4">
-            {counts && <Counter value={counts.theses} label="stock write-ups" />}
-            {counts && <Counter value={counts.passes} label="ended in a pass" />}
-            {graded && <Counter value={graded} label="calls graded" />}
+            {counts && <Counter value={counts.theses} label="stocks researched" />}
+            {bought && <Counter value={bought} label="stocks bought" />}
             {nights && <Counter value={nights} label="nights running" />}
+            {rec && <Counter value={rec.picks} label={`${rec.picks.startsWith("-") ? "down" : "up"} since ${dateShort(rec.since)}`} />}
           </div>
         )}
       </div>
@@ -314,12 +314,8 @@ function ReadChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
   return (
     <div className="grid gap-6">
       <Prose>
-        The first job of the evening is collecting. About twenty small programs each visit one official
-        source: the Federal Reserve's economic statistics, the stock-market regulators' filings, the weekly
-        report on what professional futures traders are betting, Treasury auction results, energy and
-        agriculture statistics, and so on. Each fetches its source's latest numbers and files them away in
-        a small database, together with the date the number was published. The terminal below is what those
-        programs printed last night.
+        About twenty small programs each visit one official source and file away what they find, with the
+        date it was published. This is what they printed last night.
       </Prose>
       {runs.length > 0 ? (
         <Terminal
@@ -354,14 +350,10 @@ function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
     // zooms the whole page out (see DESIGN_MEMORY's phone rule).
     <div className="relative grid gap-6 overflow-hidden">
       <Prose>
-        Once the data is in, a second set of programs reads everything the collectors filed and writes an
-        opinion. They only read; they never fetch anything themselves. Two things come out. A one-line
-        summary of the market's mood, which three indicators decide: the fear index, the extra interest
-        risky companies pay to borrow, and whether the options market expects fear to rise. And a scorecard
-        pointing out stocks whose numbers look unusual that day, for example a lot of
+        A second set of programs reads what was collected and writes two things: a one-line read on the
+        market's mood, and a scorecard of stocks with unusual numbers that day, such as a lot of
         <FlipWords words={["short selling", "failed deliveries", "attention on Reddit", "options buying"]} className="font-medium" />
-        An unusual number is not a reason to buy anything, so the scorecard is a reading list and nothing
-        more.
+        The scorecard is a reading list, not a recommendation.
       </Prose>
       <div className="grid gap-3 sm:grid-cols-3">
         <OutputCard label="The mood" value={night.regime ?? "not called"} note="three indicators decide it" />
@@ -407,21 +399,16 @@ function GradeChapter({
   return (
     <div className="grid gap-6">
       <Prose>
-        This is the part that makes it more than a pile of opinions. A grader goes back and checks how each
-        past opinion turned out over the following weeks, against the simplest alternative, which is holding
-        an S&amp;P 500 fund. It also checks the odds the research gave itself: when a write-up said it had a
-        46% chance of beating the market, did that happen about 46% of the time? Signals with a poor record
-        get exposed by their own numbers, and a person decides whether to keep, adjust, or retire them.
-        Nothing tunes itself automatically.
+        A grader goes back and checks how each past opinion turned out, against simply holding an S&amp;P 500
+        fund. It also checks the odds the research gave itself. Nothing tunes itself automatically.
       </Prose>
       <Facts
         items={[
           `Each opinion is checked 5, 10 and ${GRADE_HORIZON} trading days later.`,
-          "A pass gets checked too. Saying no to a stock that then goes up counts against the research.",
+          "A pass gets checked too. Saying no to a stock that then goes up counts against it.",
           unproven
-            ? `${unproven.unproven} of ${unproven.total} market signals do not have enough history yet to be trusted either way.`
+            ? `${unproven.unproven} of ${unproven.total} market signals have too little history to trust yet.`
             : "A market signal is not trusted until it has enough history.",
-          "The grader skips a night when the price ledger has not caught up, rather than grading on a stale price.",
         ]}
       />
       {cal && said ? (
@@ -451,12 +438,9 @@ function ResearchChapter({ doc, best, night }: { doc: DashboardDoc; best: BestCa
   return (
     <div className="grid gap-6">
       <Prose>
-        Later in the evening an AI assistant researches one stock from the reading list and writes it up the
-        way an analyst would: what the company does, whether it has anything competitors cannot easily copy,
-        what growth today's share price already assumes, and finally a buy or a pass with a stated
-        probability of beating the market over the next three months. The write-up is a markdown file in
-        the repository, and every number in it points to the filing it came from. The one below is the call
-        that has worked out best so far.
+        An AI assistant researches one stock from the reading list: what the company does, what growth the
+        price already assumes, and a buy or a pass with stated odds. Every number points to the filing it
+        came from. Below is the call that has worked out best so far.
       </Prose>
       {best && (
         <div className="bg-card border-border grid max-w-2xl gap-3 rounded-2xl border p-5 sm:p-6">
@@ -499,10 +483,8 @@ function AttackChapter({ counts, night }: { counts: ResearchCounts | null; night
   return (
     <div className="grid gap-6">
       <Prose>
-        Before anyone reads a write-up, the same assistant is asked to argue against it. It lists what would
-        have to be true for the thesis to hold, checks each point against the evidence, and labels the
-        write-up sound, flawed, or unproven. Flawed is not rare. The labels are graded later as well, so the
-        attack has a track record of its own.
+        The same assistant is then asked to argue against the write-up and label it sound, flawed, or
+        unproven. Flawed is not rare.
       </Prose>
       <div className="flex justify-start py-6 pl-2">
         <CardStack items={cards} />
@@ -525,16 +507,14 @@ function DecideChapter({ counts }: { counts: ResearchCounts | null }) {
   return (
     <div className="grid gap-6">
       <Prose>
-        In the morning a person reads the notes. Nothing in this project can place a trade on its own. If a
-        stock does get bought, it is queued by hand, in a small amount, and the purchase goes into the same
-        journal the grader reads, so a bad decision shows up in the scorecard the same way a bad opinion
-        does. Most of the time the answer is no.
+        In the morning a person reads the notes. Nothing here trades on its own; a purchase is queued by
+        hand, in a small amount, and graded like everything else.
       </Prose>
       {counts && (
         <Facts
           items={[
             `${counts.passes} of the ${counts.theses} write-ups so far ended in a pass.`,
-            "None of this is investment advice. It is one person's research tooling, published to show what it produces.",
+            "None of this is investment advice.",
           ]}
         />
       )}
@@ -575,7 +555,7 @@ function Story({ doc }: { doc: DashboardDoc }) {
           icon={MoonStar}
           label="One night"
           title="What happens every evening."
-          note={`Everything runs on a schedule on one Mac in Phoenix. These are the six jobs that matter, with what each one actually produced on ${doc.edition_date}.`}
+          note={`Six jobs on a schedule, on one Mac in Phoenix. The outputs are from ${doc.edition_date}.`}
         />
         <Timeline data={entries} />
       </div>
@@ -625,7 +605,7 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
           icon={ClipboardCheck}
           label="The scorecard"
           title="Has it been right?"
-          note="The lines are $100 put into the stock picks, into an S&P 500 fund, and into a savings account at the Fed's rate, from the first day the picks were held. Positions and dollar amounts are not shown."
+          note="$100 put into the picks, into an S&P 500 fund, and into cash, from the first day the picks were held. No positions or dollar amounts."
           className="mb-10"
         />
         {nothing && (
@@ -741,7 +721,7 @@ function SuggestName() {
           icon={MessageSquarePlus}
           label="Suggest a name"
           title="Suggest a stock."
-          note="Any US-listed company. It goes on the reading list and gets the same write-up and the same attack as everything else, and the call gets graded whether it says buy or pass."
+          note="Any US-listed company. It gets the same write-up, the same attack, and the same grading as everything else."
         />
         <form
           className="bg-card border-border relative grid gap-3 rounded-2xl border p-5 sm:p-6"

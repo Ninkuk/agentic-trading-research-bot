@@ -14,6 +14,7 @@ import {
   nightsCalled,
   record,
   researchCounts,
+  stocksBought,
   thesisOneLiner,
   unprovenSignals,
 } from "./homeFacts";
@@ -49,6 +50,14 @@ test("newestThesis picks the latest thesis_date and lowercases the call", () => 
     ],
   });
   expect(newestThesis(d)).toEqual({ ticker: "NEW", date: "2026-07-09", call: "buy", verdict: null });
+});
+
+test("stocksBought counts distinct journaled buy symbols", () => {
+  const d = withSection("your-trades", { rows: [
+    { symbol: "A", side: "buy" }, { symbol: "A", side: "buy" }, { symbol: "B", side: "buy" }, { symbol: "C", side: "sell" },
+  ] });
+  expect(stocksBought(d)).toBe(2);
+  expect(stocksBought(withSection("your-trades", { rows: [] }))).toBeNull();
 });
 
 test("firstNight is the timeline's earliest date", () => {
