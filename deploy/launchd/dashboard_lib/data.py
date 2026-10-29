@@ -2719,26 +2719,40 @@ def _fill_thesis_ticker_fields(
         }
 
 
-def export_theses(data_dir: str, out_dir: Path) -> int:
-    """Copy each ticker's NEWEST thesis to `<out_dir>/theses/<SYM>.md`.
-    Only names matching THESIS_RE are ever read (never verdicts.log, never
-    README), and the source must resolve inside research/. Returns the
-    count; 0 when research/ is absent."""
+def export_theses(data_dir: str, out_dir: Path, dated: tuple[tuple[str, str], ...] = ()) -> int:
+    """Copy each ticker's NEWEST thesis to `<out_dir>/theses/<SYM>.md`, and
+    each `dated` (symbol, date) write-up to `<SYM>-<date>.md` as well (the
+    home page shows the exact thesis behind the best graded call, which is
+    usually older than the ticker's newest). Only names matching THESIS_RE
+    are ever read (never verdicts.log, never README), and the source must
+    resolve inside research/. Returns the count; 0 when research/ is absent."""
     research = _research_dir(data_dir).resolve()
     try:
         newest = list_theses(research)
     except OSError:
         return 0
     n = 0
-    for sym, thesis_date in newest.items():
+    wanted = [(sym, d, f"{sym}.md") for sym, d in newest.items()]
+    wanted += [(sym, d, f"{sym}-{d}.md") for sym, d in dated]
+    for sym, thesis_date, name in wanted:
         src = (research / f"{sym}-{thesis_date}.md").resolve()
-        if not src.is_relative_to(research) or not THESIS_RE.match(src.name):
+        if not src.is_relative_to(research) or not THESIS_RE.match(src.name) or not src.is_file():
             continue
         dest = Path(out_dir) / "theses"
         dest.mkdir(parents=True, exist_ok=True)
-        (dest / f"{sym}.md").write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+        (dest / name).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
         n += 1
     return n
+
+
+def best_call_thesis(doc: dict[str, Any]) -> tuple[tuple[str, str], ...]:
+    """The (symbol, date) of the best graded call in an exported document,
+    for export_theses's `dated`; empty when there is none."""
+    best = doc.get("sections", {}).get("research-verdict-outcomes", {}).get("best_call")
+    if not isinstance(best, dict):
+        return ()
+    sym, d = best.get("symbol"), best.get("verdict_date")
+    return ((sym, d),) if isinstance(sym, str) and isinstance(d, str) else ()
 
 
 def _fill_composite_ticker_fields(

@@ -28,7 +28,6 @@ import { useEffect, useState } from "react";
 import { motion, MotionConfig } from "motion/react";
 import { ArrowRight, Check, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, X, type LucideIcon } from "lucide-react";
 import { CardStack } from "../components/aceternity/card-stack";
-import { EncryptedText } from "../components/aceternity/encrypted-text";
 import { GlowingEffect } from "../components/aceternity/glowing-effect";
 import { HoverBorderGradient } from "../components/aceternity/hover-border-gradient";
 import { InfiniteMovingCards } from "../components/aceternity/infinite-moving-cards";
@@ -36,6 +35,7 @@ import { Button as MovingBorderButton } from "../components/aceternity/moving-bo
 import { Spotlight } from "../components/aceternity/spotlight-new";
 import { Terminal } from "../components/aceternity/terminal";
 import { TextGenerateEffect } from "../components/aceternity/text-generate-effect";
+import { TypewriterEffect } from "../components/aceternity/typewriter-effect";
 import { Timeline, type TimelineEntry } from "../components/aceternity/timeline";
 import { EquityCurve } from "../charts/EquityCurve";
 import { REPO_URL } from "../constants";
@@ -99,34 +99,37 @@ function bestCallLine(b: BestCall): string {
 }
 
 interface ThesisPeek {
+  title: string | null;
   line: string | null;
   headings: string[];
 }
 
-/** Last night's published thesis, peeked: its opening sentence and its
- * section headings. Null while loading, when the file is not published,
- * or when it has neither. The published file is the ticker's newest
- * thesis, which for last night's name is the one just written. */
-function useThesisPeek(symbol: string | null): ThesisPeek | null {
+/** A published thesis, peeked: its title line, its opening sentence and
+ * its section headings. Null while loading, when the file is not
+ * published, or when it has none of those. `file` is the published path
+ * under theses/: `<SYM>.md` is a ticker's newest thesis, `<SYM>-<date>.md`
+ * the exact write-up behind a graded call. */
+function useThesisPeek(file: string | null): ThesisPeek | null {
   const [peek, setPeek] = useState<ThesisPeek | null>(null);
   useEffect(() => {
     setPeek(null);
-    if (!symbol || typeof fetch !== "function") return;
+    if (!file || typeof fetch !== "function") return;
     let live = true;
-    fetch(`./theses/${symbol}.md`)
+    fetch(`./theses/${file}`)
       .then(async (r) => {
         if (!r.ok) return null;
         const md = await r.text();
+        const title = md.split("\n").find((l) => l.startsWith("# "))?.slice(2).trim() ?? null;
         const line = thesisOneLiner(md);
         const headings = thesisHeadings(md);
-        return line || headings.length > 0 ? { line, headings } : null;
+        return line || headings.length > 0 ? { title, line, headings } : null;
       })
       .then((p) => live && setPeek(p))
       .catch(() => live && setPeek(null));
     return () => {
       live = false;
     };
-  }, [symbol]);
+  }, [file]);
   return peek;
 }
 
@@ -471,8 +474,14 @@ function GradeChapter({
 }
 
 function ResearchChapter({ best, night }: { best: BestCall | null; night: LastNight }) {
-  const thesis = night.thesis;
-  const peek = useThesisPeek(thesis?.ticker ?? null);
+  // The best graded call's own write-up when there is one (a well-known
+  // name, and the thesis that actually earned the grade), else last night's.
+  const featured = best
+    ? { ticker: best.symbol, date: best.verdict_date, file: `${best.symbol}-${best.verdict_date}.md`, call: "buy", verdict: null as string | null, caption: `best call so far: ${bestCallLine(best)}` }
+    : night.thesis
+      ? { ticker: night.thesis.ticker, date: night.thesis.date, file: `${night.thesis.ticker}.md`, call: night.thesis.call, verdict: night.thesis.verdict, caption: "written last night" }
+      : null;
+  const peek = useThesisPeek(featured?.file ?? null);
   return (
     <div className="grid gap-6">
       <Prose>
@@ -480,74 +489,69 @@ function ResearchChapter({ best, night }: { best: BestCall | null; night: LastNi
         price already assumes, and a buy or a pass with stated odds. Every number points to the filing it
         came from.
       </Prose>
-      {thesis && (
-        // Last night's write-up, as a document taking shape: the file name,
-        // the opening sentence decrypting into place, then the section
-        // headings landing one by one, and the call at the foot.
+      {featured && (
+        // The write-up as the markdown file it is: the title line, the
+        // opening sentence typed out, then the section headings landing one
+        // by one, all in mono with the markdown marks showing.
         <motion.div
-          className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border"
+          className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border font-mono text-[13px] leading-relaxed sm:text-sm"
           initial="rest"
           whileInView="in"
           viewport={{ once: true, amount: 0.4 }}
         >
-          <div className="border-border text-muted-foreground flex items-center gap-3 border-b px-5 py-3 font-mono text-xs sm:px-6">
+          <div className="border-border text-muted-foreground flex items-center gap-3 border-b px-5 py-3 text-xs sm:px-6">
             <span className="flex gap-1.5" aria-hidden="true">
               <span className="bg-border size-2.5 rounded-full" />
               <span className="bg-border size-2.5 rounded-full" />
               <span className="bg-border size-2.5 rounded-full" />
             </span>
-            <span className="truncate">research/{thesis.ticker}-{thesis.date}.md</span>
+            <span className="truncate">research/{featured.ticker}-{featured.date}.md</span>
           </div>
-          <div className="grid gap-5 p-5 sm:p-6">
-            <p className="m-0 text-lg leading-relaxed font-medium sm:text-xl">
-              {peek?.line ? (
-                <EncryptedText text={peek.line} revealDelayMs={16} flipDelayMs={40} encryptedClassName="text-muted-foreground/50" />
-              ) : (
-                <>
-                  <span className="sym">{thesis.ticker}</span>: {thesis.call}
-                  {thesis.verdict ? `, thesis ${thesis.verdict}` : ""}.
-                </>
-              )}
+          <div className="grid gap-4 p-5 sm:p-6">
+            <p className="m-0 font-semibold">
+              <span className="text-tone-up">#</span> {peek?.title ?? `${featured.ticker} — ${featured.date}`}
             </p>
+            {peek?.line && (
+              <p className="border-border m-0 border-l-2 pl-4">
+                <span className="text-tone-up">&gt;</span> <span className="font-semibold">**In one sentence:**</span>{" "}
+                <TypewriterEffect
+                  words={peek.line.split(" ").map((text) => ({ text }))}
+                  className="inline"
+                  cursorClassName="ml-0.5"
+                />
+              </p>
+            )}
             {peek && peek.headings.length > 0 && (
-              <ol className="text-muted-foreground m-0 grid list-none gap-1.5 p-0 font-mono text-xs sm:grid-cols-2">
+              <ol className="text-muted-foreground m-0 grid list-none gap-1 p-0">
                 {peek.headings.map((h, i) => (
                   <motion.li
                     key={h}
-                    className="flex items-baseline gap-2"
-                    variants={{ rest: { opacity: 0, x: -6 }, in: { opacity: 1, x: 0, transition: { delay: 0.8 + i * 0.18, duration: 0.3 } } }}
+                    className="truncate"
+                    variants={{
+                      rest: { opacity: 0, x: -6 },
+                      in: { opacity: 1, x: 0, transition: { delay: 0.6 + (peek.line?.length ?? 0) * 0.012 + i * 0.18, duration: 0.3 } },
+                    }}
                   >
-                    <span className="text-tone-up" aria-hidden="true">
-                      ##
-                    </span>
-                    <span className="truncate">{h}</span>
+                    <span className="text-tone-up">##</span> {h}
                   </motion.li>
                 ))}
               </ol>
             )}
-            <div className="flex flex-wrap items-center gap-2">
-              <Chip tone={thesis.call === "buy" ? "up" : undefined}>{thesis.call}</Chip>
-              {thesis.verdict && <Chip>kill-thesis: {thesis.verdict}</Chip>}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Chip tone={featured.call === "buy" ? "up" : undefined}>{featured.call}</Chip>
+              {featured.verdict && <Chip>kill-thesis: {featured.verdict}</Chip>}
+              <span className="text-muted-foreground text-xs">{featured.caption}</span>
               <HoverBorderGradient
                 as="a"
-                href={`#/ticker/${thesis.ticker}`}
+                href={`#/ticker/${featured.ticker}`}
                 containerClassName="ml-auto no-underline"
-                className="text-sm font-medium"
+                className="font-sans text-sm font-medium"
               >
                 Read the whole thesis
               </HoverBorderGradient>
             </div>
           </div>
         </motion.div>
-      )}
-      {best && (
-        <p className="text-muted-foreground m-0 text-sm">
-          Best call so far: <span className="sym text-foreground">{best.symbol}</span>, {bestCallLine(best)}.{" "}
-          <a className="underline underline-offset-4" href={`#/ticker/${best.symbol}`}>
-            Read it
-          </a>
-          .
-        </p>
       )}
     </div>
   );

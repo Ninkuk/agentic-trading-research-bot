@@ -107,7 +107,7 @@ test("the story has one chapter per step of the run, with last night's output", 
   // "Risk-on, 3rd night" reads as "3 / calm nights in a row" (the ticker holds at 0 in jsdom).
   expect(screen.getByText("calm nights in a row")).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/Risk-on/);
-  expect(screen.getByText(`research/${night.thesis!.ticker}-${night.thesis!.date}.md`)).toBeInTheDocument();
+  expect(screen.getByText(/^research\/[A-Z.]+-\d{4}-\d{2}-\d{2}\.md$/)).toBeInTheDocument();
   // The rebuilt log lines stay inside the terminal; no chapter quotes one as a chip.
   expect(screen.queryByText(/composite snapshot|scorer snapshot|done: \d+ ok/)).not.toBeInTheDocument();
   // The terminal replays the read jobs' real commands (typed once in view;
@@ -128,35 +128,36 @@ test("the counters come from the research and timeline sections", () => {
   expect(stocksBought(doc)).toBeGreaterThan(0);
 });
 
-test("the best graded buy call is linked from the story and from where-next", () => {
+test("the best graded buy call is the document on the card and the where-next link", () => {
   render(<Home doc={doc} />);
   const best = bestCall(doc)!;
-  const links = [screen.getByRole("link", { name: "Read it" }), screen.getByRole("link", { name: /best call so far/i })];
+  const links = [screen.getByRole("link", { name: "Read the whole thesis" }), screen.getByRole("link", { name: /best call so far/i })];
   for (const link of links) expect(link).toHaveAttribute("href", `#/ticker/${best.symbol}`);
-  // Last night's thesis, not the best call, is the document on the card.
-  const night = lastNight(doc).thesis!;
-  expect(screen.getByRole("link", { name: "Read the whole thesis" })).toHaveAttribute("href", `#/ticker/${night.ticker}`);
+  expect(screen.getByText(`research/${best.symbol}-${best.verdict_date}.md`)).toBeInTheDocument();
   // The line appears in the research chapter (no thesis file published
   // here, so the plain fallback) and again in where-next.
   expect(screen.getAllByText(/\+14\.8 points vs SPY over 21 trading days, called Jul 28/).length).toBe(2);
 });
 
-test("last night's thesis takes shape from its published file: sentence and headings", async () => {
-  const night = lastNight(doc).thesis!;
+test("the best call's own write-up takes shape from its dated file: title, sentence, headings", async () => {
+  const best = bestCall(doc)!;
   const md =
-    "# X\n\n> [!IMPORTANT]\n> **In one sentence:** A fine business at a fair price, so buy.\n\n## 1. Verdict and thesis\n\n## 2. Business\n\n## 7. Sources\n";
+    "# DASH — DoorDash — 2026-07-28\n\n> [!IMPORTANT]\n> **In one sentence:** A fine business at a fair price, so buy.\n\n## 1. Verdict and thesis\n\n## 2. Business\n\n## 7. Sources\n";
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => md }));
   render(<Home doc={doc} />);
-  expect(await screen.findByLabelText("A fine business at a fair price, so buy.")).toBeInTheDocument();
-  expect(screen.getByText("2. Business")).toBeInTheDocument();
-  expect(screen.getByText(`research/${night.ticker}-${night.date}.md`)).toBeInTheDocument();
-  expect(vi.mocked(fetch)).toHaveBeenCalledWith(`./theses/${night.ticker}.md`);
+  expect(await screen.findByText("DASH — DoorDash — 2026-07-28")).toBeInTheDocument();
+  expect(screen.getByText("2. Business", { exact: false })).toBeInTheDocument();
+  expect(screen.getByText("**In one sentence:**")).toBeInTheDocument();
+  expect(vi.mocked(fetch)).toHaveBeenCalledWith(`./theses/${best.symbol}-${best.verdict_date}.md`);
 });
 
 test("without a graded buy there is no featured thesis anywhere", () => {
   const sec = doc.sections["research-verdict-outcomes"];
   render(<Home doc={{ ...doc, sections: { ...doc.sections, "research-verdict-outcomes": { ...sec, best_call: null } } }} />);
-  expect(screen.queryByRole("link", { name: /best call so far|Read it/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /best call so far/i })).not.toBeInTheDocument();
+  // Without a graded buy the card falls back to last night's write-up.
+  const night = lastNight(doc).thesis!;
+  expect(screen.getByText(`research/${night.ticker}-${night.date}.md`)).toBeInTheDocument();
 });
 
 test("the scorecard shows the exporter's curve figures and the grade cards when graded", () => {

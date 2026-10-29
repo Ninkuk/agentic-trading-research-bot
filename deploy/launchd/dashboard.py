@@ -87,7 +87,8 @@ def main(argv: list[str] | None = None) -> int:
         )
     write_dashboard(text, OUTPUT_PATH)
     try:
-        n = data.export_theses(DATA_DIR, Path(OUTPUT_PATH).parent)
+        dated = data.best_call_thesis(json.loads(text))
+        n = data.export_theses(DATA_DIR, Path(OUTPUT_PATH).parent, dated=dated)
         print(f"wrote {n} theses beside {OUTPUT_PATH}")
     except Exception as e:  # the JSON is already on disk; never fail the job on theses
         print(f"theses export failed ({type(e).__name__})", file=sys.stderr)

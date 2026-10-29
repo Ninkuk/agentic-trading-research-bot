@@ -680,6 +680,35 @@ def test_export_theses_writes_newest_per_ticker(populated_data_dir, tmp_path):
     assert not (out / "theses" / "AAPL.md").exists()
 
 
+def test_export_theses_also_writes_the_dated_write_up_it_is_asked_for(populated_data_dir, tmp_path):
+    _write_thesis(populated_data_dir, "STNE-2026-06-01.md", "old")
+    _write_thesis(populated_data_dir, "STNE-2026-07-01.md", "new")
+    out = tmp_path / "reports"
+    n = data.export_theses(
+        populated_data_dir, out, dated=(("STNE", "2026-06-01"), ("NOPE", "2026-01-01"))
+    )
+    assert n == 2  # the newest, plus the dated one; the missing file is skipped
+    assert (out / "theses" / "STNE.md").read_text(encoding="utf-8") == "new"
+    assert (out / "theses" / "STNE-2026-06-01.md").read_text(encoding="utf-8") == "old"
+    assert not (out / "theses" / "NOPE-2026-01-01.md").exists()
+
+
+def test_best_call_thesis_reads_the_exported_document():
+    doc = {
+        "sections": {
+            "research-verdict-outcomes": {
+                "best_call": {"symbol": "SAP", "verdict_date": "2026-07-30"}
+            }
+        }
+    }
+    assert data.best_call_thesis(doc) == (("SAP", "2026-07-30"),)
+    assert (
+        data.best_call_thesis({"sections": {"research-verdict-outcomes": {"best_call": None}}})
+        == ()
+    )
+    assert data.best_call_thesis({}) == ()
+
+
 def test_export_theses_ignores_non_thesis_files(populated_data_dir, tmp_path):
     """verdicts.log and README.md live in research/ too; only
     <TICKER>-<DATE>.md is ever copied out."""
