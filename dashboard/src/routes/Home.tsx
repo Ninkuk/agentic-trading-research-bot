@@ -382,7 +382,7 @@ function GradeChapter({
         // The reveal: the research's own odds at rest; hover (or tap) plays
         // Aceternity's Canvas Reveal Effect and swaps in what actually happened.
         <div
-          className="bg-card border-border relative min-h-56 max-w-2xl cursor-pointer overflow-hidden rounded-2xl border p-6 sm:p-8"
+          className="bg-card border-border relative max-w-2xl cursor-pointer overflow-hidden rounded-2xl border p-6 sm:p-8"
           onMouseEnter={() => setRevealed(true)}
           onMouseLeave={() => setRevealed(false)}
           onClick={() => setRevealed((v) => !v)}
