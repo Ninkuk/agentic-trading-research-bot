@@ -10,6 +10,7 @@ import {
   lastNight,
   lastRunOf,
   lastRuns,
+  latestTheses,
   plainSummary,
   newestThesis,
   nightsCalled,
@@ -73,6 +74,18 @@ test("firstNight is the timeline's earliest date", () => {
   const dates = doc.sections["regime-timeline"].rows!.map((r) => String(r.date)).sort();
   expect(firstNight(doc)).toBe(dates[0]);
   expect(firstNight(withSection("regime-timeline", { rows: [] }))).toBeNull();
+});
+
+test("latestTheses returns the newest rows first", () => {
+  const d = withSection("research", {
+    rows: [
+      { ticker: "OLD", thesis_date: "2026-07-01", call: "PASS", verdict: "SOUND" },
+      { ticker: "NEW", thesis_date: "2026-07-09", call: "BUY", verdict: null },
+      { ticker: "MID", thesis_date: "2026-07-05", call: "PASS", verdict: "FLAWED" },
+    ],
+  });
+  expect(latestTheses(d, 2).map((t) => t.ticker)).toEqual(["NEW", "MID"]);
+  expect(latestTheses(withSection("research", { rows: [] }), 3)).toEqual([]);
 });
 
 test("nightsCalled prefers the exporter's total over the capped row count", () => {

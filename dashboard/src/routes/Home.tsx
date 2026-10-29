@@ -25,7 +25,7 @@
 // for readers who asked for less motion.
 
 import { lazy, Suspense, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useMotionValue } from "motion/react";
 import { MotionConfig } from "motion/react";
 
 // three.js only loads on the first hover over a where-next card.
@@ -35,6 +35,7 @@ const CanvasRevealEffect = lazy(() =>
 import { ArrowRight, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, type LucideIcon } from "lucide-react";
 import { CardStack } from "../components/aceternity/card-stack";
 import { EncryptedText } from "../components/aceternity/encrypted-text";
+import { CardPattern } from "../components/aceternity/evervault-card";
 import { GlowingEffect } from "../components/aceternity/glowing-effect";
 import { HoverBorderGradient } from "../components/aceternity/hover-border-gradient";
 import { InfiniteMovingCards } from "../components/aceternity/infinite-moving-cards";
@@ -54,6 +55,7 @@ import {
   GRADE_HORIZON,
   lastNight,
   lastRuns,
+  latestTheses,
   nightsCalled,
   plainSummary,
   record,
@@ -66,6 +68,7 @@ import {
   type LastNight,
   type ResearchCounts,
 } from "../home/homeFacts";
+import { generateRandomString } from "../home/scramble";
 import { normalizeTicker, suggestionHref, TICKER_RE } from "../home/suggest";
 import { StatTicker, type Stat } from "../home/StatTicker";
 import type { BestCall, DashboardDoc, LastRun } from "../types";
@@ -396,39 +399,61 @@ function GradeChapter({
   );
 }
 
-function ResearchChapter({ doc, best, night }: { doc: DashboardDoc; best: BestCall | null; night: LastNight }) {
+function ResearchChapter({ doc, best }: { doc: DashboardDoc; best: BestCall | null }) {
   const line = useThesisOneLiner(doc, best);
+  const latest = latestTheses(doc, 3);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const [scramble, setScramble] = useState(() => generateRandomString(1500));
   return (
     <div className="grid gap-6">
       <Prose>
-        An AI assistant researches one stock from the reading list: what the company does, what growth the
-        price already assumes, and a buy or a pass with stated odds. Every number points to the filing it
-        came from. Below is the call that has worked out best so far.
+        An AI assistant researches a few names from the reading list, three most nights: what each company
+        does, what growth the price already assumes, and a buy or a pass with stated odds. Every number
+        points to the filing it came from. Below is the call that has worked out best so far.
       </Prose>
       {best && (
-        <div className="bg-card border-border grid max-w-2xl gap-3 rounded-2xl border p-5 sm:p-6">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div
+          className="group/card bg-card border-border relative grid max-w-2xl gap-3 overflow-hidden rounded-2xl border p-5 sm:p-6"
+          onMouseMove={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            mouseX.set(e.clientX - r.left);
+            mouseY.set(e.clientY - r.top);
+            setScramble(generateRandomString(1500));
+          }}
+        >
+          <CardPattern mouseX={mouseX} mouseY={mouseY} randomString={scramble} />
+          <div className="relative flex flex-wrap items-baseline justify-between gap-2">
             <span className="text-muted-foreground font-mono text-xs">research/{best.symbol}-{best.verdict_date}.md</span>
             <Chip tone="up">best call so far</Chip>
           </div>
-          {line ? (
-            <p className="m-0 text-lg leading-relaxed font-medium">
-              <EncryptedText text={line} revealDelayMs={18} flipDelayMs={40} encryptedClassName="text-muted-foreground/60" />
-            </p>
-          ) : (
-            <p className="text-foreground m-0 text-lg font-medium">
-              <span className="sym">{best.symbol}</span>: buy, {bestCallLine(best)}.
-            </p>
-          )}
-          <HoverBorderGradient as="a" href={`#/ticker/${best.symbol}`} containerClassName="no-underline" className="text-sm font-medium">
+          <p className="text-foreground relative m-0 text-lg leading-relaxed font-medium">
+            <EncryptedText
+              text={line ?? `${best.symbol}: buy, ${bestCallLine(best)}.`}
+              revealDelayMs={18}
+              flipDelayMs={40}
+              encryptedClassName="text-muted-foreground/60"
+            />
+          </p>
+          <HoverBorderGradient
+            as="a"
+            href={`#/ticker/${best.symbol}`}
+            containerClassName="relative no-underline"
+            className="text-sm font-medium"
+          >
             Read the whole thesis
           </HoverBorderGradient>
         </div>
       )}
-      {night.thesis && (
-        <Chip>
-          last night: {night.thesis.ticker} · {night.thesis.call}
-        </Chip>
+      {latest.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-muted-foreground text-sm">latest:</span>
+          {latest.map((t) => (
+            <Chip key={t.ticker}>
+              {t.ticker} · {t.call}
+            </Chip>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -504,7 +529,7 @@ function Story({ doc }: { doc: DashboardDoc }) {
         <GradeChapter cal={calibration(doc)} graded={callsGraded(doc)} unproven={unprovenSignals(doc)} />
       ),
     },
-    { when: "10:00pm", title: "Research a name", content: <ResearchChapter doc={doc} best={bestCall(doc)} night={night} /> },
+    { when: "10:00pm", title: "Research a name", content: <ResearchChapter doc={doc} best={bestCall(doc)} /> },
     { when: "10:00pm", title: "Attack the thesis", content: <AttackChapter counts={counts} night={night} /> },
     { when: "6:30am", title: "A person decides", content: <DecideChapter counts={counts} />, accent: true },
   ];

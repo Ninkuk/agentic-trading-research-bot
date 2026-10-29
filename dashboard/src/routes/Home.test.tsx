@@ -107,7 +107,7 @@ test("the story has one chapter per step of the run, with last night's output", 
   // "Risk-on, 3rd night" reads as "3 / calm nights in a row" (the ticker holds at 0 in jsdom).
   expect(screen.getByText("calm nights in a row")).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/Risk-on/);
-  expect(screen.getByText(`last night: ${night.thesis!.ticker} · ${night.thesis!.call}`)).toBeInTheDocument();
+  expect(screen.getByText(`${night.thesis!.ticker} · ${night.thesis!.call}`)).toBeInTheDocument();
   // The rebuilt log lines stay inside the terminal; no chapter quotes one as a chip.
   expect(screen.queryByText(/composite snapshot|scorer snapshot|done: \d+ ok/)).not.toBeInTheDocument();
   // The terminal replays the read jobs' real commands (typed once in view;
@@ -134,9 +134,11 @@ test("the best graded buy call is the featured thesis, in the story and in where
   const links = screen.getAllByRole("link", { name: /best call so far|whole thesis/i });
   expect(links.length).toBe(2);
   for (const link of links) expect(link).toHaveAttribute("href", `#/ticker/${best.symbol}`);
-  // The line appears in the research chapter (no thesis file published
-  // here, so the plain fallback) and again in where-next.
-  expect(screen.getAllByText(/\+14\.8 points vs SPY over 21 trading days, called Jul 28/).length).toBe(2);
+  // The research chapter decrypts the line in (its aria-label is the text;
+  // no thesis file is published here, so it is the plain call line), and
+  // where-next prints it.
+  expect(screen.getByLabelText(/\+14\.8 points vs SPY over 21 trading days, called Jul 28/)).toBeInTheDocument();
+  expect(screen.getByText(/\+14\.8 points vs SPY over 21 trading days, called Jul 28/)).toBeInTheDocument();
 });
 
 test("the thesis sentence shows only when the published thesis is the graded call's", async () => {
@@ -159,7 +161,7 @@ test("the thesis sentence shows only when the published thesis is the graded cal
   };
   render(<Home doc={newer} />);
   expect(screen.queryByLabelText(/DoorDash earns/)).not.toBeInTheDocument();
-  expect(screen.getAllByText(/\+14\.8 points vs SPY/).length).toBe(2);
+  expect(screen.getByLabelText(/\+14\.8 points vs SPY/)).toBeInTheDocument();
 });
 
 test("without a graded buy there is no featured thesis anywhere", () => {
