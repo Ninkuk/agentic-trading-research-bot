@@ -264,3 +264,15 @@
 2026-09-28 QYGUrkoB7Fg implied-return-distribution-not-point DEAD gate=2:duplication
 2026-09-28 QYGUrkoB7Fg pricing-view-forward-multiple DEAD gate=6:statistics
 2026-09-28 QYGUrkoB7Fg antithetical-competitor-cac-kill DEAD gate=7:priority
+2026-10-29 cd1xrO2q9HU partner-share-as-cogs DEAD gate=7:priority
+2026-10-29 cd1xrO2q9HU commitments-as-debt DEAD gate=2:duplication
+2026-10-29 cd1xrO2q9HU fixed-compute-growth-bet DEAD gate=7:priority
+2026-10-29 cd1xrO2q9HU sbc-growth-vs-revenue-growth SURVIVED
+2026-10-29 cd1xrO2q9HU sales-to-capital-reinvestment DEAD gate=2:duplication
+2026-10-29 cd1xrO2q9HU failure-probability-haircut DEAD gate=7:priority
+2026-10-29 cd1xrO2q9HU coc-bounded-by-cross-section DEAD gate=2:duplication
+2026-10-29 cd1xrO2q9HU customer-concentration-risk SALVAGED gate=5:architecture
+2026-10-29 cd1xrO2q9HU customer-concentration-risk-salvaged DEAD gate=2:duplication
+2026-10-29 cd1xrO2q9HU lockup-expiry-no-effect DEAD gate=1:provenance
+2026-10-29 cd1xrO2q9HU governance-as-shareholder-power SALVAGED gate=5:architecture
+2026-10-29 cd1xrO2q9HU governance-as-shareholder-power-salvaged DEAD gate=7:priority
