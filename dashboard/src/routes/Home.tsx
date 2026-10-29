@@ -54,6 +54,7 @@ import {
   lastNight,
   lastRuns,
   nightsCalled,
+  plainSummary,
   record,
   researchCounts,
   scoredSymbols,
@@ -226,17 +227,15 @@ const SOURCES = [
 ];
 
 /** The night's jobs as the terminal replays them: the wrapper's real
- * `main.py` invocation, then the summary line the run printed and its
- * wall time. Jobs whose output matched nothing show the command alone. */
+ * `main.py` invocation, then what it fetched in plain words and the wall
+ * time. Jobs whose output matched nothing show the command alone. */
 function terminalScript(runs: LastRun[]): { commands: string[]; outputs: Record<number, string[]> } {
   const commands: string[] = [];
   const outputs: Record<number, string[]> = {};
   runs.forEach((r, i) => {
     commands.push(`uv run python main.py ${r.command}`);
-    outputs[i] = [
-      ...(r.summary ? [r.summary] : []),
-      `[${r.at}] done in ${r.seconds}s, exit ${r.exit}`,
-    ];
+    const plain = plainSummary(r);
+    outputs[i] = [...(plain ? [plain] : []), `done in ${r.seconds}s`];
   });
   return { commands, outputs };
 }

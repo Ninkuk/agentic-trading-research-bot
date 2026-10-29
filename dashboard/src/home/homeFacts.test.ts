@@ -10,6 +10,7 @@ import {
   lastNight,
   lastRunOf,
   lastRuns,
+  plainSummary,
   newestThesis,
   nightsCalled,
   record,
@@ -172,6 +173,14 @@ test("lastRuns replays the health section's runs in order and by job", () => {
   expect(lastRunOf(doc, "nope")).toBeNull();
   expect(lastRuns(withSection("health", { error: "no logs" }))).toEqual([]);
   expect(lastRuns(withSection("health", { tiles: [] }))).toEqual([]);
+});
+
+test("plainSummary phrases each job's numbers for a reader, else keeps the line", () => {
+  const fred = lastRunOf(doc, "fred")!;
+  expect(plainSummary(fred)).toBe("142,314 data points across 31 economic series, from the Federal Reserve");
+  expect(plainSummary(lastRunOf(doc, "edgar")!)).toBe("4,341 new company filings, from the SEC");
+  expect(plainSummary({ ...fred, job: "scorer" })).toBe(fred.summary);
+  expect(plainSummary({ ...fred, summary: null })).toBeNull();
 });
 
 test("drivers lists the macro tiles with their band words", () => {

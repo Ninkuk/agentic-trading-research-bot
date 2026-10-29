@@ -218,6 +218,36 @@ export function lastRuns(doc: DashboardDoc): LastRun[] {
   return runs.filter((r) => typeof r.command === "string" && r.command !== "");
 }
 
+/** The run's summary line in plain words for the terminal: the same
+ * numbers the exporter rebuilt, phrased per job ("142,314 data points
+ * across 31 economic series, from the Federal Reserve"). A job with no
+ * phrasing, or a summary whose numbers do not parse, shows the summary
+ * as it is. */
+export function plainSummary(run: LastRun): string | null {
+  if (!run.summary) return null;
+  const nums = (run.summary.match(/\d[\d,]*/g) ?? []).map((n) => Number(n.replace(/,/g, "")));
+  const fmt = (n: number | undefined) => (n === undefined ? null : n.toLocaleString("en-US"));
+  const [a, b] = nums;
+  switch (run.job) {
+    case "fred":
+      return a !== undefined && b !== undefined
+        ? `${fmt(a)} data points across ${fmt(b)} economic series, from the Federal Reserve`
+        : run.summary;
+    case "treasury":
+      return a !== undefined ? `${fmt(a)} rows of yields, auctions and debt figures, from the Treasury` : run.summary;
+    case "edgar":
+      return a !== undefined ? `${fmt(a)} new company filings, from the SEC` : run.summary;
+    case "cboe-stats":
+      return a !== undefined ? `${fmt(a)} readings of the fear index and options activity, from Cboe` : run.summary;
+    case "short-volume":
+      return a !== undefined ? `${fmt(a)} daily short-selling records, from FINRA` : run.summary;
+    case "short-interest":
+      return a !== undefined ? `${fmt(a)} short-interest records, from FINRA` : run.summary;
+    default:
+      return run.summary;
+  }
+}
+
 /** One job's run, by its launchd name. */
 export function lastRunOf(doc: DashboardDoc, job: string): LastRun | null {
   return lastRuns(doc).find((r) => r.job === job) ?? null;
