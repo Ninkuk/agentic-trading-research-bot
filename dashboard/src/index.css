@@ -14,6 +14,18 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
+/* Aceternity Infinite Moving Cards: the `animate-scroll` utility it expects.
+   Direction and duration come from inline custom properties the component
+   sets; the translate is half the duplicated list plus half the gap. */
+@theme {
+  --animate-scroll: scroll var(--animation-duration, 40s) var(--animation-direction, forwards)
+    linear infinite;
+  @keyframes scroll {
+    to {
+      transform: translate(calc(-50% - 0.5rem));
+    }
+  }
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -182,6 +194,34 @@
 }
 
 @layer components {
+  /* Home route (src/routes/Home.tsx): a full-bleed page outside the
+     sidebar inset. `.page-wide` is the same 72rem column as `.page` with
+     the phone gutter; `.home-grid` is the dot grid behind the hero, masked
+     to a soft ellipse so it never reads as a sheet of graph paper. */
+  .page-wide {
+    width: 100%;
+    max-width: var(--page-width);
+    margin: 0 auto;
+    padding-inline: 1.25rem;
+  }
+  @media (min-width: 640px) {
+    .page-wide {
+      padding-inline: 2rem;
+    }
+  }
+  .no-visible-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-visible-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .home-grid {
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(ellipse 60% 70% at 70% 40%, #000 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse 60% 70% at 70% 40%, #000 20%, transparent 75%);
+  }
   /* page container */
   .page {
     /* width 100%: inside the sidebar inset (a column flexbox) auto margins
