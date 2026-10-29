@@ -27,7 +27,6 @@
 import { useEffect, useState } from "react";
 import { motion, MotionConfig } from "motion/react";
 import { ArrowRight, Check, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, X, type LucideIcon } from "lucide-react";
-import { CardStack } from "../components/aceternity/card-stack";
 import { GlowingEffect } from "../components/aceternity/glowing-effect";
 import { HoverBorderGradient } from "../components/aceternity/hover-border-gradient";
 import { InfiniteMovingCards } from "../components/aceternity/infinite-moving-cards";
@@ -54,7 +53,9 @@ import {
   researchCounts,
   scoredSymbols,
   stocksBought,
+  thesisCallout,
   thesisHeadings,
+  thesisKillVerdict,
   thesisOneLiner,
   unprovenSignals,
   type Calibration,
@@ -102,6 +103,9 @@ interface ThesisPeek {
   title: string | null;
   line: string | null;
   headings: string[];
+  /** The attack pass's strongest objection, and its label on the thesis. */
+  attack: string | null;
+  killVerdict: string | null;
 }
 
 /** A published thesis, peeked: its title line, its opening sentence and
@@ -122,7 +126,9 @@ function useThesisPeek(file: string | null): ThesisPeek | null {
         const title = md.split("\n").find((l) => l.startsWith("# "))?.slice(2).trim() ?? null;
         const line = thesisOneLiner(md);
         const headings = thesisHeadings(md);
-        return line || headings.length > 0 ? { title, line, headings } : null;
+        const attack = thesisCallout(md, "Closest attack");
+        const killVerdict = thesisKillVerdict(md);
+        return line || headings.length > 0 ? { title, line, headings, attack, killVerdict } : null;
       })
       .then((p) => live && setPeek(p))
       .catch(() => live && setPeek(null));
@@ -473,15 +479,27 @@ function GradeChapter({
   );
 }
 
-function ResearchChapter({ best, night }: { best: BestCall | null; night: LastNight }) {
-  // The best graded call's own write-up when there is one (a well-known
-  // name, and the thesis that actually earned the grade), else last night's.
-  const featured = best
-    ? { ticker: best.symbol, date: best.verdict_date, file: `${best.symbol}-${best.verdict_date}.md`, call: "buy", verdict: null as string | null }
-    : night.thesis
-      ? { ticker: night.thesis.ticker, date: night.thesis.date, file: `${night.thesis.ticker}.md`, call: night.thesis.call, verdict: night.thesis.verdict }
-      : null;
-  const peek = useThesisPeek(featured?.file ?? null);
+interface Featured {
+  ticker: string;
+  date: string;
+  file: string;
+  call: string;
+  verdict: string | null;
+}
+
+/** The write-up the story follows: the best graded call's own (a
+ * well-known name, and the thesis that actually earned the grade), else
+ * last night's. */
+function featuredThesis(best: BestCall | null, night: LastNight): Featured | null {
+  if (best) return { ticker: best.symbol, date: best.verdict_date, file: `${best.symbol}-${best.verdict_date}.md`, call: "buy", verdict: null };
+  if (night.thesis) {
+    const t = night.thesis;
+    return { ticker: t.ticker, date: t.date, file: `${t.ticker}.md`, call: t.call, verdict: t.verdict };
+  }
+  return null;
+}
+
+function ResearchChapter({ featured, peek }: { featured: Featured | null; peek: ThesisPeek | null }) {
   return (
     <div className="grid gap-6">
       <Prose>
@@ -552,32 +570,105 @@ function ResearchChapter({ best, night }: { best: BestCall | null; night: LastNi
   );
 }
 
-function AttackChapter({ counts, night }: { counts: ResearchCounts | null; night: LastNight }) {
-  const cards = [
-    { id: 0, name: "Sound", designation: "the argument held up", content: <Big n={counts?.sound} /> },
-    { id: 1, name: "Flawed", designation: "the attack found a real hole in it", content: <Big n={counts?.flawed} /> },
-    { id: 2, name: "Unproven", designation: "it depends on something that could not be checked", content: <Big n={counts?.unproven} /> },
-  ];
+const VERDICT_TONE: Record<string, string> = {
+  sound: "text-tone-up border-tone-up",
+  flawed: "text-tone-down border-tone-down",
+  unproven: "text-tone-hold border-tone-hold",
+};
+
+function AttackChapter({
+  featured,
+  peek,
+  counts,
+}: {
+  featured: Featured | null;
+  peek: ThesisPeek | null;
+  counts: ResearchCounts | null;
+}) {
+  const verdict = peek?.killVerdict ?? featured?.verdict ?? null;
+  const total = counts ? counts.sound + counts.flawed + counts.unproven : 0;
   return (
     <div className="grid gap-6">
       <Prose>
-        The same assistant is then asked to argue against the write-up and label it sound, flawed, or
-        unproven. Flawed is not rare.
+        The same assistant is then asked to argue the other side: what would have to be true for the thesis
+        to hold, and where the evidence is thin. It labels the write-up sound, flawed, or unproven, and
+        flawed is not rare.
       </Prose>
-      <div className="flex justify-start py-6 pl-2">
-        <CardStack items={cards} />
-      </div>
-      {night.thesis?.verdict && <Chip>last night: kill-thesis {night.thesis.verdict}</Chip>}
+      {featured && peek?.line && (
+        // The exchange, from the real write-up: the thesis's own sentence,
+        // then the attack's strongest objection, then the label it got.
+        <div className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border">
+          <div className="border-border text-muted-foreground flex items-center justify-between gap-3 border-b px-5 py-3 font-mono text-xs sm:px-6">
+            <span>{featured.ticker} · the thesis vs. the attack</span>
+          </div>
+          <div className="grid gap-4 p-5 sm:p-6">
+            <motion.div
+              className="border-tone-up/60 bg-tone-up-bg/40 max-w-[90%] justify-self-start rounded-2xl rounded-tl-sm border-l-2 px-4 py-3"
+              initial={{ opacity: 0, x: -14 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.6 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="text-tone-up mb-1 font-mono text-[11px] tracking-wide uppercase">the thesis</div>
+              <p className="m-0 text-sm leading-relaxed sm:text-base">{peek.line}</p>
+            </motion.div>
+            {peek.attack && (
+              <motion.div
+                className="border-tone-down/60 bg-tone-down-bg/40 max-w-[90%] justify-self-end rounded-2xl rounded-tr-sm border-r-2 px-4 py-3 text-right"
+                initial={{ opacity: 0, x: 14 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.6 }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+              >
+                <div className="text-tone-down mb-1 font-mono text-[11px] tracking-wide uppercase">the attack</div>
+                <p className="m-0 text-sm leading-relaxed sm:text-base">{peek.attack}</p>
+              </motion.div>
+            )}
+            {verdict && (
+              <motion.div
+                className="flex items-center gap-3 pt-1"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true, amount: 0.6 }}
+                transition={{ delay: 1.1 }}
+              >
+                <span className="text-muted-foreground text-sm">verdict</span>
+                <motion.span
+                  className={`rounded-md border-2 px-2.5 py-0.5 font-mono text-sm font-semibold tracking-widest uppercase ${VERDICT_TONE[verdict] ?? "text-muted-foreground border-border"}`}
+                  initial={{ scale: 1.8, rotate: -6 }}
+                  whileInView={{ scale: 1, rotate: -4 }}
+                  viewport={{ once: true, amount: 0.6 }}
+                  transition={{ delay: 1.1, type: "spring", stiffness: 500, damping: 22 }}
+                >
+                  {verdict}
+                </motion.span>
+              </motion.div>
+            )}
+          </div>
+        </div>
+      )}
+      {counts && total > 0 && (
+        <div className="grid max-w-2xl gap-2">
+          <div aria-label="attack verdicts so far" className="flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full">
+            <span className="bg-tone-up" style={{ width: `${(100 * counts.sound) / total}%` }} />
+            <span className="bg-tone-down" style={{ width: `${(100 * counts.flawed) / total}%` }} />
+            <span className="bg-tone-hold flex-1" />
+          </div>
+          <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            <span>
+              <span className="text-tone-up font-medium">{counts.sound}</span> sound
+            </span>
+            <span>
+              <span className="text-tone-down font-medium">{counts.flawed}</span> flawed
+            </span>
+            <span>
+              <span className="text-tone-hold font-medium">{counts.unproven}</span> unproven
+            </span>
+            <span className="ml-auto">of {total} write-ups attacked</span>
+          </div>
+        </div>
+      )}
     </div>
-  );
-}
-
-function Big({ n }: { n: number | undefined }) {
-  return (
-    <span className="text-4xl font-semibold tracking-tight tabular-nums">
-      {n === undefined ? "—" : n}
-      <span className="text-muted-foreground ml-2 text-base font-normal">theses</span>
-    </span>
   );
 }
 
@@ -612,6 +703,8 @@ function DecideChapter({ counts }: { counts: ResearchCounts | null }) {
 function Story({ doc }: { doc: DashboardDoc }) {
   const night = lastNight(doc);
   const counts = researchCounts(doc);
+  const featured = featuredThesis(bestCall(doc), night);
+  const peek = useThesisPeek(featured?.file ?? null);
   const entries: TimelineEntry[] = [
     { when: "4:30pm", title: "Read", content: <ReadChapter doc={doc} night={night} /> },
     { when: "9:00pm", title: "Gauge the market", content: <WriteChapter doc={doc} night={night} /> },
@@ -627,8 +720,8 @@ function Story({ doc }: { doc: DashboardDoc }) {
         />
       ),
     },
-    { when: "10:00pm", title: "Research a name", content: <ResearchChapter best={bestCall(doc)} night={night} /> },
-    { when: "10:00pm", title: "Attack the thesis", content: <AttackChapter counts={counts} night={night} /> },
+    { when: "10:00pm", title: "Research a name", content: <ResearchChapter featured={featured} peek={peek} /> },
+    { when: "10:00pm", title: "Play devil's advocate", content: <AttackChapter featured={featured} peek={peek} counts={counts} /> },
     { when: "6:30am", title: "A person decides", content: <DecideChapter counts={counts} />, accent: true },
   ];
   return (

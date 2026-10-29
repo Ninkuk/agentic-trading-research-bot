@@ -100,7 +100,7 @@ test("the story has one chapter per step of the run, with last night's output", 
     "Gauge the market",
     "Grade the old ones",
     "Research a name",
-    "Attack the thesis",
+    "Play devil's advocate",
     "A person decides",
   ]);
   // "Risk-on, 3rd night" reads as "3 / calm nights in a row" (the ticker holds at 0 in jsdom).
@@ -140,10 +140,13 @@ test("the best graded buy call is the document on the card and the where-next li
 test("the best call's own write-up takes shape from its dated file: title, sentence, headings", async () => {
   const best = bestCall(doc)!;
   const md =
-    "# DASH — DoorDash — 2026-07-28\n\n> [!IMPORTANT]\n> **In one sentence:** A fine business at a fair price, so buy.\n\n## 1. Verdict and thesis\n\n## 2. Business\n\n## 7. Sources\n";
+    "# DASH — DoorDash — 2026-07-28\n\n> [!IMPORTANT]\n> **In one sentence:** A fine business at a fair price, so buy.\n\n## 1. Verdict and thesis\n\n**BUY at $100.** kill-thesis: **FLAWED** —\n\n> [!WARNING]\n> **Closest attack:** Growth could stall if\n> couriers unionize.\n\n## 2. Business\n\n## 7. Sources\n";
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => md }));
   render(<Home doc={doc} />);
   expect(await screen.findByText("DASH — DoorDash — 2026-07-28")).toBeInTheDocument();
+  // The devil's-advocate chapter replays the same file's attack and label.
+  expect(screen.getByText("Growth could stall if couriers unionize.")).toBeInTheDocument();
+  expect(screen.getByText("flawed", { selector: "span.uppercase" })).toBeInTheDocument();
   expect(screen.getByText("2. Business", { exact: false })).toBeInTheDocument();
   expect(screen.getByText("**In one sentence:**")).toBeInTheDocument();
   expect(vi.mocked(fetch)).toHaveBeenCalledWith(`./theses/${best.symbol}-${best.verdict_date}.md`);

@@ -17,7 +17,9 @@ import {
   researchCounts,
   scoredSymbols,
   stocksBought,
+  thesisCallout,
   thesisHeadings,
+  thesisKillVerdict,
   thesisOneLiner,
   unprovenSignals,
 } from "./homeFacts";
@@ -197,6 +199,14 @@ test("drivers lists the macro tiles with their band words", () => {
     { label: "Junk-bond premium", value: "3.18", band: "calm" },
   ]);
   expect(drivers(withSection("macro-drivers", undefined))).toEqual([]);
+});
+
+test("thesisCallout pulls any labelled callout; thesisKillVerdict reads the attack's label", () => {
+  const md = "> [!WARNING]\n> **Closest attack:** the moat is\n> thinner than it looks.\n\nkill-thesis: **FLAWED** —\n";
+  expect(thesisCallout(md, "Closest attack")).toBe("the moat is thinner than it looks.");
+  expect(thesisCallout(md, "In one sentence")).toBeNull();
+  expect(thesisKillVerdict(md)).toBe("flawed");
+  expect(thesisKillVerdict("no label")).toBeNull();
 });
 
 test("thesisHeadings lists the ## sections in order", () => {

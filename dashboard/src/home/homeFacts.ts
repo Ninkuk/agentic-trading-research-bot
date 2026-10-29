@@ -277,12 +277,13 @@ export function thesisHeadings(md: string): string[] {
     .filter((h) => h.length > 0);
 }
 
-/** The "In one sentence" line a thesis opens with, out of its markdown:
- * the `> **In one sentence:** …` callout, joined across its wrapped
- * blockquote lines. Null when the thesis has no such line. */
-export function thesisOneLiner(md: string): string | null {
+/** A labelled callout out of a thesis's markdown: the first
+ * `> **<label>:** …` line, joined across its wrapped blockquote lines.
+ * Null when the thesis has no such callout. */
+export function thesisCallout(md: string, label: string): string | null {
   const lines = md.split("\n");
-  const start = lines.findIndex((l) => /\*\*In one sentence:\*\*/.test(l));
+  const marker = new RegExp(`\\*\\*${label}:\\*\\*`);
+  const start = lines.findIndex((l) => marker.test(l));
   if (start < 0) return null;
   const parts: string[] = [];
   for (let i = start; i < lines.length; i += 1) {
@@ -292,8 +293,20 @@ export function thesisOneLiner(md: string): string | null {
     if (i > start && (body === "" || body.startsWith("[!") || body.startsWith("**"))) break;
     parts.push(body);
   }
-  const text = parts.join(" ").replace(/\*\*In one sentence:\*\*\s*/, "").replace(/\s+/g, " ").trim();
+  const text = parts.join(" ").replace(marker, "").replace(/\s+/g, " ").trim();
   return text || null;
+}
+
+/** The "In one sentence" line a thesis opens with. */
+export function thesisOneLiner(md: string): string | null {
+  return thesisCallout(md, "In one sentence");
+}
+
+/** The attack's label on a thesis: the first `kill-thesis: **SOUND**`
+ * (or FLAWED / UNPROVEN) in the markdown, lowercased; null when absent. */
+export function thesisKillVerdict(md: string): string | null {
+  const m = /kill-thesis:\s*\*\*(SOUND|FLAWED|UNPROVEN)\*\*/i.exec(md);
+  return m ? m[1].toLowerCase() : null;
 }
 
 export interface LastNight {
