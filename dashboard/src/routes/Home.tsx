@@ -330,9 +330,9 @@ function SymbolWall({ doc }: { doc: DashboardDoc }) {
 
 function nightNote(night: LastNight): string {
   const parts: string[] = [];
-  parts.push(night.regime ? `Market mood: ${night.regime.toLowerCase()}.` : "No mood call tonight.");
-  if (night.tickersScored !== null) parts.push(`${night.tickersScored.toLocaleString()} stocks checked for unusual numbers.`);
-  if (night.candidates !== null) parts.push(`${night.candidates} good businesses with shares down are worth a closer look.`);
+  parts.push(night.regime ? `${night.regime}.` : "No mood call tonight.");
+  if (night.tickersScored !== null) parts.push(`${night.tickersScored.toLocaleString()} stocks checked.`);
+  if (night.candidates !== null) parts.push(`${night.candidates} worth a closer look.`);
   return parts.join(" ");
 }
 
@@ -343,8 +343,8 @@ function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
   return (
     <div className="grid gap-6">
       <Prose>
-        A second set of programs reads what was collected and writes two things: a one-line read on the
-        market's mood, and a list of stocks whose numbers look unusual that day.
+        A second set of programs reads what was collected and writes a one-line read on the market's mood,
+        plus a list of stocks whose numbers look unusual.
       </Prose>
       <div
         ref={ref}
