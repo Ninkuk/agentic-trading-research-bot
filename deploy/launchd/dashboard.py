@@ -34,6 +34,7 @@ disk full) is not caught and propagates as a process crash with a non-zero
 exit, and the ping correctly never fires.
 """
 
+import argparse
 import json
 import os
 import sys
@@ -63,7 +64,13 @@ def write_dashboard(text: str, output_path: str) -> None:
     os.replace(tmp, out)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser()
+    # The push-triggered render (publish_now.sh) must not ping: the switch
+    # proves the NIGHTLY scheduler ran, and a midday ping would mask a 9:13pm
+    # that never fired.
+    p.add_argument("--no-heartbeat", action="store_true")
+    a = p.parse_args(argv)
     now_iso = datetime.now(UTC).isoformat()
     try:
         text = data.export_json(DATA_DIR, now_iso)
@@ -88,7 +95,8 @@ def main() -> int:
     print(f"wrote {OUTPUT_PATH} ({size} bytes)")
     if size > _SIZE_WARNING_BYTES:
         print("WARNING: data.json exceeds 1.5MB target")
-    heartbeat()
+    if not a.no_heartbeat:
+        heartbeat()
     return 0
 
 

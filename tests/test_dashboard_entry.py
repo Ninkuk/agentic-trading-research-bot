@@ -19,7 +19,7 @@ def test_main_writes_json(tmp_path, monkeypatch, populated_data_dir):
     monkeypatch.setattr(dashboard, "DATA_DIR", populated_data_dir)
     monkeypatch.setattr(dashboard, "OUTPUT_PATH", str(out))
 
-    rc = dashboard.main()
+    rc = dashboard.main([])
 
     assert rc == 0
     doc = json.loads(out.read_text(encoding="utf-8"))
@@ -35,7 +35,7 @@ def test_main_total_failure_writes_error_doc_and_exits_zero(tmp_path, monkeypatc
 
     monkeypatch.setattr(dashboard.data, "export_json", _boom)
 
-    rc = dashboard.main()
+    rc = dashboard.main([])
 
     assert rc == 0
     text = out.read_text(encoding="utf-8")
@@ -51,7 +51,7 @@ def test_size_warning_over_target(capsys, tmp_path, monkeypatch):
         dashboard.data, "export_json", lambda data_dir, now_iso, repo_root=None: "x" * 1_600_000
     )
 
-    rc = dashboard.main()
+    rc = dashboard.main([])
 
     assert rc == 0
     captured = capsys.readouterr()
@@ -64,5 +64,22 @@ def test_main_writes_theses_beside_data_json(tmp_path, monkeypatch, populated_da
     out = tmp_path / "reports" / "data.json"
     monkeypatch.setattr(dashboard, "DATA_DIR", populated_data_dir)
     monkeypatch.setattr(dashboard, "OUTPUT_PATH", str(out))
-    assert dashboard.main() == 0
+    assert dashboard.main([]) == 0
     assert (tmp_path / "reports" / "theses" / "STNE.md").read_text(encoding="utf-8") == "# STNE"
+
+
+def test_no_heartbeat_flag_skips_the_dead_mans_switch(tmp_path, monkeypatch):
+    """A push-triggered render must not ping HEALTHCHECK_URL: the switch
+    proves the NIGHTLY scheduler ran, and a midday ping would mask a nightly
+    that never fired."""
+    out = tmp_path / "data.json"
+    monkeypatch.setattr(dashboard, "OUTPUT_PATH", str(out))
+    monkeypatch.setattr(dashboard.data, "export_json", lambda *a, **k: "{}")
+    pings = []
+    monkeypatch.setattr(dashboard, "heartbeat", lambda: pings.append(1))
+
+    assert dashboard.main(["--no-heartbeat"]) == 0
+    assert pings == []
+
+    assert dashboard.main([]) == 0
+    assert pings == [1]

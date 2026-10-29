@@ -68,5 +68,5 @@ def test_main_returns_0_when_ping_fails(monkeypatch, tmp_path):
 
     monkeypatch.setattr(dashboard, "_default_get", fake_default_get)
 
-    assert dashboard.main() == 0
+    assert dashboard.main([]) == 0
     assert (tmp_path / "data.json").read_text() == "{}"
