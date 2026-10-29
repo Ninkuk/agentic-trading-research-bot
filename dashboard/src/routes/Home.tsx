@@ -371,55 +371,87 @@ function GradeChapter({
   unproven: { unproven: number; total: number } | null;
 }) {
   const said = cal ? /said (\d+%), won (\d+%)/.exec(cal.verdict.text) : null;
-  const [hovered, setHovered] = useState(false);
-  const stats: Stat[] = [];
-  if (said) {
-    stats.push({ value: said[1], label: "it said it would win" });
-    stats.push({ value: said[2], label: "it actually won" });
-  }
-  if (graded) stats.push({ value: graded, label: "calls graded" });
-  else if (unproven) stats.push({ value: `${unproven.unproven} of ${unproven.total}`, label: "signals too new to trust", tick: false });
+  const [revealed, setRevealed] = useState(false);
   return (
     <div className="grid gap-6">
       <Prose>
         A grader goes back and checks how each past opinion turned out against simply holding an S&amp;P 500
         fund, and whether the odds the research gave itself held up. Nothing tunes itself automatically.
       </Prose>
-      {stats.length > 0 ? (
+      {said ? (
+        // The reveal: the research's own odds at rest; hover (or tap) plays
+        // Aceternity's Canvas Reveal Effect and swaps in what actually happened.
         <div
-          className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border p-6 sm:p-8"
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
+          className="bg-card border-border relative min-h-56 max-w-2xl cursor-pointer overflow-hidden rounded-2xl border p-6 sm:p-8"
+          onMouseEnter={() => setRevealed(true)}
+          onMouseLeave={() => setRevealed(false)}
+          onClick={() => setRevealed((v) => !v)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setRevealed((v) => !v);
+            }
+          }}
+          aria-pressed={revealed}
         >
-          {/* Aceternity's Canvas Reveal Effect under the figures, on hover:
-              a dot matrix sweeping in from the center, in the primary tone. */}
           <AnimatePresence>
-            {hovered && (
+            {revealed && (
               <motion.div
                 key="reveal"
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_80%)]"
+                className="pointer-events-none absolute inset-0"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
                 <Suspense fallback={null}>
-                  <CanvasRevealEffect
-                    animationSpeed={3}
-                    containerClassName="bg-transparent"
-                    colors={[[0, 200, 5]]}
-                    dotSize={2}
-                    showGradient={false}
-                  />
+                  <CanvasRevealEffect animationSpeed={3} containerClassName="bg-transparent" colors={[[0, 200, 5]]} dotSize={2} />
                 </Suspense>
               </motion.div>
             )}
           </AnimatePresence>
-          <div className="text-muted-foreground relative mb-4 font-mono text-xs">the odds it gave itself</div>
-          <StatTicker stats={stats} className="relative" />
+          <div className="relative grid gap-3">
+            <div className="text-muted-foreground font-mono text-xs">the odds it gave itself</div>
+            <AnimatePresence mode="wait" initial={false}>
+              {revealed ? (
+                <motion.p
+                  key="won"
+                  className="m-0 text-2xl font-semibold tracking-tight sm:text-4xl"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  It won {said[2]}.
+                </motion.p>
+              ) : (
+                <motion.p
+                  key="said"
+                  className="m-0 text-2xl font-semibold tracking-tight sm:text-4xl"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  It said it would win {said[1]} of the time.
+                </motion.p>
+              )}
+            </AnimatePresence>
+            <div className="text-muted-foreground text-sm">
+              {revealed ? `${graded ? `${graded} calls graded. ` : ""}Hover away to see the odds again.` : "Hover to see what happened."}
+            </div>
+          </div>
         </div>
       ) : (
-        <Chip>nothing graded yet</Chip>
+        <Chip>
+          {graded
+            ? `${graded} calls graded`
+            : unproven
+              ? `${unproven.unproven} of ${unproven.total} market signals have too little history to trust yet`
+              : "nothing graded yet"}
+        </Chip>
       )}
     </div>
   );
