@@ -44,10 +44,10 @@ test("the beats render in order: headline, the night's story, scorecard, where n
   );
   const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
   expect(headings).toEqual([
-    "Six steps, every evening, while nobody is watching.",
+    "What happens every evening.",
     "Has it been right?",
-    "Three ways in.",
-    "Point the desk at a stock.",
+    "Where to go from here.",
+    "Suggest a stock.",
   ]);
 });
 
@@ -121,13 +121,13 @@ test("the counters come from the research and timeline sections", () => {
   expect(screen.getByText(/Running every night since [A-Z][a-z]+ \d+, \d{4}/)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/snapshot #/);
   const counts = researchCounts(doc)!;
-  expect(screen.getByText("theses written").previousSibling).toHaveTextContent(String(counts.theses));
+  expect(screen.getByText("stock write-ups").previousSibling).toHaveTextContent(String(counts.theses));
   expect(screen.getByText("ended in a pass").previousSibling).toHaveTextContent(String(counts.passes));
-  expect(screen.getByText("nights, no gaps").previousSibling).toHaveTextContent(
+  expect(screen.getByText("nights running").previousSibling).toHaveTextContent(
     String(doc.sections["regime-timeline"].rows!.length),
   );
   // No calibration rows in the fixture: the graded counter is omitted, not zero.
-  expect(screen.queryByText("calls graded so far")).not.toBeInTheDocument();
+  expect(screen.queryByText("calls graded")).not.toBeInTheDocument();
 });
 
 test("the best graded buy call is the featured thesis, from the hero and from where-next", () => {
@@ -178,7 +178,7 @@ test("the scorecard shows the exporter's curve figures and the grade cards when 
   expect(screen.getByText("Buy calls right").previousSibling).toHaveTextContent("56%");
   expect(screen.getByText("Confidence vs results").previousSibling).toHaveTextContent("said 46%, won 44%");
   expect(screen.getByText("Market signals still unproven").previousSibling).toHaveTextContent("1 of 1");
-  expect(screen.getByText("calls graded so far").previousSibling).toHaveTextContent("93");
+  expect(screen.getByText("calls graded").previousSibling).toHaveTextContent("93");
   // The grade chapter turns the calibration verdict into the reveal card.
   expect(screen.getByText("It said it would win 46% of the time.")).toBeInTheDocument();
   expect(screen.getByText("It won 44%.")).toBeInTheDocument();

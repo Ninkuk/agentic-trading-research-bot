@@ -167,8 +167,10 @@ function Hero({ doc }: { doc: DashboardDoc }) {
           <TextGenerateEffect words={HEADLINE} duration={0.6} />
         </h1>
         <p className="text-muted-foreground m-0 max-w-[58ch] text-lg md:text-xl">
-          Every night it pulls official public data, has an AI write a stock thesis and then attack it, and
-          keeps a public scorecard of whether those opinions were right. A person makes every actual decision.
+          Every day this project visits about twenty official public sources, mostly the government agencies
+          that publish the country's economic and market numbers, and files away what it finds. Every evening it
+          re-reads those files, writes up an opinion on the market and on a few stocks, and goes back to check
+          how its earlier opinions worked out. A person reads the notes and makes every actual decision.
         </p>
         <div className="flex flex-wrap gap-3">
           <MovingBorderButton
@@ -201,10 +203,10 @@ function Hero({ doc }: { doc: DashboardDoc }) {
         </div>
         {(counts || graded || nights) && (
           <div className="border-border grid max-w-3xl grid-cols-2 gap-5 border-t pt-6 sm:grid-cols-4">
-            {counts && <Counter value={counts.theses} label="theses written" />}
+            {counts && <Counter value={counts.theses} label="stock write-ups" />}
             {counts && <Counter value={counts.passes} label="ended in a pass" />}
-            {graded && <Counter value={graded} label="calls graded so far" />}
-            {nights && <Counter value={nights} label="nights, no gaps" />}
+            {graded && <Counter value={graded} label="calls graded" />}
+            {nights && <Counter value={nights} label="nights running" />}
           </div>
         )}
       </div>
@@ -247,15 +249,15 @@ function SectionTitle({
 // FINRA and Cboe are private trademarks and the NY Fed has no public-domain
 // seal, so those three show as wordmarks.
 const SOURCES = [
-  { name: "The Federal Reserve", title: "Interest rates, inflation, and the Fed's own balance sheet", quote: "The numbers behind every rate headline, straight from the people who set the rate.", logo: "./logos/fed.png" },
-  { name: "The US Treasury", title: "Daily yields and auction results", quote: "What the government pays to borrow, and how eager buyers were at the last auction.", logo: "./logos/treasury.png" },
-  { name: "The SEC", title: "Company filings", quote: "Earnings, insider trades, restated numbers, and anyone crossing 5% of a company.", logo: "./logos/sec.png" },
-  { name: "The CFTC", title: "Weekly futures positions", quote: "What professional traders are actually betting on, by contract, every week.", logo: "./logos/cftc.png" },
-  { name: "FINRA", title: "Short selling and off-exchange volume", quote: "How much of today's trading was betting against a stock, and how much happened in the dark." },
-  { name: "Cboe", title: "The fear index and the options mood", quote: "How nervous the options market is, and whether it expects that to get worse." },
-  { name: "The New York Fed", title: "Overnight funding markets", quote: "The plumbing that shows stress before prices do." },
-  { name: "The EIA", title: "Weekly energy inventories", quote: "Crude, fuel and gas stocks, with the change from last week.", logo: "./logos/eia.png" },
-  { name: "The USDA", title: "Monthly grain supply", quote: "World supply and demand for the major crops.", logo: "./logos/usda.png" },
+  { name: "The Federal Reserve", title: "Interest rates, inflation, and the Fed's own balance sheet", quote: "Economic statistics: interest rates, inflation, the money supply, and the Fed's own balance sheet.", logo: "./logos/fed.png" },
+  { name: "The US Treasury", title: "Daily yields and auction results", quote: "What the government pays to borrow at each maturity, and how each auction of new debt went.", logo: "./logos/treasury.png" },
+  { name: "The SEC", title: "Company filings", quote: "Company filings: quarterly reports, insider trades, restated numbers, and large new shareholders.", logo: "./logos/sec.png" },
+  { name: "The CFTC", title: "Weekly futures positions", quote: "The weekly report on what professional futures traders are betting, contract by contract.", logo: "./logos/cftc.png" },
+  { name: "FINRA", title: "Short selling and off-exchange volume", quote: "How much of each day's trading was short selling, and how much happened away from the public exchanges." },
+  { name: "Cboe", title: "The fear index and the options mood", quote: "The fear index and the rest of the options market's mood." },
+  { name: "The New York Fed", title: "Overnight funding markets", quote: "Overnight lending rates between banks, which tend to show strain early." },
+  { name: "The EIA", title: "Weekly energy inventories", quote: "Weekly stocks of crude oil, fuel and natural gas.", logo: "./logos/eia.png" },
+  { name: "The USDA", title: "Monthly grain supply", quote: "Monthly supply and demand estimates for the major crops.", logo: "./logos/usda.png" },
 ];
 
 /** The night's jobs as the terminal replays them: the wrapper's real
@@ -312,9 +314,12 @@ function ReadChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
   return (
     <div className="grid gap-6">
       <Prose>
-        About twenty official sources, the places the numbers actually come from. No vendor feeds, no
-        scraping forums for tips. Each one is read on its own schedule by a small program that does nothing
-        else, and every figure is filed with the date it was published.
+        The first job of the evening is collecting. About twenty small programs each visit one official
+        source: the Federal Reserve's economic statistics, the stock-market regulators' filings, the weekly
+        report on what professional futures traders are betting, Treasury auction results, energy and
+        agriculture statistics, and so on. Each fetches its source's latest numbers and files them away in
+        a small database, together with the date the number was published. The terminal below is what those
+        programs printed last night.
       </Prose>
       {runs.length > 0 ? (
         <Terminal
@@ -349,15 +354,17 @@ function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
     // zooms the whole page out (see DESIGN_MEMORY's phone rule).
     <div className="relative grid gap-6 overflow-hidden">
       <Prose>
-        Two things get written. A one-line read on the market's mood, decided by three fear-and-credit
-        gauges with nine more watched but not voting. And a scorecard of every stock whose numbers look
-        unusual tonight: heavy
-        <FlipWords words={["short selling", "delivery failures", "crowd attention", "options bets"]} className="font-medium" />
-        and the like. A statistically odd stock is not a good business, so the scorecard is a reading list,
-        never a recommendation.
+        Once the data is in, a second set of programs reads everything the collectors filed and writes an
+        opinion. They only read; they never fetch anything themselves. Two things come out. A one-line
+        summary of the market's mood, which three indicators decide: the fear index, the extra interest
+        risky companies pay to borrow, and whether the options market expects fear to rise. And a scorecard
+        pointing out stocks whose numbers look unusual that day, for example a lot of
+        <FlipWords words={["short selling", "failed deliveries", "attention on Reddit", "options buying"]} className="font-medium" />
+        An unusual number is not a reason to buy anything, so the scorecard is a reading list and nothing
+        more.
       </Prose>
       <div className="grid gap-3 sm:grid-cols-3">
-        <OutputCard label="The mood" value={night.regime ?? "not called"} note="three gauges vote; nine are watched" />
+        <OutputCard label="The mood" value={night.regime ?? "not called"} note="three indicators decide it" />
         <OutputCard
           label="The scorecard"
           value={night.tickersScored !== null ? `${night.tickersScored.toLocaleString()} stocks` : "not scored"}
@@ -366,7 +373,7 @@ function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
         <OutputCard
           label="The reading list"
           value={night.candidates !== null ? `${night.candidates} companies` : "empty"}
-          note="good businesses currently marked down"
+          note="decent businesses whose shares are down"
         />
       </div>
       <RunChip run={lastRunOf(doc, "composite")} />
@@ -400,17 +407,21 @@ function GradeChapter({
   return (
     <div className="grid gap-6">
       <Prose>
-        Weeks later, every opinion gets a report card. Each call is re-checked against simply holding the
-        S&amp;P 500, the stated odds are held to account, and a market signal with too little evidence stays
-        unproven rather than being trusted. Nothing adjusts itself; a person reads the grades.
+        This is the part that makes it more than a pile of opinions. A grader goes back and checks how each
+        past opinion turned out over the following weeks, against the simplest alternative, which is holding
+        an S&amp;P 500 fund. It also checks the odds the research gave itself: when a write-up said it had a
+        46% chance of beating the market, did that happen about 46% of the time? Signals with a poor record
+        get exposed by their own numbers, and a person decides whether to keep, adjust, or retire them.
+        Nothing tunes itself automatically.
       </Prose>
       <Facts
         items={[
-          `Each call is re-checked 5, 10 and ${GRADE_HORIZON} trading days on.`,
-          "A pass is graded too: saying no has a cost when the stock goes on to win.",
+          `Each opinion is checked 5, 10 and ${GRADE_HORIZON} trading days later.`,
+          "A pass gets checked too. Saying no to a stock that then goes up counts against the research.",
           unproven
-            ? `${unproven.unproven} of ${unproven.total} market signals are still unproven.`
-            : "A market signal stays unproven until it has enough independent episodes.",
+            ? `${unproven.unproven} of ${unproven.total} market signals do not have enough history yet to be trusted either way.`
+            : "A market signal is not trusted until it has enough history.",
+          "The grader skips a night when the price ledger has not caught up, rather than grading on a stale price.",
         ]}
       />
       {cal && said ? (
@@ -419,9 +430,9 @@ function GradeChapter({
           revealText={`It won ${said[2]}.`}
           className="max-w-2xl"
         >
-          <TextRevealCardTitle>Confidence, held to account</TextRevealCardTitle>
+          <TextRevealCardTitle>The odds it gave itself</TextRevealCardTitle>
           <TextRevealCardDescription>
-            Drag across to reveal. {graded ? `${graded} calls graded so far.` : ""}
+            Drag across the card. {graded ? `${graded} calls graded so far.` : ""}
             {cal.forecastError
               ? ` Forecast error ${cal.forecastError}${cal.baseRate ? `; guessing the base rate scores ${cal.baseRate}` : ""}.`
               : ""}
@@ -440,9 +451,12 @@ function ResearchChapter({ doc, best, night }: { doc: DashboardDoc; best: BestCa
   return (
     <div className="grid gap-6">
       <Prose>
-        One company gets the full treatment: what the business actually does and whether it has an edge,
-        what today's price already assumes about its growth, and a yes or a no with stated odds of beating
-        the market over the next quarter. Every number cites the filing it came from.
+        Later in the evening an AI assistant researches one stock from the reading list and writes it up the
+        way an analyst would: what the company does, whether it has anything competitors cannot easily copy,
+        what growth today's share price already assumes, and finally a buy or a pass with a stated
+        probability of beating the market over the next three months. The write-up is a markdown file in
+        the repository, and every number in it points to the filing it came from. The one below is the call
+        that has worked out best so far.
       </Prose>
       {best && (
         <div className="bg-card border-border grid max-w-2xl gap-3 rounded-2xl border p-5 sm:p-6">
@@ -478,16 +492,17 @@ function ResearchChapter({ doc, best, night }: { doc: DashboardDoc; best: BestCa
 
 function AttackChapter({ counts, night }: { counts: ResearchCounts | null; night: LastNight }) {
   const cards = [
-    { id: 0, name: "Sound", designation: "the argument held up under attack", content: <Big n={counts?.sound} /> },
-    { id: 1, name: "Flawed", designation: "the attack found a load-bearing hole", content: <Big n={counts?.flawed} /> },
-    { id: 2, name: "Unproven", designation: "it rests on something that could not be checked", content: <Big n={counts?.unproven} /> },
+    { id: 0, name: "Sound", designation: "the argument held up", content: <Big n={counts?.sound} /> },
+    { id: 1, name: "Flawed", designation: "the attack found a real hole in it", content: <Big n={counts?.flawed} /> },
+    { id: 2, name: "Unproven", designation: "it depends on something that could not be checked", content: <Big n={counts?.unproven} /> },
   ];
   return (
     <div className="grid gap-6">
       <Prose>
-        Then it tries to break its own argument. A second pass argues the other side, asks what would have
-        to be true, and checks each of those against the evidence. The verdict is sound, flawed, or unproven,
-        and flawed is common. Both passes state their odds, and the scorecard grades both.
+        Before anyone reads a write-up, the same assistant is asked to argue against it. It lists what would
+        have to be true for the thesis to hold, checks each point against the evidence, and labels the
+        write-up sound, flawed, or unproven. Flawed is not rare. The labels are graded later as well, so the
+        attack has a track record of its own.
       </Prose>
       <div className="flex justify-start py-6 pl-2">
         <CardStack items={cards} />
@@ -510,14 +525,16 @@ function DecideChapter({ counts }: { counts: ResearchCounts | null }) {
   return (
     <div className="grid gap-6">
       <Prose>
-        Nothing trades on its own. The notes are read in the morning, by a person. Any purchase is queued by
-        hand, in small amounts, and every fill and every pass is journaled and graded like everything else.
+        In the morning a person reads the notes. Nothing in this project can place a trade on its own. If a
+        stock does get bought, it is queued by hand, in a small amount, and the purchase goes into the same
+        journal the grader reads, so a bad decision shows up in the scorecard the same way a bad opinion
+        does. Most of the time the answer is no.
       </Prose>
       {counts && (
         <Facts
           items={[
-            `${counts.passes} of ${counts.theses} researched names ended in a pass. A high bar is the point.`,
-            "Nothing here is investment advice.",
+            `${counts.passes} of the ${counts.theses} write-ups so far ended in a pass.`,
+            "None of this is investment advice. It is one person's research tooling, published to show what it produces.",
           ]}
         />
       )}
@@ -557,8 +574,8 @@ function Story({ doc }: { doc: DashboardDoc }) {
         <SectionTitle
           icon={MoonStar}
           label="One night"
-          title="Six steps, every evening, while nobody is watching."
-          note={`Read, write, grade, research, attack, decide. The outputs below are from ${doc.edition_date}, Phoenix time.`}
+          title="What happens every evening."
+          note={`Everything runs on a schedule on one Mac in Phoenix. These are the six jobs that matter, with what each one actually produced on ${doc.edition_date}.`}
         />
         <Timeline data={entries} />
       </div>
@@ -608,7 +625,7 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
           icon={ClipboardCheck}
           label="The scorecard"
           title="Has it been right?"
-          note="Opinions are graded weeks later against what actually happened. Nothing re-tunes itself. Performance is $100 rebased; no positions, no dollar amounts."
+          note="The lines are $100 put into the stock picks, into an S&P 500 fund, and into a savings account at the Fed's rate, from the first day the picks were held. Positions and dollar amounts are not shown."
           className="mb-10"
         />
         {nothing && (
@@ -660,7 +677,7 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
               <Grade
                 value={`${sig.unproven} of ${sig.total}`}
                 label="Market signals still unproven"
-                evidence="Not enough independent episodes yet to keep or retire them."
+                evidence="Too little history yet to keep or retire them."
                 href="#signal-recommendations"
               />
             )}
@@ -680,7 +697,7 @@ function WhereNext({ doc }: { doc: DashboardDoc }) {
   return (
     <section id="next" className="border-border border-t py-16 md:py-24">
       <div className="page-wide">
-        <SectionTitle icon={Compass} label="Where next" title="Three ways in." className="mb-10" />
+        <SectionTitle icon={Compass} label="Where next" title="Where to go from here." className="mb-10" />
         <div className="grid gap-3 md:grid-cols-3">
           {best && (
             <a className={card} href={`#/ticker/${best.symbol}`}>
@@ -723,8 +740,8 @@ function SuggestName() {
         <SectionTitle
           icon={MessageSquarePlus}
           label="Suggest a name"
-          title="Point the desk at a stock."
-          note="Any US-listed name. It joins the reading list, gets the same thesis and the same attack as every other name, and the scorecard grades the call whether it says buy or pass."
+          title="Suggest a stock."
+          note="Any US-listed company. It goes on the reading list and gets the same write-up and the same attack as everything else, and the call gets graded whether it says buy or pass."
         />
         <form
           className="bg-card border-border relative grid gap-3 rounded-2xl border p-5 sm:p-6"
@@ -764,7 +781,7 @@ function SuggestName() {
             </HoverBorderGradient>
           </div>
           <span className="text-muted-foreground text-xs">
-            Opens a prefilled GitHub issue in a new tab; a GitHub account is needed. Nothing is stored here.
+            This opens a prefilled GitHub issue in a new tab, so a GitHub account is needed. Nothing is stored here.
           </span>
         </form>
       </div>
