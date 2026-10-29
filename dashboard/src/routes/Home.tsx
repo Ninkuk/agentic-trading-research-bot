@@ -24,8 +24,14 @@
 // `MotionConfig reducedMotion="user"` turns all of it into plain rendering
 // for readers who asked for less motion.
 
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { MotionConfig } from "motion/react";
+
+// three.js only loads on the first hover over a where-next card.
+const CanvasRevealEffect = lazy(() =>
+  import("../components/aceternity/canvas-reveal-effect").then((m) => ({ default: m.CanvasRevealEffect })),
+);
 import { ArrowRight, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, type LucideIcon } from "lucide-react";
 import { CardStack } from "../components/aceternity/card-stack";
 import { EncryptedText } from "../components/aceternity/encrypted-text";
@@ -624,39 +630,71 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
 
 // --- where next ----------------------------------------------------------------
 
+/** A where-next card: on hover, Aceternity's Canvas Reveal Effect floods
+ * the card with an animated dot matrix in the primary tone behind the text. */
+function RevealCard({ href, external, children }: { href: string; external?: boolean; children: React.ReactNode }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <a
+      className="bg-card border-border group relative grid min-w-0 gap-1 overflow-hidden rounded-2xl border p-5 no-underline"
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <AnimatePresence>
+        {hovered && (
+          <motion.div
+            className="pointer-events-none absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Suspense fallback={null}>
+              <CanvasRevealEffect animationSpeed={4} colors={[[0, 200, 5]]} dotSize={2} containerClassName="bg-card" />
+            </Suspense>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="relative grid gap-1">{children}</div>
+    </a>
+  );
+}
+
 function WhereNext({ doc }: { doc: DashboardDoc }) {
   const best = bestCall(doc);
   const counts = researchCounts(doc);
-  const card = "bg-card border-border hover:bg-muted/60 grid min-w-0 gap-1 rounded-2xl border p-5 no-underline";
   return (
     <section id="next" className="border-border border-t py-16 md:py-24">
       <div className="page-wide">
         <SectionTitle icon={Compass} label="Where next" title="Where to go from here." className="mb-10" />
         <div className="grid gap-3 md:grid-cols-3">
           {best && (
-            <a className={card} href={`#/ticker/${best.symbol}`}>
+            <RevealCard href={`#/ticker/${best.symbol}`}>
               <span className="flex items-center justify-between font-semibold">
                 Read the best call so far <ArrowRight aria-hidden="true" className="text-muted-foreground size-4" />
               </span>
               <span className="text-muted-foreground text-sm">
                 <span className="sym">{best.symbol}</span> · {bestCallLine(best)}
               </span>
-            </a>
+            </RevealCard>
           )}
-          <a className={card} href="#/research">
+          <RevealCard href="#/research">
             <span className="flex items-center justify-between font-semibold">
               Every researched name <ArrowRight aria-hidden="true" className="text-muted-foreground size-4" />
             </span>
             <span className="text-muted-foreground text-sm">
               {counts ? `${counts.theses} theses, each with its call and how it held up under attack` : "Theses, calls, and how each held up under attack"}
             </span>
-          </a>
-          <a className={card} href={`${REPO_URL}#readme`} target="_blank" rel="noreferrer">
+          </RevealCard>
+          <RevealCard href={`${REPO_URL}#readme`} external>
             <span className="flex items-center justify-between font-semibold">
               How it works, and the glossary <ExternalLink aria-hidden="true" className="text-muted-foreground size-4" />
             </span>
             <span className="text-muted-foreground text-sm">Plain-English pages on GitHub, with the code that produced every number.</span>
-          </a>
+          </RevealCard>
         </div>
       </div>
     </section>

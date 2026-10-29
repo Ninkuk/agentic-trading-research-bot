@@ -11,7 +11,7 @@ export function HoverBorderGradient({
   children,
   containerClassName,
   className,
-  as: Tag = "button",
+  as = "button",
   duration = 1,
   clockwise = true,
   ...props
@@ -27,6 +27,10 @@ export function HoverBorderGradient({
     rel?: string;
   } & React.HTMLAttributes<HTMLElement>
 >) {
+  // With @react-three/fiber's JSX augmentation loaded, a bare ElementType
+  // tag types its props as never; a concrete anchor type keeps href/target
+  // valid while `as` still picks the rendered element at runtime.
+  const Tag = as as unknown as "a";
   const [hovered, setHovered] = useState<boolean>(false);
   const [direction, setDirection] = useState<Direction>("TOP");
 
