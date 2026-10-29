@@ -448,7 +448,7 @@ export function Terminal({
   const prompt = (
     <span className="text-neutral-500">
       <span className="text-emerald-400">{username}</span>
-      <span className="text-neutral-500">$</span>{" "}
+      <span className="text-neutral-500"> $</span>{" "}
     </span>
   );
 

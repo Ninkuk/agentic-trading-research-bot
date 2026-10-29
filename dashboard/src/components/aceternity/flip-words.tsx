@@ -1,4 +1,4 @@
-// Aceternity UI "flip-words" (MIT), adapted: theme tokens.
+// Aceternity UI "flip-words" (MIT), adapted: theme tokens; the wrapper is a span so it can sit inside a paragraph.
 // https://ui.aceternity.com/components/flip-words
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
@@ -36,7 +36,7 @@ export const FlipWords = ({
         setIsAnimating(false);
       }}
     >
-      <motion.div
+      <motion.span
         initial={{
           opacity: 0,
           y: 10,
@@ -93,7 +93,7 @@ export const FlipWords = ({
             <span className="inline-block">&nbsp;</span>
           </motion.span>
         ))}
-      </motion.div>
+      </motion.span>
     </AnimatePresence>
   );
 };
