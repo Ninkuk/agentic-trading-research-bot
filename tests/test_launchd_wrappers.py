@@ -524,9 +524,11 @@ def test_publish_now_renders_without_heartbeat_then_publishes():
     assert "publish-now" in health.SLOW_JOBS
 
 
-def _run_pre_push(tmp_path, stdin, *, launchctl_rc=0):
+def _run_pre_push(tmp_path, stdin, *, launchctl_rc=0, cwd=REPO_ROOT):
     """Run .githooks/pre-push with fake launchctl/npm on PATH. Each fake
-    appends its argv to a log; the real ones would reach launchd and node."""
+    appends its argv to a log; the real ones would reach launchd and node.
+    The hook cds to `cwd`'s git toplevel, so a throwaway repo stands in for
+    this one."""
     fakes = tmp_path / "bin"
     fakes.mkdir()
     log = tmp_path / "calls.log"
@@ -539,7 +541,7 @@ def _run_pre_push(tmp_path, stdin, *, launchctl_rc=0):
         input=stdin,
         capture_output=True,
         text=True,
-        cwd=REPO_ROOT,
+        cwd=cwd,
         env={"PATH": f"{fakes}:/usr/bin:/bin", "HOME": str(tmp_path)},
         timeout=60,
     )
@@ -547,16 +549,36 @@ def _run_pre_push(tmp_path, stdin, *, launchctl_rc=0):
     return result, calls
 
 
-def _shas_touching(path):
-    """(parent, commit) of the newest commit touching `path`."""
-    out = subprocess.run(
-        ["git", "log", "-1", "--format=%P %H", "--", path],
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
-        check=True,
-    ).stdout.split()
-    return out[0], out[-1]
+def _repo_with_dashboard_change(tmp_path):
+    """A two-commit repo whose second commit touches dashboard/: (repo, parent,
+    head). This repo's own history is not usable -- CI checks out depth 1, where
+    HEAD's parent is grafted away and a parent..head range diffs to nothing."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    env = {
+        "PATH": "/usr/bin:/bin",
+        "HOME": str(tmp_path),
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@example.invalid",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@example.invalid",
+    }
+
+    def git(*args):
+        return subprocess.run(
+            ["git", *args], cwd=repo, env=env, capture_output=True, text=True, check=True
+        ).stdout.strip()
+
+    git("init", "-q")
+    (repo / "README.md").write_text("x\n")
+    git("add", "README.md")
+    git("commit", "-q", "-m", "base")
+    parent = git("rev-parse", "HEAD")
+    (repo / "dashboard" / "src").mkdir(parents=True)
+    (repo / "dashboard" / "src" / "App.tsx").write_text("y\n")
+    git("add", "dashboard")
+    git("commit", "-q", "-m", "frontend")
+    return repo, parent, git("rev-parse", "HEAD")
 
 
 def _no_frontend_change():
@@ -586,9 +608,9 @@ def test_pre_push_to_another_branch_does_nothing(tmp_path):
 def test_pre_push_rebuilds_the_frontend_when_dashboard_changed(tmp_path):
     """launchd never invokes Node; the hook builds dist in the user's shell
     BEFORE kicking the job so the publish ships the pushed frontend."""
-    parent, head = _shas_touching("dashboard/src")
+    repo, parent, head = _repo_with_dashboard_change(tmp_path)
     stdin = f"refs/heads/main {head} refs/heads/main {parent}\n"
-    result, calls = _run_pre_push(tmp_path, stdin)
+    result, calls = _run_pre_push(tmp_path, stdin, cwd=repo)
     assert result.returncode == 0, result.stderr
     assert calls[0] == "npm --prefix dashboard run build", calls
     assert calls[1].startswith("launchctl kickstart"), calls
