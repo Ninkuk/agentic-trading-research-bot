@@ -331,9 +331,9 @@ function nightStats(night: LastNight): Stat[] {
   const stats: Stat[] = [];
   if (night.regime) {
     // "Risk-on, 92nd night" → the streak as the figure, the mood in plain
-    // words as its label: risk-on is an upbeat market, risk-off a nervous one.
+    // words as its label: the inputs are fear gauges, so risk-on is calm, risk-off nervous.
     const n = /(\d+)(?:st|nd|rd|th) night/.exec(night.regime)?.[1];
-    const mood = /risk-on/i.test(night.regime) ? "upbeat" : /risk-off/i.test(night.regime) ? "nervous" : "mixed";
+    const mood = /risk-on/i.test(night.regime) ? "calm" : /risk-off/i.test(night.regime) ? "nervous" : "mixed";
     stats.push(n ? { value: Number(n), label: `${mood} nights in a row` } : { value: mood, label: "the market tonight", tick: false });
   } else {
     stats.push({ value: "none", label: "no mood call tonight", tick: false });
@@ -353,10 +353,7 @@ function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
       </Prose>
       <div className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border p-6 sm:p-8">
         <SymbolWall doc={doc} />
-        <div className="text-muted-foreground relative mb-4 flex items-center justify-between font-mono text-xs">
-          <span>tonight's note</span>
-          <span>composite · 9:05pm</span>
-        </div>
+        <div className="text-muted-foreground relative mb-4 font-mono text-xs">tonight's note</div>
         <StatTicker stats={stats} className="relative" />
       </div>
     </div>
