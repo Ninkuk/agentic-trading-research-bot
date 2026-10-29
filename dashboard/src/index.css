@@ -393,6 +393,15 @@
 .thesis-md p, .thesis-md ul, .thesis-md ol { margin: 0 0 0.75rem; }
 .thesis-md ul, .thesis-md ol { padding-left: 1.25rem; }
 .thesis-md blockquote { border-left: 2px solid var(--border); margin: 0 0 0.75rem; padding-left: 0.75rem; color: var(--muted-foreground); }
+/* Callouts (GitHub `> [!TYPE]` alerts via remarkCallouts). Tone-tokened like
+   every other mark: important is the strongest NEUTRAL, never the up green. */
+.thesis-md .callout { --callout: var(--muted-foreground); --callout-bg: var(--muted); border-left: 3px solid var(--callout); background: var(--callout-bg); border-radius: 0 0.5rem 0.5rem 0; margin: 0 0 1rem; padding: 0.6rem 0.85rem; }
+.thesis-md .callout > :last-child { margin-bottom: 0; }
+.thesis-md .callout-title { margin: 0 0 0.25rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--callout); }
+.thesis-md .callout-important { --callout: var(--foreground); --callout-bg: var(--accent); }
+.thesis-md .callout-tip { --callout: var(--tone-up); --callout-bg: var(--tone-up-bg); }
+.thesis-md .callout-warning { --callout: var(--tone-hold); --callout-bg: var(--tone-hold-bg); }
+.thesis-md .callout-caution { --callout: var(--tone-down); --callout-bg: var(--tone-down-bg); }
 .thesis-md code { font-family: var(--font-mono); font-size: 0.85em; overflow-wrap: anywhere; }
 .thesis-md pre { overflow-x: auto; }
 .thesis-md table { border-collapse: collapse; margin: 0 0 1rem; font-size: 0.85rem; display: block; overflow-x: auto; }

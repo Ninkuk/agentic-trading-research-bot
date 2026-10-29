@@ -491,7 +491,7 @@ source-tier names are all fixed there. Then commit it. The skeleton:
    here, per the template.
 
 Then, with §1 and the kill-thesis label final, write the template's
-`**In one sentence:**` line directly under the title — the last edit to the
+`**In one sentence:**` callout directly under the title — the last edit to the
 file before the verdict is logged. It is the top of the document and the
 last thing written: a reader skimming `research/` sees the call and its
 reason without opening §1, and a line composed after the verdict cannot

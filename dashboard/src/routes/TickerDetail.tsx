@@ -18,6 +18,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Line, LineChart, ReferenceLine, XAxis, YAxis } from "recharts";
 import remarkGfm from "remark-gfm";
+import { remarkCallouts } from "../callouts";
 import { REPO_URL } from "../constants";
 import { dateShort, num, pct, signed, usd } from "../format";
 import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
@@ -426,7 +427,7 @@ function ThesisBlock({ thesis }: { thesis: TickerThesis }) {
           )}
           <div className="thesis-md">
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
+              remarkPlugins={[remarkGfm, remarkCallouts]}
               components={{
                 h2: ({ children }) => <h2 id={headingId(String(children))}>{children}</h2>,
                 a: ({ href, children }) => (

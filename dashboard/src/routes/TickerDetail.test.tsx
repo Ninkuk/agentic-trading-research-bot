@@ -139,6 +139,16 @@ test("thesis block fetches theses/<SYM>.md and renders markdown with GFM tables"
   expect(screen.getByText("Ownership call: PASS at $190.")).toBeInTheDocument();
 });
 
+test("thesis block renders GitHub alerts as callouts", async () => {
+  stubThesisFetch(200, "# X\n\n> [!IMPORTANT]\n> **In one sentence:** pass.\n");
+  const { container } = render(<TickerDetail doc={doc} symbol="AAPL" />);
+  await screen.findByText(/In one sentence/);
+  const aside = container.querySelector(".thesis-md aside.callout-important");
+  expect(aside).toBeInTheDocument();
+  expect(aside).toHaveTextContent("Important");
+  expect(container.textContent).not.toContain("[!IMPORTANT]");
+});
+
 test("thesis block offers a jump-list built from the ## headings", async () => {
   stubThesisFetch();
   render(<TickerDetail doc={doc} symbol="AAPL" />);

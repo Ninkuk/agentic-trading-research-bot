@@ -14,7 +14,14 @@ skimmable in the same places.
   suffixed file is deliberately invisible to `tools/research/worklist.py`.
 - Title: `# <TICKER> — <Company Name> — <YYYY-MM-DD>`. Reopen runs append
   ` (reopen of <YYYY-MM-DD>, trigger: <slug>)`.
-- Directly under the title, REQUIRED, one line:
+- Callouts: seven labelled blocks are GitHub alert blockquotes — first line
+  `> [!TYPE]`, every line of the block `> `-prefixed, nothing else in the
+  quote. GitHub and the dashboard both render them as callouts. IMPORTANT is
+  the call (`In one sentence`; the `p(beat SPY)` + `Disputed expectation`
+  block), WARNING is what breaks it (`Closest attack`, `Dominant shared risk
+  factor`), NOTE is what revisits it (`Reopen trigger`, `Flip evidence`). No
+  other block is a callout.
+- Directly under the title, REQUIRED, one line in a `> [!IMPORTANT]` callout:
   `**In one sentence:** <the sentence>` — what a reader who reads nothing
   else takes away. BUY and PASS alike: what the business is, why it is
   attractive, the one thing the call turns on (for a PASS, what blocks
@@ -79,7 +86,8 @@ ownership call from here):
   not "unverifiable"; `unknown=` counts load-bearing UNKNOWNs only. The
   count is whatever the bull case needs, not a house number. A scope
   parenthetical is allowed ("SOUND (on this pass)").
-- Second line, always: `**p(beat SPY, 63 td): 0.60** · kill-thesis: 0.45` —
+- Second block, always, one `> [!IMPORTANT]` callout:
+  `**p(beat SPY, 63 td): 0.60** · kill-thesis: 0.45` —
   the probability this name beats SPY over the stated horizon (trading
   days), for BUY and PASS alike (a PASS at 0.35 is coherent), and the
   kill-thesis pass's own number. Then `**Disputed expectation:**` — one line:
@@ -87,7 +95,8 @@ ownership call from here):
   revision. The journal records all three (`p_win`, `p_win_kill`,
   `horizon_days`, `expectation`) and `v_research_calibration` grades them.
 - Then the thesis in plain language, 2–5 sentences.
-- Then `**Closest attack:**` — the attack that came nearest to landing.
+- Then `**Closest attack:**` in a `> [!WARNING]` callout — the attack that
+  came nearest to landing.
 - Then the load-bearing conditions of the bull case (on a PASS too — the
   list never carries the pass's own claims), numbered, each tagged in
   italics *probable* or *plausible* with one line of the evidence behind
@@ -95,8 +104,8 @@ ownership call from here):
   *possible* is not a tier a numbered condition can carry. This list is
   mandatory — a count whose conditions are never enumerated is unauditable,
   and reopen runs need the list to sweep against.
-- Then the factor line, always present, this exact lead-in (overlap reads
-  grep it):
+- Then the factor line, always present, in a `> [!WARNING]` callout, this
+  exact lead-in (overlap reads grep it):
   `**Dominant shared risk factor:** <factor> — shared by N of M held names
   (<tickers>) · K unlabelled`. `<factor>` is factor grain, never a sector
   label; `idiosyncratic` stands alone with no overlap clause. When holdings
@@ -166,7 +175,8 @@ never enter) or `**Shift —**` (input moved: revalue). On a PASS, split the
 list: "For the pass (flip toward buy)" then "For an owner (sell)". Close the
 section with one line, always present:
 
-`**Reopen trigger:** 2026-11-04: <slug>` or `none stated` — always dated,
+`**Reopen trigger:** 2026-11-04: <slug>` or `none stated`, in a `> [!NOTE]`
+callout — always dated,
 even for a discrete event: the date is the latest filing that must settle
 it (the next 10-Q, the print). This is the same trigger the `verdicts.log`
 line carries; the thesis file (here) holds the actual condition.
@@ -200,8 +210,8 @@ Written by the Phase 5 kill-thesis pass; the one place its detail lives (not
 per-condition adjudication (`SURVIVED` / `REFUTED` / `PENDING <date>` /
 `UNKNOWN` / `NOT OBTAINED`) with the attack each faced — the conditions are
 §1's bull-case list, never the pass's; the standing/statistical/options-
-timing checks that ran (or why one was N/A); `**Closest attack:**`;
-`**Flip evidence:**` in both
+timing checks that ran (or why one was N/A); `**Closest attack:**` (a
+`> [!WARNING]` callout); `**Flip evidence:**` (a `> [!NOTE]` callout) in both
 directions (what makes it SOUND, what makes it FLAWED); and
 `**p(beat SPY, N td):**` — the kill pass's own probability, written before
 re-reading §1's.
