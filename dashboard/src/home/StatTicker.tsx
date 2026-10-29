@@ -7,7 +7,8 @@
 // once.
 
 import { motion, useInView, useReducedMotion, useSpring, useTransform } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { EncryptedText } from "../components/aceternity/encrypted-text";
 
 export interface Stat {
   /** A number, or a string like "+7.79%" whose digits tick. */
@@ -15,6 +16,9 @@ export interface Stat {
   label: string;
   /** false: show the value as it is ("92nd night" has no sensible count-up). */
   tick?: boolean;
+  /** Seconds to hold the value scrambled before it decrypts into place
+   * (the answer to the stat before it). Replaces the count-up. */
+  revealAfter?: number;
 }
 
 function split(value: number | string): { prefix: string; n: number; suffix: string; decimals: number } {
@@ -24,6 +28,24 @@ function split(value: number | string): { prefix: string; n: number; suffix: str
   const digits = m[2].replace(/,/g, "");
   const decimals = digits.includes(".") ? digits.split(".")[1].length : 0;
   return { prefix: m[1], n: Number(digits), suffix: m[3], decimals };
+}
+
+function Reveal({ value, start, after }: { value: number | string; start: boolean; after: number }) {
+  const [go, setGo] = useState(false);
+  const reduce = useReducedMotion();
+  useEffect(() => {
+    if (!start) return;
+    const t = setTimeout(() => setGo(true), after * 1000);
+    return () => clearTimeout(t);
+  }, [start, after]);
+  const text = String(value);
+  if (reduce || go) return <EncryptedText text={text} revealDelayMs={160} flipDelayMs={50} encryptedClassName="text-muted-foreground/50" />;
+  // Held: scrambled digits of the same width, never the answer.
+  return (
+    <span className="text-muted-foreground/50 tabular-nums" aria-label={text}>
+      {text.replace(/\d/g, "#")}
+    </span>
+  );
 }
 
 function Ticker({ value, start, tick = true }: { value: number | string; start: boolean; tick?: boolean }) {
@@ -76,7 +98,11 @@ export function StatTicker({ stats, className }: { stats: Stat[]; className?: st
           transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
         >
           <dd className="text-foreground m-0 text-3xl font-semibold tracking-tight md:text-4xl">
-            <Ticker value={s.value} start={inView} tick={s.tick} />
+            {s.revealAfter !== undefined ? (
+              <Reveal value={s.value} start={inView} after={s.revealAfter} />
+            ) : (
+              <Ticker value={s.value} start={inView} tick={s.tick} />
+            )}
           </dd>
           <dt className="text-muted-foreground mt-1 text-sm">{s.label}</dt>
         </motion.div>

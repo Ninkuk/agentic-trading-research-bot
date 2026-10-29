@@ -377,7 +377,7 @@ function GradeChapter({
   const stats: Stat[] = [];
   if (said) {
     stats.push({ value: said[1], label: "it said it would win" });
-    stats.push({ value: said[2], label: "it actually won" });
+    stats.push({ value: said[2], label: "it actually won", revealAfter: 1.6 });
   }
   if (graded) stats.push({ value: graded, label: "calls graded" });
   else if (unproven) stats.push({ value: `${unproven.unproven} of ${unproven.total}`, label: "signals too new to trust", tick: false });
