@@ -13,6 +13,8 @@ export interface Stat {
   /** A number, or a string like "+7.79%" whose digits tick. */
   value: number | string;
   label: string;
+  /** false: show the value as it is ("92nd night" has no sensible count-up). */
+  tick?: boolean;
 }
 
 function split(value: number | string): { prefix: string; n: number; suffix: string; decimals: number } {
@@ -24,7 +26,7 @@ function split(value: number | string): { prefix: string; n: number; suffix: str
   return { prefix: m[1], n: Number(digits), suffix: m[3], decimals };
 }
 
-function Ticker({ value, start }: { value: number | string; start: boolean }) {
+function Ticker({ value, start, tick = true }: { value: number | string; start: boolean; tick?: boolean }) {
   const { prefix, n, suffix, decimals } = split(value);
   const reduce = useReducedMotion();
   const spring = useSpring(0, { mass: 0.8, stiffness: 75, damping: 15 });
@@ -34,6 +36,7 @@ function Ticker({ value, start }: { value: number | string; start: boolean }) {
   useEffect(() => {
     if (start) spring.set(n);
   }, [start, n, spring]);
+  if (!tick) return <span className="tabular-nums">{value}</span>;
   if (reduce || !start) {
     const shown = reduce ? n : 0;
     return (
@@ -53,13 +56,16 @@ function Ticker({ value, start }: { value: number | string; start: boolean }) {
   );
 }
 
-export function StatTicker({ stats }: { stats: Stat[] }) {
+export function StatTicker({ stats, className }: { stats: Stat[]; className?: string }) {
   const ref = useRef<HTMLDListElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.4 });
+  const cols = { 1: "sm:grid-cols-1", 2: "sm:grid-cols-2", 3: "sm:grid-cols-3", 4: "sm:grid-cols-4" }[
+    Math.min(4, Math.max(1, stats.length)) as 1 | 2 | 3 | 4
+  ];
   return (
     <dl
       ref={ref}
-      className="divide-border m-0 grid max-w-3xl grid-cols-2 divide-y sm:grid-cols-4 sm:divide-x sm:divide-y-0"
+      className={`divide-border m-0 grid grid-cols-2 divide-y sm:divide-x sm:divide-y-0 ${cols} ${className ?? "max-w-3xl"}`}
     >
       {stats.map((s, i) => (
         <motion.div
@@ -70,7 +76,7 @@ export function StatTicker({ stats }: { stats: Stat[] }) {
           transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
         >
           <dd className="text-foreground m-0 text-3xl font-semibold tracking-tight md:text-4xl">
-            <Ticker value={s.value} start={inView} />
+            <Ticker value={s.value} start={inView} tick={s.tick} />
           </dd>
           <dt className="text-muted-foreground mt-1 text-sm">{s.label}</dt>
         </motion.div>

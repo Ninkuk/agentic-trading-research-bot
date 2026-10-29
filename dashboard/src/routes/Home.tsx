@@ -24,8 +24,8 @@
 // `MotionConfig reducedMotion="user"` turns all of it into plain rendering
 // for readers who asked for less motion.
 
-import { useEffect, useRef, useState } from "react";
-import { MotionConfig, useInView } from "motion/react";
+import { useEffect, useState } from "react";
+import { MotionConfig } from "motion/react";
 import { ArrowRight, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, type LucideIcon } from "lucide-react";
 import { CardStack } from "../components/aceternity/card-stack";
 import { EncryptedText } from "../components/aceternity/encrypted-text";
@@ -327,52 +327,35 @@ function SymbolWall({ doc }: { doc: DashboardDoc }) {
   );
 }
 
-function nightNote(night: LastNight): string[] {
-  const lines: string[] = [];
-  lines.push(night.regime ? `${night.regime}.` : "No mood call tonight.");
-  if (night.tickersScored !== null) lines.push(`${night.tickersScored.toLocaleString()} stocks checked.`);
-  if (night.candidates !== null) lines.push(`${night.candidates} worth a closer look.`);
-  return lines;
+function nightStats(night: LastNight): Stat[] {
+  const stats: Stat[] = [];
+  if (night.regime) {
+    // "Risk-on, 92nd night" → the streak as the figure, the mood as its label.
+    const [mood, streak] = night.regime.split(/,\s*/, 2);
+    stats.push(streak ? { value: streak, label: mood, tick: false } : { value: mood, label: "the mood", tick: false });
+  } else {
+    stats.push({ value: "none", label: "no mood call tonight", tick: false });
+  }
+  if (night.tickersScored !== null) stats.push({ value: night.tickersScored, label: "stocks checked" });
+  if (night.candidates !== null) stats.push({ value: night.candidates, label: "worth a closer look" });
+  return stats;
 }
 
-const WORD_STAGGER = 0.18;
-
 function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.5 });
-  const lines = nightNote(night);
-  // Each bullet starts once the previous one has finished typing.
-  const starts = lines.reduce<number[]>((acc, _line, i) => {
-    acc.push(i === 0 ? 0 : acc[i - 1] + lines[i - 1].split(" ").length * WORD_STAGGER + 0.3);
-    return acc;
-  }, []);
+  const stats = nightStats(night);
   return (
     <div className="grid gap-6">
       <Prose>
         A second set of programs reads what was collected and writes a one-line read on the market's mood,
         plus a list of stocks whose numbers look unusual.
       </Prose>
-      <div
-        ref={ref}
-        className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border p-6 sm:p-8"
-      >
+      <div className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border p-6 sm:p-8">
         <SymbolWall doc={doc} />
         <div className="text-muted-foreground relative mb-4 flex items-center justify-between font-mono text-xs">
           <span>tonight's note</span>
           <span>composite · 9:05pm</span>
         </div>
-        <ul className="relative m-0 grid list-none gap-2 p-0 text-xl leading-relaxed font-medium sm:text-2xl">
-          {lines.map((line, i) => (
-            <li key={line} className="flex gap-3">
-              <span aria-hidden="true" className="bg-primary mt-[0.7em] size-2 shrink-0 rounded-full" />
-              {inView ? (
-                <TextGenerateEffect words={line} duration={0.5} delay={starts[i]} stagger={WORD_STAGGER} />
-              ) : (
-                <span className="opacity-0">{line}</span>
-              )}
-            </li>
-          ))}
-        </ul>
+        <StatTicker stats={stats} className="relative" />
       </div>
     </div>
   );

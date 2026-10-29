@@ -104,7 +104,8 @@ test("the story has one chapter per step of the run, with last night's output", 
     "A person decides",
   ]);
   const night = lastNight(doc);
-  expect(screen.getByText(`${night.regime!}.`, { exact: false })).toBeInTheDocument();
+  const [mood, streak] = night.regime!.split(/,\s*/, 2);
+  expect(screen.getByText(streak).closest("dd")!.nextSibling).toHaveTextContent(mood);
   expect(screen.getByText(`last night: ${night.thesis!.ticker} · ${night.thesis!.call}`)).toBeInTheDocument();
   // The rebuilt log lines stay inside the terminal; no chapter quotes one as a chip.
   expect(screen.queryByText(/composite snapshot|scorer snapshot|done: \d+ ok/)).not.toBeInTheDocument();
@@ -119,7 +120,8 @@ test("the counters come from the research and timeline sections", () => {
   expect(document.body.textContent).not.toMatch(/snapshot #|Phoenix/);
   // jsdom never scrolls the row into view, so the tickers hold at zero; the
   // labels and the order are what this checks, the arithmetic is homeFacts'.
-  const labels = screen.getAllByRole("term").map((t) => t.textContent);
+  const hero = within(document.querySelector("header") as HTMLElement);
+  const labels = hero.getAllByRole("term").map((t) => t.textContent);
   expect(labels).toEqual(["stocks researched", "stocks bought", "nights running", "up overall"]);
   expect(researchCounts(doc)!.theses).toBeGreaterThan(0);
   expect(stocksBought(doc)).toBeGreaterThan(0);
@@ -205,5 +207,5 @@ test("a document with no sections still renders the front door", () => {
   expect(screen.getByRole("link", { name: /every researched name/i })).toHaveAttribute("href", "#/research");
   expect(screen.queryByRole("link", { name: /best call so far/i })).not.toBeInTheDocument();
   const story = within(document.getElementById("story") as HTMLElement);
-  expect(story.getByText(/No mood call tonight/)).toBeInTheDocument();
+  expect(story.getByText("no mood call tonight")).toBeInTheDocument();
 });
