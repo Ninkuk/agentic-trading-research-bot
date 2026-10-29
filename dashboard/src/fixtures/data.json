@@ -3055,7 +3055,15 @@
         }
       ],
       "total": 1,
-      "empty": "no graded research calls yet"
+      "empty": "no graded research calls yet",
+      "best_call": {
+        "symbol": "DASH",
+        "verdict_date": "2026-07-28",
+        "horizon": 21,
+        "fwd_return": 0.153,
+        "bench_fwd_return": 0.005,
+        "excess": 0.148
+      }
     },
     "research-calibration": {
       "title": "Research call calibration",

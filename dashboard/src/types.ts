@@ -135,8 +135,21 @@ export interface Section {
   // research-only:
   dated?: number;
   events?: number;
+  // research-verdict-outcomes-only: the matured buy call that beat SPY by
+  // the most over the whole view (the rows are a capped drill-down).
+  best_call?: BestCall | null;
   // health-only:
   healthy?: boolean;
+}
+
+
+export interface BestCall {
+  symbol: string;
+  verdict_date: string;
+  horizon: number;
+  fwd_return: number;
+  bench_fwd_return: number;
+  excess: number;
 }
 
 // equity-curve-only: one charted date on the growth-of-$100 curve.

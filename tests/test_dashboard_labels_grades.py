@@ -260,6 +260,38 @@ def test_verdict_outcomes_have_no_tiles_without_rows():
     assert grades.research_verdict_outcomes(conn, NOW)["tiles"] == []
 
 
+def test_verdict_outcomes_best_call_is_the_top_matured_buy_at_the_standard_horizon():
+    rows = [
+        ("OLD", "buy", "2026-08-01", 21, 0.20, 0.0, 0.20, 1),  # best at 21d
+        ("NEW", "buy", "2026-08-09", 21, 0.20, 0.0, 0.20, 1),  # ties go to the newer call
+        ("HOT", "buy", "2026-08-05", 5, 0.90, 0.0, 0.90, 1),  # shorter horizon never outranks 21d
+        ("RAW", "buy", "2026-08-20", 21, None, None, None, None),  # unmatured
+        ("P0", "pass", "2026-08-01", 21, -0.9, 0.0, -0.9, 1),  # a pass is never "best"
+    ]
+    conn = _mem(_view("v_research_verdict_outcomes", VERDICT_COLS, rows))
+    best = grades.research_verdict_outcomes(conn, NOW)["best_call"]
+    assert best == {
+        "symbol": "NEW",
+        "verdict_date": "2026-08-09",
+        "horizon": 21,
+        "fwd_return": 0.20,
+        "bench_fwd_return": 0.0,
+        "excess": 0.20,
+    }
+
+
+def test_verdict_outcomes_best_call_falls_back_to_the_longest_matured_horizon():
+    rows = [
+        ("A", "buy", "2026-08-01", 5, 0.01, 0.0, 0.01, 1),
+        ("B", "buy", "2026-08-01", 10, 0.00, 0.01, -0.01, 0),  # longest matured, even if wrong
+        ("P", "pass", "2026-08-01", 21, -0.5, 0.0, -0.5, 1),
+    ]
+    conn = _mem(_view("v_research_verdict_outcomes", VERDICT_COLS, rows))
+    assert grades.research_verdict_outcomes(conn, NOW)["best_call"]["symbol"] == "B"
+    conn = _mem(_view("v_research_verdict_outcomes", VERDICT_COLS, []))
+    assert grades.research_verdict_outcomes(conn, NOW)["best_call"] is None
+
+
 # --- signal-effective-n ------------------------------------------------------
 
 

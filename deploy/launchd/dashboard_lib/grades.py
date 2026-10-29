@@ -128,8 +128,29 @@ def research_verdict_outcomes(conn: sqlite3.Connection, now_iso: str) -> dict[st
         "columns": _VERDICT_OUTCOME_COLUMNS,
         "rows": rows,
         "total": total,
+        "best_call": _best_call(conn),
         "empty": "no graded research calls yet",
     }
+
+
+BEST_CALL_HORIZON = 21
+
+
+def _best_call(conn: sqlite3.Connection) -> dict[str, Any] | None:
+    """The matured buy call that beat SPY by the most, over the WHOLE view
+    (the rows above are a LIMITed drill-down, so the frontend cannot find
+    this itself). Graded at the scorer's standard horizon; before any buy
+    has matured that far, the longest matured horizon stands in. Ties go
+    to the newer call. None until a buy call has matured at all."""
+    r = conn.execute(
+        "SELECT symbol, verdict_date, horizon, fwd_return, bench_fwd_return, excess"
+        " FROM v_research_verdict_outcomes"
+        " WHERE verdict = 'buy' AND verdict_correct IS NOT NULL AND excess IS NOT NULL"
+        " ORDER BY (horizon = ?) DESC, horizon DESC, excess DESC, verdict_date DESC"
+        " LIMIT 1",
+        (BEST_CALL_HORIZON,),
+    ).fetchone()
+    return None if r is None else dict(r)
 
 
 _CALIBRATION_BIN_COLUMNS = [
