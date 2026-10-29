@@ -36,11 +36,6 @@ import { Button as MovingBorderButton } from "../components/aceternity/moving-bo
 import { Spotlight } from "../components/aceternity/spotlight-new";
 import { Terminal } from "../components/aceternity/terminal";
 import { TextGenerateEffect } from "../components/aceternity/text-generate-effect";
-import {
-  TextRevealCard,
-  TextRevealCardDescription,
-  TextRevealCardTitle,
-} from "../components/aceternity/text-reveal-card";
 import { Timeline, type TimelineEntry } from "../components/aceternity/timeline";
 import { EquityCurve } from "../charts/EquityCurve";
 import { REPO_URL } from "../constants";
@@ -370,37 +365,26 @@ function GradeChapter({
   unproven: { unproven: number; total: number } | null;
 }) {
   const said = cal ? /said (\d+%), won (\d+%)/.exec(cal.verdict.text) : null;
+  const stats: Stat[] = [];
+  if (said) {
+    stats.push({ value: said[1], label: "it said it would win" });
+    stats.push({ value: said[2], label: "it actually won" });
+  }
+  if (graded) stats.push({ value: graded, label: "calls graded" });
+  else if (unproven) stats.push({ value: `${unproven.unproven} of ${unproven.total}`, label: "signals too new to trust", tick: false });
   return (
     <div className="grid gap-6">
       <Prose>
-        A grader goes back and checks how each past opinion turned out, against simply holding an S&amp;P 500
-        fund. It also checks the odds the research gave itself. Nothing tunes itself automatically.
+        A grader goes back and checks how each past opinion turned out against simply holding an S&amp;P 500
+        fund, and whether the odds the research gave itself held up. Nothing tunes itself automatically.
       </Prose>
-      <Facts
-        items={[
-          `Each opinion is checked 5, 10 and ${GRADE_HORIZON} trading days later.`,
-          "A pass gets checked too. Saying no to a stock that then goes up counts against it.",
-          unproven
-            ? `${unproven.unproven} of ${unproven.total} market signals have too little history to trust yet.`
-            : "A market signal is not trusted until it has enough history.",
-        ]}
-      />
-      {cal && said ? (
-        <TextRevealCard
-          text={`It said it would win ${said[1]} of the time.`}
-          revealText={`It won ${said[2]}.`}
-          className="max-w-2xl"
-        >
-          <TextRevealCardTitle>The odds it gave itself</TextRevealCardTitle>
-          <TextRevealCardDescription>
-            Drag across the card. {graded ? `${graded} calls graded so far.` : ""}
-            {cal.forecastError
-              ? ` Forecast error ${cal.forecastError}${cal.baseRate ? `; guessing the base rate scores ${cal.baseRate}` : ""}.`
-              : ""}
-          </TextRevealCardDescription>
-        </TextRevealCard>
+      {stats.length > 0 ? (
+        <div className="bg-card border-border relative max-w-2xl rounded-2xl border p-6 sm:p-8">
+          <div className="text-muted-foreground mb-4 font-mono text-xs">the odds it gave itself</div>
+          <StatTicker stats={stats} className="relative" />
+        </div>
       ) : (
-        <Chip>{graded ? `${graded} calls graded` : "nothing graded yet"}</Chip>
+        <Chip>nothing graded yet</Chip>
       )}
     </div>
   );
