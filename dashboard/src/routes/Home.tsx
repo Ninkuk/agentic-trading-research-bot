@@ -477,7 +477,7 @@ function ResearchChapter({ best, night }: { best: BestCall | null; night: LastNi
   // The best graded call's own write-up when there is one (a well-known
   // name, and the thesis that actually earned the grade), else last night's.
   const featured = best
-    ? { ticker: best.symbol, date: best.verdict_date, file: `${best.symbol}-${best.verdict_date}.md`, call: "buy", verdict: null as string | null, caption: `best call so far: ${bestCallLine(best)}` }
+    ? { ticker: best.symbol, date: best.verdict_date, file: `${best.symbol}-${best.verdict_date}.md`, call: "buy", verdict: null as string | null, caption: `best call so far · ${bestCallLine(best).replace(/, called .*$/, "")}` }
     : night.thesis
       ? { ticker: night.thesis.ticker, date: night.thesis.date, file: `${night.thesis.ticker}.md`, call: night.thesis.call, verdict: night.thesis.verdict, caption: "written last night" }
       : null;
@@ -493,12 +493,7 @@ function ResearchChapter({ best, night }: { best: BestCall | null; night: LastNi
         // The write-up as the markdown file it is: the title line, the
         // opening sentence typed out, then the section headings landing one
         // by one, all in mono with the markdown marks showing.
-        <motion.div
-          className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border font-mono text-[13px] leading-relaxed sm:text-sm"
-          initial="rest"
-          whileInView="in"
-          viewport={{ once: true, amount: 0.4 }}
-        >
+        <div className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border font-mono text-[13px] leading-relaxed sm:text-sm">
           <div className="border-border text-muted-foreground flex items-center gap-3 border-b px-5 py-3 text-xs sm:px-6">
             <span className="flex gap-1.5" aria-hidden="true">
               <span className="bg-border size-2.5 rounded-full" />
@@ -527,31 +522,32 @@ function ResearchChapter({ best, night }: { best: BestCall | null; night: LastNi
                   <motion.li
                     key={h}
                     className="truncate"
-                    variants={{
-                      rest: { opacity: 0, x: -6 },
-                      in: { opacity: 1, x: 0, transition: { delay: 0.6 + (peek.line?.length ?? 0) * 0.012 + i * 0.18, duration: 0.3 } },
-                    }}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6 + (peek.line?.length ?? 0) * 0.1 + i * 0.18, duration: 0.3 }}
                   >
                     <span className="text-tone-up">##</span> {h}
                   </motion.li>
                 ))}
               </ol>
             )}
-            <div className="flex flex-wrap items-center gap-2 pt-1">
+          </div>
+          <div className="border-border flex flex-wrap items-center justify-between gap-3 border-t px-5 py-3 font-sans sm:px-6">
+            <div className="flex flex-wrap items-center gap-2">
               <Chip tone={featured.call === "buy" ? "up" : undefined}>{featured.call}</Chip>
               {featured.verdict && <Chip>kill-thesis: {featured.verdict}</Chip>}
               <span className="text-muted-foreground text-xs">{featured.caption}</span>
-              <HoverBorderGradient
-                as="a"
-                href={`#/ticker/${featured.ticker}`}
-                containerClassName="ml-auto no-underline"
-                className="font-sans text-sm font-medium"
-              >
-                Read the whole thesis
-              </HoverBorderGradient>
             </div>
+            <HoverBorderGradient
+              as="a"
+              href={`#/ticker/${featured.ticker}`}
+              containerClassName="no-underline"
+              className="text-sm font-medium"
+            >
+              Read the whole thesis
+            </HoverBorderGradient>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );

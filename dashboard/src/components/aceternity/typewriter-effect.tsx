@@ -1,5 +1,6 @@
 // Aceternity UI "typewriter-effect" (MIT), adapted: theme tokens, no default type
-// scale or centering (the caller sets both), primary-tone cursor.
+// scale or centering (the caller sets both), primary-tone cursor, and the
+// space after each word typed as a character so the cursor tracks the text.
 // https://ui.aceternity.com/components/typewriter-effect
 
 import { cn } from "../ui/utils";
@@ -52,8 +53,8 @@ export const TypewriterEffect = ({
       <motion.div ref={scope} className="inline">
         {wordsArray.map((word, idx) => {
           return (
-            <div key={`word-${idx}`} className="inline-block">
-              {word.text.map((char, index) => (
+            <span key={`word-${idx}`} className="inline">
+              {[...word.text, ...(idx < wordsArray.length - 1 ? [" "] : [])].map((char, index) => (
                 <motion.span
                   initial={{}}
                   key={`char-${index}`}
@@ -62,11 +63,10 @@ export const TypewriterEffect = ({
                     word.className
                   )}
                 >
-                  {char}
+                  {char === " " ? "\u00a0" : char}
                 </motion.span>
               ))}
-              &nbsp;
-            </div>
+            </span>
           );
         })}
       </motion.div>
