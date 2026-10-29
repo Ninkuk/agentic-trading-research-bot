@@ -110,7 +110,7 @@ export const InfiniteMovingCards = ({
               <div className="relative z-20 mt-auto flex flex-row items-center gap-3 pt-6">
                 {item.logo && (
                   <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
-                    <img src={item.logo} alt="" width={32} height={32} loading="lazy" className="size-8 object-contain" />
+                    <img src={item.logo} alt="" width={40} height={40} loading="lazy" className="size-10 object-cover" />
                   </span>
                 )}
                 <span className="flex flex-col gap-1">
