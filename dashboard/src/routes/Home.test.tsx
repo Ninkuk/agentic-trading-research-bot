@@ -106,10 +106,8 @@ test("the story has one chapter per step of the run, with last night's output", 
   const night = lastNight(doc);
   expect(screen.getByText(night.regime!)).toBeInTheDocument();
   expect(screen.getByText(`last night: ${night.thesis!.ticker} · ${night.thesis!.call}`)).toBeInTheDocument();
-  // The exporter's rebuilt log lines land as chips in their chapters.
-  expect(screen.getByText(/\[21:05\] composite snapshot 120: 32 signals ok, 0 failed/)).toBeInTheDocument();
-  expect(screen.getByText(/\[21:10\] scorer snapshot 130/)).toBeInTheDocument();
-  expect(screen.getByText(/\[22:00\] done: 3 ok, 0 failed of 3 selected/)).toBeInTheDocument();
+  // The rebuilt log lines stay inside the terminal; no chapter quotes one as a chip.
+  expect(screen.queryByText(/composite snapshot|scorer snapshot|done: \d+ ok/)).not.toBeInTheDocument();
   // The terminal replays the read jobs' real commands (typed once in view;
   // jsdom never scrolls, so the title bar is what renders).
   expect(screen.getByText("~/agentic-trading-research-bot — last night")).toBeInTheDocument();

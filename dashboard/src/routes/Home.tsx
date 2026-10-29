@@ -29,7 +29,6 @@ import { MotionConfig } from "motion/react";
 import { ArrowRight, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, type LucideIcon } from "lucide-react";
 import { CardStack } from "../components/aceternity/card-stack";
 import { EncryptedText } from "../components/aceternity/encrypted-text";
-import { FlipWords } from "../components/aceternity/flip-words";
 import { GlowingEffect } from "../components/aceternity/glowing-effect";
 import { HoverBorderGradient } from "../components/aceternity/hover-border-gradient";
 import { InfiniteMovingCards } from "../components/aceternity/infinite-moving-cards";
@@ -53,7 +52,6 @@ import {
   callsGraded,
   GRADE_HORIZON,
   lastNight,
-  lastRunOf,
   lastRuns,
   nightsCalled,
   record,
@@ -300,41 +298,26 @@ function ReadChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
   );
 }
 
-function RunChip({ run }: { run: LastRun | null }) {
-  if (!run?.summary) return null;
+function WriteChapter({ night }: { night: LastNight }) {
   return (
-    <Chip>
-      [{run.at}] {run.summary}
-    </Chip>
-  );
-}
-
-function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
-  return (
-    // overflow-hidden: Flip Words' exiting word is absolutely positioned
-    // and scaled 2x, which at phone width pokes past the viewport and
-    // zooms the whole page out (see DESIGN_MEMORY's phone rule).
-    <div className="relative grid gap-6 overflow-hidden">
+    <div className="grid gap-6">
       <Prose>
         A second set of programs reads what was collected and writes two things: a one-line read on the
-        market's mood, and a scorecard of stocks with unusual numbers that day, such as a lot of
-        <FlipWords words={["short selling", "failed deliveries", "attention on Reddit", "options buying"]} className="font-medium" />
-        The scorecard is a reading list, not a recommendation.
+        market's mood, and a list of stocks whose numbers look unusual that day.
       </Prose>
       <div className="grid gap-3 sm:grid-cols-3">
-        <OutputCard label="The mood" value={night.regime ?? "not called"} note="three indicators decide it" />
+        <OutputCard label="The mood" value={night.regime ?? "not called"} note="from three indicators" />
         <OutputCard
-          label="The scorecard"
-          value={night.tickersScored !== null ? `${night.tickersScored.toLocaleString()} stocks` : "not scored"}
-          note="checked for unusual numbers"
+          label="Stocks checked"
+          value={night.tickersScored !== null ? night.tickersScored.toLocaleString() : "none"}
+          note="for unusual numbers"
         />
         <OutputCard
-          label="The reading list"
-          value={night.candidates !== null ? `${night.candidates} companies` : "empty"}
-          note="decent businesses whose shares are down"
+          label="Worth a closer look"
+          value={night.candidates !== null ? String(night.candidates) : "none"}
+          note="good businesses, shares down"
         />
       </div>
-      <RunChip run={lastRunOf(doc, "composite")} />
     </div>
   );
 }
@@ -351,12 +334,10 @@ function OutputCard({ label, value, note }: { label: string; value: string; note
 }
 
 function GradeChapter({
-  doc,
   cal,
   graded,
   unproven,
 }: {
-  doc: DashboardDoc;
   cal: Calibration | null;
   graded: number | null;
   unproven: { unproven: number; total: number } | null;
@@ -394,7 +375,6 @@ function GradeChapter({
       ) : (
         <Chip>{graded ? `${graded} calls graded` : "nothing graded yet"}</Chip>
       )}
-      <RunChip run={lastRunOf(doc, "scorer")} />
     </div>
   );
 }
@@ -428,14 +408,11 @@ function ResearchChapter({ doc, best, night }: { doc: DashboardDoc; best: BestCa
           </HoverBorderGradient>
         </div>
       )}
-      <div className="flex flex-wrap gap-2">
-        <RunChip run={lastRunOf(doc, "research-nightly")} />
-        {night.thesis && (
-          <Chip>
-            last night: {night.thesis.ticker} · {night.thesis.call}
-          </Chip>
-        )}
-      </div>
+      {night.thesis && (
+        <Chip>
+          last night: {night.thesis.ticker} · {night.thesis.call}
+        </Chip>
+      )}
     </div>
   );
 }
@@ -502,12 +479,12 @@ function Story({ doc }: { doc: DashboardDoc }) {
   const counts = researchCounts(doc);
   const entries: TimelineEntry[] = [
     { when: "4:30pm", title: "Read", content: <ReadChapter doc={doc} night={night} /> },
-    { when: "9:05pm", title: "Write an opinion", content: <WriteChapter doc={doc} night={night} /> },
+    { when: "9:05pm", title: "Write an opinion", content: <WriteChapter night={night} /> },
     {
       when: "9:10pm",
       title: "Grade the old ones",
       content: (
-        <GradeChapter doc={doc} cal={calibration(doc)} graded={callsGraded(doc)} unproven={unprovenSignals(doc)} />
+        <GradeChapter cal={calibration(doc)} graded={callsGraded(doc)} unproven={unprovenSignals(doc)} />
       ),
     },
     { when: "10:00pm", title: "Research a name", content: <ResearchChapter doc={doc} best={bestCall(doc)} night={night} /> },
