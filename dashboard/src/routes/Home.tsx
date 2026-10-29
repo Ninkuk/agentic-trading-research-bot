@@ -328,18 +328,25 @@ function SymbolWall({ doc }: { doc: DashboardDoc }) {
   );
 }
 
-function nightNote(night: LastNight): string {
-  const parts: string[] = [];
-  parts.push(night.regime ? `${night.regime}.` : "No mood call tonight.");
-  if (night.tickersScored !== null) parts.push(`${night.tickersScored.toLocaleString()} stocks checked.`);
-  if (night.candidates !== null) parts.push(`${night.candidates} worth a closer look.`);
-  return parts.join(" ");
+function nightNote(night: LastNight): string[] {
+  const lines: string[] = [];
+  lines.push(night.regime ? `${night.regime}.` : "No mood call tonight.");
+  if (night.tickersScored !== null) lines.push(`${night.tickersScored.toLocaleString()} stocks checked.`);
+  if (night.candidates !== null) lines.push(`${night.candidates} worth a closer look.`);
+  return lines;
 }
+
+const WORD_STAGGER = 0.18;
 
 function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
-  const text = nightNote(night);
+  const lines = nightNote(night);
+  // Each bullet starts once the previous one has finished typing.
+  const starts = lines.reduce<number[]>((acc, _line, i) => {
+    acc.push(i === 0 ? 0 : acc[i - 1] + lines[i - 1].split(" ").length * WORD_STAGGER + 0.3);
+    return acc;
+  }, []);
   return (
     <div className="grid gap-6">
       <Prose>
@@ -355,9 +362,18 @@ function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
           <span>tonight's note</span>
           <span>composite · 9:05pm</span>
         </div>
-        <div className="relative text-xl leading-relaxed font-medium sm:text-2xl">
-          {inView ? <TextGenerateEffect words={text} duration={0.5} /> : <span className="opacity-0">{text}</span>}
-        </div>
+        <ul className="relative m-0 grid list-none gap-2 p-0 text-xl leading-relaxed font-medium sm:text-2xl">
+          {lines.map((line, i) => (
+            <li key={line} className="flex gap-3">
+              <span aria-hidden="true" className="bg-primary mt-[0.7em] size-2 shrink-0 rounded-full" />
+              {inView ? (
+                <TextGenerateEffect words={line} duration={0.5} delay={starts[i]} stagger={WORD_STAGGER} />
+              ) : (
+                <span className="opacity-0">{line}</span>
+              )}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
@@ -509,7 +525,7 @@ function Story({ doc }: { doc: DashboardDoc }) {
   const counts = researchCounts(doc);
   const entries: TimelineEntry[] = [
     { when: "4:30pm", title: "Read", content: <ReadChapter doc={doc} night={night} /> },
-    { when: "9:05pm", title: "Write an opinion", content: <WriteChapter doc={doc} night={night} /> },
+    { when: "9:05pm", title: "Gauge the market", content: <WriteChapter doc={doc} night={night} /> },
     {
       when: "9:10pm",
       title: "Grade the old ones",

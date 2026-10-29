@@ -97,7 +97,7 @@ test("the story has one chapter per step of the run, with last night's output", 
   const seen = titles.filter((t, i) => titles.indexOf(t) === i);
   expect(seen).toEqual([
     "Read",
-    "Write an opinion",
+    "Gauge the market",
     "Grade the old ones",
     "Research a name",
     "Attack the thesis",

@@ -1,5 +1,5 @@
 // Aceternity UI "Text Generate Effect" (MIT), adapted: theme tokens instead
-// of black/white, no outer margins, so the caller owns the type scale.
+// of black/white, no outer margins, a start delay and word stagger prop.
 // https://ui.aceternity.com/components/text-generate-effect
 import { useEffect } from "react";
 import { motion, stagger, useAnimate } from "motion/react";
@@ -10,11 +10,17 @@ export const TextGenerateEffect = ({
   className,
   filter = true,
   duration = 0.5,
+  delay = 0,
+  stagger: step = 0.2,
 }: {
   words: string;
   className?: string;
   filter?: boolean;
   duration?: number;
+  /** Seconds before the first word starts, so stacked lines can take turns. */
+  delay?: number;
+  /** Seconds between words. */
+  stagger?: number;
 }) => {
   const [scope, animate] = useAnimate();
   const wordsArray = words.split(" ");
@@ -27,10 +33,10 @@ export const TextGenerateEffect = ({
       },
       {
         duration: duration ? duration : 1,
-        delay: stagger(0.2),
+        delay: stagger(step, { startDelay: delay }),
       }
     );
-  }, [scope, animate, duration, filter]);
+  }, [scope, animate, duration, filter, delay, step]);
 
   const renderWords = () => {
     return (
