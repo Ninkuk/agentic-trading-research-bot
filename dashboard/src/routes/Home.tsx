@@ -34,6 +34,7 @@ import { GlowingEffect } from "../components/aceternity/glowing-effect";
 import { HoverBorderGradient } from "../components/aceternity/hover-border-gradient";
 import { InfiniteMovingCards } from "../components/aceternity/infinite-moving-cards";
 import { Button as MovingBorderButton } from "../components/aceternity/moving-border";
+import { PointerHighlight } from "../components/aceternity/pointer-highlight";
 import { Spotlight } from "../components/aceternity/spotlight-new";
 import { Terminal } from "../components/aceternity/terminal";
 import { TextGenerateEffect } from "../components/aceternity/text-generate-effect";
@@ -51,7 +52,6 @@ import {
   calibration,
   callHitRate,
   callsGraded,
-  drivers,
   GRADE_HORIZON,
   lastNight,
   lastRunOf,
@@ -206,6 +206,32 @@ function Hero({ doc }: { doc: DashboardDoc }) {
   );
 }
 
+/** Section heading: the closing phrase boxed by Aceternity's Pointer
+ * Highlight as it scrolls into view; no uppercase kicker above it. */
+function SectionTitle({
+  lead,
+  highlight,
+  note,
+  className,
+}: {
+  lead: string;
+  highlight: string;
+  note?: string;
+  className?: string;
+}) {
+  return (
+    <div className={`grid max-w-[60ch] gap-3 ${className ?? ""}`}>
+      <h2 className="m-0 text-3xl font-semibold tracking-tight text-balance md:text-4xl">
+        {lead}{" "}
+        <PointerHighlight containerClassName="inline-block align-baseline" rectangleClassName="rounded-sm">
+          <span className="relative z-10 px-1">{highlight}</span>
+        </PointerHighlight>
+      </h2>
+      {note && <p className="text-muted-foreground m-0 text-base">{note}</p>}
+    </div>
+  );
+}
+
 // --- the story: one night, chapter by chapter ---------------------------------
 
 // Seals are the agencies' own (public domain; public/logos/README.md).
@@ -274,7 +300,6 @@ const READ_JOBS = new Set(["treasury", "fred", "cboe-stats", "short-volume", "sh
 
 function ReadChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
   const runs = lastRuns(doc).filter((r) => READ_JOBS.has(r.job));
-  const d = drivers(doc);
   return (
     <div className="grid gap-6">
       <Prose>
@@ -284,27 +309,17 @@ function ReadChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
       </Prose>
       {runs.length > 0 ? (
         <Terminal
-          username="launchd"
+          username="~/agentic-trading-research-bot"
           commands={terminalScript(runs).commands}
           outputs={terminalScript(runs).outputs}
           typingSpeed={28}
           delayBetweenCommands={500}
-          className="max-w-2xl"
+          className="max-w-3xl"
         />
       ) : (
         night.jobsRan !== null && <Chip>{night.jobsRan} jobs ran</Chip>
       )}
-      {d.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {d.map((x) => (
-            <Chip key={x.label}>
-              {x.label}: {x.value}
-              {x.band ? ` (${x.band})` : ""}
-            </Chip>
-          ))}
-        </div>
-      )}
-      <InfiniteMovingCards items={SOURCES} speed="slow" className="-mx-5 w-[calc(100%+2.5rem)] sm:-mx-8 sm:w-[calc(100%+4rem)]" />
+      <InfiniteMovingCards items={SOURCES} durationSeconds={150} className="-mx-5 w-[calc(100%+2.5rem)] sm:-mx-8 sm:w-[calc(100%+4rem)]" />
     </div>
   );
 }
@@ -530,13 +545,7 @@ function Story({ doc }: { doc: DashboardDoc }) {
   return (
     <section id="story" className="border-border border-t py-16 md:py-24">
       <div className="page-wide">
-        <div className="grid max-w-[60ch] gap-2">
-          <span className="text-tone-up text-xs font-semibold tracking-widest uppercase">One night, start to finish</span>
-          <h2 className="m-0 text-3xl font-semibold tracking-tight md:text-4xl">What happens while nobody is watching.</h2>
-          <p className="text-muted-foreground m-0 text-base">
-            Six steps, every evening, Phoenix time. The outputs below are from {doc.edition_date}.
-          </p>
-        </div>
+        <SectionTitle lead="One night," highlight="start to finish." note={`Six steps every evening, Phoenix time. The outputs are from ${doc.edition_date}.`} />
         <Timeline data={entries} />
       </div>
     </section>
@@ -581,14 +590,12 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
   return (
     <section id="scorecard" className="border-border bg-muted/30 border-t py-16 md:py-24">
       <div className="page-wide">
-        <div className="mb-8 grid max-w-[60ch] gap-2">
-          <span className="text-tone-up text-xs font-semibold tracking-widest uppercase">The scorecard</span>
-          <h2 className="m-0 text-3xl font-semibold tracking-tight md:text-4xl">Has it been right?</h2>
-          <p className="text-muted-foreground m-0 text-base">
-            Opinions are graded weeks later against what actually happened. Nothing re-tunes itself.
-            Performance is $100 rebased; no positions, no dollar amounts.
-          </p>
-        </div>
+        <SectionTitle
+          lead="Has it"
+          highlight="been right?"
+          note="Opinions are graded weeks later against what actually happened. Nothing re-tunes itself. Performance is $100 rebased; no positions, no dollar amounts."
+          className="mb-8"
+        />
         {nothing && (
           <p className="text-muted-foreground border-border rounded-2xl border border-dashed p-6 text-center">
             Nothing is graded yet. The first grades land once an opinion is {GRADE_HORIZON} trading days old.
@@ -658,10 +665,7 @@ function WhereNext({ doc }: { doc: DashboardDoc }) {
   return (
     <section id="next" className="border-border border-t py-16 md:py-24">
       <div className="page-wide">
-        <div className="mb-8 grid gap-2">
-          <span className="text-tone-up text-xs font-semibold tracking-widest uppercase">Where next</span>
-          <h2 className="m-0 text-3xl font-semibold tracking-tight md:text-4xl">Three ways in.</h2>
-        </div>
+        <SectionTitle lead="Three" highlight="ways in." className="mb-8" />
         <div className="grid gap-3 md:grid-cols-3">
           {best && (
             <a className={card} href={`#/ticker/${best.symbol}`}>
@@ -701,14 +705,11 @@ function SuggestName() {
   return (
     <section id="suggest" className="border-border bg-muted/30 border-t py-16 md:py-24">
       <div className="page-wide grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center">
-        <div className="grid max-w-[60ch] gap-2">
-          <span className="text-tone-up text-xs font-semibold tracking-widest uppercase">Suggest a name</span>
-          <h2 className="m-0 text-3xl font-semibold tracking-tight md:text-4xl">Point the desk at a stock.</h2>
-          <p className="text-muted-foreground m-0 text-base">
-            Any US-listed name. It joins the reading list, gets the same thesis and the same attack as every
-            other name, and the scorecard grades the call whether it says buy or pass.
-          </p>
-        </div>
+        <SectionTitle
+          lead="Point the desk at"
+          highlight="a stock."
+          note="Any US-listed name. It joins the reading list, gets the same thesis and the same attack as every other name, and the scorecard grades the call whether it says buy or pass."
+        />
         <form
           className="bg-card border-border relative grid gap-3 rounded-2xl border p-5 sm:p-6"
           onSubmit={(e) => {

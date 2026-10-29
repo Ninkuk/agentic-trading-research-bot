@@ -44,7 +44,7 @@ test("the beats render in order: headline, the night's story, scorecard, where n
   );
   const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
   expect(headings).toEqual([
-    "What happens while nobody is watching.",
+    "One night, start to finish.",
     "Has it been right?",
     "Three ways in.",
     "Point the desk at a stock.",
@@ -112,7 +112,7 @@ test("the story has one chapter per step of the run, with last night's output", 
   expect(screen.getByText(/\[22:00\] done: 3 ok, 0 failed of 3 selected/)).toBeInTheDocument();
   // The terminal replays the read jobs' real commands (typed once in view;
   // jsdom never scrolls, so the title bar is what renders).
-  expect(screen.getByText("launchd — last night")).toBeInTheDocument();
+  expect(screen.getByText("~/agentic-trading-research-bot — last night")).toBeInTheDocument();
 });
 
 test("the counters come from the research and timeline sections", () => {
