@@ -8,8 +8,11 @@ duration/hang-detection history, not a bash test suite.
 
 import re
 import subprocess
+import sys
 import textwrap
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LAUNCHD = REPO_ROOT / "deploy" / "launchd"
@@ -459,6 +462,10 @@ def test_env_sh_exit_trap_emits_exactly_one_end_line_with_the_real_exit_code(tmp
     assert "exit 5" in end_lines[0]
 
 
+@pytest.mark.skipif(
+    sys.platform != "darwin",
+    reason="wedge_autopsy shells out to macOS-only `sample`; no sample.txt lands elsewhere",
+)
 def test_wedged_claude_gets_an_autopsy_before_the_kill(tmp_path):
     """Every observed wedge is a frozen event loop (main thread blocked in
     openat), so the process can never log what it is stuck on; the wrapper
