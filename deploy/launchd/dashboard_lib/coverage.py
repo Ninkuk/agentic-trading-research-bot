@@ -72,6 +72,7 @@ _STOCKS_COLS = {
     "assets": "REAL",
     "atr": "REAL",
     "analystCount": "REAL",
+    "sbcByRevenue": "REAL",
 }
 
 # data/<file> -> the ensure_schema that owns it. The launchd installer names

@@ -129,7 +129,8 @@ WITH eligible AS (
            revenueGrowth3Y, netDebtEbitda, sharesYoY, fScore, rsi, ch6m,
            high52ch, zScore, interestCoverage,
            priceDate, isin, isPrimaryListing, netIncome, operatingCF, assets,
-           revenueGrowth, revenueThisYear, revenueNextYear, analystCount
+           revenueGrowth, revenueThisYear, revenueNextYear, analystCount,
+           sbcByRevenue
     FROM v_latest
     WHERE symbol NOT LIKE '%.PR%'                 -- preferreds are not common equity
       AND marketCap >= {MARKET_CAP_MIN}
@@ -162,7 +163,13 @@ SELECT symbol, sector, marketCap, dollarVolume, roic, roic5y, fcfYield,
        -- Sell-side coverage. Annotation, ledgered per sighting, on the
        -- hypothesis that mispricing lives where coverage is thin;
        -- v_candidate_efficacy decides whether that holds.
-       analystCount
+       analystCount,
+       -- Stock comp as % of revenue. The LEVEL is research-ticker's FCF
+       -- haircut and realised dilution is gated above (sharesYoY), but
+       -- buybacks mask dilution; this ledgers per sighting so
+       -- v_candidate_quality_trend can read SBC/revenue RISING across an
+       -- episode (SBC growing faster than revenue). Annotation, not a gate.
+       sbcByRevenue
 FROM ranked WHERE rn = 1
 ORDER BY fcfYield DESC, roic DESC, symbol
 """
@@ -192,6 +199,7 @@ _FIELDS = [
     "revenueNextYear",
     "accrualsPctAssets",
     "analystCount",
+    "sbcByRevenue",
 ]
 
 

@@ -40,6 +40,7 @@ def read_candidate_rows(conn):
             "shares_yoy": r["sharesYoY"],
             "accruals_pct_assets": r["accrualsPctAssets"],
             "analyst_count": r["analystCount"],
+            "sbc_by_revenue": r["sbcByRevenue"],
             "rev_growth_ttm": r["revenueGrowth"],
             "cons_rev_growth_fy": r["revenueThisYear"],
             "cons_rev_growth_fy2": r["revenueNextYear"],

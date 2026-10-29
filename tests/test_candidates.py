@@ -19,7 +19,7 @@ _COLS = (
     " rsi REAL, ch6m REAL, high52ch REAL, zScore REAL, interestCoverage REAL,"
     " priceDate TEXT, netIncome REAL, operatingCF REAL, assets REAL,"
     " revenueGrowth REAL, revenueThisYear REAL, revenueNextYear REAL,"
-    " analystCount REAL"
+    " analystCount REAL, sbcByRevenue REAL"
 )
 
 # A name that passes every gate. Tests mutate one field at a time off this.
@@ -49,6 +49,7 @@ _CLEAN = dict(
     operatingCF=1500.0,
     assets=10000.0,
     analystCount=7.0,
+    sbcByRevenue=2.0,
     # Inflection door OFF by default: every gate test above stays single-field.
     revenueGrowth=4.0,
     revenueThisYear=4.0,
@@ -686,6 +687,25 @@ def test_analyst_count_is_carried_as_an_annotation(tmp_path):
 def test_analyst_count_is_an_annotation_not_a_gate(tmp_path):
     for i, n in enumerate((None, 0.0, 60.0)):
         conn = _stocks_db(tmp_path, {"symbol": "GOOD", "analystCount": n}, name=f"s{i}.db")
+        assert _symbols(conn) == ["GOOD"], n
+
+
+# ------------------------------------------------------- SBC annotation ----
+# sbcByRevenue (percent): stock comp as a share of revenue. The LEVEL is read
+# by research-ticker and realised dilution is gated (sharesYoY), but buybacks
+# mask dilution; SBC/revenue rising across an on-list episode is the drain
+# signal neither sees. Ledgered per sighting for v_candidate_quality_trend;
+# annotation only until v_candidate_efficacy splits on it.
+
+
+def test_sbc_by_revenue_is_carried_as_an_annotation(tmp_path):
+    conn = _stocks_db(tmp_path, {"sbcByRevenue": 12.5})
+    assert candidates.screen(conn)[0]["sbcByRevenue"] == 12.5
+
+
+def test_sbc_by_revenue_is_an_annotation_not_a_gate(tmp_path):
+    for i, n in enumerate((None, 0.0, 40.0)):
+        conn = _stocks_db(tmp_path, {"symbol": "GOOD", "sbcByRevenue": n}, name=f"s{i}.db")
         assert _symbols(conn) == ["GOOD"], n
 
 

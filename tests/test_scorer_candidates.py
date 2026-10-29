@@ -244,6 +244,7 @@ def test_unmatured_rows_are_visible_but_not_counted(tmp_path):
 
 _SCREEN_COLS = {
     "analystCount": "REAL",
+    "sbcByRevenue": "REAL",
     "sector": "TEXT",
     "marketCap": "REAL",
     "dollarVolume": "REAL",
@@ -288,10 +289,11 @@ def _mini_stocks(path, captured_at="2026-07-02T11:00:00+00:00", inflection=False
         ' roic, roic5y, "fcfYield", "revenueGrowth3Y", "netDebtEbitda", "sharesYoY",'
         ' "fScore", rsi, ch6m, high52ch, "zScore", "interestCoverage", "priceDate",'
         ' isin, "isPrimaryListing", "netIncome", "operatingCF", assets,'
-        ' "revenueGrowth", "revenueThisYear", "revenueNextYear", "analystCount")'
+        ' "revenueGrowth", "revenueThisYear", "revenueNextYear", "analystCount",'
+        ' "sbcByRevenue")'
         " VALUES (1, 'GOOD', 'Technology', 2e10, 5e7,"
         " 25.0, 20.0, 6.0, ?, 0.5, -1.0, 7.0, 38.0, -20.0, -20.0, 6.0, 12.0,"
-        " '2026-07-01', 'US1111111111', '1', 100.0, 150.0, 1000.0, ?, ?, ?, 3.0)",
+        " '2026-07-01', 'US1111111111', '1', 100.0, 150.0, 1000.0, ?, ?, ?, 3.0, 2.0)",
         growth,
     )
     conn.commit()
@@ -377,6 +379,7 @@ _QUALITY_COLS = {
     "net_debt_ebitda",
     "shares_yoy",
     "accruals_pct_assets",
+    "sbc_by_revenue",
     # the inflection door's three legs, ledgered so its entries can be
     # re-analysed (which leg was marginal?) once v_candidate_efficacy grades them
     "rev_growth_ttm",
@@ -520,6 +523,27 @@ def test_quality_trend_carries_accruals_entry_and_now(tmp_path):
     _appear(conn, "AAA", "2026-07-03", accruals_pct_assets=8.0)
     t = _trend(conn, "AAA")
     assert (t["accruals_entry"], t["accruals_now"]) == (-5.0, 8.0)
+
+
+def test_read_candidate_rows_carries_sbc_by_revenue(tmp_path):
+    conn = _conn(tmp_path)
+    _mini_stocks(tmp_path / "stocks.db")
+    fetch.attach_ro(conn, str(tmp_path / "stocks.db"))
+    try:
+        _, _, rows = fetch.read_candidate_rows(conn)
+    finally:
+        fetch.detach(conn)
+    assert rows[0]["sbc_by_revenue"] == 2.0
+
+
+def test_quality_trend_carries_sbc_entry_and_now(tmp_path):
+    """SBC/revenue rising across an episode is SBC growing faster than revenue
+    — the drain read the level and the dilution gate both miss."""
+    conn = _conn(tmp_path)
+    _appear(conn, "AAA", "2026-07-01", sbc_by_revenue=2.0)
+    _appear(conn, "AAA", "2026-07-03", sbc_by_revenue=9.0)
+    t = _trend(conn, "AAA")
+    assert (t["sbc_entry"], t["sbc_now"]) == (2.0, 9.0)
 
 
 # ------------------------------------------------- the inflection door ----

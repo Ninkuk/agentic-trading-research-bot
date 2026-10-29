@@ -400,6 +400,7 @@ CREATE TABLE IF NOT EXISTS candidate_appearances (
     shares_yoy     REAL,
     accruals_pct_assets REAL,
     analyst_count  REAL,
+    sbc_by_revenue REAL,
     -- the inflection door's three legs, so an entry can be re-read later
     rev_growth_ttm REAL,
     cons_rev_growth_fy REAL,
@@ -446,6 +447,7 @@ _APPEARANCE_QUALITY_COLS = (
     "shares_yoy",
     "accruals_pct_assets",
     "analyst_count",
+    "sbc_by_revenue",
     "rev_growth_ttm",
     "cons_rev_growth_fy",
     "cons_rev_growth_fy2",
@@ -1162,6 +1164,7 @@ SELECT e.symbol,
        MIN(CASE WHEN e.is_entry THEN e.roic END) AS roic_entry,
        MIN(CASE WHEN e.is_entry THEN e.fcf_yield END) AS fcf_yield_entry,
        MIN(CASE WHEN e.is_entry THEN e.accruals_pct_assets END) AS accruals_entry,
+       MIN(CASE WHEN e.is_entry THEN e.sbc_by_revenue END) AS sbc_entry,
        (SELECT fscore FROM episodes l WHERE l.symbol = e.symbol AND l.episode = e.episode
          ORDER BY l.screen_date DESC LIMIT 1) AS fscore_now,
        (SELECT roic FROM episodes l WHERE l.symbol = e.symbol AND l.episode = e.episode
@@ -1170,7 +1173,10 @@ SELECT e.symbol,
          ORDER BY l.screen_date DESC LIMIT 1) AS fcf_yield_now,
        (SELECT accruals_pct_assets FROM episodes l
          WHERE l.symbol = e.symbol AND l.episode = e.episode
-         ORDER BY l.screen_date DESC LIMIT 1) AS accruals_now
+         ORDER BY l.screen_date DESC LIMIT 1) AS accruals_now,
+       (SELECT sbc_by_revenue FROM episodes l
+         WHERE l.symbol = e.symbol AND l.episode = e.episode
+         ORDER BY l.screen_date DESC LIMIT 1) AS sbc_now
 FROM episodes e JOIN current c ON c.symbol = e.symbol AND c.episode = e.episode
 GROUP BY e.symbol, e.episode;
 
@@ -1626,8 +1632,8 @@ def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
             "  fscore, via_rsi, via_drawdown, via_inflection, roic, roic5y,"
             "  rev_growth_3y, net_debt_ebitda, shares_yoy, accruals_pct_assets,"
             "  analyst_count, rev_growth_ttm, cons_rev_growth_fy, cons_rev_growth_fy2,"
-            "  recorded_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "  sbc_by_revenue, recorded_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 r["symbol"],
                 screen_date,
@@ -1649,6 +1655,7 @@ def record_appearances(conn, rows, screen_date, screen_version, now_iso) -> int:
                 r.get("rev_growth_ttm"),
                 r.get("cons_rev_growth_fy"),
                 r.get("cons_rev_growth_fy2"),
+                r.get("sbc_by_revenue"),
                 now_iso,
             ),
         )
