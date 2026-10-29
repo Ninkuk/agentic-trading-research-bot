@@ -24,8 +24,8 @@
 // `MotionConfig reducedMotion="user"` turns all of it into plain rendering
 // for readers who asked for less motion.
 
-import { lazy, Suspense, useEffect, useState } from "react";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import { useEffect, useState } from "react";
+import { motion, MotionConfig } from "motion/react";
 import { ArrowRight, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, type LucideIcon } from "lucide-react";
 import { CardStack } from "../components/aceternity/card-stack";
 import { EncryptedText } from "../components/aceternity/encrypted-text";
@@ -57,6 +57,8 @@ import {
   thesisOneLiner,
   unprovenSignals,
   type Calibration,
+  type HitRate,
+  type UnprovenSignals,
   type LastNight,
   type ResearchCounts,
 } from "../home/homeFacts";
@@ -67,11 +69,6 @@ import { VerdictChip } from "../ui/VerdictChip";
 
 const HEADLINE = "A research desk that grades its own work.";
 
-// three.js and react-three-fiber ride only in this chunk, fetched the first
-// time the grade card is hovered; the page's own bundle never carries them.
-const CanvasRevealEffect = lazy(() =>
-  import("../components/aceternity/canvas-reveal-effect").then((m) => ({ default: m.CanvasRevealEffect })),
-);
 
 /** In-page navigation that leaves the hash alone: a bare `#story` would be
  * parsed as a section route and send the reader to a strand page. */
@@ -361,98 +358,92 @@ function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
   );
 }
 
+interface ReportRow {
+  label: string;
+  result: string;
+  mark: "pass" | "fail" | "open";
+}
+
+/** The grader's own report card, from the real grades: each row lands
+ * with a short stagger as it scrolls into view, then the stamp drops. */
+function reportRows(cal: Calibration | null, buy: HitRate | null, pass: HitRate | null, unproven: UnprovenSignals | null): ReportRow[] {
+  const rows: ReportRow[] = [];
+  if (buy) rows.push({ label: "Buy calls", result: `${pct(buy.rate * 100, 0)} right, ${buy.n} graded`, mark: buy.rate >= 0.5 ? "pass" : "fail" });
+  if (pass) rows.push({ label: "Pass calls", result: `${pct(pass.rate * 100, 0)} right, ${pass.n} graded`, mark: pass.rate >= 0.5 ? "pass" : "fail" });
+  const said = cal ? /said (\d+)%, won (\d+)%/.exec(cal.verdict.text) : null;
+  if (said) {
+    const gap = Math.abs(Number(said[1]) - Number(said[2]));
+    rows.push({ label: "Its own odds", result: `said ${said[1]}%, won ${said[2]}%`, mark: gap <= 5 ? "pass" : "fail" });
+  }
+  if (unproven) rows.push({ label: "Market signals", result: `${unproven.unproven} of ${unproven.total} too new to trust`, mark: "open" });
+  return rows;
+}
+
+const MARK = {
+  pass: { glyph: "✓", className: "text-tone-up border-tone-up/40" },
+  fail: { glyph: "✗", className: "text-tone-down border-tone-down/40" },
+  open: { glyph: "…", className: "text-muted-foreground border-border" },
+};
+
+function ReportCard({ rows, graded }: { rows: ReportRow[]; graded: number | null }) {
+  return (
+    <motion.div
+      className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border p-6 sm:p-8"
+      initial="rest"
+      whileInView="in"
+      viewport={{ once: true, amount: 0.5 }}
+    >
+      <div className="text-muted-foreground mb-4 flex items-center justify-between font-mono text-xs">
+        <span>report card</span>
+        {graded !== null && <span>{graded} calls graded</span>}
+      </div>
+      <ul className="m-0 grid list-none gap-0 p-0">
+        {rows.map((r, i) => (
+          <motion.li
+            key={r.label}
+            className="border-border flex items-center gap-4 border-t py-3 first:border-t-0"
+            variants={{ rest: { opacity: 0, x: -8 }, in: { opacity: 1, x: 0, transition: { delay: 0.15 + i * 0.25, duration: 0.35 } } }}
+          >
+            <span className={`grid size-7 shrink-0 place-items-center rounded-full border font-mono text-sm ${MARK[r.mark].className}`}>
+              {MARK[r.mark].glyph}
+            </span>
+            <span className="font-medium">{r.label}</span>
+            <span className="text-muted-foreground ml-auto text-right text-sm tabular-nums">{r.result}</span>
+          </motion.li>
+        ))}
+      </ul>
+      <motion.span
+        aria-hidden="true"
+        className="text-tone-up border-tone-up pointer-events-none absolute right-6 bottom-5 rotate-[-12deg] rounded-md border-2 px-2 py-0.5 font-mono text-sm font-semibold tracking-widest uppercase"
+        variants={{ rest: { opacity: 0, scale: 1.8 }, in: { opacity: 0.9, scale: 1, transition: { delay: 0.3 + rows.length * 0.25, type: "spring", stiffness: 500, damping: 22 } } }}
+      >
+        graded
+      </motion.span>
+    </motion.div>
+  );
+}
+
 function GradeChapter({
   cal,
+  buy,
+  pass,
   graded,
   unproven,
 }: {
   cal: Calibration | null;
+  buy: HitRate | null;
+  pass: HitRate | null;
   graded: number | null;
-  unproven: { unproven: number; total: number } | null;
+  unproven: UnprovenSignals | null;
 }) {
-  const said = cal ? /said (\d+%), won (\d+%)/.exec(cal.verdict.text) : null;
-  const [revealed, setRevealed] = useState(false);
+  const rows = reportRows(cal, buy, pass, unproven);
   return (
     <div className="grid gap-6">
       <Prose>
         A grader goes back and checks how each past opinion turned out against simply holding an S&amp;P 500
         fund, and whether the odds the research gave itself held up. Nothing tunes itself automatically.
       </Prose>
-      {said ? (
-        // The reveal: the research's own odds at rest; hover (or tap) plays
-        // Aceternity's Canvas Reveal Effect and swaps in what actually happened.
-        <div
-          className="bg-card border-border relative max-w-2xl cursor-pointer overflow-hidden rounded-2xl border p-6 sm:p-8"
-          onMouseEnter={() => setRevealed(true)}
-          onMouseLeave={() => setRevealed(false)}
-          onClick={() => setRevealed((v) => !v)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setRevealed((v) => !v);
-            }
-          }}
-          aria-pressed={revealed}
-        >
-          <AnimatePresence>
-            {revealed && (
-              <motion.div
-                key="reveal"
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <Suspense fallback={null}>
-                  <CanvasRevealEffect animationSpeed={3} containerClassName="bg-transparent" colors={[[0, 200, 5]]} dotSize={2} />
-                </Suspense>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="relative grid gap-3">
-            <div className="text-muted-foreground font-mono text-xs">the odds it gave itself</div>
-            <AnimatePresence mode="wait" initial={false}>
-              {revealed ? (
-                <motion.p
-                  key="won"
-                  className="m-0 text-2xl font-semibold tracking-tight sm:text-4xl"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  It won {said[2]}.
-                </motion.p>
-              ) : (
-                <motion.p
-                  key="said"
-                  className="m-0 text-2xl font-semibold tracking-tight sm:text-4xl"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  It said it would win {said[1]} of the time.
-                </motion.p>
-              )}
-            </AnimatePresence>
-            <div className="text-muted-foreground text-sm">
-              {revealed ? `${graded ? `${graded} calls graded. ` : ""}Hover away to see the odds again.` : "Hover to see what happened."}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <Chip>
-          {graded
-            ? `${graded} calls graded`
-            : unproven
-              ? `${unproven.unproven} of ${unproven.total} market signals have too little history to trust yet`
-              : "nothing graded yet"}
-        </Chip>
-      )}
+      {rows.length > 0 ? <ReportCard rows={rows} graded={graded} /> : <Chip>nothing graded yet</Chip>}
     </div>
   );
 }
@@ -562,7 +553,13 @@ function Story({ doc }: { doc: DashboardDoc }) {
       when: "9:30pm",
       title: "Grade the old ones",
       content: (
-        <GradeChapter cal={calibration(doc)} graded={callsGraded(doc)} unproven={unprovenSignals(doc)} />
+        <GradeChapter
+          cal={calibration(doc)}
+          buy={callHitRate(doc, "buy")}
+          pass={callHitRate(doc, "pass")}
+          graded={callsGraded(doc)}
+          unproven={unprovenSignals(doc)}
+        />
       ),
     },
     { when: "10:00pm", title: "Research a name", content: <ResearchChapter doc={doc} best={bestCall(doc)} night={night} /> },

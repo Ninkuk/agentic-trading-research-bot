@@ -176,9 +176,9 @@ test("the scorecard shows the exporter's curve figures and the grade cards when 
   expect(screen.getByText("Buy calls right").previousSibling).toHaveTextContent("56%");
   expect(screen.getByText("Confidence vs results").previousSibling).toHaveTextContent("said 46%, won 44%");
   expect(screen.getByText("Market signals still unproven").previousSibling).toHaveTextContent("1 of 1");
-  // The grade chapter turns the calibration verdict into the said-then-won reveal.
-  expect(screen.getByText("It said it would win 46% of the time.")).toBeInTheDocument();
-  expect(screen.queryByText("It won 44%.")).not.toBeInTheDocument();
+  // The grade chapter is a report card built from the real grades.
+  expect(screen.getByText("Its own odds").nextSibling).toHaveTextContent("said 46%, won 44%");
+  expect(screen.getByText("Buy calls").nextSibling).toHaveTextContent("56% right, 45 graded");
 });
 
 test("each grade degrades alone; with nothing graded the scorecard says so", () => {
@@ -186,8 +186,8 @@ test("each grade degrades alone; with nothing graded the scorecard says so", () 
   expect(screen.queryByText("Buy calls right")).not.toBeInTheDocument();
   expect(screen.queryByText("Confidence vs results")).not.toBeInTheDocument();
   expect(screen.getByText("Market signals still unproven")).toBeInTheDocument();
-  // No calibration in the fixture: the grade chapter falls back to the unproven count.
-  expect(screen.getByText(/1 of 1 market signals have too little history/)).toBeInTheDocument();
+  // No calibration or hit rates in the fixture: the report card holds the one open row.
+  expect(screen.getByText("Market signals").nextSibling).toHaveTextContent("1 of 1 too new to trust");
 });
 
 test("with no graded section at all the scorecard shows its empty state", () => {
