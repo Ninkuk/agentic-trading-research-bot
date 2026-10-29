@@ -506,9 +506,9 @@ function Story({ doc }: { doc: DashboardDoc }) {
   const counts = researchCounts(doc);
   const entries: TimelineEntry[] = [
     { when: "4:30pm", title: "Read", content: <ReadChapter doc={doc} night={night} /> },
-    { when: "9:05pm", title: "Gauge the market", content: <WriteChapter doc={doc} night={night} /> },
+    { when: "9:00pm", title: "Gauge the market", content: <WriteChapter doc={doc} night={night} /> },
     {
-      when: "9:10pm",
+      when: "9:30pm",
       title: "Grade the old ones",
       content: (
         <GradeChapter cal={calibration(doc)} graded={callsGraded(doc)} unproven={unprovenSignals(doc)} />
