@@ -516,7 +516,7 @@ function Story({ doc }: { doc: DashboardDoc }) {
     },
     { when: "10:00pm", title: "Research a name", content: <ResearchChapter doc={doc} best={bestCall(doc)} night={night} /> },
     { when: "10:00pm", title: "Attack the thesis", content: <AttackChapter counts={counts} night={night} /> },
-    { when: "morning", title: "A person decides", content: <DecideChapter counts={counts} />, accent: true },
+    { when: "6:30am", title: "A person decides", content: <DecideChapter counts={counts} />, accent: true },
   ];
   return (
     <section id="story" className="border-border border-t py-16 md:py-24">
