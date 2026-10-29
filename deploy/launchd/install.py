@@ -141,6 +141,9 @@ JOBS = {
     # manually via `npm run build` after dashboard/ changes — launchd never
     # invokes Node.
     "publish-dashboard": (script("publish_dashboard.sh"), weekly(range(7), 21, 20)),
+    # On demand only: .githooks/pre-push kickstarts it after a push to main so
+    # a finished thesis is live in minutes, not at 9:20pm. No calendar.
+    "publish-now": (script("publish_now.sh"), []),
     # -- agentic research (after the combine chain, dashboard, and publish:
     #    selects from TONIGHT's v_flagged; up to RESEARCH_NIGHTLY_MAX
     #    headless `claude -p /research-ticker` runs, ~20min each) --
@@ -179,14 +182,18 @@ def plist_path(name):
 
 def build(name, program_args, intervals):
     log = str(LOGS / f"{name}.log")
-    return {
+    plist = {
         "Label": label(name),
         "ProgramArguments": program_args,
         "WorkingDirectory": str(REPO),
-        "StartCalendarInterval": intervals,
         "StandardOutPath": log,
         "StandardErrorPath": log,
     }
+    # An empty StartCalendarInterval is rejected at bootstrap; an on-demand
+    # job (publish-now) simply omits the key and waits for kickstart.
+    if intervals:
+        plist["StartCalendarInterval"] = intervals
+    return plist
 
 
 def launchctl(*args, check=False):

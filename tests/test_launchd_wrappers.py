@@ -482,3 +482,128 @@ def test_wedged_claude_gets_an_autopsy_before_the_kill(tmp_path):
     assert (autopsy_dir / "lsof.txt").exists() and (autopsy_dir / "sample.txt").exists()
     assert (autopsy_dir / "lldb.txt").exists()
     assert "leaf=" in line and "path=" in line
+
+
+# -- publish-now: the on-demand render+publish the pre-push hook kicks -------
+
+HOOKS = REPO_ROOT / ".githooks"
+
+
+def test_publish_now_job_is_installed_without_a_calendar():
+    """publish-now exists only to be kicked by `launchctl kickstart` from the
+    pre-push hook, so its plist must carry NO StartCalendarInterval: an
+    empty interval list is a plist key launchd rejects at bootstrap, and a
+    real slot would double-publish beside the 9:20pm job."""
+    from deploy.launchd import install
+
+    args, intervals = install.JOBS["publish-now"]
+    assert args[-1].endswith("publish_now.sh")
+    assert intervals == []
+    assert "StartCalendarInterval" not in install.build("publish-now", args, intervals)
+    # The scheduled jobs keep their calendar: the omission is for empty only.
+    d_args, d_intervals = install.JOBS["dashboard"]
+    assert install.build("dashboard", d_args, d_intervals)["StartCalendarInterval"] == d_intervals
+
+
+def test_publish_now_renders_without_heartbeat_then_publishes():
+    """Order and gating are the whole wrapper: the render runs first with
+    --no-heartbeat (the dead-man's switch is the nightly's), and the publish
+    runs ONLY if the render succeeded -- publish_dashboard.py's freshness
+    check reads data.json's mtime, so a failed render followed by a publish
+    would ship the previous document under tonight's date."""
+    from dashboard_lib import health
+
+    lines = [_code_only(ln) for ln in (LAUNCHD / "publish_now.sh").read_text().splitlines()]
+    cmds = [ln.strip() for ln in lines if "deploy/launchd/" in ln]
+    assert len(cmds) == 2, cmds
+    assert "dashboard.py --no-heartbeat" in cmds[0]
+    assert cmds[0].endswith("&&") or "&&" in cmds[1], cmds
+    assert "publish_dashboard.py" in cmds[1]
+    # Render (~40s) + a push bounded at 300s + other git calls at 120s can
+    # pass the 15min default hang budget; it belongs in the slow tier.
+    assert "publish-now" in health.SLOW_JOBS
+
+
+def _run_pre_push(tmp_path, stdin, *, launchctl_rc=0):
+    """Run .githooks/pre-push with fake launchctl/npm on PATH. Each fake
+    appends its argv to a log; the real ones would reach launchd and node."""
+    fakes = tmp_path / "bin"
+    fakes.mkdir()
+    log = tmp_path / "calls.log"
+    for name, rc in (("launchctl", launchctl_rc), ("npm", 0)):
+        fake = fakes / name
+        fake.write_text(f'#!/bin/sh\necho "{name} $*" >> "{log}"\nexit {rc}\n')
+        fake.chmod(0o755)
+    result = subprocess.run(
+        ["bash", str(HOOKS / "pre-push"), "origin", "https://example.invalid/repo.git"],
+        input=stdin,
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        env={"PATH": f"{fakes}:/usr/bin:/bin", "HOME": str(tmp_path)},
+        timeout=60,
+    )
+    calls = log.read_text().splitlines() if log.exists() else []
+    return result, calls
+
+
+def _shas_touching(path):
+    """(parent, commit) of the newest commit touching `path`."""
+    out = subprocess.run(
+        ["git", "log", "-1", "--format=%P %H", "--", path],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        check=True,
+    ).stdout.split()
+    return out[0], out[-1]
+
+
+def _no_frontend_change():
+    """A push range whose diff is empty (HEAD..HEAD): no dashboard/ change."""
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=REPO_ROOT, check=True
+    ).stdout.strip()
+    return head, head
+
+
+def test_pre_push_to_main_kicks_the_publish_now_job(tmp_path):
+    parent, head = _no_frontend_change()
+    stdin = f"refs/heads/main {head} refs/heads/main {parent}\n"
+    result, calls = _run_pre_push(tmp_path, stdin)
+    assert result.returncode == 0, result.stderr
+    assert calls == [f"launchctl kickstart gui/{_uid()}/com.tradingbot.publish-now"], calls
+
+
+def test_pre_push_to_another_branch_does_nothing(tmp_path):
+    parent, head = _no_frontend_change()
+    stdin = f"refs/heads/feature {head} refs/heads/feature {parent}\n"
+    result, calls = _run_pre_push(tmp_path, stdin)
+    assert result.returncode == 0, result.stderr
+    assert calls == []
+
+
+def test_pre_push_rebuilds_the_frontend_when_dashboard_changed(tmp_path):
+    """launchd never invokes Node; the hook builds dist in the user's shell
+    BEFORE kicking the job so the publish ships the pushed frontend."""
+    parent, head = _shas_touching("dashboard/src")
+    stdin = f"refs/heads/main {head} refs/heads/main {parent}\n"
+    result, calls = _run_pre_push(tmp_path, stdin)
+    assert result.returncode == 0, result.stderr
+    assert calls[0] == "npm --prefix dashboard run build", calls
+    assert calls[1].startswith("launchctl kickstart"), calls
+
+
+def test_pre_push_never_blocks_the_push(tmp_path):
+    """The hook is a convenience, not a gate: a missing job (fresh clone,
+    install.py not run) prints a note and the push proceeds."""
+    parent, head = _no_frontend_change()
+    stdin = f"refs/heads/main {head} refs/heads/main {parent}\n"
+    result, calls = _run_pre_push(tmp_path, stdin, launchctl_rc=113)
+    assert result.returncode == 0, result.stderr
+    assert "publish-now" in result.stderr + result.stdout
+    assert calls  # it did try
+
+
+def _uid():
+    return subprocess.run(["id", "-u"], capture_output=True, text=True).stdout.strip()

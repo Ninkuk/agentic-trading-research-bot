@@ -1,0 +1,26 @@
+#!/bin/sh
+# After a push to origin/main, publish the live dashboard now instead of at
+# 9:20pm: rebuild the frontend here if the pushed commits touched dashboard/
+# (launchd never invokes Node), then kickstart the publish-now launchd job,
+# which renders data.json from the local DBs and force-pushes gh-pages in the
+# background. Never blocks the push: every failure here is a note, exit 0.
+# Args: <remote name> <remote url>; stdin: <local ref> <local sha> <remote ref> <remote sha>.
+cd "$(git rev-parse --show-toplevel)" || exit 0
+remote="$1"
+zero="0000000000000000000000000000000000000000"
+
+while read -r _local_ref local_sha remote_ref remote_sha; do
+    [ "$remote" = "origin" ] && [ "$remote_ref" = "refs/heads/main" ] || continue
+    [ "$local_sha" != "$zero" ] || continue  # branch delete
+    if [ "$remote_sha" = "$zero" ] || git diff --name-only "$remote_sha" "$local_sha" -- dashboard/ | grep -q .; then
+        npm --prefix dashboard run build || echo "pre-push: dashboard build failed; publish-now will ship the previous dist" >&2
+    fi
+    label="com.tradingbot.publish-now"  # install.py's PREFIX + job name
+    if launchctl kickstart "gui/$(id -u)/$label" 2>/dev/null; then
+        echo "pre-push: kicked $label (logs/publish-now.log)"
+    else
+        echo "pre-push: $label not loaded (run deploy/launchd/install.py); skipping live publish" >&2
+    fi
+    break
+done
+exit 0

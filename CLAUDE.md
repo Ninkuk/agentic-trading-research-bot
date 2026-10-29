@@ -54,6 +54,8 @@ uv run mypy                            # type-check sources/, deploy/, tools/, m
 
 The pre-commit hook (`.githooks/pre-commit`) runs all four gates in ~2s. It's wired via
 `core.hooksPath`; on a fresh clone run `git config core.hooksPath .githooks` once.
+The pre-push hook (`.githooks/pre-push`) kickstarts the `publish-now` launchd job after a push to
+`origin/main` so the live dashboard reflects a pushed thesis within minutes (see `docs/SCHEDULE.md`).
 Bypass an intentionally-red WIP commit with `git commit --no-verify`.
 
 API keys (`FRED_API_KEY`, `EIA_API_KEY`, `NASS_API_KEY`, optional `CFTC_APP_TOKEN`) live in `.env`

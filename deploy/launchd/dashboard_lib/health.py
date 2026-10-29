@@ -40,6 +40,7 @@ SLOW_JOBS = {
     "fundamentals-bulk",  # downloads + ingests a DERA quarterly ZIP
     "edgar",  # starts 43min before the health snapshot AND has a designed sleep 900 retry pause
     "research-nightly",  # headless `claude -p` per ticker, ~20min each, up to 3
+    "publish-now",  # render (~40s) plus publish_dashboard.py's bounded git calls (~13min worst)
 }
 
 # Max acceptable age (days) of the newest snapshot, by DB filename. Defaults

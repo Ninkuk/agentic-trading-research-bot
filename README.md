@@ -25,7 +25,8 @@ The nightly summary is published as a small website:
 **<https://ninkuk.github.io/agentic-trading-research-bot/>**
 
 It's a small React app that reads a plain-data snapshot (`reports/data.json`,
-regenerated every evening around 9pm Phoenix time) and renders it client-side.
+regenerated every evening around 9pm Phoenix time, and again within minutes of
+each push to `main`) and renders it client-side.
 What you're looking at: a snapshot of the market's overall condition
 according to the collected data, a scorecard of stocks the system currently
 finds notable, a page per ticker (its screen row, the newest thesis rendered
