@@ -26,7 +26,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, MotionConfig } from "motion/react";
-import { ArrowRight, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, type LucideIcon } from "lucide-react";
+import { ArrowRight, Check, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, X, type LucideIcon } from "lucide-react";
 import { CardStack } from "../components/aceternity/card-stack";
 import { EncryptedText } from "../components/aceternity/encrypted-text";
 import { GlowingEffect } from "../components/aceternity/glowing-effect";
@@ -58,7 +58,6 @@ import {
   unprovenSignals,
   type Calibration,
   type HitRate,
-  type UnprovenSignals,
   type LastNight,
   type ResearchCounts,
 } from "../home/homeFacts";
@@ -361,28 +360,34 @@ function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
 interface ReportRow {
   label: string;
   result: string;
-  mark: "pass" | "fail" | "open";
+  mark: "pass" | "fail";
+  /** Wins and losses behind the mark, for the split bar; absent for the odds row. */
+  wins?: number;
+  losses?: number;
 }
 
 /** The grader's own report card, from the real grades: each row lands
- * with a short stagger as it scrolls into view, then the stamp drops. */
-function reportRows(cal: Calibration | null, buy: HitRate | null, pass: HitRate | null, unproven: UnprovenSignals | null): ReportRow[] {
+ * with a short stagger as it scrolls into view, then the stamp drops.
+ * Wins and losses both show, as counts and as a two-tone bar. */
+function reportRows(cal: Calibration | null, buy: HitRate | null, pass: HitRate | null): ReportRow[] {
   const rows: ReportRow[] = [];
-  if (buy) rows.push({ label: "Buy calls", result: `${pct(buy.rate * 100, 0)} right, ${buy.n} graded`, mark: buy.rate >= 0.5 ? "pass" : "fail" });
-  if (pass) rows.push({ label: "Pass calls", result: `${pct(pass.rate * 100, 0)} right, ${pass.n} graded`, mark: pass.rate >= 0.5 ? "pass" : "fail" });
+  const split = (label: string, h: HitRate) => {
+    const wins = Math.round(h.rate * h.n);
+    rows.push({ label, result: `${wins} right, ${h.n - wins} wrong`, mark: h.rate >= 0.5 ? "pass" : "fail", wins, losses: h.n - wins });
+  };
+  if (buy) split("Buy calls", buy);
+  if (pass) split("Pass calls", pass);
   const said = cal ? /said (\d+)%, won (\d+)%/.exec(cal.verdict.text) : null;
   if (said) {
     const gap = Math.abs(Number(said[1]) - Number(said[2]));
     rows.push({ label: "Its own odds", result: `said ${said[1]}%, won ${said[2]}%`, mark: gap <= 5 ? "pass" : "fail" });
   }
-  if (unproven) rows.push({ label: "Market signals", result: `${unproven.unproven} of ${unproven.total} too new to trust`, mark: "open" });
   return rows;
 }
 
 const MARK = {
-  pass: { glyph: "✓", className: "text-tone-up border-tone-up/40" },
-  fail: { glyph: "✗", className: "text-tone-down border-tone-down/40" },
-  open: { glyph: "…", className: "text-muted-foreground border-border" },
+  pass: { Icon: Check, className: "text-tone-up border-tone-up/40 bg-tone-up-bg" },
+  fail: { Icon: X, className: "text-tone-down border-tone-down/40 bg-tone-down-bg" },
 };
 
 function ReportCard({ rows, graded }: { rows: ReportRow[]; graded: number | null }) {
@@ -404,11 +409,22 @@ function ReportCard({ rows, graded }: { rows: ReportRow[]; graded: number | null
             className="border-border flex items-center gap-4 border-t py-3 first:border-t-0"
             variants={{ rest: { opacity: 0, x: -8 }, in: { opacity: 1, x: 0, transition: { delay: 0.15 + i * 0.25, duration: 0.35 } } }}
           >
-            <span className={`grid size-7 shrink-0 place-items-center rounded-full border font-mono text-sm ${MARK[r.mark].className}`}>
-              {MARK[r.mark].glyph}
+            <span className={`grid size-7 shrink-0 place-items-center rounded-full border ${MARK[r.mark].className}`}>
+              {(() => {
+                const Icon = MARK[r.mark].Icon;
+                return <Icon aria-hidden="true" className="size-4" strokeWidth={2.5} />;
+              })()}
             </span>
             <span className="font-medium">{r.label}</span>
-            <span className="text-muted-foreground ml-auto text-right text-sm tabular-nums">{r.result}</span>
+            <span className="ml-auto grid justify-items-end gap-1">
+              <span className="text-muted-foreground text-right text-sm tabular-nums">{r.result}</span>
+              {r.wins !== undefined && r.losses !== undefined && r.wins + r.losses > 0 && (
+                <span aria-hidden="true" className="flex h-1.5 w-28 overflow-hidden rounded-full">
+                  <span className="bg-tone-up" style={{ width: `${(100 * r.wins) / (r.wins + r.losses)}%` }} />
+                  <span className="bg-tone-down flex-1" />
+                </span>
+              )}
+            </span>
           </motion.li>
         ))}
       </ul>
@@ -428,15 +444,13 @@ function GradeChapter({
   buy,
   pass,
   graded,
-  unproven,
 }: {
   cal: Calibration | null;
   buy: HitRate | null;
   pass: HitRate | null;
   graded: number | null;
-  unproven: UnprovenSignals | null;
 }) {
-  const rows = reportRows(cal, buy, pass, unproven);
+  const rows = reportRows(cal, buy, pass);
   return (
     <div className="grid gap-6">
       <Prose>
@@ -558,7 +572,6 @@ function Story({ doc }: { doc: DashboardDoc }) {
           buy={callHitRate(doc, "buy")}
           pass={callHitRate(doc, "pass")}
           graded={callsGraded(doc)}
-          unproven={unprovenSignals(doc)}
         />
       ),
     },
