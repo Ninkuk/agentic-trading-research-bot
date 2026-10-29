@@ -133,8 +133,7 @@ test("the best graded buy call is the document on the card and the where-next li
   const links = [screen.getByRole("link", { name: "Read the whole thesis" }), screen.getByRole("link", { name: /best call so far/i })];
   for (const link of links) expect(link).toHaveAttribute("href", `#/ticker/${best.symbol}`);
   expect(screen.getByText(`research/${best.symbol}-${best.verdict_date}.md`)).toBeInTheDocument();
-  // The card's caption carries the gain; where-next carries the gain and the date.
-  expect(screen.getByText(/best call so far · \+14\.8 points vs SPY over 21 trading days$/)).toBeInTheDocument();
+  // Only where-next states the gain; the card itself carries no caption.
   expect(screen.getByText(/\+14\.8 points vs SPY over 21 trading days, called Jul 28/)).toBeInTheDocument();
 });
 

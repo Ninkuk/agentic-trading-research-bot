@@ -477,9 +477,9 @@ function ResearchChapter({ best, night }: { best: BestCall | null; night: LastNi
   // The best graded call's own write-up when there is one (a well-known
   // name, and the thesis that actually earned the grade), else last night's.
   const featured = best
-    ? { ticker: best.symbol, date: best.verdict_date, file: `${best.symbol}-${best.verdict_date}.md`, call: "buy", verdict: null as string | null, caption: `best call so far · ${bestCallLine(best).replace(/, called .*$/, "")}` }
+    ? { ticker: best.symbol, date: best.verdict_date, file: `${best.symbol}-${best.verdict_date}.md`, call: "buy", verdict: null as string | null }
     : night.thesis
-      ? { ticker: night.thesis.ticker, date: night.thesis.date, file: `${night.thesis.ticker}.md`, call: night.thesis.call, verdict: night.thesis.verdict, caption: "written last night" }
+      ? { ticker: night.thesis.ticker, date: night.thesis.date, file: `${night.thesis.ticker}.md`, call: night.thesis.call, verdict: night.thesis.verdict }
       : null;
   const peek = useThesisPeek(featured?.file ?? null);
   return (
@@ -536,7 +536,6 @@ function ResearchChapter({ best, night }: { best: BestCall | null; night: LastNi
             <div className="flex flex-wrap items-center gap-2">
               <Chip tone={featured.call === "buy" ? "up" : undefined}>{featured.call}</Chip>
               {featured.verdict && <Chip>kill-thesis: {featured.verdict}</Chip>}
-              <span className="text-muted-foreground text-xs">{featured.caption}</span>
             </div>
             <HoverBorderGradient
               as="a"
