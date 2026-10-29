@@ -24,8 +24,8 @@
 // `MotionConfig reducedMotion="user"` turns all of it into plain rendering
 // for readers who asked for less motion.
 
-import { useEffect, useState } from "react";
-import { MotionConfig } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { MotionConfig, useInView } from "motion/react";
 import { ArrowRight, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, type LucideIcon } from "lucide-react";
 import { CardStack } from "../components/aceternity/card-stack";
 import { EncryptedText } from "../components/aceternity/encrypted-text";
@@ -56,6 +56,7 @@ import {
   nightsCalled,
   record,
   researchCounts,
+  scoredSymbols,
   stocksBought,
   thesisOneLiner,
   unprovenSignals,
@@ -298,37 +299,66 @@ function ReadChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
   );
 }
 
-function WriteChapter({ night }: { night: LastNight }) {
+/** The night's opinion as the desk writes it: the scorecard's real symbols
+ * as a faint wall behind a note card, the flagged ones lit in their lean's
+ * tone, and the sentence typed in word by word once it scrolls into view. */
+function SymbolWall({ doc }: { doc: DashboardDoc }) {
+  const symbols = scoredSymbols(doc, 60);
+  if (symbols.length === 0) return null;
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 flex flex-wrap content-start gap-x-3 gap-y-1.5 overflow-hidden p-4 font-mono text-[11px] leading-none tracking-wide select-none [mask-image:radial-gradient(ellipse_at_top_right,black_20%,transparent_75%)]"
+    >
+      {symbols.map((s) => (
+        <span
+          key={s.symbol}
+          className={
+            s.flagged && s.score > 0
+              ? "text-tone-up"
+              : s.flagged && s.score < 0
+                ? "text-tone-down"
+                : "text-muted-foreground/40"
+          }
+        >
+          {s.symbol}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function nightNote(night: LastNight): string {
+  const parts: string[] = [];
+  parts.push(night.regime ? `Market mood: ${night.regime.toLowerCase()}.` : "No mood call tonight.");
+  if (night.tickersScored !== null) parts.push(`${night.tickersScored.toLocaleString()} stocks checked for unusual numbers.`);
+  if (night.candidates !== null) parts.push(`${night.candidates} good businesses with shares down are worth a closer look.`);
+  return parts.join(" ");
+}
+
+function WriteChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.5 });
+  const text = nightNote(night);
   return (
     <div className="grid gap-6">
       <Prose>
         A second set of programs reads what was collected and writes two things: a one-line read on the
         market's mood, and a list of stocks whose numbers look unusual that day.
       </Prose>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <OutputCard label="The mood" value={night.regime ?? "not called"} note="from three indicators" />
-        <OutputCard
-          label="Stocks checked"
-          value={night.tickersScored !== null ? night.tickersScored.toLocaleString() : "none"}
-          note="for unusual numbers"
-        />
-        <OutputCard
-          label="Worth a closer look"
-          value={night.candidates !== null ? String(night.candidates) : "none"}
-          note="good businesses, shares down"
-        />
+      <div
+        ref={ref}
+        className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border p-6 sm:p-8"
+      >
+        <SymbolWall doc={doc} />
+        <div className="text-muted-foreground relative mb-4 flex items-center justify-between font-mono text-xs">
+          <span>tonight's note</span>
+          <span>composite · 9:05pm</span>
+        </div>
+        <div className="relative text-xl leading-relaxed font-medium sm:text-2xl">
+          {inView ? <TextGenerateEffect words={text} duration={0.5} /> : <span className="opacity-0">{text}</span>}
+        </div>
       </div>
-    </div>
-  );
-}
-
-function OutputCard({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className="bg-card border-border relative grid min-w-0 gap-0.5 rounded-2xl border p-4">
-      <GlowingEffect disabled={false} proximity={48} spread={32} inactiveZone={0.2} borderWidth={2} />
-      <span className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">{label}</span>
-      <span className="text-lg font-semibold tracking-tight">{value}</span>
-      <span className="text-muted-foreground text-sm">{note}</span>
     </div>
   );
 }
@@ -479,7 +509,7 @@ function Story({ doc }: { doc: DashboardDoc }) {
   const counts = researchCounts(doc);
   const entries: TimelineEntry[] = [
     { when: "4:30pm", title: "Read", content: <ReadChapter doc={doc} night={night} /> },
-    { when: "9:05pm", title: "Write an opinion", content: <WriteChapter night={night} /> },
+    { when: "9:05pm", title: "Write an opinion", content: <WriteChapter doc={doc} night={night} /> },
     {
       when: "9:10pm",
       title: "Grade the old ones",

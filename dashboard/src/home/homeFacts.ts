@@ -75,6 +75,26 @@ export function bestCall(doc: DashboardDoc): BestCall | null {
   return b;
 }
 
+export interface ScoredSymbol {
+  symbol: string;
+  /** Composite's lean tonight: positive bullish, negative bearish, 0 quiet. */
+  score: number;
+  flagged: boolean;
+}
+
+/** The first `n` scorecard rows as symbols, in the exporter's order
+ * (flagged names first), for the opinion chapter's backdrop. */
+export function scoredSymbols(doc: DashboardDoc, n: number): ScoredSymbol[] {
+  return rows(doc.sections["scorecard"])
+    .filter((r) => typeof r.symbol === "string")
+    .slice(0, n)
+    .map((r) => ({
+      symbol: String(r.symbol),
+      score: typeof r.score_sum === "number" ? r.score_sum : 0,
+      flagged: r.flagged === true,
+    }));
+}
+
 /** Distinct symbols with a journaled buy fill. */
 export function stocksBought(doc: DashboardDoc): number | null {
   const syms = new Set<string>();

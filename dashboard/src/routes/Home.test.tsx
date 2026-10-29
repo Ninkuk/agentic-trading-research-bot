@@ -104,7 +104,7 @@ test("the story has one chapter per step of the run, with last night's output", 
     "A person decides",
   ]);
   const night = lastNight(doc);
-  expect(screen.getByText(night.regime!)).toBeInTheDocument();
+  expect(screen.getByText(`Market mood: ${night.regime!.toLowerCase()}.`, { exact: false })).toBeInTheDocument();
   expect(screen.getByText(`last night: ${night.thesis!.ticker} · ${night.thesis!.call}`)).toBeInTheDocument();
   // The rebuilt log lines stay inside the terminal; no chapter quotes one as a chip.
   expect(screen.queryByText(/composite snapshot|scorer snapshot|done: \d+ ok/)).not.toBeInTheDocument();
@@ -205,5 +205,5 @@ test("a document with no sections still renders the front door", () => {
   expect(screen.getByRole("link", { name: /every researched name/i })).toHaveAttribute("href", "#/research");
   expect(screen.queryByRole("link", { name: /best call so far/i })).not.toBeInTheDocument();
   const story = within(document.getElementById("story") as HTMLElement);
-  expect(story.getByText("not called")).toBeInTheDocument();
+  expect(story.getByText(/No mood call tonight/)).toBeInTheDocument();
 });

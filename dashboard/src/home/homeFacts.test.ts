@@ -14,6 +14,7 @@ import {
   nightsCalled,
   record,
   researchCounts,
+  scoredSymbols,
   stocksBought,
   thesisOneLiner,
   unprovenSignals,
@@ -50,6 +51,13 @@ test("newestThesis picks the latest thesis_date and lowercases the call", () => 
     ],
   });
   expect(newestThesis(d)).toEqual({ ticker: "NEW", date: "2026-07-09", call: "buy", verdict: null });
+});
+
+test("scoredSymbols takes the scorecard's first rows with lean and flag", () => {
+  const out = scoredSymbols(doc, 2);
+  expect(out.map((s) => s.symbol)).toEqual(doc.sections["scorecard"].rows!.slice(0, 2).map((r) => r.symbol));
+  expect(out[0]).toEqual({ symbol: "AAPL", score: 4, flagged: true });
+  expect(scoredSymbols(withSection("scorecard", { rows: [] }), 5)).toEqual([]);
 });
 
 test("stocksBought counts distinct journaled buy symbols", () => {
