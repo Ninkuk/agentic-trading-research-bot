@@ -103,7 +103,6 @@ test("the story has one chapter per step of the run, with last night's output", 
     "Attack the thesis",
     "A person decides",
   ]);
-  const night = lastNight(doc);
   // "Risk-on, 3rd night" reads as "3 / calm nights in a row" (the ticker holds at 0 in jsdom).
   expect(screen.getByText("calm nights in a row")).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/Risk-on/);
