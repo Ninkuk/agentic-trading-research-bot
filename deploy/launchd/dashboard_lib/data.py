@@ -790,6 +790,9 @@ def _health(data_dir: str, now_iso: str) -> dict[str, Any]:
         "tiles": tiles,
         "columns": _HEALTH_COLUMNS,
         "rows": problems,
+        # The home page's terminal: each job's real command and rebuilt
+        # summary line (health.last_runs; never a raw log line).
+        "last_runs": health.last_runs(base / "logs"),
     }
     return out
 

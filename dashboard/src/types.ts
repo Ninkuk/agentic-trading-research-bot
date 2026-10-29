@@ -140,8 +140,21 @@ export interface Section {
   best_call?: BestCall | null;
   // health-only:
   healthy?: boolean;
+  // The night's job runs for the home page's terminal: each job's real
+  // command and a summary REBUILT by the exporter from matched numbers,
+  // never a raw log line (health.last_runs).
+  last_runs?: LastRun[];
 }
 
+export interface LastRun {
+  job: string;
+  command: string;
+  /** Phoenix wall clock, "HH:MM". */
+  at: string;
+  summary: string | null;
+  seconds: number;
+  exit: number;
+}
 
 export interface BestCall {
   symbol: string;

@@ -2763,6 +2763,56 @@
           "target": "cboe-stats",
           "detail": "2 FAILED lines in 24h"
         }
+      ],
+      "last_runs": [
+        {
+          "job": "treasury",
+          "command": "treasury --db data/treasury.db",
+          "at": "16:30",
+          "summary": "stored 11513 rows across 6 datasets into data/treasury.db",
+          "seconds": 42,
+          "exit": 0
+        },
+        {
+          "job": "fred",
+          "command": "fred --db data/fred.db",
+          "at": "16:40",
+          "summary": "stored 142314 observations across 31 series into data/fred.db",
+          "seconds": 28,
+          "exit": 0
+        },
+        {
+          "job": "edgar",
+          "command": "edgar",
+          "at": "20:30",
+          "summary": "stored 4341 filings into data/edgar.db",
+          "seconds": 19,
+          "exit": 0
+        },
+        {
+          "job": "composite",
+          "command": "composite --db data/composite.db --keep-days 365",
+          "at": "21:05",
+          "summary": "composite snapshot 120: 32 signals ok, 0 failed, into data/composite.db",
+          "seconds": 9,
+          "exit": 0
+        },
+        {
+          "job": "scorer",
+          "command": "scorer --db data/scorer.db --keep-days 365",
+          "at": "21:10",
+          "summary": "scorer snapshot 130: 11393 prices, 6923 registered, 6574 matured, 456 skipped, into data/scorer.db",
+          "seconds": 3,
+          "exit": 0
+        },
+        {
+          "job": "research-nightly",
+          "command": "research nightly",
+          "at": "22:00",
+          "summary": "done: 3 ok, 0 failed of 3 selected",
+          "seconds": 1077,
+          "exit": 0
+        }
       ]
     },
     "pending": {

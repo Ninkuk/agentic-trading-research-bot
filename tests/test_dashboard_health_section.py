@@ -116,3 +116,97 @@ def test_rollover_now_local(tmp_path, monkeypatch):
 
     runs_tile = next(t for t in body["tiles"] if t["label"] == "Jobs that ran")
     assert runs_tile["value"] == 1
+
+
+# --- last runs (the home page's terminal) -----------------------------------
+
+
+def test_last_run_rebuilds_the_summary_from_matched_numbers_only(tmp_path):
+    log = tmp_path / "fred.log"
+    log.write_text(
+        "[2026-10-27 16:40:05] start: fred --db data/fred.db\n"
+        "stored 142300 observations across 31 series into data/fred.db\n"
+        "[2026-10-27 16:40:30] end: fred --db data/fred.db (25s, exit 0)\n"
+        "[2026-10-28 16:40:05] start: fred --db data/fred.db\n"
+        "warning: skipping DGS10: https://api.stlouisfed.org/?api_key=LEAKME\n"
+        "stored 142314 observations across 31 series into data/fred.db\n"
+        "[2026-10-28 16:40:33] end: fred --db data/fred.db (28s, exit 0)\n"
+    )
+    run = data.health.last_run(log)
+    assert run == {
+        "command": "fred --db data/fred.db",
+        "at": "16:40",
+        "summary": "stored 142314 observations across 31 series into data/fred.db",
+        "seconds": 28,
+        "exit": 0,
+    }
+    assert "LEAKME" not in json.dumps(run)
+
+
+def test_last_run_knows_each_job_shape_and_drops_the_unknown(tmp_path):
+    cases = {
+        "composite snapshot 120: 32 signals ok, 0 failed, into data/composite.db": (
+            "composite snapshot 120: 32 signals ok, 0 failed, into data/composite.db"
+        ),
+        "scorer snapshot 130: 11393 prices, 6923 registered, 6574 matured, 456 skipped,"
+        " into data/scorer.db": (
+            "scorer snapshot 130: 11393 prices, 6923 registered, 6574 matured, 456 skipped,"
+            " into data/scorer.db"
+        ),
+        "advisor snapshot 128: 26 positions, 7 caps, 26 exit rows, into data/advisor.db": (
+            "advisor snapshot 128: 26 positions, 7 caps, 26 exit rows, into data/advisor.db"
+        ),
+        "stored 4341 filings into data/edgar.db": "stored 4341 filings into data/edgar.db",
+        "stored 204 weekly rows across 17 markets (tff) into data/cftc.db": (
+            "stored 204 weekly rows across 17 markets into data/cftc.db"
+        ),
+        "done: 3 ok, 0 failed of 3 selected": "done: 3 ok, 0 failed of 3 selected",
+        "stored 4341 filings into data/edgar.db; see https://x/?api_key=LEAKME": None,
+        "selected: TOPP, PRI, ZTO (max=3, stale_days=30, model=opus)": None,
+    }
+    for line, expected in cases.items():
+        assert data.health._rebuild_summary(line) == expected, line
+
+
+def test_last_run_refuses_a_command_outside_the_allowlist_and_needs_a_finished_run(tmp_path):
+    log = tmp_path / "x.log"
+    log.write_text(
+        "[2026-10-28 16:40:05] start: fred --db data/fred.db?api_key=LEAKME\n"
+        "stored 1 observations across 1 series into data/fred.db\n"
+        "[2026-10-28 16:40:33] end: fred (28s, exit 0)\n"
+    )
+    assert data.health.last_run(log) is None
+    log.write_text("[2026-10-28 16:40:05] start: fred --db data/fred.db\nstill running\n")
+    assert data.health.last_run(log) is None
+    # A finished run whose output matched nothing keeps the command, no summary.
+    log.write_text(
+        "[2026-10-28 16:40:05] start: nyfed --db data/nyfed.db\n"
+        "warning: skipping soma: IncompleteRead\n"
+        "[2026-10-28 16:40:11] end: nyfed --db data/nyfed.db (6s, exit 1)\n"
+    )
+    assert data.health.last_run(log) == {
+        "command": "nyfed --db data/nyfed.db",
+        "at": "16:40",
+        "summary": None,
+        "seconds": 6,
+        "exit": 1,
+    }
+
+
+def test_health_section_carries_last_runs_in_job_order(tmp_path, monkeypatch):
+    data_dir, logs_dir = _layout(tmp_path)
+    (logs_dir / "scorer.log").write_text(
+        "[2026-07-22 21:10:05] start: scorer --db data/scorer.db --keep-days 365\n"
+        "scorer snapshot 9: 10 prices, 8 registered, 6 matured, 0 skipped, into data/scorer.db\n"
+        "[2026-07-22 21:10:08] end: scorer --db data/scorer.db --keep-days 365 (3s, exit 0)\n"
+    )
+    (logs_dir / "treasury.log").write_text(
+        "[2026-07-22 16:30:05] start: treasury --db data/treasury.db\n"
+        "stored 11513 rows across 6 datasets into data/treasury.db\n"
+        "[2026-07-22 16:30:47] end: treasury --db data/treasury.db (42s, exit 0)\n"
+    )
+    monkeypatch.setattr(data.health, "job_exit_codes", lambda: {})
+    monkeypatch.setattr(data.health, "running_jobs", lambda: set())
+    runs = data._health(str(data_dir), NOW)["last_runs"]
+    assert [r["job"] for r in runs] == ["treasury", "scorer"]
+    assert runs[0]["summary"] == "stored 11513 rows across 6 datasets into data/treasury.db"

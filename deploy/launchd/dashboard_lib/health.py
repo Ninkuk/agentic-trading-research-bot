@@ -318,6 +318,122 @@ def stale_dbs(now_utc: dt.datetime, data_dir: Path) -> list[dict[str, str]]:
     return problems
 
 
+# --- last runs: the night's log, replayed on the public home page ---------
+# The home page's terminal types each job's real command and the summary
+# line its run printed. A raw log line can carry anything a subprocess
+# printed (a URL with an api_key, a traceback), and this payload is published
+# to public gh-pages, so NOTHING here passes through verbatim: the command is
+# admitted only when every character is in a tight allowlist, and the summary
+# is REBUILT from the numbers and db names a known pattern captured. A line no
+# pattern knows is dropped, never quoted.
+
+LAST_RUN_JOBS = (
+    "treasury",
+    "fred",
+    "cboe-stats",
+    "short-volume",
+    "short-interest",
+    "edgar",
+    "composite",
+    "scorer",
+    "advisor",
+    "research-nightly",
+)
+
+_CMD_RE = re.compile(r"^[a-z_]+(?: [a-z_]+)*(?: --[a-z-]+(?: [A-Za-z0-9_./-]+)?)*$")
+_START_RE = re.compile(r"^\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}):\d{2}\] start: (.+)$")
+_END_RE = re.compile(r"^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] end: .*\((\d+)s, exit (\d+)\)$")
+_DB = r"(data/[a-z_]+\.db)"
+_WORD = r"([a-z][a-z -]*?)"  # "rows", "short-volume rows", "weekly rows"
+_SUMMARY_RES: tuple[tuple[re.Pattern[str], str], ...] = (
+    (
+        re.compile(rf"^stored (\d+) {_WORD} across (\d+) {_WORD}(?: \({_WORD}\))? into {_DB}$"),
+        "stored {0} {1} across {2} {3} into {5}",
+    ),
+    (re.compile(rf"^stored (\d+) {_WORD} into {_DB}$"), "stored {0} {1} into {2}"),
+    (
+        re.compile(rf"^composite snapshot (\d+): (\d+) signals ok, (\d+) failed, into {_DB}$"),
+        "composite snapshot {0}: {1} signals ok, {2} failed, into {3}",
+    ),
+    (
+        re.compile(
+            rf"^scorer snapshot (\d+): (\d+) prices, (\d+) registered, (\d+) matured,"
+            rf" (\d+) skipped, into {_DB}$"
+        ),
+        "scorer snapshot {0}: {1} prices, {2} registered, {3} matured, {4} skipped, into {5}",
+    ),
+    (
+        re.compile(
+            rf"^advisor snapshot (\d+): (\d+) positions, (\d+) caps, (\d+) exit rows, into {_DB}$"
+        ),
+        "advisor snapshot {0}: {1} positions, {2} caps, {3} exit rows, into {4}",
+    ),
+    (
+        re.compile(r"^done: (\d+) ok, (\d+) failed of (\d+) selected$"),
+        "done: {0} ok, {1} failed of {2} selected",
+    ),
+)
+
+
+def _rebuild_summary(line: str) -> str | None:
+    for pattern, template in _SUMMARY_RES:
+        m = pattern.match(line)
+        if m:
+            groups = tuple("" if g is None else g for g in m.groups())
+            return template.format(*groups)
+    return None
+
+
+def last_run(path: Path) -> dict[str, Any] | None:
+    """The newest completed run in one job log: {command, at, summary,
+    seconds, exit}. None when the log has no finished run, or when the
+    command line fails the allowlist. `summary` is None when no line between
+    start and end matched a known pattern (a job that printed only
+    warnings) -- the frontend then shows the command alone."""
+    lines = path.read_text(errors="replace").splitlines()
+    end_idx = next((i for i in range(len(lines) - 1, -1, -1) if _END_RE.match(lines[i])), None)
+    if end_idx is None:
+        return None
+    start_idx = next((i for i in range(end_idx - 1, -1, -1) if _START_RE.match(lines[i])), None)
+    if start_idx is None:
+        return None
+    start = _START_RE.match(lines[start_idx])
+    end = _END_RE.match(lines[end_idx])
+    assert start and end
+    command = start.group(3).strip()
+    if not _CMD_RE.match(command):
+        return None
+    summary = None
+    for line in lines[start_idx + 1 : end_idx]:
+        rebuilt = _rebuild_summary(line.strip())
+        if rebuilt:
+            summary = rebuilt  # the last matching line wins (steps print several)
+    return {
+        "command": command,
+        "at": start.group(2),
+        "summary": summary,
+        "seconds": int(end.group(1)),
+        "exit": int(end.group(2)),
+    }
+
+
+def last_runs(logs_dir: Path, jobs: tuple[str, ...] = LAST_RUN_JOBS) -> list[dict[str, Any]]:
+    """`last_run` for each named job that has a log, in the given order,
+    each row tagged with its job. Unreadable logs are skipped, not fatal."""
+    out: list[dict[str, Any]] = []
+    for job in jobs:
+        path = logs_dir / f"{job}.log"
+        if not path.exists():
+            continue
+        try:
+            run = last_run(path)
+        except Exception:
+            continue
+        if run is not None:
+            out.append({"job": job, **run})
+    return out
+
+
 def build_health(
     logs_dir: Path, data_dir: Path, now_local: dt.datetime, now_utc: dt.datetime
 ) -> dict[str, Any]:
