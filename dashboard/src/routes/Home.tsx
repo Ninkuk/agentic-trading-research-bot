@@ -67,6 +67,7 @@ import {
   type ResearchCounts,
 } from "../home/homeFacts";
 import { normalizeTicker, suggestionHref, TICKER_RE } from "../home/suggest";
+import { StatTicker, type Stat } from "../home/StatTicker";
 import type { BestCall, DashboardDoc, LastRun } from "../types";
 import { VerdictChip } from "../ui/VerdictChip";
 
@@ -134,17 +135,6 @@ function useThesisOneLiner(doc: DashboardDoc, best: BestCall | null): string | n
 
 // --- hero --------------------------------------------------------------------
 
-function Counter({ value, label }: { value: string | number; label: string }) {
-  return (
-    <div className="min-w-0">
-      <div className="text-foreground text-3xl font-semibold tracking-tight tabular-nums md:text-4xl">
-        {value}
-      </div>
-      <div className="text-muted-foreground text-sm">{label}</div>
-    </div>
-  );
-}
-
 function Hero({ doc }: { doc: DashboardDoc }) {
   const counts = researchCounts(doc);
   const nights = nightsCalled(doc);
@@ -152,6 +142,11 @@ function Hero({ doc }: { doc: DashboardDoc }) {
   const bought = stocksBought(doc);
   const rec = record(doc);
   const best = bestCall(doc);
+  const stats: Stat[] = [];
+  if (counts) stats.push({ value: counts.theses, label: "stocks researched" });
+  if (bought) stats.push({ value: bought, label: "stocks bought" });
+  if (nights) stats.push({ value: nights, label: "nights running" });
+  if (rec) stats.push({ value: rec.picks, label: `${rec.picks.startsWith("-") ? "down" : "up"} since ${dateShort(rec.since)}` });
   return (
     <header className="relative overflow-hidden">
       <Spotlight
@@ -201,12 +196,9 @@ function Hero({ doc }: { doc: DashboardDoc }) {
             </a>
           )}
         </div>
-        {(counts || bought || nights || rec) && (
-          <div className="border-border grid max-w-3xl grid-cols-2 gap-5 border-t pt-6 sm:grid-cols-4">
-            {counts && <Counter value={counts.theses} label="stocks researched" />}
-            {bought && <Counter value={bought} label="stocks bought" />}
-            {nights && <Counter value={nights} label="nights running" />}
-            {rec && <Counter value={rec.picks} label={`${rec.picks.startsWith("-") ? "down" : "up"} since ${dateShort(rec.since)}`} />}
+        {stats.length > 0 && (
+          <div className="border-border border-t pt-6">
+            <StatTicker stats={stats} />
           </div>
         )}
       </div>

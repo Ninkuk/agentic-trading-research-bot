@@ -120,14 +120,12 @@ test("the counters come from the research and timeline sections", () => {
   // The eyebrow says since when in plain words, never a snapshot number.
   expect(screen.getByText(/Running every night since [A-Z][a-z]+ \d+, \d{4}/)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/snapshot #/);
-  const counts = researchCounts(doc)!;
-  expect(screen.getByText("stocks researched").previousSibling).toHaveTextContent(String(counts.theses));
-  expect(screen.getByText("stocks bought").previousSibling).toHaveTextContent(String(stocksBought(doc)));
-  expect(screen.getByText("nights running").previousSibling).toHaveTextContent(
-    String(doc.sections["regime-timeline"].rows!.length),
-  );
-  const picks = String(doc.sections["equity-curve"].tiles![0].value);
-  expect(screen.getByText(/^up since /).previousSibling).toHaveTextContent(picks);
+  // jsdom never scrolls the row into view, so the tickers hold at zero; the
+  // labels and the order are what this checks, the arithmetic is homeFacts'.
+  const labels = screen.getAllByRole("term").map((t) => t.textContent);
+  expect(labels).toEqual(["stocks researched", "stocks bought", "nights running", expect.stringMatching(/^up since /)]);
+  expect(researchCounts(doc)!.theses).toBeGreaterThan(0);
+  expect(stocksBought(doc)).toBeGreaterThan(0);
 });
 
 test("the best graded buy call is the featured thesis, from the hero and from where-next", () => {
