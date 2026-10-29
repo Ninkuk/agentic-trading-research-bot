@@ -1,6 +1,7 @@
 # STNE — StoneCo Ltd. — 2026-08-13 post-print (reopen: q2-print-cost-of-risk, fired)
 
-**In one sentence:** StoneCo is a cheap Brazilian small-business payments and credit lender, but the Q2 print showed credit losses still above 20% and rising defaults, so the credit fix the thesis needed is behind schedule and I pass.
+> [!IMPORTANT]
+> **In one sentence:** StoneCo is a cheap Brazilian small-business payments and credit lender, but the Q2 print showed credit losses still above 20% and rising defaults, so the credit fix the thesis needed is behind schedule and I pass.
 
 Price $10.25 (8/13 regular close; after-hours $10.14 as of 22:08 UTC) · market
 cap $2,488.2M (probe `hover`) · Q2 print filed today, call held 5pm ET today.
@@ -79,8 +80,9 @@ deciding condition got worse, not better, at its scheduled checkpoint.
 Ownership at today's price would be paying for a credit fix that is now two
 quarters behind its own story.
 
-**Closest attack:** "guidance is already broken" — did not land (detail in
-the Kill-thesis record).
+> [!WARNING]
+> **Closest attack:** "guidance is already broken" — did not land (detail in
+> the Kill-thesis record).
 
 Load-bearing conditions (names as adjudicated in the Kill-thesis record;
 condition tiers not recorded in original run except where noted):
@@ -207,11 +209,12 @@ Updated this run.
   R$36.9B receivables asset's risk); buyback suspended; off-strategy
   acquisition; Selic re-hiking above 15%.
 
-**Reopen trigger:** 2026-11-05:
-stne-q3-cost-of-risk-vs-restated-guide-and-issuer-recovery — Q3 print:
-cost-of-risk decline vs management's own high-teens path, NPL 90+ peak,
-issuer-receivable settlement
-(`reopen=2026-11-05:stne-q3-cost-of-risk-vs-restated-guide-and-issuer-recovery`).
+> [!NOTE]
+> **Reopen trigger:** 2026-11-05:
+> stne-q3-cost-of-risk-vs-restated-guide-and-issuer-recovery — Q3 print:
+> cost-of-risk decline vs management's own high-teens path, NPL 90+ peak,
+> issuer-receivable settlement
+> (`reopen=2026-11-05:stne-q3-cost-of-risk-vs-restated-guide-and-issuer-recovery`).
 
 ## 6. UNKNOWNs
 
