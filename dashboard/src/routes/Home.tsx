@@ -26,7 +26,7 @@
 
 import { useEffect, useState } from "react";
 import { MotionConfig } from "motion/react";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, type LucideIcon } from "lucide-react";
 import { CardStack } from "../components/aceternity/card-stack";
 import { EncryptedText } from "../components/aceternity/encrypted-text";
 import { FlipWords } from "../components/aceternity/flip-words";
@@ -34,7 +34,6 @@ import { GlowingEffect } from "../components/aceternity/glowing-effect";
 import { HoverBorderGradient } from "../components/aceternity/hover-border-gradient";
 import { InfiniteMovingCards } from "../components/aceternity/infinite-moving-cards";
 import { Button as MovingBorderButton } from "../components/aceternity/moving-border";
-import { PointerHighlight } from "../components/aceternity/pointer-highlight";
 import { Spotlight } from "../components/aceternity/spotlight-new";
 import { Terminal } from "../components/aceternity/terminal";
 import { TextGenerateEffect } from "../components/aceternity/text-generate-effect";
@@ -206,28 +205,31 @@ function Hero({ doc }: { doc: DashboardDoc }) {
   );
 }
 
-/** Section heading: the closing phrase boxed by Aceternity's Pointer
- * Highlight as it scrolls into view; no uppercase kicker above it. */
+/** Section heading in the catalog style: an icon tile with a colored
+ * label, a regular-weight headline, a muted lede. */
 function SectionTitle({
-  lead,
-  highlight,
+  icon: Icon,
+  label,
+  title,
   note,
   className,
 }: {
-  lead: string;
-  highlight: string;
+  icon: LucideIcon;
+  label: string;
+  title: string;
   note?: string;
   className?: string;
 }) {
   return (
-    <div className={`grid max-w-[60ch] gap-3 ${className ?? ""}`}>
-      <h2 className="m-0 text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-        {lead}{" "}
-        <PointerHighlight containerClassName="inline-block align-baseline" rectangleClassName="rounded-sm">
-          <span className="relative z-10 px-1">{highlight}</span>
-        </PointerHighlight>
-      </h2>
-      {note && <p className="text-muted-foreground m-0 text-base">{note}</p>}
+    <div className={`grid max-w-[60ch] gap-5 ${className ?? ""}`}>
+      <div className="flex items-center gap-3">
+        <span className="bg-tone-up-bg text-tone-up grid size-10 place-items-center rounded-lg">
+          <Icon aria-hidden="true" className="size-5" />
+        </span>
+        <span className="text-tone-up text-lg font-medium">{label}</span>
+      </div>
+      <h2 className="m-0 text-4xl leading-[1.08] font-medium tracking-tight text-balance md:text-5xl">{title}</h2>
+      {note && <p className="text-muted-foreground m-0 max-w-[52ch] text-lg leading-relaxed">{note}</p>}
     </div>
   );
 }
@@ -545,7 +547,12 @@ function Story({ doc }: { doc: DashboardDoc }) {
   return (
     <section id="story" className="border-border border-t py-16 md:py-24">
       <div className="page-wide">
-        <SectionTitle lead="One night," highlight="start to finish." note={`Six steps every evening, Phoenix time. The outputs are from ${doc.edition_date}.`} />
+        <SectionTitle
+          icon={MoonStar}
+          label="One night"
+          title="Six steps, every evening, while nobody is watching."
+          note={`Read, write, grade, research, attack, decide. The outputs below are from ${doc.edition_date}, Phoenix time.`}
+        />
         <Timeline data={entries} />
       </div>
     </section>
@@ -591,10 +598,11 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
     <section id="scorecard" className="border-border bg-muted/30 border-t py-16 md:py-24">
       <div className="page-wide">
         <SectionTitle
-          lead="Has it"
-          highlight="been right?"
+          icon={ClipboardCheck}
+          label="The scorecard"
+          title="Has it been right?"
           note="Opinions are graded weeks later against what actually happened. Nothing re-tunes itself. Performance is $100 rebased; no positions, no dollar amounts."
-          className="mb-8"
+          className="mb-10"
         />
         {nothing && (
           <p className="text-muted-foreground border-border rounded-2xl border border-dashed p-6 text-center">
@@ -665,7 +673,7 @@ function WhereNext({ doc }: { doc: DashboardDoc }) {
   return (
     <section id="next" className="border-border border-t py-16 md:py-24">
       <div className="page-wide">
-        <SectionTitle lead="Three" highlight="ways in." className="mb-8" />
+        <SectionTitle icon={Compass} label="Where next" title="Three ways in." className="mb-10" />
         <div className="grid gap-3 md:grid-cols-3">
           {best && (
             <a className={card} href={`#/ticker/${best.symbol}`}>
@@ -706,8 +714,9 @@ function SuggestName() {
     <section id="suggest" className="border-border bg-muted/30 border-t py-16 md:py-24">
       <div className="page-wide grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center">
         <SectionTitle
-          lead="Point the desk at"
-          highlight="a stock."
+          icon={MessageSquarePlus}
+          label="Suggest a name"
+          title="Point the desk at a stock."
           note="Any US-listed name. It joins the reading list, gets the same thesis and the same attack as every other name, and the scorecard grades the call whether it says buy or pass."
         />
         <form

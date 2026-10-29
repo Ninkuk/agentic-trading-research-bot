@@ -44,7 +44,7 @@ test("the beats render in order: headline, the night's story, scorecard, where n
   );
   const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
   expect(headings).toEqual([
-    "One night, start to finish.",
+    "Six steps, every evening, while nobody is watching.",
     "Has it been right?",
     "Three ways in.",
     "Point the desk at a stock.",
