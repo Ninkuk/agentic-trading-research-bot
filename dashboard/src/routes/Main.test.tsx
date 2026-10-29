@@ -11,36 +11,11 @@ beforeEach(() => {
   location.hash = "";
 });
 
-test("renders every hero bullet", () => {
-  render(<Main doc={doc} />);
-  for (const bullet of doc.hero.bullets) {
-    expect(screen.getByText(bullet.text)).toBeInTheDocument();
-  }
-});
-
-test("hero bullets link known tickers to their drill-down route", () => {
-  const withFlag: DashboardDoc = {
-    ...doc,
-    hero: {
-      bullets: [
-        { text: "AAPL is flagged tonight and worth a look.", tone: "mid" },
-      ],
-    },
-  };
-  render(<Main doc={withFlag} />);
-  // Scope to the hero: the scorecard below also links AAPL by design.
-  const hero = within(document.querySelector(".hero") as HTMLElement);
-  const link = hero.getByRole("link", { name: "AAPL" });
-  expect(link).toHaveAttribute("href", "#/ticker/AAPL");
-  // Words that merely look uppercase-ish but aren't exported tickers stay text.
-  expect(hero.queryByRole("link", { name: "VIX" })).not.toBeInTheDocument();
-});
-
 function strandEl(slug: string): HTMLElement {
   return document.getElementById(slug) as HTMLElement;
 }
 
-test("renders every strand as a force-mounted section in order; all inactive on the Summary route", () => {
+test("renders every strand as a force-mounted section in order; the first is active on the main route", () => {
   render(<Main doc={doc} />);
   const strands = Array.from(document.querySelectorAll("section.strand")).map(
     (s) => s.id,
@@ -48,24 +23,24 @@ test("renders every strand as a force-mounted section in order; all inactive on 
   expect(strands).toEqual(
     KICKERS.map((k) => k.toLowerCase().replace(/\s+/g, "-")),
   );
-  for (const s of strands)
+  // App routes `#/` to Home; Main itself falls back to the first strand.
+  expect(strandEl(strands[0])).toHaveAttribute("data-state", "active");
+  for (const s of strands.slice(1))
     expect(strandEl(s)).toHaveAttribute("data-state", "inactive");
-  expect(document.querySelector(".hero")).not.toBeNull();
 });
 
-test("a strand route activates that strand and hides the Summary", () => {
+test("a strand route activates that strand and hides the others", () => {
   location.hash = "#/signals";
   render(<Main doc={doc} />);
   expect(strandEl("signals")).toHaveAttribute("data-state", "active");
   expect(strandEl("macro")).toHaveAttribute("data-state", "inactive");
-  expect(document.querySelector(".hero")).toBeNull();
 });
 
-test("an unknown strand slug falls back to the Summary", () => {
+test("an unknown strand slug falls back to the first strand", () => {
   location.hash = "#/nonsense";
   render(<Main doc={doc} />);
-  expect(document.querySelector(".hero")).not.toBeNull();
-  for (const s of document.querySelectorAll("section.strand")) {
+  expect(strandEl("macro")).toHaveAttribute("data-state", "active");
+  for (const s of Array.from(document.querySelectorAll("section.strand")).slice(1)) {
     expect(s).toHaveAttribute("data-state", "inactive");
   }
 });
@@ -162,16 +137,6 @@ test("shorter or single-publisher strands stay ungrouped: no headings, no chip r
     expect(
       strandEl(slug).querySelector("[role=group][aria-labelledby]"),
     ).toBeNull();
-  }
-});
-
-test("the Summary indexes every strand with a link into it", () => {
-  render(<Main doc={doc} />);
-  const index = within(document.querySelector(".strand-index") as HTMLElement);
-  for (const label of KICKERS) {
-    expect(
-      index.getByRole("link", { name: new RegExp(`^${label}`) }),
-    ).toHaveAttribute("href", `#/${label.toLowerCase().replace(/\s+/g, "-")}`);
   }
 });
 
@@ -322,11 +287,7 @@ test("a pinned ticker (shared pins pref) stays first in the scorecard despite an
 
 test("regime section renders its tiles and drivers table", () => {
   render(<Main doc={doc} />);
-  // The regime verdict shows twice by design: once compact in the KPI row,
-  // once again in the Macro strand's Regime section header.
-  expect(
-    screen.getAllByText("Risk-on, 3rd night").length,
-  ).toBeGreaterThanOrEqual(2);
+  expect(screen.getByText("Risk-on, 3rd night")).toBeInTheDocument();
   expect(screen.getByText("VIX level")).toBeInTheDocument();
 });
 

@@ -158,18 +158,3 @@ export function strandOfSection(
   if (!sec) return null;
   return strandId(isStray(sec) ? "Other" : (sec.kicker as string));
 }
-
-// One sentence per strand for the Summary page's index: what lives there.
-export const STRAND_BLURBS: Record<StrandLabel, string> = {
-  Macro: "Tonight's regime call, the week's calendar, and the yield curve.",
-  Signals: "Composite's per-ticker opinions, with how well they have graded.",
-  Sources:
-    "The raw feeds behind the opinions: dark pools, COT, fails, filings.",
-  Research:
-    "Theses on candidate names, and how research calls have panned out.",
-  "Track record": "Your own fills and passes against paper outcomes and SPY.",
-  "Your book":
-    "Book heat, disagreements, and vol-scaled size caps on what you hold.",
-  Ops: "Pipeline health, order queue, and the research worklist.",
-  Other: "Sections whose strand the dashboard doesn't recognize yet.",
-};

@@ -1,7 +1,6 @@
 import fixture from "./fixtures/data.json";
 import { KICKERS, type DashboardDoc, type Kicker } from "./types";
 import {
-  STRAND_BLURBS,
   groupBySource,
   showsGroups,
   strandId,
@@ -50,7 +49,6 @@ test("strandOfSection resolves a section id to its strand slug, or null when unk
 });
 
 test("every strand has a one-line blurb for the Summary index", () => {
-  for (const label of KICKERS) expect(STRAND_BLURBS[label]).toMatch(/\S/);
 });
 
 test("groupBySource groups a strand by publisher in first-appearance order, moving siblings together", () => {

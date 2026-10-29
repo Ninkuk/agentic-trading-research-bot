@@ -1,10 +1,10 @@
-// The main page: the Summary ("Tonight in plain English" bullets + regime
-// chip + an index of the strands) on `#/`, or one strand of sections on
-// `#/<strand>`; the sidebar (AppShell) does the switching. Every strand is
-// force-mounted and only the routed one is shown, exactly as the old tab
-// strip did, so anchor links to section ids and DOM-querying tests see the
-// whole document. A bare `#<section-id>` hash resolves to the strand that
-// holds the section and scrolls it into view.
+// The strand page: one strand of sections on `#/<strand>`; the sidebar
+// (AppShell) does the switching, and `#/` itself is the Home route (App
+// renders it outside this component). Every strand is force-mounted and
+// only the routed one is shown, exactly as the old tab strip did, so anchor
+// links to section ids and DOM-querying tests see the whole document. A
+// bare `#<section-id>` hash resolves to the strand that holds the section
+// and scrolls it into view; an unknown slug falls back to the first strand.
 //
 // `SECTION_COMPONENTS` maps a section id to the component that renders its
 // body; a section id with no entry falls back to `GenericSection` (columns+
@@ -21,7 +21,6 @@
 //
 
 import { useEffect, type ComponentType, type ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
 import { useHashRoute, type HashRoute } from "../hooks/useHashRoute";
 import { REPO_URL } from "../constants";
 import { ExtLink } from "../ui/ExtLink";
@@ -44,7 +43,6 @@ import { SignalRecommendations } from "../sections/SignalRecommendations";
 import { SizeCaps } from "../sections/SizeCaps";
 import { YieldCurve } from "../sections/YieldCurve";
 import {
-  STRAND_BLURBS,
   groupBySource,
   isQuiet,
   showsGroups,
@@ -56,17 +54,7 @@ import {
   type SectionGroup,
   type StrandLabel,
 } from "../strands";
-import type { DashboardDoc, Glossary, Section, Tone } from "../types";
-import { Card, CardContent } from "../components/ui/card";
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemTitle,
-} from "../components/ui/item";
-import { Separator } from "../components/ui/separator";
+import type { DashboardDoc, Glossary, Section } from "../types";
 import { DataTable } from "../ui/DataTable";
 import { SectionShell } from "../ui/SectionShell";
 import { makeSectionCell, visibleColumns } from "../ui/sectionCells";
@@ -76,19 +64,12 @@ import { StatTile } from "../ui/StatTile";
 import { TileCharts } from "../ui/TileCharts";
 import { hasChart } from "../ui/tileHistory";
 import { TextReport } from "../ui/TextReport";
-import { VerdictChip } from "../ui/VerdictChip";
 
 interface SectionComponentProps {
   sec: Section;
   glossary: Glossary;
   id?: string;
 }
-
-const TONE_DOT: Record<Tone, string> = {
-  on: "var(--tone-up)",
-  off: "var(--tone-down)",
-  mid: "var(--tone-hold)",
-};
 
 /** UTC export timestamp → the reader's local clock ("Jul 30, 2026, 10:31 AM").
  * Falls back to the raw string if the timestamp doesn't parse. */
@@ -106,22 +87,6 @@ function slug(s: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
-}
-
-/** Wrap known ticker symbols in hero-bullet text with drill-down links —
- * the hero names the one thing worth attention tonight, so it must also be
- * the path to it. Only exact uppercase tokens that match an exported
- * ticker qualify, so prose words can't false-positive. */
-function linkifyTickers(text: string, known: Set<string>): ReactNode[] {
-  return text.split(/\b/).map((part, i) =>
-    part.length >= 2 && /^[A-Z]+$/.test(part) && known.has(part) ? (
-      <a key={i} className="sym" href={`#/ticker/${part}`}>
-        {part}
-      </a>
-    ) : (
-      part
-    ),
-  );
 }
 
 const SECTION_COMPONENTS: Record<
@@ -297,94 +262,26 @@ export interface MainProps {
   doc: DashboardDoc;
 }
 
-/** The strand slug the route shows, or "summary". An unknown strand slug
- * and a section id no strand holds both fall back to the Summary. */
+/** The strand slug the route shows. An unknown strand slug, a section id
+ * no strand holds, and the main route (reachable here only in tests — App
+ * routes `#/` to Home) all fall back to the first strand. */
 function routedStrand(
   route: HashRoute,
   doc: DashboardDoc,
   labels: StrandLabel[],
 ): string {
+  const first = strandId(labels[0]);
   if (route.route === "strand") {
-    return labels.some((l) => strandId(l) === route.id) ? route.id : "summary";
+    return labels.some((l) => strandId(l) === route.id) ? route.id : first;
   }
   if (route.route === "section") {
     return (
       strandOfSection(doc.sections, route.id) ??
       strandOfAnchor(labels, route.id) ??
-      "summary"
+      first
     );
   }
-  return "summary";
-}
-
-interface SummaryProps {
-  doc: DashboardDoc;
-  labels: StrandLabel[];
-}
-
-// Tonight's plain-English read + regime chip, then one row per strand so
-// the home page is also the map: what each strand holds, and the way in.
-function Summary({ doc, labels }: SummaryProps) {
-  const knownTickers = new Set(Object.keys(doc.tickers ?? {}));
-  const regimeSec = doc.sections["regime"];
-  return (
-    <div className="space-y-5">
-      <Card className="hero gap-4 py-5">
-        <CardContent className="space-y-4 px-5">
-          <div className="space-y-1.5">
-            {doc.hero.bullets.map((bullet, i) => (
-              <p
-                className="read m-0 flex items-start gap-2.5 text-base"
-                key={i}
-              >
-                <span
-                  aria-hidden="true"
-                  className="mt-1.5 size-2.5 shrink-0 rounded-full"
-                  style={{ background: TONE_DOT[bullet.tone] }}
-                />
-                <span>{linkifyTickers(bullet.text, knownTickers)}</span>
-              </p>
-            ))}
-          </div>
-          {regimeSec?.verdict && (
-            <>
-              <Separator />
-              {/* The regime chip alone: the deciding inputs render as the
-                  macro-drivers card in Macro, beside the table they explain. */}
-              <VerdictChip verdict={regimeSec.verdict} className="text-sm" />
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <nav aria-label="strand index" className="strand-index">
-        <ItemGroup className="grid gap-3 md:grid-cols-2">
-          {labels.map((label) => (
-            <Item
-              key={label}
-              asChild
-              variant="outline"
-              size="sm"
-              className="no-underline"
-            >
-              <a href={`#/${strandId(label)}`}>
-                <ItemContent>
-                  <ItemTitle>{label}</ItemTitle>
-                  <ItemDescription>{STRAND_BLURBS[label]}</ItemDescription>
-                </ItemContent>
-                <ItemActions>
-                  <ChevronRight
-                    aria-hidden="true"
-                    className="text-muted-foreground size-4"
-                  />
-                </ItemActions>
-              </a>
-            </Item>
-          ))}
-        </ItemGroup>
-      </nav>
-    </div>
-  );
+  return first;
 }
 
 export function Main({ doc }: MainProps) {
@@ -416,8 +313,6 @@ export function Main({ doc }: MainProps) {
 
   return (
     <div>
-      {active === "summary" && <Summary doc={doc} labels={labels} />}
-
       {labels.map((label) => {
         const slug = strandId(label);
         const state = active === slug ? "active" : "inactive";

@@ -1,4 +1,4 @@
-// The app shell around both routes: shadcn Sidebar (Summary + one item
+// The app shell around the strand and ticker routes: shadcn Sidebar (Home + one item
 // per strand) on the left, masthead + route content in the inset. The
 // active item follows the hash route; a bare section or group anchor
 // lights the strand that holds it. Each strand is a collapsible holding
@@ -233,12 +233,12 @@ export function AppShell({ doc, route, children }: AppShellProps) {
         <SidebarContent>
           <nav aria-label="sections" className="contents">
             <SidebarGroup>
-              <SidebarGroupLabel>Tonight</SidebarGroupLabel>
+              <SidebarGroupLabel>Front door</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   <NavItem
                     href="#/"
-                    label="Summary"
+                    label="Home"
                     icon={House}
                     active={active === "summary"}
                   />

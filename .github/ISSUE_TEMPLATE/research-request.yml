@@ -1,0 +1,24 @@
+name: Suggest a name to research
+description: Point the desk at a stock. It goes on the reading list; a thesis follows if the name clears the usual gates.
+title: "Research: TICKER"
+labels: ["research-request"]
+body:
+  - type: input
+    id: ticker
+    attributes:
+      label: Ticker
+      description: The US-listed symbol, e.g. KTB.
+      placeholder: KTB
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this one?
+      description: Optional. A sentence is plenty; a link to a filing or a write-up is better than a tip.
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        Nothing here is investment advice, and a request never places a trade. Research is written and graded the same way for every name.

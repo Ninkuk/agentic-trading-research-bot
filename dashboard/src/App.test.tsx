@@ -9,10 +9,25 @@ afterEach(() => {
   location.hash = "";
 });
 
-test("renders the main page once the fixture doc loads", async () => {
+test("renders the Home page once the fixture doc loads", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => fixture }));
   render(<App />);
-  await waitFor(() => expect(screen.getByText(/Risk-on: leaning into risky assets/)).toBeInTheDocument());
+  await waitFor(() =>
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "A research desk that grades its own work.",
+    ),
+  );
+  // Home carries its own top bar; the sidebar shell is for the other routes.
+  expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument();
+});
+
+// Renders every strand's full card set, the slowest render in the suite;
+// under a parallel run it has overshot the default 5s.
+test("a strand route renders inside the sidebar shell", { timeout: 20_000 }, async () => {
+  location.hash = "#/signals";
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => fixture }));
+  render(<App />);
+  await waitFor(() => expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "#/"));
 });
 
 test("a fetch failure shows the full-page generation-failed banner", async () => {
@@ -48,7 +63,7 @@ test("a stale document renders normally with a dismissable banner", async () => 
   await screen.findByText(/this edition is stale/i);
   await userEvent.click(screen.getByRole("button", { name: /dismiss/i }));
   expect(screen.queryByRole("status")).not.toBeInTheDocument();
-  expect(screen.getByText(/Risk-on: leaning into risky assets/)).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("grades its own work");
 });
 
 test("the ticker hash route renders the drill-down for a known symbol", async () => {

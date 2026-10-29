@@ -15,14 +15,14 @@ function navLinks() {
   return within(nav).getAllByRole("link");
 }
 
-test("sidebar lists Summary first, then every strand in order, each linking to its hash route", () => {
+test("sidebar lists Home first, then every strand in order, each linking to its hash route", () => {
   render(
     <AppShell doc={doc} route={{ route: "main" }}>
       <p>body</p>
     </AppShell>,
   );
   const links = navLinks();
-  expect(links.map((l) => l.textContent)).toEqual(["Summary", ...KICKERS]);
+  expect(links.map((l) => l.textContent)).toEqual(["Home", ...KICKERS]);
   expect(links[0]).toHaveAttribute("href", "#/");
   expect(links[KICKERS.indexOf("Track record") + 1]).toHaveAttribute(
     "href",
@@ -31,13 +31,13 @@ test("sidebar lists Summary first, then every strand in order, each linking to i
   expect(screen.getByText("body")).toBeInTheDocument();
 });
 
-test("the active item follows the route: Summary on main, the strand on a strand route", () => {
+test("the active item follows the route: Home on main, the strand on a strand route", () => {
   const { rerender } = render(
     <AppShell doc={doc} route={{ route: "main" }}>
       <p>body</p>
     </AppShell>,
   );
-  expect(screen.getByRole("link", { name: "Summary" })).toHaveAttribute(
+  expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute(
     "aria-current",
     "page",
   );
@@ -50,7 +50,7 @@ test("the active item follows the route: Summary on main, the strand on a strand
     "aria-current",
     "page",
   );
-  expect(screen.getByRole("link", { name: "Summary" })).not.toHaveAttribute(
+  expect(screen.getByRole("link", { name: "Home" })).not.toHaveAttribute(
     "aria-current",
   );
 });

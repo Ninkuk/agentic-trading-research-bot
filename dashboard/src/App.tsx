@@ -7,13 +7,15 @@
 // - `doc` loaded but stale (generated_at > 36h old): the normal page, with
 //   a dismissable-for-this-session (never persisted) banner above it — a
 //   stale run should keep nagging on the next visit.
-// - Route switch via useHashRoute, inside the sidebar shell (AppShell):
-//   `#/ticker/<SYMBOL>` renders the per-ticker drill-down (TickerDetail);
-//   everything else renders Main, which picks Summary or a strand itself.
+// - Route switch via useHashRoute: `#/` renders Home, the visitor-facing
+//   front door, outside the sidebar shell (it carries its own top bar);
+//   inside AppShell, `#/ticker/<SYMBOL>` renders the per-ticker drill-down
+//   (TickerDetail) and everything else renders Main, which picks the strand.
 
 import { useState } from "react";
 import { useDashboardData } from "./hooks/useDashboardData";
 import { useHashRoute } from "./hooks/useHashRoute";
+import { Home } from "./routes/Home";
 import { Main } from "./routes/Main";
 import { TickerDetail } from "./routes/TickerDetail";
 import { AppShell } from "./ui/AppShell";
@@ -37,11 +39,22 @@ function App() {
     return <GenerationFailedBanner message={error ?? "unknown error"} generatedAt={generatedAt} />;
   }
 
+  const banner = stale && !staleDismissed && (
+    <StaleBanner generatedAt={doc.generated_at} onDismiss={() => setStaleDismissed(true)} />
+  );
+
+  if (route.route === "main") {
+    return (
+      <>
+        {banner}
+        <Home doc={doc} />
+      </>
+    );
+  }
+
   return (
     <AppShell doc={doc} route={route}>
-      {stale && !staleDismissed && (
-        <StaleBanner generatedAt={doc.generated_at} onDismiss={() => setStaleDismissed(true)} />
-      )}
+      {banner}
       {route.route === "ticker" ? <TickerDetail doc={doc} symbol={route.symbol} /> : <Main doc={doc} />}
     </AppShell>
   );
