@@ -135,7 +135,6 @@ export interface Section {
   // research-only:
   dated?: number;
   events?: number;
-  checkpoints?: ReopenCheckpoint[];
   // health-only:
   healthy?: boolean;
 }
@@ -167,18 +166,6 @@ export interface EquityCurveSummary {
   cash: number | null;
   positions: number;
   trading_days: number;
-}
-
-// research-only: held-ticker revisit checkpoints (data.py's
-// `checkpoints` list) — a held position's thesis re-check date, distinct
-// from the due-date rows already in `columns`/`rows`.
-export interface ReopenCheckpoint {
-  ticker: string;
-  reopen_date: string;
-  trigger: string;
-  thesis_date: string;
-  when_days: number;
-  thesis_path: string | null;
 }
 
 export interface ScoreHistoryPoint {

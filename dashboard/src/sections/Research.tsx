@@ -63,11 +63,6 @@ function renderResearchCell(row: Row, col: Column): ReactNode {
   return sectionCell(row, col);
 }
 
-function whenLabel(days: number): string {
-  if (days === 0) return "today";
-  return days > 0 ? `in ${days}d` : `${-days}d ago`;
-}
-
 export function verdictCounts(rows: Row[]): VerdictCounts {
   const counts: VerdictCounts = { SOUND: 0, UNPROVEN: 0, FLAWED: 0 };
   for (const r of rows) {
@@ -102,7 +97,6 @@ export function buyCount(rows: Row[]): number {
 }
 
 export function Research({ sec, glossary, today: todayProp }: SectionComponentProps) {
-  const checkpoints = sec.checkpoints ?? [];
   const rows = sec.rows ?? [];
   const today = todayProp ?? defaultToday(rows);
   const held = rows.filter((r) => r.held === true).length;
@@ -118,16 +112,6 @@ export function Research({ sec, glossary, today: todayProp }: SectionComponentPr
           </div>
           <VerdictMix counts={verdictCounts(rows)} />
         </div>
-      )}
-      {checkpoints.length > 0 && (
-        <ul className="verdict-list">
-          {checkpoints.map((c) => (
-            <li key={`${c.ticker}-${c.reopen_date}`}>
-              <strong>{c.ticker}</strong> — held position checkpoint: {c.trigger} ·{" "}
-              {c.reopen_date} ({whenLabel(c.when_days)})
-            </li>
-          ))}
-        </ul>
       )}
       <DataTable
         columns={sec.columns ?? []}

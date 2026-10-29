@@ -58,30 +58,6 @@ test("a row with no resolvable thesis path still links to its page", () => {
   expect(screen.getByRole("link", { name: "XYZ" })).toHaveAttribute("href", "#/ticker/XYZ");
 });
 
-test("held-ticker checkpoints render above the table, with a 'today' label for when_days: 0", () => {
-  render(<Research sec={doc.sections["research"]} glossary={doc.glossary} />);
-  expect(screen.getByText(/held position checkpoint/)).toBeInTheDocument();
-  expect(screen.getByText(/\(today\)/)).toBeInTheDocument();
-});
-
-test("no checkpoint list renders when checkpoints is absent", () => {
-  const sec = { ...doc.sections["research"], checkpoints: undefined };
-  render(<Research sec={sec} glossary={doc.glossary} />);
-  expect(screen.queryByText(/held position checkpoint/)).not.toBeInTheDocument();
-});
-
-test("every checkpoint's ticker has a fixture row with a non-null due", () => {
-  // Pins what the exporter actually guarantees: `checkpoints` is built only
-  // from dated (due != null) rows (data.py's `_research_reopens`), so a
-  // checkpoint whose ticker's row has `due: null` is an impossible shape
-  // the exporter cannot emit.
-  const sec = doc.sections["research"];
-  const rowsByTicker = new Map((sec.rows ?? []).map((r) => [r.ticker, r]));
-  for (const c of sec.checkpoints ?? []) {
-    expect(rowsByTicker.get(c.ticker)?.due).not.toBeNull();
-  }
-});
-
 const SUMMARY_ROWS = [
   { ticker: "HMY", held: false, call: "PASS", verdict: "UNPROVEN", due: "2026-08-27", trigger: "fy26-results", thesis_date: "2026-07-30", thesis_path: null },
   { ticker: "INTU", held: true, call: "BUY", verdict: "SOUND", due: "2026-09-02", trigger: "intu-investor-day", thesis_date: "2026-08-25", thesis_path: null },
@@ -91,7 +67,7 @@ const SUMMARY_ROWS = [
 ];
 
 test("KPI tiles count researched, buy calls, held, and due within 7 days of the injected today", () => {
-  const sec = { ...doc.sections["research"], rows: SUMMARY_ROWS, checkpoints: undefined };
+  const sec = { ...doc.sections["research"], rows: SUMMARY_ROWS };
   render(<Research sec={sec} glossary={doc.glossary} today="2026-08-27" />);
   expect(screen.getByText("researched").previousSibling).toHaveTextContent("5");
   expect(screen.getByText("buy calls").previousSibling).toHaveTextContent("2");

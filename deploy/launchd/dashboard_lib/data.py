@@ -723,33 +723,9 @@ def _research(data_dir: str, now_iso: str) -> dict[str, Any]:
         return (3, _newest_first(r["thesis_date"]), "", r["ticker"])
 
     rows.sort(key=_rank)
-    dated = [(when, t, slug, d) for t, d, _k, when, slug in parsed if when is not None]
+    dated = [when for _t, _d, _k, when, _slug in parsed if when is not None]
     events = sum(1 for _t, _d, _k, when, slug in parsed if when is None and slug is not None)
-    due_this_week = sum(1 for when, *_ in dated if floor <= when <= ceiling)
-    today_date = date.fromisoformat(today)
-    checkpoints = []
-    for when, ticker, slug, thesis_date in sorted(dated):
-        if ticker not in held or not (floor <= when <= ceiling):
-            continue
-        try:
-            when_days = (date.fromisoformat(when) - today_date).days
-        except ValueError:
-            # REOPEN_FIELD_RE validates digit shape only, never calendar
-            # validity (verdicts.log is human-written) -- a malformed date
-            # like 2026-02-30 drops just this one checkpoint, not the whole
-            # section: TOTAL applies per-row here, same as everywhere else
-            # in this module.
-            continue
-        checkpoints.append(
-            {
-                "ticker": ticker,
-                "reopen_date": when,
-                "trigger": slug,
-                "thesis_date": thesis_date,
-                "when_days": when_days,
-                "thesis_path": _thesis_path(ticker, thesis_date),
-            }
-        )
+    due_this_week = sum(1 for when in dated if floor <= when <= ceiling)
     return {
         "verdict": verdict(f"{due_this_week} due this week", "mid")
         if due_this_week
@@ -758,7 +734,6 @@ def _research(data_dir: str, now_iso: str) -> dict[str, Any]:
         "rows": rows,
         "dated": len(dated),
         "events": events,
-        "checkpoints": checkpoints,
     }
 
 
