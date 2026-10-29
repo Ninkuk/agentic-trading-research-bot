@@ -114,20 +114,6 @@ export function firstNight(doc: DashboardDoc): string | null {
   return first;
 }
 
-/** The `n` most recent research rows, newest first. */
-export function latestTheses(doc: DashboardDoc, n: number): NewestThesis[] {
-  return rows(doc.sections["research"])
-    .filter((r) => typeof r.thesis_date === "string" && typeof r.ticker === "string")
-    .sort((a, b) => String(b.thesis_date).localeCompare(String(a.thesis_date)))
-    .slice(0, n)
-    .map((r) => ({
-      ticker: String(r.ticker),
-      date: String(r.thesis_date),
-      call: String(r.call ?? "").toLowerCase(),
-      verdict: typeof r.verdict === "string" ? r.verdict.toLowerCase() : null,
-    }));
-}
-
 /** Nights the regime has been called, from the timeline's row count. */
 export function nightsCalled(doc: DashboardDoc): number | null {
   const sec = live(doc.sections["regime-timeline"]);

@@ -1,4 +1,5 @@
-// Aceternity UI "canvas-reveal-effect" (MIT), adapted: theme tokens, a typed mesh ref.
+// Aceternity UI "canvas-reveal-effect" (MIT), adapted: theme-neutral wrapper (no
+// white ground, no fixed gray gradient), loaded lazily by the one card that uses it.
 // https://ui.aceternity.com/components/canvas-reveal-effect
 import { cn } from "../ui/utils";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -25,7 +26,7 @@ export const CanvasRevealEffect = ({
   showGradient?: boolean;
 }) => {
   return (
-    <div className={cn("bg-card relative h-full w-full", containerClassName)}>
+    <div className={cn("relative h-full w-full", containerClassName)}>
       <div className="h-full w-full">
         <DotMatrix
           colors={colors ?? [[0, 255, 255]]}
@@ -280,12 +281,10 @@ const ShaderMaterial = ({
     });
 
     return materialObject;
-    // size feeds getUniforms' u_resolution, which the linter cannot see.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [size.width, size.height, source]);
 
   return (
-    <mesh ref={ref}>
+    <mesh ref={ref as any}>
       <planeGeometry args={[2, 2]} />
       <primitive object={material} attach="material" />
     </mesh>

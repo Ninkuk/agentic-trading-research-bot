@@ -25,17 +25,10 @@
 // for readers who asked for less motion.
 
 import { lazy, Suspense, useEffect, useState } from "react";
-import { AnimatePresence, motion, useMotionValue } from "motion/react";
-import { MotionConfig } from "motion/react";
-
-// three.js only loads on the first hover over a where-next card.
-const CanvasRevealEffect = lazy(() =>
-  import("../components/aceternity/canvas-reveal-effect").then((m) => ({ default: m.CanvasRevealEffect })),
-);
+import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { ArrowRight, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, type LucideIcon } from "lucide-react";
 import { CardStack } from "../components/aceternity/card-stack";
 import { EncryptedText } from "../components/aceternity/encrypted-text";
-import { CardPattern } from "../components/aceternity/evervault-card";
 import { GlowingEffect } from "../components/aceternity/glowing-effect";
 import { HoverBorderGradient } from "../components/aceternity/hover-border-gradient";
 import { InfiniteMovingCards } from "../components/aceternity/infinite-moving-cards";
@@ -55,7 +48,6 @@ import {
   GRADE_HORIZON,
   lastNight,
   lastRuns,
-  latestTheses,
   nightsCalled,
   plainSummary,
   record,
@@ -68,13 +60,18 @@ import {
   type LastNight,
   type ResearchCounts,
 } from "../home/homeFacts";
-import { generateRandomString } from "../home/scramble";
 import { normalizeTicker, suggestionHref, TICKER_RE } from "../home/suggest";
 import { StatTicker, type Stat } from "../home/StatTicker";
 import type { BestCall, DashboardDoc, LastRun } from "../types";
 import { VerdictChip } from "../ui/VerdictChip";
 
 const HEADLINE = "A research desk that grades its own work.";
+
+// three.js and react-three-fiber ride only in this chunk, fetched the first
+// time the grade card is hovered; the page's own bundle never carries them.
+const CanvasRevealEffect = lazy(() =>
+  import("../components/aceternity/canvas-reveal-effect").then((m) => ({ default: m.CanvasRevealEffect })),
+);
 
 /** In-page navigation that leaves the hash alone: a bare `#story` would be
  * parsed as a section route and send the reader to a strand page. */
@@ -374,10 +371,11 @@ function GradeChapter({
   unproven: { unproven: number; total: number } | null;
 }) {
   const said = cal ? /said (\d+%), won (\d+%)/.exec(cal.verdict.text) : null;
+  const [hovered, setHovered] = useState(false);
   const stats: Stat[] = [];
   if (said) {
     stats.push({ value: said[1], label: "it said it would win" });
-    stats.push({ value: said[2], label: "it actually won", revealAfter: 1.6 });
+    stats.push({ value: said[2], label: "it actually won" });
   }
   if (graded) stats.push({ value: graded, label: "calls graded" });
   else if (unproven) stats.push({ value: `${unproven.unproven} of ${unproven.total}`, label: "signals too new to trust", tick: false });
@@ -388,8 +386,36 @@ function GradeChapter({
         fund, and whether the odds the research gave itself held up. Nothing tunes itself automatically.
       </Prose>
       {stats.length > 0 ? (
-        <div className="bg-card border-border relative max-w-2xl rounded-2xl border p-6 sm:p-8">
-          <div className="text-muted-foreground mb-4 font-mono text-xs">the odds it gave itself</div>
+        <div
+          className="bg-card border-border relative max-w-2xl overflow-hidden rounded-2xl border p-6 sm:p-8"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          {/* Aceternity's Canvas Reveal Effect under the figures, on hover:
+              a dot matrix sweeping in from the center, in the primary tone. */}
+          <AnimatePresence>
+            {hovered && (
+              <motion.div
+                key="reveal"
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_80%)]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Suspense fallback={null}>
+                  <CanvasRevealEffect
+                    animationSpeed={3}
+                    containerClassName="bg-transparent"
+                    colors={[[0, 200, 5]]}
+                    dotSize={2}
+                    showGradient={false}
+                  />
+                </Suspense>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="text-muted-foreground relative mb-4 font-mono text-xs">the odds it gave itself</div>
           <StatTicker stats={stats} className="relative" />
         </div>
       ) : (
@@ -399,61 +425,39 @@ function GradeChapter({
   );
 }
 
-function ResearchChapter({ doc, best }: { doc: DashboardDoc; best: BestCall | null }) {
+function ResearchChapter({ doc, best, night }: { doc: DashboardDoc; best: BestCall | null; night: LastNight }) {
   const line = useThesisOneLiner(doc, best);
-  const latest = latestTheses(doc, 3);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const [scramble, setScramble] = useState(() => generateRandomString(1500));
   return (
     <div className="grid gap-6">
       <Prose>
-        An AI assistant researches a few names from the reading list, three most nights: what each company
-        does, what growth the price already assumes, and a buy or a pass with stated odds. Every number
-        points to the filing it came from. Below is the call that has worked out best so far.
+        An AI assistant researches one stock from the reading list: what the company does, what growth the
+        price already assumes, and a buy or a pass with stated odds. Every number points to the filing it
+        came from. Below is the call that has worked out best so far.
       </Prose>
       {best && (
-        <div
-          className="group/card bg-card border-border relative grid max-w-2xl gap-3 overflow-hidden rounded-2xl border p-5 sm:p-6"
-          onMouseMove={(e) => {
-            const r = e.currentTarget.getBoundingClientRect();
-            mouseX.set(e.clientX - r.left);
-            mouseY.set(e.clientY - r.top);
-            setScramble(generateRandomString(1500));
-          }}
-        >
-          <CardPattern mouseX={mouseX} mouseY={mouseY} randomString={scramble} />
-          <div className="relative flex flex-wrap items-baseline justify-between gap-2">
+        <div className="bg-card border-border grid max-w-2xl gap-3 rounded-2xl border p-5 sm:p-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
             <span className="text-muted-foreground font-mono text-xs">research/{best.symbol}-{best.verdict_date}.md</span>
             <Chip tone="up">best call so far</Chip>
           </div>
-          <p className="text-foreground relative m-0 text-lg leading-relaxed font-medium">
-            <EncryptedText
-              text={line ?? `${best.symbol}: buy, ${bestCallLine(best)}.`}
-              revealDelayMs={18}
-              flipDelayMs={40}
-              encryptedClassName="text-muted-foreground/60"
-            />
-          </p>
-          <HoverBorderGradient
-            as="a"
-            href={`#/ticker/${best.symbol}`}
-            containerClassName="relative no-underline"
-            className="text-sm font-medium"
-          >
+          {line ? (
+            <p className="m-0 text-lg leading-relaxed font-medium">
+              <EncryptedText text={line} revealDelayMs={18} flipDelayMs={40} encryptedClassName="text-muted-foreground/60" />
+            </p>
+          ) : (
+            <p className="text-foreground m-0 text-lg font-medium">
+              <span className="sym">{best.symbol}</span>: buy, {bestCallLine(best)}.
+            </p>
+          )}
+          <HoverBorderGradient as="a" href={`#/ticker/${best.symbol}`} containerClassName="no-underline" className="text-sm font-medium">
             Read the whole thesis
           </HoverBorderGradient>
         </div>
       )}
-      {latest.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-muted-foreground text-sm">latest:</span>
-          {latest.map((t) => (
-            <Chip key={t.ticker}>
-              {t.ticker} · {t.call}
-            </Chip>
-          ))}
-        </div>
+      {night.thesis && (
+        <Chip>
+          last night: {night.thesis.ticker} · {night.thesis.call}
+        </Chip>
       )}
     </div>
   );
@@ -529,7 +533,7 @@ function Story({ doc }: { doc: DashboardDoc }) {
         <GradeChapter cal={calibration(doc)} graded={callsGraded(doc)} unproven={unprovenSignals(doc)} />
       ),
     },
-    { when: "10:00pm", title: "Research a name", content: <ResearchChapter doc={doc} best={bestCall(doc)} /> },
+    { when: "10:00pm", title: "Research a name", content: <ResearchChapter doc={doc} best={bestCall(doc)} night={night} /> },
     { when: "10:00pm", title: "Attack the thesis", content: <AttackChapter counts={counts} night={night} /> },
     { when: "6:30am", title: "A person decides", content: <DecideChapter counts={counts} />, accent: true },
   ];
@@ -655,71 +659,39 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
 
 // --- where next ----------------------------------------------------------------
 
-/** A where-next card: on hover, Aceternity's Canvas Reveal Effect floods
- * the card with an animated dot matrix in the primary tone behind the text. */
-function RevealCard({ href, external, children }: { href: string; external?: boolean; children: React.ReactNode }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <a
-      className="bg-card border-border group relative grid min-w-0 gap-1 overflow-hidden rounded-2xl border p-5 no-underline"
-      href={href}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noreferrer" : undefined}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <AnimatePresence>
-        {hovered && (
-          <motion.div
-            className="pointer-events-none absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Suspense fallback={null}>
-              <CanvasRevealEffect animationSpeed={4} colors={[[0, 200, 5]]} dotSize={2} containerClassName="bg-card" />
-            </Suspense>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <div className="relative grid gap-1">{children}</div>
-    </a>
-  );
-}
-
 function WhereNext({ doc }: { doc: DashboardDoc }) {
   const best = bestCall(doc);
   const counts = researchCounts(doc);
+  const card = "bg-card border-border hover:bg-muted/60 grid min-w-0 gap-1 rounded-2xl border p-5 no-underline";
   return (
     <section id="next" className="border-border border-t py-16 md:py-24">
       <div className="page-wide">
         <SectionTitle icon={Compass} label="Where next" title="Where to go from here." className="mb-10" />
         <div className="grid gap-3 md:grid-cols-3">
           {best && (
-            <RevealCard href={`#/ticker/${best.symbol}`}>
+            <a className={card} href={`#/ticker/${best.symbol}`}>
               <span className="flex items-center justify-between font-semibold">
                 Read the best call so far <ArrowRight aria-hidden="true" className="text-muted-foreground size-4" />
               </span>
               <span className="text-muted-foreground text-sm">
                 <span className="sym">{best.symbol}</span> · {bestCallLine(best)}
               </span>
-            </RevealCard>
+            </a>
           )}
-          <RevealCard href="#/research">
+          <a className={card} href="#/research">
             <span className="flex items-center justify-between font-semibold">
               Every researched name <ArrowRight aria-hidden="true" className="text-muted-foreground size-4" />
             </span>
             <span className="text-muted-foreground text-sm">
               {counts ? `${counts.theses} theses, each with its call and how it held up under attack` : "Theses, calls, and how each held up under attack"}
             </span>
-          </RevealCard>
-          <RevealCard href={`${REPO_URL}#readme`} external>
+          </a>
+          <a className={card} href={`${REPO_URL}#readme`} target="_blank" rel="noreferrer">
             <span className="flex items-center justify-between font-semibold">
               How it works, and the glossary <ExternalLink aria-hidden="true" className="text-muted-foreground size-4" />
             </span>
             <span className="text-muted-foreground text-sm">Plain-English pages on GitHub, with the code that produced every number.</span>
-          </RevealCard>
+          </a>
         </div>
       </div>
     </section>
