@@ -104,8 +104,9 @@ test("the story has one chapter per step of the run, with last night's output", 
     "A person decides",
   ]);
   const night = lastNight(doc);
-  const [mood, streak] = night.regime!.split(/,\s*/, 2);
-  expect(screen.getByText(streak).closest("dd")!.nextSibling).toHaveTextContent(mood);
+  // "Risk-on, 3rd night" reads as "3 / upbeat nights in a row" (the ticker holds at 0 in jsdom).
+  expect(screen.getByText("upbeat nights in a row")).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/Risk-on/);
   expect(screen.getByText(`last night: ${night.thesis!.ticker} · ${night.thesis!.call}`)).toBeInTheDocument();
   // The rebuilt log lines stay inside the terminal; no chapter quotes one as a chip.
   expect(screen.queryByText(/composite snapshot|scorer snapshot|done: \d+ ok/)).not.toBeInTheDocument();
