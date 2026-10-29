@@ -14,17 +14,19 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
-/* Aceternity Infinite Moving Cards: the `animate-scroll` utility it expects.
-   Direction and duration come from inline custom properties the component
-   sets; the translate is half the duplicated list plus half the gap. */
-@theme {
-  --animate-scroll: scroll var(--animation-duration, 40s) var(--animation-direction, forwards)
-    linear infinite;
-  @keyframes scroll {
-    to {
-      transform: translate(calc(-50% - 0.5rem));
-    }
+/* Aceternity Infinite Moving Cards: the `animate-scroll` class it expects.
+   Declared as a plain rule, not a theme variable: a `var()` inside a
+   `:root` custom property resolves against :root, so the component's
+   inline --animation-duration on the container would never be seen and
+   every speed would fall back to 40s. The translate is half the
+   duplicated list plus half the gap. */
+@keyframes scroll {
+  to {
+    transform: translate(calc(-50% - 0.5rem));
   }
+}
+.animate-scroll {
+  animation: scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite;
 }
 
 @theme inline {

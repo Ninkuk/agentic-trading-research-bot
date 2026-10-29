@@ -117,22 +117,21 @@ test("the story has one chapter per step of the run, with last night's output", 
 
 test("the counters come from the research and timeline sections", () => {
   render(<Home doc={doc} />);
-  // The eyebrow says since when in plain words, never a snapshot number.
-  expect(screen.getByText(/Running every night since [A-Z][a-z]+ \d+, \d{4}/)).toBeInTheDocument();
-  expect(document.body.textContent).not.toMatch(/snapshot #/);
+  expect(screen.getByText("Running every night")).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/snapshot #|Phoenix/);
   // jsdom never scrolls the row into view, so the tickers hold at zero; the
   // labels and the order are what this checks, the arithmetic is homeFacts'.
   const labels = screen.getAllByRole("term").map((t) => t.textContent);
-  expect(labels).toEqual(["stocks researched", "stocks bought", "nights running", expect.stringMatching(/^up since /)]);
+  expect(labels).toEqual(["stocks researched", "stocks bought", "nights running", "up overall"]);
   expect(researchCounts(doc)!.theses).toBeGreaterThan(0);
   expect(stocksBought(doc)).toBeGreaterThan(0);
 });
 
-test("the best graded buy call is the featured thesis, from the hero and from where-next", () => {
+test("the best graded buy call is the featured thesis, in the story and in where-next", () => {
   render(<Home doc={doc} />);
   const best = bestCall(doc)!;
   const links = screen.getAllByRole("link", { name: /best call so far|whole thesis/i });
-  expect(links.length).toBeGreaterThanOrEqual(3);
+  expect(links.length).toBe(2);
   for (const link of links) expect(link).toHaveAttribute("href", `#/ticker/${best.symbol}`);
   // The line appears in the research chapter (no thesis file published
   // here, so the plain fallback) and again in where-next.

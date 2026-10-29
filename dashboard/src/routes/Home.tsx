@@ -51,7 +51,6 @@ import {
   calibration,
   callHitRate,
   callsGraded,
-  firstNight,
   GRADE_HORIZON,
   lastNight,
   lastRunOf,
@@ -84,14 +83,6 @@ function onScrollTo(id: string) {
     e.preventDefault();
     scrollToId(id);
   };
-}
-
-/** "2026-07-06" → "July 6, 2026", parsed from the string so no timezone shifts the day. */
-function longDate(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-  if (!m) return iso;
-  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
 /** UTC export timestamp → the reader's local clock. */
@@ -138,15 +129,13 @@ function useThesisOneLiner(doc: DashboardDoc, best: BestCall | null): string | n
 function Hero({ doc }: { doc: DashboardDoc }) {
   const counts = researchCounts(doc);
   const nights = nightsCalled(doc);
-  const first = firstNight(doc);
   const bought = stocksBought(doc);
   const rec = record(doc);
-  const best = bestCall(doc);
   const stats: Stat[] = [];
   if (counts) stats.push({ value: counts.theses, label: "stocks researched" });
   if (bought) stats.push({ value: bought, label: "stocks bought" });
   if (nights) stats.push({ value: nights, label: "nights running" });
-  if (rec) stats.push({ value: rec.picks, label: `${rec.picks.startsWith("-") ? "down" : "up"} since ${dateShort(rec.since)}` });
+  if (rec) stats.push({ value: rec.picks, label: rec.picks.startsWith("-") ? "down overall" : "up overall" });
   return (
     <header className="relative overflow-hidden">
       <Spotlight
@@ -158,7 +147,7 @@ function Hero({ doc }: { doc: DashboardDoc }) {
       <div className="page-wide relative grid gap-7 py-20 md:py-28">
         <span className="border-border text-muted-foreground inline-flex w-max items-center gap-2 rounded-full border px-3.5 py-1 text-sm">
           <span aria-hidden="true" className="bg-primary size-2 rounded-full shadow-[0_0_0_3px_var(--tone-up-bg)]" />
-          {first ? `Running every night since ${longDate(first)}` : "Running every night"}
+          Running every night
         </span>
         <h1 className="m-0 max-w-[14ch] text-5xl leading-[1.02] font-semibold tracking-tight text-balance md:text-6xl lg:text-7xl">
           <TextGenerateEffect words={HEADLINE} duration={0.6} />
@@ -180,21 +169,6 @@ function Hero({ doc }: { doc: DashboardDoc }) {
           >
             Watch one night
           </MovingBorderButton>
-          <a
-            className="border-border hover:bg-muted inline-flex h-11 items-center gap-1.5 rounded-full border px-5 text-sm font-medium no-underline"
-            href="#/"
-            onClick={onScrollTo("scorecard")}
-          >
-            See the scorecard <ArrowRight aria-hidden="true" className="size-3.5" />
-          </a>
-          {best && (
-            <a
-              className="border-border hover:bg-muted inline-flex h-11 items-center gap-1.5 rounded-full border px-5 text-sm font-medium no-underline"
-              href={`#/ticker/${best.symbol}`}
-            >
-              Read the best call so far <ArrowRight aria-hidden="true" className="size-3.5" />
-            </a>
-          )}
         </div>
         {stats.length > 0 && (
           <div className="border-border border-t pt-6">
@@ -299,7 +273,7 @@ function Facts({ items }: { items: string[] }) {
   );
 }
 
-const READ_JOBS = new Set(["treasury", "fred", "cboe-stats", "short-volume", "short-interest", "edgar"]);
+const READ_JOBS = new Set(["fred", "edgar"]);
 
 function ReadChapter({ doc, night }: { doc: DashboardDoc; night: LastNight }) {
   const runs = lastRuns(doc).filter((r) => READ_JOBS.has(r.job));
@@ -547,7 +521,7 @@ function Story({ doc }: { doc: DashboardDoc }) {
           icon={MoonStar}
           label="One night"
           title="What happens every evening."
-          note={`Six jobs on a schedule, on one Mac in Phoenix. The outputs are from ${doc.edition_date}.`}
+          note="Six jobs on a schedule. These are last night's outputs."
         />
         <Timeline data={entries} />
       </div>
