@@ -576,6 +576,63 @@ const VERDICT_TONE: Record<string, string> = {
   unproven: "text-tone-hold border-tone-hold",
 };
 
+/** A boxing glove, drawn as one outline: the fist, the thumb, the cuff.
+ * `flip` mirrors it so a pair faces each other. */
+function Glove({ flip, className }: { flip?: boolean; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      aria-hidden="true"
+      className={className}
+      style={flip ? { transform: "scaleX(-1)" } : undefined}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M14 20c0-7 5-12 12-12h4c7 0 12 5 12 12v6c0 6-4 10-10 10H22" />
+      <path d="M14 20v9c0 4 3 7 7 7" />
+      <path d="M14 22h-3a4 4 0 0 0-4 4v3a4 4 0 0 0 4 4h3" />
+      <path d="M21 36h11v6H21z" />
+      <path d="M26 16c3 0 5 2 5 5" />
+    </svg>
+  );
+}
+
+function Versus() {
+  return (
+    <motion.div
+      aria-hidden="true"
+      className="text-muted-foreground flex items-center justify-center gap-1 self-center md:flex-col md:gap-0"
+      initial={{ opacity: 0, scale: 0.6 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true, amount: 0.6 }}
+      transition={{ delay: 0.5, type: "spring", stiffness: 400, damping: 18 }}
+    >
+      <motion.span
+        className="text-tone-up"
+        initial={{ x: -6 }}
+        whileInView={{ x: 0 }}
+        viewport={{ once: true, amount: 0.6 }}
+        transition={{ delay: 0.9, type: "spring", stiffness: 600, damping: 12 }}
+      >
+        <Glove className="size-8" />
+      </motion.span>
+      <span className="font-mono text-[11px] font-semibold tracking-widest uppercase">vs</span>
+      <motion.span
+        className="text-tone-down"
+        initial={{ x: 6 }}
+        whileInView={{ x: 0 }}
+        viewport={{ once: true, amount: 0.6 }}
+        transition={{ delay: 0.9, type: "spring", stiffness: 600, damping: 12 }}
+      >
+        <Glove flip className="size-8" />
+      </motion.span>
+    </motion.div>
+  );
+}
+
 function AttackChapter({
   featured,
   peek,
@@ -602,31 +659,32 @@ function AttackChapter({
             <span>{featured.ticker} · the thesis vs. the attack</span>
           </div>
           <div className="grid gap-4 p-5 sm:p-6">
-            <motion.div
-              className="border-tone-up/60 bg-tone-up-bg/40 max-w-[90%] justify-self-start rounded-2xl rounded-tl-sm border-l-2 px-4 py-3"
-              initial={{ opacity: 0, x: -14 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.6 }}
-              transition={{ duration: 0.4 }}
-            >
-              <div className="text-tone-up mb-1 font-mono text-[11px] tracking-wide uppercase">the thesis</div>
-              <p className="m-0 text-sm leading-relaxed sm:text-base">{peek.line}</p>
-            </motion.div>
-            {peek.attack && (
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-4">
               <motion.div
-                className="border-tone-down/60 bg-tone-down-bg/40 max-w-[90%] justify-self-end rounded-2xl rounded-tr-sm border-r-2 px-4 py-3 text-right"
+                className="border-tone-up/50 bg-tone-up-bg/30 rounded-2xl border px-4 py-3"
+                initial={{ opacity: 0, x: -14 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.6 }}
+                transition={{ duration: 0.4 }}
+              >
+                <div className="text-tone-up mb-1 font-mono text-[11px] tracking-wide uppercase">the thesis</div>
+                <p className="m-0 text-sm leading-relaxed">{peek.line}</p>
+              </motion.div>
+              <Versus />
+              <motion.div
+                className="border-tone-down/50 bg-tone-down-bg/30 rounded-2xl border px-4 py-3"
                 initial={{ opacity: 0, x: 14 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, amount: 0.6 }}
-                transition={{ duration: 0.4, delay: 0.5 }}
+                transition={{ duration: 0.4 }}
               >
                 <div className="text-tone-down mb-1 font-mono text-[11px] tracking-wide uppercase">the attack</div>
-                <p className="m-0 text-sm leading-relaxed sm:text-base">{peek.attack}</p>
+                <p className="m-0 text-sm leading-relaxed">{peek.attack ?? "No written objection survived; the attack found nothing load-bearing."}</p>
               </motion.div>
-            )}
+            </div>
             {verdict && (
               <motion.div
-                className="flex items-center gap-3 pt-1"
+                className="flex items-center justify-center gap-3 pt-1"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true, amount: 0.6 }}
