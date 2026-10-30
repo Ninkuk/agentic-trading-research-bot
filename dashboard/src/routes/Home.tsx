@@ -26,7 +26,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, MotionConfig } from "motion/react";
-import { ArrowRight, Check, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, X, type LucideIcon } from "lucide-react";
+import { Check, ClipboardCheck, MessageSquarePlus, MoonStar, X, type LucideIcon } from "lucide-react";
 import { Compare } from "../components/aceternity/compare";
 import { GlowingEffect } from "../components/aceternity/glowing-effect";
 import { DecisionSort } from "../home/DecisionSort";
@@ -40,7 +40,6 @@ import { TypewriterEffect } from "../components/aceternity/typewriter-effect";
 import { Timeline, type TimelineEntry } from "../components/aceternity/timeline";
 import { EquityCurve } from "../charts/EquityCurve";
 import { REPO_URL } from "../constants";
-import { dateShort } from "../format";
 import {
   bestCall,
   calibration,
@@ -92,14 +91,6 @@ function formatGeneratedAt(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-}
-
-/** "+14.8 points vs SPY over 21 trading days, called Sep 26". Excess is a
- * fraction of return; points are the plain-English unit the curve's chip
- * already uses. */
-function bestCallLine(b: BestCall): string {
-  const pts = (b.excess * 100).toFixed(1);
-  return `${b.excess >= 0 ? "+" : ""}${pts} points vs SPY over ${b.horizon} trading days, called ${dateShort(b.verdict_date)}`;
 }
 
 interface ThesisPeek {
@@ -792,51 +783,17 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
             </div>
           </>
         )}
+        <div className="mt-8 flex">
+          <HoverBorderGradient as="a" href="#/research" containerClassName="no-underline" className="text-sm font-medium">
+            Every write-up, with its grade
+          </HoverBorderGradient>
+        </div>
       </div>
     </section>
   );
 }
 
 // --- where next ----------------------------------------------------------------
-
-function WhereNext({ doc }: { doc: DashboardDoc }) {
-  const best = bestCall(doc);
-  const counts = researchCounts(doc);
-  const card = "bg-card border-border hover:bg-muted/60 grid min-w-0 gap-1 rounded-2xl border p-5 no-underline";
-  return (
-    <section id="next" className="border-border border-t py-16 md:py-24">
-      <div className="page-wide">
-        <SectionTitle icon={Compass} label="Where next" title="Where to go from here." className="mb-10" />
-        <div className="grid gap-3 md:grid-cols-3">
-          {best && (
-            <a className={card} href={`#/ticker/${best.symbol}`}>
-              <span className="flex items-center justify-between font-semibold">
-                Read the best call so far <ArrowRight aria-hidden="true" className="text-muted-foreground size-4" />
-              </span>
-              <span className="text-muted-foreground text-sm">
-                <span className="sym">{best.symbol}</span> · {bestCallLine(best)}
-              </span>
-            </a>
-          )}
-          <a className={card} href="#/research">
-            <span className="flex items-center justify-between font-semibold">
-              Every researched name <ArrowRight aria-hidden="true" className="text-muted-foreground size-4" />
-            </span>
-            <span className="text-muted-foreground text-sm">
-              {counts ? `${counts.theses} theses, each with its call and how it held up under attack` : "Theses, calls, and how each held up under attack"}
-            </span>
-          </a>
-          <a className={card} href={`${REPO_URL}#readme`} target="_blank" rel="noreferrer">
-            <span className="flex items-center justify-between font-semibold">
-              How it works, and the glossary <ExternalLink aria-hidden="true" className="text-muted-foreground size-4" />
-            </span>
-            <span className="text-muted-foreground text-sm">Plain-English pages on GitHub, with the code that produced every number.</span>
-          </a>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // --- suggest a name -------------------------------------------------------------
 
@@ -907,7 +864,6 @@ export function Home({ doc }: { doc: DashboardDoc }) {
         <Hero doc={doc} />
         <Story doc={doc} />
         <Scorecard doc={doc} />
-        <WhereNext doc={doc} />
         <SuggestName />
 
         <footer className="border-border text-muted-foreground border-t py-8 text-sm">

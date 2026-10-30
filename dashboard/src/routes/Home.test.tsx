@@ -46,7 +46,6 @@ test("the beats render in order: headline, the night's story, scorecard, where n
   expect(headings).toEqual([
     "What happens every evening.",
     "Has it been right?",
-    "Where to go from here.",
     "Suggest a stock.",
   ]);
 });
@@ -138,14 +137,13 @@ test("the counters come from the research and timeline sections", () => {
   expect(stocksBought(doc)).toBeGreaterThan(0);
 });
 
-test("the best graded buy call is the document on the card and the where-next link", () => {
+test("the best graded buy call is the document on the research card", () => {
   render(<Home doc={doc} />);
   const best = bestCall(doc)!;
-  const links = [screen.getByRole("link", { name: "Read the whole thesis" }), screen.getByRole("link", { name: /best call so far/i })];
-  for (const link of links) expect(link).toHaveAttribute("href", `#/ticker/${best.symbol}`);
+  expect(screen.getByRole("link", { name: "Read the whole thesis" })).toHaveAttribute("href", `#/ticker/${best.symbol}`);
   expect(screen.getByText(`research/${best.symbol}-${best.verdict_date}.md`)).toBeInTheDocument();
-  // Only where-next states the gain; the card itself carries no caption.
-  expect(screen.getByText(/\+14\.8 points vs SPY over 21 trading days, called Jul 28/)).toBeInTheDocument();
+  // The card carries no caption about the gain.
+  expect(document.body.textContent).not.toMatch(/points vs SPY/);
 });
 
 test("the best call's own write-up takes shape from its dated file: title, sentence, headings", async () => {
@@ -166,7 +164,6 @@ test("the best call's own write-up takes shape from its dated file: title, sente
 test("without a graded buy there is no featured thesis anywhere", () => {
   const sec = doc.sections["research-verdict-outcomes"];
   render(<Home doc={{ ...doc, sections: { ...doc.sections, "research-verdict-outcomes": { ...sec, best_call: null } } }} />);
-  expect(screen.queryByRole("link", { name: /best call so far/i })).not.toBeInTheDocument();
   // Without a graded buy the card falls back to last night's write-up.
   const night = lastNight(doc).thesis!;
   expect(screen.getByText(`research/${night.ticker}-${night.date}.md`)).toBeInTheDocument();
@@ -204,8 +201,7 @@ test("never addresses the reader as 'you', and never prices positions", () => {
 test("a document with no sections still renders the front door", () => {
   render(<Home doc={{ ...doc, sections: {} }} />);
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("grades its own work");
-  expect(screen.getByRole("link", { name: /every researched name/i })).toHaveAttribute("href", "#/research");
-  expect(screen.queryByRole("link", { name: /best call so far/i })).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /every write-up/i })).toHaveAttribute("href", "#/research");
   const story = within(document.getElementById("story") as HTMLElement);
   expect(story.getByText("no mood call tonight")).toBeInTheDocument();
 });
