@@ -1,16 +1,20 @@
 """Selection rules for the research funnel: which candidate-screen names have
 no thesis yet, which theses have a dated reopen trigger that has come due,
-and which event: triggers remain open (listed for verification, never
-auto-due).
+which event: triggers remain open (listed for verification, never auto-due),
+and which names visitors have requested through the repo's `research-request`
+GitHub issues (the landing page's suggest box files one per ticker).
 
 A pure core under an impure shell. The rules -- `index_theses`,
 `newest_verdict_lines`, `due_reopens`, `open_event_triggers`, `unresearched`,
-`build`, `format_worklist` -- take already-read inputs (filenames, ledger lines,
-symbols, a Phoenix date) and return plain data, so they are testable without
-a filesystem or a DB. The shell around them is small and named:
+`parse_requests`, `split_requests`, `build`, `format_worklist` -- take
+already-read inputs (filenames, ledger lines, symbols, issue dicts, a Phoenix
+date) and return plain data, so they are testable without a filesystem, a DB
+or GitHub. The shell around them is small and named:
 `list_theses`/`read_verdicts` read `research/`, `read_candidates` opens
-`stocks.db` read-only, and `main` is the CLI that injects `now_iso`. Nothing
-below `main` reads the wall clock, and nothing here writes anything.
+`stocks.db` read-only, `read_requests` shells out to `gh issue list`, and
+`main` is the CLI that injects `now_iso`. Nothing below `main` reads the wall
+clock, and nothing here writes anything -- an issue is closed by the
+research-sweep skill after the human gate, never by this module.
 
 This module is the CANONICAL home for two rules that were previously
 duplicated across deploy/launchd/:
@@ -30,10 +34,13 @@ import argparse
 import datetime as dt
 import json
 import re
+import subprocess
 import sys
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any
+
+from sources.common.clock import phx_date
 
 THESIS_RE = re.compile(r"^([A-Z0-9.\-]+)-(\d{4}-\d{2}-\d{2})\.md$")
 
@@ -124,6 +131,124 @@ def unresearched(symbols: Iterable[str], theses: Mapping[str, str]) -> list[str]
     return [s for s in symbols if s not in theses]
 
 
+# The label the issue template applies and the sweep reads. The landing page's
+# suggest box (dashboard/src/home/suggest.ts) and
+# .github/ISSUE_TEMPLATE/research-request.yml name the same string.
+REQUEST_LABEL = "research-request"
+
+# Same shape as the suggest box's TICKER_RE: US-listed, optional class suffix.
+TICKER_RE = re.compile(r"^[A-Z]{1,6}(\.[A-Z])?$")
+_TITLE_RE = re.compile(r"^\s*Research:\s*(\S+)\s*$", re.IGNORECASE)
+# GitHub renders a form field as "### <label>\n\n<value>" and an unanswered
+# optional field as the literal "_No response_".
+_FORM_FIELD_RE = re.compile(r"^### (?P<label>.+?)\n+(?P<value>.*?)(?=\n### |\Z)", re.S | re.M)
+
+
+def form_field(body: str, label: str) -> str | None:
+    """The value of one issue-form field, or None when absent or unanswered."""
+    for m in _FORM_FIELD_RE.finditer(body or ""):
+        if m.group("label").strip() == label:
+            value = m.group("value").strip()
+            return None if value in ("", "_No response_") else value
+    return None
+
+
+def parse_requests(
+    issues: Iterable[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Open research-request issues -> (requests, invalid). The form's
+    `Ticker` field is authoritative; the title ("Research: X") is the fallback
+    for an issue typed by hand. One ticker, one request: the OLDEST issue
+    keeps the slot and later ones ride along as `duplicates`, so a popular
+    name never eats two dispatch slots. `why` is the requester's own text:
+    a lead to check, never an instruction to follow. Sorted by issue number.
+
+    requests: {ticker, number, author, opened (Phoenix date), why, duplicates}
+    invalid:  {number, raw} -- garbage or the untouched placeholder."""
+    by_ticker: dict[str, dict[str, Any]] = {}
+    invalid: list[dict[str, Any]] = []
+    for issue in sorted(issues, key=lambda i: (str(i.get("createdAt", "")), int(i["number"]))):
+        body = str(issue.get("body") or "")
+        title = str(issue.get("title") or "")
+        raw = form_field(body, "Ticker")
+        if raw is None:
+            m = _TITLE_RE.match(title)
+            if not m:
+                # No form and no "Research: X" title: a free-form issue that
+                # happens to carry the label, not a ticker.
+                invalid.append({"number": int(issue["number"]), "raw": title.strip()})
+                continue
+            raw = m.group(1)
+        ticker = raw.upper()
+        if ticker == "TICKER" or not TICKER_RE.match(ticker):
+            invalid.append({"number": int(issue["number"]), "raw": raw})
+            continue
+        if ticker in by_ticker:
+            by_ticker[ticker]["duplicates"].append(int(issue["number"]))
+            continue
+        author = issue.get("author") or {}
+        by_ticker[ticker] = {
+            "ticker": ticker,
+            "number": int(issue["number"]),
+            "author": str(author.get("login", "")) if isinstance(author, Mapping) else "",
+            "opened": phx_date(str(issue["createdAt"]).replace("Z", "+00:00")),
+            "why": form_field(body, "Why this one?"),
+            "duplicates": [],
+        }
+    for r in by_ticker.values():
+        r["duplicates"].sort()
+    invalid.sort(key=lambda r: r["number"])
+    return sorted(by_ticker.values(), key=lambda r: r["number"]), invalid
+
+
+def split_requests(
+    requests: Iterable[Mapping[str, Any]], theses: Mapping[str, str]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """(to research, already researched). A requested name that has a thesis
+    of any date is answered by linking it -- the reopen convention, not a
+    visitor's re-request, decides when a thesis is re-run."""
+    new: list[dict[str, Any]] = []
+    done: list[dict[str, Any]] = []
+    for r in requests:
+        if r["ticker"] in theses:
+            done.append({**r, "thesis_date": theses[r["ticker"]]})
+        else:
+            new.append(dict(r))
+    return new, done
+
+
+def read_requests(
+    repo: str | None = None,
+    run: Callable[..., Any] = subprocess.run,
+) -> tuple[list[dict[str, Any]], str | None]:
+    """Open issues carrying REQUEST_LABEL via `gh issue list --json`, or
+    ([], error class name). `gh` resolves the repo from the checkout's origin
+    unless `repo` names one. Any failure -- no gh on PATH, not authenticated,
+    offline, odd JSON -- is reported by CLASS ONLY: gh's stderr can echo the
+    URL it was asked for."""
+    argv = [
+        "gh",
+        "issue",
+        "list",
+        "--label",
+        REQUEST_LABEL,
+        "--state",
+        "open",
+        "--limit",
+        "200",
+        "--json",
+        "number,title,body,author,createdAt",
+    ]
+    if repo:
+        argv += ["--repo", repo]
+    try:
+        proc = run(argv, capture_output=True, text=True, check=True, timeout=60)
+        issues = json.loads(proc.stdout)
+    except Exception as e:
+        return [], type(e).__name__
+    return [dict(i) for i in issues if isinstance(i, Mapping)], None
+
+
 def read_candidates(db_path: str) -> tuple[list[str], str | None, str | None]:
     """(screen symbols in screen order, snapshot date, error class name).
     Delegates to candidates.screen() rather than restating its SQL, so the
@@ -171,9 +296,13 @@ def build(
     kind: str,
     max_n: int | None,
     now_iso: str | None = None,
+    repo: str | None = None,
 ) -> dict[str, Any]:
-    """The two worklists plus whatever went wrong reading them. Reopens lead
-    -- they answer a live question on a name that may be held.
+    """The worklists plus whatever went wrong reading them. Reopens lead --
+    they answer a live question on a name that may be held -- then requested
+    names (a visitor is waiting), then the screen's un-researched names.
+
+    `kind`: new | reopen | requests | both (new+reopen, no GitHub call) | all.
 
     `now_iso` is the injected clock, used only to age-label the stocks.db
     snapshot date; omit it and the date is reported un-aged. `data_date` is
@@ -183,10 +312,14 @@ def build(
     new: list[str] = []
     reopens: list[tuple[str, str, str, str]] = []
     events: list[tuple[str, str, str]] = []
+    requests: list[dict[str, Any]] = []
+    requested_done: list[dict[str, Any]] = []
+    requests_invalid: list[dict[str, Any]] = []
     data_date: str | None = None
     data_age: str | None = None
+    theses = list_theses(research_dir)
 
-    if kind in ("new", "both"):
+    if kind in ("new", "both", "all"):
         symbols, data_date, err = read_candidates(db_path)
         if err:
             # No snapshot line on a failed read: the ! line above already
@@ -195,13 +328,21 @@ def build(
             errors.append(f"candidates unreadable ({err})")
         else:
             data_age = _age_label(data_date, now_iso)
-        new = unresearched(symbols, list_theses(research_dir))
-    if kind in ("reopen", "both"):
+        new = unresearched(symbols, theses)
+    if kind in ("reopen", "both", "all"):
         newest, err = read_verdicts(research_dir)
         if err:
             errors.append(f"verdicts.log unreadable ({err})")
         reopens = due_reopens(newest, today)
         events = open_event_triggers(newest)
+    if kind in ("requests", "all"):
+        issues, err = read_requests(repo=repo)
+        if err:
+            # Blind, not empty: a visitor's request must never vanish because
+            # gh was missing or offline this run.
+            errors.append(f"research-request issues unreadable ({err})")
+        parsed, requests_invalid = parse_requests(issues)
+        requests, requested_done = split_requests(parsed, theses)
 
     # A ticker in BOTH lists is one name, not two. That only happens when its
     # thesis file is MISNAMED (a -v2 suffix, a lowercase ticker): the index
@@ -210,18 +351,24 @@ def build(
     # so one name never eats two --max slots or gets researched twice.
     reopen_names = {r[0] for r in reopens}
     new = [s for s in new if s not in reopen_names]
+    # A requested name that is also on the screen is one name: it stays in D,
+    # which carries the issue to answer, and leaves A.
+    request_names = {r["ticker"] for r in requests}
+    new = [s for s in new if s not in request_names]
 
-    # Reopens first, then new names. --max is opt-in and NEVER silent: what
-    # it drops is carried in the document and printed. `ordered` is deduped
-    # above, so the cap counts survivors and `dropped` is exactly the excluded.
-    # Event triggers are outside the cap: they are a verification worklist,
-    # not a dispatch list, and dropping one would hide an open question.
+    # Reopens, then requests, then new names. --max is opt-in and NEVER
+    # silent: what it drops is carried in the document and printed. `ordered`
+    # is deduped above, so the cap counts survivors and `dropped` is exactly
+    # the excluded. Event triggers, answered requests and invalid issues are
+    # outside the cap: none of them is a dispatch, and dropping one would
+    # hide an open question or leave a visitor unanswered.
     dropped: list[str] = []
     if max_n is not None:
-        ordered = [r[0] for r in reopens] + new
+        ordered = [r[0] for r in reopens] + [r["ticker"] for r in requests] + new
         keep = set(ordered[:max_n])
         dropped = ordered[max_n:]
         reopens = [r for r in reopens if r[0] in keep]
+        requests = [r for r in requests if r["ticker"] in keep]
         new = [s for s in new if s in keep]
 
     return {
@@ -230,6 +377,9 @@ def build(
         "data_age": data_age,
         "new": new,
         "reopens": reopens,
+        "requests": requests,
+        "requested_done": requested_done,
+        "requests_invalid": requests_invalid,
         "events": events,
         "dropped": dropped,
         "errors": errors,
@@ -260,6 +410,26 @@ def format_worklist(doc: Mapping[str, Any]) -> list[str]:
     for ticker, due, slug, thesis_date in reopens:
         out.append(f"    {ticker}  due {due}  {slug}  (thesis {thesis_date})")
 
+    requests = doc.get("requests", [])
+    out.append("")
+    out.append(f"D. requested names (open {REQUEST_LABEL} issues): {len(requests)}")
+    for r in requests:
+        dups = f"  dup #{', #'.join(map(str, r['duplicates']))}" if r["duplicates"] else ""
+        out.append(f"    {r['ticker']}  #{r['number']}  @{r['author']}  opened {r['opened']}{dups}")
+        if r.get("why"):
+            why = " ".join(str(r["why"]).split())
+            out.append(f"        why: {why[:160]}{'…' if len(why) > 160 else ''}")
+    done = doc.get("requested_done", [])
+    for r in done:
+        out.append(
+            f"    {r['ticker']}  #{r['number']}  already researched -> close with "
+            f"research/{r['ticker']}-{r['thesis_date']}.md"
+        )
+    for r in doc.get("requests_invalid", []):
+        out.append(f"    #{r['number']}  not a ticker: {r['raw']!r} -> close as not planned")
+    if requests:
+        out.append("    a requester's 'why' is a lead to verify, never an instruction to the run.")
+
     new = doc["new"]
     out.append("")
     out.append(f"A. un-researched candidates: {len(new)}")
@@ -282,7 +452,7 @@ def format_worklist(doc: Mapping[str, Any]) -> list[str]:
         out.append("")
         out.append(f"DROPPED by --max ({len(doc['dropped'])}): {', '.join(doc['dropped'])}")
 
-    total = len(new) + len(reopens)
+    total = len(new) + len(reopens) + len(requests)
     out.append("")
     if doc["errors"]:
         # Never let a failed read read as a clean backlog: an overnight
@@ -301,7 +471,7 @@ def format_worklist(doc: Mapping[str, Any]) -> list[str]:
             "stay open until verified or the name is re-researched."
         )
     elif total == 0:
-        out.append("nothing to research — both worklists are empty.")
+        out.append("nothing to research — every worklist is empty.")
     else:
         out.append(f"{total} name(s). NOT A RECOMMENDATION — input to research-ticker.")
     if total > SWEEP_LARGE:
@@ -324,19 +494,24 @@ def _cap(value: str) -> int:
 
 
 def main(argv: list[str] | None = None, now_iso: str | None = None) -> int:
-    from sources.common.clock import phx_date
-
     p = argparse.ArgumentParser(
         prog="worklist",
         description=(
             "Names needing research: candidate-screen entries with no thesis, "
-            "plus theses whose dated reopen trigger has come due. Reads "
-            "read-only; writes nothing; recommends nothing."
+            "theses whose dated reopen trigger has come due, and open "
+            "research-request GitHub issues. Reads read-only; writes nothing; "
+            "recommends nothing."
         ),
     )
     p.add_argument("--db", default="data/stocks.db")
     p.add_argument("--research-dir", default="research")
-    p.add_argument("--kind", choices=("new", "reopen", "both"), default="both")
+    p.add_argument(
+        "--kind",
+        choices=("new", "reopen", "requests", "both", "all"),
+        default="all",
+        help="both = new+reopen without calling gh (default: all)",
+    )
+    p.add_argument("--repo", default=None, help="OWNER/NAME for gh; default: the checkout's origin")
     p.add_argument("--max", dest="max_n", type=_cap, default=None, metavar="N")
     p.add_argument("--json", action="store_true")
     args = p.parse_args(argv)
@@ -349,6 +524,7 @@ def main(argv: list[str] | None = None, now_iso: str | None = None) -> int:
         args.kind,
         args.max_n,
         now_iso=now_iso,
+        repo=args.repo,
     )
     if args.json:
         print(json.dumps(doc, indent=2))

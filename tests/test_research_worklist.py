@@ -163,3 +163,109 @@ def test_reopen_field_re_matches_event_and_dated():
     assert worklist.REOPEN_FIELD_RE.search("x reopen=event:slug").group(1) == "event"
     assert worklist.REOPEN_FIELD_RE.search("x reopen=2026-08-05:slug").group(1) == "2026-08-05"
     assert worklist.REOPEN_DATED_RE.search("x reopen=event:slug") is None
+
+
+# --- D. requested names (open research-request issues) ---------------------
+
+ISSUE_BODY = "### Ticker\n\nktb\n\n### Why this one?\n\nCheap denim. See the 10-K.\n"
+
+
+def _issue(
+    number, title="Research: TICKER", body=ISSUE_BODY, login="alice", created="2026-10-30T18:00:00Z"
+):
+    return {
+        "number": number,
+        "title": title,
+        "body": body,
+        "author": {"login": login},
+        "createdAt": created,
+    }
+
+
+def test_form_field_reads_the_section_and_treats_no_response_as_absent():
+    assert worklist.form_field(ISSUE_BODY, "Ticker") == "ktb"
+    assert worklist.form_field(ISSUE_BODY, "Why this one?") == "Cheap denim. See the 10-K."
+    assert (
+        worklist.form_field(
+            "### Ticker\n\nKTB\n\n### Why this one?\n\n_No response_\n", "Why this one?"
+        )
+        is None
+    )
+    assert worklist.form_field("free text, no form", "Ticker") is None
+
+
+def test_parse_requests_prefers_the_form_field_over_the_title_and_uppercases():
+    reqs, invalid = worklist.parse_requests([_issue(7, title="Research: WRONG")])
+    assert invalid == []
+    assert reqs == [
+        {
+            "ticker": "KTB",
+            "number": 7,
+            "author": "alice",
+            "opened": "2026-10-30",
+            "why": "Cheap denim. See the 10-K.",
+            "duplicates": [],
+        }
+    ]
+
+
+def test_parse_requests_falls_back_to_the_title_when_the_body_has_no_form():
+    reqs, invalid = worklist.parse_requests([_issue(3, title="Research: brk.b", body="just prose")])
+    assert [r["ticker"] for r in reqs] == ["BRK.B"]
+    assert reqs[0]["why"] is None
+    assert invalid == []
+
+
+def test_parse_requests_rejects_garbage_and_the_untouched_placeholder():
+    reqs, invalid = worklist.parse_requests(
+        [
+            _issue(1, body="### Ticker\n\nTICKER\n"),  # placeholder left as-is
+            _issue(2, body="### Ticker\n\nnot a ticker!!\n"),
+            _issue(4, title="hello", body=""),
+        ]
+    )
+    assert reqs == []
+    assert invalid == [
+        {"number": 1, "raw": "TICKER"},
+        {"number": 2, "raw": "not a ticker!!"},
+        {"number": 4, "raw": "hello"},
+    ]
+
+
+def test_parse_requests_dedupes_a_ticker_keeping_the_oldest_issue():
+    reqs, _ = worklist.parse_requests(
+        [
+            _issue(9, created="2026-10-30T18:00:00Z"),
+            _issue(5, created="2026-10-29T18:00:00Z", login="bob"),
+            _issue(11, created="2026-10-31T01:00:00Z"),
+        ]
+    )
+    assert len(reqs) == 1
+    assert reqs[0]["number"] == 5
+    assert reqs[0]["author"] == "bob"
+    assert reqs[0]["duplicates"] == [9, 11]
+
+
+def test_parse_requests_opened_is_the_phoenix_date():
+    """01:00Z on the 31st is still the 30th in Phoenix."""
+    reqs, _ = worklist.parse_requests([_issue(1, created="2026-10-31T01:00:00Z")])
+    assert reqs[0]["opened"] == "2026-10-30"
+
+
+def test_parse_requests_sorted_by_issue_number():
+    reqs, _ = worklist.parse_requests(
+        [
+            _issue(8, body="### Ticker\n\nZZZ\n"),
+            _issue(2, body="### Ticker\n\nAAA\n"),
+        ]
+    )
+    assert [r["number"] for r in reqs] == [2, 8]
+
+
+def test_split_requests_separates_already_researched_names():
+    reqs, _ = worklist.parse_requests(
+        [_issue(1, body="### Ticker\n\nKTB\n"), _issue(2, body="### Ticker\n\nAAPL\n")]
+    )
+    new, done = worklist.split_requests(reqs, {"AAPL": "2026-07-10"})
+    assert [r["ticker"] for r in new] == ["KTB"]
+    assert [(r["ticker"], r["thesis_date"]) for r in done] == [("AAPL", "2026-07-10")]

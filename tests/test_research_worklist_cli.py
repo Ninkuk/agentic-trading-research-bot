@@ -306,3 +306,153 @@ def test_main_accepts_a_max_of_one(research_dir, monkeypatch, capsys):
     doc = json.loads(capsys.readouterr().out)
     assert [r[0] for r in doc["reopens"]] == ["NICE"]
     assert doc["dropped"] == ["LDOS"]
+
+
+# --- D. requested names ---------------------------------------------------
+
+
+def _issues(*tickers):
+    return [
+        {
+            "number": i + 1,
+            "title": f"Research: {t}",
+            "body": f"### Ticker\n\n{t}\n\n### Why this one?\n\n_No response_\n",
+            "author": {"login": "alice"},
+            "createdAt": "2026-08-01T18:00:00Z",
+        }
+        for i, t in enumerate(tickers)
+    ]
+
+
+def test_read_requests_runs_gh_and_parses_json():
+    calls = []
+
+    def fake_run(argv, **kw):
+        calls.append(argv)
+
+        class R:
+            stdout = json.dumps(_issues("KTB"))
+
+        return R()
+
+    issues, err = worklist.read_requests(run=fake_run)
+    assert err is None
+    assert [i["number"] for i in issues] == [1]
+    argv = calls[0]
+    assert argv[:3] == ["gh", "issue", "list"]
+    assert "--label" in argv and worklist.REQUEST_LABEL in argv
+    assert "--state" in argv and "open" in argv
+
+
+def test_read_requests_names_the_error_class_only():
+    def missing(argv, **kw):
+        raise FileNotFoundError("/usr/local/bin/gh: secret-ish path")
+
+    assert worklist.read_requests(run=missing) == ([], "FileNotFoundError")
+
+    def bad_json(argv, **kw):
+        class R:
+            stdout = "not json"
+
+        return R()
+
+    assert worklist.read_requests(run=bad_json) == ([], "JSONDecodeError")
+
+
+def test_build_requests_lead_new_names_and_dedupe_against_the_screen(research_dir, monkeypatch):
+    monkeypatch.setattr(
+        worklist, "read_candidates", lambda _db: (["LDOS", "KTB", "CI"], "2026-07-08", None)
+    )
+    monkeypatch.setattr(
+        worklist, "read_requests", lambda **kw: (_issues("KTB", "NICE", "BWA"), None)
+    )
+    doc = worklist.build("x", research_dir, "2026-08-05", "all", None)
+    # KTB is requested AND on the screen: one name, kept in D with its issue.
+    assert [r["ticker"] for r in doc["requests"]] == ["KTB", "BWA"]
+    assert doc["new"] == ["LDOS", "CI"]
+    # NICE already has a thesis: close-with-link, never dispatch.
+    assert [(r["ticker"], r["thesis_date"]) for r in doc["requested_done"]] == [
+        ("NICE", "2026-07-27")
+    ]
+    assert doc["requests_invalid"] == []
+
+
+def test_build_max_counts_requests_after_reopens_before_new(research_dir, monkeypatch):
+    monkeypatch.setattr(
+        worklist, "read_candidates", lambda _db: (["LDOS", "CI"], "2026-07-08", None)
+    )
+    monkeypatch.setattr(worklist, "read_requests", lambda **kw: (_issues("BWA"), None))
+    doc = worklist.build("x", research_dir, "2026-08-05", "all", 2)
+    assert [r[0] for r in doc["reopens"]] == ["NICE"]
+    assert [r["ticker"] for r in doc["requests"]] == ["BWA"]
+    assert doc["new"] == []
+    assert doc["dropped"] == ["LDOS", "CI"]
+
+
+def test_build_kind_both_never_calls_gh(research_dir, monkeypatch):
+    monkeypatch.setattr(worklist, "read_candidates", lambda _db: ([], "2026-07-08", None))
+
+    def boom(**kw):
+        raise AssertionError("gh must not run for --kind both")
+
+    monkeypatch.setattr(worklist, "read_requests", boom)
+    doc = worklist.build("x", research_dir, "2026-08-05", "both", None)
+    assert doc["requests"] == [] and doc["errors"] == []
+
+
+def test_build_records_unreadable_requests(research_dir, monkeypatch):
+    monkeypatch.setattr(worklist, "read_requests", lambda **kw: ([], "CalledProcessError"))
+    doc = worklist.build("x", research_dir, "2026-08-05", "requests", None)
+    assert doc["requests"] == []
+    assert doc["errors"] == ["research-request issues unreadable (CalledProcessError)"]
+    assert "INCOMPLETE" in "\n".join(worklist.format_worklist(doc))
+
+
+def test_format_worklist_renders_requests_done_and_invalid():
+    doc = {
+        "today": "2026-08-05",
+        "new": [],
+        "reopens": [],
+        "requests": [
+            {
+                "ticker": "KTB",
+                "number": 7,
+                "author": "alice",
+                "opened": "2026-08-01",
+                "why": "Cheap denim.",
+                "duplicates": [9],
+            },
+        ],
+        "requested_done": [
+            {
+                "ticker": "NICE",
+                "number": 3,
+                "author": "bob",
+                "opened": "2026-08-01",
+                "why": None,
+                "duplicates": [],
+                "thesis_date": "2026-07-27",
+            },
+        ],
+        "requests_invalid": [{"number": 4, "raw": "hello"}],
+        "dropped": [],
+        "errors": [],
+    }
+    out = "\n".join(worklist.format_worklist(doc))
+    assert "D. requested names" in out
+    assert "KTB" in out and "#7" in out and "alice" in out and "Cheap denim." in out
+    assert "#9" in out  # the duplicate is named so the human can close it
+    assert "NICE" in out and "research/NICE-2026-07-27.md" in out
+    assert "#4" in out and "hello" in out
+    assert "1 name(s)" in out  # done and invalid rows are not research work
+
+
+def test_main_defaults_to_all_kinds(research_dir, monkeypatch, capsys):
+    monkeypatch.setattr(worklist, "read_candidates", lambda _db: ([], "2026-07-08", None))
+    monkeypatch.setattr(worklist, "read_requests", lambda **kw: (_issues("BWA"), None))
+    worklist.main(
+        ["--json", "--research-dir", str(research_dir), "--db", "x.db"],
+        now_iso="2026-08-05T04:12:00+00:00",
+    )
+    doc = json.loads(capsys.readouterr().out)
+    assert [r["ticker"] for r in doc["requests"]] == ["BWA"]
