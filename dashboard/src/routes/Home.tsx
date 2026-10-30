@@ -786,7 +786,7 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
           icon={ClipboardCheck}
           label="The scorecard"
           title="Has it been right?"
-          note="Imagine $100 going into the picks on the day the first one was bought, another $100 into an S&P 500 fund, and $100 left in cash. This is what each is worth today."
+          note="Imagine $100 going into the picks on the day the first one was bought, another $100 into an S&P 500 fund, and $100 left in cash. This is how each has done since."
           className="mb-10"
         />
         {nothing && (
@@ -801,14 +801,13 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
               <Stat label="SPY" value={rec.spy} swatch="dashed" />
               {rec.cash !== null && <Stat label="Cash" value={rec.cash} swatch="dotted" />}
             </div>
-            <div className="border-border/70 from-card/60 rounded-3xl border bg-linear-to-b to-transparent p-1.5">
-              <div className="bg-card border-border rounded-[1.1rem] border px-4 pt-4 pb-3">
-                <EquityCurve rows={rec.rows} footnote={`${rec.tradingDays} trading days`} />
-                <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                  {rec.verdict && <VerdictChip verdict={rec.verdict} />}
-                  <span>$100 at the {dateShort(rec.since)} close</span>
+            <div className="bg-card border-border rounded-2xl border px-4 pt-4 pb-3">
+              <EquityCurve rows={rec.rows} footnote={`${rec.tradingDays} trading days`} />
+              {rec.verdict && (
+                <div className="mt-3 flex">
+                  <VerdictChip verdict={rec.verdict} />
                 </div>
-              </div>
+              )}
             </div>
           </>
         )}
