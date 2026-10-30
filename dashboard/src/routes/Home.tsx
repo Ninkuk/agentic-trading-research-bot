@@ -786,7 +786,7 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
           icon={ClipboardCheck}
           label="The scorecard"
           title="Has it been right?"
-          note="$100 put into the picks, into an S&P 500 fund, and into cash, from the first day the picks were held. No positions or dollar amounts."
+          note="$100 put into the picks, into an S&P 500 fund, and into cash, from the first day the picks were held."
           className="mb-10"
         />
         {nothing && (
