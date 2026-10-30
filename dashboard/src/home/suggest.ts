@@ -15,10 +15,13 @@ export function normalizeTicker(raw: string): string {
 }
 
 export function suggestionHref(ticker: string): string {
+  // `ticker` prefills the form's required field by its id; the title alone
+  // leaves the field blank and the visitor retyping it.
   const q = new URLSearchParams({
     template: "research-request.yml",
     title: `Research: ${ticker}`,
     labels: "research-request",
+    ticker,
   });
   return `${REPO_URL}/issues/new?${q.toString()}`;
 }

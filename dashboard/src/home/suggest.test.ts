@@ -1,7 +1,7 @@
 
 import fixture from "../fixtures/data.json";
 import type { DashboardDoc } from "../types";
-import { matches, universe } from "./suggest";
+import { matches, suggestionHref, universe } from "./suggest";
 
 const doc = fixture as unknown as DashboardDoc;
 
@@ -33,4 +33,11 @@ test("matches lists symbols on the typed prefix, capped, none for nothing typed"
   for (const k of a) expect(k.symbol.startsWith("A")).toBe(true);
   expect(matches(known, "A", 1).length).toBe(1);
   expect(matches(known, "QQQQQQ")).toEqual([]);
+});
+
+test("suggestionHref prefills the template, the title and the ticker field", () => {
+  const href = suggestionHref("BRK.B");
+  expect(href).toContain("/issues/new?template=research-request.yml&title=Research%3A+BRK.B");
+  expect(href).toContain("&labels=research-request");
+  expect(href).toContain("&ticker=BRK.B");
 });
