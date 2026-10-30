@@ -18,7 +18,7 @@
 // present — a young fred.db must not leave a dangling legend entry.
 
 import type { ReactNode } from "react";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis, usePlotArea, useYAxisScale } from "recharts";
 import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
 import {
   ChartContainer,
@@ -43,6 +43,76 @@ const CONFIG = {
 } satisfies ChartConfig;
 
 const money = (v: number) => `$${v.toFixed(2)}`;
+
+// The band between the book and SPY, split by sign so each half takes its
+// tone: `above` spans spy→portfolio where the book leads, `below` spans
+// portfolio→spy where it trails; the other half collapses to zero height.
+// A pair of range areas, one per sign, is the only way Recharts fills a
+// region between two series in two colors.
+interface BandRow extends EquityCurvePoint {
+  above: [number, number];
+  below: [number, number];
+}
+
+function withBand(rows: EquityCurvePoint[]): BandRow[] {
+  return rows.map((r) => ({
+    ...r,
+    above: r.portfolio >= r.spy ? [r.spy, r.portfolio] : [r.spy, r.spy],
+    below: r.portfolio < r.spy ? [r.portfolio, r.spy] : [r.spy, r.spy],
+  }));
+}
+
+const LABEL_GAP = 13;
+
+// Where each series ends: its last value beside the line's end, in text
+// tokens, pushed apart when two ends are closer than a line of text; and
+// a bracket from SPY's end to the book's with the gap in points, only
+// when the two ends are far enough apart to fit it.
+function EndCaps({ rows, hasCash }: { rows: EquityCurvePoint[]; hasCash: boolean }) {
+  const plot = usePlotArea();
+  const scale = useYAxisScale();
+  const last = rows[rows.length - 1];
+  if (!plot || !scale || !last) return null;
+  const x0 = plot.x + plot.width + 5;
+  const ends = [
+    { key: "portfolio", v: last.portfolio, fill: "var(--foreground)", weight: 600 },
+    { key: "spy", v: last.spy, fill: "var(--muted-foreground)", weight: 500 },
+    ...(hasCash && last.cash !== null ? [{ key: "cash", v: last.cash, fill: "var(--muted-foreground)", weight: 500 }] : []),
+  ].map((e) => ({ ...e, y: scale(e.v) as number }));
+  const labels = ends.map((e) => ({ ...e, ly: e.y })).sort((a, b) => a.y - b.y);
+  for (let i = 1; i < labels.length; i++) {
+    if (labels[i].ly - labels[i - 1].ly < LABEL_GAP) labels[i].ly = labels[i - 1].ly + LABEL_GAP;
+  }
+  const yPort = scale(last.portfolio) as number;
+  const ySpy = scale(last.spy) as number;
+  const diff = last.portfolio - last.spy;
+  const span = Math.abs(ySpy - yPort);
+  const bracketX = x0 + 54;
+  return (
+    <g className="equity-end-caps" aria-hidden="true" fontSize={11} fontFamily="var(--font-mono, ui-monospace, monospace)">
+      {labels.map((e) => (
+        <text key={e.key} x={x0} y={e.ly} dy={4} fill={e.fill} fontWeight={e.weight}>
+          {money(e.v)}
+        </text>
+      ))}
+      {span >= 30 && (
+        <g stroke={diff >= 0 ? "var(--tone-up)" : "var(--tone-down)"} strokeWidth={1.5} fill="none">
+          <path d={`M${bracketX - 3},${Math.min(yPort, ySpy)} h3 V${Math.max(yPort, ySpy)} h-3`} />
+          <text
+            x={bracketX + 5}
+            y={(yPort + ySpy) / 2}
+            dy={4}
+            stroke="none"
+            fill={diff >= 0 ? "var(--tone-up)" : "var(--tone-down)"}
+            fontWeight={600}
+          >
+            {`${diff >= 0 ? "+" : "−"}${Math.abs(diff).toFixed(1)}`}
+          </text>
+        </g>
+      )}
+    </g>
+  );
+}
 
 // Axis precision follows the plotted span: a 1D window moves a tenth of a
 // percent, so whole-dollar ticks would all read "$100". Under a dollar
@@ -78,10 +148,13 @@ export function EquityCurve({
   height = 260,
   footnote,
   controls,
+  gap = false,
+  endLabels = false,
 }: EquityCurveProps) {
   const { ref, width } = useMeasuredWidth(640);
   const hasCash = rows.some((r) => r.cash !== null);
   const dp = axisDecimals(rows);
+  const data = gap ? withBand(rows) : rows;
 
   return (
     <div ref={ref} className="equity-curve chart-measure w-full">
@@ -91,13 +164,39 @@ export function EquityCurve({
         className="aspect-auto w-full"
         style={{ height }}
       >
-        <LineChart
+        <ComposedChart
           width={width}
           height={height}
-          data={rows}
-          margin={{ top: 8, right: 12, bottom: 0, left: 0 }}
+          data={data}
+          margin={{ top: 8, right: endLabels ? 96 : 12, bottom: 0, left: 0 }}
         >
           <CartesianGrid vertical={false} />
+          {gap && (
+            <>
+              <Area
+                className="equity-gap-above"
+                dataKey="above"
+                type="monotone"
+                stroke="none"
+                fill="var(--tone-up)"
+                fillOpacity={0.16}
+                isAnimationActive={false}
+                tooltipType="none"
+                legendType="none"
+              />
+              <Area
+                className="equity-gap-below"
+                dataKey="below"
+                type="monotone"
+                stroke="none"
+                fill="var(--tone-down)"
+                fillOpacity={0.16}
+                isAnimationActive={false}
+                tooltipType="none"
+                legendType="none"
+              />
+            </>
+          )}
           <XAxis
             dataKey="date"
             tickLine={false}
@@ -151,7 +250,8 @@ export function EquityCurve({
               isAnimationActive={false}
             />
           )}
-        </LineChart>
+          {endLabels && <EndCaps rows={rows} hasCash={hasCash} />}
+        </ComposedChart>
       </ChartContainer>
       <div className="equity-curve-legend text-muted-foreground mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
         <span className="inline-flex items-center gap-1.5">

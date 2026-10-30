@@ -83,3 +83,24 @@ test("renders the controls slot below the legend row", () => {
     legend!.compareDocumentPosition(controls!) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
 });
+
+test("the gap band and the end labels are opt-in; the band splits by sign", () => {
+  const { container } = render(<EquityCurve rows={ROWS} gap endLabels />);
+  expect(container.querySelectorAll(".recharts-area").length).toBe(2);
+  expect(container.querySelectorAll(".recharts-line").length).toBe(3);
+  const caps = container.querySelector(".equity-end-caps")!;
+  expect(caps.textContent).toContain("$112.50");
+  expect(caps.textContent).toContain("$101.59");
+  expect(caps.textContent).toContain("$100.05");
+  expect(caps.textContent).toContain("+10.9");
+  // Without the flags nothing extra renders.
+  const plain = render(<EquityCurve rows={ROWS} />).container;
+  expect(plain.querySelectorAll(".recharts-area").length).toBe(0);
+  expect(plain.querySelector(".equity-end-caps")).toBeNull();
+});
+
+test("a book behind SPY brackets a negative gap", () => {
+  const behind = ROWS.map((r) => ({ ...r, portfolio: r.spy - 5 }));
+  const { container } = render(<EquityCurve rows={behind} endLabels />);
+  expect(container.querySelector(".equity-end-caps")!.textContent).toContain("−5.0");
+});
