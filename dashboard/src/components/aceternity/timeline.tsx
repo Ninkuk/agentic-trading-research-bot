@@ -21,9 +21,17 @@ export function Timeline({ data, className }: { data: TimelineEntry[]; className
   const containerRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
 
+  // The list grows after mount (fetched thesis text, typed-in cards), so
+  // the beam tracks its height rather than reading it once.
   useEffect(() => {
-    if (ref.current) setHeight(ref.current.getBoundingClientRect().height);
-  }, [ref]);
+    const el = ref.current;
+    if (!el) return;
+    setHeight(el.getBoundingClientRect().height);
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setHeight(el.getBoundingClientRect().height));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
