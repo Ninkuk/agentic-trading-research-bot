@@ -36,7 +36,8 @@ skimmable in the same places.
   market cap $X · next earnings <date + BMO/AMC, or "none scheduled">`.
   Add EV/net debt only when §4 uses them.
 - Then one provenance line: entry path (`candidates` screen row, composite
-  flag, user-directed, reopen) and, on a scheduled run, the sentence
+  flag, user-directed, `requested (issue #N)` for a visitor's GitHub
+  research-request, reopen) and, on a scheduled run, the sentence
   "Unattended scheduled run." Reopen runs replace this line with a short bold
   block: prior file, prior verdict + ownership call, and the reopen question.
 

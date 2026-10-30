@@ -223,10 +223,12 @@ source itself. Import a screener/monitor/combiner's internals as `sources.screen
 `tools/` holds code that is neither a source nor a dispatcher — helpers with no network
 and no writes, each a pure core under (at most) a thin read-only shell. Today:
 `tools/research/worklist.py`, the research-sweep selection rules (un-researched
-candidates, due `reopen=` triggers) and the canonical home of two rules the dashboard
-and `research_nightly.py` import rather than copy — the only module here that touches a
-DB (`stocks.db` read-only via `candidates`) or a clock (an injected `now_iso` its pure
-core never reaches for);
+candidates, due `reopen=` triggers, open `research-request` GitHub issues read through
+`gh issue list` — the landing page's suggest box files one per ticker) and the canonical
+home of two rules the dashboard and `research_nightly.py` import rather than copy — the
+only module here that touches a DB (`stocks.db` read-only via `candidates`), a clock (an
+injected `now_iso` its pure core never reaches for) or a network (that one `gh` call,
+behind an injected `run=`; the module itself never writes to GitHub);
 `tools/book/intraday_curve.py`, today's stock
 book vs SPY rebased to $100 at the prior close from broker positions × 5-minute bars
 (the broker has no intraday portfolio history), rendered through the sibling page
