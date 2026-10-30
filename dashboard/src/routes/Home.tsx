@@ -27,6 +27,7 @@
 import { useEffect, useState } from "react";
 import { motion, MotionConfig } from "motion/react";
 import { ArrowRight, Check, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, X, type LucideIcon } from "lucide-react";
+import { Compare } from "../components/aceternity/compare";
 import { GlowingEffect } from "../components/aceternity/glowing-effect";
 import { HoverBorderGradient } from "../components/aceternity/hover-border-gradient";
 import { InfiniteMovingCards } from "../components/aceternity/infinite-moving-cards";
@@ -576,51 +577,22 @@ const VERDICT_TONE: Record<string, string> = {
   unproven: "text-tone-hold border-tone-hold",
 };
 
-/** Phosphor Icons' boxing glove (MIT, phosphoricons.com), inlined.
- * `flip` mirrors it so a pair faces each other. */
-function Glove({ flip, className }: { flip?: boolean; className?: string }) {
+/** One face of the comparison: a tinted sheet with the side's label and
+ * its sentence. Both faces sit in the same grid cell, so each stretches to
+ * the taller one. */
+function Side({ tone, label, text }: { tone: "up" | "down"; label: string; text: string }) {
+  // The tone backgrounds are translucent; the card base keeps the other
+  // face from showing through as the divider wipes.
+  const tint = tone === "up" ? "bg-tone-up-bg" : "bg-tone-down-bg";
+  const ink = tone === "up" ? "text-tone-up" : "text-tone-down";
   return (
-    <svg
-      viewBox="0 0 256 256"
-      aria-hidden="true"
-      className={className}
-      style={flip ? { transform: "scaleX(-1)" } : undefined}
-      fill="currentColor"
-    >
-      <path d="M168,16H120A56.06,56.06,0,0,0,64,72H56a32,32,0,0,0-32,32v29.19a16.09,16.09,0,0,0,3.51,10,8,8,0,0,0,.62.69L64,179.34V216a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V177.12l15.38-53.85a15.89,15.89,0,0,0,.62-4.39V72A56.06,56.06,0,0,0,168,16Zm40,102.88L192.31,173.8A7.85,7.85,0,0,0,192,176v40H80V176a8,8,0,0,0-2.38-5.69L40,133.12V104A16,16,0,0,1,56,88h8v16a8,8,0,0,0,16,0V72a40,40,0,0,1,40-40h48a40,40,0,0,1,40,40Zm-36.42,48.28L153.89,176l17.69,8.84a8,8,0,0,1-7.16,14.32L136,184.94l-28.42,14.22a8,8,0,1,1-7.16-14.32L118.11,176l-17.69-8.84a8,8,0,1,1,7.16-14.32L136,167.06l28.42-14.22a8,8,0,1,1,7.16,14.32Z" />
-    </svg>
-  );
-}
-
-/** The pair of gloves between the two boxes: side by side, in the page's
- * ink, springing toward each other as the row scrolls in. */
-function Versus() {
-  return (
-    <motion.div
-      aria-hidden="true"
-      className="text-foreground flex items-center justify-center self-center"
-      initial={{ opacity: 0, scale: 0.6 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true, amount: 0.6 }}
-      transition={{ delay: 0.5, type: "spring", stiffness: 400, damping: 18 }}
-    >
-      <motion.span
-        initial={{ x: -8 }}
-        whileInView={{ x: 0 }}
-        viewport={{ once: true, amount: 0.6 }}
-        transition={{ delay: 0.9, type: "spring", stiffness: 600, damping: 12 }}
-      >
-        <Glove className="size-9" />
-      </motion.span>
-      <motion.span
-        initial={{ x: 8 }}
-        whileInView={{ x: 0 }}
-        viewport={{ once: true, amount: 0.6 }}
-        transition={{ delay: 0.9, type: "spring", stiffness: 600, damping: 12 }}
-      >
-        <Glove flip className="size-9" />
-      </motion.span>
-    </motion.div>
+    <div className="bg-card relative h-full">
+      <div className={`absolute inset-0 ${tint}`} />
+      <div className="relative px-5 py-5 sm:px-6">
+        <div className={`mb-2 font-mono text-[11px] tracking-wide uppercase ${ink}`}>{label}</div>
+        <p className="text-foreground m-0 text-sm leading-relaxed sm:text-base">{text}</p>
+      </div>
+    </div>
   );
 }
 
@@ -650,29 +622,20 @@ function AttackChapter({
             <span>{featured.ticker} · the thesis vs. the attack</span>
           </div>
           <div className="grid gap-4 p-5 sm:p-6">
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-4">
-              <motion.div
-                className="border-tone-up/50 bg-tone-up-bg/30 rounded-2xl border px-4 py-3"
-                initial={{ opacity: 0, x: -14 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, amount: 0.6 }}
-                transition={{ duration: 0.4 }}
-              >
-                <div className="text-tone-up mb-1 font-mono text-[11px] tracking-wide uppercase">the thesis</div>
-                <p className="m-0 text-sm leading-relaxed">{peek.line}</p>
-              </motion.div>
-              <Versus />
-              <motion.div
-                className="border-tone-down/50 bg-tone-down-bg/30 rounded-2xl border px-4 py-3"
-                initial={{ opacity: 0, x: 14 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, amount: 0.6 }}
-                transition={{ duration: 0.4 }}
-              >
-                <div className="text-tone-down mb-1 font-mono text-[11px] tracking-wide uppercase">the attack</div>
-                <p className="m-0 text-sm leading-relaxed">{peek.attack ?? "No written objection survived; the attack found nothing load-bearing."}</p>
-              </motion.div>
-            </div>
+            <Compare
+              className="border-border rounded-2xl border"
+              first={<Side tone="up" label="the thesis" text={peek.line} />}
+              second={
+                <Side
+                  tone="down"
+                  label="the attack"
+                  text={peek.attack ?? "No written objection survived; the attack found nothing load-bearing."}
+                />
+              }
+              initialSliderPercentage={100}
+              autoplay
+              autoplayDuration={5000}
+            />
             {verdict && (
               <motion.div
                 className="flex items-center justify-center gap-3 pt-1"

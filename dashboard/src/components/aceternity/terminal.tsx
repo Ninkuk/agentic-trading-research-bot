@@ -468,8 +468,8 @@ export function Terminal({
             <div className="h-3 w-3 rounded-full bg-yellow-500 transition-colors hover:bg-yellow-600" />
             <div className="h-3 w-3 rounded-full bg-green-500 transition-colors hover:bg-green-600" />
           </div>
-          <div className="flex-1 text-center">
-            <span className="truncate text-xs text-neutral-400">
+          <div className="w-0 min-w-0 flex-1 text-center">
+            <span className="block truncate text-xs text-neutral-400">
               {username} — last night
             </span>
           </div>
