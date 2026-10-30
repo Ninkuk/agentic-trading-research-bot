@@ -104,6 +104,36 @@ export function stocksBought(doc: DashboardDoc): number | null {
   return syms.size > 0 ? syms.size : null;
 }
 
+export interface DeckCard {
+  ticker: string;
+  call: "buy" | "pass";
+  date: string;
+}
+
+/** The morning's deck: the newest write-ups, oldest first, with the newest
+ * `buys` buy calls kept in so a sample of `n` shows what a yes looks like
+ * (one in ten calls is a buy; a plain newest-`n` slice can hold none). */
+export function decisionDeck(doc: DashboardDoc, n = 20, buys = 4): DeckCard[] {
+  const cards: DeckCard[] = [];
+  for (const r of rows(doc.sections["research"])) {
+    const call = String(r.call ?? "").toLowerCase();
+    if ((call !== "buy" && call !== "pass") || typeof r.ticker !== "string") continue;
+    cards.push({ ticker: r.ticker, call, date: String(r.thesis_date ?? "") });
+  }
+  cards.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const pick: DeckCard[] = [];
+  let left = buys;
+  for (const c of cards) {
+    if (c.call === "buy") {
+      if (left === 0) continue;
+      left -= 1;
+    }
+    pick.push(c);
+    if (pick.length === n) break;
+  }
+  return pick.reverse();
+}
+
 /** The first night the regime was called: the timeline's earliest date. */
 export function firstNight(doc: DashboardDoc): string | null {
   const rows = live(doc.sections["regime-timeline"])?.rows ?? [];

@@ -29,6 +29,7 @@ import { motion, MotionConfig } from "motion/react";
 import { ArrowRight, Check, ClipboardCheck, Compass, ExternalLink, MessageSquarePlus, MoonStar, X, type LucideIcon } from "lucide-react";
 import { Compare } from "../components/aceternity/compare";
 import { GlowingEffect } from "../components/aceternity/glowing-effect";
+import { DecisionSort } from "../home/DecisionSort";
 import { HoverBorderGradient } from "../components/aceternity/hover-border-gradient";
 import { InfiniteMovingCards } from "../components/aceternity/infinite-moving-cards";
 import { Button as MovingBorderButton } from "../components/aceternity/moving-border";
@@ -45,6 +46,7 @@ import {
   calibration,
   callHitRate,
   callsGraded,
+  decisionDeck,
   GRADE_HORIZON,
   lastNight,
   lastRuns,
@@ -60,6 +62,7 @@ import {
   thesisOneLiner,
   unprovenSignals,
   type Calibration,
+  type DeckCard,
   type HitRate,
   type LastNight,
   type ResearchCounts,
@@ -272,19 +275,6 @@ function Chip({ children, tone }: { children: React.ReactNode; tone?: "up" }) {
 
 function Prose({ children }: { children: React.ReactNode }) {
   return <p className="text-muted-foreground m-0 max-w-[60ch] text-base md:text-lg">{children}</p>;
-}
-
-function Facts({ items }: { items: string[] }) {
-  return (
-    <ul className="text-foreground m-0 grid max-w-[60ch] list-none gap-2 p-0">
-      {items.map((t) => (
-        <li key={t} className="flex gap-3">
-          <span aria-hidden="true" className="bg-primary mt-2.5 size-1.5 shrink-0 rounded-full" />
-          <span>{t}</span>
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 const READ_JOBS = new Set(["fred", "edgar"]);
@@ -689,20 +679,17 @@ function AttackChapter({
   );
 }
 
-function DecideChapter({ counts }: { counts: ResearchCounts | null }) {
+function DecideChapter({ counts, deck }: { counts: ResearchCounts | null; deck: DeckCard[] }) {
   return (
     <div className="grid gap-6">
       <Prose>
         In the morning a person reads the notes. Nothing here trades on its own; a purchase is queued by
         hand, in a small amount, and graded like everything else.
       </Prose>
-      {counts && (
-        <Facts
-          items={[
-            `${counts.passes} of the ${counts.theses} write-ups so far ended in a pass.`,
-            "None of this is investment advice.",
-          ]}
-        />
+      {counts && deck.length > 0 && (
+        // The newest write-ups dealt onto two piles; the totals are every
+        // call so far, so the buy pile stays short.
+        <DecisionSort deck={deck} totals={counts} className="max-w-2xl" />
       )}
       <HoverBorderGradient
         as="a"
@@ -720,6 +707,7 @@ function DecideChapter({ counts }: { counts: ResearchCounts | null }) {
 function Story({ doc }: { doc: DashboardDoc }) {
   const night = lastNight(doc);
   const counts = researchCounts(doc);
+  const deck = decisionDeck(doc);
   const featured = featuredThesis(bestCall(doc), night);
   const peek = useThesisPeek(featured?.file ?? null);
   const entries: TimelineEntry[] = [
@@ -739,7 +727,7 @@ function Story({ doc }: { doc: DashboardDoc }) {
     },
     { when: "10:00pm", title: "Research a name", content: <ResearchChapter featured={featured} peek={peek} /> },
     { when: "10:00pm", title: "Play devil's advocate", content: <AttackChapter featured={featured} peek={peek} counts={counts} /> },
-    { when: "6:30am", title: "A person decides", content: <DecideChapter counts={counts} />, accent: true },
+    { when: "6:30am", title: "A person decides", content: <DecideChapter counts={counts} deck={deck} />, accent: true },
   ];
   return (
     <section id="story" className="border-border border-t py-16 md:py-24">

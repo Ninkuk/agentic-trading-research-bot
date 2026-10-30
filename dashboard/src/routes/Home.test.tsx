@@ -2,7 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import fixture from "../fixtures/data.json";
 import type { DashboardDoc, Section } from "../types";
-import { bestCall, lastNight, researchCounts, stocksBought } from "../home/homeFacts";
+import { bestCall, decisionDeck, lastNight, researchCounts, stocksBought } from "../home/homeFacts";
 import { suggestionHref } from "../home/suggest";
 import { Home } from "./Home";
 
@@ -112,6 +112,21 @@ test("the story has one chapter per step of the run, with last night's output", 
   // The terminal replays the read jobs' real commands (typed once in view;
   // jsdom never scrolls, so the title bar is what renders).
   expect(screen.getByText("~/agentic-trading-research-bot — last night")).toBeInTheDocument();
+});
+
+test("the morning deals the newest write-ups onto a pass pile and a buy pile", () => {
+  render(<Home doc={doc} />);
+  const deck = decisionDeck(doc);
+  expect(deck.length).toBeGreaterThan(0);
+  for (const c of deck) expect(screen.getAllByText(c.ticker).length).toBeGreaterThan(0);
+  // jsdom never scrolls the row into view, so nothing is dealt yet: the
+  // piles show the calls outside the deck, and reach the real totals as
+  // tickets land.
+  const counts = researchCounts(doc)!;
+  const inDeck = deck.filter((c) => c.call === "buy").length;
+  const sort = within(screen.getByRole("figure", { name: /the morning's sort/ }));
+  expect(sort.getByText("buy").previousSibling).toHaveTextContent(String(counts.buys - inDeck));
+  expect(sort.getByText("pass").previousSibling).toHaveTextContent(String(counts.passes - (deck.length - inDeck)));
 });
 
 test("the counters come from the research and timeline sections", () => {

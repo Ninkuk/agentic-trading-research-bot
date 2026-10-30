@@ -4,6 +4,7 @@ import {
   bestCall,
   calibration,
   callHitRate,
+  decisionDeck,
   callsGraded,
   drivers,
   firstNight,
@@ -70,6 +71,22 @@ test("stocksBought counts distinct journaled buy symbols", () => {
   ] });
   expect(stocksBought(d)).toBe(2);
   expect(stocksBought(withSection("your-trades", { rows: [] }))).toBeNull();
+});
+
+test("decisionDeck deals the newest write-ups oldest-first, keeping a few buys in", () => {
+  const d = withSection("research", {
+    rows: [
+      { ticker: "A", call: "PASS", thesis_date: "2026-07-01" },
+      { ticker: "B", call: "BUY", thesis_date: "2026-07-02" },
+      { ticker: "C", call: "PASS", thesis_date: "2026-07-03" },
+      { ticker: "D", call: "BUY", thesis_date: "2026-07-04" },
+      { ticker: "E", call: "PASS", thesis_date: "2026-07-05" },
+      { ticker: "F", call: "HOLD", thesis_date: "2026-07-06" },
+    ],
+  });
+  expect(decisionDeck(d, 3, 1).map((c) => `${c.ticker}:${c.call}`)).toEqual(["C:pass", "D:buy", "E:pass"]);
+  expect(decisionDeck(d, 10, 1).map((c) => c.ticker)).toEqual(["A", "C", "D", "E"]);
+  expect(decisionDeck(withSection("research", { rows: [] }))).toEqual([]);
 });
 
 test("firstNight is the timeline's earliest date", () => {
