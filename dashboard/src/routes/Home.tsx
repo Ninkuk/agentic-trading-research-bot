@@ -571,6 +571,10 @@ function ResearchChapter({ featured, peek }: { featured: Featured | null; peek: 
   );
 }
 
+/** The divider's one pass: across to the attack, then back to rest in
+ * the middle with half of each side showing. */
+const ATTACK_PATH = [0, 50];
+
 const VERDICT_TONE: Record<string, string> = {
   sound: "text-tone-up border-tone-up",
   flawed: "text-tone-down border-tone-down",
@@ -634,6 +638,7 @@ function AttackChapter({
               }
               initialSliderPercentage={100}
               autoplay
+              autoplayPath={ATTACK_PATH}
               autoplayDuration={5000}
             />
             {verdict && (

@@ -1,9 +1,11 @@
 // Aceternity UI "Compare" (MIT), adapted: the two layers are arbitrary
 // content, not images, stacked in one grid cell so the box takes the
 // taller one's height; the sparkles layer (a tsparticles dependency) is
-// dropped; the divider glows in the theme's primary; autoplay eases and
-// dwells at each end instead of a constant sweep, waits for the box to
-// scroll into view, and is off under reduced motion. https://ui.aceternity.com/components/compare
+// dropped; the divider glows in the theme's primary; autoplay is one
+// eased path through given waypoints once the box scrolls into view (not
+// the original endless ping-pong), after which the divider rests at the
+// last waypoint and moves only under the pointer. Off under reduced
+// motion. https://ui.aceternity.com/components/compare
 
 import { GripVertical } from "lucide-react";
 import { useInView, useReducedMotion } from "motion/react";
@@ -20,12 +22,15 @@ interface CompareProps {
   initialSliderPercentage?: number;
   /** hover: the divider follows the pointer; drag: it moves while held. */
   slideMode?: "hover" | "drag";
+  /** Wipe once from `initialSliderPercentage` through these waypoints. */
   autoplay?: boolean;
-  /** One end-to-end pass, in ms. */
+  /** Waypoints of that pass; the divider rests at the last. */
+  autoplayPath?: number[];
+  /** Time for a full-width wipe, in ms; shorter legs take their share. */
   autoplayDuration?: number;
 }
 
-/** Smootherstep: the sweep dwells on each full view and crosses quickly,
+/** Smootherstep: the wipe lingers on each full view and crosses quickly,
  * so two half-sentences share the box as briefly as possible. */
 function ease(t: number): number {
   return t * t * t * (t * (t * 6 - 15) + 10);
@@ -38,12 +43,18 @@ export function Compare({
   initialSliderPercentage = 50,
   slideMode = "hover",
   autoplay = false,
+  autoplayPath = [100 - initialSliderPercentage],
   autoplayDuration = 4000,
 }: CompareProps) {
+  const restAt = autoplayPath[autoplayPath.length - 1] ?? initialSliderPercentage;
   const [percent, setPercent] = useState(initialSliderPercentage);
+  // Where the divider sits when the pointer leaves: the start until the
+  // pass has run, the path's end after.
+  const [rest, setRest] = useState(initialSliderPercentage);
   const [dragging, setDragging] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const frame = useRef<number | null>(null);
+  const played = useRef(false);
   const reduce = useReducedMotion();
   const inView = useInView(ref, { once: true, amount: 0.6 });
   const play = autoplay && inView && !reduce;
@@ -53,23 +64,34 @@ export function Compare({
     frame.current = null;
   }, []);
 
-  const start = useCallback(() => {
-    if (!play) return;
-    stop();
+  useEffect(() => {
+    if (!play || played.current) return;
+    played.current = true;
+    const legs: { from: number; to: number; start: number; ms: number }[] = [];
+    let from = initialSliderPercentage;
+    let start = 0;
+    for (const to of autoplayPath) {
+      const ms = (autoplayDuration * Math.abs(to - from)) / 100;
+      legs.push({ from, to, start, ms });
+      from = to;
+      start += ms;
+    }
     const t0 = performance.now();
     const tick = (now: number) => {
-      const progress = ((now - t0) % (autoplayDuration * 2)) / autoplayDuration;
-      const p = progress <= 1 ? ease(progress) : ease(2 - progress);
-      setPercent(p * 100);
+      const elapsed = now - t0;
+      const leg = legs.find((l) => elapsed < l.start + l.ms);
+      if (!leg) {
+        frame.current = null;
+        setPercent(restAt);
+        setRest(restAt);
+        return;
+      }
+      setPercent(leg.from + (leg.to - leg.from) * ease((elapsed - leg.start) / leg.ms));
       frame.current = requestAnimationFrame(tick);
     };
     frame.current = requestAnimationFrame(tick);
-  }, [play, autoplayDuration, stop]);
-
-  useEffect(() => {
-    start();
     return stop;
-  }, [start, stop]);
+  }, [play, initialSliderPercentage, autoplayPath, autoplayDuration, restAt, stop]);
 
   const moveTo = useCallback((clientX: number) => {
     const rect = ref.current?.getBoundingClientRect();
@@ -82,8 +104,7 @@ export function Compare({
   };
   const onMouseLeave = () => {
     setDragging(false);
-    if (slideMode === "hover") setPercent(initialSliderPercentage);
-    start();
+    if (slideMode === "hover") setPercent(rest);
   };
   const onTouchMove = (e: React.TouchEvent) => {
     if (dragging) moveTo(e.touches[0].clientX);
@@ -94,7 +115,10 @@ export function Compare({
       ref={ref}
       className={cn("relative grid overflow-hidden select-none", className)}
       style={{ cursor: slideMode === "drag" ? (dragging ? "grabbing" : "grab") : "col-resize" }}
-      onMouseEnter={stop}
+      onMouseEnter={() => {
+        stop();
+        setRest(restAt);
+      }}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
       onMouseDown={() => setDragging(true)}
@@ -105,10 +129,7 @@ export function Compare({
         moveTo(e.touches[0].clientX);
       }}
       onTouchMove={onTouchMove}
-      onTouchEnd={() => {
-        setDragging(false);
-        start();
-      }}
+      onTouchEnd={() => setDragging(false)}
     >
       <div className="[grid-area:1/1]">{second}</div>
       <div className="[grid-area:1/1]" style={{ clipPath: `inset(0 ${100 - percent}% 0 0)` }}>
