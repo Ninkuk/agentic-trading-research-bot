@@ -576,26 +576,18 @@ const VERDICT_TONE: Record<string, string> = {
   unproven: "text-tone-hold border-tone-hold",
 };
 
-/** A boxing glove, drawn as one outline: the fist, the thumb, the cuff.
+/** Phosphor Icons' boxing glove (MIT, phosphoricons.com), inlined.
  * `flip` mirrors it so a pair faces each other. */
 function Glove({ flip, className }: { flip?: boolean; className?: string }) {
   return (
     <svg
-      viewBox="0 0 48 48"
+      viewBox="0 0 256 256"
       aria-hidden="true"
       className={className}
       style={flip ? { transform: "scaleX(-1)" } : undefined}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="currentColor"
     >
-      <path d="M14 20c0-7 5-12 12-12h4c7 0 12 5 12 12v6c0 6-4 10-10 10H22" />
-      <path d="M14 20v9c0 4 3 7 7 7" />
-      <path d="M14 22h-3a4 4 0 0 0-4 4v3a4 4 0 0 0 4 4h3" />
-      <path d="M21 36h11v6H21z" />
-      <path d="M26 16c3 0 5 2 5 5" />
+      <path d="M168,16H120A56.06,56.06,0,0,0,64,72H56a32,32,0,0,0-32,32v29.19a16.09,16.09,0,0,0,3.51,10,8,8,0,0,0,.62.69L64,179.34V216a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V177.12l15.38-53.85a15.89,15.89,0,0,0,.62-4.39V72A56.06,56.06,0,0,0,168,16Zm40,102.88L192.31,173.8A7.85,7.85,0,0,0,192,176v40H80V176a8,8,0,0,0-2.38-5.69L40,133.12V104A16,16,0,0,1,56,88h8v16a8,8,0,0,0,16,0V72a40,40,0,0,1,40-40h48a40,40,0,0,1,40,40Zm-36.42,48.28L153.89,176l17.69,8.84a8,8,0,0,1-7.16,14.32L136,184.94l-28.42,14.22a8,8,0,1,1-7.16-14.32L118.11,176l-17.69-8.84a8,8,0,1,1,7.16-14.32L136,167.06l28.42-14.22a8,8,0,1,1,7.16,14.32Z" />
     </svg>
   );
 }
