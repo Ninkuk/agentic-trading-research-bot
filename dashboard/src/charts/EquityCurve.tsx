@@ -142,6 +142,14 @@ export interface EquityCurveProps {
   // the range labels beneath everything. The chart stays agnostic about
   // what the slot holds.
   controls?: ReactNode;
+  // Shade the band between the book and SPY (green ahead, red behind).
+  gap?: boolean;
+  // Label each line's end with its value and bracket the book-vs-SPY gap.
+  endLabels?: boolean;
+  // Draw every series in from the left, together, the first time the chart
+  // scrolls into view; the end labels fade in once the draw lands. CSS in
+  // index.css (.equity-curve[data-draw]); nothing under reduced motion.
+  draw?: boolean;
 }
 
 export function EquityCurve({
