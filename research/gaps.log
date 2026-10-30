@@ -60,3 +60,4 @@
 2026-10-25 PRDO thesis=2026-10-25 source-acquisition prdo-fsa-data-center-proprietary-school-90-10-revenue-percentages-studentaid-gov-timed-out-second-run doc=regulator-dataset bench=kill-thesis
 2026-10-26 IEP thesis=2026-10-26 source-acquisition iep-real-estate-indicative-nav-mark-basis-10k-note-unread-second-run doc=10-K bench=kill-thesis
 2026-10-30 NTES thesis=2026-10-30 source-acquisition ntes-q2-2026-call-full-transcript-benzinga-403-sahm-404-partial-tradingkey-used doc=earnings-call-qa-transcript bench=kill-thesis
+2026-10-30 MGY thesis=2026-10-30 source-acquisition cme-wti-futures-settlement-page-timeout-forward-curve-for-2027-hedge-drag-and-strip-leverage-claims-not-read-second-run doc=exchange-settlement-page bench=kill-thesis
