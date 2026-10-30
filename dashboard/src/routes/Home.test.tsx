@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import fixture from "../fixtures/data.json";
 import type { DashboardDoc, Section } from "../types";
 import { bestCall, decisionDeck, lastNight, researchCounts, stocksBought } from "../home/homeFacts";
-import { suggestionHref } from "../home/suggest";
+import { matches, suggestionHref, universe } from "../home/suggest";
 import { Home } from "./Home";
 
 const doc = fixture as unknown as DashboardDoc;
@@ -82,6 +82,37 @@ test("a suggested ticker becomes a prefilled GitHub issue link, nothing else", a
   expect(box).toHaveValue("TOOLONGN");
   expect(screen.queryByRole("link", { name: "Suggest it" })).not.toBeInTheDocument();
   expect(box).toHaveAttribute("aria-invalid", "true");
+});
+
+test("the box completes from the names followed nightly and says what is on file", async () => {
+  render(<Home doc={doc} />);
+  const known = universe(doc);
+  const researched = known.find((k) => k.call)!;
+  // A first letter with at least two completions, so the arrow keys have somewhere to go.
+  const letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").find((l) => matches(known, l).length >= 2)!;
+  const box = screen.getByRole("combobox", { name: "Ticker" });
+  expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  await userEvent.type(box, letter);
+  const options = within(screen.getByRole("listbox")).getAllByRole("option");
+  expect(options.length).toBeGreaterThanOrEqual(2);
+  expect(options.length).toBeLessThanOrEqual(6);
+  for (const o of options) expect(o.textContent!.startsWith(letter)).toBe(true);
+  // Enter takes the highlighted row instead of opening the issue.
+  const open = vi.spyOn(window, "open").mockImplementation(() => null);
+  await userEvent.keyboard("{ArrowDown}{Enter}");
+  expect(open).not.toHaveBeenCalled();
+  expect(box).toHaveValue(matches(known, letter)[1].symbol);
+  // A researched name says so and links to its page.
+  await userEvent.clear(box);
+  await userEvent.type(box, researched.symbol);
+  expect(screen.getByText(/already has a write-up/)).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Read it" })).toHaveAttribute("href", `#/ticker/${researched.symbol}`);
+  // A name nobody follows can still be suggested.
+  await userEvent.clear(box);
+  await userEvent.type(box, "QQQQQQ");
+  expect(screen.getByText(/not one of the names followed nightly/)).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Suggest it" })).toHaveAttribute("href", suggestionHref("QQQQQQ"));
+  open.mockRestore();
 });
 
 test("the story has one chapter per step of the run, with last night's output", () => {

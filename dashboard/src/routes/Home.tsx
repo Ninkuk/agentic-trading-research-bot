@@ -24,7 +24,7 @@
 // `MotionConfig reducedMotion="user"` turns all of it into plain rendering
 // for readers who asked for less motion.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, MotionConfig } from "motion/react";
 import { Check, ClipboardCheck, MessageSquarePlus, MoonStar, X, type LucideIcon } from "lucide-react";
 import { Compare } from "../components/aceternity/compare";
@@ -65,7 +65,7 @@ import {
   type LastNight,
   type ResearchCounts,
 } from "../home/homeFacts";
-import { normalizeTicker, suggestionHref, TICKER_RE } from "../home/suggest";
+import { matches, normalizeTicker, suggestionHref, TICKER_RE, universe, type Known } from "../home/suggest";
 import { StatTicker, type Stat } from "../home/StatTicker";
 import type { BestCall, DashboardDoc, LastRun } from "../types";
 import { VerdictChip } from "../ui/VerdictChip";
@@ -797,9 +797,38 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
 
 // --- suggest a name -------------------------------------------------------------
 
-function SuggestName() {
+/** What the status line under the box says about a complete ticker. */
+function knownLine(k: Known | null, ticker: string): React.ReactNode {
+  if (!k) return `${ticker} is not one of the names followed nightly, but it can still be suggested.`;
+  if (k.call) {
+    return (
+      <>
+        {ticker} already has a write-up, with a {k.call} call.{" "}
+        <a href={`#/ticker/${ticker}`} className="text-foreground underline underline-offset-4">
+          Read it
+        </a>
+        .
+      </>
+    );
+  }
+  return `${ticker} is followed nightly and has no write-up yet.`;
+}
+
+function SuggestName({ doc }: { doc: DashboardDoc }) {
   const [ticker, setTicker] = useState("");
+  const [picked, setPicked] = useState(0);
+  const [open, setOpen] = useState(false);
+  const known = useMemo(() => universe(doc), [doc]);
   const valid = TICKER_RE.test(ticker);
+  const exact = known.find((k) => k.symbol === ticker) ?? null;
+  // The list closes once the only completion is the box's own symbol.
+  const all = open ? matches(known, ticker) : [];
+  const options = all.length === 1 && all[0].symbol === ticker ? [] : all;
+  const choose = (sym: string) => {
+    setTicker(sym);
+    setPicked(0);
+    setOpen(false);
+  };
   return (
     <section id="suggest" className="border-border bg-muted/30 border-t py-16 md:py-24">
       <div className="page-wide grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center">
@@ -807,13 +836,14 @@ function SuggestName() {
           icon={MessageSquarePlus}
           label="Suggest a name"
           title="Suggest a stock."
-          note="Any US-listed company. It gets the same write-up, the same attack, and the same grading as everything else."
+          note={`Any US-listed company. The ${known.length.toLocaleString("en-US")} names followed nightly fill in as they are typed; a name gets the same write-up, the same attack, and the same grading as everything else.`}
         />
         <form
           className="bg-card border-border relative grid gap-3 rounded-2xl border p-5 sm:p-6"
           onSubmit={(e) => {
             e.preventDefault();
-            if (valid) window.open(suggestionHref(ticker), "_blank", "noopener");
+            if (options.length > 0 && !exact) choose(options[picked]?.symbol ?? options[0].symbol);
+            else if (valid) window.open(suggestionHref(ticker), "_blank", "noopener");
           }}
         >
           <GlowingEffect disabled={false} proximity={64} spread={40} inactiveZone={0.2} borderWidth={2} />
@@ -821,19 +851,69 @@ function SuggestName() {
             Ticker
           </label>
           <div className="flex flex-wrap gap-2">
-            <input
-              id="suggest-ticker"
-              className="border-border bg-background text-foreground h-11 min-w-0 flex-1 rounded-full border px-4 font-mono text-base uppercase tracking-wide"
-              value={ticker}
-              onChange={(e) => setTicker(normalizeTicker(e.target.value))}
-              placeholder="KTB"
-              autoComplete="off"
-              autoCapitalize="characters"
-              inputMode="text"
-              spellCheck={false}
-              maxLength={8}
-              aria-invalid={ticker !== "" && !valid}
-            />
+            <div className="relative min-w-0 flex-1">
+              <input
+                id="suggest-ticker"
+                className="border-border bg-background text-foreground h-11 w-full min-w-0 rounded-full border px-4 font-mono text-base uppercase tracking-wide"
+                value={ticker}
+                onChange={(e) => {
+                  setTicker(normalizeTicker(e.target.value));
+                  setPicked(0);
+                  setOpen(true);
+                }}
+                onFocus={() => setOpen(true)}
+                onBlur={() => setOpen(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setOpen(false);
+                    return;
+                  }
+                  if (options.length === 0) return;
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setPicked((p) => (p + 1) % options.length);
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setPicked((p) => (p - 1 + options.length) % options.length);
+                  }
+                }}
+                placeholder="KTB"
+                autoComplete="off"
+                autoCapitalize="characters"
+                inputMode="text"
+                spellCheck={false}
+                maxLength={8}
+                role="combobox"
+                aria-expanded={options.length > 0}
+                aria-controls="suggest-options"
+                aria-autocomplete="list"
+                aria-invalid={ticker !== "" && !valid}
+              />
+              {options.length > 0 && (
+                <ul
+                  id="suggest-options"
+                  role="listbox"
+                  aria-label="names followed nightly"
+                  className="bg-card border-border absolute inset-x-0 top-full z-20 m-0 mt-1 grid list-none gap-0.5 rounded-xl border p-1 shadow-md"
+                >
+                  {options.map((k, i) => (
+                    <li key={k.symbol} role="option" aria-selected={i === picked}>
+                      <button
+                        type="button"
+                        className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left font-mono text-sm ${i === picked ? "bg-muted" : "hover:bg-muted/60"}`}
+                        onMouseEnter={() => setPicked(i)}
+                        // Keep the box focused, so the blur does not close the list before the click lands.
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => choose(k.symbol)}
+                      >
+                        <span>{k.symbol}</span>
+                        {k.call && <span className="text-muted-foreground font-sans text-xs">researched · {k.call}</span>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <HoverBorderGradient
               as={valid ? "a" : "span"}
               href={valid ? suggestionHref(ticker) : undefined}
@@ -847,7 +927,9 @@ function SuggestName() {
             </HoverBorderGradient>
           </div>
           <span className="text-muted-foreground text-xs">
-            This opens a prefilled GitHub issue in a new tab, so a GitHub account is needed. Nothing is stored here.
+            {valid && known.length > 0
+              ? knownLine(exact, ticker)
+              : "This opens a prefilled GitHub issue in a new tab, so a GitHub account is needed. Nothing is stored here."}
           </span>
         </form>
       </div>
@@ -864,7 +946,7 @@ export function Home({ doc }: { doc: DashboardDoc }) {
         <Hero doc={doc} />
         <Story doc={doc} />
         <Scorecard doc={doc} />
-        <SuggestName />
+        <SuggestName doc={doc} />
 
         <footer className="border-border text-muted-foreground border-t py-8 text-sm">
           <div className="page-wide grid gap-1.5">
