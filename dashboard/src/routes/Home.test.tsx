@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import fixture from "../fixtures/data.json";
 import type { DashboardDoc, Section } from "../types";
@@ -64,10 +64,6 @@ test("in-page links scroll without touching the hash (a bare #id would route to 
   }
   expect(scrolled).toEqual(["story", "scorecard"]);
   expect(location.hash).toBe("");
-  // Cross-route anchors stay real hashes: the grading links land on strand sections.
-  cleanup();
-  render(<Home doc={{ ...doc, sections: { ...doc.sections, ...graded } }} />);
-  expect(screen.getAllByRole("link", { name: "See the grading" })[0]).toHaveAttribute("href", "#research-filter");
 });
 
 test("a suggested ticker becomes a prefilled GitHub issue link, nothing else", async () => {
@@ -176,31 +172,24 @@ test("without a graded buy there is no featured thesis anywhere", () => {
   expect(screen.getByText(`research/${night.ticker}-${night.date}.md`)).toBeInTheDocument();
 });
 
-test("the scorecard shows the exporter's curve figures and the grade cards when graded", () => {
+test("the scorecard shows the exporter's curve figures; the grade chapter its report card", () => {
   render(<Home doc={{ ...doc, sections: { ...doc.sections, ...graded } }} />);
   const sec = doc.sections["equity-curve"];
   expect(screen.getByText("The picks").parentElement).toHaveTextContent(String(sec.tiles![0].value));
   expect(screen.getByText(sec.verdict!.text)).toBeInTheDocument();
-  expect(screen.getByText("Buy calls right").previousSibling).toHaveTextContent("56%");
-  expect(screen.getByText("Confidence vs results").previousSibling).toHaveTextContent("said 46%, won 44%");
-  expect(screen.getByText("Market signals still unproven").previousSibling).toHaveTextContent("1 of 1");
   // The grade chapter is a report card built from the real grades.
   expect(screen.getByText("Its own odds").nextSibling).toHaveTextContent("said 46%, won 44%");
   expect(screen.getByText("Buy calls").nextSibling).toHaveTextContent("25 right, 20 wrong");
   expect(screen.getByText("Pass calls").nextSibling).toHaveTextContent("136 right, 98 wrong");
 });
 
-test("each grade degrades alone; with nothing graded the scorecard says so", () => {
+test("with no hit rates or calibration the grade chapter shows its empty chip", () => {
   render(<Home doc={doc} />);
-  expect(screen.queryByText("Buy calls right")).not.toBeInTheDocument();
-  expect(screen.queryByText("Confidence vs results")).not.toBeInTheDocument();
-  expect(screen.getByText("Market signals still unproven")).toBeInTheDocument();
-  // No calibration or hit rates in the fixture: no report card, just the empty chip.
   expect(screen.getByText("nothing graded yet")).toBeInTheDocument();
 });
 
-test("with no graded section at all the scorecard shows its empty state", () => {
-  render(<Home doc={without("equity-curve", "research-filter", "research-calibration", "signal-recommendations")} />);
+test("without the equity curve the scorecard shows its empty state", () => {
+  render(<Home doc={without("equity-curve")} />);
   expect(screen.getByText(/nothing is graded yet/i)).toBeInTheDocument();
 });
 

@@ -40,7 +40,7 @@ import { TypewriterEffect } from "../components/aceternity/typewriter-effect";
 import { Timeline, type TimelineEntry } from "../components/aceternity/timeline";
 import { EquityCurve } from "../charts/EquityCurve";
 import { REPO_URL } from "../constants";
-import { dateShort, pct } from "../format";
+import { dateShort } from "../format";
 import {
   bestCall,
   calibration,
@@ -60,7 +60,6 @@ import {
   thesisHeadings,
   thesisKillVerdict,
   thesisOneLiner,
-  unprovenSignals,
   type Calibration,
   type DeckCard,
   type HitRate,
@@ -746,20 +745,6 @@ function Story({ doc }: { doc: DashboardDoc }) {
 
 // --- the record ----------------------------------------------------------------
 
-function Grade({ value, label, evidence, href }: { value: string; label: string; evidence: string; href: string }) {
-  return (
-    <article className="bg-card border-border relative grid min-w-0 gap-1 rounded-2xl border p-5">
-      <GlowingEffect disabled={false} proximity={48} spread={32} inactiveZone={0.2} borderWidth={2} />
-      <span className="text-2xl font-semibold tracking-tight tabular-nums">{value}</span>
-      <span className="font-medium">{label}</span>
-      <span className="text-muted-foreground text-sm">{evidence}</span>
-      <a className="text-muted-foreground mt-1 text-sm underline underline-offset-4" href={href}>
-        See the grading
-      </a>
-    </article>
-  );
-}
-
 function Stat({ label, value, swatch }: { label: string; value: string; swatch: "solid" | "dashed" | "dotted" }) {
   const border = { solid: "border-chart-1", dashed: "border-muted-foreground border-dashed", dotted: "border-chart-2 border-dotted" }[swatch];
   return (
@@ -775,10 +760,6 @@ function Stat({ label, value, swatch }: { label: string; value: string; swatch: 
 
 function Scorecard({ doc }: { doc: DashboardDoc }) {
   const rec = record(doc);
-  const buy = callHitRate(doc, "buy");
-  const cal = calibration(doc);
-  const sig = unprovenSignals(doc);
-  const nothing = !rec && !buy && !cal && !sig;
   return (
     <section id="scorecard" className="border-border bg-muted/30 border-t py-16 md:py-24">
       <div className="page-wide">
@@ -789,7 +770,7 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
           note="Imagine $100 going into the picks on the day the first one was bought, another $100 into an S&P 500 fund, and $100 left in cash. This is how each has done since."
           className="mb-10"
         />
-        {nothing && (
+        {!rec && (
           <p className="text-muted-foreground border-border rounded-2xl border border-dashed p-6 text-center">
             Nothing is graded yet. The first grades land once an opinion is {GRADE_HORIZON} trading days old.
           </p>
@@ -810,38 +791,6 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
               )}
             </div>
           </>
-        )}
-        {(buy || cal || sig) && (
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            {buy && (
-              <Grade
-                value={pct(buy.rate * 100, 0)}
-                label="Buy calls right"
-                evidence={`${buy.n} calls, graded ${GRADE_HORIZON} trading days later against SPY.`}
-                href="#research-filter"
-              />
-            )}
-            {cal && (
-              <Grade
-                value={cal.verdict.text.replace(/^[^:]*:\s*/, "")}
-                label="Confidence vs results"
-                evidence={
-                  cal.forecastError
-                    ? `Forecast error ${cal.forecastError}${cal.baseRate ? `; guessing the base rate scores ${cal.baseRate}` : ""}.`
-                    : "Stated odds against actual wins."
-                }
-                href="#research-calibration"
-              />
-            )}
-            {sig && (
-              <Grade
-                value={`${sig.unproven} of ${sig.total}`}
-                label="Market signals still unproven"
-                evidence="Too little history yet to keep or retire them."
-                href="#signal-recommendations"
-              />
-            )}
-          </div>
         )}
       </div>
     </section>
