@@ -452,3 +452,30 @@
 .thesis-md a { text-decoration: underline; }
 .thesis-nav a { color: var(--muted-foreground); }
 .thesis-nav a:hover { color: var(--foreground); }
+
+/* The home scorecard's chart draws in: every series clipped to nothing,
+   then released left-to-right together; the end labels follow. Each layer
+   clips against its own box (fill-box for SVG), and every series spans the
+   plot's width, so one rule keeps them in step. */
+.equity-curve[data-draw] :is(.recharts-line, .recharts-area) {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 2.2s cubic-bezier(0.25, 0.6, 0.2, 1);
+}
+.equity-curve[data-draw="done"] :is(.recharts-line, .recharts-area) {
+  clip-path: inset(0 0 0 0);
+}
+.equity-curve[data-draw] .equity-end-caps {
+  opacity: 0;
+  transition: opacity 0.5s ease 2s;
+}
+.equity-curve[data-draw="done"] .equity-end-caps {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .equity-curve[data-draw] :is(.recharts-line, .recharts-area),
+  .equity-curve[data-draw] .equity-end-caps {
+    clip-path: none;
+    opacity: 1;
+    transition: none;
+  }
+}

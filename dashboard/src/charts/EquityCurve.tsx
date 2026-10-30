@@ -17,6 +17,7 @@
 // point carries it or none does, so its line and legend render only when
 // present — a young fred.db must not leave a dangling legend entry.
 
+import { useInView } from "motion/react";
 import type { ReactNode } from "react";
 import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis, usePlotArea, useYAxisScale } from "recharts";
 import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
@@ -150,14 +151,16 @@ export function EquityCurve({
   controls,
   gap = false,
   endLabels = false,
+  draw = false,
 }: EquityCurveProps) {
   const { ref, width } = useMeasuredWidth(640);
+  const inView = useInView(ref, { once: true, amount: 0.5 });
   const hasCash = rows.some((r) => r.cash !== null);
   const dp = axisDecimals(rows);
   const data = gap ? withBand(rows) : rows;
 
   return (
-    <div ref={ref} className="equity-curve chart-measure w-full">
+    <div ref={ref} className="equity-curve chart-measure w-full" data-draw={draw ? (inView ? "done" : "wait") : undefined}>
       <ChartContainer
         config={CONFIG}
         responsive={false}

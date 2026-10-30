@@ -104,3 +104,11 @@ test("a book behind SPY brackets a negative gap", () => {
   const { container } = render(<EquityCurve rows={behind} endLabels />);
   expect(container.querySelector(".equity-end-caps")!.textContent).toContain("−5.0");
 });
+
+test("draw is opt-in and waits for the chart to scroll into view", () => {
+  const { container } = render(<EquityCurve rows={ROWS} draw />);
+  // jsdom never scrolls, so the chart stays in its waiting state.
+  expect(container.querySelector(".equity-curve")).toHaveAttribute("data-draw", "wait");
+  const plain = render(<EquityCurve rows={ROWS} />).container;
+  expect(plain.querySelector(".equity-curve")).not.toHaveAttribute("data-draw");
+});

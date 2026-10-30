@@ -774,7 +774,7 @@ function Scorecard({ doc }: { doc: DashboardDoc }) {
               {rec.cash !== null && <Stat label="Cash" value={rec.cash} swatch="dotted" />}
             </div>
             <div className="bg-card border-border rounded-2xl border px-4 pt-4 pb-3">
-              <EquityCurve rows={rec.rows} footnote={`${rec.tradingDays} trading days`} gap endLabels />
+              <EquityCurve rows={rec.rows} footnote={`${rec.tradingDays} trading days`} gap endLabels draw />
               {rec.verdict && (
                 <div className="mt-3 flex">
                   <VerdictChip verdict={rec.verdict} />
