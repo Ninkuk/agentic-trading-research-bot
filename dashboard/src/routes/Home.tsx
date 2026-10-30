@@ -600,34 +600,33 @@ function Glove({ flip, className }: { flip?: boolean; className?: string }) {
   );
 }
 
+/** The pair of gloves between the two boxes: side by side, in the page's
+ * ink, springing toward each other as the row scrolls in. */
 function Versus() {
   return (
     <motion.div
       aria-hidden="true"
-      className="text-muted-foreground flex items-center justify-center gap-1 self-center md:flex-col md:gap-0"
+      className="text-foreground flex items-center justify-center self-center"
       initial={{ opacity: 0, scale: 0.6 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, amount: 0.6 }}
       transition={{ delay: 0.5, type: "spring", stiffness: 400, damping: 18 }}
     >
       <motion.span
-        className="text-tone-up"
-        initial={{ x: -6 }}
+        initial={{ x: -8 }}
         whileInView={{ x: 0 }}
         viewport={{ once: true, amount: 0.6 }}
         transition={{ delay: 0.9, type: "spring", stiffness: 600, damping: 12 }}
       >
-        <Glove className="size-8" />
+        <Glove className="size-9" />
       </motion.span>
-      <span className="font-mono text-[11px] font-semibold tracking-widest uppercase">vs</span>
       <motion.span
-        className="text-tone-down"
-        initial={{ x: 6 }}
+        initial={{ x: 8 }}
         whileInView={{ x: 0 }}
         viewport={{ once: true, amount: 0.6 }}
         transition={{ delay: 0.9, type: "spring", stiffness: 600, damping: 12 }}
       >
-        <Glove flip className="size-8" />
+        <Glove flip className="size-9" />
       </motion.span>
     </motion.div>
   );
