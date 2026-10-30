@@ -824,8 +824,13 @@ function SuggestName({ doc }: { doc: DashboardDoc }) {
   // The list closes once the only completion is the box's own symbol.
   const all = open ? matches(known, ticker) : [];
   const options = all.length === 1 && all[0].symbol === ticker ? [] : all;
-  const choose = (sym: string) => {
-    setTicker(sym);
+  // A researched row goes straight to its write-up; any other fills the box.
+  const choose = (k: Known) => {
+    if (k.call) {
+      location.hash = `#/ticker/${k.symbol}`;
+      return;
+    }
+    setTicker(k.symbol);
     setPicked(0);
     setOpen(false);
   };
@@ -842,7 +847,7 @@ function SuggestName({ doc }: { doc: DashboardDoc }) {
           className="bg-card border-border relative grid gap-3 rounded-2xl border p-5 sm:p-6"
           onSubmit={(e) => {
             e.preventDefault();
-            if (options.length > 0 && !exact) choose(options[picked]?.symbol ?? options[0].symbol);
+            if (options.length > 0 && !exact) choose(options[picked] ?? options[0]);
             else if (valid) window.open(suggestionHref(ticker), "_blank", "noopener");
           }}
         >
@@ -877,7 +882,7 @@ function SuggestName({ doc }: { doc: DashboardDoc }) {
                     setPicked((p) => (p - 1 + options.length) % options.length);
                   }
                 }}
-                placeholder="KTB"
+                placeholder="AAPL"
                 autoComplete="off"
                 autoCapitalize="characters"
                 inputMode="text"
@@ -896,21 +901,30 @@ function SuggestName({ doc }: { doc: DashboardDoc }) {
                   aria-label="names followed nightly"
                   className="bg-card border-border absolute inset-x-0 top-full z-20 m-0 mt-1 grid list-none gap-0.5 rounded-xl border p-1 shadow-md"
                 >
-                  {options.map((k, i) => (
-                    <li key={k.symbol} role="option" aria-selected={i === picked}>
-                      <button
-                        type="button"
-                        className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left font-mono text-sm ${i === picked ? "bg-muted" : "hover:bg-muted/60"}`}
-                        onMouseEnter={() => setPicked(i)}
-                        // Keep the box focused, so the blur does not close the list before the click lands.
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => choose(k.symbol)}
-                      >
-                        <span>{k.symbol}</span>
-                        {k.call && <span className="text-muted-foreground font-sans text-xs">researched · {k.call}</span>}
-                      </button>
-                    </li>
-                  ))}
+                  {options.map((k, i) => {
+                    const row = `flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left font-mono text-sm no-underline ${i === picked ? "bg-muted" : "hover:bg-muted/60"}`;
+                    return (
+                      <li key={k.symbol} role="option" aria-selected={i === picked}>
+                        {k.call ? (
+                          <a href={`#/ticker/${k.symbol}`} className={row} onMouseEnter={() => setPicked(i)} onMouseDown={(e) => e.preventDefault()}>
+                            <span className="text-foreground">{k.symbol}</span>
+                            <span className="text-muted-foreground font-sans text-xs">read the {k.call} write-up →</span>
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            className={row}
+                            onMouseEnter={() => setPicked(i)}
+                            // Keep the box focused, so the blur does not close the list before the click lands.
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => choose(k)}
+                          >
+                            <span>{k.symbol}</span>
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

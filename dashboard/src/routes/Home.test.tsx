@@ -88,8 +88,8 @@ test("the box completes from the names followed nightly and says what is on file
   render(<Home doc={doc} />);
   const known = universe(doc);
   const researched = known.find((k) => k.call)!;
-  // A first letter with at least two completions, so the arrow keys have somewhere to go.
-  const letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").find((l) => matches(known, l).length >= 2)!;
+  // A first letter whose second completion is unresearched, so Enter fills the box rather than leaving the page.
+  const letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").find((l) => matches(known, l).length >= 2 && !matches(known, l)[1].call)!;
   const box = screen.getByRole("combobox", { name: "Ticker" });
   expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   await userEvent.type(box, letter);
@@ -97,6 +97,9 @@ test("the box completes from the names followed nightly and says what is on file
   expect(options.length).toBeGreaterThanOrEqual(2);
   expect(options.length).toBeLessThanOrEqual(6);
   for (const o of options) expect(o.textContent!.startsWith(letter)).toBe(true);
+  // A researched row is a link straight to its write-up.
+  const researchedRow = within(screen.getByRole("listbox")).queryAllByRole("link")[0];
+  if (researchedRow) expect(researchedRow.getAttribute("href")).toMatch(/^#\/ticker\/[A-Z.]+$/);
   // Enter takes the highlighted row instead of opening the issue.
   const open = vi.spyOn(window, "open").mockImplementation(() => null);
   await userEvent.keyboard("{ArrowDown}{Enter}");
