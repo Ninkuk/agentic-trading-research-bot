@@ -1,0 +1,591 @@
+# H — Hyatt Hotels Corporation — 2026-10-26
+
+> [!IMPORTANT]
+> **In one sentence:** Hyatt is now a 90% fee-based hotel franchisor with the industry's best unit growth, but at $175 owner cash flow returns only 5–6% a year against a 10.8% hurdle, so pass.
+
+Price $174.59 (live quote, 2026-10-26 09:43 ET; prior close $172.58) ·
+market cap $16.37B (at the close) · EV $20.17B · net debt $3.80B · next
+earnings 2026-10-29 BMO (three sessions away)
+
+Entry path: user-directed (`/research-ticker H (Hyatt)`). Not on the
+`candidates` screen (no `candidate_appearances` row); composite's latest
+snapshot (2026-10-21) scores it −1 on `stocks_rsi` 70.2 with `sa_fcf_yield`
+1.50% and `sa_fscore` 6 as annotations. No prior thesis.
+
+## 1. Verdict and thesis
+
+> **PASS at $174.59.** kill-thesis: **FLAWED** — conditions=5 (2 probable,
+> 3 plausible), refuted=1, unknown=0, pending=2, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.45** · kill-thesis: 0.42
+> **Disputed expectation:** the market prices fee growth of 9–13% a year
+> through 2028 compounding into roughly $600M of "adjusted" free cash flow
+> and a shrinking share count, and treats that figure as owner cash; the
+> cash-flow statement says $150–170M a year of key money and ~$66M of stock
+> compensation sit outside it, so owner cash is ~$300–380M against a $16.4B
+> market cap, and only the Q3 print (10-29) plus a Q4 opening wave can revise
+> that path upward.
+
+Hyatt is a good business that has finished becoming the business it long
+said it would become. Since 2017 it has sold $5.7B of hotels at a blended
+15× EBITDA, kept the management contracts on every one, and now earns over
+90% of its EBITDA from fees on hotels other people own. Fees per room are the
+highest among the large public peers, net rooms growth has led the industry
+nine years running, and World of Hyatt (69M members, +17% YoY) supplies
+roughly half of all system room-nights, which is the mechanism that makes
+owners sign. None of that is in dispute. What is in dispute is the price:
+the reverse DCF on any honest owner-cash base returns 4.4–6.2% a year, and
+even the most generous reading (management's adjusted FCF, no haircut for
+key money or stock compensation, 16% growth for three years) returns 8.4%
+against a 10.84% cost of equity. The equity is priced as if the fee
+compounding were already banked. It is a pass on valuation, not on quality.
+
+> [!WARNING]
+> **Closest attack:** the key-money ledger. Hyatt's "adjusted free cash flow"
+> ($580–630M guided for 2026) is NCFO minus capex plus Playa one-offs; key
+> money ($134M 2025, $153M 2024, $132M 2023; guided $150–170M a year through
+> 2028) is booked in investing activities and never touches either FCF figure,
+> yet it is the cash price of the net-rooms growth the whole story rests on.
+> Charging it, and the SBC that NCFO adds back, cuts the owner base by
+> ~35–40% and moves the implied return from 8.4% to 6.2% on the same growth
+> path. The bull case does not survive its own cash-flow statement at this
+> price.
+
+Load-bearing conditions of the bull case (what must be true for owning H at
+$174.59 to beat SPY over 63 trading days and beyond):
+
+1. *plausible* — **Gross fees compound 9–13% a year 2025→2028** (from
+   $1,198M), which needs net rooms growth of 6–8% plus RevPAR of 2–4%.
+   Evidence today: pipeline 154k rooms (+10% YoY), Q2 gross fees +7.8%,
+   FY2026 fee guide $1,305–1,335M (+9–11%) held; against it, TTM NRG was
+   3.9% (4.4% ex-Playa removals) and the FY2026 NRG guide was cut to ~6% on
+   PIP slippage, with over half the year's openings loaded into Q4. Settled
+   by the FY2026 print (2027-02-11): FY NRG and gross fees.
+2. *plausible* — **Owner free cash flow at today's price clears the cost of
+   equity on the management path.** Attacked in §4: no scenario does. The
+   most generous base (adjusted FCF $605M, no haircuts) at 16/16/16/10/10
+   growth returns 8.44% vs the 10.84% hurdle (−240bp); the owner-cash base
+   (key money and SBC charged) returns 6.22% (−462bp); the GAAP base returns
+   4.4–4.8%, below the 10th percentile of US costs of capital. REFUTED.
+3. *plausible* — **The owned portfolio ($2.2–2.5B at management's 18–20×
+   mark) and three investments (~$700M) are monetised and returned.** Hyatt
+   Grand Central New York, under contract since Investor Day, is "no longer
+   expected to close in 2026" (Q2 call); the realised multiple on $5.7B of
+   sales since 2017 was 15×, not 18–20×. Even fully credited (§4 scenario E)
+   the fee business alone still implies 5.4%. Settled by the FY2026 10-K
+   (2027-02-11): held-for-sale classification and any closed sale.
+4. *probable* — **Capital allocation stays shareholder-directed under
+   89% Pritzker voting control.** $2.1B returned since 2022 (over 90% of
+   cash generated), $1.5B authorisation remaining, FY2026 return guide
+   $325–375M, share count −4.0% YoY. SURVIVED.
+5. *probable* — **The loyalty-and-brand mechanism holds owners and guests
+   against agentic/OTA disintermediation and owner fee pushback.** Member
+   stays 49% of system room-nights (10-K), luxury/lifestyle RevPAR index +3
+   points in H1 2026, PMS cost per room cut 40% for owners, Delta replaced
+   American as the airline partner on 2026-09-09 with no disclosed cost.
+   SURVIVED at probable; the Item 1A AI-distribution risk is named, not
+   priced.
+
+> [!WARNING]
+> **Dominant shared risk factor:** US high-income discretionary leisure-travel
+> spend — shared by 1 of 25 held names (YOU: US discretionary air-travel
+> volume) · 0 unlabelled. KTB and PRI carry a lower/middle-income consumer
+> factor, a different grain that does not fail in the same scenario.
+
+## 2. Business
+
+**Created:** a guest at a Park Hyatt, Andaz, Hyatt Regency or Secrets resort
+gets a brand promise that is consistent across 83 countries, a loyalty
+currency (World of Hyatt) that earns and burns across 1,500+ hotels plus
+Mr & Mrs Smith boutiques and now Delta, and a booking channel the guest
+trusts more than an OTA. A hotel owner gets the brand, the reservation
+system, the loyalty demand (49% of room-nights), revenue management, group
+sales and procurement scale, and in return gives up roughly 3–10% of
+revenue in fees and accepts Hyatt's standards. Hyatt's measurable surplus
+to owners is fees per room above the large peers *and* RevPAR index gains
+(+3 points in luxury/lifestyle H1 2026), which is why the pipeline grew 10%
+in a year when openings slipped.
+
+**Captured:** five distinct mechanisms. (i) Base management fees, a
+percentage of hotel revenue on ~70% of rooms that are managed ($124M in
+Q2, +10%). (ii) Incentive management fees, a share of hotel operating
+profit, 90% of them from outside the US ($64M, +2.6%). (iii) Franchise and
+other fees, royalties on franchised rooms plus "non-RevPAR fees": the
+Chase co-brand card (fixed upfront plus spend-based), Unlimited Vacation
+Club licence fees and branded-residential fees ($136M, +8%). (iv) Owned and
+leased hotel profits, now a small and shrinking segment ($40M Q2 adjusted
+EBITDA; portfolio marked by management at $2.2–2.5B). (v) Distribution,
+the ALG Vacations tour-operator business bought with Apple Leisure Group
+($27M Q2, down on Jamaica and Mexico). Gross fees were $1,198M in 2025 and
+are guided to $1,305–1,335M in 2026; management-and-franchising is $266M of
+$297M Q2 adjusted EBITDA.
+
+**Protected:** the moat is a two-sided switching cost, not a label. Owners
+sign 20–30 year management or franchise contracts; leaving means a PIP, a
+rebrand and the loss of the loyalty demand that fills half their nights.
+Guests hold status and points that are only worth something inside the
+system, and the program has grown from 10M (2017) to 69M members. The
+honest limit: the same mechanism exists at Marriott and Hilton at four to
+five times the scale, so Hyatt competes for owners partly with key money
+($150–170M a year guided) and for guests with elite benefits that cost the
+owners, and Item 1A names "potential AI platforms that could change the way
+that guests discover, search for, and book travel" as a competitor to the
+direct channel. The protection is real and it is bought, every year.
+
+**Control:** dual class. Class A (41.6M shares, one vote) trades; Class B
+(52.6M shares, ten votes) is 95.7% held by Pritzker family business
+interests, giving them 54.7% of the shares and 89.0% of the votes at
+2026-01-31 (10-K). Charter amendments need 80% of voting power. This
+forecloses an unsolicited takeover and any activist path; the public holder
+is a passenger on the Pritzkers' capital allocation, which to date has been
+shareholder-friendly ($2.1B returned since 2022).
+
+**Operating leverage (Phase 0): positive, but barely, and on a revenue line
+that is mostly pass-through.** Revenue includes ~$4B a year of reimbursed
+costs booked at zero margin.
+
+| FY | revenue $M | operating income $M |
+|---|---|---|
+| 2021 | 3,028 | −251 |
+| 2022 | 5,891 | 427 |
+| 2023 | 6,667 | 331 |
+| 2024 | 6,648 | 416 |
+| 2025 | 7,101 | 521 |
+| TTM Q2'26 | 7,152 | 524 |
+
+Revenue +20.5% from 2022 to 2025, operating income +22%. The fee line is the
+one that matters: gross fees $1,198M in 2025, guided +9–11% in 2026, and
+adjusted EBITDA guided +13–18% after a $78M adjustment for assets sold.
+
+## 3. Threads pulled
+
+- **Key money is the cash cost of growth and sits outside every FCF
+  measure.** Payments for key money assets: $132M (2023), $153M (2024),
+  $134M (2025) in investing activities (10-K cash-flow statement); Investor
+  Day guides $150–170M a year through 2028; key money assets on the balance
+  sheet rose to $1,160M at 6/30/26 from $1,095M. Contra revenue (its
+  amortisation) was $86M in 2025. Investment commitments at 12/31/25 were
+  $231M due within a year and $456M thereafter (10-K Contractual
+  Obligations). The compensation plan rewards exactly this: PSUs are 50%
+  net-rooms-growth rank and 50% a three-year adjusted-EBITDA-to-adjusted-FCF
+  conversion ratio (DEF 14A 2026), and neither metric is charged for key
+  money. This thread became §4's base-FCF haircut and the closest attack.
+- **The GAAP-to-adjusted FCF bridge is closing, but 2026 still carries
+  $86M of Playa costs.** 2025: NCFO $379M − capex $220M = FCF $159M, plus
+  $117M cash taxes on asset sales and $198M Playa costs = adjusted $474M.
+  2026 guide: NCFO $628–678M − capex $135M = FCF $493–543M, plus $1M taxes
+  and $86M Playa costs = adjusted $580–630M (Q2 release A-12). After 2026
+  the two should converge; 2027 is the first clean year.
+- **Net rooms growth is the metric the stock trades on and it is slipping
+  on timing, not signings.** TTM NRG 3.9% (4.4% ex-Playa removals) vs the
+  6–8% long-term range given 2026-05-28; FY2026 cut to ~6%; management
+  blames heavier-than-modelled PIPs on the two new conversion brands (Hyatt
+  Select, Unscripted) and over half of openings scheduled for Q4, "some of
+  which could slip into 2027" (Q2 call). Pipeline +10% to 154k rooms and
+  the two-year NRG stack of 16% are the counter-evidence. This is condition
+  1 and the first reopen question.
+- **Leverage is manageable, not light.** Total debt $4.3B, all senior
+  unsecured notes (5.75% $600M due 2027 is now current; $900M due 2028;
+  the rest 2029–2035 at 5.25–5.75%); $1,497M revolver undrawn; cash $606M;
+  interest expense guided $260M for 2026. On TTM GAAP EBITDA of $836M that
+  is 4.95× gross; on guided adjusted EBITDA ($1,180M midpoint) net debt is
+  ~3.1×. Investor Day says "modest deleveraging" through 2027 and capacity
+  for $200–500M more debt by 2028 within investment grade. Not a Phase 0
+  kill, and net debt is 19% of EV, so the equity-as-option lens does not
+  apply. The 2027 refinancing of 5.75% paper happens with DGS10 at 4.96%:
+  roughly neutral.
+- **Off-balance-sheet claims are real but bounded.** Performance guarantees
+  $171M remaining maximum (liability $119M); debt-repayment guarantees $105M
+  gross / $20M net of recoveries; UVC partner guarantee $70M; tax
+  indemnities $102M including a $33M assessment received 2026-07-13 that
+  Hyatt will appeal; contingent consideration up to $352M ($143M recorded);
+  guarantee liabilities at fair value $215M (Q2 10-Q Note 13). Long-term
+  income taxes payable of $562M relate to uncertain tax positions, excluded
+  from the commitments table "due to the uncertainty related to the timing
+  of the reversal" (10-K). None individually moves the valuation; together
+  they are ~$0.9B of maximum exposure against a $16.4B cap.
+- **Hyatt Studios financing: Hyatt says it provided "credit support," no
+  filing quantifies it.** On the Q2 call the CEO described a ~$500M
+  facility with Hall Financial for Hyatt Studios construction loans, "we
+  have provided some credit support in that facility." The Q2 10-Q does not
+  name Hall or the facility; the June 2026 trade-press announcement (Hall
+  Structured Finance program, June 18, 2026) gives no size and no Hyatt
+  commitment. If the support is a guarantee it belongs in Note 13 of the Q3
+  10-Q. PENDING in §6.
+- **Post-call reconciliation (2026-07-30 → 2026-10-26).** 2026-08-28:
+  automatic mixed-securities shelf (S-3ASR), routine. 2026-09-09: long-term
+  exclusive loyalty collaboration with Delta announced hours after Hyatt
+  said the American Airlines relationship would not continue; benefits
+  start "in the coming months," no financial terms (Business Wire via
+  search; businesswire.com itself returned 403). 2026-09-30: Amar Lalvani
+  named first Chief Creative Officer; Essentials-portfolio release. Insider
+  filings since the call are all routine: the CFO sold 1,825 and 1,826
+  Class A shares under a 2025-11-07 10b5-1 plan (Aug 3 at $170.37, Oct 16
+  at $172.00), director Kronick sold 1,700 under a plan, Lalvani exercised
+  and sold 1,364 net, three directors received quarterly RSU grants; Jason
+  Pritzker's filing was an RSU grant. 387,666 Class B shares converted to
+  Class A in H1 2026 (10-Q), a trickle. Sell-side moved targets both ways
+  (Morgan Stanley $224, JPMorgan $207, Wells Fargo $189, Susquehanna $180)
+  into the print. Nothing post-call contradicts management's framing; the
+  stock fell from $204 (6/18) to $155 (9/17) and has recovered to $175,
+  with no company-specific filing explaining the September leg.
+- **Earnings pattern (broker tier; the estimate side has no integrated
+  official source).** Trailing six: Q1'25 0.46 vs 0.32, Q2'25 0.68 vs 0.66,
+  Q3'25 −0.30 vs 0.49 (Playa stub and asset-sale period), Q4'25 1.33 vs
+  0.41, Q1'26 0.63 vs 0.57, Q2'26 1.12 vs 0.91; Q3'26 estimate 0.75 on
+  2026-10-29 am. The broker "actual" is adjusted EPS, not GAAP: Q2'26 GAAP
+  diluted EPS was $1.14 (`sec_fundamentals.db` frame and the release) vs
+  the broker's 1.12, and Q1'26 GAAP $0.40 vs the broker's 0.63. Pattern:
+  beats-by-more-than-a-hair in five of six, with wide swings from one-off
+  items; guidance is not managed to a hair.
+- **Transcript corpus (primary, transcribed; coverage 49 calls,
+  2020-05-07 → 2026-07-30, 10.5 pre-corpus years unquantified).** Issuer
+  elected as Hyatt Hotels Corporation from pooled turns; management 1,686
+  turns, outside 852, no division name among outside firms. Fixed lexicon:
+  "market share" df 19/49 across 7 seasons, "penetration" 30/49, "wallet
+  share" 10/49, "cohort" 5/49, "pricing power" 3/49, "unit economics" and
+  "churn" 0/49. Ticker probes: "asset-light" in 40 of 49 calls (the framing
+  is six years old, not new), "key money" in 8 of 49 (first 2020-05-07,
+  most recently the Investor Day), "free cash flow conversion" 9/49 since
+  2023, "Grand Central" 9/49 since 2020-11-05 (the sale has been discussed
+  for six years). World of Hyatt membership as stated on calls: 30M (Feb
+  2022) → 36M (end 2022) → 44M → 54M (end 2024) → 61M (Q3 2025) → 69M (Q2
+  2026): the growth-rate series is 22%, 22%, 20%, 17%, decelerating as the
+  base grows, which is expected and not a break.
+- **Options read (mandatory):** path 2 only (H is not in the CBOE catalog,
+  so `data/options.db` has no history). Table in §4. Liquidity gate FAILED
+  → UNRELIABLE; the window brackets the 10-29 print so "elevated" is the
+  stopgap reading, not a discovery. Timing check NOT APPLICABLE: this is a
+  PASS with no dated price-move claim.
+- **Data-coverage findings.** `data/earnings.db` has no H row in
+  `v_upcoming_earnings` (calendar_now 2026-10-26); the print date comes
+  from the statistics page and the broker, both 2026-10-29 BMO. The
+  `/stocks/H/metrics/` route returns no breakdowns (`annualDates` empty);
+  segments came from the 10-Q and release instead. businesswire.com and
+  hotelbusiness.com returned 403 to WebFetch.
+- **Dead ends:** the $318M noncontrolling interest on the balance sheet
+  (new since 2024) traces to a consolidated acquisition's NCI recorded at
+  fair value (10-K business-combination note); NCI income is $2–3M a year,
+  so the owner-share haircut to FCF is immaterial and §4 does not apply one.
+  The 64.8% TTM tax rate is Playa-period noise; the 10-K effective rate was
+  17.1% in 2025 and the 2026 outlook assumes 27–30%. The $562M long-term
+  taxes payable are uncertain tax positions, not deferred asset-sale taxes.
+  The two Schedule 13G/A filings in August are passive holders. None of
+  these changed the call.
+
+## 4. Valuation
+
+**Inputs.** Market cap $16,365,151,574 and enterprise value
+$20,168,151,574 (statistics page, at the $172.58 close; the live quote is
+1.2% higher). TTM levered FCF `fcf` $252,000,000 = NCFO $443M + capex
+−$191M; TTM net income $79M; debt $4,509M; cash $606M. Pairing: levered
+flow against market cap, `--net-debt` 0 by the pairing rule. Owner
+haircuts: key money ~$150M a year (guided $150–170M; §3) and SBC $66M
+(2026 outlook; `shareBasedComp` $73M TTM, `sbcByRevenue` 1.02%). Minority
+interest: NCI income $2–3M, no haircut. Excess cash: $606M against a $600M
+2027 maturity, none. The bases used: (A) TTM GAAP FCF $252M as reported;
+(B) 2026E GAAP FCF midpoint $518M less key money $150M less SBC $66M =
+$302M; (D) 2026E adjusted FCF midpoint $605M less $160M less $66M = $379M;
+(E) a sum-of-parts cap of $13.315B (cap less $2.35B owned portfolio less
+$0.7B investments, both at management's marks) against fee-business owner
+FCF $242M ($302M less ~$60M owned-hotel cash); (F) adjusted FCF $605M with
+no haircuts, the most generous reading available.
+
+**Hurdle:** rf 4.96% (DGS10, 2026-10-22) + beta 1.40 × ERP 4.20%
+(Damodaran, October 1, 2026, trailing-12-month implied) = **10.84%**. Beta
+is above the 0.8–1.2 stable band; the float is 43% of shares out (40.15M of
+94.24M) and insiders hold 9.95% of Class A, which is the thin-float case
+that floors a *low* beta into the band, so no clamp is applied to a high
+one. Clamped to 1.2 for reference the hurdle is 10.00% and no scenario
+spread changes sign. Terminal growth 2.34% = the 10-year breakeven T10YIE
+(2026-10-23), the working ceiling; the risk-free cap is 4.96%.
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| A: TTM GAAP FCF as reported | $252M | 8% flat | 2.34% | 4.38% | −646bp |
+| B: 2026E GAAP − key money − SBC | $302M | 8% flat | 2.34% | 4.78% | −606bp |
+| C: same base, management path | $302M | 16/16/16/10/10 | 2.34% | 5.45% | −539bp |
+| D: 2026E adjusted − key money − SBC | $379M | 16/16/16/10/10 | 2.34% | 6.22% | −462bp |
+| E: SOTP cap $13.3B, fee owner FCF | $242M | 16/16/16/10/10 | 2.34% | 5.40% | −544bp |
+| F: adjusted FCF, no haircuts | $605M | 16/16/16/10/10 | 2.34% | 8.44% | −240bp |
+
+The spread is the finding. The generous case (F) still sits 240bp under the
+hurdle and below Hyatt's own stated WACC (9.87% on the statistics page);
+the owner-cash cases (B–E) sit between 4.8% and 6.2%, straddling the 10th
+percentile of US costs of capital (5.26%; Damodaran 2026, median 7.79%).
+The 16% growth path is management's adjusted-FCF CAGR ceiling (14–18%)
+extended two years beyond its 2028 horizon; the 8% path is the fee CAGR
+floor. Reading A at face value is what the 64.5× P/FCF on the statistics
+page shows and it overstates the problem; reading F is what the bull case
+needs and it is still not enough.
+
+**Integrity checks.**
+- *Reinvestment / terminal ROE.* Every run with base FCF ≥ base earnings
+  printed the `growth without reinvestment` warning (2026E net income
+  midpoint $292M vs owner FCF $302–605M). The honest response is the one
+  taken: terminal growth is held at the breakeven, claiming no real growth
+  in perpetuity. The gap between FCF and earnings is partly accounting
+  (contra revenue $86M of key-money amortisation and acquired-intangible
+  amortisation depress GAAP income) and partly the key money itself being
+  outside FCF; scenario E, where base earnings are below FCF by design,
+  printed an implied terminal ROE of 73%, which is not a credible
+  perpetuity and is why E is not quoted as a ceiling.
+- *Market-share sentence.* The 16% path grows FCF, not rooms. The fee path
+  behind it (6–8% NRG) compounds the system by ~1.4× over five years; the
+  executed pipeline already in hand is 154k rooms against an executed
+  contract base described as ~148k rooms at year-end 2025, i.e. roughly
+  three years of guided openings are signed. Hyatt remains a fraction of
+  Marriott's or Hilton's room count, so this is not a bigger-than-the-market
+  failure; the risk is timing (PIPs), not addressable supply.
+- *Terminal growth vs the Item 1A terminal risk.* The disclosed structural
+  risk is distribution: "potential AI platforms that could change the way
+  that guests discover, search for, and book travel" and OTA
+  intermediation, plus owners' access to capital. A 2.34% nominal terminal
+  rate (inflation only, no real growth) survives a world where the loyalty
+  channel loses share, because it assumes the fee base merely reprices;
+  anything above it would not.
+- *Distribution clamp.* Scenarios A, B are below the 10th percentile; C, D,
+  E are within a point of it; only F reaches the median band. A strong pass
+  on valuation regardless of story.
+- *Base-year cash tax.* The 2025 effective rate was 17.1% and the 2026
+  outlook assumes 27–30%, so the 2026E base already carries a marginal-rate
+  tax burden; no further haircut.
+- *Serial acquirer.* Playa ($2.6B gross, 2025) and ALG (2021) were funded
+  outside FCF; the 16% path assumes organic fee growth only, and the base
+  excludes Playa costs, so acquisitions are neither charged nor credited.
+- *Asset-light check.* Capex guided at $135M and falling; the asset-light
+  claim fails on key money, not capex, and that is charged above.
+
+**Options-implied move.** Path 2 (Robinhood stopgap); expiry 2026-11-20,
+25 calendar days from the Phoenix date 2026-10-26, bracketing the
+2026-10-29 BMO print; ATM strike 175 against spot 174.585; call mark 7.10
+(IV 36.50%), put mark 7.25 (IV 41.51%), IV = mean 39.00%; 89 daily closes
+2026-06-18 → 2026-10-23 for realised vol.
+
+| metric | value |
+|---|---|
+| spot | 174.59 |
+| expected absolute move | 8.22% (MEAN, not a ceiling) |
+| 1-σ move | 10.21% |
+| ATM IV | 39.00% |
+| RV60 | 28.63% |
+| RV20 | 29.80% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Both windows read YES, so the reading is "elevated," but the trailing
+windows contain no earnings print while the forward window does, which is
+the stopgap's known failure mode; it says the market is pricing a known
+calendar item, nothing more. Liquidity gate: call bid/ask 5.60/8.60 (spread
+$3.00 against a $0.71 cap), open interest 60 call / 4 put, same-day volume
+0 / 11 → **FAILED → UNRELIABLE**. ATM IV is below 50%, so two-decimal
+implied returns are retained above. Timing check: NOT APPLICABLE (no dated
+price-move claim; one-way valve, nothing confirmed either way).
+
+Equity as option: omitted. Net debt is 19% of EV, book equity is positive
+($3.62B), no going-concern language; the DCF frame governed §1.
+
+## 5. Falsifiers
+
+For the pass (flip toward buy):
+
+- **Shift —** owner FCF (NCFO − capex − key money − SBC) reported for FY2026
+  at or above ~$420M with 2027 guidance implying 15%+ growth: scenario D
+  becomes the floor, not the ceiling, and the spread narrows to under
+  −300bp. Checkable at the FY2026 print, 2027-02-11.
+- **Shift —** a price at or below ~$125 on unchanged guidance (the level at
+  which scenario D clears 8% and F clears the hurdle), or a Grand Central
+  sale at or above the 18–20× mark with proceeds returned.
+- **Shift —** FY2026 NRG printed at 6% or above with Q4 openings delivered,
+  confirming condition 1's timing story.
+
+For an owner (sell):
+
+- **Break —** FY2026 NRG below 5% with pipeline growth turning negative:
+  the fee algorithm's growth leg is broken, not delayed.
+- **Break —** a disclosed guarantee or funding commitment on the Hyatt
+  Studios facility above ~$100M, or key money guided above $200M a year:
+  growth is being bought at a price the fee stream cannot carry.
+- **Shift —** gross fee growth below 7% for two consecutive quarters ex
+  Middle East and Mexico; capital returns guided below $300M for 2027.
+- **Shift —** Pritzker Class B conversions and sales accelerating (Form 4s
+  under the 10% owner); the control discount becomes a supply overhang.
+
+> [!NOTE]
+> **Reopen trigger:** 2027-02-11:
+> h-fy2026-print-nrg-at-or-above-6pct-gaap-fcf-ex-key-money-sbc-at-or-above-420m-or-price-at-or-below-125
+
+## 6. UNKNOWNs
+
+1. PENDING 2026-10-30 (Q3 10-Q) — the size and form of Hyatt's "credit
+   support" in the Hall Structured Finance Hyatt Studios facility (CEO, Q2
+   call). Would come from Note 13 (guarantees) of the Q3 10-Q or an 8-K. It
+   bears on the key-money/contingent-claims haircut; at any plausible size
+   (tens of millions) it does not change a pass that already fails by
+   240bp on the generous case, so its absence does not decide the call.
+2. UNKNOWN — the owned portfolio's true market value. Management's
+   $2.2–2.5B (18–20× 2025 adjusted EBITDA) is a management mark; realised
+   sales since 2017 averaged 15×, and the Grand Central buyer and price are
+   undisclosed. Would come only from closed transactions. Scenario E shows
+   the call does not turn on it.
+3. UNKNOWN — the Chase co-brand contract economics beyond "fixed amount at
+   inception plus spend-based variable," the renewal date, and the Delta
+   deal's cost to the program. Private contracts; no filing carries them.
+   Relevant to condition 5's durability, not to the price today.
+4. PENDING 2027-02-11 (FY2026 10-K) — whether the Playa-cost line in
+   adjusted FCF actually ends in 2026 (guided $86M in 2026, zero implied
+   after). If a 2027 adjustment line appears, "adjusted" FCF is a recurring
+   definition, not a bridge.
+5. Option value, unnumbered in §1: a re-rating toward Hilton/Marriott
+   EV/EBITDA multiples as asset-light mix passes 95% in 2028; the three
+   investments worth "~$700M or $7 per share" (Investor Day) realised over
+   five years; Hyatt Select in China via the Dossen master franchise. None
+   has a date or a disclosure that settles it.
+
+## 7. Sources
+
+**Primary:** Hyatt Form 10-Q for the quarter ended 2026-06-30 (filed
+2026-07-30; debt note, Note 13 guarantees, Playa/Tortuga, cover-page share
+counts, Class B conversions); Form 8-K 2026-07-30 Exhibit 99.1 (Q2 2026
+earnings release: segment EBITDA, fee lines, 2026 outlook, FCF
+reconciliations A-12); Form 10-K FY2025 (filed 2026-02-13; Item 1A, Pritzker
+voting control, contractual and investment commitments, key money cash
+flows, World of Hyatt 63M members and 49% of room-nights, effective tax
+rate); DEF 14A filed 2026-04-02 (PSU metrics); Forms 4 and 3 filed
+2026-07-06 → 2026-10-19 (decoded from EDGAR XML); S-3ASR 2026-08-28; EDGAR
+submissions index for CIK 1468174. Q2 2026 earnings call (2026-07-30) and
+Investor Day (2026-05-28) transcripts, and the 49-call corpus 2020-05 →
+2026-07, via stockanalysis.com transcript route: primary, transcribed;
+numbers quoted from calls were corroborated against the release or 10-Q
+where load-bearing.
+
+**stockanalysis.com (vetted exception):** `/stocks/H/statistics/` (market
+cap, EV, FCF, debt, beta, float, short interest, analyst count, hover
+values); `/stocks/H/financials/{income-statement,cash-flow-statement,
+balance-sheet}/` (FY2021–2025 and TTM history); `/stocks/H/` news feed;
+`/filings/H/` index; `/stocks/H/transcripts/` index and detail routes.
+
+**Broker/market microstructure (Robinhood MCP):** live quote
+(2026-10-26 13:43Z), option chain, the two ATM 2026-11-20 contracts'
+marks/IV/OI/volume, 89 daily bars for realised vol, and trailing eight
+quarters of estimate-vs-actual EPS. Admissible because no integrated
+official source carries option quotes, intraday prices or consensus
+estimates for this ticker; the EPS actuals were cross-checked against
+`sec_fundamentals.db` and found to be adjusted, not GAAP.
+
+**Reference data:** Damodaran implied ERP 4.20% (October 1, 2026,
+trailing-12-month with adjusted payout); US cost-of-capital distribution
+(2026 update: median 7.79%, 10th percentile 5.26%); excess-return base rate
+~29%. FRED via `data/fred.db`: DGS10 4.96% (2026-10-22), T10YIE 2.34%
+(2026-10-23).
+
+**Point-in-time repo DBs (read-only):** `stocks.db` v_latest (captured
+2026-10-26 11:00Z: price $172.58, beta 1.398, float 40.15M, sharesOut
+94.24M, insiders 9.95%, institutions 55.39%, SBC $73M, sbcByRevenue 1.02%,
+analystCount 25, ipoDate 2009-11-05, roic 2.47%, fScore 6); `sec_fundamentals.db`
+v_screener (Q2 2026 frame: revenue $1,829M, net income $110M, diluted EPS
+$1.14, assets $13,976M, equity $3,306M); `composite.db` snapshot 114
+(2026-10-21: stocks_rsi 70.2 → −1; sa_fcf_yield 1.50, sa_fscore 6 as
+annotations); `earnings.db` (no H row; calendar_now 2026-10-26);
+`portfolio.db` v_latest_positions (25 symbols, for the factor overlap);
+`scorer.db` candidate_appearances (no H row).
+
+**Low-confidence:** trade-press coverage of the Hall Structured Finance /
+Hyatt Studios program (asianhospitality.com, 2026-06-26; hotelbusiness.com
+403) and of the Delta collaboration (onemileatatime, thepointsguy,
+awardwallet via search), used only to date the events; sell-side target
+changes via TheFly headlines in the news feed.
+
+## Kill-thesis record
+
+Ledger: `2026-10-26 H FLAWED conditions=5 refuted=1 unknown=0 pending=2
+not_obtained=0 reopen=2027-02-11:h-fy2026-print-...`. The object attacked
+is the bull case in §1 (own H at $174.59 and beat SPY), not the pass.
+
+Per-condition adjudication:
+
+1. Fee CAGR 9–13% through 2028 — **PENDING 2027-02-11.** Attacked with the
+   NRG miss (3.9% TTM vs 6–8%), the FY2026 NRG cut to ~6%, and the Q4
+   opening concentration; what bears today (pipeline +10%, Q2 fees +7.8%,
+   fee guide held at +9–11%) does not stand against it, so it is not
+   refuted. Internal strain noted: "industry-leading growth" and "only
+   modest incremental capital" are claimed together while key money is
+   guided at $150–170M a year; the growth is paid for, just not in the FCF
+   line.
+2. Owner FCF clears the cost of equity at this price — **REFUTED.** Six
+   runs in §4; the most generous (adjusted FCF, no haircuts, 16% growth)
+   returns 8.44% against a 10.84% hurdle, and every owner-cash base returns
+   4.4–6.2%. The refutation holds with beta clamped to 1.2 (hurdle 10.00%)
+   and holds against the US median cost of capital (7.79%) for every case
+   but F.
+3. Owned portfolio and investments monetised at management's marks —
+   **PENDING 2027-02-11.** Attacked with the Grand Central slip past 2026
+   and the 15× realised history vs the 18–20× mark; neither refutes a sale
+   at some price. Scenario E shows it cannot rescue condition 2 even fully
+   credited.
+4. Shareholder-directed capital allocation under Pritzker control —
+   **SURVIVED** (probable). Attacked with the control structure (89% votes,
+   80% charter threshold, takeover foreclosed) and the Q2 buyback of only
+   $12M; the lock-out explanation (Investor Day quiet period) and the
+   reaffirmed $325–375M return guide stand. The attack lands on the
+   *ceiling* of outcomes (no premium bid is possible), not on the
+   condition.
+5. Loyalty/brand mechanism durable — **SURVIVED** (probable). Attacked with
+   the Item 1A AI-distribution risk, the American Airlines exit, and the
+   owner-fee-pushback question asked on the call; the 49% member-night
+   share, +3 points RevPAR index, 40% PMS cost cut and the Delta
+   replacement stand as evidence that exists today.
+
+Standing checks. *Base rate:* ~29% of firms earn above their cost of
+capital (Damodaran EVA dataset); Hyatt's reported ROIC is 2.5% TTM and 6.6%
+five-year, depressed by $3.45B of goodwill from ALG, Playa and brand
+acquisitions, so the terminal assumption of excess returns fading is the
+default here, not the exception; the asset-light conversions at Marriott
+and Hilton did succeed, which is why the quality is not disputed. *Short
+case:* a 24× TTM / ~17× forward EV/EBITDA hotel C-corp whose GAAP FCF yield
+is ~3% before key money, whose NRG is slipping, whose all-inclusive and
+Middle East exposure is cutting fees by $25M this year, whose 2027 $600M
+refinancing lands at today's rates, and whose controlling family can never
+be bought out; the stock has already de-rated from $204 to $155 and back
+to $175 in four months with no filing to explain the round trip.
+*Management incentives:* PSUs pay on NRG rank (50%) and adjusted-EBITDA-to-
+adjusted-FCF conversion (50%); neither charges key money, so the plan
+rewards buying rooms with key money and reporting the fee growth they
+produce, which is exactly the lever the thesis under-counts.
+*Disconfirming search:* post-call 8-Ks, Forms 4/144, the news feed and a
+rival-side search (Delta/American) turned up nothing that contradicts
+management; the disconfirming evidence is internal, in the cash-flow
+statement and the commitments note. *Moat as mechanism:* two-sided
+switching costs on 20–30 year contracts and a 69M-member loyalty program
+that supplies half the nights; a mechanism, and a bought one.
+
+Statistical checks: N/A beyond the composite signal (one `stocks_rsi`
+reading, no inference drawn from it). Options-timing check: not run; the
+thesis makes no dated price-move claim, and the chain failed the liquidity
+gate (spread $3.00 on a $7.10 mark, OI 60/4), so path 2 is UNRELIABLE for
+any such claim anyway. Path 1 unavailable (not in the CBOE catalog).
+
+> [!WARNING]
+> **Closest attack:** the key-money ledger against condition 2, which landed:
+> charging $150–170M of key money and $66M of SBC against "adjusted" FCF cuts
+> the owner base by 35–40% and the implied return from 8.4% to 6.2% on
+> management's own growth path.
+
+> [!NOTE]
+> **Flip evidence:** toward SOUND — FY2026 owner FCF (NCFO − capex − key
+> money − SBC) at or above ~$420M with 2027 guidance implying 15%+ growth, or
+> a price at or below ~$125 on unchanged guidance; either makes condition 2
+> survivable on the generous path and leaves two PENDING conditions dated
+> 2027-02-11. Toward dead rather than repairable — FY2026 NRG below 5% with
+> pipeline growth negative, or a Studios guarantee above ~$100M, which would
+> refute condition 1 as well.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.42** — written before re-reading §1's line. The
+> window holds the Q3 print (10-29, guided to the low end of the RevPAR range
+> and "moderately below" on Net Package RevPAR) and the Q4 opening wave; a
+> beat on fees is plausible and the stock has momentum off the September low,
+> but the base case is a name priced for a return under its hurdle drifting
+> with the index. §1 wrote 0.45; the 3-point gap is anchoring, not
+> independence.

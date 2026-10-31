@@ -1,0 +1,581 @@
+# LUV — Southwest Airlines Co. — 2026-10-28
+
+> [!IMPORTANT]
+> **In one sentence:** Southwest's bag-fee and assigned-seating transformation
+> is lifting unit revenue 20%+, but an unhedged fuel bill has cut 2026 EPS
+> guidance from "at least $4" to $2.60–2.85 and a $14.8B Boeing order book
+> keeps free cash flow near zero through 2029, so at $43.44 the earnings
+> multiple is paying for cash the fleet renewal consumes — pass.
+
+Price $43.44 (official close 2026-10-27; pre-market 2026-10-28 bid/ask
+$43.08/$43.34) · market cap $21.27B · EV $24.52B · net debt $3.25B
+(incl. $0.98B operating leases) · next earnings 2027-01-27 AMC.
+
+User-directed run (`/research-ticker LUV`). Not a `candidates` row (negative
+FCF yield fails the screen); composite carries only the two informational
+annotations (`sa_fscore` 7, `sa_fcf_yield` −2.1%), score 0, never flagged.
+
+## 1. Verdict and thesis
+
+> **PASS at $43.44.** kill-thesis: **FLAWED** — conditions=5 (2 probable,
+> 3 plausible), refuted=1, unknown=0, pending=2, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.45** · kill-thesis: 0.42
+
+> [!IMPORTANT]
+> **Disputed expectation:** at 13.4× 2026E and 10.5× 2027E consensus EPS the
+> market prices roughly $2.8B of 2027 EBIT with GAAP earnings treated as
+> distributable; the Q4 print on 2027-01-27 (first 2027 capex and unit-cost
+> guide) and the 2027-03-02 Capital Markets Day (multi-year cash framework)
+> are what revise it — a 2027 net-capex guide at or above $3B with ~1% fleet
+> growth breaks the earnings frame, a 2027 jet-fuel curve under ~$3.50/gal
+> makes the frame irrelevant for a quarter.
+
+The business has genuinely changed: Q3 2026 RASM rose 21.6% while lapping
+the 2025 bag-fee launch, passenger yield hit a record, business revenue grew
+29% on flat capacity, and the Q4 guide (RASM +19–21%, 65% booked) says the
+lift is not a one-quarter lap effect. But the same nine months carried three
+guidance cuts, all fuel: full-year adjusted EPS went from "at least $4"
+(January) to $3.25–4.25 (July) to $2.60–2.85 (October) as jet fuel went from
+$2.40 to $3.92/gal with no hedges left. Headline "adjusted operating margin
+5.4%, up 4.8 points" includes $214M of fleet-sale and sale-leaseback gains
+and a $48M depreciation cut from a residual-value estimate change; strip
+both and Q3 operating margin was ~2.3%. Southwest earns a GAAP profit while
+generating no free cash: TTM FCF is −$450M, the fifth straight negative
+period, because net capex ($2.5–2.75B guided for 2026) runs at twice
+depreciation ($1.25B) to replace 737-700s with MAX aircraft under a $14.8B
+firm Boeing commitment that does not fall below $2.5B/yr until 2030. The
+price clears a 9.85% hurdle only when 2026–27 net income is handed to the
+DCF as cash; every path built from cash the owner can actually keep lands
+80–400bp short.
+
+> [!WARNING]
+> **Closest attack:** the earnings-quality loop — the "durable earnings power"
+> management points to in Q3 is 5.4% adjusted margin of which 2.5 points are
+> asset gains and 0.6 points a depreciation estimate change, both booked in
+> the same operating line the cost story is measured on, and the gains are
+> sales of fleet the company is simultaneously paying Boeing $2.5–4B a year to
+> replace. That attack does not kill the revenue story; it kills the frame in
+> which 13× earnings is cheap.
+
+Load-bearing conditions of the bull case (owning at $43.44 beats SPY over
+63 trading days):
+
+1. *probable* — Unit-revenue outperformance persists through the initiative
+   lap: Q4 RASM lands inside +19–21% and 2027 unit revenue grows on 4–5%
+   capacity. Evidence today: Q3 beat the top of its own +17.5–19.5% range
+   while lapping bag fees; 65% of Q4 booked; record September yield and
+   load factor together (Q3 call, 2026-10-22).
+2. *plausible* — Transformation EBIT delivers as guided: seat products $1.5B
+   and bag fees ≥$1B of 2027 EBIT, visible as 2027 EBIT near $2.8B
+   (consensus EPS $4.12) at the Oct-15 forward fuel curve. Settles at the
+   2027-01-27 print (2027 EPS guide) and the 2027-03-02 Capital Markets
+   Day. Management says both are "on track, if not ahead" (Q3 call).
+3. *plausible* — Unit-cost growth moderates below unit-revenue growth in
+   2027: CASM-X growth steps down from the Q4 +4.0–4.5% "outlier" (heavy
+   maintenance timing, OTP costs, advertising, a 1-point hit from removing
+   six seats per 737-700). Settles at the 2027-01-27 print's CASM-X guide.
+4. *plausible* — Owner cash flow, not GAAP earnings, clears the hurdle: the
+   fleet renewal leaves levered FCF that reaches a sustainable ~$1.6B/yr
+   (the required-FCF inversion at $21.27B, 9.85%, 2.35% terminal), or the
+   earnings path is high enough that the frame does not matter. This is the
+   condition the price rests on and the one the kill pass refutes (§4,
+   Kill-thesis record).
+5. *probable* — Capital allocation stays inside the stated framework: no
+   debt-funded buybacks while FCF is negative, gross leverage inside
+   1.0–2.5× (1.9× at Q3), the $2.15B of 2026–27 maturities refinanced
+   without rating pressure. Evidence: zero repurchases in Q2 and Q3 2026
+   ($450M of the $2.0B authorization left); $1.25B of 5.75%/6.00% notes
+   priced 2026-10-26 (424B5 2026-10-28) to repay the $300M 3.00% notes due
+   2026-11-15 and for general corporate purposes; $2.0B revolver undrawn.
+
+> [!WARNING]
+> **Dominant shared risk factor:** US middle-income discretionary spending,
+> leisure travel first (compounded here by an unhedged jet-fuel bill, which an
+> oil spike raises while it drains the same consumer) — shared by 4 of 26 held
+> names (YOU directly, "US discretionary air-travel volume"; KTB and PRI,
+> "US lower- and middle-income consumer / household" spend; PYPL, "US and
+> European online consumer discretionary spend") · 0 unlabelled. EEFT
+> ("cross-border movement of people") is adjacent but fails on a border or
+> migration shock, not a US consumer downturn, so it is not counted.
+
+## 2. Business
+
+**Created:** a dense domestic point-to-point network — No. 1 carrier in most
+of its large airports, with 95% of Q4 seat growth touching airports where it
+is the largest carrier (Q3 call) — sold with a cost base that still lets it
+price below the legacy carriers' main cabin. Customers get frequency,
+nonstop service in mid-size city pairs the hubs do not serve nonstop, a
+single fleet type with high completion factor, and since 2025 the choices
+the legacy carriers already sold: assigned and extra-legroom seats, a
+Basic fare, Priority Boarding. Two free bags for A-List Preferred and Choice
+Extra customers, one for co-brand cardholders, are now the loyalty hook
+rather than the brand promise (10-K FY2025, Fare Structure).
+
+**Captured:** four distinct mechanisms. (i) Passenger fares — $7.75B of the
+$8.42B Q3 revenue, average fare $231.69, up 26.9% y/y, with yield per RPM
++23.3% (10-Q Q3 2026 statistics). (ii) Ancillaries now inside passenger
+revenue — bag fees since 2025-05-28, seat selection and extra legroom,
+Priority Boarding; management sizes bags at ≥$1B and seats at $1.5B of 2027
+EBIT. (iii) Loyalty — Rapid Rewards points sold to Chase under the co-brand
+agreement amended in 2025 "with improved economics" (10-K); loyalty revenue
+recognized $1.70B in 9M 2026 and "Other" revenue $1.87B (+7.4%); the
+deferred points sit in a $7.08B current plus $1.20B noncurrent air traffic
+liability. A Platinum tier (2027-01-01), partner redemptions (spring 2027),
+a premium card and Icon lounges (Q4 2027) are the next monetization layer,
+unquantified. (iv) Fleet recycling — retiring 737-700/800s and engines sold
+for $735M of proceeds in 9M 2026 plus $212M of sale-leasebacks, booked as
+$390M of gains inside Other operating expenses; management calls aircraft
+sales "a recurring part of our business" and a capex offset.
+
+**Protected:** the mechanism is utilization and position, not price. A
+point-to-point schedule flown by one fleet type turns aircraft faster than a
+hub bank can, and the connecting traffic the redesigned banks now carry
+rides on top of that (Q3 call, Jones). Gate and slot positions at Dallas
+Love, Chicago Midway, Baltimore, Nashville, Las Vegas, Denver are hard to
+replicate at scale. Rapid Rewards plus the Chase card are a switching cost
+for the ~13M-member base. What has weakened: the fare-product convergence
+removes the differentiation the brand used to carry, CASM-X is converging
+toward the legacy carriers (labor is 46.9% of opex after a pilot contract
+with 29% immediate plus ~4%/yr raises through 2027), and the company's own
+Item 1A leads with "the Company's low-cost structure has historically been a
+competitive advantage, and many factors have and could continue to adversely
+affect the Company's ability to control its costs." The 10-K also names the
+single-manufacturer dependence: every delivery through 2031 is a Boeing 737.
+Honest reading: a real operating moat (utilization, airport position,
+loyalty) whose cash value is being competed away on the cost side.
+
+**Control:** one class of common stock, one vote per share, no controlling
+holder (10-K FY2025, Note on equity). Insiders 0.93%, institutions 95.2%,
+float 484.5M of 489.6M shares. Elliott, which forced the 2024 board
+overhaul under an October 2024 cooperation agreement (amended February
+2025), reported 4.9% on 2026-04-02 (Schedule 13D/A No. 14) and is below the
+reporting threshold since. Two directors added 2026-08-10 (Rocket's CEO and
+Royal Caribbean's CEO). Nothing forecloses an unsolicited bid or a renewed
+activist path.
+
+**Operating leverage (Phase 0): negative 2022–2025, inflecting positive in
+the last twelve months.** Revenue rose 18% from 2022 to 2025 while operating
+income fell 53%; TTM revenue is up 12% on FY2025 with operating income 3×.
+The inflection is one year old and includes $390M of fleet gains and $108M
+of depreciation relief.
+
+| FY | revenue | operating income | op margin |
+|---|---|---|---|
+| 2021 | $15.79B | −$1.13B | −7.2% |
+| 2022 | $23.81B | $1.01B | 4.2% |
+| 2023 | $26.09B | $0.22B | 0.9% |
+| 2024 | $27.48B | $0.29B | 1.0% |
+| 2025 | $28.06B | $0.48B | 1.7% |
+| TTM 9/26 | $31.55B | $1.43B | 4.5% |
+
+Source: stockanalysis `/financials/income-statement/` (`datekey[0]` = TTM).
+
+## 3. Threads pulled
+
+- **The three guidance cuts.** Q4 2025 call (2026-01-29): full-year 2026
+  adjusted EPS "at least $4 ... the lower end of our internal forecast." Q2
+  call (2026-07-23): $3.25–4.25 "reflects the forward fuel curve as of July
+  17." Q3 call (2026-10-22): $2.60–2.85 on $4.55/gal Q4 fuel. Q3 fuel was
+  $3.92 vs $2.40 a year earlier, an $821M headwind in one quarter; the
+  company terminated its remaining hedges in Q2 2025 (10-K Item 1). Fuel
+  consumed ~2.15B gallons/yr (9M: 1,607M), so each $0.50/gal is ~$1.07B
+  pretax, ~$1.70/share after tax. The revenue initiatives were not the
+  problem — the exposure the company chose to carry naked was. Scenario
+  input, not a condition (Phase 3 rule), but it is the whole 2026 story.
+- **Earnings quality inside "adjusted operating margin."** Q3 release
+  reconciliation: operating income excluding special items $452M (5.4%).
+  Gains on sale $96M and sale-leaseback gains $118M sit inside Other
+  operating expenses (10-Q Q3 2026 cash-flow statement and Note 10) and are
+  not special items; the residual-value estimate change cut Q3 D&A by $48M
+  and 9M D&A by $108M (10-Q Note 1). Ex both, Q3 operating income ≈ $190M,
+  margin ≈ 2.3%. 9M: $1,367M adjusted less $390M gains less $108M
+  depreciation relief ≈ $869M, 3.6%. Management's own Q&A acknowledges the
+  gains are "a cash story" and a capex offset (Doxey). The STI metric since
+  2025 is adjusted operating margin (DEF 14A 2026-03-27), which includes
+  these gains.
+- **Free cash flow and the Boeing order book.** FCF: 2022 −$156M, 2023
+  −$356M, 2024 −$1.59B, 2025 −$831M, TTM −$450M (stockanalysis cash-flow
+  statement; 2021's +$1.81B was the air-traffic-liability rebuild). 10-K
+  FY2025 Note 4: firm Boeing payments $4.2B (2026), $2.7B→$2.8B (2027,
+  after four −7 options exercised), $2.7B→$2.8B (2028, after three more
+  exercised through 2026-10-22), $2.5B (2029), $1.5B (2030), $1.2B (2031),
+  $14.8B total. 10-Q Q3 2026 Note 9: 484 firm aircraft plus 133 options
+  through 2031 against a fleet of 803 — a near-full renewal, with 2027
+  deliveries guided "higher than 2026's 67" as the MAX 7 (FAA-certified
+  2026-08-03) enters service. Net capex 2026 $2.5–2.75B vs D&A $1.25B at
+  ~1% fleet growth: the excess is replacement spend GAAP depreciates over
+  decades at old cost. Doxey on 2027 FCF: "largely depend on the quantity
+  of aircraft that we are taking, offset by the proceeds" — no guide.
+- **Balance sheet after the buyback.** $2.6B repurchased in 2025 and $1.27B
+  in Q1 2026 (a $750M ASR settled 2026-01-02), none since; shares −9.8%
+  y/y. Cash fell from $7.5B (2024) to $3.6B; debt ex-leases is $5.89B with
+  $2.15B current (the $300M 3.00% notes due 2026-11-15, the $1.3B 5.125%
+  and $300M 3.45% notes and $100M 7.375% debentures due 2027; 10-K Note 6).
+  New money since March 2026: $1.5B secured term loan due 2029 (8-Ks
+  2026-03-12 and 2026-05-19), $1.25B unsecured 5.75% 2029 / 6.00% 2031
+  (priced 2026-10-26), a $2.0B revolver to 2031 (8-K 2026-08-12). The $426M
+  PSP3 Treasury note was prepaid 2026-04-22. Interest expense doubled y/y
+  to $70M in Q3. Investment grade, leverage 1.9×, liquidity $5.6B — not a
+  solvency thread, but the buyback was financed by the cash pile and
+  refinanced at roughly double the retired coupons.
+- **What the Street thinks vs what management guides.** Consensus
+  (stockanalysis forecast): 2026 adjusted EPS $2.74, 2027 $4.12 (+50%),
+  revenue $33.5B → $35.7B; 23 targets, average $49.32, range $34–65.
+  Trailing-8-quarter pattern (Robinhood `get_earnings_results`; these are
+  adjusted actuals, not GAAP — Q2 2026 shows $0.94 adjusted against $0.47
+  GAAP because the $285M breakage reversal is a special item): beats in six
+  of eight, including Q3 2026 $0.66 vs $0.58 — beats against a bar that
+  was lowered twice. Southwest trades at 13.4× forward vs DAL 12.5× and UAL
+  12.1× with an operating margin of 4.5% vs 7.3% and 6.5% and negative FCF
+  vs +$3.0B and +$1.1B (stockanalysis statistics, 2026-10-27): the market
+  is already paying for the catch-up.
+- **Recency sweep since the 2026-10-22 call.** EDGAR: 10-Q 2026-10-22;
+  424B5 2026-10-26 and 2026-10-28 for the notes. News: 11 new near-
+  international routes from November (Fox Business, low-confidence). No
+  Forms 4 since 2026-09-17 (an RSU vesting by the principal accounting
+  officer; the only open-market insider trade in the period is his 179-
+  share sale at $40.38 on 2026-08-21). On the call Jordan called the wide-
+  body press reports "not correct"; a 737 variant above 175 seats (MAX 10)
+  would need the pilot contract, which "does open up next year likely"
+  (Watterson). Nothing since the call contradicts the Q4 guide.
+- **Options read (mandatory):** path 2 only (LUV is not in the 24-symbol
+  CBOE catalog; `data/options.db` has no history). Expiry 2027-03-19
+  brackets both dated catalysts (Q4 print 2027-01-27 AMC, repricing in the
+  2027-01-28 session; Capital Markets Day 2027-03-02). Table and liquidity
+  gate in §4; the gate failed, so the read is UNRELIABLE and the IV-vs-
+  realized "elevated" reading is the stopgap's known artefact.
+- **Transcript corpus.** 40 events 2021-04-22 → 2026-10-22 (ipoDate NULL in
+  `stocks.db`; pre-2021 history unquantified — the corpus proves presence
+  only). Issuer elected "Southwest Airlines"; 2,308 management turns, 1,421
+  outside. Fixed-lexicon scan: "market share" df 14 (6 seasons), "take
+  rate" df 8, "capacity utilization" df 21; no ARPU/CAC/churn vocabulary.
+  Targeted probe: Investor Day 2024-09-26 set "$4 billion in cumulative run
+  rate EBIT in 2027, as compared with 2024"; 2024 EBIT was $285M, so the
+  target implies ~$4.3B of 2027 EBIT against ~$2.8B consensus — the ~$1.5B
+  gap is roughly the annualized fuel increase plus labor. Management now
+  quotes the two initiative pieces ($1.5B seats, ≥$1B bags) and no longer
+  the $4B total; the Capital Markets Day will restate the framework.
+- **Dead ends:** no defined-benefit pension of consequence (OCI items only,
+  10-K); SBC $99M in 2025, 0.35% of revenue, no haircut needed; no minority
+  interests; the Chase agreement's term is not disclosed in the 10-K and
+  does not bear on the pass; `sec_fundamentals.db` carries LUV (CIK 92380,
+  Q3 revenue $8.42B, net income $270M) and agrees with the release;
+  `earnings.db` has no LUV row because the next print is outside its
+  window; short interest 5.0% of shares, 4.1 days, falling — nothing there.
+
+## 4. Valuation
+
+Inputs (statistics probe `hover` values, 2026-10-27): market cap
+$21,268,327,387; enterprise value $24,515,327,387; TTM NCFO $2,755,000,000;
+capex −$3,205,000,000; `fcf` −$450,000,000 (levered); net income
+$1,053,000,000; D&A $1,251,000,000; shares 489,602,380; beta 1.155. Pairing:
+levered flows against **market cap**, net debt 0 by the pairing rule. The
+trailing base is negative, so `reverse_dcf` refuses it:
+
+```
+refused: --base-fcf must be positive (got -450000000.0)  [exit 2]
+```
+
+Substituted bases, each stated: (A/F) 2026E net income $1.33B (guidance
+midpoint $2.72 × 490M shares) handed to the DCF as cash — the bull's frame;
+(C) owner FCF $1.0B — 2027E net income $2.0B less ~$1.0B of capex above
+depreciation net of sale proceeds; (B) 2027E levered FCF $0.65B — $2.0B net
+income + $1.25B D&A − ~$2.6B net capex; (E) the same base without the
+renewal fading; (G) consensus 2026 FCF $274M ramping. No SBC, minority or
+pension haircut (§3 dead ends). Cash is not excess ($3.6B against $2.15B of
+current maturities), so no net-of-cash adjustment.
+
+Hurdle: rf 5.00% (DGS10, 2026-10-26) + beta 1.155 × ERP 4.20% (Damodaran,
+2026-10-01, solved against his 5.29% T-bond) = **9.85%**. Beta inside the
+0.8–1.2 band; insiders 0.93% and float 99% of shares, no thin-float floor.
+Terminal growth 2.35% = the 10-year breakeven `T10YIE` (2026-10-27), the
+working ceiling; the risk-free cap is 5.00%.
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| A bull: 2026E NI as cash | $1.33B | +45/12/6/4/3% | 2.35% | 12.66% | +280bp |
+| F bull-margin (10% op margin by yr 5) | $1.33B | +45/15/10/5/3% | 2.35% | 13.31% | +346bp |
+| C mid: owner FCF | $1.00B | +15/12/10/8/5% | 2.35% | 9.05% | −80bp |
+| B realistic: 2027E levered FCF, renewal fades | $0.65B | +20% ×5 | 2.35% | 8.79% | −106bp |
+| E bear: renewal does not fade | $0.65B | +5% ×5 | 2.35% | 5.88% | −397bp |
+| G consensus 2026 FCF ramping | $0.27B | +50/40/30/20/10% | 2.35% | 6.39% | −346bp |
+
+Present value at the 9.85% hurdle: A $59.97/sh, F $64.03, C $38.69, B
+$36.90, E $20.26, G $22.61 against $43.44. Required-FCF inversion: the
+price needs ~$1.60B/yr of sustainable levered FCF ($3.26/share) at 2.35%
+growth — above every year since 2019 and 3.5× 2026E consensus.
+
+Integrity checks:
+
+- **Reinvestment warning, answered.** A and F trip `growth without
+  reinvestment` (base FCF ≥ earnings, reinvestment 0%). That warning *is*
+  the finding: the bull frame grows earnings 45% while reinvesting nothing,
+  when the company is reinvesting $2.5–2.75B net a year. C's implied
+  terminal ROE is 9.47%, at the hurdle — a value-neutral terminal, the
+  honest default for an airline. B/E's 3.48% terminal ROE sits far below
+  the hurdle: the renewal capex earning less than its cost is intentional
+  in those paths, not an error.
+- **Market-share sentence.** F's year-5 FCF of $2.64B on ~$40B of revenue
+  (consensus $35.7B for 2027 grown ~3%) is a 6.6% levered FCF margin,
+  above Damodaran's Air Transport pretax operating margin of 5.32% (January
+  2026, 23 firms) and above Southwest's own 2026 margin ex-gains. Revenue
+  itself at $40B would be ~15–16% of a ~$250B US passenger-airline industry
+  (BTS 2024 figure, low-confidence) vs ~13% today on 1–5% capacity growth
+  — a share claim the paths never state.
+- **Terminal growth vs the Item 1A terminal risk.** The disclosed terminal
+  risk is erosion of the low-cost structure (Item 1A's first operating risk)
+  plus single-manufacturer dependence. 2.35% is nominal breakeven inflation
+  with no real growth claimed, so it survives a cost structure at parity;
+  it would not survive a cost structure above the legacy carriers'. Base
+  rate: ~29% of firms earn above their cost of capital (Damodaran EVA), and
+  Air Transport's ROC–WACC spread is 1.2 points (7.93% vs 6.72%, January
+  2026) — excess returns fading is the default, kept here.
+- **Distribution clamp.** B and C (8.8–9.1%) sit inside the 80% band of US
+  costs of capital (5.26–9.88%, Data Update 2026) and below the hurdle; E
+  and G sit below the 10th percentile — a strong pass on any path that
+  does not treat earnings as cash. A/F clear comfortably; they are the
+  only paths that do.
+- **Cash taxes.** Effective rate 22.2% TTM; cash taxes paid not pulled
+  (10-Q supplemental), so no NOL flattery is claimed or excluded — a §6
+  item, not load-bearing.
+
+Options-implied move — path 2 (Robinhood stopgap), expiry 2027-03-19, 142
+calendar days, ATM strike $42.50 (nearest to $43.44; the ladder is $2.50-
+wide), bracketing the 2027-01-27 AMC print and the 2027-03-02 Capital
+Markets Day. Call mark $5.10 (bid/ask $4.85/$5.35, OI 953, volume 15), put
+mark $3.50 ($3.30/$3.70, OI 2,015, volume 15), IV mean of the two legs
+39.99% (as of 2026-10-27 close):
+
+| metric | value |
+|---|---|
+| spot | 43.44 |
+| expected absolute move (MEAN, not a ceiling) | 19.80% |
+| 1-σ move | 24.94% |
+| ATM IV | 39.99% |
+| RV60 | 32.77% |
+| RV20 | 35.83% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+| thesis requires (bull PV $59.97 by expiry) | 38.10% = 1.29 σ |
+| P(\|move\| ≥ required) | 19.56% |
+| refutes timing claim (> 2 sigma)? | NO |
+
+Liquidity gate: put spread $0.40 on a $3.50 mark (11.4%) fails the 10%
+spread gate and both legs trade 15 contracts → **FAILED → UNRELIABLE**.
+Timing check: applicable (two dated catalysts inside the expiry) but it
+does not refute — 1.29σ is inside the band where the market is merely less
+optimistic than the bull destination, and the one-way valve means the
+"elevated" IV reading (which spans an earnings print the trailing windows
+do not) is not evidence either way. IV below 50%, so two-decimal precision
+on the implied returns is permitted; the spread between A and B (+280 vs
+−106bp) is the finding, not any one figure.
+
+Equity as option: omitted — net debt is 13% of EV, book equity $7.33B
+positive, no going-concern language; the leverage gate does not open.
+
+## 5. Falsifiers
+
+For the pass (flip toward buy):
+
+- **Shift —** the 2027-01-27 release guides 2027 net capex ≤ $2.0B (sale
+  proceeds included) or guides positive FCF ≥ $1B: the owner-cash path
+  moves toward C/A and the PV crosses the price.
+- **Shift —** the 2027 jet-fuel forward curve falls below ~$3.50/gal and
+  the 2027 EPS guide exceeds $4.50: a $1.00/gal move is ~$3.40/share of
+  EPS, and at that level the stock clears the hurdle on cash even with the
+  renewal.
+- **Shift —** the Capital Markets Day (2027-03-02) publishes a multi-year
+  framework with an earnings-to-FCF bridge showing ≥ $1.6B sustainable
+  levered FCF by 2028 and the capital-commitment table consistent with it.
+- **Shift —** price at or below ~$37 (PV of paths B/C at the hurdle) with
+  the Q4 RASM guide intact — the mid path then clears.
+
+For an owner (sell):
+
+- **Break —** Q4 RASM prints below +19% or 2027 unit revenue is guided
+  negative: the lap failed and condition 1 is gone.
+- **Break —** repurchases resume funded by new debt while FCF is negative.
+- **Shift —** 2027 CASM-X guided above +4%: condition 3 fails and the margin
+  expansion story becomes a fuel bet alone.
+- **Shift —** MAX 7 entry into service slips past H1 2027 or Boeing
+  deliveries fall materially below the 2027 plan: capacity and unit-cost
+  plans re-base.
+
+> [!NOTE]
+> **Reopen trigger:** 2027-01-27: luv-q4-print-2027-capex-fcf-guide-and-casmx-vs-rasm
+
+## 6. UNKNOWNs
+
+1. PENDING 2027-01-27 — 2027 net capital spending, delivery and retirement
+   counts (contractual 90 deliveries incl. 54 MAX 7s; Doxey: "higher than
+   2026"), and any FCF guide. From the Q4 release and the FY2026 10-K
+   commitment table (early February 2027). This is condition 4's dated
+   test; its absence today is why the pass stands.
+2. PENDING 2027-01-27 — 2027 RASM and CASM-X guidance (conditions 1 and 3).
+3. PENDING 2027-03-02 — the Capital Markets Day multi-year framework
+   (margin, ROIC, FCF conversion, the restated $4B EBIT target). From the
+   investor presentation 8-K.
+4. UNKNOWN — Chase co-brand agreement term and economics (amended 2025,
+   "improved economics", 10-K). No filing carries the numbers. Not
+   load-bearing: loyalty is upside in every path and the pass does not rest
+   on it.
+5. UNKNOWN — Elliott's current stake below the 4.9% of 2026-04-02; no
+   further 13D/A is required. Not load-bearing.
+6. UNKNOWN — cash taxes paid vs the 22.2% book rate (10-Q supplemental
+   disclosure not parsed this run). Not load-bearing; it would only lower
+   the owner-cash paths further.
+7. Option value (*possible* tier, unnumbered in §1): the premium co-brand
+   card and Icon lounges (first guests Q4 2027), the Platinum tier, partner
+   redemptions, Starlink fleet-wide by fall 2027, a MAX 10 or wide-body
+   product after the 2027 pilot-contract opener. Management declined to
+   quantify any of them (Q3 call, Shanker's question).
+
+## 7. Sources
+
+- **Primary:** Form 10-K FY2025 (filed 2026-02-05: Item 1 fuel and hedge
+  termination, fare structure, Rapid Rewards; Item 1A; Note 4 capital
+  commitments $14.8B; Note 6 debt; equity note, one class one vote). Form
+  10-Q Q3 2026 (filed 2026-10-22: Note 1 residual values, Note 9 order book
+  484 firm/133 options, Note 10 financing, cash-flow statement gains and
+  proceeds, operating statistics, repurchase disclosure). 8-K 2026-10-21
+  with the Q3 earnings release (guidance tables, non-GAAP reconciliation,
+  balance sheet). 8-Ks 2026-03-12 and 2026-05-19 (term loan), 2026-08-07
+  (executive pay), 2026-08-10 (two directors), 2026-08-12 (revolver),
+  2026-02-10 (director resignations), 2025-12-05 (EBIT update to ~$500M).
+  DEF 14A 2026-03-27 (STI metric: adjusted operating margin; 2023 ROIC
+  LTI paid 0%). Schedule 13D/A No. 14 (Elliott, 2026-04-03, 4.9%). Forms 4
+  2026-08-07 through 2026-09-17. 424B5 2026-10-26/28 ($1.25B notes;
+  terms via news, low-confidence until the final prospectus is read).
+  Transcripts (primary, transcribed via stockanalysis/Quartr): Q3 2026 call
+  2026-10-22, Q2 2026 call 2026-07-23, Q4 2025 call 2026-01-29, Investor
+  Day 2024-09-26, plus the 40-event corpus scan.
+- **stockanalysis.com (vetted exception):** `/stocks/LUV/statistics/`
+  (2026-10-27 figures), `/financials/income-statement/` annual and
+  quarterly, `/financials/cash-flow-statement/`, `/financials/balance-
+  sheet/`, `/forecast/` (consensus EPS/revenue, 23 price targets),
+  `/transcripts/`, `/filings/LUV/` (release PDF), peer statistics for DAL,
+  UAL, AAL, ALK.
+- **Broker/market microstructure:** Robinhood MCP `get_equity_quotes`
+  (close and pre-market), `get_earnings_results` (estimate-vs-actual
+  pattern; actuals cross-checked to the release's adjusted EPS),
+  `get_option_chains` / `get_option_instruments` / `get_option_quotes`
+  (2027-03-19 ATM straddle), `get_equity_historicals` (91 daily closes for
+  RV20/RV60). Admissible: no integrated official source covers option
+  quotes, consensus-vs-actual estimates or live quotes for LUV.
+- **Reference data:** Damodaran implied ERP 4.20% (2026-10-01; T-bond
+  5.29%); Air Transport industry margins, sales-to-capital 1.80,
+  capex/depreciation 176%, equity std dev 59%, ROC 7.93% vs WACC 6.72%
+  (January 2026 data update); US cost-of-capital distribution (Data Update
+  2026); EVA base rate ~29%. FRED via `data/fred.db`: DGS10 5.00%
+  (2026-10-26), T10YIE 2.35% (2026-10-27).
+- **Point-in-time repo DBs (read-only):** `stocks.db` v_latest (price
+  $43.44, beta 1.155, insiders 0.93%, institutions 95.18%, float, 25
+  analysts; `shareBasedComp` NULL); `sec_fundamentals.db` v_screener (CIK
+  92380, Q3 revenue $8.42B, net income $270M, equity $7.33B); `composite.db`
+  (informational annotations only, never flagged); `earnings.db` (no LUV
+  row inside the window); `portfolio.db` v_latest_positions (26 symbols for
+  the factor overlap); `options.db` (no LUV history, path 1 inapplicable).
+- **Low-confidence:** web search results on the $1.25B notes terms
+  (TradingView/StreetInsider), MAX 7 certification coverage (trade press),
+  Elliott sell-down commentary (Cranky Flier, ch-aviation), Fox Business on
+  11 new routes; BTS industry revenue figure for the market-share sentence.
+
+## Kill-thesis record
+
+Ledger: `2026-10-28 LUV FLAWED conditions=5 refuted=1 unknown=0 pending=2
+not_obtained=0 reopen=2027-01-27:luv-q4-print-2027-capex-fcf-guide-and-casmx-vs-rasm`.
+Object of attack: the bull case (own at $43.44, beat SPY over 63 td); the
+five conditions are §1's list.
+
+Per-condition adjudication:
+
+1. RASM outperformance persists through the lap — **SURVIVED** (probable).
+   Attack: the Q3 +21.6% still contains part-year ancillary lapping (bags
+   launched 2025-05-28, assigned seating 2026-01); passenger count fell
+   3.2% y/y and load factor was flat at 79.8%, so the gain is price, and
+   fares "remain below 2019 in real terms" is management's frame, not a
+   demand measure. What stands: Q3 beat the top of its own range while
+   lapping, 65% of Q4 booked at +19–21%, business revenue +29% on flat
+   capacity, and a Q4 schedule concentrated in airports where Southwest is
+   No. 1. The attack did not land for a 63-day horizon.
+2. Transformation EBIT delivers ($1.5B seats, ≥$1B bags; 2027 EBIT near
+   $2.8B at the forward curve) — **PENDING 2027-01-27**. Attack with what
+   bears today: three cuts in nine months, the Investor Day $4B target
+   quietly replaced by its two components, consensus 2027 EPS $4.12 that
+   embeds an unknown fuel curve. None of that stands *against* the
+   initiative EBIT itself (bags "tracked", fees stepped up, seats "on track
+   if not ahead"); it stands against the total. Pending, not refuted.
+3. Unit-cost growth moderates below unit-revenue growth — **PENDING
+   2027-01-27**. Attack: labor 46.9% of opex with contractual 4% pilot
+   raises in 2027, flight-attendant and ground contracts, OTP remediation
+   costs, 737-700 seat removals, and a CASM-X that rose 3.8% on *negative*
+   capacity in Q3. Management calls Q4 an outlier; the 2027 guide decides.
+4. Owner cash flow, not GAAP earnings, clears the hurdle — **REFUTED**.
+   Evidence: levered FCF negative in 2022, 2023, 2024, 2025 and TTM; 2026E
+   consensus FCF $274M; net capex guided $2.5–2.75B against $1.25B D&A for
+   ~1% fleet growth; firm Boeing payments of $2.8B, $2.8B, $2.5B in
+   2027–29; management declines to guide 2027 FCF. The only paths that clear
+   9.85% (A/F) hand net income to the DCF with zero reinvestment while the
+   company reinvests twice its depreciation. Every owner-cash path lands
+   80–400bp short and values the equity at $37–39 on the mid paths.
+   Repairable: a 2027 capex/FCF guide or a Capital Markets Day bridge that
+   shows ≥ $1.6B sustainable FCF reopens it — hence the dated trigger.
+5. Capital allocation inside the framework — **SURVIVED** (probable).
+   Attack: the 2025–Q1 2026 buyback of $3.9B was paid from the cash pile
+   and refinanced at 5.75–6.00% versus 3.00–5.125% retired, and $450M of
+   authorization remains with Elliott's framework still in force. What
+   stands: zero repurchases in Q2 and Q3 2026 with the stock in the $38–48
+   range, leverage 1.9× inside 1.0–2.5×, liquidity $5.6B, IG ratings.
+
+Standing checks: *Base rate* — only ~29% of firms earn above their cost of
+capital and Air Transport's ROC–WACC spread is 1.2 points (Damodaran,
+January 2026); low-cost carriers that converged their product to the
+legacy set have historically converged their cost base too — the 10-K's own
+first operating risk. *Short case* — a 4.5%-margin airline at 13.4× forward
+earnings with negative FCF, naked fuel, $14.8B of firm aircraft payments,
+labor at 47% of costs, adjusted margin padded by asset gains and a
+depreciation estimate change, and a $4 EPS promise that became $2.72 in nine
+months; the premium to DAL/UAL multiples is the short's entry. *Management
+incentives* — STI on adjusted operating margin (includes fleet gains and
+the depreciation change); the 2023–25 ROIC-based LTI paid 0%, so the ROIC
+discipline the thesis needs has not paid management recently; CEO and
+officer pay re-set upward 2026-08-05 benchmarked to the big-three carriers.
+*Disconfirming search* — post-call EDGAR and news sweep found the $1.25B
+notes (confirming refinancing at higher coupons), MAX 7 certification
+(supports deliveries, i.e. more capex), and the wide-body denial; nothing
+that contradicts the Q4 guide, nothing that improves the cash picture.
+*Moat as mechanism* — utilization and airport position are mechanisms and
+real; the price advantage the brand rested on is being removed by the
+company itself (bag fees, Basic fare) and by CASM-X convergence.
+
+Statistical checks: no backtest or repo signal is relied on; composite
+never flagged LUV; the trailing beat pattern (6 of 8) is against estimates
+that were cut, so it is not evidence of under-promising.
+
+Options timing check: ran (two dated catalysts inside the 2027-03-19
+expiry); bull destination +38.1% = 1.29σ, P 19.6%, `refutes timing claim
+(> 2 sigma)? NO`. Path 2 stopgap, liquidity gate FAILED (put spread 11.4%,
+15 contracts each leg) → UNRELIABLE; the check cannot cut here and under
+the one-way valve it confirms nothing.
+
+> [!WARNING]
+> **Closest attack:** the earnings-quality loop in §1 — $214M of Q3 gains and
+> $48M of depreciation relief inside a $452M "adjusted" operating result,
+> booked while the company spends $2.5B+ a year replacing the assets it sells.
+> It did not refute condition 1 or 5; it is what made condition 4's refutation
+> decisive rather than arguable.
+
+> [!NOTE]
+> **Flip evidence:** toward SOUND — a 2027 net-capex guide ≤ $2.0B or an FCF
+> guide ≥ $1B on 2027-01-27, or a Capital Markets Day bridge to ≥ $1.6B
+> sustainable levered FCF with the commitment table consistent with it.
+> Toward a deeper FLAWED — Q4 RASM below +19%, 2027 CASM-X guided above +4%,
+> or a debt-funded buyback resumption with FCF still negative.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td):** 0.42 — the horizon ends at the Q4 print, the
+> stock's near-term driver is a fuel price neither side can call, and the
+> market has already paid for the catch-up; the kill pass sees the pass as a
+> valuation-frame judgment, not a directional call.

@@ -1,0 +1,361 @@
+# CATX — Perspective Therapeutics, Inc. — 2026-10-27
+
+> [!IMPORTANT]
+> **In one sentence:** A pre-revenue alpha-radiopharma developer trading at
+> about 57% of its June cash after a disappointing interim readout; its cash
+> cannot fund a pivotal trial without heavy dilution at depressed prices, so pass.
+
+Price $1.19 (official close, 2026-10-27; after-hours $1.20) · market cap
+$135.84M · EV −$97.07M (cash $236.88M, debt $3.96M, 2026-06-30) · next
+earnings 2026-11-09 AMC (tentative; Robinhood unverified, stockanalysis
+"estimated"; no row in `data/earnings.db`)
+
+Entry: composite flag (bullish 2, score_sum 3 — `si_days_to_cover` 23.64 obs
+2026-08-31, `stocks_rsi` 21.4 obs 2026-10-26). Unattended scheduled run.
+
+## 1. Verdict and thesis
+
+> **PASS at $1.19.** kill-thesis: **FLAWED** — conditions=3 (1 probable,
+> 2 plausible), refuted=1, unknown=2, pending=0, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.33** · kill-thesis: 0.30
+
+> [!IMPORTANT]
+> **Disputed expectation:** the tape prices the pipeline at −$97M (below net
+> cash), i.e. that the remaining cash is spent and more is raised below today's
+> price; the revision would come from a funded, FDA-agreed registrational
+> design or a partnership that pays for the pivotal trial.
+
+This is a Phase 0 fast kill. Perspective has no product revenue ($0.41M TTM),
+a free cash flow of −$121.19M TTM, and losses that widened every year. It
+also just fell 47% in three sessions ($2.26 → $1.19) on interim VMT-α-NET data
+whose intent-to-treat response rate in the lead cohort slipped from ~43% to
+~33% as enrollment roughly doubled. Trading below cash is not a margin of
+safety here. The cash is committed to a trial program that costs more than
+the company holds, and the next raise at $1–2 a share would more than double
+the 114M-share count. Whether the alpha-emitter science is better than the
+incumbent and a better-reported rival is a domain question this run cannot
+evaluate. That leaves it unassessed, not absent, but unassessed conditions
+cannot carry a buy.
+
+> [!WARNING]
+> **Closest attack:** the below-cash price itself. If the 18-month landmark PFS
+> (72%, few events) holds at NANETS and the FDA agrees a physician's-choice
+> comparator, a partner could fund the pivotal trial. The shares would then
+> rerate toward cash ($1.85–2.08/sh) without dilution. That path exists, but
+> nothing dated inside 63 trading days settles it.
+
+**Load-bearing conditions of the bull case (3):**
+
+1. *plausible* — VMT-α-NET matures into a registrable efficacy profile vs
+   physician's choice. Cohort 2 ITT ORR ~33% (n=46), SSTR2-all-positive 37%
+   (C2) / 47% (C3, n≈17), 72% 18-month landmark PFS on few events (Oct 23
+   call). Partly settled by NANETS follow-up (Nov 2026) and the FDA
+   registrational-design dialogue (guided "early next year", undated).
+2. *probable* — cash funds the program to a value-inflecting readout without
+   dilution that overwhelms per-share value. Today's evidence: $236.9M at
+   2026-06-30, guided "into late 2027", H1-2026 burn ~$52M, a $175M raise in
+   Feb 2026 that took shares from ~74M to 114M.
+3. *plausible* — differentiation survives Lutathera's incumbency and Orano
+   Med/Sanofi's AlphaMedix (212Pb-DOTAMTATE, ~60% ORR reported at ESMO 2025,
+   low-confidence source). It turns on cross-trial data; no head-to-head
+   exists or is scheduled.
+
+> [!WARNING]
+> **Dominant shared risk factor:** biotech follow-on financing window (small-cap
+> biotech risk appetite, i.e. whether pre-revenue issuers can raise equity) —
+> holdings unavailable in this session.
+
+## 2. Business
+
+**Created:** Perspective develops lead-212 alpha-particle radioligand
+therapies: a peptide that binds a tumor receptor (SSTR2 for neuroendocrine
+tumors with VMT-α-NET, MC1R for melanoma with VMT01, plus FAP and CCK2R
+programs), chelated to 212Pb. The pitch is a shorter-range, higher-energy
+payload than Lutathera's beta-emitter 177Lu. Management claims a
+"net-neutral charge" construct, <5% isotope leakage vs "up to 30%" for others,
+and no dose-limiting toxicities across >150 patients treated (Oct 23 call).
+The customer surplus, if the data hold, is a higher response rate for SSTR2+
+NET patients who today get Lutathera (NETTER-1 ORR 13%, as cited by
+management).
+
+**Captured:** nothing yet. TTM revenue is $0.41M, legacy and immaterial. Value
+capture would come later through a one-time-per-dose infused product, priced
+like Lutathera, made in its own 212Pb generator/manufacturing network. It
+would be supplied by thorium-228 from the DOE, with ~$10M of take-or-pay
+commitments per a low-confidence aggregator. The alternative is a licensing
+or partnership deal. Merck is a clinical collaboration and supply partner for
+the VMT01 combination (Sep 2026 press release), not an economic partner on
+record.
+
+**Protected:** if anything, by the isotope supply chain (212Pb's 10.6-hour
+half-life forces a regional generator network that is slow to replicate),
+patents on the chelator and peptide, and regulatory exclusivity once
+approved. None of this stops Orano Med, which owns its own 212Pb supply and is
+further along with AlphaMedix. On mechanism alone the moat is the manufacturing
+network plus whatever clinical edge the data prove, and the clinical edge is
+UNKNOWN (domain science, §6).
+
+**Control:** a single class of common stock is believed (NYSE American
+listing). Insiders hold 0.57% and institutions 55.5% (`stocks.db`). The proxy
+was not read this run, so a controlling holder or charter defenses are NOT
+OBTAINED; non-load-bearing for a pass.
+
+**Operating leverage (Phase 0): negative.** Revenue shrank while operating
+losses grew ~14× (stockanalysis `/financials/`, $M):
+
+| | FY2022 | FY2023 | FY2024 | FY2025 | TTM 6/2026 |
+|---|---|---|---|---|---|
+| Revenue | 5.42 | 1.43 | 1.45 | 0.88 | 0.41 |
+| Operating income | −8.80 | −40.94 | −66.80 | −113.56 | −125.23 |
+| Net income | −10.76 | −46.51 | −79.28 | −103.12 | −116.43 |
+| FCF | −10.68 | −37.99 | −72.71 | −95.23 | −121.19 |
+
+Persistently loss-making with no revenue line to lever is the skill's first
+fast-kill criterion. Leverage is not the problem (debt $3.96M). The unattended
+run cannot ask whether to continue past Phase 0. Judgment call: finish a
+compressed Phases 1–5 so the pass carries the readout context, rather than
+writing a numbers-only stub.
+
+## 3. Threads pulled
+
+- **The Oct 23 readout and the 47% drop (load-bearing).** Trading was halted
+  Oct 23 for the ESMO 2026 VMT-α-NET interim. The stock fell $2.26 → $1.61
+  (Oct 23) → $1.21 (Oct 26) → $1.19 (Oct 27) on 5.6M/9.6M/8.7M shares, about
+  5–10× normal volume (Robinhood daily bars). On the call (CEO Thijs Spoor,
+  CMO Markus Puhlmann), Piper's Biren Amin challenged the Cohort 2 ITT ORR
+  falling from ~43% (first 23 patients) to ~33% (n=46). Spoor called it "our
+  kind of worst case scenario possible now", attributing it to more
+  pancreatic NETs and immature follow-up. Puhlmann conceded the 72% landmark
+  PFS rests on few events ("the steps are disproportionate"). Median
+  follow-up was not available on the call. The registrational path is not
+  yet at an end-of-Phase 2 meeting, and the comparator (physician's choice)
+  is still under FDA discussion. RBC downgraded to Sector Perform on Oct 27.
+- **Pattern repetition.** The same conference produced the same reaction a
+  year earlier. ESMO 2025 VMT-α-NET (ORR ~44%, down from earlier) came the
+  same session AlphaMedix showed ~60%, and the stock fell ~29% the next day
+  (low-confidence web colour, biotechcurrents Substack). Two consecutive
+  annual updates in which the lead asset's response rate decayed as n grew is
+  the thread. Small early cohorts overstate response rates, and these keep
+  regressing.
+- **Funding versus the plan (the refuting thread).** Cash was $144M at
+  2025-12-31 with runway "into late 2026". The Feb 2026 $175M offering lifted
+  it to $236.9M at 2026-06-30, now guided "into late 2027" (Q2 release via
+  1stoncology/aggregators). H1-2026 burn was ~$52M and TTM FCF −$121.19M. A
+  registrational NET trial with a PFS endpoint and a physician's-choice arm,
+  starting "early next year", runs past late 2027 before readout. So the
+  program is not funded to its value-inflection point, and the next raise
+  comes at or near $1.19. Raising $150M at $1.19 would mean ~126M new shares
+  on a 114M base. Cash per share was $2.08 at 6/30; the estimated 9/30
+  figure is ~$1.85, using ~$26M quarterly burn (PENDING the Q3 10-Q).
+- **Earnings pattern (Robinhood estimate vs actual, 6 quarters).** −0.25 vs
+  −0.27, −0.30/−0.29, −0.35/−0.32, −0.51/−0.35 (Q4'25, large miss),
+  −0.25/−0.30, −0.22/−0.27. For a pre-revenue biotech EPS is a burn number;
+  the read is that per-share loss improved only because the share count
+  rose ~54%. Cross-check: Q2'26 actual −0.22 matches `sec_fundamentals.db`
+  `eps_diluted` −0.22 and net income −$26.786M. They agree.
+- **Short interest.** 14.52% of shares outstanding, 23.40% of float
+  (stockanalysis). Composite's `si_days_to_cover` 23.64 is 57 days stale
+  (obs 2026-08-31). Composite flagged microstructure dislocation, not
+  quality, which is the expected shape for this scanner.
+- **Options read (mandatory):** path 1 has no CBOE `iv30` row for CATX in
+  `data/options.db`. Path 2: a chain is listed but there is no ATM strike, and
+  the liquidity gate FAILED, so the reading is UNRELIABLE (§4).
+- **Dead ends:** a "trading below cash = value" angle (ruled out: the cash is
+  committed to burn, and the guided runway ends before any pivotal readout);
+  leverage (none: debt $3.96M, current ratio 6.61); the Merck agreement (a
+  clinical supply and collaboration deal for VMT01, no disclosed economics,
+  so it does not fund VMT-α-NET); Form 4 / insider buying after the
+  readout (searched, nothing found; absence is not proof, and EDGAR's Form 4
+  index was not read directly); Fast Track for PSV359 (Oct 8; designation
+  only, no economics).
+
+## 4. Valuation
+
+**Inputs:** market cap $135,840,479 (symbol lookup, 1.19 × 114.15M shares),
+cash $236.88M, debt $3.96M, net cash $232.91M, EV −$97.07M, TTM FCF
+−$121.19M (NCFO −$93.07M, capex −$28.12M), TTM net income −$116.43M, SBC
+$10.06M TTM (`stocks.db`; `sbcByRevenue` 2,460% because revenue is ~0). All
+figures are from the stockanalysis statistics page, read via WebFetch: the
+unattended sandbox denied the probe script's raw `hover` path, so these are
+display-rounded values. Levered FCF pairs with market cap; net debt 0 by the
+pairing rule.
+
+**Hurdle:** rf 5.00% (DGS10, 2026-10-26) + beta 1.85 × ERP 4.20% (Damodaran
+implied ERP, 2026-10-01, trailing-12-month adjusted payout) = **12.77%**.
+Clamped to the 0.8–1.2 band (beta 1.2) it is 10.04%. The 10-year breakeven,
+2.35% (T10YIE, 2026-10-27), is the terminal-growth ceiling.
+
+`reverse_dcf` refused (exit 2):
+`refused: base_fcf must be positive, got -121190000.0`
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| TTM levered | −$121.19M | n/a | 2.35% | refused | n/a |
+
+**The honest arithmetic instead:**
+
+- Market-implied pipeline value is market cap − net cash = **−$97M**
+  (−$0.85/share). The market expects the cash to be consumed and more raised.
+- Runway: $236.9M ÷ $121.2M/yr ≈ 1.95 years from 6/30/2026, roughly to mid-2028
+  at the TTM rate. Management guides "into late 2027", which implies burn
+  rising as the registrational trial starts.
+- To earn the 12.77% hurdle over three years, equity worth $135.8M today must
+  be worth ≈$195M in 2029 per current share. That has to happen after
+  funding a pivotal trial the current cash cannot finish, so any raise below
+  ~$1.90 lifts the required pipeline value per share. The required outcome is
+  approval-grade data on schedule *and* funding at a higher price, a
+  two-legged binary.
+- Integrity bullets: the reinvestment/terminal-ROE check is N/A (no positive
+  base). Market-share sentence N/A (no revenue path to compound). Item 1A
+  terminal risk: NOT OBTAINED (10-K not read). The dominant disclosed risk
+  for any clinical-stage issuer is failure to obtain approval plus the need
+  for additional financing, which is exactly the refuted condition.
+  Distribution clamp N/A.
+
+**Options-implied move:** path 2 (Robinhood), expiry 2026-11-20, 24 DTE
+(brackets the Nov 9 tentative print and the NANETS presentation). No ATM
+strike is listed: the strike ladder is $2.50 / $5.00 / $7.50, set before the
+crash, with spot $1.19. `implied_move` was not run because it needs ATM marks.
+
+| contract | bid | ask | mark | IV | OI | volume |
+|---|---|---|---|---|---|---|
+| Nov 20 $2.50 C | 0.00 | 0.20 | 0.10 | 162% | 456 | 0 |
+| Nov 20 $2.50 P | 0.00 | 2.20 | 1.10 | 0.05% (artefact) | 1 | 0 |
+
+Liquidity gate: **FAILED → UNRELIABLE** (zero bids, zero volume, deep
+OTM/ITM only). The 162% call IV is a one-sided mark, not a vol estimate. Even
+read loosely it is far above 50%, so any implied return would be quoted only
+to whole percents. Timing check: NOT APPLICABLE, because the bull case makes
+no dated price claim that an ATM expiry can bracket.
+
+## 5. Falsifiers
+
+For the pass (flip toward buy):
+
+- **Shift —** a non-dilutive or partner-funded pivotal trial (a licensing
+  deal with upfront ≥ ~$100M or a pharma co-development) announced while the
+  price is below cash per share.
+- **Shift —** FDA-agreed registrational design (comparator, endpoint,
+  20 mCi dose) disclosed with a runway that reaches the primary readout.
+- **Break —** none is needed for a pass. A third consecutive decay in the ITT
+  ORR at NANETS (below 30% at more patients) would close the name entirely.
+
+For an owner (sell):
+
+- **Break —** the Q3/Q4 update shows Cohort 2/3 ORR falling further or a
+  renal/heme toxicity signal (Grade ≥3 AKI beyond the 2 events disclosed).
+- **Shift —** an equity raise below $1.50, which revalues per-share cash and
+  pipeline claims.
+- **Break —** AlphaMedix approval in US SSTR2+ NET before Perspective's
+  pivotal trial starts, which makes the "first alpha in NETs" slot taken.
+
+> [!NOTE]
+> **Reopen trigger:** 2026-11-09: catx-q3-10q-cash-runway-financing-and-nanets-orr
+
+## 6. UNKNOWNs
+
+1. UNKNOWN — whether 212Pb-SSTR2 efficacy (ORR 33–47%, immature PFS) is
+   registrable and superior to physician's choice. This is domain science
+   plus FDA judgment, and no scheduled filing carries it. Load-bearing for
+   the bull case and blocks a buy, but the pass already stands on the
+   refuted funding condition.
+2. UNKNOWN — the clinical edge versus AlphaMedix. Cross-trial only, and no
+   head-to-head is planned. Load-bearing for the bull case.
+3. PENDING 2026-11-09 — Q3 cash balance, ATM/shelf usage, and restated runway
+   (the 10-Q). The ~$1.85/share 9/30 cash figure is an estimate until then.
+4. NOT OBTAINED — the Q2 2026 10-Q commitments footnote (DOE thorium
+   take-or-pay; the ~$10M figure is from an aggregator) and any open ATM
+   facility. Not load-bearing for a pass.
+5. NOT OBTAINED — proxy (control, compensation metrics) and 10-K Item 1A.
+   Not load-bearing for a pass.
+6. NOT OBTAINED — exact `hover` figures from the statistics probe (sandbox
+   denied the script; WebFetch display values used). Rounding is immaterial
+   at this magnitude.
+7. *Possible* (option value, not a condition): a strategic acquisition of
+   the 212Pb manufacturing network by a large pharma building alpha capacity.
+
+## 7. Sources
+
+- **Primary:** Oct 23, 2026 study-update call transcript (Quartr via
+  stockanalysis, primary-transcribed). Q2 2026 results release (Aug 10,
+  2026) as reproduced on 1stoncology.com (cash $236.9M, runway "into late
+  2027", Q2 net loss $26.8M / −$0.22, R&D $21.5M). Company press releases
+  (ESMO/NANETS/SITC acceptances, Merck collaboration, PSV359 Fast Track) as
+  headlined on stockanalysis.
+- **stockanalysis.com (vetted exception):** statistics page (market cap, EV,
+  cash, debt, FCF, NCFO, capex, short interest, beta 1.85, Altman Z 1.15,
+  Piotroski 2), `/financials/` annual history, transcripts index, news feed
+  (RBC downgrade 10/27, trading halt/resume 10/23).
+- **Broker/market microstructure:** Robinhood MCP quote (close $1.19,
+  after-hours $1.20), daily bars 2026-06-22 → 2026-10-27, earnings
+  estimate/actual history (estimates have no integrated official source),
+  option chain/instruments/quotes. The `get_earnings_results` date is
+  tentative.
+- **Reference data:** Damodaran implied ERP 4.20% (2026-10-01, home page);
+  FRED DGS10 5.00% (2026-10-26) and T10YIE 2.35% (2026-10-27) via
+  `data/fred.db`.
+- **Point-in-time repo DBs:** `stocks.db` v_latest (price $1.21, mcap
+  $138.1M, beta 1.85, insiders 0.57%, institutions 55.49%, SBC $10.06M);
+  `sec_fundamentals.db` v_screener (net income −$26.786M, equity $323.9M,
+  eps −0.22, latest quarter); `composite.db` snapshot 119 (bullish 2, score 3);
+  `options.db` (no CATX row); `earnings.db` (no CATX row).
+- **Low-confidence:** biotechcurrents Substack and itiger (ESMO 2025 −29%,
+  AlphaMedix ~60% ORR, Feb 2026 offering −11%); tipranks/panabee/kalkine
+  aggregator summaries (DOE take-or-pay ~$10M, $175M Feb raise).
+
+## Kill-thesis record
+
+FLAWED — conditions=3 (1 probable, 2 plausible), refuted=1, unknown=2,
+pending=0, not_obtained=0.
+
+**Per-condition adjudication (bull case):**
+
+1. Registrable efficacy — **UNKNOWN.** Attack: the ITT ORR decayed ~43% → ~33%
+   as n doubled, repeating the ESMO 2025 decay. Landmark PFS rests on few
+   events, median follow-up was not available, and the comparator is
+   undefined. NANETS adds follow-up but cannot settle registrability. No
+   dated disclosure inside the horizon does.
+2. Funded without overwhelming dilution — **REFUTED.** Attack: the guided
+   runway ("into late 2027") ends before a PFS-endpoint pivotal trial
+   starting "early next year" can read out. The last raise ($175M, Feb 2026)
+   added ~54% to the share count, and the stock is now 47% lower than before
+   the readout. A comparable raise at $1.19 would more than double the share
+   count. The base rate for a clinical-stage biotech funding a pivotal
+   program from a sub-$150M market cap is a dilutive raise or a partnership
+   on poor terms.
+3. Differentiation vs Lutathera/AlphaMedix — **UNKNOWN.** Cross-trial only;
+   AlphaMedix's reported ~60% ORR (low-confidence source) exceeds
+   Perspective's 33–47%. No head-to-head exists.
+
+**Standing checks:** base rate — most Phase 1/2 oncology assets do not reach
+approval, and decaying early ORRs are the common path. Short case — 23% of
+float short sees a cash-burning company that must raise below cash, a lead
+asset that is losing its response-rate edge, and a better-supplied rival.
+Management incentives — proxy NOT OBTAINED. The call framed every metric
+positively ("pretty fantastic disease control") and dodged the ORR decay;
+management's incentive is to keep the program funded, which is the dilution
+path. Disconfirming search — looked for a partnership, non-dilutive funding
+or insider buying after the readout: none found. Moat — mechanism (212Pb
+supply network) partly real, but Orano Med owns the same capability.
+
+**Statistical checks:** the composite flag rests on a stale (57-day) short
+signal and an RSI reading that the crash itself produced; effective n = 1
+event. Not evidence for the bull case.
+
+**Options timing check:** NOT APPLICABLE, because there is no dated price
+claim. Path 2 liquidity gate FAILED (no ATM strike, zero bids, zero volume).
+
+> [!WARNING]
+> **Closest attack:** below-cash price plus a partner-funded pivotal trial.
+> Not refuted, but it is a possible-tier event with no date.
+
+> [!NOTE]
+> **Flip evidence:** toward SOUND — a funded registrational plan (partner money
+> or a raise at ≥ cash per share) plus NANETS follow-up showing ORR stable or
+> rising with PFS events accruing. Toward dead — a sub-$1.50 raise before the
+> FDA design is agreed, or a further ORR decay at NANETS.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td):** 0.30

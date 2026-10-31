@@ -1,0 +1,309 @@
+# WFF — WF Holding Ltd — 2026-10-12
+
+> [!IMPORTANT]
+> **In one sentence:** WF Holding is a tiny, loss-making Malaysian fiberglass tank maker whose stock spiked with no news while a stock-selling equity line caps the upside, so I pass at $17.28.
+
+Price $17.28 (official close 2026-10-12; after-hours $15.10) · market cap
+$783.8M (45.36M shares incl. 3.44M class A; $724.4M on 41.92M ordinary) ·
+next earnings none scheduled (semiannual FPI; FY2026 20-F due by 2027-04-30)
+
+Entry path: user-directed ticker (composite carries it at score −4, bearish
+on `si_spike` and `stocks_rsi`). Unattended scheduled run.
+
+## 1. Verdict and thesis
+
+> **PASS at $17.28.** kill-thesis: **FLAWED** — conditions=3 (1 probable,
+> 2 plausible), refuted=3, unknown=0, pending=0, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.12** · kill-thesis: 0.10
+
+> [!IMPORTANT]
+> **Disputed expectation:** $784M prices a ~$62M/yr perpetual FCF stream off a
+> $6.9M-revenue, cash-burning FRP fabricator; a contractual equity line that
+> sells stock at ≤$1.01 into a $15–17 tape forces the revision.
+
+A Phase 0 fast kill. WF Holding makes fiberglass tanks and ducting in
+Malaysia: $6.94M TTM revenue, falling (H1-26 −13% YoY), gross margin halved
+(19% vs 34%), operating loss widening, FCF −$9.6M against $1.36M cash. The
+stock went from ~$2.05 to $12.29 on 2026-10-09 and traded $7.75–$50.60 on
+2026-10-12 with no 6-K, press release, or contract on file. The capital
+structure is built to sell shares into exactly this kind of spike: a $30M
+standby equity line priced at the lower of $1.01 or 50% of the lowest
+180-day close, an authorized capital of 90 trillion ordinary shares, and a
+CEO who controls ~89% of the vote through 100-vote class A shares. This is
+a persistently loss-making microcap in a momentum spike, not a business
+being priced; there is nothing here to own at any price this tape offers.
+
+> [!WARNING]
+> **Closest attack:** none of the three bull conditions came close to
+> surviving. The nearest thing to a bull argument is that the spike could
+> persist for weeks (retail momentum names do overshoot), which is a trading
+> claim with no fundamental anchor. The 2025 cycle answers it: $146.30
+> split-adjusted on 2025-06-27 after a China-investment press release, then
+> $0.909 by 2026-04-09 (−99.4%).
+
+Bull-case conditions (what owning at $17.28 needs):
+
+1. The move reflects a real business change (a disclosed contract or
+   partnership) that shows up in H2-26 revenue — *plausible*: settled by
+   the FY2026 20-F, due 2027-04-30; nothing filed since the 2026-10-02 6-K.
+2. The Javelin SEPA is not drawn far below market, so dilution stays
+   bounded — *probable* (evidence exists today: the 424B5 fixes the price,
+   and $1.89M was already drawn at $0.10–$1.01).
+3. The FRP business scales to the ~$62M/yr perpetual FCF the cap requires
+   at a 10.26% hurdle — *plausible*: FY2026 20-F, 2027-04-30.
+
+> [!WARNING]
+> **Dominant shared risk factor:** retail speculative-momentum liquidity —
+> holdings unavailable in this session.
+
+## 2. Business
+
+**Created:** custom fiberglass-reinforced-plastic (FRP) process equipment —
+filament-wound and moulded tanks, thermoplastic tanks, linings, ducting, air
+pollution control units — plus delivery, installation, repair and on-site
+consultation for chemical, water/wastewater, oil & gas and power customers
+in Malaysia (Robinhood profile; 424B4 2025-03-28). Customers buy a corrosion-
+resistant vessel built to spec by a local fabricator; the surplus is
+proximity and turnaround, not technology.
+
+**Captured:** two mechanisms. (a) Project/fabrication revenue per order —
+lumpy, with gross margin set by resin/glass input cost against a fixed bid
+(H1-26 gross margin 19.3% = $590,250 / $3,055,765 vs 34.0% in H1-25 —
+6-K 2026-10-02 ex.99.1). (b) Installation, repair and maintenance service
+fees attached to installed equipment. No disclosure splits the two.
+
+**Protected:** no moat found. FRP fabrication is a commodity job-shop trade
+with low capital barriers; 142 employees; revenue has oscillated in a
+$4.6–7.4M band for five years with no share gains. The silence is the
+answer.
+
+**Control:** dual class. Each ordinary share carries 1 vote; each class A
+share 100 votes. CEO Chee Hoong Lew holds ~89% of total voting power
+(424B5 2026-07-31) — a Nasdaq "controlled company". This forecloses any
+unsolicited takeover and any activist path; outside holders cannot block
+issuance, and authorized capital was redesignated on 2026-07-10 to 90
+trillion ordinary and 10 trillion class A shares (6-K 2026-10-02 subsequent
+events).
+
+**Operating leverage (Phase 0): negative.** Revenue went sideways while
+operating income went from +$1.25M to −$2.20M (stockanalysis, $M):
+
+| period | FY21 | FY22 | FY23 | FY24 | FY25 | TTM Jun-26 |
+|---|---|---|---|---|---|---|
+| revenue | 5.80 | 4.97 | 5.73 | 4.57 | 7.40 | 6.94 |
+| operating income | −0.11 | 1.25 | 0.66 | 0.12 | −1.32 | −2.20 |
+| net income | −0.03 | 0.98 | 0.49 | 0.11 | −4.77 | −87.56 |
+
+Post-IPO admin cost ($1.75M in H1-26 vs $1.47M) lands on a flat revenue
+base. The −$87.6M TTM net loss is almost entirely an $81.99M non-cash fair-
+value loss on warrant liabilities (6-K 2026-10-02); the operating loss is
+the business, the warrant loss is the capital structure.
+
+## 3. Threads pulled
+
+- **Why the stock moved 500%+:** no catalyst on file. EDGAR's filing index
+  for CIK 1980210 shows nothing after the 2026-10-02 6-K (fetched
+  2026-10-12). Trader-news sites attribute the 2026-10-09 move ($2.08 open
+  → $19.44 high → $12.29 close) to momentum; one (StocksToTrade) mentions an
+  unspecified "strategic partnership deal" with no filing or release behind
+  it (low-confidence). 2026-10-12: $14.75 open, $50.60 high, $7.75 low,
+  $17.28 close on 36.6M shares — roughly the entire float (38.48M) traded in
+  one session (Robinhood fundamentals). Composite's `stocks_rsi` read 93.2
+  on 2026-10-09.
+- **The 2025 precedent:** a 2025-06-24 PR announcing plans for "significant
+  investments in China" (PR Newswire; low-confidence colour) coincided with
+  the all-time high of $146.30 split-adjusted on 2025-06-27; the stock then
+  fell to $0.909 by 2026-04-09 (stocks.db). One full pump-and-fade cycle
+  inside 18 months of listing.
+- **Dilution machine (load-bearing):** 1:5 reverse split 2026-04-13. June
+  2026 private placement: 4,032,258 shares plus 40,322,580 warrants at
+  $0.248 for $5.0M; the warrants were cashless-exercised into 36,290,322
+  shares on 2026-06-22 (6-K 2026-10-02). Weighted shares went 4.82M (H1-25)
+  → 7.29M (H1-26) → 41.92M ordinary outstanding by 2026-07-30 (424B5) — the
+  ordinary count rose ~9× on a split-adjusted basis in about a year.
+  (stockanalysis's "+31% YoY" understates this; the filing counts govern.)
+- **The SEPA (load-bearing):** 424B5 2026-07-31 — Javelin Global Investors
+  may be issued up to $30M of ordinary shares at "the lower of (i) $1.01 …
+  and (ii) 50% of the lowest closing price … during the one hundred and
+  eighty (180) trading days" before each request; floor $0.10; $100K–$3M
+  per request; 750,000 commitment shares; Univest 5% fee. By the 6-K,
+  $1.89M had already bought 3.6M shares at $0.10–$1.01. At the $1.01
+  ceiling the remaining ~$28.1M is ≥27.8M new shares (+66% on 41.92M); at
+  50% of a ~$0.9 low close it is ~62M (+149%). The investor buys at ≤$1.01
+  into a $15–17 market. The company "controls the timing", but with $1.36M
+  cash and −$5.8M H1 operating cash burn it has every reason to draw.
+- **Cash runway:** cash $1,360,903, total equity $8.63M at 2026-06-30; H1
+  OCF −$5.80M, financing +$4.95M (6-K). Book value $8.63M against a $784M
+  cap is 91× book. Altman Z −5.86 (stockanalysis). No going-concern language
+  in the interim statements.
+- **Debt:** total debt $364,575, net cash $1.13M (stockanalysis) — leverage
+  is not the problem; equity issuance is the financing.
+- **Disclosure cadence:** semiannual 6-K/20-F only, no earnings calls
+  (stockanalysis transcripts route 404s; Robinhood earnings history empty).
+  No call to read; the H1-26 6-K is the latest primary print.
+- **Insider trading:** as a foreign private issuer WFF is exempt from
+  Section 16 (no Form 4s). Six Form 3s are on file (five 2026-03-18, one
+  2026-06-09); not read — not load-bearing (§6).
+- **Options read (mandatory):** no listed options — Robinhood
+  `get_option_chains` returns no chain and WFF is absent from `options.db`
+  `underlyings`. Neither path 1 nor path 2 can run; §4 says so.
+- **Dead ends:** Robinhood `get_earnings_results` — empty (no estimates, no
+  coverage). `sec_fundamentals.db` has the company row (CIK 1980210, added
+  2026-08-21) but no FPI financial history worth reading against the 6-K.
+  A search for a 2026 press release or partnership found only the 2025
+  China-investment PR. `earnings.db` `v_upcoming_earnings` has no WFF row.
+  None of these changed the picture.
+
+## 4. Valuation
+
+**Inputs:** live close $17.28 (2026-10-12) × 45.36M shares (ordinary plus
+convertible class A, stockanalysis) = $783.8M; levered TTM FCF −$9,606,298
+(OCF −$6,438,905, capex −$3,167,393; stockanalysis TTM to 2026-06-30) paired
+against market cap; net debt 0 by the pairing rule (actual net cash $1.13M,
+immaterial). No SBC line disclosed; no minority interests.
+
+**Hurdle:** rf 5.22% (DGS10, 2026-10-08) + beta 1.2 × ERP 4.20% (Damodaran
+implied ERP, Oct 1, 2026, as carried in this repo's 2026-10-12 UNIT run)
+= 10.26%. Beta is n/a (listed since 2025-03-27); clamped to the 1.2 top of
+the 0.8–1.2 band — a generous choice; realized volatility is far higher.
+Terminal-growth ceiling: 10-year breakeven 2.33% (T10YIE, 2026-10-09).
+
+`reverse_dcf` refused: `refused: base_fcf must be positive, got
+-9606298.0` (exit 2). The honest arithmetic is the required-FCF inversion:
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| actual TTM | −$9.6M | n/a | 2.33% | refused (exit 2) | n/a |
+| required at today's price | $62M/yr perpetual | flat | 2.33% | 10% (= hurdle) | 0 bp |
+
+Required perpetual FCF = $783.8M × (10.26% − 2.33%) ≈ $62.2M/yr — 9.0× TTM
+**revenue**. At a generous 15% FCF margin that is ~$415M of revenue, 60×
+today's.
+
+- **Reinvestment / terminal ROE:** not computable on a negative base; the
+  required stream would need a business that does not exist in the filings.
+- **Market-share sentence:** $415M of revenue would make a 142-person
+  Malaysian FRP job shop one of the larger FRP-equipment makers anywhere;
+  nothing in five years of $4.6–7.4M revenue points there.
+- **Terminal risk (Item 1A):** the 20-F was not re-read for this run; the
+  dominant structural risk is visible in the 424B5 itself — dilution under
+  the SEPA and a controlling holder who can authorize further issuance. No
+  terminal rate survives a share count with no ceiling.
+- **Distribution clamp:** not reached — there is no positive implied return
+  to place in the 5–10% band.
+- **Precision:** no options IV exists; the price moved $7.75→$50.60 in one
+  session, so any rate would be quoted in whole percents at most.
+
+**Options-implied move:** no listed options (Robinhood chain empty; absent
+from CBOE `options.db`). No table; liquidity gate and timing check N/A.
+
+## 5. Falsifiers
+
+For the pass (flip toward buy):
+
+- **Shift —** a filed 6-K disclosing a material, named contract whose value
+  exceeds current annual revenue several times over, with the SEPA
+  terminated or repriced to market.
+- **Shift —** the FY2026 20-F shows H2-26 revenue up sharply with positive
+  operating cash flow and a share count that stopped growing.
+
+For an owner (sell):
+
+- **Break —** any further SEPA draw at ≤$1.01 while the stock trades far
+  above it (already happening per the 6-K).
+- **Break —** a new authorized-share action, warrant issue, or PIPE.
+- **Break —** H2-26 revenue below H2-25, or cash below one half-year of burn.
+
+> [!NOTE]
+> **Reopen trigger:** 2027-04-30: fy26-20f-revenue-ocf-and-sepa-share-count
+
+## 6. UNKNOWNs
+
+1. NOT OBTAINED — the last 37K characters of the 424B5 (Javelin's
+   beneficial-ownership cap and any exchange-cap terms). Would bound how
+   fast the SEPA can be drawn; does not kill the pass, which holds at any
+   draw speed.
+2. NOT OBTAINED — the six Form 3 filings (2026-03-18, 2026-06-09): who
+   became an insider or 10% holder around the PIPE. Colour, not
+   load-bearing.
+3. UNKNOWN — the exact lowest closing price in the SEPA's 180-trading-day
+   lookback (sets the purchase price below $1.01). Bounded: $0.909 low on
+   2026-04-09 → ~$0.45 purchase price; at worst the cap of $1.01 governs.
+4. UNKNOWN — the "strategic partnership" mentioned by one trader-news site.
+   No filing carries it; if real it would have to appear in a 6-K. Absence
+   reinforces the pass.
+5. PENDING 2027-04-30 — FY2026 20-F: H2-26 revenue, cash burn, SEPA draws.
+
+## 7. Sources
+
+- **Primary:** WF Holding 6-K 2026-10-02, ex.99.1 (H1-26 interim financials,
+  warrant FV loss, PIPE/warrant exercise, subsequent events incl. SEPA draws
+  and authorized-capital redesignation); 424B5 2026-07-31 (SEPA terms,
+  41,919,934 ordinary + 3,440,664 class A shares, 100-vote class A, CEO ~89%
+  voting power); EDGAR filing index CIK 1980210 (fetched 2026-10-12);
+  424B4 2025-03-28 (IPO, via the index).
+- **stockanalysis.com (vetted exception):** `/stocks/wff/statistics/`
+  (market cap $783.83M, 45.36M shares, net cash $1.13M, book $8.63M, FCF
+  −$9.61M, 1:5 reverse split 2026-04-13, Altman Z −5.86); `/financials/`
+  (FY21–TTM revenue, operating and net income); transcripts route 404.
+- **Broker/market microstructure:** Robinhood MCP quote (close $17.28,
+  after-hours $15.10), fundamentals (2026-10-12 OHLC $14.75/$50.60/$7.75,
+  volume 36.6M, float 38.48M), empty earnings history and option chain.
+  Admissible: no integrated official source carries the live quote or
+  intraday range.
+- **Reference data:** DGS10 5.22% (2026-10-08) and T10YIE 2.33%
+  (2026-10-09) from `fred.db`; Damodaran implied ERP 4.20% (Oct 1, 2026),
+  not re-fetched this run.
+- **Point-in-time repo DBs:** `stocks.db` v_latest (2026-10-09 price
+  $12.29, ATH $146.30 2025-06-27, low $0.909 2026-04-09); `composite.db`
+  snapshot 104 (score −4: `si_spike` 9.91 on 2026-08-31, `stocks_rsi` 93.2
+  on 2026-10-09); `sec_fundamentals.db` companies row; `options.db` (absent);
+  `earnings.db` (no row).
+- **Low-confidence:** StocksToTrade / Timothy Sykes / Tickeron trader-news
+  pages (2026-10-12) on the move; PR Newswire mirrors of the 2025-06-24
+  China-investment release.
+
+## Kill-thesis record
+
+> FLAWED — conditions=3, refuted=3, unknown=0, pending=0, not_obtained=0.
+> Dead, not repairable at this price.
+
+**Conditions:**
+
+1. Real business change behind the move — **REFUTED.** Attacked with what
+   exists today: no 6-K after 2026-10-02, no press release found, and the
+   latest print runs the other way (revenue −13%, gross margin 34% → 19%).
+   A dated filing could still surprise, but the present evidence stands
+   against it, so it is not PENDING.
+2. SEPA dilution bounded — **REFUTED.** The 424B5 fixes the purchase price
+   at ≤$1.01 regardless of the tape; 3.6M shares were already sold at
+   $0.10–$1.01; cash $1.36M against a ~$5.8M half-year burn makes further
+   draws necessary rather than optional.
+3. Scale to ~$62M/yr FCF — **REFUTED.** Needs FCF of 9× current revenue
+   from a business whose revenue has not left a $4.6–7.4M band in five
+   years and whose FCF is −$9.6M.
+
+**Standing checks:** base rate — sub-$10M-revenue microcap IPOs that spike
+on no news overwhelmingly round-trip; this one already did once (−99.4%
+from the 2025 high). Short case — a controlled company with a below-market
+equity line and 90 trillion authorized shares sells stock into every spike;
+the short sees the issuer as the natural seller. Management incentives —
+the controller keeps ~89% of the vote whatever the ordinary count, so
+issuance costs control nothing. Disconfirming search — looked for a filed
+contract or partnership; found none. Moat — no mechanism. Statistical
+checks — N/A (no data-backed claim). Options timing check — N/A: no dated
+claim and no listed chain.
+
+> [!WARNING]
+> **Closest attack:** none landed short of refutation; the strongest bull
+> remnant is momentum persistence, which is not a fundamental condition.
+
+> [!NOTE]
+> **Flip evidence:** to SOUND — a filed contract of multi-year revenue scale
+> plus SEPA termination; to stay FLAWED — any further sub-$1.01 draw or new
+> issuance authority (both already on file).
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td):** 0.10

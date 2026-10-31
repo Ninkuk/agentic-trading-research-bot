@@ -1,0 +1,451 @@
+# ZTO — ZTO Express (Cayman) Inc. (NYSE: ZTO / SEHK: 2057) — 2026-10-28
+
+> [!IMPORTANT]
+> **In one sentence:** ZTO is China's lowest-cost parcel carrier, September data showed only one rival still cutting price while fees rose regionally, and an 11% implied return clears the hurdle, so I buy at $19.75.
+
+Price $19.75 (official close 2026-10-28, Robinhood) · market cap
+$14,734,548,567 (stockanalysis live) · next earnings 2026-11-17 AMC (company
+6-K of 2026-10-16; Robinhood verified).
+
+Entry path: scheduled research run on a held name, superseding
+`research/ZTO-2026-09-27.md` (BUY at $19.49, kill-thesis SOUND, reopen
+2026-11-19). That trigger has not come due. This run checks the September
+peer data — the first datum the 09-27 flip-evidence line named — and the
+post-09-27 filings, three weeks before the Q3 print. Unattended scheduled run.
+
+## 1. Verdict and thesis
+
+**BUY at $19.75 (official close 2026-10-28).** kill-thesis: **SOUND (on this
+pass)** — conditions=5 (4 probable, 1 plausible), refuted=0, unknown=0,
+pending=1, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.54** · kill-thesis: 0.48
+
+> [!IMPORTANT]
+> **Disputed expectation:** at $19.75 a haircut $1.1B FCF base growing 6% for
+> five years implies 11.25%/yr, and a flat perpetuity still implies 7.47%. The
+> market is pricing the pricing truce breaking. The Q3 print (2026-11-17 AMC)
+> forces the revision. Per-parcel revenue flat or up quarter on quarter with
+> operating margin ≥ ~22% revises it up. YTO's cut reaching ZTO's ASP revises
+> it down.
+
+Nothing in the business has changed since 09-27, and the one datum the prior
+run said could flip it toward FLAWED came in on the thesis's side. In
+September only YTO priced down YoY again (RMB2.08, −5.76%, on +12.3%
+volume). STO (+2.36%) and Yunda (+5.94%) priced up, and industry revenue per
+parcel ran ≈ +3.4% YoY (State Post Bureau: revenue +5.6% on volume +2.1%).
+YTO itself rose sequentially (2.05 → 2.08), and from 2026-09-20 the
+franchise carriers, ZTO and YTO among them, raised pickup-side fees by
+RMB0.1–0.3 per parcel province by province (Henan, Anhui, Jiangsu, Zhejiang,
+Jiangxi, then Shanxi and Shandong in October). On 10-22/23 the State Post
+Bureau restated the anti-involution line. ZTO's HK buyback kept printing
+through 2026-10-26. The stock is +1.3% since 09-27. The conservative implied
+return is **11.25% vs a 6.93% hurdle (+432bps)**.
+
+> [!WARNING]
+> **Closest attack:** the volume axis, not the price axis. Industry volume
+> slowed to +2.1% in September (Jan–Sep +4.3%), the weakest month in the run,
+> while STO (+15.4%, share 14.5%, +1.5 pt over 9M) and YTO (+12.3%) took the
+> growth. STO did it while pricing *up*. Industry revenue per parcel is also
+> fading (+4.1% Aug → +3.4% Sep), and from September every operator laps the
+> 2025 hikes. Q3 can print a negative YoY ASP and a below-guide volume with no
+> price war at all. It does not refute anything today: the breadth falsifier
+> is one of three, and condition 2 rests on ZTO's own Q2 cost data.
+
+Load-bearing conditions (5):
+
+1. **Industry pricing discipline holds.** Per-parcel revenue does not return
+   to sustained YoY declines across the majors — *plausible*. September:
+   industry ≈ +3.4% YoY, STO +2.36%, Yunda +5.94%, YTO −5.76% (lapping its
+   own Sep-2025 hike: implied Sep-25 RMB2.21). New regional hikes since
+   2026-09-20. Settled next by ZTO's Q3 print (2026-11-17) plus the October
+   peer briefs (~Nov 18). PENDING.
+2. **Cost leadership holds** — *probable*. Q2'26 unit sorting+transport cost
+   was down 2 RMB-cents and margins expanded while ZTO outgrew the industry
+   (6.5% vs ~4.2%) (Q2'26 6-K). No new ZTO quarter. STO (+15.4% Sep) and
+   YTO (+12.3%) still outgrow ZTO's guide on volume.
+3. **The VIE keeps functioning and cash reaches ADR holders** — *probable*.
+   April 2026 dividend paid; $740M of H1 buybacks. HK buyback Next Day
+   Disclosure Returns kept coming: 6-Ks of 09-28, 10-05, 10-13 (five
+   returns), 10-20 and 10-26 (returns dated 10-22, 10-23, 10-26).
+4. **The haircut FCF base (~$1.1B) is real** — *probable*. No new quarter.
+   The base is rebuilt from income (NI + D&A − full capex incl. land-use
+   rights − SBC − one-off tax refund), 25% below raw TTM FCF of $1,476.7M.
+5. **Industry parcel volume stays positive** — *probable*. SPB: Jan–Sep
+   +4.3%, September +2.1% (August +2.7%). Decelerating but positive; the
+   thesis needs slowing, not shrinking.
+
+> [!WARNING]
+> **Dominant shared risk factor:** China consumption / PRC policy stance —
+> holdings unavailable in this session (the unattended slot has no
+> portfolio.db grant).
+
+## 2. Business
+
+Unchanged from `research/ZTO-2026-09-27.md` §2; summary and deltas:
+
+**Created:** the cheapest reliable national e-commerce parcel delivery in
+China. ZTO owns the scale-sensitive middle mile (92 sorting hubs, >3,600
+line-haul routes, >10,000 self-owned trucks, 782 automated sorter sets —
+Q2'26 6-K); ~6,000 network partners own last-mile economics with their own
+capital.
+
+**Captured:** three mechanisms.
+- Per-parcel transit + sorting fees charged to network partners (core
+  express, ~94% of revenue). The September regional hikes act here: they are
+  levied on outlets and contracted shippers at pickup, not on consumers.
+- Direct key-account revenue, mostly e-commerce return parcels (+63.6% YoY
+  in Q2). Gross billing with pickup/dispatch pass-through, so it inflates the
+  headline ASP.
+- Accessories (thermal waybill paper), plus small freight and financing
+  lines.
+
+**Protected:** a cost gap, not a pricing gap. Middle-mile fixed costs spread
+over ~20% of national parcels give the lowest unit cost. The gap's direction
+is observable; its width is disclosed by no one. The state referees pricing
+(anti-involution, restated 10-22/23). A policy is not an equilibrium, and
+YTO's two months of negative YoY ASP show the referee does not stop one
+player's price from slipping.
+
+**Control:** founder-chairman Meisong Lai controls the vote through
+weighted-voting-rights Class B shares (carried; exact voting % not
+re-pulled). This forecloses an unsolicited takeover or activist path.
+Alibaba's group is a 6.1% economic holder (46,941,287 shares, 13D/A
+2026-09-22); no further 13D/A has been filed since.
+
+**Operating leverage (Phase 0): positive.** No new quarter. Q2'26 revenue
++23.0% YoY (RMB14,549.9M), operating income +30.4% (RMB3,227.9M), margin
+20.9% → 22.2% (Q2'26 6-K). TTM (stockanalysis): revenue $7,980.2M, opinc
+$1,680.2M (21.1%). Annual (RMB M, revenue/opinc): 2021 30,406/5,503 → 2022
+35,377/7,737 → 2023 38,419/10,008 → 2024 44,281/11,777 → 2025 49,099/10,475.
+Positive 2021–24, negative 2025, positive the two quarters since.
+
+## 3. Threads pulled
+
+- **September peer monthly data (the 09-27 flip-evidence datum).** Company
+  monthly operating briefs (filed ~2026-10-19/20 on SSE/SZSE; STO's on
+  cninfo 2026-10-20), via Sohu/10jqka/ifeng reprints.
+
+  | operator | rev/parcel Sep-26 | YoY | volume YoY | Aug-26 rev/parcel (YoY) |
+  |---|---|---|---|---|
+  | YTO | RMB2.08 | −5.76% | +12.33% | 2.05 (−4.4%) |
+  | STO | RMB2.17 | +2.36% | +15.43% | 2.13 (+3.4%) |
+  | Yunda | RMB2.14 | +5.94% | +1.37% | 2.12 (+10.4%) |
+  | SF (time-definite, not comparable) | RMB14.94 | +7.71% | −7.25% | — |
+  | Industry (SPB) | — | ≈ +3.4% (rev +5.6% / vol +2.1%) | +2.1% | ≈ +4.1% |
+
+  - The falsifier needs two of YTO/STO/Yunda negative in one month. One is.
+    NOT TRIGGERED.
+  - YTO is up sequentially and is lapping its own Sep-2025 hike (implied
+    Sep-25 RMB2.21). Its −5.76% is mostly the hike falling out of the
+    comparison base plus mix, not a fresh cut.
+  - STO's YoY is decelerating (+6.0% Jun → +3.4% Aug → +2.36% Sep) and
+    is flattered by consolidating Danniao since Nov 2025. Lapping drags
+    every operator's YoY from here; the §5 falsifiers read levels and
+    breadth for that reason.
+  - Q3 peer prints (via Economic Reference Daily/Sina, 2026-10-28): YTO
+    9M revenue +7.8%, net profit +60.9%; STO 9M revenue +26.9%, net profit
+    +108.5%, share 14.5% (+1.5 pt). Profits are rising across the sector,
+    which is what a working truce looks like.
+- **New regional price hikes (low-confidence press, multiple outlets).**
+  From 2026-09-20 ZTO, YTO, STO, Yunda and J&T raised pickup-side fees
+  RMB0.1–0.3/parcel in Henan, Anhui, Jiangsu (Huxiu); Zhejiang, Jiangxi and
+  Shanxi followed (Guosheng via Eastmoney, 2026-10-13); Shandong from
+  2026-10-12 (Economic Reference Daily). Guosheng expects a national round
+  into the Q4 peak. ZTO's own participation rests on the Huxiu summary
+  alone; no ZTO filing names it. This is the opposite of contagion: YTO,
+  the price-cutter, is listed among the hikers.
+- **Regulator.** At a State Post Bureau symposium on 2026-10-22/23,
+  officials said anti-involution work continues, terminal delivery fees stay
+  stable, and headquarters must not push costs down to outlets (Economic
+  Reference Daily). The policy referee is still on the field.
+- **Post-09-27 filings (EDGAR, ZTO CIK 1677250).** Six 6-Ks: 09-28, 10-05,
+  10-13, 10-20, 10-26 (HKEX Next Day Disclosure Returns, image-only — the
+  10-26 index names returns dated 10-22, 10-23, 10-26) and 10-16 (Q3 date
+  notice: 2026-11-17 after US close). No new 13D/A, no Form 144 after
+  08-26, no Form 3/4. Buybacks running is the reading; volumes are in the
+  images and were not transcribed.
+- **Q3 date moved one day earlier.** Robinhood and the 6-K now give
+  2026-11-17 AMC (09-27 run carried 11-18, unverified). The reopen trigger
+  stays dated to the day after the print plus the October peer briefs.
+- **Goldman price target** cut $25 → $22 on 2026-10-14 (low-confidence
+  press, finviz/aggregator). The stock fell 1.5% that day and recovered;
+  a sell-side re-rating on the volume axis already in the 08-19 guide cut.
+- **Rates.** DGS10 4.99% (2026-10-27), −19bp since 09-27; Damodaran's
+  implied ERP 4.20% (Oct 1). Hurdle 7.10% → 6.93%.
+- **Options read (mandatory):** path 2 only. ZTO is outside the CBOE
+  24-symbol catalog, so `data/options.db` has no history. Expiry 2026-11-20
+  (23 DTE) brackets the Q3 print on 2026-11-17 AMC. Liquidity gate
+  **FAILED → UNRELIABLE** (table in §4).
+- **Dead ends:**
+  - ZTO publishes no monthly volume or ASP, so no ZTO-specific Q3 datum
+    exists before the print.
+  - The stockanalysis transcript route is still unfed for ZTO.
+  - J&T China September pricing: not searched separately after the 09-27
+    run's empty search; no reprint surfaced it.
+  - Composite: not re-read this run (ZTO was all-zero in the 09-27 run's
+    two snapshots; `ticker_scores` has no `ticker` column and the query was
+    not retried). Nothing in this thesis leans on it.
+  - `earnings.db` has no ZTO row (20-F filer outside its universe).
+  - The Alibaba lock-up (Item 6 of the 09-22 13D/A) was not re-pulled.
+
+## 4. Valuation
+
+**Inputs.** Levered TTM FCF against market cap; net debt 0 by the pairing
+rule.
+- Market cap $14,734,548,567 at $19.75 (stockanalysis screener `se=ZTO`,
+  priceDate 2026-10-28, full precision). stocks.db's latest capture agrees
+  in scale (2026-09-28 read $14.958B at $19.98).
+- Raw TTM `fcf` $1,476,669,518 (capex −$742,928,879). Same quarter as
+  09-27; the dollar figures moved only on RMB translation.
+- Conservative base **$1.1B**, carried: NI $1,519M + D&A ~$533M − capex incl.
+  land-use rights ~$865M − SBC $33.7M − one-off tax refund ~$50M. SBC is
+  0.42% of revenue (stocks.db).
+- `--base-earnings` $1,469M (NI ex-refund). Minority interest immaterial
+  (Q2 NCI RMB26.7M).
+- Cash $3,279M vs debt $3,245M (the ~US$1.5B 0.925% convert is inside debt).
+  Net cash incl. ST investments ~9% of cap is not netted, which biases the
+  implied return slightly low.
+- Diluted-count overhang ~6.5% (815.0M diluted vs 765.1M basic, Q2).
+
+**Hurdle:** rf 4.99% (DGS10, 2026-10-27) + beta 0.38 × China ERP 5.11% =
+**6.93%**.
+- China ERP = Damodaran implied US ERP 4.20% (as-of 2026-10-01; his T-bond
+  5.29%) + China CRP 0.91% (country table, 2026-01-05, carried).
+- Beta 0.38 is the 2Y figure carried from 08-19; stockanalysis's 5Y beta is
+  −0.19, far below the 0.8–1.2 band. The beta-1.0 clamp is the sensitivity
+  row (hurdle 10.10%).
+
+**Terminal growth:** 2.38% = the 10-year breakeven (T10YIE, 2026-10-28).
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| conservative | $1,100M | 6% | 2.38% | **11.25%** | **+432bps** |
+| conservative @ beta 1.0 | $1,100M | 6% | 2.38% | 11.25% | +115bps (hurdle 10.10%) |
+| lapped pricing (volume only) | $1,100M | 3% | 2.38% | 10.23% | +329bps |
+| optimistic | $1,476.7M (raw TTM) | 8% | 2.38% | 15.13% | +820bps |
+| truce-break bound | $1,100M flat | 0% | 0% | 7.47% | +53bps / −263bps at beta 1.0 |
+
+- **Reinvestment / terminal ROE:** conservative runs reinvest 25.1% with
+  implied terminal ROE **9.47%**, 2.5 pts above the 6.93% hurdle (inside the
+  ~5-pt band) and below the beta-1.0 hurdle. Excess returns fade, which is
+  the default read, intentionally.
+  - The optimistic run prints `growth without reinvestment` (raw FCF ≥
+    earnings, reinvestment −0.5%). It is a ceiling only, never evidence.
+- **Market share:** 6%×5y takes revenue from $7.98B to ≈ $10.7B (~RMB76B),
+  ~5% of a ~RMB1.5T industry revenue pool (2025, SPB). Not bigger than the
+  market.
+- **Terminal risk (20-F Item 3, carried):** commoditization / price
+  competition. Terminal 2.38% = breakeven claims only repricing of existing
+  assets. The lapped-pricing row holds +329bps with no ASP help; the flat
+  row shows what a full war costs.
+- **Cash tax:** TTM effective 13.3% vs 25% statutory (carried); one-off
+  refund stripped from the base. Regional preferences are policy-granted,
+  another face of condition 1.
+- **Serial acquirer:** no; growth is organic.
+- **Distribution clamp:** 11.25% sits above the ~5–10% band; on conservative
+  assumptions this is the interesting side.
+- **Precision:** call-leg IV 35.8% < 50%, so two decimals are permitted;
+  the gate failed, so read them as arithmetic.
+
+**Options-implied move** (path 2 — Robinhood stopgap; expiry 2026-11-20, 23
+DTE, bracketing the Q3'26 print on 2026-11-17 AMC; $20 strike both legs,
+nearest to spot $19.75). Marks: call 0.625, put 0.875. The put quote is
+broken (bid 0 / ask 1.75, IV 0.05%, delta −1.00), so **`--iv` is the call
+leg's 0.358 alone, not the two-leg mean** — a stated deviation, and the put
+mark is the midpoint of a one-sided book. Closes: 75 daily bars,
+2026-07-15..10-28 (10-28 = official close; the interpolated bar dropped).
+
+| metric | value |
+|---|---|
+| spot | 19.75 |
+| expected absolute move (MEAN, not a ceiling) | 7.59% |
+| 1-σ move | 8.99% |
+| ATM IV (call leg only) | 35.80% |
+| RV60 | 27.84% |
+| RV20 | 16.79% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+- **Liquidity gate: FAILED → UNRELIABLE.**
+  - Call $20: bid 0.45 / ask 0.80 (spread 56% of mark), volume 4, OI 49.
+  - Put $20: no bid, ask 1.75, volume 0, OI 58.
+- The front IV now sits well above both realized windows (RV20 16.8% is a
+  quiet tape since the block sale rolled out). The window disagreement of
+  09-27 is gone: the November contract carries the print. Directionally
+  consistent with a priced event, on an unreliable book.
+- **Timing check:** NOT APPLICABLE. The thesis states no dated
+  required-move.
+
+## 5. Falsifiers
+
+For an owner (this run concludes BUY):
+
+- **Break —** price war resumes. At least two of YTO/STO/Yunda print
+  negative YoY per-parcel revenue in the same month, or the SPB industry
+  revenue-per-parcel runs negative YoY for 2 consecutive months, while ZTO
+  re-chases share (volume premium up, margin down). Sell. (September: one
+  of three; industry ≈ +3.4%.)
+- **Break —** VIE/regulatory event: PCAOB access revoked, an HFCAA
+  determination, or any action impairing the VIE contracts. Sell.
+- **Shift —** ZTO Q3 core-express revenue per parcel down sequentially vs Q2
+  (ex key-account pass-through), or operating margin below ~21% ex-one-offs.
+  YTO's cut is reaching ZTO; revalue on the lapped-pricing and flat rows.
+- **Shift —** share loss: ZTO volume growth below the SPB industry rate for 2
+  consecutive quarters. Revalue.
+- **Shift —** capex re-accelerates above ~RMB8B/yr. Revalue the FCF base.
+- **Shift —** the shareholder-return mechanism breaks: FY2026 dividends +
+  buybacks land below 50% of adjusted NI'25 while FCF holds, or the HK
+  Next Day Disclosure Returns stop for a full quarter outside a blackout.
+  Revalue.
+- **Shift —** Alibaba's group sells the remaining 46.9M shares. Supply, not
+  cash flow; moves the 63-day odds, not the thesis. Revalue only if a
+  traffic-routing change is disclosed.
+
+> [!NOTE]
+> **Reopen trigger:** 2026-11-19: zto-q3-asp-level-vs-yto-cut
+
+## 6. UNKNOWNs
+
+1. **PENDING 2026-11-17** — ZTO's Q3 per-parcel revenue (level and
+   sequential) and operating margin. Condition 1's next installment and the
+   only way to see whether YTO's cut reached ZTO. Its absence does not
+   kill; the ownership call leans on the flat/lapped-price bounds until
+   then.
+2. **NOT OBTAINED (carried)** — any lock-up on Alibaba's remaining 46.9M
+   shares (Item 6 of the 2026-09-22 Schedule 13D/A). Bounds the 63-day
+   overhang, not the cash flows.
+3. **UNKNOWN** — the per-parcel cost-gap width vs YTO/J&T China. No one
+   discloses it. The moat's error bar. Does not kill.
+4. **UNKNOWN** — anti-involution persistence beyond the checkpoints. A
+   future PRC policy stance; tested quarterly, bounded by the flat row.
+5. **NOT OBTAINED** — whether ZTO itself raised fees in the Sep–Oct regional
+   round, and by how much. Only a Huxiu summary names ZTO; no ZTO filing or
+   notice was found. Would come from ZTO's Q3 call. Not load-bearing.
+6. **NOT OBTAINED (carried)** — terms of the ~US$1.5B 0.925% convertible
+   (due 2031); the 815M diluted count bounds the overhang.
+7. **UNKNOWN** — ZTO Q3 volume vs STO (+15.4% Sep) and YTO (+12.3%). Ceding
+   share to the price-cutter fits the thesis; ceding it to STO, which priced
+   up, would not. Settled at the print.
+8. **NOT OBTAINED** — HK buyback volumes in the Oct 6-K returns (image-only,
+   not transcribed). The cadence is read; the dollar pace is not.
+
+## 7. Sources
+
+- **Primary:**
+  - SEC EDGAR, ZTO filing index (CIK 1677250): 6-Ks of 2026-09-28, 10-05,
+    10-13 (Exh. 99.1–99.5), 10-16 (Q3 date notice), 10-20, 10-26 (Exh.
+    99.1–99.3, Next Day Disclosure Returns dated 10-22/23/26); Schedule
+    13D/A of 2026-09-22 (Alibaba group, carried).
+  - Q2'26 6-K (2026-08-19) and FY2025 20-F, carried.
+  - State Post Bureau September and Jan–Sep 2026 statistics (published
+    2026-10-19, via Sina/ifeng reprints).
+  - YTO/STO/Yunda/SF September 2026 monthly operating briefs (STO on cninfo
+    2026-10-20; others via Sohu, 10jqka, ifeng reprints); YTO/STO Q3 9M
+    results as reported by Economic Reference Daily (Sina, 2026-10-28).
+- **stockanalysis.com (vetted exception):** screener table `se=ZTO`, live
+  2026-10-28 (market cap, EV $13.37B, fcf, capex, net income, revenue,
+  opinc, beta −0.19, cash, debt, ROIC 18.21%, FCF yield 10.02%, PE 10.45);
+  statistics route schema via the probe (next confirmed earnings Tuesday).
+- **Broker/market microstructure:** Robinhood MCP — ZTO/SPY quotes and
+  official 10-28 closes; 75 daily bars; earnings history (Q3 2026-11-17 pm,
+  verified); option chain and $20 Nov-20 instruments and quotes. Admissible
+  because no integrated official source covers live quotes or chains for
+  this 20-F filer.
+- **Reference data:** Damodaran home page (implied ERP 4.20%, T-bond 5.29%,
+  as-of 2026-10-01); country premium table (China CRP 0.91%, as-of
+  2026-01-05, carried).
+- **Point-in-time repo DBs:**
+  - `fred.db`: DGS10 4.99% (2026-10-27), T10YIE 2.38% (2026-10-28).
+  - `stocks.db`: close $19.98, cap $14.958B, beta −0.18976, insiders 42.34%,
+    institutions 22.91%, SBC $33.7M (0.42% of revenue), 17 analysts.
+  - `earnings.db`: no ZTO row. `composite.db`: not re-read (see §3).
+  - `portfolio.db`: not granted in this unattended slot.
+- **Low-confidence:** Huxiu (Sep-20 regional hikes naming ZTO, RMB0.1–0.3);
+  Eastmoney/Guosheng (2026-10-13, Shanxi and the national-round
+  expectation); Economic Reference Daily via Sina (Shandong 10-12 hikes,
+  SPB 10-22/23 symposium, peer 9M results); finviz/aggregators (Goldman PT
+  $25 → $22, 2026-10-14).
+
+## Kill-thesis record
+
+**SOUND (on this pass)** — conditions=5 (4 probable, 1 plausible),
+refuted=0, unknown=0, pending=1, not_obtained=0. Same ledger as 09-27; the
+only decisive new datum (September peer briefs) was the one the 09-27 flip
+line named, and it did not flip.
+
+Per-condition adjudication:
+
+1. Pricing discipline — **PENDING 2026-11-17.**
+   - Attack: YTO is negative YoY for a third month (−0.9% Jul, −4.4% Aug,
+     −5.76% Sep) on double-digit volume; STO's YoY has decayed from +6.0%
+     (Jun) to +2.36%; industry ASP growth is fading.
+   - Why not refuted: today's evidence does not stand against it. Industry
+     ≈ +3.4% YoY. Two of three listed franchise peers priced up. YTO rose
+     sequentially (2.05 → 2.08) and joined the Sep–Oct regional fee hikes
+     (low-confidence press). The regulator restated anti-involution on
+     10-22/23. Peer 9M profits are up 61–108%: a war does not print that.
+2. Cost leadership — **SURVIVED (probable).**
+   - Attack: STO gains share while pricing up, which a "lowest-cost wins"
+     story does not predict.
+   - Answer: STO's gain is flattered by consolidating Danniao (from Nov
+     2025). ZTO's Q2 unit-cost decline with margin expansion is the latest
+     hard evidence; no new ZTO quarter has arrived to contradict it. §6 #7.
+3. VIE + cash to holders — **SURVIVED.** Attack: the Alibaba exit and a
+   policy-dependent wrapper. The contractual cash path keeps working: HK
+   buyback returns filed through 2026-10-26.
+4. FCF base — **SURVIVED.** No new data; the income-built base already sits
+   25% under raw FCF.
+5. Industry volume positive — **SURVIVED.** Attack: +2.1% September is the
+   lowest yet. The condition is positivity, and the lapped-pricing row
+   prices 3% growth at +329bps.
+
+**Internal consistency:** modest growth (6%), moderate reinvestment (25%),
+not-low risk (VIE, policy). No high-growth/low-reinvestment/low-risk triad.
+
+**Standing checks:**
+- **Base rate:** every prior China-express truce broke within ~2 years;
+  this one is ~14 months old (Aug–Sep 2025 hikes). Only ~29% of firms
+  sustain returns above their cost of capital (Damodaran EVA); terminal ROE
+  9.47% sits below the beta-1.0 hurdle, so fade is assumed.
+- **Short case, strongest form:** a state-refereed utility whose industry
+  volume is converging on zero growth, whose two fastest rivals are taking
+  the remaining growth, whose ASP comparisons turn negative by arithmetic
+  from Q3, with 46.9M Alibaba shares left to sell and the cheapness already
+  the fair charge for VIE and policy risk.
+- **Management incentives:** founder WVR control; the record is aligned
+  with distributions (buybacks continuing). No evidence of empire-building.
+- **Disconfirming search:** run for an October price war / share grab
+  (Chinese-language query on price cuts by J&T/YTO/ZTO); it returned only
+  2021–23 material. The September briefs were read for the contagion
+  falsifier and it did not fire.
+- **Moat as mechanism:** fixed middle-mile cost over ~20% share → lowest
+  unit cost. A mechanism; its width is unmeasured (§6 #3).
+
+**Statistical checks:** no inference claim leaned on. Industry revenue per
+parcel is arithmetic on two SPB aggregates (includes SF/JD mix) and is read
+as directional.
+
+**Options timing check:** N/A — no dated required-move, and the path-2
+stopgap failed the liquidity gate (put leg had no bid; §4).
+
+> [!WARNING]
+> **Closest attack:** volume share drifting to STO/YTO while lapping turns
+> ASP comparisons negative (stated in §1). The buy survives either the beta
+> charge (+115bps at beta 1.0) or the truce break (+53bps flat) alone, not
+> both (−263bps).
+
+> [!NOTE]
+> **Flip evidence:**
+> - → FLAWED: STO or Yunda joins YTO in negative YoY per-parcel revenue in
+>   the October briefs (~Nov 18), or ZTO's Q3 core-express revenue per
+>   parcel falls sequentially with operating margin below ~21%.
+> - → SOUND without qualification: ZTO's Q3 shows level-or-higher sequential
+>   pricing and ≥22% operating margin with volume at or above industry.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.48** — written before re-reading §1's. A print
+> inside the window that the lapping arithmetic biases toward a negative
+> headline ASP, the Alibaba overhang, and a China-ADR name against SPY near
+> highs; the cheapness rarely pays inside one quarter.

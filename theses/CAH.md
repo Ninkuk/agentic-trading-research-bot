@@ -1,0 +1,629 @@
+# CAH — Cardinal Health, Inc. — 2026-10-27 (reopen of 2026-09-26, trigger: cah-fq1-fy27-adj-fcf-vs-3.5b-run-rate-and-cvs-renewal-status-or-8k)
+
+> [!IMPORTANT]
+> **In one sentence:** Cardinal is a US drug wholesaler whose CVS contract is now extended to 2032, but a 12% rally leaves only about 1.3 points of implied return over its cost of equity, a thinner but still positive margin, so buy.
+
+Price $246.45 (official close, 2026-10-27) · market cap $57.07B · EV $62.21B ·
+net debt $5.14B · next earnings 2026-11-05 BMO (company-confirmed)
+
+**Reopen block.** Prior file `research/CAH-2026-09-26.md`: BUY at $220.20,
+kill-thesis SOUND (5 conditions, 1 pending). Its dated trigger (2026-11-10)
+is not due yet. Its event half, "CVS renewal status or 8-K", fired on
+2026-10-01, so this scheduled run is treated as an early reopen. That
+classification is a judgment call made unattended. Reopen question: the CVS
+renewal arrived and the stock rose 12%. Is the price still below what the
+business is worth, now that the main risk is retired? Unattended scheduled
+run. Not composite-flagged (score 0 in the last two `ticker_scores` rows).
+
+## 0. The reopen question, answered first
+
+Yes, but by less. The one pending condition resolved favourably: a binding
+LOI extends the CVS distribution agreements through June 30, 2032 at the
+"current scope" (8-K, 2026-10-01). The market then repriced the stock by
+about the value the stress row said was at risk.
+
+At $246.45 the base case implies about 10% a year against an 8.36% cost of
+equity, roughly +130bp. At $220.20 the margin was +198bp. The tail that
+drove the September closest attack is mostly gone. What remains is a
+thinner valuation margin, and condition 5 now carries the risk instead.
+
+The CVS economics were not disclosed. The same release reaffirmed FY27
+guidance and the long-term 12–14% EPS growth algorithm, which is the best
+evidence available that any price concession fits inside that algorithm.
+
+| prior falsifier | actual | status |
+|---|---|---|
+| CVS non-renewal / narrowed scope by 2027-06-30 (Break) | binding LOI to 2032-06-30, "current scope of distribution services" (8-K 2026-10-01) | NOT TRIGGERED (resolved the other way) |
+| Brand compensation moved off WAC / material DTC diversion (Break) | no filing or disclosure; only unattributed "scrutiny" commentary (MHE, 2026-10-06) | NOT TRIGGERED |
+| FY27 adj FCF tracking < $3.5B at Q2 (Shift) | no print yet; $3.5–4.0B guide implicitly reaffirmed with EPS guide 2026-10-01 | NOT TRIGGERED |
+| Pharma profit growth < 8% two quarters (Shift) | no FY27 print yet (FQ1 on 2026-11-05) | NOT TRIGGERED |
+| New M&A > ~$1B (Shift) | no 8-K after 2026-10-01; the Option Care deal ($5.8B) is McKesson + CD&R, not CAH | NOT TRIGGERED |
+| IRS NOPAs resolve near ~$2B (Shift) | nothing filed | NOT TRIGGERED |
+| CEO/CFO open-window selling > ~30% before renewal (Shift) | no Forms 4/144 since 2026-08-20 (EDGAR atom, owner=include) | NOT TRIGGERED |
+| Price above ~$292 (Shift, pass side) | peak close $257.55 (2026-10-20); today $246.45; break-even now ≈ $298 | NOT TRIGGERED |
+| DGS10 above ~7.2% (Shift, pass side) | 5.00% (2026-10-26) | NOT TRIGGERED |
+
+## 1. Verdict and thesis
+
+**BUY at $246.45.** kill-thesis: **SOUND** — conditions=5 (5 probable,
+0 plausible), refuted=0, unknown=0, pending=0, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.52** · kill-thesis: 0.48
+
+> [!IMPORTANT]
+> **Disputed expectation:** the price pays for about 8%→5% FCF growth fading
+> to 2.35%, at ≈10% a year on a normalized $3.35B base, against an 8.36%
+> hurdle. Three things would force a downward revision:
+> - FQ1 Pharma profit below the 8–11% guide on Nov 5;
+> - CVS terms that show up as a guide cut;
+> - evidence that the growth path needs continued MSO buying. Charging $1B a
+>   year of acquisitions takes the base row to −88bp.
+
+A clean beat with the guide raised revises toward the optimistic row.
+
+Cardinal is one of three US wholesalers that move nearly every prescription
+drug from manufacturer to pharmacy. It earns a per-unit fee plus a generics
+sourcing spread on working capital its suppliers fund. Its largest customer
+has now committed for five more years. The business case is unchanged from
+September; the risk is lower and the price is higher. At today's price the
+base case still clears a cost of equity that uses a beta floored at 0.8 (raw
+0.50). The conservative case (guide low, SBC charged, 2% terminal) does not.
+The call is a buy on a positive but narrower margin.
+
+> [!WARNING]
+> **Closest attack:** the serial-acquirer charge on condition 5. FY25–26 spent
+> $7.2B on MSO acquisitions (GIA, ION, Solaris, ADS; prior thesis §2), and the
+> proxy pays on adjusted EPS, which excludes acquired-intangible amortization.
+> If the 8%-a-year FCF path quietly needs ~$1B a year of deals,
+> `fcf = NCFO − capex` never charges for them. Charged against the base, the
+> implied return falls to about 7% (7.48%), 88bp under the hurdle. The FY27
+> guide explicitly excludes new M&A (Q4 FY26 release), so this is a watch item,
+> not a refutation. It is the attack that lands closest.
+
+Load-bearing conditions:
+
+1. *probable* — the $3.35B normalized levered FCF base is not a peak. Basis:
+   FY27 adjusted-FCF guide midpoint $3.75B (range $3.5–4.0B, Q4 FY26
+   release) less the ~$0.4B/yr opioid payment. The FY24–26 after-opioid
+   average is $3.21B. FY26 adjusted FCF of $5.0B is excluded: it rode a
+   working-capital inflow. EPS guidance was reaffirmed 2026-10-01.
+2. *probable* — the CVS extension keeps Pharma segment profit on the guided
+   path. The binding LOI runs to 2032-06-30 at current scope (8-K
+   2026-10-01). The same release reaffirmed FY27 EPS $12.40–12.60 and the
+   long-term 12–14% growth range. Terms are undisclosed (§6).
+3. *probable* — Pharma segment profit grows 8–11% in FY27 (guide). FY26 grew
+   +23% to $2.8B and Q4 grew +21% (Q4 FY26 release). Actual EPS has beaten
+   the consensus estimate in 6 of 6 quarters on the broker tier (FQ3 FY25
+   through FQ4 FY26). FQ1 tests this on 2026-11-05.
+4. *probable* — IRA price caps and MFN pricing move revenue, not profit.
+   In Q4 FY26 revenue was ≈ −500bp from IRA WAC changes while Pharma profit
+   rose 21%. On 2026-09-09 the CFO expressed "the same level of confidence"
+   for January 2027 (prior thesis §3).
+5. *probable* — the price clears the hurdle as a band on the stated path:
+   - base ≈10% (+127bp);
+   - optimistic ≈11% (+247bp);
+   - CVS-concession stress ≈9% (+90bp);
+   - conservative ≈7% (−88bp);
+   - M&A-charged ≈7% (−88bp).
+
+   This uses the 0.8 beta floor and terminal growth at the breakeven. The
+   rate is a scenario input, not a condition.
+
+Upside only, not load-bearing: *possible* — the MSO and at-Home platforms
+become a higher-margin second engine. "Other" segment profit was +37% in
+FY26 and is guided +15–18% (Q4 FY26 release), but there is no platform-level
+margin disclosure.
+
+> [!WARNING]
+> **Dominant shared risk factor:** US brand-drug pricing regime (IRA / MFN WAC
+> compression shrinking a fee-on-WAC base) — holdings unavailable in this
+> session
+
+## 2. Business
+
+Unchanged from `research/CAH-2026-09-26.md` §2 (itself carried from the
+August run), since no new 10-K or 10-Q has been filed. Deltas:
+
+**Created:** unchanged. One dock, daily delivery, credit, returns, and
+controlled-substance compliance for pharmacies. One invoice for the whole US
+channel for manufacturers.
+
+**Captured:** unchanged. Four mechanisms:
+- brand fee-for-service on WAC/units;
+- the Red Oak generics spread (the CVS joint venture, term to June 2029);
+- specialty plus MSO practice economics;
+- GMPD plus "Other" (Nuclear, OptiFreight, at-Home).
+
+New detail: FY26 GMPD profit of $258M includes a one-time $100M net IEEPA
+tariff refund (Q4 FY26 release; $0.31/share). Underlying GMPD is therefore
+≈$158M, and the FY27 guide of $200–220M is +27–39% on that base, not the
+−15–22% the headline comparison suggests. The FY27 EPS growth rates are
+stated ex-refund (8-K 2026-10-01 footnote).
+
+**Protected:** the mechanism is unchanged: a scale three-player network plus
+switching costs. Its known failure mode is the largest customers moving
+(OptumRx, June 2024). The CVS extension to 2032 removes that failure mode at
+the largest customer for five years. Both CVS wholesalers extended in the
+same week (McKesson: agreement in principle, also to June 2032;
+pharmaceuticalcommerce.com 2026-10-02). That is a status-quo outcome, not a
+share shift.
+
+**Control:** unchanged. One share, one vote, no controlling holder. Insiders
+hold 0.082% and institutions 90.6% (`stocks.db`). The annual meeting is
+virtual on 2026-11-12 (DEF 14A 2026-09-21).
+
+**Operating leverage (Phase 0): positive.** Unchanged series (no new annual
+filing):
+
+| | FY22 | FY24 | FY25 | FY26 |
+|---|---|---|---|---|
+| Revenue | $181.3B | $226.8B | $222.6B | $254.2B |
+| GAAP operating earnings | — | $1,243M | $2,275M | $2,613M |
+| Non-GAAP operating earnings | — | — | $2.8B | $3.6B |
+
+Revenue +40% from FY22 to FY26 while operating income roughly doubled. FY26
+non-GAAP operating earnings rose +30% on +14% revenue (Q4 FY26 release),
+including the $100M one-time refund.
+
+## 3. Threads pulled
+
+- **The CVS 8-K (2026-10-01).**
+  - Item 7.01: "a binding letter of intent to extend its pharmaceutical
+    distribution agreements with CVS Health through June 2032", with FY27
+    EPS ($12.40–12.60) and the long-term 12–14% range reaffirmed.
+  - Exhibit 99.1: "the continuation of Cardinal Health's current scope of
+    distribution services."
+  - The release has no pricing language and does not say a definitive
+    agreement is still to come. Red Oak is not mentioned.
+  - "Further updates may be provided" on the 2026-11-05 call.
+  - McKesson's parallel deal is only an "agreement in principle". So
+    Cardinal's is the firmer of the two, and both CVS wholesalers stay in
+    place.
+- **What moved the stock: CVS day, then a sector rotation.** Robinhood daily
+  closes:
+
+  | | Sep 25 | Oct 27 | change | Oct 1 day | Oct 13→15 |
+  |---|---|---|---|---|---|
+  | CAH | $220.22 | $246.45 | +11.9% | +3.4% | +5.8% |
+  | MCK | $866.64 | $967.02 | +11.6% | +5.3% | +3.8% |
+  | COR | $306.92 | $325.37 | +6.0% | +3.2% | +3.4% |
+  | XLV | $170.70 | $179.18 | +5.0% | −1.3% | +4.4% |
+  | SPY | $771.35 | $769.66 | −0.2% | — | −0.8% |
+
+  - On Oct 1, COR rose 3.2% though it is not a CVS supplier. The market
+    read the extensions as a group "clearing event" (BofA, per TheFly
+    headline, Oct 2).
+  - Oct 14–15 was healthcare-wide: XLV +4.4% while SPY fell. A dated search
+    found no CAH-specific cause (dead ends).
+  - In net terms, CAH is back at its Sep 3 level ($248.61). The September
+    derating (prior UNKNOWN 3) has reversed, still without an identified
+    cause.
+- **Sell-side drift (low-confidence, headlines only):** Mizuho raised its
+  target to $280 from $250 (~Oct 21) and UBS to $295 from $280 (~Oct 17),
+  both via TheFly. The stockanalysis consensus target is $273.47. Both
+  targets sit below the ≈$298 break-even computed in §4, which is
+  consistent with a market that has priced the CVS outcome.
+- **Rates.** DGS10 has eased back to 5.00% (2026-10-26) from 5.18% on Sep 24
+  and a 5.31% peak on Oct 5 (`fred.db`). Damodaran's October ERP rose to
+  4.20% from 4.14%. The hurdle fell 13bp, from 8.49% to 8.36%.
+- **Policy scrutiny.** Managed Healthcare Executive (2026-10-06) reports
+  "some lawmakers, healthcare policy experts and executives" starting to
+  criticize the Big Three in PBM-style terms. It names no lawmaker or bill;
+  the cited voices are a PBM lobbyist and an academic. This is a watch item
+  on condition 4 and the WAC Break falsifier, not evidence.
+- **Earnings date.** The company release (2026-10-01) confirms Nov 5 BMO, and
+  Robinhood shows `verified: true`. `earnings.db` (calendar_now 2026-10-27)
+  still carries 2026-11-10 with no time, a stale feed row. The reopen
+  trigger moves to Nov 5.
+- **Guidance pattern (broker tier).** Actual minus estimate for the six
+  reported quarters on the tool: +0.18, +0.05, +0.36, +0.26, +0.37, +0.49.
+  The FQ1 estimate is $2.94 (it was $2.93 on Sep 26). Chronic, sizable beats
+  mean a beat on Nov 5 is the expected case, not news.
+  `sec_fundamentals.db` is unchanged: latest quarter revenue $60.94B, NI
+  $399M, equity −$2.88B.
+- **Disclosure cadence.** No conference transcript since Sep 15 (stockanalysis
+  transcript index). The 8-K is the only company communication since; the
+  call on Nov 5 is the next.
+- **Options read (mandatory):** path 2 only. CAH is not in the CBOE catalog.
+  The Nov 6 expiry (10 DTE) brackets the Nov 5 BMO print, and Nov 20 (24
+  DTE) is the cleaner tenor. The liquidity gate fails on both: UNRELIABLE.
+  Table in §4.
+- **Dead ends:**
+  - Dated searches for an Oct 14 CAH catalyst returned only stale August
+    earnings stories. The move was sector-wide.
+  - Searches for a wholesaler rally story returned the McKesson/Option Care
+    deal (Oct 6) and older items.
+  - The DLA contract awards (CAH $2.7B, MCK $741.5M; TheFly headline, ~Oct
+    28) are multi-year government distribution volume at wholesale margins,
+    immaterial against $254B of revenue.
+  - Goldman's "23 unloved stocks" list (MarketWatch, ~Oct 20) is colour, not
+    fundamentals.
+  - EDGAR shows no Forms 3/4/144 since 2026-08-20.
+
+  None changed the verdict.
+
+## 4. Valuation
+
+**Inputs.** The levered flow is paired with a market cap of $57,067,800,575
+(statistics `hover`: 231,559,345 shares × $246.45). Net debt is 0 by the
+pairing rule; EV ($62,209,800,575) is the wrong denominator for a
+post-interest flow.
+
+The TTM figures are unchanged (no new filing): NCFO $5,174,000,000, capex
+−$649,000,000, `fcf` $4,525,000,000. That `fcf` is not the base because it
+includes the FY26 working-capital inflow.
+
+Base flows are the FY27 adjusted-FCF guide ($3.5B / $3.75B / $4.0B) less the
+~$0.4B/yr opioid payment. The conservative row also deducts SBC
+($367,000,000 TTM, `stocks.db`; 0.144% of revenue).
+
+Earnings bases, unchanged:
+- GAAP net income $1,714M;
+- cash earnings ≈ $2,080M;
+- non-GAAP ≈ $2,670M.
+
+Cash of $4,856M is operating float, so none is netted. The IRS NOPAs (~$2B)
+are not subtracted; carrying them as debt would cost ~30bp on every row.
+
+**Hurdle:** rf 5.00% (DGS10, 2026-10-26) + beta 0.8 × ERP 4.20% (Damodaran,
+Oct 1, 2026) = **8.36%**.
+- Damodaran solved the ERP against a 5.29% T-bond rate; today's DGS10 is
+  29bp below it. The vintage mix is stated, not adjusted.
+- The raw beta of 0.501 (statistics probe) is floored to 0.8.
+- Damodaran's mature-firm check is rf + 4.5% = 9.50%. The base row clears it
+  by only ~13bp, and the conservative row fails it by ~200bp.
+
+**Terminal-growth ceiling:** 10-year breakeven T10YIE 2.35% (2026-10-27),
+used on the base, optimistic and stress rows. The conservative row uses
+2.0%.
+
+**Precision.** The Nov 6 ATM IV is 50.78%, above the 50% line (it brackets
+the print; Nov 20 reads 37.04%). Returns are therefore quoted to the whole
+percent. The tool's exact figure follows in brackets as arithmetic, not
+knowledge.
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| conservative (guide low −opioid −SBC) | $2.733B | 5/5/5/4/4% | 2.00% | ≈7% (7.48) | ≈ −90bp (−88) |
+| base (guide mid −opioid) | $3.350B | 8/8/7/6/5% | 2.35% | ≈10% (9.63) | ≈ +130bp (+127) |
+| optimistic (guide high −opioid) | $3.600B | 12/10/9/7/6% | 2.35% | ≈11% (10.83) | ≈ +250bp (+247) |
+| stress: CVS terms concede (base −5%) | $3.180B | 8/8/7/6/5% | 2.35% | ≈9% (9.26) | ≈ +90bp (+90) |
+| stress: growth bought (base −$1B/yr M&A) | $2.350B | 8/8/7/6/5% | 2.35% | ≈7% (7.48) | ≈ −90bp (−88) |
+| reference: raw TTM `fcf` (WC-inflated) | $4.525B | 8/8/7/6/5% | 2.35% | ≈12% (12.12) | ≈ +380bp (+376) |
+
+Notes on the table:
+- Both stress rows are stated assumptions, not disclosures:
+  - The −5% concession is sized as a few basis points of give on a
+    28%-of-revenue customer; CVS's profit share is UNKNOWN (§6).
+  - The $1B/yr M&A charge is below the FY25–26 pace (~$3.6B/yr).
+- Break-even: the base row reads 8.39% (+3bp) at a $69.0B market cap,
+  **≈ $298/share** (verified by re-run).
+
+**Integrity checks.**
+
+- *Reinvestment warning, answered.* The solver flags FCF ≥ earnings on every
+  row. Two causes, carried and unchanged:
+  - GAAP earnings are depressed by acquired-intangible amortization ($469M),
+    acquisition-related compensation, and impairments.
+  - Growth is supplier-financed: FY26 payables grew $3.46B against a $0.9B
+    rise in receivables plus inventory.
+
+  Terminal growth sits at the breakeven (price-level growth on a fee-on-WAC
+  base with no reinvestment). The explicit-years growth is where
+  reinvestment hides, and the M&A-charged row prices exactly that.
+- *Market-share sentence.* Revenue at the guided 3–5% reaches roughly $300B
+  by FY31, a flat ~30% share of a Big-Three channel (~$933B in 2026, DCI;
+  low-confidence) growing mid-single digits. There is no
+  bigger-than-the-market failure. FCF can outrun revenue only through fee
+  mix (specialty/MSO, "Other" +15–18%).
+- *Terminal risk vs terminal growth.* Item 1A's dominant structural risk is
+  IRA price caps (FY26 10-K), extended by MFN/TrumpRx. Terminal growth at
+  the breakeven survives it only while compensation keeps resetting off WAC.
+  FY26 shows it did (≈ −500bp revenue, +21% Q4 Pharma profit). If that
+  stops, the Break falsifier in §5 fires.
+- *Distribution clamp.* The base ≈10% sits above the 90th percentile of US
+  cost of capital (~9.9%, Damodaran 2026). The conservative ≈7% sits below
+  the 7.8% median. Terminal ROE is not meaningful because book equity is
+  negative.
+- *Serial acquirer.* The FY27 guide includes Strive and AdaptHealth Diabetes
+  and excludes further M&A (Q4 FY26 release). The M&A-charged row is the
+  answer if that changes.
+- *Cash taxes.* The FY26 non-GAAP effective tax rate was 19.0% and the FY27
+  guide is 19–20%, a modest gap to the 21% federal plus state marginal rate.
+  No haircut.
+
+**Options-implied move** — path 2 (Robinhood stopgap), ATM strike 245 (spot
+$246.45 official close), marks as of 2026-10-27 close. RV windows are built
+from 90 daily closes (Jun 22 – Oct 27, interpolated bar dropped).
+
+Nov 6, 2026 expiry, 10 DTE; brackets the Nov 5 BMO print:
+
+| metric | value |
+|---|---|
+| spot | 246.45 |
+| expected absolute move | 6.59% |
+| 1-σ move | 8.41% |
+| ATM IV | 50.78% |
+| RV60 | 23.84% |
+| RV20 | 26.55% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Nov 20, 2026 expiry, 24 DTE; also brackets the print:
+
+| metric | value |
+|---|---|
+| spot | 246.45 |
+| expected absolute move | 7.53% |
+| 1-σ move | 9.50% |
+| ATM IV | 37.04% |
+| RV60 | 23.84% |
+| RV20 | 26.55% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Both windows agree, so the reading is "elevated". But both expiries span a
+known print, so this is the stopgap pricing the calendar, not a discovery.
+The 8.41% 1-σ over 10 days is wider than September's 9.22% over 34 days on
+a per-day basis, so the market is pricing a larger-than-usual print reaction
+for a name that has just re-rated.
+
+Liquidity gate: **FAILED → UNRELIABLE** on both expiries.
+
+| leg | spread | mark | spread / mark | OI | volume |
+|---|---|---|---|---|---|
+| Nov 6 call | $2.00 | $9.40 | 21% | 5 | 0 |
+| Nov 6 put | $2.10 | $6.85 | 31% | 1 | 0 |
+| Nov 20 call | $2.30 | $10.75 | 21% | 3 | 1 |
+| Nov 20 put | $1.80 | $7.80 | 23% | 0 | 0 |
+
+The gate constants are uncalibrated. Timing check: **not applicable** — the
+thesis makes no dated move claim.
+
+**Equity as option** (gate tripped by negative book equity, −$2.724B).
+Inputs:
+- firm value = market EV $62.21B;
+- debt face $13.084B (principal plus scheduled interest, FY26 10-K
+  contractual obligations), duration 8.4 years;
+- rf 5.00%;
+- equity vol 37.04% (Nov 20 ATM IV; the Nov 6 expiry is print-dominated);
+- debt vol 19% (Damodaran Healthcare Support Services, Jan 2026 vintage);
+- debt weight 0.149.
+
+| metric | value |
+|---|---|
+| firm volatility | 32.99% |
+| equity value (call on firm) | $53.76B |
+| debt value | $8.45B |
+| implied debt yield | 5.34% |
+| risk-neutral P(firm covers debt) | 94.43% |
+| market equity | $57.07B |
+| option / market | 0.94× |
+
+Negative book equity is buybacks plus the opioid accrual, not distress. The
+debt prices 34bp over riskless. The DCF frame governed §1's ownership call.
+
+## 5. Falsifiers
+
+For an owner (sell):
+
+- **Break —** the CVS LOI fails to become a working agreement at current
+  scope, or a later filing shows a narrowed scope. The franchise-retention
+  story ends and a working-capital unwind follows.
+- **Break —** brand compensation moves off the WAC base, or material volume
+  diverts to direct-to-patient channels (MFN/TrumpRx), with no disclosed fee
+  re-negotiation. The terminal-growth assumption fails.
+- **Shift —** FQ1 FY27 (Nov 5) Pharma segment profit growth below 8%, or any
+  cut to the FY27 Pharma profit or EPS guide: condition 3 weakens, revalue.
+- **Shift —** management quantifies CVS renewal economics as a drag on the
+  long-term 12–14% algorithm. Revalue on the concession row.
+- **Shift —** FY27 adjusted FCF tracking below $3.5B at FQ2 (Feb 2027)
+  without a working-capital explanation: the base was a peak.
+- **Shift —** new MSO/at-Home M&A above ~$1B in FY27. The growth is being
+  bought; read the M&A-charged row (−88bp).
+- **Shift —** IRS NOPAs resolve near the full ~$2B. Revalue with the claim as
+  debt.
+- **Shift —** CEO or CFO open-window selling above ~30% of holdings after
+  the Nov 5 print.
+
+For the buy (what would make this a pass):
+
+- **Shift —** price above ≈$298. The base row meets the 8.36% hurdle at a
+  $69.0B market cap.
+- **Shift —** DGS10 sustained above ~6.3%. At the floored beta and an
+  unchanged ERP, that lifts the hurdle to the base row's 9.63%.
+
+> [!NOTE]
+> **Reopen trigger:** 2026-11-05: cah-fq1-fy27-pharma-profit-and-adj-fcf-vs-guide-and-cvs-terms-commentary
+
+## 6. UNKNOWNs
+
+1. UNKNOWN — the economics of the CVS extension (fee rates, generics terms,
+   any concession). These are private contract terms, and the 8-K and
+   release carry none. The best bound is the long-term EPS guide,
+   reaffirmed in the same release. Not load-bearing on its own: condition 2
+   rests on scope and the reaffirmed guide, and the concession row bounds a
+   5% give at +90bp.
+2. UNKNOWN — CVS Health's share of Pharma segment *profit*, as opposed to 28%
+   of revenue. No filing carries it.
+3. UNKNOWN — whether a separate definitive agreement follows the "binding"
+   LOI, and when. Neither the 8-K nor the release says. If later 10-Qs
+   describe the CVS term, that settles it. Not load-bearing: a binding LOI
+   at current scope is the contract-relevant fact.
+4. UNKNOWN — the cause of the Sep 3–25 wholesaler derating, now fully
+   reversed (CAH $248.61 → $220.22 → $246.45). No filing explains either
+   leg. It suggests group flows, not CAH fundamentals, are setting the
+   short-horizon path. That is why p(beat) sits near a coin flip.
+5. UNKNOWN — the IRS NOPAs (~$2B gross). Bounded at ~30bp of implied return.
+6. UNKNOWN — the scale of direct-to-patient (TrumpRx/MFN) volume leaving the
+   wholesale channel. No filer discloses it. Watch item for condition 4.
+7. NOT OBTAINED (carried, not load-bearing) — FY27 CD&A metric weightings
+   (DEF 14A 2026-09-21); the earlier fetch truncated. Not re-attempted.
+8. Option value (*possible* tier, not a condition): steady-state MSO and
+   at-Home margins.
+
+## 7. Sources
+
+- **Primary:**
+  - CAH 8-K 2026-10-01 (Item 7.01; Ex. 99.1, binding LOI with CVS through
+    June 2032, current scope; FY27 and long-term guidance reaffirmed; Nov 5
+    call date).
+  - Q4 FY26 earnings release, 2026-08-11 (IR PDF pp. 1–3: FY26 segment
+    results, IEEPA $100M / $0.31 one-time, FY27 outlook table incl. adjusted
+    FCF $3.5–4.0B, capex ~$700M, buybacks ~$1B).
+  - EDGAR filing feed, CIK 721371, owner=include (filings since 2026-09-15:
+    8-K 10-01, ARS/DEFA14A/DEF 14A 09-21; no Forms 3/4/144).
+  - Carried from `research/CAH-2026-09-26.md` without re-reading: FY26 10-K
+    (Item 1A, Note 1 concentration, contractual obligations), DEF 14A, Sep
+    9/14/15 conference transcripts.
+- **stockanalysis.com (vetted exception):**
+  - `/stocks/cah/statistics/__data.json` (2026-10-27: market cap, EV,
+    shares, FCF/NCFO/capex, debt, cash, equity, NI, revenue, beta,
+    P/E, target $273.47, Altman Z 5.02, Nov 5 BMO). Read via WebFetch
+    because the headless slot blocks ad-hoc Python; the probe CLI prints
+    schema only.
+  - `/stocks/cah/` news feed (TheFly/PRNewswire headlines).
+  - `/stocks/cah/transcripts/` index (newest Sep 15).
+- **Broker/market microstructure:** Robinhood MCP. Admissible because no
+  integrated official source covers real-time quotes, option chains, or the
+  EPS estimate side.
+  - CAH/MCK/COR/CVS/SPY/XLV quotes and official closes, 2026-10-27.
+  - Daily bars: CAH Jun 22 – Oct 27; MCK/COR/XLV/SPY Sep 30 – Oct 16.
+  - CAH option chain; Nov 6 / Nov 20 245-strike instruments and quotes.
+  - Trailing earnings estimate vs actual, plus the Nov 5 date
+    (`verified: true`).
+- **Reference data:** Damodaran — implied ERP 4.20% (Oct 1, 2026, against
+  5.29% T-bond), homepage; US cost-of-capital distribution (2026); industry
+  standard deviations, Healthcare Support Services (Jan 2026), both carried.
+- **Point-in-time repo DBs (read-only):**
+  - `fred.db`: DGS10 5.00% (2026-10-26) and its path from 5.17% (Sep 25),
+    peak 5.31% (Oct 5); T10YIE 2.35% (2026-10-27).
+  - `stocks.db` v_latest: price $251.54 (prior session), market cap
+    $58.25B, beta 0.50093, insiders 0.082%, institutions 90.61%, SBC $367M
+    (0.144% of revenue), 17 analysts.
+  - `earnings.db`: calendar_now 2026-10-27, CAH 2026-11-10 (stale vs the
+    company's Nov 5).
+  - `composite.db` ticker_scores: score 0, no flag.
+  - `sec_fundamentals.db` v_screener: latest quarter revenue $60.94B, NI
+    $399M, equity −$2.88B.
+  - `portfolio.db`: not readable (no grant in the headless slot).
+- **Low-confidence:**
+  - pharmaceuticalcommerce.com (2026-10-02, McKesson agreement in principle,
+    CVS ~24% of MCK revenue).
+  - Managed Healthcare Executive (2026-10-06, Big Three scrutiny, Option
+    Care deal).
+  - TheFly headlines (BofA "clearing event", Mizuho $280, UBS $295, DLA
+    awards).
+  - Quiverquant/Webull summaries of the Oct 1 move.
+  - DCI channel size (carried).
+
+## Kill-thesis record
+
+**SOUND** — conditions=5 (5 probable, 0 plausible), refuted=0, unknown=0,
+pending=0, not_obtained=0. The thesis attacked is the BUY: "a scale
+distribution franchise with supplier-funded growth and its largest customer
+locked to 2032, priced at ≈10% implied against an 8.36% cost of equity."
+
+**What moved since September.** The one PENDING condition (CVS renewal)
+resolved by 8-K. That removed the closest attack of the prior run and moved
+pending from 1 to 0. The price absorbed it: the spread fell from +198bp to
++127bp. The label is unchanged, but the risk now sits in valuation rather
+than in a contract.
+
+- **Condition 1 (normalized FCF base) — SURVIVED.**
+  - Attack: FY26 adjusted FCF was $5.0B and FY25 GAAP FCF $1.85B, so any
+    single number is a guess.
+  - Answer: the base takes the guide midpoint less opioid, which sits 4%
+    above the three-year average. The guide was reaffirmed Oct 1, against a
+    record of under-guiding.
+  - The Nov 5 print is the next test, not a pending disclosure of the
+    number. FY27 adjusted FCF lands with the FY27 10-K.
+- **Condition 2 (CVS terms keep Pharma on path) — SURVIVED.**
+  - Attack 1: a "binding LOI" is not a definitive contract, and the
+    economics are hidden. CVS negotiated while under its own margin
+    pressure and had every reason to extract price. McKesson's deal is only
+    in principle.
+  - Attack 2: the 2032 term rewards whoever gave more, and no filing
+    carries the number (UNKNOWN 1).
+  - What stands against the attack: management reaffirmed both the FY27
+    guide and the long-term 12–14% algorithm in the same release, with full
+    knowledge of the terms. Reaffirming a multi-year algorithm alongside a
+    material concession would invite a securities claim.
+  - Survives at probable. The size of any concession stays UNKNOWN but is
+    not load-bearing given the concession row (+90bp at −5%).
+- **Condition 3 (Pharma profit +8–11%) — SURVIVED.**
+  - Attack: the comparison is against FY26's +23%, which includes MSO
+    annualization, and incentives reward buying more.
+  - Answer: the guide includes only the closed tuck-ins, Q4 FY26 still grew
+    +21%, and the beat history is 6 for 6 on the broker tier.
+  - Residual: the beat is consensus, so it is priced.
+- **Condition 4 (IRA/MFN hits revenue, not profit) — SURVIVED.**
+  - Attack: the Big Three are now the next PBM-style target (MHE, Oct 6),
+    and TrumpRx DTC routes bypass the wholesaler.
+  - Answer: no named bill or rule exists, and the FY26 evidence shows fees
+    resetting. The DTC leak is unsized (UNKNOWN 6), a watch item, not a
+    refutation.
+- **Condition 5 (price clears hurdle as a band) — SURVIVED, barely.**
+  - Attack 1 (the internal-consistency check): 8%-a-year growth with zero
+    reinvestment and a low beta asks for growth, no reinvestment and low
+    risk all at once. If acquisitions supply the growth, the M&A-charged row
+    is ≈7%, −88bp.
+  - Attack 2: the conservative row is −88bp, and the base clears
+    Damodaran's mature-firm 9.50% by only ~13bp. At IV > 50% only whole
+    percents may be quoted, so "10% vs 8%" is the honest precision.
+  - Answer: the FY27 guide excludes new M&A, and the spread to the hurdle is
+    positive in four of six rows.
+  - Survives as a band whose low end fails, which is disclosed, not
+    credited away.
+
+**Standing checks.**
+- *Base rate.* ~29% of firms sustain excess returns (Damodaran EVA). The
+  terminal assumes none (growth at the breakeven). Incumbent Big-Three
+  renewals are the norm, now confirmed for CVS.
+- *Short case.* A 1%-margin pass-through at 34× trailing GAAP and 19.6×
+  forward non-GAAP. It has run 12% in a month into a print it is expected to
+  beat (the beat is priced). Its largest risk was just retired, so there is
+  no catalyst left on the upside except a guide raise. Policy scrutiny of
+  the Big Three is beginning. A ~$2B IRS claim is open. Incentives pay on
+  adjusted EPS, which favours buying growth. The strongest version: "the
+  good news is in, and the remaining upside needs organic growth management
+  has never been paid to deliver."
+- *Management incentives.* PSUs pay on adjusted EPS CAGR, adjusted FCF
+  (opioid-excluded) and relative TSR (DEF 14A, via summary). The thesis
+  assumes no material M&A against an incentive that favours it; logged as a
+  Shift falsifier and priced in the M&A-charged row.
+- *Disconfirming search.* Hunted for:
+  - CVS terms or concession reports (none);
+  - an Oct 14 CAH catalyst (none; sector-wide);
+  - named legislative action against wholesalers (none);
+  - post-August insider selling (none);
+  - CAH M&A after Oct 1 (none).
+- *Moat.* A mechanism (scale network plus switching cost) whose stated
+  failure mode (the largest customer leaving) has just been tested and held.
+
+**Statistical checks:** N/A. No backtest or signal claim; composite score 0.
+The beat pattern is n=6 quarters of one management team, not a signal.
+
+**Options timing check:** skipped. The thesis makes no dated move claim.
+Path-2 coverage, the failed liquidity gate, and IV > 50% (the precision
+consequence) are disclosed in §4.
+
+> [!WARNING]
+> **Closest attack:** condition 5's serial-acquirer charge. If the growth path
+> needs ~$1B/yr of MSO deals, the price implies ≈7%, below the 8.36% hurdle.
+
+> [!NOTE]
+> **Flip evidence:**
+> - Toward FLAWED:
+>   - a cut to FY27 Pharma or EPS guidance on Nov 5;
+>   - management quantifying the CVS terms as a drag on the 12–14%
+>     algorithm;
+>   - a >$1B acquisition announced with the guide unchanged.
+> - Toward a firmer SOUND: Pharma profit at or above 11% in FQ1 with the guide
+>   raised, and adjusted FCF tracking at or above the $3.75B midpoint.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td):** 0.48. Written before re-reading §1. The stock has
+> re-rated about 12% against a flat SPY, the expected beat is consensus, and
+> the valuation margin is about half of September's.

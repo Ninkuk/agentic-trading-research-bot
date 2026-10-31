@@ -1,0 +1,490 @@
+# KTB — Kontoor Brands, Inc. — 2026-10-27
+
+> [!IMPORTANT]
+> **In one sentence:** Kontoor's Wrangler cash engine and pending Lee proceeds are unchanged while the stock rebounded with apparel peers, trimming the conservative implied return to about 11% against an 8.8% hurdle — still a buy, with a thinner cushion.
+
+Price $74.86 (official close 2026-10-27) · market cap $4,091,369,993 ·
+next earnings 2026-11-10 BMO per stockanalysis and Robinhood (unverified),
+2026-11-11 per earnings.db (`edgar-estimate`) · EV $5,305,678,993 / net
+debt $1,214,309,000 (stated for the leverage gate only; §4 pairs levered
+FCF with market cap)
+**Supersedes `KTB-2026-09-26.md`** (BUY at $65.37, kill-thesis SOUND,
+reopen 2026-11-11). Held (composite.db snapshot 119 `portfolio_holding` =
+0.122379 shares). The stock is up 14.5% since that file while SPY fell
+0.2%. Same question as last month, from the other side: did anything in
+the business move, or only the price? The reopen trigger has not come due;
+this is an early, price-driven rerun. Unattended scheduled run.
+
+## 1. Verdict and thesis
+
+**BUY at $74.86 (official close 2026-10-27).** kill-thesis: **SOUND** —
+conditions=5 (3 probable, 2 plausible), refuted=0, unknown=0, pending=2,
+not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.54** · kill-thesis: 0.52
+> **Disputed expectation:** at $75 the market prices continuing Kontoor at
+> roughly 9% on a no-growth path (stress row E). The Q3 print (~2026-11-10)
+> and the Lee close launching a $400M ASR force a revision if Wrangler's
+> margin and Helly's ~9.7% margin hold.
+
+Nothing in the business has been disclosed as changing since the 2026-08-12
+print and the 2026-09-02 Investor Day. Filings since the prior file are a
+2% dividend increase (8-K 2026-10-22) and routine director equity grants.
+Only the price moved. The month-ago drop was multiple compression with an
+unexplained ~12-point residual. About a third of that residual has now
+reversed, alongside an apparel-wide rebound (peer basket ~+10%) and a
+Jefferies upgrade. At $74.86, paying $3.44B pro forma for ~$285–330M of
+continuing free cash flow returns 11–13% against an 8.76% hurdle. That is
+still a high implied return on conservative assumptions. The cushion is
+thinner: the stress rows sit at +9 to +62bp, against +119 to +193bp a month
+ago.
+
+> [!WARNING]
+> **Closest attack:** the spread has compressed to where the two harshest
+> rows (E, G) need everything else to hold. At Damodaran's own 5.29% risk-free
+> (1 October) instead of DGS10's 5.00%, row G turns −21bp. Short interest also
+> kept rising into the print, to 11.98% of float (8.15 days to cover). The
+> rebound came from sell-side and sector flows, not a disclosure, so it
+> carries no more information than the fall did. The attack does not land:
+> the verdict rows B/C (+205/+408bp) rest on disclosed cash flows and an
+> announced share retirement, and nothing printed contradicts either.
+
+Load-bearing conditions:
+
+1. *probable* — **Wrangler holds its US share and its ~23% segment
+   margin.** FY2025 segment profit $440.0M on $1,914.6M (23.0%); Q2 2026
+   segment profit $138.9M (+29%); 17 consecutive quarters of Circana
+   bottoms share gains (Q2 call). No new data since then. Jefferies' upgrade
+   (~2026-10-14) cites "recovering demand" for Wrangler, but that is
+   sell-side colour, not a disclosure, and is not used as evidence.
+2. *probable* — **The Lee sale closes in Q4 2026 at $750M cash.** Signed
+   SPA with an ABG affiliate (2026-05-20), "on track… fourth quarter"
+   (2026-08-12 call), and Q4 ASR timing restated at Investor Day
+   (2026-09-02). No closing 8-K (Item 2.01) through 2026-10-27, and no
+   report of delay or regulatory trouble (EDGAR index; disconfirming search).
+   The $250M earnout is treated as zero.
+3. *probable* — **Proceeds go where announced: a $400M ASR at close, the
+   rest to voluntary debt paydown.** 2026-08-12 8-K release headline,
+   restated 2026-09-02. At $74.86 the ASR retires ~5.3M shares (9.8% of
+   54.65M), against 6.1M (11.2%) at $65.37.
+4. *plausible* — **The ~$40M of stranded Lee overhead (~$0.55/share) is
+   mitigated within 12–18 months of close.** Settled by the FY2027 guide
+   at the Q4 2026 print (~2027-03-02, Robinhood unverified). Evidence today
+   is the plan plus the Project Jeanius record (>$100M gross savings).
+5. *plausible* — **Helly Hansen holds at least its ~9.7% TTM adjusted
+   operating margin while doubling marketing.** TTM to June 2026: $705.3M
+   revenue at 9.7% (Investor Day deck, 8-K 2026-09-02). Settled by Helly's
+   Q3 segment margin in the Q3 release/10-Q (~2026-11-10, backstop
+   2026-11-11).
+
+> [!WARNING]
+> **Dominant shared risk factor:** US lower- and middle-income consumer
+> discretionary spend through the mass channel (Walmart is 30% of revenue) —
+> shared by 3 of 25 held names (PYPL "US and European online consumer
+> discretionary spend"; YOU "US discretionary air-travel volume"; PRI "US
+> lower- and middle-income household…") · 0 unlabelled. Holdings come from
+> composite.db's `portfolio_holding` signal (snapshot 119,
+> 2026-10-28T04:05Z UTC), not portfolio.db, which the headless slot cannot
+> read. HMC's factor ("US import-tariff escalation on North American…")
+> matches this thesis's USMCA secondary risk, not its dominant factor.
+
+## 2. Business
+
+Unchanged from `KTB-2026-09-26.md` §2 (and `KTB-2026-08-23.md` before it).
+No call, release or 10-Q has been filed since.
+
+**Created:** unchanged. Wrangler is the default Western/work jean at
+$20–$60 through mass, farm-and-ranch and Western specialty. Helly Hansen is
+Norwegian technical sailing, ski and workwear. A product delta since the
+prior file: Wrangler's "Hay Away" bonded-sherpa layering launch (Business
+Wire 2026-10-19).
+
+**Captured:** unchanged. US wholesale on purchase orders, international
+wholesale on an order book, DTC, licensing, and the equity-method China
+Helly JV. Cash returned through a dividend now $0.54/quarter ($2.16/yr,
++2%; payable 2026-12-18, record 2026-12-08; 8-K Ex. 99.1 2026-10-22).
+
+**Protected:** unchanged. One narrow real moat: Wrangler's Western/work
+authenticity plus owned, USMCA-qualified Mexican manufacturing. Helly has
+heritage but no structural protection in the US (~3% unaided awareness,
+Investor Day Q&A). The USMCA review is the live threat to the
+manufacturing half.
+
+**Control:** one share, one vote, no controlling holder. Institutions
+106.0% of shares (stocks.db; above 100% through share lending, consistent
+with ~12% short float), insiders 1.73%. Nothing in the structure forecloses
+a bid or activist pressure. The board added Caulfield and Skipworth
+(2026-09-23) and Waldron (2026-07-22). Waldron's Form 4 shows 87,174 shares
+held directly.
+
+**Operating leverage (Phase 0): positive.** No new quarter since the prior
+file. stockanalysis TTM (Jul-2026) is unchanged: revenue $3,434.4M,
+operating income $547.9M (16.0%), against $2,475.9M / $284.0M (11.5%) in
+FY2021. Revenue +39% and operating income +93% over the span: operating
+leverage runs positive. Consolidated incl. Lee; full table in
+`KTB-2026-08-23.md`.
+
+## 3. Threads pulled
+
+- **Why the price rose (load-bearing, the reason for this run).** Official
+  closes 2026-09-25 → 2026-10-27: KTB $65.37 → $74.86 (+14.5%), SPY
+  $771.35 → $769.66 (−0.2%), XRT +5.9%. Through 2026-10-26 bars: LEVI
+  +10.4%, VFC +19.8%, COLM +5.6%, WMT +11.4%. The apparel/mass-retail group
+  rebounded together, and KTB's excess over a simple peer mean (~+10%) is
+  ~4 points, about a third of the ~12-point residual the prior file could
+  not explain. The rise came in steps. 10/13–10/15: $66.06 → $72.94
+  (+10.4%; XRT +4.4%), with Jefferies upgrading Hold → Buy, PT $82 → $89
+  (~10/14, citing the lower valuation, Wrangler demand, Helly US expansion
+  and the Lee-sale focus) and two CNBC Cramer mentions (10/15). 10/20:
+  +2.8% on 1.29M shares, no company news beyond the 10/19 product launch.
+  10/22: +3.6% on the dividend-increase day (XRT +2.9%). Needham initiated
+  at Hold, no target (10/16). **Reading:** sector flows plus one upgrade;
+  no disclosure moved. The fall and the rebound are both non-information
+  about the business. The valuation is re-run on the new price (§4).
+- **Lee close status.** No 8-K Item 2.01 and no press release through
+  2026-10-27 (EDGAR filing index, CIK 1760965). The 2026-10-22 dividend
+  release does not mention Lee. A disconfirming search for a delay,
+  regulatory issue or ABG financing problem returned nothing; the deal
+  press still says "second half of 2026, subject to regulatory approvals."
+  Kontoor's fiscal Q4 runs to about 2027-01-02, so the window is still
+  open. If Q4 passes with no close, condition 2 fails.
+- **Dividend +2% (8-K 2026-10-22, Items 8.01/9.01).** $0.53 → $0.54. Small,
+  but declared before a pending ~$400M ASR and debt paydown, so the board
+  is not conserving cash ahead of the close. Mildly corroborates conditions
+  2–3, and is not counted as evidence for them.
+- **Insider activity since the prior thesis (Forms 4, EDGAR).** 2026-10-06:
+  three director filings, including Waldron (47.64 phantom units from
+  deferred director fees, code A; holdings 87,174.443 shares).
+  2026-10-22: Caulfield's 1,792-RSU initial director award (code A, $0).
+  No open-market buys or sales and no Form 144. Neutral.
+- **Short interest.** Prior file: shortFloat 10.55% (2026-09-14). Now
+  11.98% of float, 6.43M shares, 8.15 days to cover (stockanalysis
+  statistics; stocks.db `shortFloat` 11.98249 / `shortRatio` 8.15). Shorts
+  added into a 14% rally. The short base (6.43M) exceeds the ASR's
+  ~5.3M-share retirement, so a close-plus-ASR announcement meets a crowded
+  short. That cuts both ways, and the size of the short book says someone
+  holds a thesis this file has not found (§6).
+- **USMCA (secondary risk).** The US declined to renew at the 2026-07-01
+  joint review, which triggers annual reviews through 2036. The agreement
+  stays in force, and qualifying imports keep preferential treatment
+  (IISD, 2026-09-09; Baker Tilly guide). No report found of a
+  September/October US–Mexico round outcome or of apparel terms. Exogenous
+  §4 input and a Break falsifier; unchanged.
+- **Estimates and targets (stocks.db, point-in-time).** `epsNextYear`
+  +24.1% (was +24.5%), `revenueNextYear` +4.1% (was +4.2%),
+  `priceTarget` $98.2 (was $97.5), 11 analysts. Flat. Forward P/E 12.7
+  (stockanalysis).
+- **Earnings-estimate pattern (Robinhood, broker tier; no integrated source
+  carries the estimate side).** Trailing actual vs estimate: Q1'25
+  1.20/1.16, Q2'25 1.33/0.84, Q3'25 1.44/1.38, Q4'25 1.29/1.65, Q1'26
+  1.06/1.15, Q2'26 1.06/1.04. Small beats, one large tariff beat, and two
+  definitional "misses" (prior files). Q3'26 estimate $1.32 on 2026-11-10
+  AM (unverified); Q4'26 $1.87. The actual side is unchanged against
+  `sec_fundamentals.db` `v_screener.eps_diluted` 1.17 (Q2 GAAP incl.
+  discontinued; Robinhood's $1.06 is adjusted continuing), so the two
+  disagree by definition, as recorded before.
+- **Prior-thesis falsifier sweep:**
+
+  | prior falsifier | actual | status |
+  |---|---|---|
+  | Wrangler loses Circana share two quarters / segment margin < 20% | no data since Q2 print | NOT TRIGGERED |
+  | Lee fails to close, < $700M, or proceeds redirected | not closed yet; no delay reported; window open to ~2027-01-02 | NOT TRIGGERED |
+  | USMCA duty on Mexico-made apparel | no outcome; agreement in force under annual review | NOT TRIGGERED |
+  | Helly Q3 margin < ~9.7% | not printed (~2026-11-10) | NOT TRIGGERED |
+  | Stranded costs not visibly out in FY2027 guide | not due (~2027-03) | NOT TRIGGERED |
+  | New acquisition before stranded costs out / deal > $500M in 2027 | none announced | NOT TRIGGERED |
+
+- **Options read (mandatory):** path 2 only. KTB is not in the 24-symbol
+  CBOE catalog, so `data/options.db` has no history. Nov-20-2026 $75
+  straddle, table in §4. Liquidity gate FAILED → UNRELIABLE.
+- **Dead ends:** searched for an October 2026 downgrade, a Walmart vendor
+  or apparel change, a Lee-deal delay, and USMCA apparel news. Nothing
+  found beyond the upgrade/initiation pair and the unresolved annual
+  review. The transcript index has nothing newer than the 2026-09-02
+  Investor Day, and no Q3 date-confirmation release exists yet, so the
+  10-11/11-10/11-11 disagreement persists. `get_equity_tax_lots` was not
+  pulled (not granted headless; this run is not an add decision).
+  Ad-hoc Python against the stockanalysis decoder is blocked in the
+  headless slot. Statistics values came from a WebFetch of the same
+  `__data.json` route instead, and match stocks.db (shares 54,653,620,
+  beta 0.895, SBC $35.99M).
+
+## 4. Valuation
+
+Inputs (stockanalysis `/stocks/KTB/statistics/__data.json`, `hover` values,
+2026-10-27): market cap $4,091,369,993 at $74.86 × 54,653,620 shares. TTM
+levered FCF $422,432,000 (NCFO $446,133,000 + capex −$23,701,000),
+consolidated incl. Lee and pre-divestiture; kept only as reference row A.
+TTM net income $267,942,000. The continuing base is carried from the prior
+files because no quarter or guide has printed since. Adjusted net income
+~$294M ($5.30 guide midpoint × 55.5M shares) + continuing D&A ~$49M −
+capex $30M − ~$30M recurring cash restructuring = **$285M conservative**.
+Pro forma, add stranded-cost mitigation $32M + ~$11M after-tax interest
+saved = **$330M base**. SBC $35.99M TTM (1.05% of revenue, stocks.db) is
+already charged in net income; no add-back. Denominator: $4,091.4M − $650M
+net Lee proceeds (assumes ~$100M tax leakage, PENDING §6) =
+**$3,441.4M**. Pairing: levered flow against market cap; net debt 0 by the
+pairing rule. No minority interest (the China JV is equity-method).
+
+Hurdle: rf 5.00% (DGS10, 2026-10-26) + beta 0.895 × ERP 4.20% (Damodaran
+implied ERP, trailing 12m with adjusted payout, as of 2026-10-01) =
+**8.76%**. Beta is inside the 0.8–1.2 band, unclamped. Damodaran solved
+that ERP against a 5.29% Treasury, so pairing it with today's 29bp-lower
+DGS10 understates the hurdle slightly; at his 5.29% the hurdle is 9.05%
+(sensitivity below). Terminal-growth ceiling: 10-year breakeven `T10YIE`
+**2.35%** (2026-10-27).
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| A reference: TTM consolidated (incl. Lee) vs full cap $4,091M | $422.4M | 3% | 2.35% | 13% | +444bp |
+| B conservative: continuing, no mitigation, $3,441M | $285M | 3% | 2.0% | 11% | +205bp |
+| C base: pro forma, $3,441M | $330M | 4% | 2.35% | 13% | +408bp |
+| D optimistic (not carried — Helly margin target dated 2030) | — | — | — | not run | — |
+| E stress: flat, no mitigation, $3,441M | $285M | 0% | 1.5% | 9% | +62bp |
+| F Helly investment drag: continuing less $25M marketing | $260M | 3% | 2.0% | 10% | +128bp |
+| G stress + $250M proceeds lost to M&A at zero value ($3,691M) | $285M | 0% | 1.5% | 9% | +9bp |
+
+ATM IV is 61.5%, above 50%, so implied returns are whole percents and the
+range is wide. The honest read is B-to-C (11–13%). A month ago the same
+rows read 12–15% against 8.87%. **At Damodaran's 5.29% rf (hurdle 9.05%):
+B +176bp, E +33bp, G −21bp.** G is the first row to cross below a hurdle
+since the 2026-08-23 file, and only on the stricter rate pairing.
+
+- **Reinvestment warning, answered.** A and C print "growth without
+  reinvestment" (FCF ≥ earnings). B/E/G print `implied_terminal_roe` 65% /
+  49% / 49%, far above hurdle +5pts. The answer is the same as before: at
+  the 2.35% breakeven, terminal growth is nominal repricing of existing
+  brand assets and needs no real reinvestment. B, E and G sit at or below
+  the breakeven and do not lean on perpetual real growth. F's 17% terminal
+  ROE is the most defensible (ROIC 22.8% TTM, stockanalysis) and clears by
+  128bp. The default read is fade, and the verdict does not need the
+  excess return to persist.
+- **Market-share sentence.** 4% for five years puts continuing revenue at
+  ~$3.27B by 2031. With Helly at its >$1.1B 2030 target, Wrangler is
+  ~$2.2B vs ~$1.95B today: mid-single-digit growth, the "balanced grower"
+  framing. No row needs share Wrangler does not already hold. No TAM is in
+  the filings (§6).
+- **Terminal growth vs Item 1A.** The dominant disclosed structural risk
+  is still customer concentration plus private label (Walmart 30%, top ten
+  53%, purchase orders only; FY2025 10-K). The USMCA annual-review regime
+  bears on the same moat. E's 1.5% terminal survives both; C's 2.35% needs
+  both to hold.
+- **Distribution clamp.** B and C sit above the US ~90th-percentile cost
+  of capital (~9.9%, Damodaran Data Update 2026). E and G (9%) sit at the
+  top of the 80% band, nowhere near the ~5% floor. The cheapness is
+  narrower than a month ago but still real on conservative inputs.
+- **Cash taxes, serial acquirer, commitments, SBC.** Unchanged: cash taxes
+  ≈ book (FY2025 $70.0M vs $71.2M); no M&A in the base, and G charges the
+  stated 2027 appetite; purchase commitments are one season of inventory;
+  capex guide $30M; SBC 1.05% of revenue, already expensed. The asset-light
+  claim holds.
+- **Leverage gate.** Net debt $1,214.3M / EV $5,305.7M = 23%; book equity
+  positive ($618.5M, sec_fundamentals.db); Altman Z 3.51; no going-concern
+  language. Normal leverage, so the equity-as-option lens is omitted.
+
+Options-implied move (path 2, Robinhood stopgap). Expiry 2026-11-20, DTE
+24 from the Phoenix date 2026-10-27. The window brackets the Q3 print under
+every date in circulation (11-10, 11-11) and possibly the Lee close. The
+thesis needs no dated price move, so no `--required-move` was passed.
+`--iv` is the mean of call 62.76% and put 60.31%; marks $4.80 / $4.55;
+closes are 90 daily bars 2026-06-22 → 2026-10-27, with the interpolated
+10-27 bar replaced by the official close:
+
+| metric | value |
+|---|---|
+| spot | 74.86 |
+| expected absolute move (mean, not a ceiling) | 12.49% |
+| 1-σ move | 15.78% |
+| ATM IV | 61.53% |
+| RV60 | 41.47% |
+| RV20 | 31.48% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Liquidity gate **FAILED → UNRELIABLE**: open interest 10 (call) / 1 (put),
+same-day volume 0, bid-ask 3.90/5.70 (38% of mark) and 3.50/5.60 (46%).
+IV sits above both realized windows, as an earnings-spanning expiry
+mechanically will (options-read §6), but the chain is too thin to read and
+is not evidence for or against the thesis. Timing-check applicability: no
+dated price claim in the thesis, so the check was not run.
+
+## 5. Falsifiers
+
+For an owner (sell):
+
+- **Break —** Wrangler loses US bottoms share in two consecutive Circana
+  quarters, or Wrangler segment margin falls below 20% for a full year.
+  Private label has breached the narrow moat.
+- **Break —** The Lee sale fails to close by fiscal year-end (~2027-01-02),
+  closes below $700M cash, or proceeds are redirected from the announced
+  ASR to an acquisition. Conditions 2/3 fail, and the share-count
+  arithmetic behind most of the spread disappears.
+- **Break —** A USMCA outcome that puts a duty on Mexico-made apparel
+  entering the US, or a US withdrawal notice. Wrangler's cost advantage
+  inverts; re-underwrite from scratch.
+- **Shift —** Helly's Q3 2026 segment operating margin prints below the
+  ~9.7% TTM level with marketing stepping up. Revalue on F; condition 5
+  fails, and F still clears by 128bp.
+- **Shift —** Price above ~$80 with no change in disclosed cash flows. Row
+  B falls toward the ~9.9% 90th-percentile band and E/G go negative.
+  Revalue; the buy case becomes a hold case.
+- **Shift —** Stranded costs not visibly coming out in the FY2027 guide
+  (~2027-03). Revalue on B rather than C.
+- **Shift —** A new acquisition announced before the stranded costs are
+  out, or any deal above ~$500M in 2027. Revalue on G and cut terminal
+  growth to 1.5%.
+
+> [!NOTE]
+> **Reopen trigger:** 2026-11-11: ktb-q3-print-lee-close-and-helly-margin
+
+## 6. UNKNOWNs
+
+1. **UNKNOWN — what the enlarged short book is pricing.** Short float rose
+   10.55% → 11.98% into a 14% rally. No filing explains it. Candidates:
+   USMCA positioning, a Q3 sell-in or tariff-cost miss, or an apparel
+   pair trade. Would come from the Q3 call or a 13F/borrow-cost read; it
+   is not load-bearing because the verdict rows rest on disclosed numbers.
+   It is one reason p(beat) is 0.54 and not higher.
+2. **PENDING 2026-12-31 — tax on the Lee gain.** Undisclosed; would come
+   from the closing 8-K or FY2026 10-K. Leakage $0–150M; a $100M swing
+   moves the denominator ~3%. Not thesis-killing.
+3. **UNKNOWN — the ABG earnout mechanics** ($250M over five years). Treated
+   as zero; pure upside.
+4. **NOT OBTAINED — Helly workwear size target** (Investor Day slide
+   images in the 2026-09-02 8-K). Carried from the prior file; not
+   load-bearing.
+5. **UNKNOWN — US denim/Western TAM** for the market-share sentence; none
+   in the filings.
+6. **UNKNOWN — USMCA annual-review outcome and timing.** Exogenous; no
+   date. A Break falsifier, never a condition.
+7. **UNKNOWN — the confirmed Q3 date.** 11-10 (stockanalysis, Robinhood
+   unverified) vs 11-11 (earnings.db EDGAR estimate). Kontoor has not
+   issued its date release. The reopen trigger uses the later date as the
+   backstop.
+8. **Not pulled — per-lot cost basis** (`get_equity_tax_lots`, not granted
+   headless). Irrelevant to the ownership call.
+
+## 7. Sources
+
+- **Primary:** 8-K 2026-10-22 Items 8.01/9.01 and Exhibit 99.1 (dividend
+  $0.54, +2%, payable 2026-12-18, record 2026-12-08); Forms 4 filed
+  2026-10-06 (Waldron and two other director filings: phantom units, code
+  A) and 2026-10-22 (Caulfield: 1,792 RSUs, code A); EDGAR filing index
+  for CIK 1760965 (no Item 2.01 8-K, no Form 144 since 2026-08-13).
+  Carried from prior files: 8-K 2026-09-02 (Investor Day; Helly TTM
+  $705.3M / 9.7%), Investor Day transcript (via stockanalysis,
+  primary-transcribed), FY2025 10-K, Q2 2026 10-Q, 8-K 2026-08-12 release
+  and call, Lee SPA (2026-05-20).
+- **stockanalysis.com (vetted exception):** `/stocks/KTB/statistics/`
+  `__data.json` (market cap, EV, FCF, NCFO, capex, cash, debt, net income,
+  beta 0.895, short interest 6.43M / 11.98% / 8.15 days, ROIC 22.8%,
+  Altman Z 3.51, forward P/E 12.7, target $98.20, next earnings
+  2026-11-10 BMO est.); `/stocks/KTB/` news feed (TheFly: Jefferies
+  upgrade, Needham initiation, dividend; Business Wire: Hay Away launch,
+  dividend).
+- **Broker/market microstructure:** Robinhood MCP `get_equity_quotes`
+  (KTB, SPY, XRT, LEVI official closes 2026-10-27),
+  `get_equity_historicals` (KTB 2026-06-22 → 10-27; SPY, XRT, LEVI, VFC,
+  COLM, WMT 2026-09-24 → 10-27), `get_earnings_results` (estimate side;
+  Q3 2026-11-10 AM unverified), `get_option_chains` /
+  `get_option_instruments` / `get_option_quotes` (Nov-20 $75 straddle).
+  Admissible: no integrated official source covers quotes, consensus
+  estimates or the chain.
+- **Reference data:** Damodaran implied ERP 4.20% as of 2026-10-01 (his
+  Treasury 5.29%; prior month 4.14% at 4.75%); cost-of-capital
+  distribution (Data Update 2026); EVA base rate ~29%.
+- **Point-in-time repo DBs:** stocks.db `v_latest` (price $75.64, the
+  2026-10-26 close; beta 0.89516; insiders 1.73%, institutions 106.0%; SBC
+  $35.99M, 1.05%; shortFloat 11.98, shortRatio 8.15; priceTarget 98.2;
+  epsNextYear 24.13; revenueNextYear 4.13; earnings 2026-11-10); fred.db
+  (DGS10 5.00% 2026-10-26, T10YIE 2.35% 2026-10-27); earnings.db
+  `v_upcoming_earnings` (2026-11-11, edgar-estimate; `calendar_now`
+  2026-10-27); composite.db snapshot 119 (KTB bullish 1 via
+  `si_days_to_cover` 10.03 obs 2026-08-31, stale; annotations
+  `sa_fcf_yield` 10.22, `sa_fscore` 7; `portfolio_holding` list of 26
+  names); sec_fundamentals.db `v_screener` (eps_diluted 1.17, equity
+  $618.5M, unchanged).
+- **Low-confidence:** goldesel.de / stockhub.kr / Simply Wall St recaps of
+  the Jefferies upgrade rationale; CNBC/Invezz Cramer mentions; IISD and
+  Baker Tilly on the USMCA joint review; RetailDetail/Jing Daily/MarketScreener
+  on Lee deal terms (consistent with the SPA).
+
+## Kill-thesis record
+
+**SOUND** — conditions=5 (3 probable, 2 plausible), refuted=0, unknown=0,
+pending=2, not_obtained=0.
+
+1. Wrangler share and margin — **SURVIVED (probable).** Attack: shorts
+   added 1.4 points of float into the rally, which is what front-running a
+   sell-in or tariff-cost miss looks like; the Walmart shopper faces a 5%
+   10-year. Evidence today: flat estimates, no pre-announcement, 23%
+   segment margin and 17 quarters of share gains on the last print.
+   Nothing printed stands against it. The Q3 print re-tests it.
+2. Lee closes at $750M — **SURVIVED (probable).** Attack: four weeks into
+   fiscal Q4 with no closing 8-K, and the deal is "subject to regulatory
+   approvals." Evidence: signed SPA, Q4 timing restated 2026-09-02, no
+   reported delay (disconfirming search), and a dividend raise declared on
+   2026-10-22 without a word of caution. Unclosed is not late until the
+   quarter ends; the Break falsifier is dated to fiscal year-end.
+3. ASR plus paydown — **SURVIVED (probable).** Attack: M&A appetite stated
+   at Investor Day. Answer unchanged: the ASR is an 8-K headline commitment
+   restated at Investor Day, and the M&A window is 2027. Higher price means
+   fewer shares retired (9.8% vs 11.2%), already in the denominator.
+4. Stranded costs mitigated — **PENDING 2027-03-02** (FY2027 guide at the
+   Q4 print). Nothing refutes it; the Jeanius record bears on it.
+5. Helly holds ~9.7% margin while investing — **PENDING 2026-11-11** (Q3
+   release/10-Q; earliest date in circulation 2026-11-10). Attack: the
+   base rate for acquired outdoor brands under US holdcos (VF) is margin
+   erosion when marketing doubles. Management's phasing is profitability
+   first. Neither side is decisive before the print.
+
+**Self-consistency check.** The conditions do not claim high growth, low
+reinvestment and low risk together. The verdict rows grow 0–3% with
+terminal at or below the breakeven, and the risk is named (customer
+concentration, USMCA). No free contradiction to exploit.
+
+**Standing checks.** Base rate: ~29% of firms earn above their cost of
+capital (Damodaran EVA). Kontoor's 22.8% ROIC puts it there today, and the
+verdict rows assume fade. The short case at $75 is a Walmart-dependent
+denim vendor whose cost moat is a Mexican factory under a USMCA regime the
+US declined to renew. Management is shopping for its next brand after a
+$901M Helly deal whose target margin is dated 2030. The Lee proceeds are
+not yet in hand, and a 12% short float added into a rally that rode
+sell-side and sector flows, not a disclosure. It is a real short case on
+policy, the consumer and capital allocation, not on the mechanism.
+Management incentives: DEF 14A not read. No open-market insider buying at
+$63–65; the only director activity is routine grants. Disconfirming
+search: run for a downgrade, a Walmart change, a Lee delay and USMCA
+apparel terms; found only Needham's Hold initiation and the unresolved
+review. Moat: a mechanism, not a label (Western authenticity plus owned
+USMCA-qualified manufacturing), and the USMCA regime is exactly what tests
+its second half.
+
+**Statistical checks:** N/A. No claim rests on a backtest, hit rate or
+repo signal; composite's stale `si_days_to_cover` vote is not used.
+
+**Options-timing check:** not run. The thesis makes no dated price claim.
+Path 2 only, chain illiquid (gate FAILED), coverage disclosed in §4.
+
+> [!WARNING]
+> **Closest attack:** the spread compressed from +349bp to +205bp on the
+> conservative row, and the harshest row (G) sits at +9bp, or −21bp at
+> Damodaran's own risk-free rate. The buy now needs B or C, which means it
+> needs the Lee proceeds and the ASR (conditions 2–3) to arrive as
+> announced. It does not land because both are signed and restated and
+> nothing contradicts them. It would land if the Lee close slipped past
+> fiscal year-end or the price ran above ~$80 with no new cash flow.
+
+> [!NOTE]
+> **Flip evidence:** to FLAWED — a Q3 print with Wrangler segment margin
+> falling or share lost, no Lee close by ~2027-01-02, or a USMCA apparel
+> duty. SOUND is strengthened by a closing 8-K launching the $400M ASR and a
+> Q3 Helly margin ≥9.7%.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td):** 0.52 — written before re-reading §1's 0.54. Still
+> cheap on conservative rows, with a share-count catalyst likely inside the
+> window. Held back by the thinner cushion after a 14.5% run, a crowded and
+> growing short, a print with 61% IV straddling it, and the unresolved
+> policy risk.

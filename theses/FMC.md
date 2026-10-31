@@ -1,0 +1,583 @@
+# FMC — FMC Corporation — 2026-10-17
+
+> [!IMPORTANT]
+> **In one sentence:** FMC is a crop-protection company hurt by generic competition and now levered like a distressed borrower, so its stock is a binary option on a covenant outcome I cannot read; pass.
+
+Price $5.65 (live quote, last regular trade 2026-10-16; official close
+2026-10-15 $5.62) · market cap $880.4M · EV $4.81B / net debt $3.93B
+(6/30 balance sheet) · next earnings 2026-10-29 AMC (call 10-30 with
+preliminary 2027–28 outlook)
+
+Entry path: user-directed (scheduled single-ticker run); composite has it at
+2 bullish / 0 bearish on oversold RSI and short days-to-cover. Unattended
+scheduled run.
+
+## 1. Verdict and thesis
+
+> **PASS at $5.65.** kill-thesis: **UNPROVEN** — conditions=5
+> (1 probable, 4 plausible), refuted=0, unknown=0, pending=3,
+> not_obtained=1.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.38** · kill-thesis: 0.35
+
+> [!IMPORTANT]
+> **Disputed expectation:** the price (≈1× the option-lens equity value at a
+> ~$4.0B firm value) treats the common as a deep out-of-the-money call that
+> survives only if covenant EBITDA can add back the $625–675M Q3 price reset
+> and 2027 EBITDA climbs back toward ~$600M. The 10-30 2027–28 outlook and
+> the Q3 10-Q covenant disclosure force the revision either way.
+
+This is a fast kill on leverage that the skill's leverage gate turns into
+an option question. FMC is a crop-protection company whose patented
+insecticide franchise (Rynaxypyr) went generic. Revenue fell 36% from 2021
+($5.05B) to TTM ($3.25B) while operating income fell 91%. On 2026-10-15 it
+guided Q3 revenue to $65–125M against prior guidance of $840–900M, and
+adjusted EBITDA to a loss of $510–565M. It did this by cutting prices on
+inventory already in its distributors' warehouses. Net debt is ~$3.5–3.9B
+against TTM EBITDA of $269M, interest coverage is 0.38× (stockanalysis
+TTM), and the bank covenant test returns in Q4. Equity at $880M is an
+option on a restructuring that has not been priced by anyone who can see
+the covenant definition, including me. I would not own it at this price:
+the outcome is binary, it is decided by documents I could not read, and
+the market's price matches the option arithmetic rather than sitting below
+it.
+
+> [!WARNING]
+> **Closest attack:** condition 2. The Q3 reset admits that FMC's net prices
+> were set too high for a generic market. A permanent cut in realized price
+> lands on a business whose operating income already fell 91% in four years.
+> So the 2027 EBITDA needed to hold the covenant and cover ~$272M of interest
+> (~$550–650M) has to be rebuilt from a lower price base, with new actives
+> adding only $150–200M of *sales*. It stays PENDING, not REFUTED, only
+> because the 10-30 outlook is four trading days after the print and
+> management's July Q4 guide ($275–315M EBITDA) has not been withdrawn.
+
+**Bull-case conditions** (what must be true for owning the common at $5.65
+to beat SPY):
+
+1. **Covenant headroom survives the Q3 reset.** The credit agreement's
+   EBITDA definition adds back the $625–675M commercial-action charge, or
+   banks waive or amend without equity-dilutive terms. *plausible* — the
+   Q2 call says max total leverage is reinstated in Q4 2026 at 6.75× and
+   interest coverage must be ≥2.0×. The add-back language sits in the
+   Fifth Amended and Restated Credit Agreement (2022-06-17) and its earlier
+   amendments, not in Amendment No. 7, which only carves out a Corteva lien.
+   The Q3 10-Q due ~2026-10-29/11-05 must disclose compliance and any
+   amendment.
+2. **The price reset restores volume, and 2027 adjusted EBITDA recovers to
+   roughly $550–650M.** *plausible* — management claims distributor
+   inventory is at record lows and the reset makes the portfolio
+   competitive (8-K ex-99.1, 2026-10-15). The preliminary 2027–28 outlook
+   on the 2026-10-30 call is the first number; FY2027 prints settle it.
+3. **New actives outrun generic erosion.** Fluindapyr, Isoflex, and
+   rimisoxafen add the guided $150–200M in 2027 sales while Rynaxypyr holds
+   2026 earnings and Cyazypyr's ~2028–29 data-protection loss is defended.
+   *plausible* — guided on the Q2 2026 call; Q4 2026 (10-K, ~Feb 2027) is
+   the first test of the Q4 new-product ramp.
+4. **Asset sales close and reduce net debt.** India ($252M, definitive,
+   Crystal Crop Protection) and the Newark campus sale-leaseback ($114M,
+   framework only). *probable* for India (definitive agreement, 10-Q Q2
+   2026); Delaware is softer. Settles in the FY2026 10-K (~Feb 2027).
+5. **No common-equity wipe or heavy dilution in a recapitalization.** FMC
+   does not need a rights issue, debt-for-equity exchange, or Chapter 11
+   to pass 2027. *plausible* — the next bond maturity is $500M in October
+   2029, and >$1.56B of revolver was undrawn at Q2. But the revolver is
+   only usable while covenants hold (condition 1). Settles on the 10-Q and
+   any bank amendment 8-K.
+
+> [!WARNING]
+> **Dominant shared risk factor:** farm-income / crop-input demand cycle
+> (Brazil credit and generic agrochemical pricing) — holdings unavailable in
+> this session.
+
+## 2. Business
+
+**Created:** FMC invents and registers crop-protection molecules
+(insecticides, herbicides, fungicides, and biologicals) that growers spray
+to protect yield. The grower gets a product that works on a pest that
+generics either do not cover or cover with older chemistry, plus
+formulations (high-concentration, mixtures) that cut application cost. When
+the molecule is patented and the pest pressure is real, the grower gets
+more yield than the product costs. That was the diamide era (Rynaxypyr,
+Cyazypyr). Once generics arrive, the surplus moves to the grower and the
+generic maker.
+
+**Captured:** three distinct mechanisms.
+(a) Branded active-ingredient sales through distributors and co-ops at a
+high gross price less large rebates. This is the U.S. model FMC is now
+abandoning ("significantly reduce the gap between gross and net pricing",
+8-K 2026-10-15).
+(b) Supply and licensing of actives to other majors: partner diamide sales
+(shrinking, per the Q2 call), fluindapyr and rimisoxafen to Corteva
+(including a $200M rimisoxafen prepayment, booked as deferred revenue),
+and Isoflex to Bayer.
+(c) Credit extension to Latin American distributors. Brazil is >20% of
+sales (AgriBiz, low-confidence), and receivables are a disclosed risk:
+$70.6M of LatAm long-term receivables were written off under Project
+Foundation (10-Q Q2 2026, Note 5). FMC also sells receivables (securitized
+$96.4M and factored $68.2M in H1 2026), which flatters operating cash
+flow.
+
+**Protected:** patents and regulatory data protection. These are real but
+time-limited, and the flagship's protection has expired. Rynaxypyr is
+generic. Cyazypyr's data protection ends ~2028–29 (Q2 call). The current
+moat is the registration dossier on newer actives (registration takes
+years and costs heavily) plus formulation know-how. Neither stopped the
+pricing collapse in the channel, so for today's revenue base the honest
+answer is **no moat against generics on the legacy portfolio**. Whether the
+new-actives pipeline rebuilds one is UNKNOWN; I cannot evaluate the
+agronomic efficacy (domain science).
+
+**Control:** one class of common stock, no controlling holder. Tessenderlo
+Group NV holds ~20.0% since 2026-09-23 (30,319,166 shares at $13.30,
+$403.2M; 8-K 2026-09-23). It gets a board seat at ≥10%, must vote with the
+board except on change-of-control matters, is under a standstill that
+falls away on a change-of-control transaction, and has a 36-month lock-up.
+This forecloses a hostile bid from that holder and blunts an activist
+path: one-fifth of the vote is pledged to the board on ordinary matters.
+It also leaves a strategic buyer with a seat at the table in any sale.
+Insiders own 0.79% (stocks.db).
+
+**Operating leverage (Phase 0): negative.** Revenue and operating income
+(stockanalysis financials, $M):
+
+| | 2021 | 2022 | 2023 | 2024 | 2025 | TTM 6/26 |
+|---|---|---|---|---|---|---|
+| Revenue | 5,045.2 | 5,802.3 | 4,486.8 | 4,246.1 | 3,467.4 | 3,251.2 |
+| Op. income | 1,076.0 | 1,237.4 | 679.2 | 635.1 | 240.2 | 99.7 |
+| Op. margin | 21.3% | 21.3% | 15.1% | 15.0% | 6.9% | 3.1% |
+| FCF | 720.0 | 440.1 | −520.3 | 603.2 | −176.5 | 84.8 |
+
+Revenue is −36% from 2021 to TTM; operating income is −91%. Every dollar of
+lost revenue took ~36¢ of operating income with it. Net income was
+−$2,240M in 2025 and −$2,759.5M TTM, both impairment-driven. That is before
+the Q3 2026 charge, which comes with a flagged further "material non-cash
+impairment" of intangibles (8-K 2026-10-15).
+
+## 3. Threads pulled
+
+- **The 2026-10-15 pre-announcement is the event** (8-K Item 2.02,
+  ex-99.1). Q3 revenue is guided to $65–125M (prior $840–900M, Q2 call).
+  Adjusted EBITDA is −$565M to −$510M (prior +$120–140M). It includes
+  $625–675M of "commercial actions": price cuts on product already held by
+  channel customers in Brazil, Argentina, the U.S., and Canada, plus a U.S.
+  move away from high-gross/high-rebate pricing. Management's framing:
+  higher-priced inventory entered the channel "under different cost
+  structures, IP positions, and competitive conditions", and generic price
+  declines opened a gap between inventory value and market price. In plain
+  terms, FMC is paying its distributors to mark down FMC inventory. A
+  triggering event for intangible impairment occurred at 9/30, and GAAP
+  results "cannot yet be reasonably estimated." The stock fell from $8.09
+  to $5.62 (−30.5%) on 32.6M shares (Robinhood bars). The 1-year price
+  change is −81.19% (stockanalysis).
+- **Covenants are the load-bearing thread.** Per the Q2 call, the max
+  total leverage test was not measured at Q2/Q3 under the amended revolver
+  and is reinstated in Q4 2026 at 6.75× through 2027-12-31. Secured
+  debt/EBITDA was 1.66× against a 3.5× limit, and interest coverage 2.78×
+  against a 2.0× minimum. My arithmetic, assuming July's FY guide
+  ($670–730M) less the Q3 swing with Q4 unchanged: reported FY2026
+  adjusted EBITDA comes to ≈$30M. Q1 ≈ $122M implied, Q2 $153M, Q3 ≈
+  −$537M, Q4 guided $275–315M. That gives trailing EBITDA at the Q4 test
+  of ≈$30M against ~$3.5–3.9B net debt and ~$272M/yr interest (2 × H1 net
+  interest $136.1M). On unadjusted figures both the 6.75× leverage and the
+  2.0× coverage tests fail by an order of magnitude. If covenant EBITDA
+  adds back the commercial-action charge, trailing EBITDA is ≈$680M,
+  leverage ≈5.2–5.7×, and the test passes. Management "expects to be in
+  compliance at 9/30" and "intends to talk with its bank group over the
+  next year about further covenant modifications." That sentence is the
+  tell: the reset was sized with the covenant in mind, and relief is still
+  needed. The definition is NOT OBTAINED (§6). Press reports (AgriBiz,
+  low-confidence) give a 6× limit at 9/30, which conflicts with the call's
+  "not measured"; the call is primary and wins.
+- **The capital structure moved from unsecured IG to secured high-yield in
+  four months.** May–June 2026: $1.2B of 8.000% senior secured notes due
+  2031, secured by first liens on substantially all assets of FMC and its
+  U.S./Canadian/Swiss guarantors (8-K 2026-06-05). Proceeds redeemed the
+  3.20% October 2026 notes and paid down the revolver. Amendment No. 7 to
+  the credit agreement (8-K 2026-06-23, ex-10.1) adds a lien basket on the
+  rimisoxafen IP securing a refund obligation to Corteva of up to $200M.
+  So the Corteva "prepayment" is a **secured, refundable** claim that ranks
+  ahead of the common on that IP: debt-like, though booked as deferred
+  revenue. The 10-Q shows total debt of $4,280.6M at 6/30, $326.3M
+  of it current. Press reports bond yields at ~10.5% after the 10-15 cut
+  and say FMC "has already lost its investment-grade rating"
+  (AgriBiz/Bloomberg, low-confidence; the rating actions themselves are
+  NOT OBTAINED). The 2031 secured notes carry a 101% change-of-control put
+  and an asset-sale offer at 100%, so asset-sale proceeds can be claimed by
+  secured holders.
+- **The deleveraging plan (~$1B) is mostly done or signed, and it did not
+  move the leverage problem.** Done or signed: Corteva's $200M rimisoxafen
+  prepayment (a liability, not debt reduction in substance), Tessenderlo's
+  $403M equity, India for $252M (definitive; carrying value $350M after a
+  $43.6M impairment), Newark campus $114M (framework, Q4 close,
+  sale-leaseback). Each piece is either a one-time cash inflow or an asset
+  sold, and the 10-15 charge alone is larger than the Tessenderlo cheque.
+- **Tessenderlo paid $13.30 three weeks before the stock went to $5.62.**
+  The deal was struck 2026-06-30, when the stock was $11.50, and closed
+  2026-09-23 at $9.90. The buyer is now 57% under water. It is locked for
+  36 months, so this is not a signal about today's price; it says a
+  strategic buyer valued the franchise at ~$2.07B equity in June. It also
+  makes Tessenderlo the natural backstop or acquirer in a recap, and its
+  preemptive right to hold 20% means any equity raise is partly placed
+  before the public sees it.
+- **Generic competition in Brazil.** Brazil is >20% of sales. Generic
+  makers (Tecnomyl, Agriconnection) are growing fast, and the LatAm CEO
+  announced his departure in September via LinkedIn rather than a company
+  release (AgriBiz citing AgFeed, low-confidence). The Q2 call called
+  Q3–Q4 "the big test" for new generics in LatAm and North America. The
+  test came early and was failed.
+- **EPS pattern (Robinhood, adjusted basis, 6 reported quarters).** Q1'25
+  0.18 vs 0.09; Q2'25 0.69 vs 0.61; Q3'25 0.89 vs 0.85; Q4'25 1.20 vs 1.21;
+  Q1'26 −0.02 vs −0.38; Q2'26 0.26 vs 0.22. Five beats and one hair-miss,
+  delivered while full-year guidance was cut repeatedly: these are beats
+  against lowered bars, not execution. Robinhood's 0.26 is **adjusted**
+  EPS. `sec_fundamentals.db` `eps_diluted` for Q2 2026 is −1.49 GAAP
+  (net income −$186.6M), so the actuals disagree by definition. Q3'26
+  consensus is +$0.09, now unreachable on any basis.
+- **Environmental liabilities: $562.9M** at 6/30 (10-Q), continuing and
+  discontinued. This is an equity claim and is added to the debt-like
+  stack in §4.
+- **Short interest is 29.03M shares, 25.2% of float, 7.41 days to cover**
+  (stockanalysis). Composite's `si_days_to_cover` (11.53 at 8/31) and
+  `stocks_rsi` (16.5 at 10/15) are the two bullish votes. Both are
+  microstructure, consistent with CLAUDE.md's note that the ticker layer is
+  a dislocation scanner. Neither says anything about solvency.
+- **Dividend:** $0.08/quarter (ex-div 9/30), ~$50M/yr. "No decision" on a
+  cut as of July (Q2 call). I expect it to go, but that is not material
+  next to the covenant.
+- **Options read (mandatory):** path 2 only (FMC is not in the 24-symbol
+  CBOE catalog). Nov-20-2026 expiry, 34 DTE, brackets the 10-29 AMC print
+  and 10-30 outlook call. ATM IV 97%, so implied returns are quoted to
+  whole percents. The liquidity gate FAILED, so the reading is UNRELIABLE.
+  Table in §4.
+- **Dead ends:** (1) The 9 Form 4s filed 2026-10-16 (e.g. CEO Brondeau 57
+  shares, director Cordeiro 169 shares) are all code A at $0, dividend
+  equivalents on vested RSUs. There were **no open-market insider buys**
+  after the crash and no Form 144s since September (EDGAR). (2) The 10-Q's
+  debt note and covenant definitions were unreachable: WebFetch truncates
+  the 10-Q at Note 8 on every offset tried. Recorded as NOT OBTAINED, not
+  as "absent". (3) No Moody's/S&P/Fitch rating action dated October 2026
+  was found by search; the "lost IG" claim rests on press. (4) No pension
+  problem: accrued pension and OPEB total $19.9M (10-Q).
+
+## 4. Valuation
+
+**Inputs.** Statistics-probe `hover` values: market cap 880,390,388; EV
+4,806,490,388; TTM FCF 84,800,000 (NCFO 156.4M + capex −71.6M); debt
+4,402,700,000; cash 476,600,000; SBC 23.6M TTM (stocks.db; sbcByRevenue
+0.73%). Pairing: levered TTM FCF against market cap, net debt 0 by the
+pairing rule. Haircuts: SBC deducted (−$23.6M). The $200M Corteva
+prepayment (Q2, inside the TTM window) is non-recurring customer
+financing (refundable, and secured on the rimisoxafen IP), so the honest
+base excludes it. Equity claims the FCF base does not show: environmental
+liabilities ($562.9M), the Corteva refund obligation (≤$200M), and the
+Q3 charge's cash leg. Together with ~$3.5–3.9B of net debt, ahead of the
+common sit ≈$4.3–4.7B of claims. Market cap already counts the 30.3M Tessenderlo shares (155.55M
+outstanding), while the $403M of cash arrived after the 6/30 balance
+sheet. Pro-forma net debt is ≈$3.52B before Q3 burn.
+
+**Hurdle:** rf 5.10% (DGS10, 2026-10-15) + beta 0.8 (5Y beta 0.46, clamped
+to the 0.8–1.2 band) × ERP 4.20% (Damodaran implied ERP, 2026-10-01) =
+**8.46%**. This hurdle is not credible for this equity. FMC's secured 2031
+notes reportedly trade at ~10.5%, and the common sits below them, so its
+true cost of equity is above 10.5% by a wide margin. I read the scenarios
+against both 8.46% and a ≥12% distressed floor (my judgment, stated).
+
+**Terminal growth ceiling:** T10YIE 2.35% (2026-10-16), used as
+`--terminal-growth`.
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| A: reported TTM (incl. Corteva prepay, pre-SBC) | $84.8M | 0% flat | 2.35% | 11% | +282bp (below the ~10.5% bond yield + any premium) |
+| B: TTM less SBC | $61.2M | 0% flat | 2.35% | 9% | +31bp (≈0) |
+| C: ex-prepayment, less SBC | −$138.8M | — | — | refused | n/a |
+| D: recovery (FCF $61M→$171M) | $61.2M | 50/60/10/3/3% | 2.35% | 19% | +1041bp |
+
+Scenario C's exact refusal: `refused: base_fcf must be positive, got
+-138800000.0`. The honest base FCF is negative, and Q3's $625–675M
+commercial-action charge will cut cash collections further over the next
+quarters (timing UNKNOWN). Required-FCF inversion: to earn the 12%
+distressed floor at zero growth and 2.35% terminal, $880M of equity needs
+about $85–90M of sustainable owner FCF. That is the July FY2026 FCF guide's
+low end ($75M) before the Q3 reset. Scenario D is the bull path and needs
+conditions 1, 2, and 5 all to hold.
+
+**Integrity checks.**
+- *Reinvestment/terminal ROE:* `--base-earnings` was not passed because
+  trailing net income is −$2.76B. The reinvestment line is undefined on a
+  loss base, so the "growth without reinvestment" question is answered by
+  restriction: terminal growth equals the breakeven (pure inflation, zero
+  real growth). D's 50–60% growth years are margin recovery on a collapsed
+  base, not reinvestment-funded expansion.
+- *Market share:* D's end state ($171M FCF) needs ~$550–650M EBITDA on
+  ~$3.5–3.8B revenue, which is below 2024's revenue. The test is not
+  market share but price: generics set the market price now.
+- *Terminal vs Item 1A:* the dominant structural risk is loss of patent
+  and data protection to generics, already realized on Rynaxypyr and dated
+  ~2028–29 on Cyazypyr. A 2.35% terminal assumes the new-actives pipeline
+  replaces the diamides indefinitely. I cannot evaluate the agronomic
+  science (UNKNOWN), so the terminal stays at breakeven and is not raised.
+- *Distribution clamp:* A–B sit at 9–11%, inside the 5–10%-plus US
+  cost-of-capital band only because the hurdle is understated. Against the
+  ≥12% distressed floor, A and B are passes and only D clears.
+- *Cash taxes:* TTM income tax was $396.9M on a pretax loss, likely
+  valuation-allowance and deferred-tax write-offs (UNKNOWN split). Cash
+  taxes are not a flattering factor here.
+
+**Options-implied move.** Path 2 (Robinhood), Nov-20-2026 expiry, 34 DTE,
+brackets the 10-29 AMC print and the 10-30 outlook call. The nearest
+strike is $5.00, 11.5% below spot $5.65, so the "straddle" contains ~$0.65
+of call intrinsic value and overstates the expected move. The IV is the
+mean of call 108.3% and put 86.0%.
+
+| metric | value |
+|---|---|
+| spot | 5.65 |
+| expected absolute move (MEAN, not a ceiling) | 23.89% |
+| 1-σ move | 29.65% |
+| ATM IV | 97.16% |
+| RV60 | 99.66% |
+| RV20 | 134.35% |
+| IV > RV60? | NO |
+| IV > RV20? | NO |
+
+Liquidity gate: **FAILED → UNRELIABLE**. Call spread $0.90/$1.25 = 33% of
+mark; put spread $0.20/$0.35 = 55% of mark, both above the 10% gate.
+Timing check: NOT APPLICABLE. The thesis asserts no dated move size, and
+the pass does not lean on a timing claim. IV below both realized windows
+says the options market prices no more vol than the stock has already
+shown. This is not evidence for anything.
+
+**Equity as option (leverage gate fires: net debt / EV = 82%).**
+`tools.valuation.equity_option`, rf 5.10%, equity vol 97% (path-2 ATM IV;
+cross-check: Damodaran Chemical (Basic) equity σ 45.8%, firm σ 28.7%, Jan
+2026), debt vol 15% (my assumption), D/(D+E) 0.82. Derived firm vol is
+25.9%, consistent with Damodaran's firm-σ range for chemicals. Debt face
+includes cumulated coupons at ~$272M/yr. Maturity mix and face-weighted
+duration are NOT OBTAINED (debt note unreadable); 4 and 7 years bracket
+it, given the $500M Oct 2029 next maturity and long-dated 2049+ paper.
+
+| firm value | debt face | duration | equity (call) | implied debt yield | P(cover) | option / market |
+|---|---|---|---|---|---|---|
+| $4.81B (market EV) | $4.40B (face only) | 7y | $2.13B | 7.32% | 62.1% | 2.42× |
+| $4.81B | $6.30B (+coupons) | 7y | $1.45B | 9.38% | 41.5% | 1.64× |
+| $4.81B | $5.40B (+coupons) | 4y | $1.16B | 10.27% | 46.5% | 1.32× |
+| $4.00B | $6.30B (+coupons) | 7y | $0.93B | 10.84% | 31.4% | 1.06× |
+
+The row whose implied debt yield matches the reported ~10.5% bond yield is
+the 4-year/$5.4B case, and it values the equity at 1.32× market. That row
+uses *book* EV, though. With the bonds below par, market EV is lower, and
+at ~$4.0B (last row) the option value equals the market cap (1.06×).
+Volatility is a shareholder asset here, and a covenant waiver or maturity
+extension is equity value; that is the whole bull case in option terms.
+The lens shows the price is **consistent with** a ~31% risk-neutral
+chance that the firm covers its debt, not cheap against it. **The option
+frame governed §1's ownership call:** the DCF scenarios cannot be trusted
+on a negative honest base, and the option table shows no margin of safety
+at a market-consistent firm value.
+
+## 5. Falsifiers
+
+For the pass (flip toward buy):
+- **Shift —** the Q3 10-Q (or a bank-amendment 8-K) shows covenant EBITDA
+  adds back the commercial-action charge, Q4 leverage tests at ≤6.0×, and
+  any waiver comes without equity-linked terms. Revalue on the option
+  frame with the debt-note maturity schedule in hand.
+- **Shift —** the 10-30 preliminary 2027 outlook is adjusted EBITDA
+  ≥$600M with positive FCF after interest, *and* the stock does not
+  re-rate to match it (equity < option value at the bond-implied firm
+  value).
+- **Shift —** an open-market insider purchase of size, or Tessenderlo
+  buying in the market to defend its 20% after its lock-up allows.
+
+For an owner (sell):
+- **Break —** a covenant waiver priced with warrants, a rights issue, a
+  debt-for-equity exchange, or a Chapter 11 filing: the common is diluted
+  or extinguished.
+- **Break —** two of three agencies downgrade, triggering the reported
+  all-asset collateral pledge to lenders (press-reported mechanism,
+  unverified against the credit agreement). That subordinates the
+  unsecured notes and the common further.
+- **Shift —** Q4 2026 revenue below the July $1.06–1.20B guide, which would
+  show the price reset did not restore volume.
+
+> [!NOTE]
+> **Reopen trigger:** 2026-10-30: fmc-q3-print-2027-28-outlook-covenant-ebitda-addback
+
+## 6. UNKNOWNs
+
+1. NOT OBTAINED — **the credit agreement's covenant-EBITDA definition**
+   (add-backs for "commercial actions", restructuring, non-cash charges)
+   and the exact Q4 2026 test levels. They exist in the Fifth Amended and
+   Restated Credit Agreement (2022-06-17) and its pre-June-2026 amendments
+   (the leverage holiday was set by an amendment dated ~2026-04-16, per
+   10-Q XBRL tags), and in the Q2 10-Q debt note, which WebFetch truncated
+   at Note 8. Amendment No. 7 was read and does not contain them. **Load-bearing:** this single definition decides whether
+   condition 1 holds. Its absence does not kill the pass; it is the reason
+   for it.
+2. PENDING 2026-10-29 — Q3 GAAP results, the intangible impairment, the
+   cash timing of the $625–675M commercial actions (credit memos against
+   receivables vs. future rebates), and 9/30 net debt after the Tessenderlo
+   inflow.
+3. PENDING 2026-10-30 — preliminary 2027 and 2028 outlook (condition 2).
+4. PENDING ~2027-02 (FY2026 10-K) — India and Newark closings, final
+   FY2026 FCF, Item 1A update, covenant compliance at 12/31.
+5. NOT OBTAINED — current Moody's/S&P/Fitch ratings and outlooks, and
+   whether the press-reported two-of-three collateral trigger is in the
+   credit agreement. Rating-agency releases or the credit
+   agreement would settle it.
+6. NOT OBTAINED — the full debt maturity schedule (principal, coupon,
+   maturity per note) behind the 4–7 year duration bracket in §4.
+7. UNKNOWN — agronomic efficacy and regulatory durability of the
+   new-actives pipeline (fluindapyr, Isoflex, rimisoxafen, Dodhylex). This
+   is domain science I cannot evaluate. It is a moat that has not been
+   assessed, not a moat that is absent.
+8. *Option value (possible tier, not a condition):* a takeover of FMC by
+   Tessenderlo or another strategic buyer (the standstill falls away on a
+   change-of-control transaction; a 101% CoC put on the secured notes
+   prices that path for creditors). It could happen; I cannot say what or
+   when.
+
+## 7. Sources
+
+- **Primary:** FMC 8-K 2026-10-15 (Item 2.02, ex-99.1 Q3 pre-announcement);
+  8-K 2026-09-23 and 2026-07-01 (Tessenderlo purchase, investor and
+  registration-rights agreements); 8-K 2026-06-05 ($1.2B 8.000% senior
+  secured notes due 2031); 8-K 2026-06-23 (Amendment No. 7 to the credit
+  agreement); 8-K 2026-06-23 (Newark/Stine campus framework sale, $114M);
+  10-Q for Q2 2026 (balance sheet, debt totals, receivables, inventories,
+  restructuring, environmental reserves, India held-for-sale — read
+  through Note 8 only); Form 4s filed 2026-10-16 (Brondeau, Cordeiro). Q2
+  2026 earnings call transcript 2026-07-30 (via stockanalysis/Quartr;
+  primary-transcribed).
+- **stockanalysis.com (vetted exception):** `/stocks/FMC/statistics/`
+  (hover values: market cap, EV, FCF, debt, cash, short interest, ratios,
+  52-week change); `/stocks/FMC/financials/` (FY2021–FY2025 and TTM);
+  transcripts index.
+- **Broker/market microstructure:** Robinhood MCP equity quote and daily
+  bars (live price; no integrated official intraday source), option chain,
+  Nov-20 $5 call/put quotes (no integrated official chain for non-catalog
+  names), earnings results (estimate side; actuals cross-checked against
+  sec_fundamentals.db and found to be adjusted, not GAAP).
+- **Reference data:** Damodaran implied ERP 4.20% (2026-10-01); Damodaran
+  industry standard deviations, Chemical (Basic/Specialty/Diversified) and
+  Farming/Agriculture (January 2026); FRED DGS10 5.10% (2026-10-15) and
+  T10YIE 2.35% (2026-10-16) via `data/fred.db`.
+- **Point-in-time repo DBs:** `stocks.db` (FMC $5.62, cap $874.2M,
+  priceDate 2026-10-15; beta 0.456, insiders 0.79%, institutions 78.0%,
+  SBC $23.6M); `sec_fundamentals.db` v_screener (Q2 2026 revenue $867.1M,
+  net income −$186.6M, diluted EPS −1.49); `composite.db` snapshot 109
+  (bullish 2/bearish 0: stocks_rsi 16.5 score +2, si_days_to_cover 11.53
+  score +1, edgar_insider 9 filings score 0); `earnings.db` has no FMC row
+  in `v_upcoming_earnings` (date taken from the 8-K and Robinhood).
+  `portfolio.db` was not readable in this session.
+- **Low-confidence:** The AgriBiz (2026-10-15; bond yields ~10.5%, lost-IG
+  claim, 6× covenant figure, Brazil >20% of sales, generic competitors,
+  LatAm CEO departure); Benzinga/Yahoo/Seeking Alpha/MarketScreener
+  headlines on the 10-15 drop (search results only).
+
+## Kill-thesis record
+
+**Ledger:** UNPROVEN — conditions=5 (1 probable, 4 plausible), refuted=0,
+unknown=0, pending=3, not_obtained=1,
+reopen=2026-10-30:fmc-q3-print-2027-28-outlook-covenant-ebitda-addback.
+
+Five legs is a lot of surface for a bull case. They are also not
+independent: conditions 1, 2, and 5 are the same bet (2027 EBITDA
+recovers) seen from the bank's, the P&L's, and the shareholder's side. If
+condition 2 fails, 1 and 5 fail with it.
+
+**Per-condition adjudication (the bull case):**
+
+1. *Covenant headroom survives the Q3 reset* — **NOT OBTAINED.** Attack:
+   on unadjusted figures, trailing EBITDA at the Q4 test is ≈$30M against
+   ~$3.5–3.9B of net debt and ~$272M of interest, so both the 6.75×
+   leverage and 2.0× coverage tests fail by an order of magnitude. The bull
+   case survives only if the EBITDA definition adds back the $625–675M
+   charge. Management's own sentence ("discussions with its bank group
+   over the next year about further covenant modifications", 8-K
+   2026-10-15) says headroom is insufficient even on its preferred
+   definition. The decisive document is the Fifth A&R Credit Agreement
+   (2022-06-17) and its pre-June-2026 amendments. Amendment No. 7 was read
+   and contains only a Corteva lien carve-out. Logged to gaps.log.
+2. *Price reset restores volume; 2027 adj. EBITDA ~$550–650M* — **PENDING
+   2026-10-30.** Attack: operating income has fallen every year since 2022
+   ($1,237M → $99.7M TTM). FY2026 guidance was cut in July (EBITDA −23% at
+   the midpoint) before being blown through in October. The reset permanently
+   lowers realized price on the legacy book, and 3-year consensus EPS
+   growth is −12.4% (stockanalysis). Base rate: turnarounds mostly fail.
+   Not REFUTED today only because the dated outlook is two weeks out, and
+   management's July Q4 guide (+5% EBITDA YoY) still stands.
+3. *New actives outrun generic erosion* — **PENDING 2027-02-03** (Q4 2026
+   print). Attack: partner diamide orders are shrinking (Q2 call),
+   Cyazypyr loses data protection ~2028–29, and an unnamed Brazil source
+   says the pipeline "has run dry" (AgriBiz, low-confidence, not
+   load-bearing). The guided +$150–200M of 2027 new-active sales is gross
+   of erosion it must offset. Efficacy is domain science I cannot judge.
+4. *Asset sales close* — **SURVIVED** (at *probable*). India is a signed
+   definitive agreement ($252M, Crystal Crop), expected to close by
+   year-end with no reported break (search 2026-10-17). Delaware is a
+   framework only, and its $114M is immaterial to the outcome. Even
+   closed, both together ($366M) are smaller than the Q3 charge.
+5. *No common-equity wipe or heavy dilution* — **PENDING 2026-11-06** (Q3
+   10-Q / any bank-amendment 8-K). Attack: the Tessenderlo agreement gives
+   a 20% holder preemptive rights and a right to buy up to 20%. That
+   structure was drafted for further issuance. Covenant relief for a
+   borrower at ~5× adjusted leverage on a collapsing base is typically
+   bought with fees, margin, collateral, or equity. In FMC's favour: no
+   bond maturity until October 2029 and >$1.56B of undrawn revolver at Q2,
+   so a 63-day wipe is unlikely. The dilution path is the live one.
+
+**Standing checks.**
+- *Base rate:* only ~29% of firms earn above their cost of capital
+  (Damodaran EVA dataset). FMC's ROIC is 1.70% against its 5.08% WACC
+  (stockanalysis), so it is already outside that 29%. Interest coverage
+  under 1× with net debt over 10× EBITDA is the profile of a recap, not a
+  re-rating. Distressed-equity outcomes are right-skewed but have a
+  negative median.
+- *Short case (strongest version):* 25.2% of float is short. The bear sees
+  a legacy portfolio repriced to generic economics, a confession-sized
+  reset, ≈$4.3–4.7B of claims ahead of an $0.88B equity, and secured debt
+  that now primes the unsecured notes. The bear also sees a covenant that
+  needs a friendly definition plus a bank negotiation, and a 20% strategic
+  holder positioned to take more of the company cheaply. I could construct
+  it without strain.
+- *Management incentives:* NOT read (no DEF 14A this run). The "commercial
+  actions" label is excluded from adjusted metrics and, plausibly, from
+  covenant EBITDA. Management has an incentive to frame as one-time what
+  may be a permanent price level. Brondeau holds 533,970 shares (Form 4).
+  No open-market insider buys after the crash.
+- *Disconfirming search:* run for the bull case (bank support, Tessenderlo
+  backstop, rating stability). Found no rating stabilization, no bank
+  statement, and no Tessenderlo comment after 10-15. Found the bond-yield
+  spike to ~10.5% and the reported loss of IG (low-confidence).
+- *Moat — checkbox or mechanism:* the mechanism is patent and data
+  protection, and it has demonstrably expired on the flagship. A moat that
+  just failed against Brazilian generics is not a defence for the 2027
+  price base.
+
+**Statistical checks:** composite's two bullish votes (`stocks_rsi` 16.5,
+`si_days_to_cover` 11.53) are a single oversold episode, effective n = 1.
+They are microstructure with no solvency content and no null comparison.
+Not evidence.
+
+**Options timing check:** N/A. The bull case makes dated disclosure claims
+(10-29/10-30) but states no required move size. The chain is listed, but
+the Nov-20 liquidity gate FAILED (spreads 33%/55% of mark), so even a
+size claim could not have been tested.
+
+> [!WARNING]
+> **Closest attack:** condition 2 (see §1). The reset lowers the price base
+> from which 2027 EBITDA must cover interest and the covenant.
+
+> [!NOTE]
+> **Flip evidence:** *toward SOUND* — the base credit agreement shows a
+> commercial-action/non-recurring add-back with Q4 leverage ≤6.75×, and the
+> 10-30 outlook puts 2027 adjusted EBITDA ≥$600M with FCF after interest
+> positive. *Toward FLAWED* — the 10-30 outlook puts 2027 adjusted EBITDA
+> below ~$500M, or a covenant amendment arrives with warrants or an equity
+> raise attached.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td):** 0.35 — written before re-reading §1's 0.38.

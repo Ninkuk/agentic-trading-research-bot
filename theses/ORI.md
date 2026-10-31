@@ -1,0 +1,495 @@
+# ORI — Old Republic International — 2026-10-22 (reopen of 2026-09-22, trigger: ori-q3-print-specialty-primary-lines-favorable-development-and-no-second-runoff-charge-and-specialty-cr-at-or-below-100)
+
+> [!IMPORTANT]
+> **In one sentence:** Old Republic is a conservatively reserved insurer whose Q3 report cleared the reserve test the bet hinged on, leaving about a 9% implied return despite flat earnings, so we buy at $39.97.
+
+Price $39.965 (live quote, 2026-10-22 11:07 Phoenix, intraday on print day;
+prior official close $40.13 on 2026-10-21) · market cap $9,569,038,994 · next
+earnings 2027-01-21 BMO (tentative per broker calendar)
+
+**Prior file:** `ORI-2026-09-22.md` — BUY at $38.78, kill-thesis SOUND
+(conditions=5, pending=1). ORI is a held name.
+**Reopen question:** did the Q3 print (8-K, 2026-10-22 BMO) show favorable
+prior-year development on specialty's primary lines, no second runoff-book
+charge, and a specialty combined ratio at or below 100?
+Unattended sweep run, dispatched the morning of the print; the Q3 call
+(3:00 pm ET today) had not happened when this was written.
+
+## 0. The reopen question, answered first
+
+**The trigger fired in the thesis's favour, with two grazes.** Specialty
+prior-year development swung from 0.3 points adverse in Q2 to **0.8 points
+favorable** in Q3. Property, commercial auto and workers' comp were favorable;
+general liability and financial indemnity were unfavorable. Financial
+indemnity is where Q2's $40M runoff transactional-risk charge was reported.
+The Q3 release gives no dollar figure for it, where Q2 named $40M (3.0 points).
+Specialty CR 96.0%, under 100. ECM was "accretive to this quarter's operating
+earnings" and booked a $124.9M bargain-purchase gain.
+
+The thesis stands, but the margin of safety is thinner. Operating EPS was
+$0.73 against $0.79 a year ago and a $0.78 consensus, a fourth straight miss.
+A new $20M credit loss on a guaranteed-asset-protection (GAP) account cost
+1.4 expense points. The stock is up 3.1% since the prior file, and the
+10-year rose 19bp. Net: the conservative spread fell from +140bp to +80bp,
+and the floor from +26bp to −25bp.
+
+| prior falsifier | actual (Q3 2026 release) | status |
+|---|---|---|
+| Break — net unfavorable PYD in primary lines (CA, WC, GL) | CA and WC favorable; GL unfavorable again (unquantified); specialty total −0.8 pts favorable | GRAZED (GL) |
+| Break — second runoff strengthening ≥ $40M plus primary-line adverse | Financial indemnity unfavorable, unnamed size; specialty total still favorable, so any FI charge was outweighed — a $40M (≈2.8 pt) repeat would need ≈3.6 pts of offsetting releases | GRAZED |
+| Break — capital-return regime abandoned | $190.2M returned in Q3 ($113.8M buybacks); $565.2M over 9M; regular $0.315 | NOT TRIGGERED |
+| Shift — specialty CR above 100% | 96.0% (95.9% ex-warranty write-up), including a 1.4-pt GAP credit loss | NOT TRIGGERED |
+| Shift — title CR back above 100% | 96.1% (vs 96.4%) | NOT TRIGGERED |
+| Shift — ECM accretion absent / bargain gain revised | "accretive"; gain $124.9M vs ~$125M guided | NOT TRIGGERED |
+| Shift — price ≤ $35 with no break | $39.97 | NOT TRIGGERED |
+
+## 1. Verdict and thesis
+
+**BUY at $39.965 (live quote, 2026-10-22 intraday).** kill-thesis: **SOUND
+(on this pass)** — conditions=4 (4 probable), refuted=0, unknown=0,
+pending=0, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.52** · kill-thesis: 0.48
+> **Disputed expectation:** the price implies ~9.3% a year on ~$686M of
+> SBC-charged operating earnings held at 2% growth. The market reads a
+> four-quarter miss streak as a falling level. Q4 (2027-01-21) revises it two
+> ways: whether ex-one-off operating EPS holds ~$0.79, and whether financial
+> indemnity stays a footnote.
+
+Old Republic is a conservatively reserved specialty P&C and title insurer.
+It earns a 12.1% annualized operating ROE against an 8.5% cost of equity and
+pays out more than its operating earnings. The Q3 print cleared the reserve
+test that was the whole bet. Specialty reserves released again, the current
+accident-year loss ratio improved (66.8% vs 68.0% ex-warranty), title earned
+inside its target band, and ECM closed accretive. Earnings stayed flat. The
+$20M GAP loss, higher holding-company interest and ECM deal costs explain
+the Q3 miss: added back, Q3 was ~$0.79. The price at $39.97 still clears the
+hurdle on conservative assumptions (+80bp), though by less than in
+September. Treat this as a continued hold-quality BUY, not a widening
+opportunity.
+
+> [!WARNING]
+> **Closest attack:** the miss streak is structural. Expenses keep re-basing
+> (IT build "entering a phase in which costs are being amortized while the
+> systems being replaced are not yet decommissioned"; start-ups not at scale;
+> now a GAP credit loss). Interest rose with the $700M May notes. Corporate &
+> Other lost $27.0M vs $5.2M. GL and financial indemnity are adverse two
+> quarters running. If $686M is a ceiling rather than a level, and growth
+> must be paid for, the floor row is already −25bp.
+
+Load-bearing conditions:
+
+1. *probable* — **Reserve adequacy holds on primary long-tail lines.** Q3
+   specialty prior-year development −0.8 pts (favorable), vs +0.3 adverse in
+   Q2. Favorable in property, commercial auto and WC; unfavorable in GL and
+   financial indemnity (Q3 release, 2026-10-22). Title PYD −1.6 pts.
+2. *probable* — **Specialty CR stays at or under ~100 through the soft
+   cycle.** Q3 96.0% (vs 94.8%), 9M 95.4%. The quarter carried a 1.4-pt
+   GAP credit loss. The current-year loss ratio improved 1.2 pts ex-warranty
+   (Q3 release).
+3. *probable* — **The capital-return regime persists.** Q3 returned $190.2M
+   ($76.3M dividends + $113.8M buybacks); 9M $565.2M against $538.1M of
+   operating income. Regular $0.315/q is 8.6% above last year. The year-end
+   special is not required by any scenario.
+4. *probable* — **Investment income grows with the asset base.** Q3 NII
+   $185.4M, +1.5% consolidated. Specialty is +4.9% on a higher invested base;
+   Corporate fell 49.5% as capital went back to shareholders. The floor and
+   conservative rows need only ~2% growth.
+
+ECM accretion (prior condition 5) was settled by the Q3 release and is
+folded into condition 2's evidence. Title recovery stays excluded from
+every scenario (upside only; §6).
+
+> [!WARNING]
+> **Dominant shared risk factor:** US commercial casualty pricing cycle and
+> long-tail loss-cost inflation (social inflation in commercial auto / GL
+> reserves) — shared by 2 of 24 other held names (HIG, WRB) · 0 unlabelled.
+
+## 2. Business
+
+Unchanged from `ORI-2026-09-22.md` §2 and `ORI-2026-08-20.md` §2.
+
+**Created:** long-tail specialty cover and title assurance from a
+counterparty that will still be solvent in a decade.
+**Captured:** three mechanisms:
+- underwriting margin (specialty 96.0% CR, title 96.1%)
+- float income on ~$17.0B of invested assets (fixed income $12.1B,
+  short-term $2.3B, equities $2.3B)
+- title agency economics
+
+**Protected:** regulated scale, niche long-tail loss data, and a
+four-carrier title oligopoly. That is adequacy, not dominance, with the
+balance sheet as the backstop.
+
+Q3 deltas (Q3 release):
+- **Premiums:** specialty NPE $1,444.6M (+9.7%; +8.0% ex-warranty write-up,
+  driven by ECM, rate and start-ups); title $823.3M (+7.3%; agency strong,
+  direct flat on rates); consolidated $2,269.3M (+8.8%).
+- **Earnings:** net operating income $181.4M ($0.73, −6.0%).
+- **Balance sheet:** BVPS $24.65 (−2.7% in the quarter on −$1.29/sh of
+  unrealized bond losses; +5.7% YTD incl. dividends). Debt $1,749.7M: the
+  $550M notes matured in August and were refinanced by May's $700M.
+  Reinsurance recoverable $8,702.8M vs equity $5,875.3M.
+
+**Control:** one share, one vote, no controlling holder. Insiders 0.387%,
+institutions 78.7%, float 220.7M of 239.4M shares (stockanalysis
+statistics, live). Nothing forecloses a takeover or activist path beyond the
+state change-of-control approval every insurer faces.
+
+**Operating leverage (Phase 0): flat ex-investment-gains.** FY history is
+carried from the prior file (no new fiscal year). Ex-gains operating income
+~1,020 (2023) → ~1,013 (prior TTM) while ex-gains revenue grew ~24%. Q3
+extends the pattern: total operating revenues +8.0% YoY, pretax operating
+income −8.5% ($227.2M vs $248.2M). That is negative operating leverage in
+the quarter, from expense build, the GAP loss and holdco interest.
+
+## 3. Threads pulled
+
+- **The Q3 release (new primary document):** read in full (8-K EX-99.1,
+  accession 0000074260-26-000100). Q2 named its runoff charge in dollars
+  ("approximately $40 (3.0 points) from its run-off transactional risk
+  business reported in financial indemnity"). Q3 says only "unfavorable
+  development in general liability and financial indemnity." That bounds
+  the charge: specialty PYD of −0.8 pts net means releases on CA/WC/property
+  exceeded GL+FI adverse by ~$11.6M. A repeat $40M would need ~$52M of
+  releases. Possible (Q3'25 released 3.4 pts, ~$45M), but the release would
+  likely have named it, as Q2 did. The exact FI figure is PENDING the 10-Q
+  (§6 #1).
+- **The miss decomposition:**
+  - *GAP credit loss:* $20M pretax, 1.4 specialty expense points, ≈$0.06/sh
+    after tax.
+  - *Corporate & Other:* pretax loss −$27.0M vs −$5.2M. Interest $8.7M vs
+    $1.5M, with both note issues outstanding until the August maturity, plus
+    ECM transaction costs and lower NII as capital was returned.
+  - *Read:* ex-GAP, Q3 is ~$0.79, matching the year-ago $0.78 and the
+    $0.78 consensus. The run-rate question is whether a GAP-type loss
+    recurs. The release describes the 9M expense ratio (30.9% vs 29.2%) as
+    still carrying IT, data/AI and start-up spend, with "several" IT
+    projects now amortizing before legacy systems retire. No normalization
+    date.
+- **Earnings-estimate pattern (broker tier):**
+  - Beats Q1–Q3 2025 (0.81/0.74, 0.83/0.80, 0.78/0.75); misses Q4'25 0.74
+    vs 0.89, Q1'26 0.68 vs 0.79, Q2'26 0.76 vs 0.79, Q3'26 0.73 vs 0.78.
+  - Actual $0.73 matches the release's diluted net operating EPS. The GAAP
+    diluted $0.99 includes −$0.25 of realized losses and +$0.51 of bargain
+    gain, an explained divergence.
+  - Q4 estimate $0.79 (2027-01-21, unverified date).
+- **Market reaction (broker tier, 11:07 Phoenix):**
+  - ORI −0.4% on the print day vs SPY −1.4%; FNF +2.8%, FAF −1.1%, HIG
+    +2.7%, WRB +1.8%. A fourth miss met with relative outperformance: the
+    market looked through the GAP item or had priced the streak.
+  - Since the prior file: ORI $38.78 → $39.97 (+3.1%), after a $37.31 low
+    on 9/30 (daily bars).
+- **Post-prior-file sweep (EDGAR, through 2026-10-22):** the only filing
+  since 2026-09-03 is today's earnings 8-K. No Forms 4 or 144 since the
+  Monroe sale. No reserve 8-K, no management change. Silence.
+- **Latest call:** the Q3 call is at 3:00 pm ET today, after this run.
+  Q2 (2026-07-23) remains the newest transcript read (see prior file).
+  PENDING §6 #2.
+- **Capital and leverage:**
+  - Debt/equity 0.30 ($1,749.7M / $5,875.3M), up from 0.27 at year-end.
+  - Q3 buybacks $113.8M at a ~1.6× book multiple: modestly dilutive to BVPS
+    but accretive to operating EPS at ~8% operating earnings yield.
+  - stockanalysis `sharesout` 239.4M is unchanged from September, so it has
+    not yet absorbed Q3 repurchases. Market cap may be overstated ~1%, which
+    biases implied returns down (conservative).
+- **Options read (mandatory):**
+  - Path 2 only. ORI is not in the CBOE catalog, so `data/options.db` has no
+    history.
+  - The thesis's next dated catalyst is the 2027-01-21 Q4 print. The first
+    listed expiry bracketing it is 2027-04-16 (Jan 15 expires before the
+    print). Table in §4: liquidity gate FAILED.
+- **Dead ends:**
+  - Transcript-corpus search: not run; no thread turned on years-long
+    phrasing.
+  - stockanalysis `fcf` and `pfcf` now read n/a (capex not reported on the
+    route). It is not used as the base anyway (prior file: NCFO includes
+    reserve build).
+  - Composite was not re-read: the prior flag was a single uncalibrated
+    `stocks_rsi` fire, and RSI is now 56.
+  - Search budget was shared with a parallel run, so no web searches were
+    spent. The release and EDGAR answered the trigger.
+
+## 4. Valuation
+
+**Inputs.**
+- *Market cap:* $9,569,038,994 (statistics-probe `marketcap` hover = 239.41M
+  shares × ~$39.97). Levered flow against market cap; net debt 0 by the
+  pairing rule.
+- *Base:* TTM net operating income $723.4M = FY25 $793M − 9M25 $607.7M +
+  9M26 $538.1M. Q3 ×4 = $725.6M agrees.
+- *SBC deducted:* FY2025 SBC $46.7M (XBRL
+  `AllocatedShareBasedCompensationExpense`) × (1 − 21%) ≈ $37M →
+  **base $686M**.
+- *Not added back:* the $20M GAP loss (~$16M after tax) stays in the base;
+  the "normalized" row adds it back for reference only. ECM's $124.9M
+  bargain gain and the −$63.2M realized losses are excluded.
+- *Other haircuts:* NCI $15.4M, negligible. Q3 operating tax rate 19.6%
+  ($44.5M on $227.2M), near marginal, so no NOL flattery.
+
+**Hurdle:** rf 5.15% (DGS10, 2026-10-19) + beta 0.8 × ERP 4.20% (Damodaran
+implied ERP, October 1, 2026, against his T-bond 5.29%) = **8.51%**.
+- *Beta:* raw 0.587 (stockanalysis) is floored into the 0.8–1.2 band as a
+  conservative choice (insiders 0.39%, not a thin-float case). At 0.587 the
+  hurdle is 7.62% and every spread below widens 89bp.
+- *Mature-company companion:* rf + 4.5% = 9.65%. Base and optimistic sit
+  above it; conservative sits below.
+
+**Terminal-growth ceiling:** 10-year breakeven 2.35% (T10YIE, 2026-10-20).
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| combined stress (earnings $560M after a recurring ~$160M/yr pretax runoff hit; 20% retained to fund 2%) | $448M | 2.0% | 2.0% | 6.78% | −173bp |
+| reserve stress (earnings $560M, no growth charge) | $560M | 2.0% | 2.0% | 7.97% | −54bp |
+| floor (686 × 80.6% after funding 2.35% at 12.1% ROE) | $553M | 2.35% | 2.35% | 8.26% | −25bp |
+| conservative | $686M | 2.0% | 2.0% | 9.31% | +80bp |
+| normalized (GAP loss added back) | $702M | 2.0% | 2.0% | 9.48% | +97bp |
+| base | $686M | 4.0% | 2.35% | 10.22% | +171bp |
+| optimistic | $686M | 6.0% | 2.35% | 10.89% | +238bp |
+
+**Move since the prior file** (rows: combined / reserve / floor /
+conservative / base / optimistic):
+
+| file | price | hurdle | spreads |
+|---|---|---|---|
+| 2026-09-22 | $38.78 | 8.27% | −124 / +1 / +26 / +140 / +231 / +301bp |
+| 2026-10-22 | $39.97 | 8.51% | −173 / −54 / −25 / +80 / +171 / +238bp |
+
+The hurdle rose 24bp (rates). The conservative implied return fell 36bp
+(9.67% → 9.31%), from the 3.1% price rise and a $12M lower base.
+
+**Integrity checks.**
+- *Reinvestment / terminal ROE:* the floor charges growth its capital
+  (reinvestment 19.4%, implied terminal ROE 12.12%). That is 3.6 points
+  above the hurdle, inside the ~5-point limit and equal to today's 12.1%
+  annualized operating ROE (Q3 release).
+- *Growth-without-reinvestment warning:* conservative, base and optimistic
+  fire it (tool output on the conservative run). Answered by keeping
+  terminal growth ≤ the 2.35% breakeven (nominal repricing of existing
+  float and premiums, no real growth) and by the floor row, which pays for
+  growth.
+- *Market share:* 4% for five years takes ex-gains revenue from ~$9.6B to
+  ~$11.7B against a US P&C market writing ~$1T of premium, well under 2%.
+- *Terminal risk (2025 10-K Item 1A, read for `ORI-2026-08-20.md`):*
+  loss-reserve estimation on long-tail casualty. A ≤ breakeven terminal
+  rate survives it; reserve risk hits the level of the base flow, which
+  the two stress rows price.
+- *Excess-return fade:* ~29% of firms sustain excess returns. The floor
+  holds a 12.1% ROE on retained capital forever, its optimistic element.
+  Conservative and base cap growth at the breakeven.
+- *Distribution clamp:* 8.3–10.9% (ex-stress rows) sits at the top of the
+  US cost-of-capital distribution (median ~7.8%, 80% within ~5–10%,
+  Damodaran January 2026). It is a positive spread on conservative
+  assumptions, not a strong-pass zone.
+- *Commitments:* no capex-type commitments. The forward obligations are the
+  $15.8B reserve stack and $8.7B reinsurance recoverable (condition 1;
+  §6 #4).
+
+**Options-implied move.** Path 2 (Robinhood stopgap), expiry 2027-04-16,
+176 DTE, strike 40 (spot 39.965, essentially ATM). It brackets the
+2027-01-21 BMO Q4 print, the thesis's next dated catalyst, plus about three
+months of drift. ATM IV is the mean of call 21.73% and put 30.96%. The
+window spans the 12/1-ish ex-dividend date and the print.
+
+| metric | value |
+|---|---|
+| spot | 39.97 |
+| expected absolute move (MEAN, not a ceiling) | 14.64% |
+| 1-σ move | 18.29% |
+| ATM IV | 26.35% |
+| RV60 | 16.43% |
+| RV20 | 17.87% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+**Liquidity gate: FAILED → UNRELIABLE.**
+- Call: bid/ask $2.10/$3.50, spread 50% of mark, OI 16, volume 0.
+- Put: bid/ask $2.10/$4.00, spread 62% of mark, OI 45, volume 0.
+- The two legs' IVs disagree by 9 points: a wide-market artifact, not skew
+  information.
+
+The "elevated" reading carries no verdict weight. It is what a 6-month
+window spanning a print looks like against trailing RV (stopgap label).
+Timing check: the thesis states no required move, so N/A.
+
+## 5. Falsifiers
+
+For an owner (sell / revalue):
+
+- **Break —** net unfavorable prior-year development in specialty for the
+  quarter (Q4 2026), or primary-line adverse beyond GL. Commercial auto or
+  WC turning adverse is the condition-1 failure.
+- **Break —** the 10-Q or the Q3 call puts Q3's financial-indemnity adverse
+  at ≥ $40M (a recurring runoff hit). The reserve-stress row (−54bp) then
+  becomes the base.
+- **Break —** capital-return regime abandoned: regular dividend not raised
+  in early 2027 AND buybacks halted with no acquisition-sized explanation.
+- **Shift —** specialty CR above 100% for a quarter: revalue on the floor.
+- **Shift —** a second GAP-type credit loss, or Q4 operating EPS below $0.73
+  with no one-off named. Treat the ~$686M base as falling, not flat. The
+  conservative row reaches zero spread at a ~$610M base (−11%).
+- **Shift —** DGS10 above ~5.95% with no offsetting price fall: the hurdle
+  passes the conservative implied return.
+- **Shift —** price at or below $36 with no break: conservative spread
+  widens past +150bp. Revalue upward, not a sell.
+
+> [!NOTE]
+> **Reopen trigger:** 2027-01-21: ori-q4-print-specialty-pyd-favorable-and-fi-adverse-under-40m-and-op-eps-at-or-above-0.73-with-no-new-credit-loss
+
+## 6. UNKNOWNs
+
+1. **PENDING Q3 2026 10-Q (due by ~2026-11-09) — the dollar size of Q3's
+   financial-indemnity and GL adverse development.** The release names the
+   lines without amounts. The specialty total (−0.8 pts favorable) bounds
+   it, but cannot rule out a ~$40M FI charge offset by large releases. It
+   does not kill: condition 1 survives on the net figure. A ≥ $40M figure is
+   a §5 break.
+2. **PENDING 2026-10-22 3:00 pm ET — the Q3 call transcript.** Not yet held
+   when this ran. It would carry management's framing of the GAP loss, the
+   FI charge and the IT-amortization curve. Does not kill.
+3. **NOT OBTAINED — statutory dividend capacity** of the insurance
+   subsidiaries (10-K subsidiary-dividend note). The $565.2M returned over
+   9M shows present capacity. Bears on the special only; does not kill.
+4. **NOT OBTAINED — reinsurance recoverable counterparty mix** ($8.7B vs
+   $5.9B equity; 10-K reinsurance note). It grew $963M YTD with ECM and the
+   warranty programs. A major reinsurer impairment would be material. Does
+   not kill.
+5. **UNKNOWN — the GAP account's identity and the remaining exposure.** The
+   release calls it "a guaranteed asset protection account." Whether other
+   such counterparties carry credit exposure is not disclosed at this level;
+   the 10-Q may say more. Does not kill: the loss is in the base.
+6. **PENDING 2027-02 (FY2026 10-K) — SBC trajectory** (FY25 $46.7M, ~5× in
+   three years). Doubling again would take the conservative spread to
+   ~+40bp.
+7. **UNKNOWN — the pace of the IT/AI expense build.** Management gives no
+   normalization date, and the Q3 release now says some systems are
+   amortizing before legacy decommissioning. Carried at today's level.
+
+Option value (not a condition):
+- title recovery on lower mortgage rates
+- specialty CR back inside 90–95
+- a year-end special at the $2.00–2.50 scale
+- ECM's full-year contribution
+
+## 7. Sources
+
+- **Primary:**
+  - Q3 2026 earnings release (8-K EX-99.1, accession 0000074260-26-000100,
+    filed 2026-10-22, read in full).
+  - Q2 2026 earnings release (accession 0000074260-26-000087), re-read for
+    the runoff-charge wording.
+  - EDGAR filing list for CIK 74260 through 2026-10-22.
+  - Q2 2026 call and 2025 10-K Item 1A, via the prior files.
+  - SEC XBRL `AllocatedShareBasedCompensationExpense` (FY2025 $46.7M), via
+    the prior file.
+- **stockanalysis.com (vetted exception):** /stocks/ORI/statistics/, live
+  probe (market cap hover $9,569,038,994, shares 239,405,529, beta 0.587,
+  insiders 0.387%, institutions 78.696%, float 220,732,579, debt
+  $1,749.7M, analyst target $43.50 from 3 analysts, dividendYield 9.46%
+  incl. the January special).
+- **Broker/market microstructure:** Robinhood MCP. Admissible because no
+  integrated official source carries estimates, intraday quotes or
+  options. Calls used:
+  - ORI/SPY/FNF/FAF/HIG/WRB live quotes and official 10/21 closes
+  - earnings estimate-vs-actual history (actuals cross-checked against the
+    release)
+  - ORI daily bars 2026-06-15 → 2026-10-21 (RV windows, price path)
+  - option chain, instruments and quotes for 2027-04-16 $40
+- **Reference data:** Damodaran home page, implied ERP 4.20% on October 1,
+  2026 (T-bond 5.29%). Cost-of-capital distribution and the ~29%
+  excess-return base rate (January 2026 vintages, per the anchors
+  reference).
+- **Point-in-time repo DBs:**
+  - fred.db: DGS10 5.15% (2026-10-19), T10YIE 2.35% (2026-10-20)
+  - portfolio.db `v_latest_positions`: 25 held symbols, ORI among them
+  - factor lines grepped from each holding's newest research file
+- **Low-confidence:** none used this run.
+
+## Kill-thesis record
+
+Ledger: **SOUND (on this pass)** — conditions=4 (4 probable), refuted=0,
+unknown=0, pending=0, not_obtained=0. §6's PENDING and NOT OBTAINED items
+attach to conditions that survive on observables (net PYD, observed
+distributions), so none enters the ledger.
+
+Per-condition adjudication:
+
+1. Reserve adequacy on primary long-tail lines — **SURVIVED**, narrowly.
+   - *Attack:* GL adverse for a second quarter; financial indemnity adverse
+     again; the runoff book's tail undisclosed. The industry backdrop (GL
+     social inflation, prior-file colour) is unchanged.
+   - *Held because:* specialty net PYD swung to −0.8 favorable (from +0.3
+     adverse), commercial auto and WC released, and the current-year loss
+     ratio improved 1.2 pts. A $40M FI repeat would have needed ~3.6 pts of
+     releases, more than the release's description supports.
+   - *Where it dies:* the 10-Q's line amounts or Q4 can still kill it.
+2. Specialty CR ≤ ~100 — **SURVIVED.**
+   - *Attack:* 96.0% with expense ratio +0.7 YoY, a new credit-loss
+     category, and IT amortization stacking on legacy run costs.
+   - *Held because:* 4 points of headroom and an improving current-year
+     loss ratio.
+3. Capital-return regime — **SURVIVED.**
+   - *Attack:* debt up $160M, BV/share down 2.7% in the quarter, and
+     buybacks at 1.6× book in a falling-BV quarter.
+   - *Held because:* $190.2M was returned in Q3 anyway, and management has
+     not changed the regime.
+4. Investment income grows with assets — **SURVIVED**, at a slower rate.
+   - *Attack:* consolidated NII +1.5% only, with Corporate −49.5%.
+   - *Held because:* the Corporate drop is the capital return itself.
+     Specialty NII is +4.9% on a growing invested base, which is the
+     condition as stated.
+
+Internal consistency: low growth, full payout, and a floor that charges
+growth its capital. No growth/reinvestment/low-risk strain.
+
+**Standing checks.**
+- *Base rate:* ~29% of firms sustain excess returns (Damodaran EVA). Only
+  the floor assumes ORI's does; it reads −25bp.
+- *Short case (strongest):* four straight misses and an expense base that
+  keeps finding new line items (IT amortization, start-ups, now a GAP
+  credit loss). Higher holdco interest, BV falling with rates, GL adverse
+  two quarters running. The headline 9.5% yield leans on a discretionary
+  special. At $39.97 the short wins if $686M is a ceiling: the floor is
+  negative, and the conservative row is only +80bp.
+  - *Answer:* ex-GAP, Q3 was flat YoY at ~$0.79, reserves released, and
+    the current-year loss ratio improved. The short needs the miss streak
+    to keep compounding, and Q3 did not show that once the named one-off is
+    removed.
+- *Management incentives:* proxy unread (§6 of the prior files). Behaviour
+  — buybacks, raised dividend, naming adverse charges in dollars when
+  material — aligns with owners. Rising SBC cuts the other way.
+- *Disconfirming search:*
+  - Looked for a named charge in Q3 FI: none found; size PENDING.
+  - Looked for Forms 4/144 cluster selling since 9/03: none.
+  - Market reaction: relative outperformance vs SPY on the print. Not
+    evidence for the thesis; it only fails to contradict it.
+- *Moat mechanism:* adequacy, not dominance (regulated scale, niche loss
+  data, title oligopoly, balance sheet), which is what ~1.6× book for a
+  12% ROE prices.
+
+**Statistical checks:** no backtest, hit-rate or composite signal underlies
+the thesis. N/A.
+
+**Options-timing check:** N/A. The thesis states no required move on a
+dated catalyst. Path 2 only; the 2027-04-16 $40 straddle failed the
+liquidity gate (UNRELIABLE).
+
+> [!WARNING]
+> **Closest attack:** the miss streak as a structural expense re-base (§1).
+> The conservative spread reaches 0bp at a ~$610M base (−11%). The floor is
+> already −25bp.
+
+> [!NOTE]
+> **Flip evidence:**
+> - *Toward FLAWED:* the 10-Q or call sizes Q3 FI adverse at ≥ $40M; Q4
+>   specialty PYD net adverse; another credit-loss item; or Q4 operating EPS
+>   below $0.73 with nothing named.
+> - *Toward firmer SOUND:* Q4 operating EPS ≥ ~$0.79, FI adverse immaterial,
+>   and the specialty expense ratio easing.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.48.** Written before re-reading §1's. A low-beta
+> insurer with a thin conservative spread and four straight misses. Its
+> relative strength on a down-market print day is a modest offset, not
+> evidence.

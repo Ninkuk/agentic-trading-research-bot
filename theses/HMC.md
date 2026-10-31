@@ -1,0 +1,434 @@
+# HMC — Honda Motor Co., Ltd. — 2026-10-13
+
+> [!IMPORTANT]
+> **In one sentence:** Honda's motorcycles and finance arm carry it while net cash backs the price, so autos need only stop losing money; a higher hurdle makes it a less comfortable buy.
+
+Price $33.33 (official close, 2026-10-13; 1 ADS = 3 common shares, so
+¥1,759/share at ~¥158.3/$) · market cap $43.25B (¥6.85T) · next earnings
+2026-11-05 or 2026-11-06 BMO (Robinhood calendar says 11-05 unverified;
+`stocks.db` says 11-06 BMO; Honda has not published the date; `data/earnings.db`
+carries no HMC row).
+
+Unattended scheduled run. Supersedes `research/HMC-2026-09-12.md` (BUY at
+$32.53, SOUND) a month before its 2026-11-06 reopen trigger. No new financial
+statements since then: the last report is still Q1 FY27 (quarter to
+2026-06-30). This run re-prices the thesis against a higher risk-free rate, a
+stronger yen and the events of the last month. Composite score 0, not flagged
+(`v_latest_scorecard`).
+
+## 1. Verdict and thesis
+
+**BUY at $33.33.** kill-thesis: **SOUND** — conditions=5 (2 probable,
+3 plausible), refuted=0, unknown=0, pending=3, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.53** · kill-thesis: 0.50
+
+> [!IMPORTANT]
+> **Disputed expectation:** at ¥6.85T the price implies ~11.6%/yr on a ¥600B
+> owner free-cash-flow base with 3% growth. The market is pricing the EV exit as
+> finished, autos at roughly breakeven, and motorcycles plus captive finance
+> carrying the company. What revises it up: a Q2 print in early November with no
+> new EV charges and a guide raised on FX and North American volume. What
+> revises it down: the 50% US tariff on Canadian-built vehicles taking effect
+> 2027-01-01 with no mitigation, or EV-exit costs breaking the ¥2.5T envelope.
+
+The thesis has not changed in the month. Motorcycles keep compounding (India
+H1 FY27 +15%, September +24%), captive finance earns ~¥300B a year, and
+operating companies hold ¥3.33T of net cash against a ¥6.85T market cap. The
+price still does not need the auto turnaround; it needs autos to stop losing
+money. What did change is the hurdle: the 10-year Treasury rose from 4.95% to
+5.24%, so the base-case spread narrowed from +247 to +213 bp and the
+value-fading bear case is now at the hurdle (+6 bp) rather than above it. It
+is still a buy, but a less comfortable one.
+
+> [!WARNING]
+> **Closest attack:** the Canada tariff. No deal has been reached since
+> 2026-08-24. Carney says Canada will not return to talks until the US changes
+> its attitude, and Honda Canada says 76% of Alliston's Civics and CR-Vs go to
+> the US. A 50% duty from 2027-01-01 on roughly 300k units is on the order of
+> ¥700B a year gross, which is more than the whole FY27 adjusted automobile
+> profit. It falls inside the 63-trading-day horizon.
+
+Load-bearing conditions of the bull case:
+
+1. *plausible* — The EV exit stays inside the ¥2.5T envelope. That means FY27
+   EV-related losses at or under the guided ¥520B, FY27's ~¥1.2T cash outflow
+   as the last large one, and the unprovisioned supplier compensation fitting
+   inside the ¥0.4T of headroom left after ¥2.1T recognised. PENDING
+   2026-11-06 (Q2 FY27 6-K, H1 EV-loss line) and 2027-05-14.
+2. *plausible* — North American autos stay profitable (segment margin ≥ ~3%)
+   on the tariff path, including whatever the Canada 50% threat becomes.
+   Evidence today: Q1 FY27 auto margin 5.0%; American Honda Q3 calendar sales
+   +9.3% and September +16% (press). Against it: the threat stands and talks
+   are frozen. PENDING 2027-02-09 (Q3 FY27 print, the first quarter under the
+   regime).
+3. *probable* — Motorcycles sustain ≥ ¥800B of operating profit. FY26 record
+   ¥732B, Q1 FY27 ¥234B at 20.5%; HMSI H1 FY27 dispatches 3.44M units (+15%);
+   September retail share 26.2%, the largest OEM (FADA).
+4. *probable* — Capital returns survive the exit. The ¥70 dividend was held
+   through a −¥424B year under the DOE 3% policy, and ¥3.33T of non-FS net
+   cash covers the ¥1.2T EV cash cost. Management sequences buybacks after
+   FY27's outflows.
+5. *plausible* — The cost reset delivers the FY29 ≥ ¥1.4T operating-profit
+   path. Mechanisms: "Triple Half" development cost and the next-generation
+   hybrid system, named "Honda Hybrid" on 2026-10-09, with 15 models by March
+   2030 and rollout from 2027. PENDING 2027-05-14 (FY28 guidance).
+
+> [!WARNING]
+> **Dominant shared risk factor:** US import-tariff escalation on North
+> American auto supply chains (Canada/Mexico/Japan-built vehicles and parts) —
+> holdings unavailable in this session.
+
+## 2. Business
+
+Unchanged from `HMC-2026-09-12.md` §2. In brief:
+
+**Created:** Motorcycles (FY26 revenue ¥4.02T) give durable, cheap-to-run
+mobility on the densest dealer and service network in India and ASEAN. Autos
+(¥13.9T) are fuel-efficient compacts and crossovers with ~10% US share.
+Captive finance (¥3.5T) supplies loans and leases on Honda products.
+
+**Captured:** (1) Motorcycle unit margin of 18–20% from scale and local
+procurement. (2) A thin, volatile auto unit margin: FY26 adjusted 0.3%, Q1
+FY27 5.0%. (3) Finance spread and lease residuals on ¥17.65T of finance
+assets, segment profit ¥276B. (4) Small, shrinking China JV equity income.
+
+**Protected:** Motorcycles have a real moat in distribution and service
+density, the reliability brand and the India cost curve. It is not a moat
+against electric two-wheelers. Autos are protected in North America by the
+hybrid system, the local footprint and loyalty. Against Chinese EV rivals in
+China and ASEAN there is no protection: Honda's China production was 14,130
+units in August 2026, 28.3% of a year earlier (Honda, 2026-09-29).
+
+**Control:** One share, one vote, no controlling holder. Trust banks and the
+ADS depositary are the largest holders of record. Nothing forecloses a
+takeover or an activist.
+
+**Operating leverage (Phase 0): negative.** Revenue rose 55% FY22→FY26 while
+operating profit went from ¥871B to a loss. FY26 adjusted ¥1,039B is below
+FY24's ¥1,382B on 7% more revenue. Figures in ¥B (stockanalysis, JPY):
+
+| FY | revenue | operating income |
+|---|---|---|
+| 2022 | 14,553 | 871 |
+| 2023 | 16,908 | 781 |
+| 2024 | 20,429 | 1,382 |
+| 2025 | 21,689 | 1,213 |
+| 2026 | 21,797 | −414 (adjusted +1,039) |
+| TTM to 2026-06-30 | 22,518 | −79 |
+
+## 3. Threads pulled
+
+- **What changed since 2026-09-12.** No Honda filing has moved the thesis.
+  The 6-K-level news is the "Honda Hybrid" naming (2026-10-09), the Honda
+  Report 2026 integrated report (2026-10-09), August production
+  (2026-09-29) and small Form 4 plan acquisitions on 2026-10-01 (442 shares
+  at ¥1,682.08 = $10.64 per share, a stock plan, not a signal). No buyback,
+  recall, EV charge or tariff statement. Silence since the call is itself a
+  reading: management has said nothing new on Canada.
+- **Rates.** DGS10 rose from 4.95% (2026-09-10) to 5.24% (2026-10-09), and
+  T10YIE went from 2.36% to 2.33%. This is the largest input change of the
+  month: it lifts the hurdle 33 bp (beta-floored) and is why the spreads in
+  §4 narrowed. Finding: the margin of safety shrank without anything
+  happening at Honda.
+- **Yen.** About ¥158.3/$ on 2026-10-13 (XE mid, low-confidence), from ~¥162.5
+  a month ago. Each ¥10 is ¥113.5B of operating profit. Honda's ¥155/$ guide
+  assumption is still conservative, but the H2 cushion is roughly halved,
+  from ~¥80B to ~¥40B. Finding: an input shift, not a break.
+- **Canada 50% tariff.** Nothing has been resolved. The tariff was announced
+  2026-08-24 for 2027-01-01, Canadian retaliation has run since 2026-09-08,
+  and no October reporting of resumed talks was found. Honda Canada's CEO:
+  76% of Alliston's Civic/CR-V output is exported to the US. Honda had
+  already shelved the C$15B Alliston EV complex (press). Analysts read the
+  risk as a gradual loss of model allocation rather than a shutdown
+  (low-confidence). The stock has not priced it (+2.5% in the month).
+  Finding: still the largest unpriced input, and now inside the horizon;
+  condition 2.
+- **US demand.** American Honda sold 121,796 units in September (+16%), the
+  sixth consecutive monthly gain, and Q3 calendar sales were 358,388 (+9.3%;
+  the brand scope is unclear) (CarPro, GoodCarBadCar, low-confidence; no
+  official release fetched). This may include pull-forward ahead of the
+  Canada tariff date. Finding: supportive of the Q2 print, not of 2027.
+- **Motorcycles.** HMSI September dispatches 706,266 (+24%), domestic +26%,
+  exports +11%; H1 FY27 3.44M units (+15%); FADA retail 468,789 at 26.19%
+  share, ahead of Hero (press, low-confidence on aggregation, consistent
+  across four outlets). Finding: condition 3 strengthened.
+- **China.** August production 14,130 (−71.7% YoY) and Asia production
+  −43.6% (Honda primary). Earlier: April China sales −48% and 2025 −24%
+  (press). Finding: the China tail is shrinking faster. It has already been
+  impaired (¥90.9B in FY26), but the Q2 equity-method income and royalty
+  line will show it. It is not load-bearing for the base case, which assumes
+  only ¥50B of equity income.
+- **Earnings pattern (broker tier, 3 analysts).** ADS EPS actual vs estimate:
+  Q1 FY26 $0.97 vs $0.51, Q2 $0.60 vs $1.27, Q3 $0.76 vs $1.07, Q4 −$4.24 vs
+  $0.03, Q1 FY27 $2.18 vs $1.27. The surprises are volatile and coverage is
+  thin, so this is not a managed-beat pattern. Actuals reconcile to the 6-K
+  per the prior run (no `sec_fundamentals.db` row exists for a 20-F filer).
+- **Options read (mandatory):** path 2 only. HMC is not in the CBOE catalog,
+  so `data/options.db` has no history for it. Expiry 2026-11-20, DTE 38,
+  bracketing the early-November print. Liquidity gate FAILED → UNRELIABLE.
+  IV is above both realised windows (table in §4).
+- **Data coverage (finding).** This session's envelope runs the statistics
+  probe in schema-only mode (no ad-hoc Python), so live `hover` values were
+  not readable. Market cap, beta, EV and shares come from the `stocks.db`
+  capture of 2026-10-12 (one session old), with price from the Robinhood
+  official close. The yen financials have not changed since the 2026-09-12
+  run (same last report date), so its JPY figures are carried forward.
+- **Dead ends:** the Honda Report 2026 press release carries no figures (the
+  CFO's capital-allocation section is in the PDF, not read). Honda's August
+  release has no motorcycle or overseas-sales figures. No October Reuters
+  story on Honda. A search for September 2026 China retail data returned
+  only stale years. The Acura eight-seat SUV (Bloomberg, 2026-10-13) and the
+  wireless-charging R&D are immaterial to FY27.
+
+## 4. Valuation
+
+Inputs: market cap $43,251M ($33.33 × 3,893,016,583 shares ÷ 3) ≈ ¥6,847B
+at ¥158.3/$. The `stocks.db` 2026-10-12 capture reads $43,015M at $32.66.
+The owner base is unchanged from the prior run and built the same way:
+adjusted operating profit ¥1,000B plus ¥50B equity income plus ¥150B net
+finance income, taxed at 28%, less ~¥90B NCI, gives ~¥775B of owner
+earnings. Add non-FS D&A ¥690B and subtract ~¥1,100B of non-FS capex and
+capitalised development to get ~¥365B; Honda's own non-FS FCF was ¥666B
+(FY25) and ¥1,058B (FY26, flattered). That gives a ¥600B base and an ¥800B
+bull. The consolidated levered `fcf` TTM ¥278.5B nets finance-receivable and
+lease-fleet growth and is a reference row only (captive-finance rule). It is
+paired with market cap, net debt 0. SBC is negligible. Net cash of ¥3.33T is
+not credited because FY27's EV cash, capex and dividend consume it.
+
+Hurdle: rf 5.24% (DGS10, 2026-10-09) + beta 0.8 × ERP 5.23% = 9.42%. Beta
+0.328 (`stocks.db`) is floored to the 0.8 band edge; float is 99.97%, so this
+is a yen ADR's low regression beta, not a thin float. ERP is the prior run's
+operations-weighted 5.17% (country table of 2026-01-05) moved up 6 bp with
+Damodaran's headline implied ERP (4.14% on 2026-09-01 → 4.20% on
+2026-10-01). Terminal ceiling: T10YIE 2.33% (2026-10-13).
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| A reference: consolidated levered TTM (finco-contaminated) | ¥279B | 3% | 2.33% | 6.62% | −280 bp |
+| B bear: owner FCF, no growth, terminal cut | ¥600B | 0% | 1.00% | 9.48% | +6 bp |
+| B base: owner FCF | ¥600B | 3% | 2.33% | 11.55% | +213 bp |
+| C bull: FY29 ≥ ¥1.4T plan delivered | ¥800B | 8/8/6/4/3% | 2.33% | 16.14% | +672 bp |
+
+Against the prior run's 9.09% hurdle, the same rows were −245 / +39 / +247 /
++706 bp. The implied returns are essentially unchanged; the hurdle moved.
+
+Integrity checks:
+
+- Reinvestment: a ¥775B earnings base against ¥600B FCF gives a 22.6%
+  terminal reinvestment rate and an implied terminal ROE of 10.3%, 0.9
+  points above the hurdle. That is Honda's long-standing 10% ROIC target,
+  which it has not met. The bear row (ROE 4.4%) is the value-fading
+  alternative and now only matches the hurdle. The bull row prints "growth
+  without reinvestment" (¥800B > ¥775B). It is an upside case that also
+  needs FY29 earnings near ¥1T, not a base.
+- Market-share sentence: the bull path compounds FCF to ~¥1,055B by year 5.
+  That needs motorcycles at ~25M units on the India capacity build and an
+  auto margin near 5%, not a US share gain beyond ~10%.
+- Terminal vs Item 3.D: the disclosed structural risk is Chinese EV
+  competition and the SDV shift. A 2.33% terminal is the breakeven, with no
+  real growth. It survives only if the motorcycle franchise holds against
+  electric two-wheelers; the bear row cuts it to 1%.
+- Distribution clamp: the base 11.55% sits above the 90th percentile of US
+  cost of capital (~9.9%). The naive consolidated row sits below the median,
+  which is why screens do not flag it.
+- Cash tax: the base taxes at 28% against Q1's 21.7% effective rate and a
+  ~30% marginal rate. Not a serial acquirer. Pension (¥316B) is ignored.
+- Leverage gate: consolidated net debt ($54.6B, `stocks.db`) is 54% of EV,
+  which triggers the gate on its face. ¥14.35T of the financing liabilities
+  is the captive's asset-backed funding against ¥17.65T of finance assets;
+  the industrial company is net cash. The equity-option lens was not run,
+  and the DCF frame governs §1.
+
+Options-implied move — path 2 (Robinhood stopgap), expiry 2026-11-20, 38
+calendar days, bracketing the early-November Q2 print (the 2027-01-01 tariff
+date is beyond it). Strike 32.5 is the nearest listed to the 33.33 spot (no
+33 strike), so the call is ~$0.83 in the money and the straddle overstates
+the mean move slightly. Call mark 1.70 / put mark 0.925; IV is the mean of
+0.27366 and 0.322685. Closes 2026-06-05 → 2026-10-13 (90 bars; the
+interpolated 10-13 bar was replaced by the official 33.33 close).
+
+| metric | value |
+|---|---|
+| spot | 33.33 |
+| expected absolute move | 7.88% |
+| 1-σ move | 9.62% |
+| ATM IV | 29.82% |
+| RV60 | 25.82% |
+| RV20 | 19.53% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Liquidity gate: FAILED → UNRELIABLE. The call spread is $2.40 on a $1.70
+mark (141%) and the put spread $0.95 on $0.925 (103%); volume 3 and 10; OI
+31 and 0. Read on its own terms, the surface prices more volatility than the
+stock has realised, as expected for an expiry that spans a print. It is
+"elevated" only in that stopgap sense. Timing check: the thesis names a dated
+catalyst (the Q2 print) but requires no stated move, so the 2-sigma
+refutation does not apply.
+
+## 5. Falsifiers
+
+For an owner (sell):
+
+- **Break —** EV-exit losses breach the ¥2.5T envelope (supplier
+  compensation, a Ye-series or Honda 0 write-down). The "last large charge"
+  premise is then false.
+- **Break —** Motorcycle operating profit runs below ¥600B annualised for two
+  consecutive quarters ex-FX, from electric two-wheeler share loss in India
+  or Vietnam.
+- **Shift —** The Canada 50% tariff takes effect 2027-01-01 with no exemption
+  or stated relocation plan. Revalue autos at −¥500B to −¥700B a year until
+  volume moves.
+- **Shift —** Dividend cut below ¥70 or DOE abandoned. Revalue on the new
+  payout.
+- **Shift —** FY28 guidance (2027-05-14) below ¥1.2T adjusted operating
+  profit. The FY29 path is off.
+- **Shift —** Yen through ¥140/$, or DGS10 above ~5.6%. Either pushes the
+  base spread toward zero (the bear row is already at the hurdle). Revalue.
+
+> [!NOTE]
+> **Reopen trigger:** 2026-11-06: hmc-q2-fy27-print-h1-ev-losses-at-or-below-260b-with-fy27-op-guide-at-or-above-650b-and-canada-tariff-mitigation-plan-or-price-at-or-below-27
+
+## 6. UNKNOWNs
+
+1. PENDING 2026-11-06 — H1 FY27 EV-related losses against the ¥520B
+   full-year figure, any provisioning of supplier claims, and the confirmed
+   report date. Source: the Q2 6-K and the Q&A minutes. A breach kills
+   condition 1; its absence does not.
+2. PENDING 2027-02-09 — Whether the Canada tariff took effect, and Honda's
+   quantified exposure. Alliston's US-bound unit count is not disclosed; the
+   76% export share is from Honda Canada's CEO via press. A shift, not a
+   kill.
+3. UNKNOWN — Annual finance-subsidiary dividends to the parent. This moves
+   the industrial/finance split, not the owner total. Not fatal.
+4. UNKNOWN — The airbag-inflator provision; the company states it is
+   unestimable. Not fatal unless Takata-sized.
+5. NOT OBTAINED — The Honda Report 2026 PDF (CFO capital-allocation section)
+   and an official American Honda Q3 sales release. Neither is load-bearing:
+   condition 4 stands on the 20-F DOE policy and the CFO's August remarks.
+6. Option value, unnumbered in §1 (*possible* tier): Nissan software
+   standardisation from FY2029, India strategic auto models from 2028, reuse
+   of the LG plant for hybrid batteries, an Astemo IPO.
+
+## 7. Sources
+
+**Primary:** Honda newsroom (global.honda): "Honda Hybrid" naming
+(2026-10-09); Honda Report 2026 release (2026-10-09); Production, Sales and
+Export Results for August 2026 (2026-09-29). Forms 4 of 2026-10-01 (stock
+plan, via press summaries of the EDGAR filings). Carried forward from
+`HMC-2026-09-12.md` §7: Form 20-F FY2026, 6-Ks of 2026-08-05 / 05-14 /
+03-12, and Honda IR scripts and Q&A minutes.
+
+**stockanalysis.com (vetted exception):** `/stocks/HMC/statistics/`, schema
+only this session (values unreadable in the envelope). JPY income-statement
+history is carried forward from the prior run.
+
+**Broker/market microstructure:** Robinhood MCP — official close 2026-10-13
+$33.33; earnings results (estimates, the tentative 2026-11-05 date),
+admissible because no integrated official source carries HMC's estimates or
+date; option chain, 2026-11-20 32.5-strike instruments and quotes; 90 daily
+closes for realised volatility.
+
+**Reference data:** Damodaran implied ERP 4.20% (2026-10-01, home page) and
+4.14% (2026-09-01); country ERP table (2026-01-05); auto-industry margins and
+excess-return base rate (January 2026). FRED via `data/fred.db`: DGS10 5.24%
+(2026-10-09), T10YIE 2.33% (2026-10-13).
+
+**Point-in-time repo DBs:** `data/stocks.db` v_latest (2026-10-12 capture:
+price $32.66, market cap $43.02B, EV $100.6B, beta 0.328, insiders 0.03%,
+float 3.89B, fScore 2, FCF yield 4.09%, net cash −$54.6B consolidated,
+3 analysts, earnings 2026-11-06 bmo); `data/composite.db` v_latest_scorecard
+(score 0, not flagged); `data/earnings.db` (no HMC row; calendar_now
+2026-10-13); `data/options.db` (no HMC history); `data/portfolio.db` not
+readable in this session.
+
+**Low-confidence:** XE / Trading Economics / FXStreet on USDJPY ~158.2–158.4
+(2026-10-13/14); CarPro and GoodCarBadCar on American Honda September/Q3
+sales; TimesDrive / Autocar India / FADA reports via press on HMSI September
+sales; CNBC, Fox Business, Globe and Mail, France 24 and Milton Now on the
+Canada talks and the 50% tariff; CHCH / CBC on the Alliston EV suspension
+and the 76% export share; Gasgoo / CarNewsChina on China sales; Bloomberg
+headline on the Acura SUV.
+
+## Kill-thesis record
+
+Ledger: `2026-10-13 HMC SOUND conditions=5 refuted=0 unknown=0 pending=3
+not_obtained=0 reopen=2026-11-06`. The object attacked is the bull case (own
+HMC at $33.33 and beat SPY over 63 trading days), never the pass it rejects.
+
+Per-condition adjudication:
+
+1. EV-exit envelope — **PENDING 2026-11-06.** Attack: supplier compensation
+   is explicitly unmeasured and unprovisioned, ¥2.1T of the ¥2.5T is used,
+   and a month of silence is not evidence of containment. Against it: the
+   CFO's "no new large-scale one-time EV losses next fiscal year", and no
+   charge announced since. Not refuted; dated.
+2. NA autos profitable under the tariff path — **PENDING 2027-02-09.**
+   Attack, stronger than a month ago: talks are frozen with no October
+   movement, Canada's PM refuses to return to the table, retaliation is
+   live, and 76% of Alliston output is US-bound. Strong September US sales
+   may be pull-forward that flatters Q3/Q4 and borrows from 2027. Against it:
+   Q1 auto margin 5.0%, rising US volumes and HEV mix, and this
+   administration's record of tariff threats being delayed or negotiated
+   down (the 25→15% offer existed in August). Closest attack to landing; the
+   uncertainty is not credited.
+3. Motorcycles ≥ ¥800B — **SURVIVED** at probable, and strengthened: HMSI H1
+   +15%, September +24%, retail share 26.2%. Attack: electric two-wheelers,
+   Hanoi restrictions, festive-season timing (September dispatches can be
+   channel fill ahead of Diwali). Retail registrations (+38% YoY) answer the
+   channel-fill attack for September.
+4. Capital returns survive — **SURVIVED** at probable. Attack: the
+   capital-allocation section of the new integrated report was not read, and
+   capex is up ¥529B. The dividend half stands on the 20-F DOE policy; the
+   buyback half was always the weaker one.
+5. Cost reset to FY29 — **PENDING 2027-05-14.** Attack: Honda has
+   restructured before and margins still fell; a branded hybrid system is a
+   name, not a cost result; the industry margin anchor is 2.3–3.2%. Against
+   it: dated launches from 2027. Not refuted; dated.
+
+Self-consistency: the base case claims modest growth (3%) with 22.6%
+reinvestment and a 10.3% terminal ROE. That is not internally strained, but
+the ROE is at the company's never-met target. The bear row removes it and now
+only matches the hurdle.
+
+Standing checks. Base rate: turnarounds usually fail, and only ~29% of firms
+earn above their cost of capital (Damodaran EVA, January 2026). The thesis
+leans on the existing motorcycle franchise, not on the auto turnaround, which
+is why it survives that rate. Short case: an automaker whose core earns
+nothing, with China production down 72%, a 50% tariff landing on its
+second-largest North American source inside the horizon, a capex cycle
+starting and a persistent conglomerate discount. Now add that a 29 bp rate
+rise erased a third of the bear-case margin with no company event. The
+cheapness is a judgement, not a mistake. Management incentives: ROIC 10% /
+DOE 3% framing aligns with returns, and the thesis needs no action against
+it. Disconfirming search: ran on Canada (found frozen talks and the 76%
+export share), China (found August −72%) and the yen (found ¥4 stronger);
+nothing on the EV envelope. Moat: motorcycles pass the mechanism question;
+autos fail it outside North America.
+
+Statistical checks: no repo signal, backtest or hit rate is load-bearing
+(composite score 0) — N/A.
+
+Options-timing check: ran on path 2 (2026-11-20, DTE 38) against the Q2
+print. The thesis states no required move, so there is no refutation. The
+liquidity gate failed (spreads 141% and 103% of mark, OI 31/0) and the table
+is UNRELIABLE. Coverage disclosed.
+
+> [!WARNING]
+> **Closest attack:** the Canada tariff on condition 2. It is the only single
+> input that turns autos into a ¥500B+ loss, it lands inside the 63-day
+> horizon, and nothing since August suggests a deal.
+
+> [!NOTE]
+> **Flip evidence:** SOUND becomes FLAWED if H1 EV losses print above ¥260B or
+> supplier claims breach the envelope, if the tariff takes effect with no plan,
+> or if motorcycle profit falls below ¥600B annualised ex-FX. SOUND hardens if
+> the Q2 print carries no new EV charges, raises the guide, and states a Canada
+> plan or exemption.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td):** 0.50 — the Q2 print is likely good (motorcycles, US
+> volume, yen still weaker than guide), but a 2027-01-01 tariff headline sits
+> inside the window and the margin over a higher hurdle is thinner.

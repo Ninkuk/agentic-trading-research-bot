@@ -1,0 +1,417 @@
+# DECK — Deckers Outdoor (HOKA, UGG) — 2026-10-22 (reopen of 2026-07-27, trigger: print-falsifier-checkpoint)
+
+> [!IMPORTANT]
+> **In one sentence:** Deckers owns the HOKA and UGG shoe brands, but both growth guides were cut and the price clears the hurdle by only about one point, so the call turns on whether growth holds and it is a pass.
+
+Price $77.35 (after-hours, 2026-10-22 13:13 Phoenix, ~8 minutes after the
+Q2 FY27 release; official regular-session last $85.25) · market cap ~$10.37B
+(~134.0M shares: 136.18M statistics count less Q2 buyback, estimated) · net
+cash $1.21B (Sep 30, no borrowings) · next earnings ~2027-01-28 after close
+(Robinhood, unverified)
+
+**Prior file:** `research/DECK-2026-07-27.md` — **BUY at $97.73**,
+kill-thesis UNPROVEN (5 conditions, 0 refuted, 2 unknown; conditions not
+enumerated).
+**Reopen question:** at the Oct 22 print, did HOKA's back-half wholesale
+acceleration show up (or stay guided), did HOKA US DTC stay positive, did
+gross margin hold above 54% — and does the BUY survive?
+
+## 0. The reopen question, answered first
+
+**The trigger fired on its main leg: the back-half acceleration was guided
+away.** The Q2 FY27 release (8-K EX-99.1, filed today) cut FY27 revenue to
+$5.700–5.725B from $5.86–5.91B, HOKA to "high-single-digit" from
+"low-double-digit" growth, and UGG to "low-single-digit" from "mid-single-
+digit". Arithmetic on the guide: H1 FY27 revenue was $2,500.1M (+4.4% YoY,
+release income statement), so the new midpoint implies H2 of ~$3,212M,
+**+4.4% — no acceleration at all**, where the July guide implied ~+9%.
+HOKA's implied H2 is +7% to +11% (from +6.6% in H1); UGG's implied holiday
+half is −1% to +2.5%. In July management called the H1 HOKA shortfall
+"a change in logistics … not any" change in demand (Q1 call, Fasching);
+this guide cut says at least part of it was demand.
+
+The quarter itself beat on profit and missed on sales. Revenue $1,480.6M
++3.5% against a ~+5% guide; HOKA +6.8% (guided high single digits), UGG
++3.5% (guided mid single digits); DTC −1.8% with comparable DTC sales
+**−6.4%**; domestic −0.4%. Gross margin 60.5% including 310bp of IEEPA
+tariff refunds (~57.4% underlying vs 56.2%); EPS $2.31 including $0.28 of
+refunds (~$2.03 underlying vs a $1.73–1.78 guide). FY EPS guide
+$7.80–7.95 includes ~$0.52 of refunds, so the underlying guide is
+~$7.28–7.43 — five to seven cents below July's $7.35–7.50.
+
+Effect on the thesis: the July BUY rested on "the bear case needs actual
+decline in both brands." Neither brand declined, but the growth leg the
+upside scenarios needed was withdrawn, and the stock trades after hours at
+$77.35 (−9.3% on the print, −21% since the prior run). At that price a
+zero-growth path pays roughly the hurdle; the price pays only if growth
+continues, which is the leg this print weakened. **The call moves to PASS.**
+
+| prior falsifier | actual | status |
+|---|---|---|
+| HOKA global growth <5% in any H2 FY27 quarter | No H2 quarter reported yet; H2 implied +7% to +11% | NOT TRIGGERED |
+| Back-half wholesale acceleration fails at Oct 22 / January | FY guide cut; consolidated H2 implied +4.4% vs ~+9% in July; HOKA LDD→HSD | FIRED (guidance level; January confirms) |
+| US HOKA DTC negative, or measured US share loss >$120 | Total DTC −1.8%, comps −6.4%, domestic −0.4%; HOKA-US DTC split not in the release | GRAZED |
+| Gross margin <54% or rising promo cadence | GM ~57.4% ex-refund, up 120bp YoY | NOT TRIGGERED |
+| UGG declining through a normal winter | Q2 UGG +3.5%; holiday half guided −1% to +2.5% | NOT TRIGGERED (pending 2027-01-28) |
+| Large acquisition displacing the buyback | None; $299M bought in Q2, FY assumption $1.0B | NOT TRIGGERED |
+
+## 1. Verdict and thesis
+
+> **PASS at $77.35 (after-hours, 2026-10-22).** kill-thesis: **FLAWED** —
+> conditions=6 (3 probable, 3 plausible), refuted=1, unknown=0, pending=2,
+> not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.45** · kill-thesis: 0.42
+
+> [!IMPORTANT]
+> **Disputed expectation:** the after-hours price implies roughly flat FCF
+> forever (~10%/yr on a $1.0B base against a 9.86% hurdle); a Jan 28 print
+> with HOKA ≥ +8% and a non-negative UGG holiday makes the growth rows (12–13%)
+> credible again, and a UGG holiday decline puts the decline row (~9%) in
+> charge.
+
+This is still a very good business: ~21% underlying operating margins, net
+cash, ROIC far above its cost of capital, and a buyback retiring ~9% of the
+shares a year at this price. But both brands' growth guides were cut
+mid-year, the back-half acceleration management promised twice is gone, and
+comparable DTC sales fell 6.4%. At $77.35 the price clears the hurdle only on
+a path where growth holds, and the edge is about one percentage point —
+inside the whole-percent precision a stock with this much vol allows. That is
+not enough to own it while the one question that matters (maturation or
+decay) has just tilted toward decay.
+
+> [!WARNING]
+> **Closest attack (on the pass):** the decline row — HOKA and UGG both
+> shrinking 5% a year for two years — still returns ~9%, only ~130bp under the
+> hurdle, and ~52bp under after excess cash. The downside of owning at $77 is
+> mediocre returns, not loss; a pass on a name this cheap can simply be wrong
+> on base rates of profitable, cash-rich brand owners at 10× FCF.
+
+Load-bearing conditions of the bull case (owning at $77.35 beats SPY):
+
+1. *probable* — Underlying FCF holds near $1.0B in FY27: ex-refund operating
+   margin ~21.5% (FY guide 23% incl. ~150bp refunds), Q2 underlying gross
+   margin up 120bp (8-K EX-99.1).
+2. *plausible* — HOKA keeps growing at least mid-single digits through FY28
+   (maturation, not decay); settled by the Q3 FY27 print, ~2027-01-28.
+3. *plausible* — UGG does not decline through the FY27 holiday half and
+   FY28; settled by the Q3 FY27 print, ~2027-01-28.
+4. *probable* — The full-price model holds: no promotional reset (Q2
+   underlying GM 57.4% vs 56.2%; inventory +3% YoY against sales +3.5%).
+5. *probable* — Capital goes to buybacks near intrinsic value, not to a
+   large acquisition ($637.5M bought in H1, $4.4B authorization left, $1.0B
+   FY assumption).
+6. *plausible* — Management's H1 framing holds: the HOKA wholesale shortfall
+   was shipment timing that the back half recovers (Q1 call, July 23).
+
+> [!WARNING]
+> **Dominant shared risk factor:** US and European discretionary consumer
+> spend on premium apparel and footwear — shared by 4 of 25 held names (KTB
+> "US lower- and middle-income consumer discretionary spend"; PYPL "US and
+> European online consumer discretionary spend"; PRI "US lower- and
+> middle-income household cash-flow stress"; YOU "US discretionary air-travel
+> volume", via the consumer-recession route) · 0 unlabelled. DECK is not held.
+
+## 2. Business
+
+Unchanged from `research/DECK-2026-07-27.md` §2 (HOKA performance running
+plus UGG comfort-luxury; capture through full-price wholesale plus a growing
+DTC mix; protection is brand heat and supply discipline, not a structural
+moat). Deltas:
+
+**Created:** HOKA Q2 $677.2M (+6.8%), UGG $786.4M (+3.5%), other brands
+$17.0M (−54%, Koolaburra phase-out) — 8-K EX-99.1. Domestic −0.4%,
+international +9.0%: growth is now entirely outside the US.
+
+**Captured:** wholesale +5.5% to $1,093M, DTC −1.8% to $387.5M (comps
+−6.4%). Q2 is the wholesale-heavy quarter, but DTC was +13% in Q1, so the
+DTC turn is the change worth noting. Underlying gross margin rose anyway,
+so the DTC softness is not a markdown story on this evidence.
+
+**Protected:** unchanged — no structural moat. CEO in the release:
+"a challenging consumer environment … we are taking deliberate actions to
+strengthen our connection with consumers, sharpen execution, and concentrate
+resources behind our greatest opportunities." That is the language of a
+brand reset, not of a share gain.
+
+**Control:** one class of common stock (NYSE: DECK, 8-K cover page), no
+controlling holder; insiders 1.02%, institutions 98.96% (statistics probe).
+Nothing forecloses a takeover or an activist. A board change today: Rati
+Sahi Levesque (CEO of The RealReal) joins Dec 1; Lauri Shanahan retires
+(8-K EX-99.2).
+
+**Operating leverage (Phase 0): positive over the decade, flat this year.**
+FY17→FY26 revenue $1.79B→$5.47B, op income −$2M→$1.26B (prior §2, SEC
+XBRL). FY27: revenue guided +4.4% with an ex-refund operating margin ~21.5%
+against FY26's 23.1%, so op income is roughly flat to down. Q2 alone:
+ex-refund op income $343.5M vs $326.5M (+5.2%) on sales +3.5%, with SG&A
++5.9%.
+
+## 3. Threads pulled
+
+- **Q2 FY27 release (8-K, filed 2026-10-22 ~13:05 Phoenix):** figures in
+  §0. Cash $1,209.7M vs $1,414M a year ago, inventory $860.8M vs $835.6M
+  (+3%), no borrowings. Q2 buyback 3.2M shares for $299.3M at $93.65; H1
+  6.5M shares for $637.5M at $98.77 — every H1 share was bought above
+  today's price.
+- **Guide-implied halves (my arithmetic on release figures and the
+  stockanalysis segment series):** FY26 revenue $5,472.2M (quarters
+  $964.5M / $1,430.8M / $1,957.6M / $1,119.3M); FY27 midpoint $5,712.5M =
+  +4.4%; H1 +4.4%, H2 +4.4%. HOKA FY26 $2,587.3M, H1 FY27 $1,380.7M (+6.6%);
+  HSD = +7–9% gives H2 $1,388–1,439M vs $1,300.1M (+7% to +11%). UGG FY26
+  $2,738.8M, H1 FY27 $1,064.4M (+3.9%); LSD = +1–3% gives H2 $1,702–1,757M
+  vs $1,714.1M (−0.7% to +2.5%).
+- **The July framing, re-read (Q1 FY27 call, stockanalysis/Quartr):** "The
+  growth that you're seeing this year is really a change in logistics. It's
+  not any … Overall, the demand is strong for the year" (Fasching); "No
+  cancellations to the order book" (Caroti, on UGG). Q2 guide then was
+  revenue ~+5% and EPS $1.73–1.78. Revenue came in under that and the year
+  was cut — condition 6 is refuted on these two documents.
+- **The Q2 call (4:30 pm ET today):** not yet transcribed on stockanalysis
+  when this was written; the brand-by-channel split (HOKA US DTC) and
+  management's account of the cut come from it. See §6.
+- **IEEPA refunds:** $46.0M plus $3.0M interest in Q2; $87.9M plus $4.7M
+  through Oct 8, now in the guide; nothing further assumed. One-time — the
+  valuation base excludes them.
+- **After the July call:** analyst PT cuts continued — UBS $161→$140 (Oct
+  15), Raymond James $120→$105 ("potentially choppy Q2", Oct 16); BMO
+  initiated Underperform $70 on "a weakening athletic demand backdrop and
+  many peers citing a highly promotional environment" (Sep 8); Wolfe
+  Peer Perform (Oct 21). Dick's executive chairman listed HOKA among brands
+  "in the reset" (Jefferies note, Aug 25). A report on Oct 5 said Michael
+  Burry opened a position (low-confidence colour). All via the stockanalysis
+  news feed.
+- **8-Ks between calls:** Aug 31 revolver amendment ($500M, maturity 2031,
+  no draw — routine); Sep 15 annual-meeting vote results. No M&A.
+- **Insiders (EDGAR Forms 4):** Aug 15–17 CFO and President tax-withholding
+  (code F) and annual grants (code A); Sep 1 director grants. No open-market
+  buys or sales. Silent.
+- **Short interest:** 11.81M shares, 8.67% of shares out, up from 8.92M the
+  prior month (statistics probe) — the short case was building into the
+  print.
+- **Composite:** last flagged 2026-09-18 on `stocks_rsi` 29.9 (score +1);
+  `sa_fcf_yield` 10.5 and `sa_fscore` 6 annotations only. Not in today's
+  flags. That was a microstructure (oversold) flag, not a business opinion.
+- **Options read (mandatory):** path 2 only (DECK is not in the CBOE
+  catalog). See §4's table — the Oct 23 expiry bracketed today's print.
+- **Dead ends:** the stockanalysis channel series for the June quarter
+  (DTC +113.6%, wholesale −45.9%) contradicts the Q1 release (DTC +13%) and
+  is a vendor reclassification error — not used. A web search for HOKA
+  promotional or competitive news in October 2026 returned only stale 2025
+  campaign items. `sec_fundamentals.db` still has no DECK row.
+
+## 4. Valuation
+
+**Inputs.** Base FCF: an underlying FY27 run-rate of $1.00B, built from the
+ex-refund EPS guide ($7.28–7.43 × ~135M diluted shares ≈ $0.99B net
+income), with D&A (~$74M) about equal to capex (~$76M) and SBC already
+expensed in net income. The trailing statistics-probe `fcf` of $1,117.8M
+less SBC $46.8M (stocks.db `shareBasedComp`) gives $1,071M and is run as a
+sensitivity; it runs above net income on working capital and predates the
+refunds. Paired with market cap ~$10,365M (134.0M estimated shares ×
+$77.35 after-hours); net debt 0 by the pairing rule. Net cash is $1.21B at
+the seasonal low (Sep 30); taking ~$0.9B as excess, the net-of-cash
+denominator is ~$9,465M. No minority interests, no debt, no pension.
+
+**Hurdle:** rf 5.15% (DGS10, 2026-10-19) + beta 1.121 × ERP 4.20%
+(Damodaran implied ERP, 2026-10-01) = **9.86%**. Beta is inside the
+0.8–1.2 band (float 134.66M of 136.18M shares; insiders 1.02%), so no clamp.
+About 37% of revenue is non-US (Europe, Japan, China); those countries'
+ERPs bracket the US figure, so the weighted ERP moves the hurdle by roughly
+±15bp — not recomputed. **Terminal-growth ceiling:** 10-year breakeven
+2.35% (T10YIE, 2026-10-20).
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| decline, then flat | $1.00B | −5, −5, −3, 0, 0% | 0% | ~9% | −134bp |
+| zero growth | $1.00B | 0% | 0% | ~10% | −21bp |
+| zero growth, net of ~$0.9B excess cash | $1.00B | 0% | 0% | ~11% | +71bp |
+| zero growth, trailing base | $1.071B | 0% | 0% | ~10% | +47bp |
+| modest | $1.00B | 3% | 2.35% | ~12% | +263bp |
+| guide-ish | $1.00B | 5, 5, 4, 4, 3% | 2.35% | ~13% | +317bp |
+
+Whole percents only: the event-week ATM IV is 226% (path 2 below). Spreads
+are the CLI's. Before the print, at $86.61, the zero-growth row on a $1.071B
+base read 9.08% (−78bp).
+
+- **Reinvestment warning, answered:** the tool flags growth without
+  reinvestment on the 2.35% rows. That terminal rate is the breakeven —
+  nominal growth at expected inflation, which repricing existing product
+  needs no reinvestment for. The 0% rows exist because a brand business
+  may not even manage that.
+- **Market share:** the guide-ish path takes revenue from $5.71B to ~$7.0B
+  in five years, 1.2× today, with no change in category share required.
+- **Terminal growth vs Item 1A:** the FY26 10-K's first risk factor is a
+  change in consumer preference (prior §2). A 2.35% terminal rate survives
+  only if one of the two brands stays relevant for decades; the 0%-terminal
+  rows price the case where it does not, and they sit at the hurdle rather
+  than above it — that is the pass.
+- **Distribution clamp:** ~10% at zero growth sits at the top of the
+  5–10% band for US cost of capital; it is not a strong-pass signal in
+  either direction.
+- **Buyback:** a $1.0B FY assumption is ~9.6% of the after-hours market
+  cap. That is how flat FCF becomes per-share growth, and it is already
+  inside the market-cap pairing — it is not extra return on top of the
+  table.
+
+**Options-implied move** (path 2 — Robinhood stopgap; path 1 N/A, DECK is
+not in the CBOE catalog): expiry 2026-10-23, 1 DTE, brackets today's
+after-close print. ATM 87 strike, read at 11:03 Phoenix before the print
+(spot $86.605; call mark 4.05, put mark 4.45):
+
+| metric | value |
+|---|---|
+| spot | 86.61 |
+| expected absolute move (MEAN, not a ceiling) | 9.81% |
+| 1-σ move | 11.81% |
+| ATM IV | 225.56% |
+| RV60 | 32.19% |
+| RV20 | 25.69% |
+| IV > RV60? | YES |
+| IV > RV20? | YES |
+
+Both windows read YES, but this is a one-day event straddle; "elevated" is
+the market pricing a known print, not a finding. The −9.3% after-hours move
+landed inside the 1-σ move. **Liquidity gate: FAILED → UNRELIABLE**
+(call spread $0.70 on a $4.05 mark = 17%, put $0.70 on $4.45 = 16%, both
+above 10%; volume 45/157, open interest 199/73). Timing-check
+applicability: the thesis makes no dated move claim, so the 2-σ timing
+refutation does not apply.
+
+## 5. Falsifiers
+
+For the pass (flip toward buy):
+
+- **Shift —** Price at or below $70: the zero-growth row reaches ~11%,
+  +80bp over the hurdle before the excess-cash adjustment.
+- **Shift —** The Q3 FY27 print (~2027-01-28) shows HOKA ≥ +8% and UGG's
+  holiday quarter ≥ flat, with comparable DTC sales positive: the growth
+  rows become the base case again.
+
+For an owner (sell):
+
+- **Break —** UGG declines in the holiday quarter (Q3 FY27) and HOKA prints
+  below +5%: both brands past peak, and the decline row governs.
+- **Break —** Underlying gross margin below 55% or a disclosed rise in
+  promotional activity: the full-price model is failing.
+- **Shift —** The FY28 outlook (May 2027) guides revenue down.
+- **Break —** A large acquisition in place of the buyback.
+
+> [!NOTE]
+> **Reopen trigger:** 2027-01-28: deck-q3-fy27-print-hoka-at-or-above-8-and-ugg-holiday-nonnegative-or-price-at-or-below-70
+
+## 6. UNKNOWNs
+
+1. **NOT OBTAINED — the Q2 FY27 call transcript** (held 4:30 pm ET today,
+   not yet posted on stockanalysis at writing). It carries HOKA DTC vs
+   wholesale and US vs international, and management's account of the
+   guide cut. Not load-bearing on its own: condition 6 is refuted on the
+   release plus the July transcript; conditions 2–3 wait on January
+   regardless.
+2. **PENDING 2027-01-28 — HOKA H2 growth and UGG holiday sales** (Q3 FY27
+   print). This settles conditions 2 and 3.
+3. **PENDING ~2026-10-30 — the Q2 FY27 10-Q:** exact share count, the
+   brand-by-channel table, and Q2 operating cash flow (the release has no
+   cash-flow statement, so TTM FCF through September is not computed).
+4. **UNKNOWN — third-party US share data for HOKA** (management cites
+   it; no disclosure carries it). Does not kill: the pass does not rest
+   on it.
+5. **NOT OBTAINED — the 2026 proxy's comp metrics** (DEF 14A filed
+   2026-07-24, not parsed this run or last). Not load-bearing.
+6. Option value (not a condition): further IEEPA refunds beyond Oct 8 are
+   excluded from the guide.
+
+## 7. Sources
+
+- **Primary:** Q2 FY27 8-K (accession 0000910521-26-000028): EX-99.1
+  results release and EX-99.2 board release, filed 2026-10-22; Q1 FY27
+  8-K EX-99.1 (2026-07-23, July guide); Q1 FY27 call transcript (2026-07-23,
+  via stockanalysis/Quartr — primary-transcribed); 8-K 2026-08-31 (credit
+  agreement amendment); EDGAR submissions API and Forms 4 (Aug 15–Sep 2);
+  FY26 10-K via `research/DECK-2026-07-27.md` (risk factors, Note 8).
+- **stockanalysis.com (vetted exception):** `/stocks/DECK/statistics/`
+  (market cap, fcf, SBC, beta, shares, short interest — `hover` exacts,
+  pre-print), `/stocks/DECK/metrics/` (quarterly HOKA/UGG/geography
+  series), `/stocks/DECK/transcripts/`, news feed (analyst actions).
+- **Broker/market microstructure:** Robinhood MCP — live and after-hours
+  quotes, daily bars (RV inputs), the Oct 23 option chain and quotes, and
+  the earnings estimate-vs-actual history (six reported quarters, all
+  beats; Q2 FY27 consensus $1.80). No integrated official source covers
+  these fields.
+- **Reference data:** Damodaran implied ERP 4.20% (trailing-12-month, Oct
+  1, 2026, home page).
+- **Point-in-time repo DBs:** `fred.db` (DGS10 5.15% on 2026-10-19; T10YIE
+  2.35% on 2026-10-20); `stocks.db` v_latest (beta 1.121, insiders 1.02%,
+  SBC $46.8M, analysts 27); `composite.db` (last DECK flag 2026-09-18,
+  `stocks_rsi` 29.9); `earnings.db` (no forward DECK row — the Oct 22 date
+  came from the statistics probe and Robinhood); `portfolio.db` (25 held
+  names, DECK not among them); `sec_fundamentals.db` (no DECK row).
+- **Low-confidence:** web search on HOKA promotional and competitive news
+  (stale results only); a news item on Michael Burry's position.
+
+## Kill-thesis record
+
+**kill-thesis verdict: FLAWED** — conditions=6 (3 probable, 3 plausible),
+refuted=1, unknown=0, pending=2, not_obtained=0. Repairable: the refuted
+leg is the July acceleration story, not the business. The bull case at
+$77.35 does not need acceleration, but it now has to be argued without
+management's demand framing, which the guide cut disproved.
+
+Per-condition adjudication (the bull case, owning at $77.35):
+
+1. FCF holds near $1.0B in FY27 — **SURVIVED** (probable). Attack: SG&A
+   +5.9% against sales +3.5%, DTC comps −6.4%. The guide still holds an
+   ex-refund ~21.5% margin and Q2's underlying margin rose; the attack
+   lands on FY28, which is conditions 2–3.
+2. HOKA ≥ mid-single digits through FY28 — **PENDING 2027-01-28.**
+   Attack: growth went 40–90% (FY23) → ~27% → ~25% → ~15% (FY26) → +7.7%
+   (Q1) → +6.8% (Q2), monotone, with the first mid-year guide cut; BMO and
+   Dick's "reset" commentary. Today's evidence still sits above mid-single
+   digits (Q2 +6.8%, H2 implied +7% to +11%), so it is not refuted.
+3. UGG non-negative through the holiday half and FY28 — **PENDING
+   2027-01-28.** Attack: the guide implies −0.7% to +2.5% for the holiday
+   half, the brand's largest season, and UGG has had a fashion-cycle decline
+   before (UNKNOWN in this run's sources; not used as evidence). Not
+   refuted on today's numbers.
+4. Full-price model holds — **SURVIVED** (probable). Underlying GM +120bp;
+   inventory +3% on sales +3.5%. The DTC comp decline arrived with higher
+   margins, which argues against a markdown reset.
+5. Buyback near intrinsic value, no large M&A — **SURVIVED** (probable),
+   with a mark against: H1 buybacks averaged $98.77, 28% above the
+   after-hours price.
+6. H1 HOKA shortfall was timing that H2 recovers — **REFUTED.** July:
+   "really a change in logistics … the demand is strong for the year"
+   (Q1 call). October: FY HOKA growth cut from low double digits to high
+   single digits, consolidated H2 implied +4.4% vs ~+9% (8-K EX-99.1).
+
+**Standing checks.** *Base rate:* ~29% of firms earn above their cost of
+capital (Damodaran EVA dataset); DECK's ~90% ROIC is in the zone where fade
+is the default, and single-brand heat in footwear fades more often than it
+persists. *Short case:* HOKA is passing peak growth as On and others take
+the premium-running slot; UGG is near a fashion-cycle top with a flat
+holiday guided; DTC comps going negative are the first crack in full-price
+demand; and the buyback spent $637M at prices 28% above today. Short
+interest rose 32% into the print. *Management incentives:* comp metrics
+NOT OBTAINED (proxy unread); the EPS guide leans on buybacks and one-time
+refunds, which flatter per-share targets. *Disconfirming search:* analyst
+actions since July are almost all PT cuts plus an Underperform initiation;
+the web search returned nothing current. *Moat:* a mechanism only as long
+as the brands stay desired — no switching cost or network.
+**Statistical checks:** N/A — no backtest or hit-rate claim.
+**Options timing check:** N/A — no dated move claim; the path-2 table
+(§4) failed its liquidity gate anyway.
+
+> [!WARNING]
+> **Closest attack:** condition 2 — HOKA's deceleration has been monotone for
+> three years and the guide cut is the first time the company conceded part
+> of it was demand; January's print decides between maturation and decay.
+
+> [!NOTE]
+> **Flip evidence:** toward SOUND — the January print shows HOKA ≥ +8% with
+> positive DTC comps and UGG's holiday ≥ flat (conditions 2–3 survive, and
+> condition 6 stops mattering). Toward a dead thesis — UGG declines in the
+> holiday quarter while HOKA prints below +5%.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td):** 0.42

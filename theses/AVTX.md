@@ -1,0 +1,393 @@
+# AVTX — Avalo Therapeutics, Inc. — 2026-10-25
+
+> [!IMPORTANT]
+> **In one sentence:** Avalo is a one-drug biotech trading near its cash, but that cash is committed to costly late-stage trials whose success cannot be judged for years, so I pass.
+
+Price $6.93 (official close, 2026-10-23) · market cap $371.7M common-only /
+$439.4M as-converted · next earnings 2026-11-05 BMO (unverified) · EV ≈ +$9M
+as-converted against 6/30 net assets
+
+Entry path: user-directed scheduled research (no candidates-screen row; the
+composite flagged AVTX bullish 2/0 on microstructure only — RSI 18.1 and
+days-to-cover 15.2). Unattended scheduled run.
+
+## 1. Verdict and thesis
+
+> **PASS at $6.93.** kill-thesis: **UNPROVEN** — conditions=4 (1 probable,
+> 3 plausible), refuted=0, unknown=2, pending=1, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.40** · kill-thesis: 0.38
+
+> [!IMPORTANT]
+> **Disputed expectation:** the as-converted equity ($439M) sits on ~$430M of
+> 6/30 net assets, so the market prices abdakibart at roughly zero after AbbVie's
+> same-pathway Phase 3 (lutikizumab, INTREPID) beat placebo by only 8 points on
+> HiSCR75. What revises it is evidence that abdakibart's +16.9-point Phase 2 delta
+> is a molecule property, not the Phase 2 inflation the class just showed. That
+> evidence is a Phase 3 topline that has not started yet (guided start 1H27).
+
+This is a fast kill under Phase 0, written out in full because the setup looks
+like a cash floor. Avalo is a 33-employee clinical-stage biotech with $59K of
+TTM revenue, a TTM operating loss of $91.4M, and one asset: abdakibart
+(AVTX-009), an anti-IL-1β antibody for hidradenitis suppurativa (HS). It trades
+near cash because the cash is not the owners' to keep. Management has committed
+it to two Phase 3 trials through 2029, so the "floor" erodes by the burn every
+quarter. Whether the molecule beats lutikizumab's Phase 3 result is a domain-
+science question this run cannot evaluate. Its decisive disclosure lies years
+past any horizon this ledger grades. Nothing here is refuted. It is unknowable
+on the time scale that matters, and there are other companies.
+
+> [!WARNING]
+> **Closest attack:** the cash floor is a mirage. Burn runs at about $25–35M a
+> quarter before Phase 3 and rises after it starts, and management guides runway
+> "to get through 2029" (Stifel forum, 2026-09-24). At Phase 3 topline, roughly
+> the whole $472M has become trial data. So the floor protects a 63-day holder
+> only against further de-rating, never against the readout.
+
+**Load-bearing conditions of the bull case (4):**
+
+1. Cash covers the as-converted equity through the horizon, with no new raise
+   — *probable*: $472.2M of cash and investments at 6/30/26 against $42.1M of
+   total liabilities (Q2 10-Q). The $75M ATM was unused in H1, and runway is
+   guided through 2029.
+2. Abdakibart's Phase 2 effect (+16.9 pt HiSCR75, 42.5% vs 25.6%, n=253)
+   holds in Phase 3 materially better than the class's Phase 2→3 decay
+   — *plausible*: the dose-response and early separation management cites.
+   The settling disclosure is the Phase 3 topline, which has no date yet: start
+   guided 1H27, readout inside the "through 2029" runway.
+3. A successful IL-1β in HS is worth more than the ~$430M it will consume
+   — *plausible*: HS is a multi-mechanism market (management cites IBD as the
+   analogy). But AbbVie's lutikizumab files 2H27 (AbbVie, 2026-10-22) and is
+   two-plus years ahead. No filing will ever carry this number.
+4. A near-term disclosure re-rates the name inside 63 td — *plausible*: the
+   end-of-Phase 2 FDA feedback is guided "before year-end" (Stifel forum). It
+   could fold LOTUS in as one pivotal trial or simplify the two-trial plan. The
+   Q3 print 2026-11-05 and the year-end update settle it.
+
+> [!WARNING]
+> **Dominant shared risk factor:** idiosyncratic
+
+Holdings unavailable in this session: the unattended slot has no
+portfolio.db grant.
+
+## 2. Business
+
+**Created:** HS is a chronic, painful, scarring skin disease. Approved options
+are adalimumab and the IL-17 class (secukinumab, bimekizumab), and many patients
+cycle off them. Abdakibart offers a different mechanism, IL-1β blockade,
+dosed subcutaneously every 4 weeks. The 300 mg q4w arm "performed essentially
+identically to" q2w (Stifel forum, 2026-09-24). LOTUS showed no neutropenia,
+serious-infection, or opportunistic-infection signal (topline PR, 2026-05-05).
+The customer surplus is a new mechanism with a clean safety profile for
+patients who fail the IL-17s. Its size is UNKNOWN until Phase 3.
+
+**Captured:** nothing today. TTM revenue is $59K, residual from legacy
+programmes (stocks.db). Capture would come from future product sales or a
+licence/sale to a large-cap immunology company. Some of any future value is
+already promised away: a $10M milestone to Eli Lilly on first Phase 3 dosing,
+accrued as a current liability, plus a $2.0M royalty obligation (Q2 10-Q). The
+Kyowa Kirin/AUSB legacy terms are NOT OBTAINED; see §6.
+
+**Protected:** patents and regulatory exclusivity on the molecule are the only
+mechanism. There is no moat against the mechanism class itself: AbbVie's
+lutikizumab hits the same pathway (IL-1α and IL-1β) and is ahead. Next-gen
+AVTX-010 (long-acting anti-IL-1β, IND 1H27) is an internal follow-on, not
+protection. The silence is the answer: what stops a competitor is clinical
+data that does not exist yet.
+
+**Control:** one class of common stock, with insiders at 1.54% and
+institutions at 112.9% of the float (stocks.db; over 100% reflects the
+convertible preferred and pre-funded warrant holders). Series C (4,085) and
+C-1 (4,295) convertible preferred shares convert at 1,000:1 under
+beneficial-ownership blockers (Q2 10-Q). There is no controlling holder, so an
+unsolicited bid or activist path is open.
+
+**Operating leverage (Phase 0): negative.** The loss widens while revenue
+goes to zero:
+
+| period | revenue | operating income |
+|---|---|---|
+| FY2021 | $5.40M | −$82.13M |
+| FY2022 | $18.05M | −$29.94M |
+| FY2023 | $1.92M | −$23.44M |
+| FY2024 | $0.44M | −$40.87M |
+| FY2025 | $0.06M | −$72.93M |
+| TTM 6/30/26 | $0.06M | −$91.36M |
+
+## 3. Threads pulled
+
+- **The 2026-10-22 crash is a rival's readout, not Avalo's.** AVTX fell
+  from $12.26 to $7.45 on 26.2M shares, about 28× its normal volume, then to
+  $6.93 on 10-23 (Robinhood bars). Same day: AbbVie's Phase 3 INTREPID
+  showed lutikizumab HiSCR75 at Week 16 of 31.4% vs 23.4% placebo
+  (p≤0.001), a +8.0 pt delta. It met 8 ranked secondaries, with flares 18.4%
+  vs 28.1% (AbbVie PR, 2026-10-22). Downgrades followed from Guggenheim,
+  H.C. Wainwright and BTIG (PT $58→$10), and Wedbush cut its target to $22
+  (stockanalysis news feed).
+- **Management staked the framing on exactly this readout.** On 9-24 the CEO
+  called a positive lutikizumab result "further validation of the IL-1 beta
+  hypothesis, primarily." A broadly similar result would "position us very,
+  very well," and a significant disappointment was the least likely outcome
+  (Stifel forum transcript). By that framing, the IL-1β pathway's Phase 3
+  ceiling in HS now reads +8 pt. Avalo's rebuttals, potency and an IL-1α
+  safety drag, are the open science question in §6.
+- **Phase 2→3 regression is the class pattern, by management's own
+  admission.** Asked about it, management said earlier HS programmes "may
+  have had a little bit optimistic effect size based on a single dose." It
+  cited placebo rates of "13% all the way up to 25%" (Stifel forum). LOTUS's
+  placebo arm, 25.6%, sits at the top of that range. INTREPID's 23.4% placebo
+  is comparable, so the placebo arm alone does not explain the gap between the
+  two deltas.
+- **Phase 3 has not started.** No 8-K since 2026-08-06 (EDGAR filing index).
+  The plan is two Phase 3s starting 1H27, after end-of-Phase 2 feedback
+  guided before year-end, favouring the 600 mg load / 300 mg q4w regimen
+  (Stifel forum). The $10M Lilly milestone fires at first Phase 3 dosing.
+- **Dilution and the as-converted count.** Common shares were 53,629,989 at
+  8/3/26. Add 1.4M pre-funded warrants at $0.001 and 8.38M as-converted
+  preferred shares, for ~63.41M as-converted. There are 5.46M options
+  outstanding, mostly far out of the money at $6.93, plus 148 legacy warrants
+  at $7,488 (Q2 10-Q). The $375M May offering (CNN quote page) and a resale
+  S-3 (7/17, effective 7/28) put the holder base mostly in May-offering
+  hands. Form 144s filed 8/10–8/18 show insider/affiliate sales near $19–20
+  (EDGAR index; forms not opened).
+- **Insider filings since the last call.** Form 4s on 9/11, 9/18 and 10/02.
+  The 10/02 trio matches the July quarterly pattern, likely grants or ESPP;
+  transaction codes NOT OBTAINED. None after 10-22, so no insider buying into
+  the crash is on file as of the index read.
+- **Short interest is crowded.** 11.41M shares short, 28.4% of float,
+  days-to-cover 15.2 (stocks.db, short data as of 8/31). The composite's
+  bullish `si_days_to_cover` and `stocks_rsi` (18.1) flags are microstructure
+  and say nothing about the molecule.
+- **EPS pattern.** Estimate vs actual across eight quarters: misses in
+  2025-Q2 (−1.92 vs −1.46), 2025-Q3 (−2.19 vs −1.65) and 2026-Q2 (−0.83 vs
+  −0.63), and a large beat in 2025-Q4 (Robinhood). For a pre-revenue biotech
+  this reads trial-spend timing, not execution. The Q2 2026 actual of −0.83
+  matches `sec_fundamentals.db` `eps_diluted` −0.83.
+- **Options read (mandatory):** path 2 only. AVTX is not in the CBOE catalog,
+  so there is no `options.db` history. The Nov-20 expiry (26 DTE) brackets the
+  Q3 print. Liquidity gate FAILED → UNRELIABLE. See §4.
+- **Dead ends:** `sec_fundamentals.db` carries only two AVTX periods (Q1 10-Q
+  and the 6/30 frame), so annual history came from stockanalysis. That is a
+  coverage gap, recorded here. The stockanalysis statistics probe returned only
+  its schema, and ad-hoc Python to decode values is not granted in this slot.
+  The "$400.28M cash" in the statistics text is cash plus short-term
+  investments and excludes $71.9M of long-term investments. Its EV (−$0.49M)
+  undercounts both cash and the preferred, and the two errors roughly cancel.
+  A search for an Avalo statement responding to INTREPID found none. The
+  transcript corpus has no earnings-call transcripts at all, only investor
+  conferences and the AGM: Avalo holds no quarterly calls. That is its long-
+  standing cadence, not a recent change.
+
+## 4. Valuation
+
+**Inputs.** stocks.db carries TTM levered FCF of −$68.29M and TTM net income
+of −$100.33M, with SBC of $16.54M. `reverse_dcf` refuses:
+
+> `refused: base_fcf must be positive, got -68290000.0` (exit 2)
+
+**Honest arithmetic instead.** The as-converted equity is 63.41M × $6.93 =
+$439.4M. Cash and investments at 6/30/26 were $472.2M ($85.4M cash + $314.9M
+short-term + $71.9M long-term). Netting every liability ($42.1M: the $10M Lilly
+milestone, the $18.5M non-current derivative, the $2.0M royalty obligation)
+gives net assets of ~$430.0M. So the as-converted EV is about +$9M at 6/30.
+After an estimated $25–35M of Q3 burn (H1 operating cash use was $37.7M, and
+Q2 R&D stepped up to $23.4M), it is about +$35–45M at 9/30. The Q3 balance is
+PENDING 2026-11-05. The market prices the pipeline at 2–10% of the equity.
+
+**Hurdle:** rf 4.96% (DGS10, 2026-10-22) + beta 0.80 × ERP 4.20%
+(Damodaran implied ERP, 2026-10-01) = 8.32%. The beta of 0.69 is clamped up to
+the 0.8 floor. A single-asset clinical biotech's true cost of equity is far
+above any CAPM figure, so this hurdle is a floor.
+
+**What the price implies.** By topline (~2029), roughly all of the ~$430M has
+become Phase 3 data. The market's near-zero pipeline value says the cash will
+be spent at about NPV-zero: P(success) × value-on-success ≈ cash consumed,
+compounded at the hurdle. Over 3 years at 8.32% that is ~$430M × 1.27 ≈
+$546M. Illustration only, not a forecast: at P(success) 0.5, success must be
+worth ~$1.1B. At the ~58% Phase III-to-NDA rate (BIO/Informa 2011–2020, from
+memory, not re-fetched), it must be worth ~$0.95B, before any lutikizumab
+haircut on the probability.
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| reverse DCF | −$68.3M (TTM) | n/a | 2.34% (T10YIE 10-23) | refused (exit 2) | n/a |
+
+**Integrity checks.**
+
+- Terminal growth: the 10-year breakeven (T10YIE 2.34%, 2026-10-23) would be
+  the ceiling. It is moot, because there is no positive cash flow to grow.
+  The Item 1A endgame risk is a Phase 3 failure in a single-asset company.
+  The 10-K risk factors were not swept on this fast kill, since no terminal
+  rate was used.
+- Market share: no revenue path was modelled, so no share claim is made.
+- SBC: $16.54M TTM is 18% of the operating loss. It would deepen the
+  refused base, not rescue it.
+- Cash-heavy name: the cash is the whole valuation, and it is earmarked for
+  burn, not excess. That is why the floor is not a floor.
+- Distribution clamp: N/A, no implied return.
+
+**Options-implied move.** Path 2 (Robinhood), $7.50 strike (the nearest listed
+strike, 8% above spot; $7.00 is not listed), Nov-20 expiry, 26 DTE, bracketing
+the 2026-11-05 Q3 print. Call mark 0.325 (IV 74.2%), put mark 0.95 (IV 83.5%),
+mean ATM IV 78.83%:
+
+| metric | value |
+|---|---|
+| spot | 6.93 |
+| expected absolute move | 18.40% |
+| 1-σ move | 21.04% |
+| ATM IV | 78.83% |
+| RV60 | 115.06% |
+| RV20 | 182.03% |
+| IV > RV60? | NO |
+| IV > RV20? | NO |
+
+Liquidity gate **FAILED → UNRELIABLE**. The call spread is $0.15 against a
+$0.325 mark (46%), the put spread $0.80 against $0.95 (84%), and put volume
+is 11 against OI 12. The off-ATM strike puts ~$0.57 of intrinsic value in the
+put, so the straddle-based expected move is biased high. Both trailing windows
+contain the 10-22 gap, so IV below RV is the crash in the window, not
+cheapness. Timing check: not applicable. The thesis states no dated required
+move. IV above 50% caps any implied-return precision at whole percents, and
+there is no implied return here.
+
+## 5. Falsifiers
+
+For the pass (flip toward buy):
+
+- **Shift —** FDA end-of-Phase 2 feedback accepts LOTUS as one of two
+  pivotal trials, halving the Phase 3 spend while the cash floor holds near
+  $430M.
+- **Shift —** full INTREPID data at a congress shows lutikizumab's gap is
+  population- or dose-specific: adolescents, biologic-experienced mix, an
+  exposure shortfall. Abdakibart's +16.9 pt would then not be the outlier the
+  class says it is.
+- **Shift —** the as-converted equity falls below net cash minus a year of
+  burn (below ~$300M, ~$4.70/share at 9/30 cash) with no new raise.
+- **Break (toward buy) —** a licence or acquisition bid from a large-cap
+  immunology company. This is *possible*-tier option value, not a condition.
+
+For an owner (sell):
+
+- **Break —** abdakibart Phase 3 HiSCR75 delta near lutikizumab's +8 pt.
+- **Break —** an equity raise at or near cash, or ATM use: the floor was
+  never the owners'.
+- **Shift —** Phase 3 start slips past 1H27, or the plan widens beyond two
+  trials.
+
+> [!NOTE]
+> **Reopen trigger:** 2026-11-05: q3-print-eop2-feedback-ph3-design-and-cash-floor
+
+## 6. UNKNOWNs
+
+1. **UNKNOWN** — whether abdakibart's IL-1β potency/selectivity explains a
+   Phase 2 delta double lutikizumab's Phase 3 delta. This is domain science
+   this run cannot evaluate. Only abdakibart's own Phase 3 (start 1H27,
+   readout undated within "through 2029") settles it. Load-bearing (C2).
+2. **UNKNOWN** — the commercial value of a second-to-market IL-1β in HS
+   against AbbVie's lutikizumab (filing 2H27) and the IL-17 class. No filing
+   carries it. Load-bearing (C3).
+3. **PENDING 2026-11-05** — 9/30 cash, Q3 burn, and any end-of-Phase 2
+   feedback (Q3 10-Q and press release). Load-bearing (C4; also confirms C1).
+4. **NOT OBTAINED** — the nature of the $18.5M non-current derivative
+   liability and the Kyowa Kirin/AUSB legacy obligations. They sit in the
+   unread back 38K characters of the Q2 10-Q notes. Not load-bearing: at most
+   4% of equity, already netted in §4.
+5. **NOT OBTAINED** — Form 4 transaction codes (9/11, 9/18, 10/02) and the
+   Form 144 holders (Aug). Not load-bearing.
+6. **NOT OBTAINED** — Phase 3 programme cost. Not discussed in the Stifel
+   transcript. Bounded by the runway guidance: all of the cash, roughly.
+7. *Possible-tier option value:* a strategic acquisition by an HS incumbent
+   or a lutikizumab-less large-cap. Unnumbered and not a condition.
+
+## 7. Sources
+
+- **Primary:** Avalo Q2 2026 10-Q, accession 0001534120-26-000049 (balance
+  sheet, share and preferred counts, Lilly milestone, ATM, going-concern
+  note), read via the StockTitan rendering, first 100K characters. Abdakibart
+  LOTUS topline PR (2026-05-05; StockTitan/ADVFN reproductions). SEC EDGAR
+  filing index for CIK 1534120 (filings 7/1–10/25/26). AbbVie INTREPID topline
+  PR (news.abbvie.com, 2026-10-22). Stifel 2026 Virtual I&I Forum transcript,
+  2026-09-24 (primary-transcribed via stockanalysis).
+- **stockanalysis.com (vetted exception):** annual income statement
+  FY2021–FY2025, news feed (downgrades 10-21/22), transcript index.
+- **Broker/market microstructure:** Robinhood MCP quote (close $6.93,
+  2026-10-23), daily bars 6/17–10/23, Nov-20 $7.50 option quotes, and the
+  8-quarter EPS estimate/actual history. Admissible because no integrated
+  official source carries option marks or consensus estimates for AVTX.
+- **Reference data:** Damodaran implied ERP 4.20% (2026-10-01, home page).
+  BIO/Informa/QLS Clinical Development Success Rates 2011–2020, Phase III
+  transition ~58%, from memory and not re-fetched this run.
+- **Point-in-time repo DBs:** `stocks.db` v_latest (snapshot 82, price $7.45
+  as of 10-22; beta 0.69; SBC $16.54M; FCF −$68.29M; short float 28.4%).
+  `sec_fundamentals.db` v_screener (6/30 frame; eps_diluted −0.83).
+  `fred.db` (DGS10 4.96% 10-22; T10YIE 2.34% 10-23). `composite.db` snapshot
+  117 (bullish 2/0: `si_days_to_cover` 15.17 as of 8/31, `stocks_rsi` 18.08).
+  `earnings.db` has no AVTX row.
+- **Low-confidence:** web-search summaries (Benzinga, Seeking Alpha, CNN
+  quote page) for the May offering size and the May price reaction.
+
+## Kill-thesis record
+
+**Ledger:** UNPROVEN — conditions=4 (1 probable, 3 plausible), refuted=0,
+unknown=2, pending=1, not_obtained=0. reopen=2026-11-05.
+
+**Per-condition adjudication (bull case):**
+
+1. *Cash covers the as-converted equity through 63 td, no raise* —
+   **SURVIVED** (probable). Attack: the $75M ATM can be tapped any day, and
+   the May investors hold an effective resale S-3. But selling at a near-cash
+   price against a guided 2029 runway is the costliest raise management could
+   choose. The 6/30 balance minus the estimated Q3 burn still exceeds the
+   as-converted cap minus ~$45M.
+2. *Phase 2 effect survives Phase 3 better than the class* — **UNKNOWN**.
+   Today's evidence leans against it: the same-pathway Phase 3 at +8 pt, the
+   regression management concedes across HS programmes, and a LOTUS placebo
+   at the top of the cited range. That does not refute a different molecule's
+   result. The decisive Phase 3 is unstarted and undated, and the
+   pharmacology is beyond this run's competence.
+3. *Commercial value exceeds cash consumed* — **UNKNOWN**. No filing will
+   carry it. AbbVie is the HS incumbent and ahead on the same mechanism.
+4. *Near-term re-rating disclosure* — **PENDING 2026-11-05**. Attack:
+   guidance says the EOP2 feedback comes "before year-end," not necessarily by
+   the print, and the most likely outcome is confirming the two-trial plan
+   already guided. That is no re-rating.
+
+**Standing checks.**
+
+- *Base rate:* a single-asset biotech whose same-mechanism competitor just
+  posted a half-sized Phase 3 effect usually stays de-rated until its own data.
+  About 58% of Phase III programmes reach filing (BIO/Informa, memory), with
+  no adjustment for this read-through.
+- *Short case:* 28% of float is short. Shorts see two years of burn to a
+  Phase 3 whose ceiling the class just set at +8 pt, then entry behind AbbVie
+  and IL-17s with higher deltas. Holders exiting near cash have the S-3 and
+  no lock-up.
+- *Management incentives:* paid in equity and milestones, so the incentive
+  is to spend the cash on Phase 3, never to return it. A thesis that treats
+  the cash as a floor assumes they act against it.
+- *Disconfirming search:* turned up Cantor's pre-readout flag of Phase 2→3
+  decay and Novartis's MAS825 modest IL-1β/IL-18 efficacy. No evidence found
+  that lutikizumab was under-dosed.
+- *Moat:* a checkbox. Patents on a molecule in a class with a two-year-ahead
+  incumbent.
+- *Statistical checks:* N/A. No backtest or hit rate is relied on, and the
+  composite flags are microstructure and are not credited.
+- *Options timing:* not applicable. No dated required move, and the
+  liquidity gate failed (UNRELIABLE).
+
+> [!WARNING]
+> **Closest attack:** the cash floor erodes by design. Management's runway
+> spends roughly all $472M through Phase 3 topline, so "trades at cash" is
+> true at only one instant.
+
+> [!NOTE]
+> **Flip evidence:** toward SOUND/buy — EOP2 feedback accepting LOTUS as
+> pivotal, or full INTREPID data isolating a population/dose explanation,
+> while the cap stays at or below net cash. Toward FLAWED — a raise near
+> cash, a Phase 3 slip past 1H27, or full INTREPID data showing IL-1β-selective
+> arms or subgroups no better than +8 pt.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td):** 0.38

@@ -1,0 +1,407 @@
+# OLMA — Olema Pharmaceuticals, Inc. — 2026-10-15
+
+> [!IMPORTANT]
+> **In one sentence:** Olema is a cancer-drug developer with no revenue whose value rides one Phase 3 breast-cancer result in early 2027 and a modest commercial prize, so we pass at $6.87.
+
+Price $6.87 (official close, 2026-10-15) · market cap $601M basic / $694M
+fully diluted (87.50M shares + 13.59M pre-funded warrants) · EV ≈ $237M on
+6/30 cash · next earnings 2026-11-09 AMC (tentative, unverified)
+
+Entry path: user-directed scheduled run (composite carries a weak bullish
+flag: 2 bullish / 0 bearish, coverage 0.18). Unattended scheduled run.
+
+## 1. Verdict and thesis
+
+> **PASS at $6.87.** kill-thesis: **UNPROVEN** — conditions=3 (1 probable,
+> 2 plausible), refuted=0, unknown=1, pending=1, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 126 td): 0.44** · kill-thesis: 0.42
+
+> [!IMPORTANT]
+> **Disputed expectation:** at ~$240–300M EV the market prices a fully enrolled
+> Phase 3 as a coin-flip-or-worse with a small commercial prize; the Q1 2027
+> OPERA-01 top-line (ESR1-mutant and all-comer PFS) forces the revision either
+> way.
+
+Phase 0 fast kill, written out in full because nobody could be asked whether
+to continue. Olema has no revenue, an operating loss that has widened every
+year since 2023 (−$221.1M TTM), and negative levered FCF (−$165.0M TTM), so
+the reverse DCF refuses the input. The whole equity value rests on one
+binary event — OPERA-01, palazestrant monotherapy in 2L/3L ER+/HER2− breast
+cancer, top-line Q1 2027 — whose science I cannot evaluate. The cash floor
+is real (~$4.56 per fully diluted share at 6/30, ~$4 by my September
+estimate), but the commercial prize behind the binary is the weak link: even a
+clean ESR1-mutant win lands palazestrant as the third or fourth oral SERD in
+a 2L ESR1m monotherapy niche, and the class has lost both first-line
+read-throughs this year.
+
+> [!WARNING]
+> **Closest attack:** the bull case's strongest point is not refuted: every
+> completed 2L monotherapy Phase 3 in this class (elacestrant EMERALD,
+> imlunestrant EMBER-3, vepdegestrant VERITAC-2) hit in the ESR1-mutant
+> subgroup, and an EV of ~$240–300M for a fully enrolled pivotal trial with
+> that precedent is not obviously rich. The pass rests on condition 2
+> (commercial share, UNKNOWN), not on a refutation.
+
+Load-bearing conditions of the bull case (what must hold for owning at $6.87
+to beat SPY through the readout):
+
+1. OPERA-01 hits its ESR1-mutant PFS primary endpoint against fulvestrant/AI
+   by a clinically meaningful margin (the CEO's own bar: ~2 months PFS). —
+   *plausible*: Phase 2 mPFS 7.3 mo ESR1m / 5.5 mo wild-type; 3-for-3 class
+   precedent in ESR1m. Settled by the top-line release, Q1 2027 (backstop
+   2027-03-31).
+2. Palazestrant wins a commercially meaningful share of a 2L ESR1m
+   endocrine-monotherapy market already served by Orserdu (elacestrant,
+   approved 2023-01) and Inluriyo (imlunestrant, FDA 2025-09). —
+   *plausible*: management sizes 2L/3L at "about $5 billion a year" (HCW,
+   2026-09-16) and claims differentiation through "complete antagonism, very
+   high exposure"; no disclosure prices share until a label and a launch,
+   2028 at the earliest.
+3. The 6/30 cash of $461.1M carries the company through the readout without
+   dilution at the depressed price. — *probable*: Q2 GAAP opex $67.2M
+   (non-GAAP ~$54.3M); at ~$60–65M a quarter that is ~7 quarters, past the
+   Q1 2027 readout.
+
+The all-comer (wild-type) hit is *possible*-tier upside, not a condition:
+EMBER-3 and VERITAC-2 both missed outside ESR1m, so it lives in §6.
+
+> [!WARNING]
+> **Dominant shared risk factor:** idiosyncratic — a single Phase 3 binary
+> (OPERA-01). Holdings unavailable in this session (the headless slot has no
+> portfolio.db grant).
+
+## 2. Business
+
+**Created:** an oral, once-daily endocrine therapy for ER+/HER2− metastatic
+breast cancer that has progressed on a CDK4/6 inhibitor plus an aromatase
+inhibitor. Patients get a pill in place of fulvestrant's monthly intramuscular
+injections, and, if OPERA-01 works, longer progression-free survival. The
+company claims palazestrant is a complete estrogen-receptor antagonist (a
+"CERAN"), unlike elacestrant (a partial agonist) and camizestrant (which the
+CEO calls "the most toxic and also the lowest exposure in the class") — HCW
+transcript, 2026-09-16. I cannot evaluate that pharmacology claim. UNKNOWN.
+
+**Captured:** nothing today; there is no product revenue. Future capture
+would be:
+- US list-price sales of a branded oral oncology drug, first as 2L/3L
+  monotherapy (OPERA-01) and later 1L with ribociclib (OPERA-02, still
+  enrolling).
+- Ex-US licensing or a buyout. No ex-US partner is disclosed.
+- Combination collaborations are supply deals, not revenue: Pfizer (Phase
+  1b/2 with atirmociclib, fully enrolled, "We don't have a timeline yet"),
+  Novartis (2024 agreement, ribociclib supply for OPERA-02), Bayer (2026
+  agreement, OP-3136 + darolutamide in mCRPC, enrolling Q4 2026).
+- Second asset: OP-3136, a KAT6 inhibitor in Phase 1, with combination data
+  promised in 1H 2027.
+
+**Protected:** composition-of-matter patents on palazestrant (term not
+checked this run — NOT OBTAINED, 10-K Item 1). Protection does not stop the
+real threat, which is not a copy but rival molecules. By management's own
+count the field holds elacestrant, imlunestrant, camizestrant, giredestrant,
+vepdegestrant and lasofoxifene. In a niche with several approved agents and
+no head-to-head data, protection is only as good as a PFS hazard ratio no
+rival has run against it. Honest answer: patent protection on the molecule,
+no moat in the market it would enter.
+
+**Control:** one share class; insiders hold 2.68% and institutions 88.9%
+(stocks.db `v_latest`). Proxy not read this run. A dispersed, institutional
+register forecloses nothing. A takeover by a large-cap breast-cancer franchise
+is the obvious exit and nothing structural blocks it. The Q3 CFO hire (ex-Vir,
+ex-Caribou) has a change-in-control lump-sum severance (8-K, 2026-08-13), which
+is standard.
+
+**Operating leverage (Phase 0): negative.** Revenue is zero every year, and
+the operating loss has widened every year since 2023:
+
+| period | revenue | operating income | net income |
+|---|---|---|---|
+| FY2021 | 0 | −$71.5M | −$71.1M |
+| FY2022 | 0 | −$107.0M | −$104.8M |
+| FY2023 | 0 | −$105.0M | −$96.7M |
+| FY2024 | 0 | −$137.3M | −$129.5M |
+| FY2025 | 0 | −$168.7M | −$162.5M |
+| TTM 6/26 | 0 | −$221.1M | −$204.6M |
+
+(stockanalysis financials; Q2 2026 net loss −$63.2M confirmed in the 10-Q.)
+
+## 3. Threads pulled
+
+- **Why $60 → $6.87.** The 52-week high of $60.27 (2025-12-16, stocks.db)
+  came after the 2025-11-18 read-through from Roche's positive giredestrant
+  evERA readout (2L, with everolimus), which sent OLMA up more than 100% in a
+  day (low-confidence press). The unwind has been a chain of class and company
+  events. Roche persevERA (1L giredestrant) missed on 2026-03-09, and OLMA
+  fell ~41% that day. The Q2 print on 2026-08-10 moved the OPERA-01 top-line
+  from "fall 2026" (Q1 release, 8-K exhibit) to Q1 2027, and the next open
+  gapped from $11.94 to $10.98. AstraZeneca's SERENA-4 (1L camizestrant)
+  missed on 2026-09-11. Since then the stock has drifted to a 12-month low
+  on no company news. The 1L failures hit OPERA-02's prize (the CEO's
+  "$10+ billion" 1L market), not OPERA-01's endpoint directly.
+- **The delay.** The 8-K exhibit (2026-08-10) gives no reason. The CEO at HCW
+  only says they are "waiting for the assessment of progressions … and
+  sort of maturation of that data", which points to an event-driven PFS
+  analysis accruing events more slowly than planned. Slow event accrual
+  is ambiguous in a blinded trial: patients on either arm are progressing
+  later than assumed. It is not evidence either way. UNKNOWN.
+- **Trial design (registry).** NCT06016738: ~510 patients, 1–2 prior
+  endocrine lines including a CDK4/6i, no prior chemo for MBC. A Part 1 dose
+  selection (90 vs 120 mg, ~120 patients) is followed by 1:1 palazestrant vs
+  fulvestrant/AI. Dual primary PFS by BICR in ESR1-mutant and in all-comers.
+  The comparator includes AIs, which are weak post-CDK4/6. That is favorable
+  to palazestrant and is a known critique of the class's control arms.
+- **Cash and dilution.** $461.1M cash + marketable securities at 6/30/26
+  ($48.6M cash, $412.5M securities; 10-Q). Long-term borrowing is only
+  $3.0M, drawn under a senior secured facility with Term Loans A/B/C
+  (amended 2026-01-11; 8-K 2026-05-01, Items 1.01/2.03). I did not read that
+  facility's terms (NOT OBTAINED, not load-bearing at $3M drawn). The ATM was
+  used in H1 2026: 1,712,739 shares for $41.9M net, ~$24.47/share, so selling
+  ran in Q1 at much higher prices. The 13.59M pre-funded warrants are
+  economically shares, which is why §4 uses the fully diluted count. No
+  runway sentence appears in the Q2 release or at HCW.
+- **Competitive field (low-confidence press).** Inluriyo (Lilly) was approved
+  9/2025 for ESR1m only after EMBER-3 missed in all-comers. Camizestrant is
+  cleared in the EU, with US status unclear in what I found. I found no
+  Orserdu or Inluriyo sales figures (UNKNOWN). Palazestrant would enter as
+  the 3rd–4th agent in the ESR1m 2L slot unless it wins all-comers.
+- **Insiders and governance since the call.** Director Cyrus Harmon sold
+  12,500 founder shares (~$146K) on 2026-07-24 under Form 144, which is
+  small. The new CFO received an inducement option for 650K shares at $10.56
+  (Form 4, 2026-09-02). Director Gorjan Hrustanovic resigned 2026-10-14, "not
+  the result of any disagreement" (8-K, 2026-10-15). Hrustanovic is
+  associated with BVF Partners, a large holder; that tie is my
+  low-confidence recollection, not verified here. A fund-affiliated director
+  leaving four months before a binary readout is worth noting but is not a
+  signal by itself.
+- **Earnings pattern (Robinhood, cross-checked).** EPS actual vs estimate
+  over six reported quarters: −0.36/−0.50, −0.51/−0.43, −0.49/−0.44,
+  −0.50/−0.52, −0.52/−0.54, −0.61/−0.56. This is noise around a rising
+  spend line. A pre-revenue biotech's EPS "miss" is an opex timing story,
+  not execution risk. The Q2 actual of −$0.61 matches `sec_fundamentals.db`
+  `eps_diluted` −0.61.
+- **Composite flag.** 2 bullish / 0 bearish, score_sum 3, coverage 0.18
+  (`ticker_scores` snapshot 107). This is a microcap-dislocation read, which
+  is what the composite is built to produce. No quality signal applies to a
+  pre-revenue company.
+- **Options read (mandatory):** path 2 only (OLMA is not in the CBOE
+  catalog). Expiry 2027-04-16 (183 DTE) was chosen because it brackets the
+  whole Q1 2027 readout window. Table in §4. The liquidity gate FAILED, so
+  the read is UNRELIABLE.
+- **Dead ends:** `sec_fundamentals.db` adds nothing beyond confirming the Q2
+  loss and EPS. The statistics probe CLI prints a schema, not values, and the
+  headless sandbox blocks ad-hoc Python, so live figures came from stocks.db
+  (captured 2026-10-14), the 10-Q, the quote, and the WebFetched
+  stockanalysis financials. A 10-Q fetch past the balance sheet truncated, so
+  the commitments and liquidity notes were not read. The Benzinga article on
+  the delay returned 403. No runway guidance exists in either the release or
+  the transcript. Neither rules anything in or out.
+
+## 4. Valuation
+
+**Inputs.** TTM levered FCF −$164,958,000 (stocks.db: operating CF
+−$164.7M, capex −$0.2M). Fully diluted market cap $694.5M (101,091,756
+shares × $6.87). Cash and securities $461.07M, debt $3.66M (stocks.db, 6/30).
+EV ≈ $237M on 6/30 cash, or ≈ $298M on an *estimated* 9/30 cash of ~$400M
+(my estimate: one more ~$60M quarter; Q3 prints 2026-11-09). SBC is $31.6M
+TTM; no haircut is applied because the base is already negative.
+
+**Hurdle.** DGS10 5.19% (fred.db, 2026-10-14); stocks.db beta 2.01, clamped to
+1.2. Damodaran ERP not fetched this run: there is no positive flow to read
+against a hurdle. 10-year breakeven 2.32% (T10YIE, 2026-10-15) would be the
+terminal-growth ceiling.
+
+**reverse_dcf refused (exit 2):**
+`refused: base_fcf must be positive, got -164958000.0`
+
+The honest arithmetic in its place:
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| any | −$165M | n/a | n/a | refused | n/a |
+
+- **What the price asks of the drug.** Fully diluted equity of $694M, less
+  ~$400M estimated cash, leaves ~$300M (~$2.9 a share) as the market's
+  value for the pipeline. If OPERA-01 fails, a reasonable floor is net cash
+  less wind-down, ~$3.5–4.0 a share, or −40% to −50%. If it hits in ESR1m
+  only, comparable 2L ESR1m assets' commercial value is UNKNOWN: no Orserdu or
+  Inluriyo sales figures were obtained. Without that number I cannot say
+  whether ~$300M of pipeline EV is cheap or fair. That is condition 2's
+  UNKNOWN restated as a valuation hole.
+- **Market-share sentence.** Management's "$5 billion" 2L/3L market includes
+  ESR1 wild-type patients, which this class has not served. ESR1m is
+  "about 40–50%" of the trial population (CEO, HCW), so the addressable
+  niche is roughly $2–2.5B, already split among two approved agents. A $500M
+  peak would need ~20–25% of it as a late entrant.
+- **Terminal / Item 1A.** Not applicable on a refused base. The dominant
+  structural risk is single-asset clinical failure (10-K Item 1A not
+  re-read this run).
+- **Distribution clamp.** N/A.
+
+**Options-implied move** (path 2, Robinhood; 2027-04-16 expiry, 183 DTE,
+brackets the Q1 2027 OPERA-01 top-line; $7 strike vs spot $6.87). The call
+leg showed zero bid / $3.10 ask with no IV, so its mark ($1.55) is a
+midpoint of nothing. `--iv` is the put leg's 130.56% alone, not the
+two-leg mean. Required move set at 100% (an illustrative "double on a hit"
+bull outcome, not a thesis target):
+
+| metric | value |
+|---|---|
+| spot | 6.87 |
+| dte (calendar days) | 183 |
+| ATM IV | 130.56% |
+| expected absolute move (MEAN, not a ceiling) | 57.86% |
+| 1-sigma move | 92.44% |
+| RV60 | 53.77% |
+| IV > RV60? | YES |
+| RV20 | 43.77% |
+| IV > RV20? | YES |
+| thesis requires | 100.00% |
+| that is | 0.75 sigma |
+| P(\|move\| >= required) | 45.337266% |
+| refutes timing claim (> 2 sigma)? | NO |
+
+Liquidity gate: **FAILED → UNRELIABLE.** OI is 9 on the call and 26 on the
+put, the call has no bid, and the put spread is $2.05/$2.80. IV of ~131%
+against RV60 of ~54% says the surface is pricing a binary event inside the
+window, which is not news. With IV above 50%, any implied return would be
+whole-percent only, and here there is none. Timing check: not refuting
+(0.75σ), and on a failed gate it may not move the verdict anyway.
+
+Leverage gate: not triggered (net cash, no going-concern language seen).
+
+## 5. Falsifiers
+
+For the pass (flip toward buy):
+- **Shift —** OPERA-01 top-line hits both primary endpoints (ESR1m and
+  all-comers), which would make palazestrant the first SERD/CERAN to win
+  all-comers as 2L monotherapy and change the commercial frame. Revalue at
+  the post-print price.
+- **Shift —** Orserdu/Inluriyo sales disclosures show a 2L ESR1m monotherapy
+  market already above ~$1B a year with room for a third entrant (fills
+  condition 2's UNKNOWN).
+- **Shift —** Q3 10-Q (2026-11-09) shows cash ≥ ~$400M and a stated runway
+  past a 2028 launch. This would confirm condition 3 and remove the
+  financing overhang.
+
+For an owner (sell):
+- **Break —** OPERA-01 misses the ESR1-mutant primary endpoint.
+- **Break —** a further OPERA-01 delay past Q1 2027, or any protocol or
+  statistical-plan amendment announced before top-line.
+- **Shift —** an equity raise before the readout below ~$8.
+
+> [!NOTE]
+> **Reopen trigger:** 2027-03-31: olma-opera01-topline-esr1m-and-allcomer-pfs
+
+## 6. UNKNOWNs
+
+1. UNKNOWN — commercial value of a 2L ESR1m oral SERD: Orserdu and
+   Inluriyo US sales were not found. Would come from Menarini/Stemline and
+   Lilly segment disclosures or Q3 2026 earnings. Its absence keeps
+   condition 2 unadjudicable and is the reason for UNPROVEN.
+2. PENDING 2027-03-31 — OPERA-01 top-line (ESR1m and all-comer PFS, hazard
+   ratios). Decisive for condition 1.
+3. UNKNOWN — the reason for the fall-2026 → Q1-2027 slip. Event-driven
+   accrual is my inference, not disclosed.
+4. UNKNOWN — whether palazestrant's "complete antagonism" pharmacology
+   translates into a PFS edge over partial-agonist or lower-exposure rivals.
+   This is domain science I cannot evaluate, and it is load-bearing behind
+   condition 1.
+5. PENDING 2026-11-09 — Q3 cash, burn, and any runway statement.
+6. NOT OBTAINED — the term-loan terms (8-K 2026-05-01 exhibit) and the 10-Q
+   commitments note (CRO obligations). Not load-bearing at $3.0M drawn.
+7. NOT OBTAINED — palazestrant patent expiry (10-K Item 1). Not
+   load-bearing before a readout.
+8. *Possible-tier upside:* an all-comer win, an acquisition by a large-cap
+   breast-cancer franchise, OPERA-02 (1L with ribociclib), and OP-3136
+   combination data in 1H 2027.
+
+## 7. Sources
+
+- **Primary:** Q2 2026 10-Q (filed 2026-08-10; balance sheet, ATM, share
+  and pre-funded warrant counts); 8-K Ex. 99.1 Q2 release (2026-08-10;
+  Q1 2027 timing, opex, Bayer); 8-K Ex. 99.1 Q1 release (2026-05-12; "fall of
+  2026" timing, $505.3M cash at 3/31); 8-K 2026-08-13 (CFO appointment and
+  terms); 8-K 2026-10-15 (Hrustanovic resignation); Form 4 2026-09-02 (CFO
+  option); Form 144 2026-07-24 (Harmon); EDGAR submissions index;
+  ClinicalTrials.gov NCT06016738 (OPERA-01 design); H.C. Wainwright
+  conference transcript 2026-09-16 (primary-transcribed, via stockanalysis).
+- **stockanalysis.com (vetted exception):** annual financials (operating and
+  net income FY2021–TTM); transcript listing; statistics page (schema only
+  this run).
+- **Broker/market microstructure:** Robinhood MCP equity quote and official
+  close (2026-10-15), daily bars 2026-06-08→10-15, OLMA option chain and the
+  2027-04-16 $7 call/put quotes, and earnings estimates/actuals. Admissible:
+  no integrated official source covers single-name option quotes or EPS
+  estimates for OLMA. Actuals cross-checked to `sec_fundamentals.db`.
+- **Reference data:** DGS10 and T10YIE via fred.db (dates above). Damodaran
+  ERP not fetched (refused base).
+- **Point-in-time repo DBs:** stocks.db `v_latest` (captured 2026-10-14:
+  price $6.80, cash $461.07M, debt $3.66M, TTM op CF −$164.7M, SBC $31.6M,
+  beta 2.01, insiders 2.68%, institutions 88.9%, 52-wk high $60.27 on
+  2025-12-16); sec_fundamentals.db `v_screener` (Q2 net loss −$63.2M, EPS
+  −0.61); composite.db `ticker_scores` snapshots 105–107; fred.db.
+- **Low-confidence:** press and aggregators (gurufocus, marketbeat, tickeron,
+  nasdaq, barchart, fiercepharma, pharmaphorum) for the persevERA / SERENA-4 /
+  evERA price reactions and competitor approvals; my recollection of
+  Hrustanovic's BVF tie.
+
+## Kill-thesis record
+
+**Ledger:** UNPROVEN — conditions=3 (1 probable, 2 plausible), refuted=0,
+unknown=1, pending=1, not_obtained=0.
+
+**Per-condition adjudication (bull case):**
+1. OPERA-01 ESR1m PFS hit — **PENDING 2027-03-31.** Attacked with today's
+   evidence. The base rate is ~48% for oncology Phase III→approval
+   (BIO/Informa/QLS 2011–2020, not re-fetched; reference recollection). The
+   class-specific record is stronger in ESR1m: EMERALD, EMBER-3 and
+   VERITAC-2 all hit there. The comparator includes AIs, which are weak
+   post-CDK4/6. Against it: an unexplained readout slip, and Phase 2 7.3-month
+   mPFS is single-arm. Nothing today stands against the condition, so it is
+   not refuted.
+2. Commercial share in 2L ESR1m — **UNKNOWN.** No filing past or future
+   prices palazestrant's share before launch, and the competitor sales that
+   would bound it were not found. The attack nearly lands: a third or fourth
+   entrant with an ESR1m-only label and no head-to-head data is the textbook
+   late-entrant problem, and both 1L class trials failed this year, shrinking
+   the follow-on prize.
+3. Cash through readout — **SURVIVED (probable).** $461.1M at 6/30 against
+   ~$60–65M quarterly GAAP opex is ~7 quarters, which reaches past Q1 2027.
+   The risk is dilution after the readout, not before.
+
+**Standing checks.** Base rate: above. Short case: a single-asset biotech
+whose class has just failed twice in the larger 1L market, with a delayed 2L
+readout. Even success yields a crowded ESR1m label, and the company will have
+to raise for launch. The short sees the evERA-driven $60 peak still
+unwinding. Incentives: management is paid in options struck far above
+market (CFO at $10.56), which favours swinging for the binary over a sale
+before data, a reasonable but unhedged posture. Disconfirming search: run
+(competitor approvals, all-comer failures). Moat: label, not mechanism (§2).
+
+**Statistical checks.** N/A: no backtest or screen claim is load-bearing.
+The composite flag is 0.18 coverage and is not used.
+
+**Options timing check.** Ran on path 2, Robinhood stopgap. The 2027-04-16
+expiry brackets the dated catalyst. Liquidity gate FAILED → UNRELIABLE. The
+CLI verdict row reads `refutes timing claim (> 2 sigma)? NO` at 0.75σ.
+Coverage disclosed. It cannot move the verdict.
+
+> [!WARNING]
+> **Closest attack:** condition 2. Being a late entrant to a niche already
+> split between two approved agents, with no sales data to price it, is what
+> keeps the binary from being a clear positive-expectancy bet at ~$300M of
+> pipeline EV.
+
+> [!NOTE]
+> **Flip evidence:** toward SOUND, Orserdu/Inluriyo sales showing a
+> >$1B ESR1m 2L market with uptake still growing, which would make condition 2
+> survivable at *plausible*. Toward FLAWED, a further OPERA-01 slip or an
+> amendment to the statistical plan before top-line, or competitor sales
+> showing the niche is sub-$500M.
+
+> [!IMPORTANT]
+> **p(beat SPY, 126 td):** 0.42. This is roughly P(ESR1m hit) ~0.55–0.6 times
+> P(the market rewards an ESR1m-only win) ~0.7, set against a −40% to −50%
+> cash-floor outcome, with pre-readout drift at a 12-month low cutting both
+> ways.

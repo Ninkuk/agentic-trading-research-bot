@@ -1,0 +1,621 @@
+# PAGS — PagSeguro Digital (PagBank) — 2026-10-26 (reopen of 2026-10-18, trigger: price-le-9-30 leg)
+
+> [!IMPORTANT]
+> **In one sentence:** PagBank is a Brazilian merchant-acquirer-turned-bank with flat real profits that fell 25% on the election result, and at 0.8× book even shrinking earnings clear the hurdle, so buy, with Brazil's country premium the reversal risk.
+
+Price $8.64 (live quote, 06:48 Phoenix, 2026-10-26; prior official close
+$11.44, 2026-10-23) · market cap $2,381.6M · next earnings 2026-11-16 AMC
+(broker-verified)
+
+**Reopen run, user-directed.** Prior file: `research/PAGS-2026-10-18.md`,
+**UNPROVEN**, **PASS at $11.00**. That document's price falsifier for the
+pass ("flip toward buy at or below ~$9.30, where the melt case re-clears the
+hurdle; a Lula runoff win would likely revisit it") fired this morning. The
+reopen question: with the business unchanged and the price 21% below the
+prior run, does the bull case now clear the hurdle on the paths the prior
+run said it failed, and does the event that moved the price (Lula's win,
+BRL −8 to −12%) change the paths themselves? Held position (two lots,
+1.183 shares, journal basis $8.72). Composite has never flagged PAGS on its
+own signals (snapshot 117: score 0, coverage 0.0, `in_portfolio` 1).
+
+## 0. The reopen question, answered first
+
+**Yes on price, with one new scenario input doing the opposing work.** The
+drop is Brazil beta, not PagBank news. No 6-K, press release or guidance
+change has been filed since the Q2 release of 2026-08-11 (EDGAR index read
+this morning; the only filings since 2026-10-13 are two Form 4s). At 06:48
+Phoenix the peers read: EWZ −23.6%, STNE −29.3%, BBD −28.6%, ITUB −21.2%,
+NU −20.5%, MELI −12.7%, TIMB −10.1%, SPY +0.4% (broker quotes against the
+10-23 official closes). PAGS at −24.5% sits in the middle of the Brazilian
+financials. The trigger was Lula's runoff win on 2026-10-25, 51.76% to
+48.24% with 100% counted (low-confidence: NPR, PBS, The Hill, AP via
+search), the first second-round reversal since 1989. The real opened at
+~5.42/USD from 4.99 on Friday and printed 5.60 by 09:47 Brasília; Ibovespa
+futures fell up to 19.7% and the cash market hit a circuit breaker
+(low-confidence: Rio Times, FinanceFeeds, TokenPost). Barclays expects
+sovereign bonds to sell off ~300bp; Morgan Stanley ~200bp (low-confidence:
+Reuters via Korea Times / US News).
+
+The prior run's valuation table said the melt case re-clears at ~$9.30 and
+the observed path at ~$9.70. Both are now true with room to spare, *at the
+prior BRL*. The new input is the currency: §4 reconverts the same R$2,151M
+of trailing net income at ~5.50 instead of ~5.18, a 6% haircut, and still
+clears every path at the January-2026 Brazil premium. The one path that
+fails needs both a −3%/yr USD melt *and* a 150bp durable widening of
+Brazil's country premium. That combination is exactly what the sell side
+is now describing, so it is the attack, not a footnote.
+
+| prior falsifier | actual | status |
+|---|---|---|
+| Shift — price ≤ ~$9.30 (melt re-clears) | $8.64 live; opened $7.705, low $7.50 in the first five minutes | FIRED |
+| Shift — Q3 GP ≥ +8% y/y, financial costs −5% | Q3 print 2026-11-16, not yet | NOT TRIGGERED (pending) |
+| Shift — active banking flat/up at Q3 | 2026-11-16 | NOT TRIGGERED (pending) |
+| Shift — BIS ≥ 21% at Q3, 2027 dividend ≥ R$1.2B | 2026-11-16 / Q1 2027 | NOT TRIGGERED (pending) |
+| Break (owner) — NPL90 > ~4.5% or allowance > 15% of GP | no new quarter | NOT TRIGGERED |
+| Break (owner) — GP/TPV < 1.4% or guide withdrawn | no filing | NOT TRIGGERED |
+| Break (owner) — equity raise or 2027 dividend < R$1.0B with BIS < 19% | no filing | NOT TRIGGERED |
+| Shift (owner) — BRL/USD beyond ~6.00 without a BRL-earnings response | 5.42–5.60 intraday (press) | GRAZED |
+| Shift (owner) — further full-stake insider exits or a controller transaction | Magnani sold 64,323 more shares 10-16 → 10-20; 107,390 left; no controller filing | HALF-TRIGGERED |
+| Shift (owner) — effective tax > ~30% or a Selic re-tightening | Selic 13.75%; pause odds for 11-04 now ~58% (low-confidence) | GRAZED |
+
+## 1. Verdict and thesis
+
+**BUY at $8.64.** kill-thesis: **UNPROVEN** — conditions=5 (2 probable,
+3 plausible), refuted=0, unknown=1, pending=2, not_obtained=0.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.52** · kill-thesis: 0.48 · **Disputed expectation:**
+> at $8.64 the market prices a Lula-regime Brazil — BRL ~5.5, a Selic that
+> pauses rather than cuts, a wider sovereign premium — onto PagBank's flat
+> real earnings. Flat USD earnings at the new BRL clear the 14.22% hurdle by
+> +351bp; a −3%/yr USD melt still clears by +39bp; only melt *plus* a 150bp
+> wider Brazil premium fails (−147bp). The Q3 print (2026-11-16: NPL90, BIS,
+> gross-profit growth) and Lula's finance-minister pick and fiscal signal are
+> what revise it either way.
+
+The business has not changed since the 2026-08-13 BUY, the 2026-09-13 PASS
+or the 2026-10-18 PASS: a commodity acquirer plus a principal bank for
+Brazilian micro-merchants, earning R$2.1–2.2B a year through a 13.75–15%
+Selic, paying ~90% of it out, trading now at 0.82× book, 6.0× trailing and
+4.7× forward earnings. What changed is the price and the regime. The price
+fell 24.5% in one session with every Brazilian ADR, back to the August
+level at which the first thesis bought. The regime is worse than the one
+the August buy assumed: a weaker real, a central bank less likely to cut,
+and a sovereign the market is repricing. The valuation absorbs the first
+two with a margin (§4) and fails only if the third is large and durable.
+That is a buy on price with a named reversal, not a buy on the story.
+
+> [!WARNING]
+> **Closest attack:** the hurdle is stale-low. §4 uses Damodaran's Brazil
+> total ERP of 7.47% from the January 5, 2026 vintage (confirmed unchanged on
+> the page today), which prices Brazil at Ba1 with a 3.24% country premium.
+> If the sovereign sells off 200–300bp as Barclays and Morgan Stanley expect
+> and it sticks, the hurdle is ~16%, and at ~16% the conservative paths fail
+> by 100–150bp. The buy case then rests on flat USD earnings alone (+165bp at
+> a 150bp-wider premium), which is the same single leg the August thesis
+> stood on.
+
+Load-bearing conditions of the bull case (owning PAGS at $8.64 beats SPY
+over the horizon): **five**, two probable and three plausible. The BRL, the
+Selic and the sovereign premium are exogenous and live in §4 as scenario
+inputs; the hidden condition — the price clears the hurdle on the stated
+path — is what §4's table attacks directly.
+
+1. *probable* — **BRL net income stays roughly flat through the CSLL
+   step-up** (34% → 37% statutory from 2026-01-01, 40% from 2028; 20-F
+   Item 10E). FY2024 R$2,116M → FY2025 R$2,118M → TTM R$2,151M
+   (stockanalysis, TTM through Q2'26; no new quarter). The FY26 gross-profit
+   guide (+6–9%, reaffirmed Q2 call) is the mechanism that absorbs the tax
+   step; §4 run H prices the case where it does not.
+2. *plausible* — **the credit book's loss curve stays inside current
+   provisioning** as the unsecured share (24.3% at Q2) rises into a
+   weaker-BRL, higher-for-longer cycle. The Q3 NPL90 / allowance table
+   (2026-11-16) is a reading; the through-cycle curve is UNKNOWN (§6.1).
+3. *plausible* — **capital return continues at the guided level without
+   an equity raise** on the 22.5% → 18% Basel glide. Settled by the Q3 BIS
+   ratio (2026-11-16) and the 2027 dividend declaration (Q1 2027).
+4. *probable* — **the take rate holds at ~1.5% gross profit / TPV.** 1.5%
+   in Q2'26 and Q2'25 (6-K 0001554855-26-001793, carried).
+5. *plausible* — **the active-client decline (−3.3% y/y) does not become a
+   revenue decline.** Revenue +0.4% at Q2. Settled by the Q3 client and
+   revenue tables, 2026-11-16.
+
+> [!WARNING]
+> **Dominant shared risk factor:** Brazilian policy-rate, currency and
+> sovereign-premium regime (Selic path, BRL/USD, Brazil CDS under a Lula
+> fourth term) — shared by 1 of 24 other held names (TIMB) · 0 unlabelled.
+> Holdings read from `portfolio.db` `v_latest_positions` (snapshot
+> 2026-10-15, 25 names). TIMB's line ("Brazilian macro — the BRL/USD path and
+> the Selic/IPCA indexation channel") fails in exactly this scenario and
+> TIMB is down 10% today on it. Every other holding carries a US- or
+> China-grain factor. The book has two names falling together on a Brazil
+> shock, and adding here raises that to two larger ones.
+
+## 2. Business
+
+Unchanged from `research/PAGS-2026-10-18.md` §2 and the 2026-09-13 run
+before it. No new quarter. The Q2'26 figures (6-K 0001554855-26-001793)
+are carried: 34.1M total clients (+3.1%), active clients 17.1M (−3.3%),
+deposits R$42.8B (+15.1%) at 83.3% of CDI, TPV R$133.4B/quarter, gross
+profit 1.5% of TPV, credit book R$5.1B, receivables R$52.4B.
+
+- **Created:** payments acceptance (POS / Pix / cards) plus a full digital
+  bank for Brazilian micro/SMB merchants and consumers.
+- **Captured:** (i) acquiring MDR on TPV; (ii) the prepayment spread on the
+  receivables book, which is where the Selic bites (TTM interest expense
+  −R$4,903M); (iii) deposit float; (iv) lending NIM plus banking/insurance/
+  investment fees.
+- **Protected:** no moat in acquiring (Stone, Mercado Pago, CloudWalk).
+  Banking principality — cheap on-platform deposits plus transaction-history
+  underwriting — is a real mechanism, weakening on both legs (active banking
+  base shrinking, deposit cost stabilised in the low 80s % of CDI). The
+  valuation assumes excess returns fade.
+- **Control:** UOL (Luis Frias via OFL Participações) holds all 120,459,508
+  Class B shares at 10 votes each plus 3.7M Class A: **88.74% of total
+  voting power** on 2.18% of the Class A (20-F FY2025 Item 7A, as of
+  2026-03-31, read this run). BlackRock holds 9.88% of Class A for 1.24% of
+  the vote. Frias left the chair on 2026-08-21 and remains the indirect
+  controller (6-K 0001554855-26-001913). Takeover and activist paths are
+  foreclosed. **New this run (Item 6.B, the prior run's NOT OBTAINED):**
+  executive pay is fixed salary plus a cash bonus under a corporate
+  results-sharing plan plus LTIP-Goals restricted shares; the LTIP pool is
+  capped at a percentage of net profit set each January and at 1% of
+  shares; the LTIP-Goals Committee is "our chairman and two officers of
+  UOL"; aggregate 2025 pay to officers and directors was R$53.5M; 16.9M
+  Class A shares have been delivered under the plans to 2026-03-31. The
+  plan's performance goals are not disclosed, so the ">16% EPS CAGR"
+  ambition is not a documented incentive target. Related-party costs with
+  the UOL group were R$560.6M in 2025 (3.1% of expenses; Item 7B). The
+  compensation committee being controller-staffed is consistent with a
+  controller who runs the company for the long run and with one who runs
+  it for UOL; the filing cannot separate the two.
+
+**Operating leverage (Phase 0): positive at the operating line, flat at the
+bottom line, and the gap is the Selic.** (BRL millions; stockanalysis, TTM
+through Q2'26; unchanged.)
+
+| | 2021 | 2022 | 2023 | 2024 | 2025 | TTM |
+|---|---|---|---|---|---|---|
+| Revenue | 10,299 | 15,159 | 15,680 | 18,334 | 19,743 | 19,804 |
+| Operating income | 2,122 | 5,073 | 5,385 | 5,959 | 7,412 | 7,478 |
+| Operating margin | 20.6% | 33.5% | 34.3% | 32.5% | 37.5% | 37.8% |
+| Net income | 1,166 | 1,505 | 1,654 | 2,116 | 2,118 | 2,151 |
+
+Revenue +92% since 2021, operating income +252%, net income +84% and flat
+for two years. Interest expense absorbs the operating gain. A Selic that
+pauses at 13.75% instead of gliding to 13.25% keeps it that way.
+
+## 3. Threads pulled
+
+- **What moved the stock: the runoff, not the company.** EDGAR shows no
+  6-K since 2026-09-01 and nothing today. The peer table in §0 puts PAGS
+  inside the Brazilian-financials cluster. Investing.com's "why is PAGS
+  plummeting 30%" piece (low-confidence) cites a Bank of America downgrade
+  and the Magnani sales; the BofA cut to Neutral/$10 is dated 2026-07-15
+  (low-confidence: MarketBeat) and is not news. Nothing company-specific
+  happened. Today's open was $7.705 with a $7.50 print in the first five
+  minutes, then $8.25–8.87 through 06:50 Phoenix (broker 5-minute bars).
+- **The transmission from a Lula win to PagBank's earnings runs through
+  the Selic, not just the real.** Analysts frame the sell-off as fiscal:
+  a 7–8% deficit and ~70% net debt/GDP (ING), reluctance on austerity, a
+  pending finance-minister pick (low-confidence: Reuters via Korea Times,
+  US News, KuCoin). A weaker real and a sovereign repricing make a Selic
+  cut on 2026-11-04 less likely; the pause odds moved from ~9% to ~58% in
+  a week (low-confidence: Rio Times prediction-market note, week of 10-26).
+  PagBank's own FY26 guide assumed a year-end Selic of 13.75–14% (Q2 call,
+  carried), so a pause at 13.75% is *inside* the guide, not below it. The
+  downside is a re-tightening, which no source currently prices. Deutsche
+  Bank notes the new Congress is more right-leaning, limiting fiscal
+  loosening (low-confidence). Net: condition 1's mechanism is intact at a
+  pause and breaks only on hikes.
+- **Insider selling, continued and resolved on plan status.** Two new Form
+  4s. 2026-10-16: 1,014 shares at $11.182 (0001554855-26-002140).
+  2026-10-19: 16,209 at $11.183 and 2026-10-20: 47,100 at $11.216
+  (0001554855-26-002151). Director Alexandre Magnani has now sold
+  **500,000 of the ~607,390 he held on 10-06 (82%)** at $10.60–11.22, with
+  107,390 left and the 10-09 Form 144 still covering them. Both new
+  filings carry `aff10b5One = 0`: **the sales were not under a 10b5-1
+  plan.** That resolves the prior run's §6.6 the wrong way for the bull —
+  a director chose, discretionarily, to sell four-fifths of his stake in
+  the fortnight before a runoff that was a polling tie, with the last sale
+  four trading days before the vote. Insider sales are weak predictors on
+  average; this one was well-timed. No insider has bought.
+- **The dividend-tax leak, a new thread from the 20-F.** Law 15,270
+  (2025-11-26) imposes a 10% withholding tax on dividends paid to
+  non-resident shareholders from 2026-01-01, refundable only if the payer's
+  effective tax rate exceeds the statutory rate (20-F Item 10E). PagSeguro
+  Digital is a Cayman parent (no Cayman tax), so dividends upstreamed from
+  PagSeguro Brazil are a non-resident payment. PagBank's effective rate is
+  17.3% against 37% statutory, so no refund. Whether the group upstreams
+  via dividends or another route is not disclosed, so the size of the leak
+  is UNKNOWN (§6.5). It is a drag on distributable cash, not on consolidated
+  earnings, and the scenario table already prices a 7% earnings haircut.
+- **Cost basis before adding (kill-thesis rule).** Two lots in the agentic
+  account: 1.148118 shares at $8.71 (2026-08-14) and 0.035359 at $9.05
+  (2026-10-01, DRIP). At $8.64 both are underwater, by 0.8% and 4.5%, both
+  short-term. The position is ~$10. Averaging down here is adding at the
+  August entry, not rescuing a loss.
+- **Selic and Copom.** 13.75% since 2026-09-17 (BCB, carried); next
+  decision 2026-11-04 (low-confidence: ricoaospoucos). Focus survey
+  (answers to 10-16, pre-runoff) had 13.25% at end-2026; that consensus
+  predates the result.
+- **Latest call: carried, not re-read.** Still Q2 2026 (2026-08-11). No
+  letter, call or 6-K since.
+- **Earnings-estimate pattern (broker tier).** Unchanged: five hair-thin
+  beats Q4'24–Q4'25, misses in Q1'26 (0.39 vs 0.40) and Q2'26 (0.388 vs
+  0.40). Q3'26 estimate 0.41, 2026-11-16 AMC verified; Q4 0.45, 2027-03-03
+  tentative. stockanalysis's "Nov 11" is the unverified date the prior run
+  also rejected.
+- **Sell-side colour.** Consensus target $11.74 (16 analysts, "Buy") is
+  pre-event. Short interest 17.34M shares, 11.45% of shares out, 5.4 days
+  to cover (stockanalysis). A crowded short into a 25% gap that already
+  happened is now the squeeze-risk side of the ledger, not the
+  overhang side.
+- **Options read (mandatory):** path 2 only (Robinhood stopgap). PAGS is
+  not in the CBOE catalog and `data/options.db` has no PAGS rows. Table,
+  liquidity verdict and timing applicability are in §4.
+- **Dead ends.** No October Bank of America action exists (the search
+  returned only the July note). No source carried today's Brazil 5-year CDS
+  level (Poder360's last print is 116bp on 2026-05-08, a cycle low), so the
+  CRP sensitivity in §4 is a stated range, not a measured move. EDGAR
+  full-text search returned Forbidden; the Atom index was used instead.
+  `earnings.db` has no PAGS row. `sec_fundamentals.db` carries assets and
+  liabilities only (FPI on IFRS). Damodaran's `ctryprem.html` still says
+  January 5, 2026; his home page's implied-ERP line (October 1, 2026) is a
+  US figure and is not used for a Brazilian issuer. Robinhood's
+  `shares_outstanding` is not re-queried; stockanalysis's 275,646,022 is
+  kept for continuity with the prior runs.
+
+## 4. Valuation
+
+**Inputs and pairing.** Unchanged pairing and the same refusal of
+stockanalysis `fcf` ($1.03B TTM, a 32.5% "yield" that is the
+receivables/deposit artifact of a prepayment bank; `leveredFCF` on the same
+period is negative). The base is **TTM GAAP net income** paired with
+**market cap**, net debt 0 by the pairing rule. stockanalysis's USD TTM
+net income is **$415,208,462** (R$2,151.1M at ~5.18, the trailing average
+rate). Because the real reset today, the primary base this run is the same
+BRL figure reconverted at **~5.50** (the mid of this morning's 5.42–5.60
+press range, low-confidence): **$391.1M**. Market cap **$2,381.6M** ($8.64
+× 275,646,022). SBC is $24.29M (0.64% of revenue; stocks.db), already
+charged in GAAP income — no further haircut. No minority interest. Book
+equity $2,898.4M (stockanalysis, USD), so **P/B 0.82×** (1.05× on 10-18,
+0.96× on 09-13); P/TBV 1.39×. Interest coverage 1.53× on stockanalysis's
+definition is the prepayment-funding artifact, not a solvency reading.
+
+**The leverage gate does not fire.** Debt $342.7M against equity $2.9B;
+liabilities are deposits and merchant payables; no going-concern language.
+The DCF frame governs §1. `equity_option` was not run.
+
+**Hurdle:** rf **4.96%** (`DGS10`, fred.db, 2026-10-22) + beta **1.24**
+(stockanalysis 5Y, live; stocks.db 1.244) × Brazil **total ERP 7.47%**
+(Damodaran `ctryprem.html`, "Last updated: January 5, 2026", re-read today:
+Ba1, default spread 2.13%, CRP 3.24%; ~100% Brazilian revenue) =
+**14.22%**. Beta sits just above the 0.8–1.2 band; no clamp, because
+flooring it upward would hand the read a free pass. Runs I and J add 150bp
+to the ERP (8.97%, hurdle 16.08%) to represent a durable sovereign
+repricing of the size the sell side is quoting; the January vintage is the
+stale-low case the closest attack names.
+
+**Terminal-growth ceiling: 2.34%**, the 10-year breakeven (`T10YIE`,
+fred.db, 2026-10-23). The flow is USD-converted BRL earnings, so US
+inflation is the zero-reinvestment growth rate in USD.
+
+| scenario | base FCF | growth ×5y | terminal | implied return | vs hurdle |
+|---|---|---|---|---|---|
+| A flat USD, prior BRL ~5.18 | $415M | 0%/yr | 2.34% | **~19%** | **+447bp** |
+| B mgmt path (75% retained-growth base) | $311M | +8%/yr | 2.34% | **~19%** | **+459bp** |
+| C melt, prior BRL | $415M | −3%/yr | 0% | **~16%** | **+132bp** |
+| D enacted-tax drag, prior BRL | $386M | 0%/yr | 2.34% | **~18%** | **+330bp** |
+| E observed path (BRL flat, USD −2.1%/yr) | $415M | −2.1%/yr | 0% | **~16%** | **+188bp** |
+| **F flat USD at BRL ~5.50 (primary)** | $391M | 0%/yr | 2.34% | **~18%** | **+351bp** |
+| G FX reset + melt | $391M | −3%/yr | 0% | **~15%** | **+39bp** |
+| H FX reset + tax drag | $364M | 0%/yr | 2.34% | **~17%** | **+241bp** |
+| I FX reset, hurdle +150bp (16.08%) | $391M | 0%/yr | 2.34% | **~18%** | **+165bp** |
+| J FX reset + melt, hurdle +150bp | $391M | −3%/yr | 0% | **~15%** | **−147bp** |
+
+Whole percents only: ATM IV is ~68%. Exact solver outputs, for the record:
+A 18.70%, B 18.81%, C 15.54%, D 17.52%, E 16.10%, F 17.73%, G 14.61%,
+H 16.63%, I 17.73%, J 14.61%.
+
+**Read against the two prior runs.** At $11.00 the flat case cleared by
++76bp and the melt and observed paths failed by 224 and 178bp. At $8.64,
+with the currency haircut applied, flat clears by +351bp, melt by +39bp,
+and the observed path (run E, the two-year BRL-flat history) by +188bp.
+The $9.30 and $9.70 flip levels the prior run named are both cleared. The
+levels at which the conservative cases fail again, from the solver: the
+FX-reset melt (G) at **~$8.90**; flat earnings under a 150bp-wider premium
+(I) at **~$9.70**; flat at the January premium (F) not until ~$11.20.
+The buy case at $8.64 therefore has a ~30-cent cushion on its most
+conservative path and ~$1 on the adverse-hurdle flat path.
+
+**Integrity checks.**
+
+- **Reinvestment warning, answered.** Runs A, D, F, H and I trip `growth
+  without reinvestment` (base FCF = base earnings, terminal growth 2.34%).
+  2.34% is the USD-inflation repricing of existing assets and needs no
+  reinvestment; real growth beyond it would, and no run assumes it. Actual
+  payout is ~90% of net income (dividend 45.6% plus 7.5% buyback yield;
+  stockanalysis).
+- **Implied terminal ROE.** Run B prints 9.36%, below the hurdle:
+  value-destroying retention in the terminal period, deliberate, matching
+  the ~29% base rate of firms earning above their cost of capital
+  (Damodaran EVA).
+- **Market-share sentence.** Run B's +8%/yr takes USD FCF to ~$460M by
+  2031. PagBank holds ~10% of Brazilian acquiring TPV and under 1% of most
+  banking verticals; the path needs no bigger-than-the-market share. The
+  company's own 2029 credit ambition (R$5.1B → R$25B) is in no run.
+- **Cash tax.** TTM effective 17.3% (stockanalysis `taxrate`) against a
+  statutory rate now 37% (2026–27) and 40% (2028+) under LC 224/2025 (20-F
+  Item 10E, re-read). Runs D and H price a 7% earnings haircut; the
+  dividend WHT (§3) is a further leak on distributions, unsized.
+- **Terminal risk (Item 3D / 10E sweep, re-run on the local 20-F).** The
+  filing names the CSLL escalation, the 2022 interchange caps on debit
+  (0.5%) and prepaid (0.7%), the new non-resident dividend WHT, and
+  Brazilian political and economic conditions. It does not name an
+  interest-rate cap on consumer credit or a Pix-displacement risk in those
+  words. A 0–2.34% terminal range survives these only because no run
+  assumes real growth; a Lula-term policy on card-credit interest or
+  interchange would be a §5 Break, and none is announced.
+- **The exogenous inputs: BRL, Selic, sovereign premium.** All three moved
+  this morning and all three sit in the table, not the condition list.
+  BRL ~5.50 is applied as the base (F–J). The Selic path enters through
+  condition 1's mechanism (a pause is inside the guide; hikes are not). The
+  sovereign premium is the +150bp sensitivity (I, J); it is the one input
+  whose durable move flips the conservative paths, and it is the one with
+  no live measurement in this run (§3 dead ends).
+- **Serial-acquirer / cash-heavy clamps:** not applicable.
+- **Distribution clamp.** Every implied return sits far above the US
+  cost-of-capital band (median ~7.8%, 80% within ~5–10%), as expected for a
+  single-country Brazilian issuer; the hurdle is what is clamped, not the
+  return.
+
+**Options-implied move — path 2 only (Robinhood stopgap).** PAGS is not in
+the CBOE catalog and `data/options.db` has no PAGS history, so path 1 is
+structurally unavailable. Expiry **2026-11-20, 25 DTE** (from 2026-10-26),
+strike 9 (spot 8.64; the 8 strike is 0.64 away, the 9 strike 0.36). It
+brackets the Copom decision (11-04) and the Q3 print (11-16 AMC). ATM IV is
+the mean of the put's 67.81% and the call's 67.29% (marks at 06:52
+Phoenix, `updated_at` 13:52 UTC). Realized vol from Robinhood daily closes
+(log returns, ×√252) with today's $8.64 appended as a partial close. Both
+windows now contain two gaps, +19.4% log on 10-05 and −28.1% log today, so
+the ex-gap figures (|r| < 15%) are given beside them.
+
+| metric | value |
+|---|---|
+| spot | 8.64 |
+| expected absolute move (straddle/spot; MEAN, not a ceiling) | 15.05% |
+| 1-σ move | 17.68% |
+| ATM IV | 67.55% |
+| RV60 | 78.5% (35.3% ex-gap) |
+| RV20 | 128.7% (35.3% ex-gap) |
+| IV > RV60? | NO (incl. gaps) / YES (ex-gap) |
+| IV > RV20? | NO (incl. gaps) / YES (ex-gap) |
+
+Read the disagreement as the finding: the realized windows are dominated
+by two election gaps, and against the ~35% the stock does on ordinary
+days, a 68% IV into a Copom plus a print is elevated. The IV barely moved
+from the 10-18 read (~72% at 33 DTE), i.e. the runoff's vol was spent and
+replaced by the post-event regime's.
+
+**Liquidity gate: FAILED → UNRELIABLE.** Put: volume 342, OI 1,674, bid
+0.75 / ask 1.05 on a 0.90 mark (33% spread). Call: volume 60, OI 372, bid
+0.30 / ask 0.50 on a 0.40 mark (50% spread). Both spreads fail the 10%
+gate; the call volume fails the 100 floor. The table is context only.
+
+**Timing check: NOT APPLICABLE.** The bull case's dated claims are
+disclosures (the 11-16 print), not price moves.
+
+## 5. Falsifiers
+
+**For an owner (sell):**
+
+- **Break —** NPL90 past **~4.5%**, or credit-loss allowance expense above
+  ~15% of quarterly gross profit (3.5% at Q2), at the Q3 print.
+- **Break —** gross profit / TPV decisively below 1.4%, or the FY
+  gross-profit guide withdrawn.
+- **Break —** an equity raise, or a 2027 dividend below R$1.0B with BIS
+  under 19%.
+- **Break —** an announced Lula-government cap on card-credit interest or
+  a further interchange cap reaching credit cards (none proposed today).
+- **Shift —** Brazil's country premium durably **≥ ~150bp wider** than the
+  January-2026 vintage (CDS or Damodaran's next `ctryprem` update), which
+  moves the hurdle to ~16% and fails the melt path. Revalue; at $8.64 flat
+  earnings still clear.
+- **Shift —** a Copom **hike**, or BRL/USD beyond ~6.00 without a
+  BRL-earnings response. A pause at 13.75% is inside the guide and is not a
+  falsifier.
+- **Shift —** price above **~$8.90** removes the melt cushion; above
+  **~$9.70** flat earnings fail under the wider premium. Neither is a sell
+  signal on its own; both revert the call toward the 10-18 pass logic.
+- **Shift —** a controller-level transaction by Frias/UOL, or Magnani
+  selling the remaining 107,390 shares.
+
+**For the buy to strengthen (toward SOUND):** Q3'26 (2026-11-16) showing
+NPL90 ≤ 3.5%, BIS ≥ 21%, gross profit ≥ +5% y/y with financial costs down
+y/y, and active banking flat or up.
+
+> [!NOTE]
+> **Reopen trigger:** 2026-11-16: `pags-q3-26-print-npl90-le-4-5pct-bis-ge-21pct-gp-growth-ge-5pct-or-brazil-crp-ge-150bp-wider-or-price-ge-9-70`
+
+## 6. UNKNOWNs
+
+1. **UNKNOWN — the through-cycle loss rate of the unsecured book.** No
+   filing carries it; the vintages are under two years old; management
+   refuses product-level disclosure (Q2 call, carried). Load-bearing on
+   condition 2 and the reason the verdict is UNPROVEN for the fourth run.
+   It matters more today than on 10-18: a BRL shock plus a Selic that
+   stops falling is the cycle these vintages have never seen.
+2. **UNKNOWN — the industry NPL comparison** (management: 3.4% vs 6.2%
+   market). Needs BCB series the repo does not ingest. Fourth run
+   unverified; not attached to a numbered condition.
+3. **PENDING 2026-11-16 — the Basel trajectory** (29.6% → 22.5% in a year,
+   4.5pp above the 18% floor). Condition 3.
+4. **UNKNOWN — the LTIP-Goals performance metrics.** Item 6.B was obtained
+   this run and does not disclose them ("performance goals established in
+   our corporate results-sharing plan"); the committee is the chairman plus
+   two UOL officers. The ">16% EPS CAGR" ambition is therefore not a
+   documented incentive. Not attached to a numbered condition.
+5. **UNKNOWN — the size of the 10% non-resident dividend WHT leak** (Law
+   15,270) on cash upstreamed from PagSeguro Brazil to the Cayman parent.
+   Depends on the intra-group distribution route, which no filing states.
+   Affects distributions, not the earnings base; bounded above by ~10% of
+   whatever is upstreamed as dividends.
+6. **UNKNOWN — controller intentions after the chair change.** Unchanged
+   from the prior run; a director's non-plan 82% exit makes it harder to
+   wave away, and no filing can resolve it before the fact.
+7. **UNKNOWN — today's Brazil CDS level.** The one scenario input §4 cannot
+   measure this run. It decides between runs F/G and I/J. Observable within
+   days from any sovereign-CDS source; Damodaran's next country update will
+   restate it.
+
+Option value (*possible* tier, unnumbered): a credible finance-minister
+pick and fiscal plan that retraces the sovereign repricing would lift
+every run in §4 at once and likely retrace a share of today's gap. It cannot
+be dated or sized, and the opposite (a loose pick) is the §5 CRP shift.
+
+## 7. Sources
+
+- **Primary:** (SEC, EDGAR CIK 0001712807) EDGAR Atom filing index read
+  2026-10-26 (no 6-K after 2026-09-01); Form 4 2026-10-20
+  (0001554855-26-002140: 1,014 shares at $11.182 on 10-16, 170,699 held
+  after, `aff10b5One` 0); Form 4 2026-10-21 (0001554855-26-002151: 16,209
+  at $11.183 on 10-19, 47,100 at $11.216 on 10-20, 107,390 held after,
+  `aff10b5One` 0); Form 144 2026-10-09 and Form 4s 2026-10-09/10-13
+  (carried); 6-K 2026-08-21 (chair change, carried); 6-K 2026-08-11 Q2
+  release (carried); **20-F FY2025 (0001554855-26-000826, main document
+  fetched and read this run):** Item 6.B Compensation (LTIP-Goals,
+  R$53.5M aggregate 2025, committee composition), Item 6.E (16.9M shares
+  delivered), Item 7A (UOL 88.74% voting power, BlackRock 9.88% of A,
+  treasury 13.2M), Item 7B (R$560.6M related-party costs), Item 10E (CSLL
+  34→37→40%; Law 15,270 10% non-resident dividend WHT; interchange caps
+  under Resolution 246/2022). Q2 2026 call transcript (2026-08-11,
+  primary-transcribed via stockanalysis; carried, not re-read). BCB Copom
+  statement, 281st meeting (carried).
+- **stockanalysis.com (vetted exception):** `/stocks/PAGS/statistics/`
+  via the `__data.json` probe, 2026-10-26 (live, already at ~$8.62):
+  market cap $2,376,068,710, EV $2,451,100,172, P/E 5.96, forward 4.73,
+  P/B 1.09 at their price, ROE 14.53%, beta 1.244, net income
+  $415,208,462, revenue $3,822,511,389, `fcf` $1,026,337,974, equity
+  $2,898,368,013, debt $342,665,612, cash $267,634,149, tax rate 17.30%,
+  shares 275,646,022, float 141,013,692, short interest 17,336,325
+  (11.45%), target $11.74 / 16 analysts, payout 45.6%, buyback yield
+  7.51%, earnings date "Nov 11" (unverified; rejected). Income-statement
+  history carried.
+- **Broker/market microstructure:** (Robinhood MCP) live quote $8.6369 at
+  13:48 UTC against the 2026-10-23 official close $11.44; peer quotes EWZ,
+  NU, STNE, ITUB, BBD, TIMB, MELI, SPY at the same minute; daily bars
+  2026-07-01 → 10-23 and 5-minute bars 2026-10-26 (open 7.705, low 7.50);
+  earnings estimate/actual for eight quarters and the verified 2026-11-16
+  PM date; option chain, 2026-11-20 instruments and the 9/8 put and call
+  quotes; the agentic account's two PAGS tax lots. Admissible: no
+  integrated official source covers PAGS quotes, options, consensus or
+  account lots, and `earnings.db` has no PAGS row.
+- **Reference data:** Damodaran `ctryprem.html` ("Last updated: January 5,
+  2026", re-read 2026-10-26): Brazil Ba1, default spread 2.13%, CRP 3.24%,
+  total ERP 7.47%; US Aa1 4.46%. US cost-of-capital distribution and the
+  ~29% EVA base rate (anchors reference, carried).
+- **Point-in-time repo DBs:** `fred.db`: DGS10 4.96% (2026-10-22), T10YIE
+  2.34% (2026-10-23). `stocks.db` (snapshot 2026-10-26 11:00 UTC, pre-open,
+  price 11.44): beta 1.244, insiders 3.62%, institutions 46.61%, float
+  141.0M, shares 275.65M, SBC $24.29M, SBC/rev 0.64%, 16 analysts.
+  `portfolio.db` `v_latest_positions` (snapshot 2026-10-15): 25 holdings
+  including PAGS 1.183 shares at $8.72 avg. `composite.db` snapshot 117:
+  PAGS 0/0, coverage 0.0, `in_portfolio` 1. `scorer.db` (read-only):
+  decisions — buy 2026-08-14 1.148 sh at $8.7099 (research-ticker, $10
+  notional), DRIP 2026-10-01 0.035 sh at $9.05; research_verdicts — buy
+  2026-08-13, pass 2026-09-13, pass 2026-10-18 (all UNPROVEN).
+  `earnings.db`: no PAGS row. `sec_fundamentals.db`: assets/liabilities
+  only.
+- **Low-confidence:** runoff result and margin (NPR, PBS, The Hill, AP via
+  search); BRL and Ibovespa intraday levels and the B3 limit changes (Rio
+  Times, FinanceFeeds, TokenPost); the Barclays/Morgan Stanley/ING/Deutsche
+  Bank fiscal commentary (Reuters via Korea Times, US News, KuCoin, Yahoo
+  Finance); the Copom pause odds and 11-04 date (Rio Times, ricoaospoucos);
+  Investing.com and StocksToTrade "why is PAGS down" pieces; MarketBeat's
+  July BofA note; Poder360's May CDS print. None carries a numbered
+  condition.
+
+## Kill-thesis record
+
+**UNPROVEN** — conditions=5, refuted=0, unknown=1, pending=2,
+not_obtained=0. (Survived=2. The prior run's "FY26 gross profit +6–9%"
+condition is folded into condition 1 as its mechanism rather than counted
+separately: at $8.64 the bull case no longer needs acceleration, only
+flat BRL earnings through the tax step, and double-counting one mechanism
+as two conditions inflates the surface without adding an attackable
+claim.)
+
+Per-condition adjudication of §1's **bull-case** list:
+
+1. **SURVIVED** (*probable*) — BRL net income flat for two years through a
+   13.75–15% Selic. No new quarter to attack it with. The attack: the CSLL
+   step from 34% to 37% took effect 2026-01-01 and H1'26 net income was
+   still flat, so the first half-year of the tax step is already in the
+   TTM figure. Run H prices a 7% miss and clears. Stands at *probable*.
+2. **UNKNOWN** — the loss curve inside provisioning. Allowance expense
+   +150% against a book +30.7%, unsecured share 13.1% → 24.3%, product-level
+   disclosure refused (all carried). The base rate for rapidly extended
+   unsecured credit to thin-file borrowers into a currency shock is poor.
+   The Q3 print (11-16) gives one reading; the through-cycle curve is in no
+   filing (§6.1). This is the UNPROVEN.
+3. **PENDING 2026-11-16** — capital return without a raise. The internal
+   tension stands (49%/yr credit growth to the 2029 ambition, ~90% payout,
+   BIS −7.1pp/yr). What bears on it today — the board's 2027–28 dividend
+   step-down to a R$1.0B floor — is consistent with managing the glide,
+   not refuting it.
+4. **SURVIVED** (*probable*) — take rate 1.5%, flat y/y, two quarters. The
+   cost is ceded volume (TPV +3.0%), which condition 5 carries.
+5. **PENDING 2026-11-16** — active-client decline not reaching revenue.
+   Revenue +0.4% at Q2 is adverse but not a decline.
+
+**Standing checks.** *Base rate:* ~29% of firms out-earn their cost of
+capital (Damodaran EVA); an EM bank with ROE ≈ local risk-free is worth
+about book, and it now trades at 0.82× book — below the base-rate anchor
+for the first time since the August buy. Post-election EM gaps partially
+retrace when the cabinet is named (2022 Brazil did), but that is folklore
+without a measured rate, and it is not credited. *Short case:* a commodity
+acquirer on a shrinking active base, levered to unsecured credit
+underwritten in one benign cycle, in a country whose currency just fell
+10% and whose central bank now pauses, with the chair gone, a director
+82% out without a plan, statutory tax stepping to 40%, a new 10% WHT on
+upstreamed dividends, and 11.45% of shares short. *Management incentives:*
+Item 6.B read this run — pay is a results-sharing bonus plus LTIP shares
+capped at a share of net profit, set by a committee of the chairman and
+two UOL officers; the metrics are undisclosed, so nothing in the filing
+aligns management to the EPS-CAGR ambition or against it. *Disconfirming
+search:* run on the election (lost, and lost in the way the prior run
+said would revisit the entry), the Selic (pause now likely, inside the
+guide), insiders (sales only, discretionary), and the sovereign (sell-side
+expects 200–300bp; no live CDS found). Three of four cut against the bull;
+the Selic read is neutral. *Moat as mechanism:* banking principality,
+real and weakening on both legs, unchanged.
+
+**Statistical checks:** not applicable. No backtest or signal underpins the
+thesis; composite's `sa_fcf_yield` is the receivables artifact §4 rejects.
+
+**Options timing check: NOT APPLICABLE and disclosed.** No dated
+price-move claim. Coverage: path 1 unavailable (not in the CBOE catalog);
+path 2 FAILED the liquidity gate (spreads 33–50% of mark, call volume 60),
+so UNRELIABLE and it moved nothing.
+
+> [!WARNING]
+> **Closest attack:** the hurdle. The 14.22% uses a January-2026 Brazil
+> premium on the morning the market is repricing Brazil. At +150bp the
+> conservative melt path fails by 147bp and only flat USD earnings clear
+> (+165bp). The buy is then standing on one *probable* leg, which is where
+> the August thesis stood when it bought at this price.
+
+> [!NOTE]
+> **Flip evidence:** SOUND if the 11-16 print shows NPL90 ≤ 3.5%, BIS ≥ 21%,
+> gross profit ≥ +5% with financial costs down, active banking flat or up,
+> *and* a further quarter of loss data narrows §6.1. FLAWED if NPL90 > 4.5%,
+> the guide is withdrawn, BIS < 19% with a sub-R$1.0B 2027 dividend, or a
+> Copom hike / announced card-credit rate cap.
+
+> [!IMPORTANT]
+> **p(beat SPY, 63 td): 0.48** — written before re-reading §1. The window
+> holds a Copom that probably pauses, a print that must show the credit book
+> holding through a shock quarter it has not yet lived through, a cabinet
+> pick that can go either way, and a 68% IV. Against that, 0.82× book, a
+> spent election gap, and a crowded short.
